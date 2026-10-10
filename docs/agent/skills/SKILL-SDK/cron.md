@@ -1,4 +1,4 @@
-> _**SDK skill · `cron` namespace** · ~7,251 tokens · hoody-sdk v1.0.0-beta.16_
+> _**SDK skill · `cron` namespace** · ~7,545 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `cron` — managed crontab entries per system user
 
@@ -48,7 +48,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 4. Bulk replace
 
-`crontabs.get` (sweep) then `crontabs.set` body — revalidates `# hoody-cron:` blocks; response has `removed_expired`.
+For a normal bulk replace, read with `crontabs.get` (sweep), edit the returned text, then call `crontabs.set` with the body — it revalidates `# hoody-cron:` blocks, and the response has `removed_expired`. If a read or entry call fails with `409 STORED_CRONTAB_INVALID` (the stored crontab cannot be used), read `details` and repair it by calling `crontabs.set` directly with a complete, valid replacement: PUT does not read the stored crontab, and anything you leave out of the replacement is removed.
 
 ### 5. Audit all users
 
@@ -63,7 +63,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - A managed entry's command is read back from the spool exactly as written, runs of whitespace included, so a later write for that user stores it unchanged: `echo "a  b"` stays `echo "a  b"`.
 - `expires_at` RFC 3339, strictly future.
 - Body cap 256 KiB by default, which the deployment can change, AND 10,000 lines; duplicate entry id rejected, and a duplicate `id=` within one metadata line is rejected.
-- **`crontabs.set` replaces the whole crontab.** `crontabs.get` returns each managed entry as its `# hoody-cron:` metadata line followed by its rule line, and PUT parses those pairs back into the same managed entries with the same ids. So a read, edit, write cycle keeps every managed entry whose two lines are still in the body; a managed entry left out of the body is deleted. Edit the text from `crontabs.get` instead of writing a fresh body, and do not re-create managed entries after a PUT: they are still there, and re-creating them makes every job run twice. Comment or blank lines placed between a metadata line and its rule line are dropped.
+- **`crontabs.set` replaces the whole crontab.** `crontabs.get` returns each managed entry as its `# hoody-cron:` metadata line followed by its rule line, and PUT parses those pairs back into the same managed entries with the same ids. So a read, edit, write cycle keeps every managed entry whose two lines are still in the body; a managed entry left out of the body is deleted. Edit the text from `crontabs.get` instead of writing a fresh body, and do not re-create managed entries after a PUT: they are still there. Re-creating an identical entry answers 200 with the existing one and writes nothing; the same schedule and command with a different name, comment, `expires_at` or `enabled` is `409 ENTRY_EXISTS` (details give its id), so change it with PATCH. Comment or blank lines placed between a metadata line and its rule line are dropped.
 - A PUT body may contain `# hoody-cron:` metadata lines written by the caller. The kit revalidates every managed entry it parses from them (schedule, command, name, comment) and rejects duplicate ids, but it does not check where the metadata came from: a well-formed pair written by hand is accepted as a managed entry, and a metadata line it cannot parse or pair is kept as a raw line. Every other non-comment line gets the syntax check of `crontab(1)`: a line it would refuse is `400 INVALID_CRONTAB` naming that line, and nothing is written.
 - `entries.list`/`entries.get` clean expired entries before serializing under a per-user mutex — a GET can mutate the spool.
 - `entries.list` items have `type: "managed"` or `"raw"`; only `managed` items carry `id`.
@@ -73,6 +73,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 Error bodies are `{ code, message, details }`, except where noted.
 
+- `409 STORED_CRONTAB_INVALID` — the crontab already stored for the user cannot be used (a Unicode line break, a `# hoody-cron:` line with two id fields, or over the line or byte cap); nothing in your request is wrong. Repair it with `crontabs.set` (workflow 4).
 - `400 INVALID_EXPIRES_AT` / `EXPIRES_IN_PAST`.
 - `400 INVALID_SCHEDULE / Invalid schedule` — Vixie 5-field plus `@`-macros only; Quartz / 6-field rejected.
 - `400 INVALID_USER` (bad user name), `INVALID_COMMAND`, `INVALID_NAME`, `INVALID_COMMENT`: a field failed validation (see Quirks for the rules).
@@ -130,7 +131,7 @@ await client.cron.entries.update('root', id, {
 
 **Goal:** disable every managed entry so nothing fires during a 30-min DB migration; re-enable once clean.
 
-**Step 1 — capture every enabled managed id.** The listing is paginated (50 per page by default, at most 200), so read every page before filtering: a job left on a later page stays enabled through the migration. Run steps 1 and 2 as one script that exits on any listing or update failure, and start the migration only when it exits successfully; a partial list or a failed disable leaves jobs enabled.
+**Step 1 — capture every enabled managed id.** The listing is paginated (50 per page by default, at most 200), so over HTTP read every page before filtering: a job left on a later page stays enabled through the migration. The CLI fetches every page itself, up to 10,000 items or 1,000 requests, so check that it returned `total` rows. Run steps 1 and 2 as one script that exits on any listing or update failure, and start the migration only when it exits successfully; a partial list or a failed disable leaves jobs enabled.
 
 ```typescript
 // listAll walks every page and resolves to the typed entries; a failed page throws.
@@ -320,7 +321,7 @@ await client.cron.entries.update('root', id, {
 
 **Goal:** a teammate wants ONE hand-written line gone without disturbing the rest. You don't have an id (it's raw). Match the whole line exactly, and skip a matching line that follows a `# hoody-cron:` metadata line: that one is a managed entry's rule, and dropping it orphans the entry.
 
-**Step 1 — fetch** the multi-line string. **Step 2 — edit client-side** (split, drop, rejoin). **Step 3 — write back.** Managed entries survive: the fetched text holds each one as a `# hoody-cron:` metadata line plus its rule line, and the PUT parses them back with the same ids. Leave those lines untouched and do not re-create the entries afterwards, or every managed job runs twice.
+**Step 1 — fetch** the multi-line string. **Step 2 — edit client-side** (split, drop, rejoin). **Step 3 — write back.** Managed entries survive: the fetched text holds each one as a `# hoody-cron:` metadata line plus its rule line, and the PUT parses them back with the same ids. Leave those lines untouched; there is nothing to re-create afterwards (an identical create answers 200 with the existing entry, a changed one `409 ENTRY_EXISTS`).
 
 ```typescript
 const cur = (await client.cron.crontabs.get('root')).data!.crontab;
@@ -349,7 +350,7 @@ client.cron.crontabs.get(user: string)
 |-----------|------|------|----------|-------------|
 | `user` | `string` | path | Yes | System username |
 
-**Returns:** `Promise<CronCrontabsGetResponse>`  |  **HTTP:** `GET /users/{user}/crontab`
+**Returns:** `Promise<CronCrontabsGetResponse>`  |  **HTTP:** `GET /api/v1/cron/users/{user}/crontab`
 **CLI:** `hoody cron crontabs get`
 
 ---
@@ -365,7 +366,7 @@ client.cron.crontabs.list(options?: { page?: number; limit?: number })
 | `page` | `number` | query | No | Page number (1-based, default 1) |
 | `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
-**Returns:** `Promise<CronCrontabsListResponse>`  |  **HTTP:** `GET /crontab`
+**Returns:** `Promise<CronCrontabsListResponse>`  |  **HTTP:** `GET /api/v1/cron/crontab`
 **CLI:** `hoody cron crontabs list`
 
 ---
@@ -381,7 +382,7 @@ client.cron.crontabs.listAll(options?: { page?: number; limit?: number })
 | `page` | `number` | query | No | Page number (1-based, default 1) |
 | `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
-**Returns:** `Promise<(NonNullable<CronCrontabsListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.items`, all pages collected (`list()` fetches one page). Each item is `cron_RawCrontabResponse`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /crontab`
+**Returns:** `Promise<(NonNullable<CronCrontabsListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.items`, all pages collected (`list()` fetches one page). Each item is `cron_RawCrontabResponse`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/cron/crontab`
 **CLI:** `hoody cron crontabs list`
 
 ---
@@ -397,7 +398,7 @@ client.cron.crontabs.listIterator(options?: { page?: number; limit?: number })
 | `page` | `number` | query | No | Page number (1-based, default 1) |
 | `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
-**Returns:** `AsyncGenerator<(NonNullable<CronCrontabsListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.items` per step, next page fetched on demand (`list()` fetches one page). Each item is `cron_RawCrontabResponse`.  |  **HTTP:** `GET /crontab`
+**Returns:** `AsyncGenerator<(NonNullable<CronCrontabsListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.items` per step, next page fetched on demand (`list()` fetches one page). Each item is `cron_RawCrontabResponse`.  |  **HTTP:** `GET /api/v1/cron/crontab`
 **CLI:** `hoody cron crontabs list`
 
 ---
@@ -413,7 +414,7 @@ client.cron.crontabs.set(user: string, data: CronCrontabsSetRequest)
 | `user` | `string` | path | Yes | System username |
 | `data` | `CronCrontabsSetRequest` | body | Yes | Shape: `cron_RawCrontabRequest` under Body schemas. |
 
-**Returns:** `Promise<CronCrontabsSetResponse>`  |  **HTTP:** `PUT /users/{user}/crontab`
+**Returns:** `Promise<CronCrontabsSetResponse>`  |  **HTTP:** `PUT /api/v1/cron/users/{user}/crontab`
 **CLI:** `hoody cron crontabs set`
 
 ---
@@ -431,7 +432,7 @@ client.cron.entries.create(user: string, data: CronEntriesCreateRequest)
 | `user` | `string` | path | Yes | System username |
 | `data` | `CronEntriesCreateRequest` | body | Yes | Shape: `cron_CreateEntryRequest` under Body schemas. |
 
-**Returns:** `Promise<CronEntriesCreateResponse>`  |  **HTTP:** `POST /users/{user}/entries`
+**Returns:** `Promise<CronEntriesCreateResponse>`  |  **HTTP:** `POST /api/v1/cron/users/{user}/entries`
 **CLI:** `hoody cron entries create`
 
 ---
@@ -447,7 +448,7 @@ client.cron.entries.delete(user: string, id: string)
 | `user` | `string` | path | Yes | System username |
 | `id` | `string` | path | Yes | Managed entry id (UUID) |
 
-**Returns:** `Promise<CronEntriesDeleteResponse>`  |  **HTTP:** `DELETE /users/{user}/entries/{id}`
+**Returns:** `Promise<CronEntriesDeleteResponse>`  |  **HTTP:** `DELETE /api/v1/cron/users/{user}/entries/{id}`
 **CLI:** `hoody cron entries delete`
 
 ---
@@ -463,7 +464,7 @@ client.cron.entries.get(user: string, id: string)
 | `user` | `string` | path | Yes | System username |
 | `id` | `string` | path | Yes | Managed entry id (UUID) |
 
-**Returns:** `Promise<CronEntriesGetResponse>`  |  **HTTP:** `GET /users/{user}/entries/{id}`
+**Returns:** `Promise<CronEntriesGetResponse>`  |  **HTTP:** `GET /api/v1/cron/users/{user}/entries/{id}`
 **CLI:** `hoody cron entries get`
 
 ---
@@ -480,7 +481,7 @@ client.cron.entries.list(user: string, options?: { page?: number; limit?: number
 | `page` | `number` | query | No | Page number (1-based, default 1) |
 | `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
-**Returns:** `Promise<CronEntriesListResponse>`  |  **HTTP:** `GET /users/{user}/entries`
+**Returns:** `Promise<CronEntriesListResponse>`  |  **HTTP:** `GET /api/v1/cron/users/{user}/entries`
 **CLI:** `hoody cron entries list`
 
 ---
@@ -497,7 +498,7 @@ client.cron.entries.listAll(user: string, options?: { page?: number; limit?: num
 | `page` | `number` | query | No | Page number (1-based, default 1) |
 | `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
-**Returns:** `Promise<(NonNullable<CronEntriesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { entries?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.entries`, all pages collected (`list()` fetches one page). Each item is `cron_CrontabEntryView`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /users/{user}/entries`
+**Returns:** `Promise<(NonNullable<CronEntriesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { entries?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.entries`, all pages collected (`list()` fetches one page). Each item is `cron_CrontabEntryView`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/cron/users/{user}/entries`
 **CLI:** `hoody cron entries list`
 
 ---
@@ -514,7 +515,7 @@ client.cron.entries.listIterator(user: string, options?: { page?: number; limit?
 | `page` | `number` | query | No | Page number (1-based, default 1) |
 | `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
-**Returns:** `AsyncGenerator<(NonNullable<CronEntriesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { entries?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.entries` per step, next page fetched on demand (`list()` fetches one page). Each item is `cron_CrontabEntryView`.  |  **HTTP:** `GET /users/{user}/entries`
+**Returns:** `AsyncGenerator<(NonNullable<CronEntriesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { entries?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.entries` per step, next page fetched on demand (`list()` fetches one page). Each item is `cron_CrontabEntryView`.  |  **HTTP:** `GET /api/v1/cron/users/{user}/entries`
 **CLI:** `hoody cron entries list`
 
 ---
@@ -531,7 +532,7 @@ client.cron.entries.update(user: string, id: string, data: CronEntriesUpdateRequ
 | `id` | `string` | path | Yes | Managed entry id (UUID) |
 | `data` | `CronEntriesUpdateRequest` | body | Yes | Shape: `cron_UpdateEntryRequest` under Body schemas. |
 
-**Returns:** `Promise<CronEntriesUpdateResponse>`  |  **HTTP:** `PATCH /users/{user}/entries/{id}`
+**Returns:** `Promise<CronEntriesUpdateResponse>`  |  **HTTP:** `PATCH /api/v1/cron/users/{user}/entries/{id}`
 **CLI:** `hoody cron entries update`
 
 ---
@@ -544,7 +545,7 @@ client.cron.entries.update(user: string, id: string, data: CronEntriesUpdateRequ
 client.cron.kit.getHealth()
 ```
 
-**Returns:** `Promise<CronKitGetHealthResponse>`  |  **HTTP:** `GET /health`
+**Returns:** `Promise<CronKitGetHealthResponse>`  |  **HTTP:** `GET /api/v1/cron/health`
 **CLI:** `hoody cron health`
 
 

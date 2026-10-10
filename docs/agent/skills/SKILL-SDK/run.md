@@ -1,4 +1,4 @@
-> _**SDK skill · `run` namespace** · ~11,126 tokens · hoody-sdk v1.0.0-beta.16_
+> _**SDK skill · `run` namespace** · ~11,152 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `run` — resolve apps to shell commands
 
@@ -103,8 +103,9 @@ Each example below has a copy-pasteable code block in the mode you're reading (c
 
 ```typescript
 const r = await client.run.search({ selector: { app: 'firefox', kind: 'any' }, page_size: 5 });
-const setId = (r.data as any).set_id;
-const top = (r.data as any).items[0];
+const setId = r.data.set_id;
+const top = r.data.items[0];
+if (!top) throw new Error('No candidates found for firefox');
 console.log(top.candidate_id, top.kind, top.score);
 ```
 
@@ -158,6 +159,7 @@ console.log((r.data as any).shell_command);
 
 ```typescript
 const wanted = (list.data as any).items[2]; // the candidate you chose in step 1
+if (!wanted) throw new Error('The chosen candidate is absent; search again');
 await client.run.resolve({
   app: 'git', kind: 'cli', set_id: setId, pick: 'id',
   candidate_id: wanted.candidate_id,
@@ -792,7 +794,7 @@ client.run.sources.update(source_id: string, data: RunSourcesUpdateRequest)
 - `run_SourceUpdate` — `{ enabled: bool, priority: int, pin: run_SourcePin|null, config: object }`
   - Partial source update. Only the fields present in the body are applied; everything else keeps its stored value. The merged source is re-validated before it is committed, so a patch that would downgrade a signed remote index is refused.
 - `run_ProfileConfig` — `{ name*: string, description: string, defaults: run_ProfileDefaults, sources_mode: run_ProfileSourceMode, sources: run_ProfileSourceOverride[], policy: run_PolicyConfig }`
-- `run_ProfileUpdate` — `{ description: string|null, defaults: run_ProfileDefaultsUpdate, sources_mode: "inherit" | "allowlist" | null, sources: run_ProfileSourceOverride[]|null, policy: run_PolicyConfigUpdate }`
+- `run_ProfileUpdate` — `{ description: string|null, defaults: run_ProfileDefaultsUpdate, sources_mode: "inherit" | "allowlist"|null, sources: run_ProfileSourceOverride[]|null, policy: run_PolicyConfigUpdate }`
   - … The merged profile is validated before it is stored, and an invalid value or an unknown top-level field is a 400 with nothing stored (unknown keys inside a nested object are ignored, as on create). The profile's name is taken from the path and cannot be changed here.
 - `run_RecipeConfig` — `{ name*: string, description: string, selector_template: run_SelectorTemplate, allowed_overrides: string[] }`
 - `run_RecipeUpdate` — `{ description: string|null, selector_template: run_SelectorTemplateUpdate, allowed_overrides: string[]|null }`
@@ -813,11 +815,11 @@ client.run.sources.update(source_id: string, data: RunSourcesUpdateRequest)
 - `run_ProfileSourceMode` — `"inherit" | "allowlist"`
 - `run_ProfileSourceOverride` — `{ source_id*: string, enabled: bool, priority: int }`
 - `run_PolicyConfig` — `{ require_verified: bool, require_integrity: bool, deny_providers: run_SourceKind[], deny_source_ids: string[] }`
-- `run_ProfileDefaultsUpdate` — `{ os: "linux" | "windows" | "any" | null, kind: "gui" | "cli" | "any" | null, source: run_SourceKind[]|null, pick: "ask" | "first" | "index" | "id" | null, terminal_id: int|null, display: string|null, limit: int|null }|null`
+- `run_ProfileDefaultsUpdate` — `{ os: "linux" | "windows" | "any"|null, kind: "gui" | "cli" | "any"|null, source: run_SourceKind[]|null, pick: "ask" | "first" | "index" | "id"|null, terminal_id: int|null, display: string|null, limit: int|null }|null`
   - `pick` — Candidate selection mode: ask: return candidate list without selecting (default); first: automatically select the highest-ranked candidate; index: select by 0-based index (requires pick_index); id: select by candidate_id (requires candidate_id)
 - `run_PolicyConfigUpdate` — `{ require_verified: bool|null, require_integrity: bool|null, deny_providers: run_SourceKind[]|null, deny_source_ids: string[]|null }|null`
 - `run_SelectorTemplate` — `{ app: string, os: run_Os, kind: run_AppKind, source: run_SourceKind[], arch: run_Arch, tags: string[], profile: string, channel: string, version: string, variant: string, publisher: string, repo: string, release: string, asset: string, pick: run_PickMode, pick_index: int, candidate_id: string, set_id: string, terminal_id: int, display: string, origin: string, format: run_OutputFormat, dry_run: bool, print_curl: run_PrintCurlMode, limit: int }`
-- `run_SelectorTemplateUpdate` — `{ app: string|null, os: "linux" | "windows" | "any" | null, kind: "gui" | "cli" | "any" | null, source: run_SourceKind[]|null, arch: "amd64" | "arm64" | "any" | null, tags: string[]|null, profile: string|null, channel: string|null, version: string|null, variant: string|null, publisher: string|null, repo: string|null, release: string|null, asset: string|null, pick: "ask" | "first" | "index" | "id" | null, pick_index: int|null, candidate_id: string|null, set_id: string|null, terminal_id: int|null, display: string|null, origin: string|null, format: "json" | "html" | null, dry_run: bool|null, print_curl: "hoody-run" | null, limit: int|null }|null`
+- `run_SelectorTemplateUpdate` — `{ app: string|null, os: "linux" | "windows" | "any"|null, kind: "gui" | "cli" | "any"|null, source: run_SourceKind[]|null, arch: "amd64" | "arm64" | "any"|null, tags: string[]|null, profile: string|null, channel: string|null, version: string|null, variant: string|null, publisher: string|null, repo: string|null, release: string|null, asset: string|null, pick: "ask" | "first" | "index" | "id"|null, pick_index: int|null, candidate_id: string|null, set_id: string|null, terminal_id: int|null, display: string|null, origin: string|null, format: "json" | "html"|null, dry_run: bool|null, print_curl: "hoody-run"|null, limit: int|null }|null`
   - `pick` — Candidate selection mode: ask: return candidate list without selecting (default); first: automatically select the highest-ranked candidate; index: select by 0-based index (requires pick_index); id: select by candidate_id (requires candidate_id)
 - `run_BatchMode` — `"search" | "run"`
 

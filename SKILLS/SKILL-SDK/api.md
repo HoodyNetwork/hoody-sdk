@@ -1,4 +1,4 @@
-> _**SDK skill · `api` namespace** · ~72,235 tokens · hoody-sdk v1.0.0-beta.16_
+> _**SDK skill · `api` namespace** · ~72,790 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `api` — Platform control plane: identity, projects, containers, billing, vault
 
@@ -8,7 +8,7 @@ Control plane outside container kits. Owns identity (signup, login, OAuth, 2FA, 
 
 ## When to use
 
-- Authenticate users; mint auth tokens for headless sessions.
+- Sign users in through their own browser; mint auth tokens only for unattended automation the user asked for.
 - Create/list/mutate/destroy projects, containers, snapshots, proxy-aliases.
 - Grant/revoke project/container access; set proxy auth (password/token/JWT/IP).
 - Wallet, billing, rental ops.
@@ -22,7 +22,7 @@ Control plane outside container kits. Owns identity (signup, login, OAuth, 2FA, 
 ## Prerequisites
 
 - Control plane at `https://api.hoody.com`.
-- Bearer token in `Authorization`. Mint via `auth.login` (1d JWT / 7d refresh) or `auth.tokens.create` (long-lived, scopable).
+- Bearer token in `Authorization`. Get it from browser sign-in (`auth.device.start` + `auth.device.poll`, see `SKILL-SDK.md` § Login; 1d JWT / 7d refresh), or from `auth.login` when the user chooses a password login. `auth.tokens.create` (long-lived, scopable) is for unattended automation only. Starting and polling a browser sign-in needs no bearer token.
 - 2FA management (`auth.twoFactor.startSetup`, `auth.twoFactor.confirmSetup`, `auth.twoFactor.disable`, `auth.twoFactor.rotateBackupCodes` and the status read) takes a login session JWT, or account-password HTTP Basic auth (which is subject to its own password and 2FA checks); a long-lived `auth.tokens.create` token is refused with 403 there. On top of that, the bodies differ: `auth.twoFactor.startSetup` needs the password; `auth.twoFactor.confirmSetup` needs the OTP code; `auth.twoFactor.verify` needs `temp_token` + code; `auth.twoFactor.disable` needs password + OTP **or** backup code; `auth.twoFactor.rotateBackupCodes` needs password + a **6-digit TOTP only** (`^\\d{6}$` — a backup code fails schema validation with 422). Login-time `auth.twoFactor.verify` needs no session.
 - Project/container writes: project owner or matching permission row.
 - Billing: prerequisites depend on the operation. A hosted crypto invoice (`wallet.createCryptoInvoice`) needs no saved payment method, only a login session (auth tokens are refused 403); server rentals and extensions debit the general wallet balance, so fund it first.
@@ -40,15 +40,17 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Common workflows
 
-### 1. Auth bootstrap (signup → verify → login [+2FA])
+### 1. Auth bootstrap through the user's browser
 
-1. `client.api.auth.signup`
-2. `client.api.auth.verifyEmail`
-3. `client.api.auth.login`
-4. `client.api.auth.twoFactor.verify` (if 2FA enabled — uses `temp_token`)
+1. New user: they sign up and verify their email at `https://api.hoody.com/auth/signup` in their own browser.
+2. `client.api.auth.device.start` — give the user `verification_uri_complete` and `user_code`.
+3. `client.api.auth.device.poll` every `interval` seconds until it returns the session (`data.token`, `data.refreshToken`); the waiting states are 400 with `data.error`. Steps and states: `SKILL-SDK.md` § Login.
+4. Use the session: `client.adoptSession(result)` installs both tokens on the client.
 5. `client.api.auth.whoami`
 
-### 2. Mint a long-lived auth token
+Never collect the user's password or ask for a pasted token. Fallback the user chooses and runs themselves: `client.api.auth.signup` → `client.api.auth.verifyEmail` → `client.api.auth.login` (+ `client.api.auth.twoFactor.verify` with the `temp_token` when 2FA is on).
+
+### 2. Mint a long-lived auth token (unattended automation only)
 
 1. `client.api.auth.tokens.create`
 2. `client.api.auth.tokens.list`
@@ -137,8 +139,9 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 
 ## Quirks & gotchas
 
+- Browser sign-in (`auth.device.poll`) is not RFC 8628 on the wire: send only the JSON fields shown, with no OAuth client or grant fields; the waiting states are HTTP 400 `{"statusCode":400,"data":{"error":"authorization_pending"}}` with the state under `data`, and the success body is a login session (`data.token`, `data.refreshToken`), not `access_token`. `expired_token` also covers a code already redeemed; `access_denied` also covers a missing or wrong PKCE verifier.
 - Login accepts `username` OR `email` + `password` (`anyOf`); only the email lookup is lowercased, usernames are matched case-sensitive.
-- JWT lifecycle: `auth.logoutAll` is a logout-ALL for JWTs — every access and refresh JWT issued before that moment stops working (all sessions, not just the current one); long-lived auth tokens are unaffected (revoke those with `auth.tokens.delete`). `auth.refresh` requires the refresh token in **both** the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. `client.api.auth.refresh({ refreshToken })` handles both: the client presents the body's `refreshToken` as the bearer for that one request, whatever token the client holds, so no separate client is needed (the call never enters automatic 401 recovery). For headless flows, mint a long-lived `auth.tokens.create` token instead.
+- JWT lifecycle: `auth.logoutAll` is a logout-ALL for JWTs — every access and refresh JWT issued before that moment stops working (all sessions, not just the current one); long-lived auth tokens are unaffected (revoke those with `auth.tokens.delete`). `auth.refresh` requires the refresh token in **both** the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. Refresh tokens are single-use: each successful refresh replaces both tokens. Never reuse the old refresh token; reuse returns 401 and, after 30 seconds, signs the account out everywhere. For an explicit SDK refresh, use `client.adoptSession(await client.api.auth.refresh({ refreshToken }))`: the refresh call sends the matching bearer header for that one request, whatever token the client holds (it never enters automatic 401 recovery), and `adoptSession` installs both replacement tokens. For unattended automation the user asked for, a long-lived `auth.tokens.create` token avoids refresh handling.
 - `servers.listRegions` returns `r.data.regions` (single-wrapped, like every other endpoint).
 - Duplicate signup returns `200` (anti-enumeration). For an unverified user the stored password is left unchanged (first writer wins) and a fresh verification email is sent; for a verified user it is a no-op. A second signup therefore cannot fix a mistyped password: logging in with the new one fails with 401. Change it through `auth.recoverPassword` → `auth.resetPassword`. Do NOT probe with signup.
 - The `agent` kit needs **no** `X-Hoody-Container-Claim` / `X-Hoody-Token` headers: it accepts the bare per-container kit URL, and access is decided by the container's proxy permission policy. No built-in kit asks for more, `bot` included: its management routes ignore an `Authorization` header and check no container ownership, so the proxy permission policy is their only access control. The `containers.createClaim(id)` call mints an *optional* portable container claim for offline verification by your own container programs; no built-in kit requires it. See § Auth model.
@@ -151,7 +154,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 - `projects.create` names the project with `alias` (required, at most 100 characters); there is no `name` field. An alias that one of your projects already uses is refused with 409.
 - Kit URL `<projectId>-<containerId>-<kit>-<n>.<server>.containers.hoody.com` (a terminal id of 10000 or more makes that label longer than DNS allows, so it is `t-<n>` instead of `terminal-<n>`; the SDK and CLI do this for you): with the default proxy permissions, holding the URL is enough to use the kit, `bot` management routes included. Treat it as a secret, since it also exposes the project and container ids; restrict it with `proxy.containerPermissions.*` groups, or publish a `proxy.aliases.create` alias instead.
 - `proxy.services.list` lists only the services named in the container's proxy permission rules or hooks, so a container with no custom rules returns `services: []`; it is not a list of running kits. `proxy.aliases.create` takes the kit or protocol as `program` (e.g. `'exec'`, `'terminal'`, or `'http'` with `port`).
-- `wallet.listInvoices` returns `200 {invoices:[],pagination:{...}}` for never-billed accounts (current). `ip.get` returns IP, user-agent, headers, referer, timestamp, auth flag, protocol, and `ip_info` — not just IP.
+- `wallet.listInvoices` returns HTTP 200 for never-billed accounts, with an empty `data.invoices` array and pagination metadata in `data.pagination`. `ip.get` returns IP, user-agent, headers, referer, timestamp, auth flag, protocol, and `ip_info` — not just IP.
 - `servers.offers.reserve` charges at once, and every reservation whose total is above zero needs `max_charge_cents`, although the body schema marks it optional. Without it the call is refused with 409 `CHARGE_CONFIRMATION_REQUIRED` (409 `SETUP_FEE_CONFIRMATION_REQUIRED` when the offer has a one-time setup fee), and a total above it is refused with 409 `CHARGE_EXCEEDS_MAX`; the error data carries `total_cents`, and nothing is charged. It also needs a caller-generated `idempotency_key`: a retry with the same key returns the first reservation instead of charging again.
 - `servers.extend` needs `expected_rental_end`: the rental's current `rental_end`, as `servers.get` returns it. The extension is applied only while that still matches, so a retry after a lost response is refused with 409 `EXTENSION_ALREADY_APPLIED` instead of charging twice; read the rental again before retrying. `max_charge_cents` is optional only when the rental's frozen renewal tiers (`renewal_pricing_frozen`) price `additional_days`; otherwise the call is refused with 409 `CHARGE_CONFIRMATION_REQUIRED`, and the error data carries `total_cents`.
 - `storage.shares.listIncomingByContainer(id)` is container-scoped: its `id` is the receiving container's id. For every incoming share across the account use `storage.shares.listIncoming`.
@@ -659,7 +662,7 @@ client.api.auth.tokens.create(data: ApiAuthTokensCreateRequest)
 |-----------|------|------|----------|-------------|
 | `data` | `ApiAuthTokensCreateRequest` | body | Yes |  |
 
-**Body:** `{ alias: string, public_key: string|null, public_storage: object|null, ip_whitelist: string[] | string, permission_template: "full_access" | "external_customer" | "dev_team" | "finance_team" | "read_only" | null, permissions: { containers: object, projects: object, financial: object, resources: object }, realm_ids: string[], allow_no_realm: bool, vault_access: bool, event_access: bool, deny_reauthorization: bool, expires_at: string | "today" | "tomorrow" | number, otp_code: string }`
+**Body:** `{ alias: string, public_key: string|null, public_storage: object|null, ip_whitelist: string[] | string, permission_template: "full_access" | "external_customer" | "dev_team" | "finance_team" | "read_only"|null, permissions: { containers: object, projects: object, financial: object, resources: object }, realm_ids: string[], allow_no_realm: bool, vault_access: bool, event_access: bool, deny_reauthorization: bool, expires_at: string | "today" | "tomorrow" | number, otp_code: string }`
 
 - `public_storage` — Public JSON profile storage attached to the token public_key (max 64KB)
 - `ip_whitelist` — IP whitelist for this token. Accepts an array of IPv4 addresses/CIDR ranges, a comma-separated string, or "*" wildcard. Defaults to "*" (allow all) if not provided. At most 1000 entries, and at most 65536 characters as a string; larger values are refused with IP_WHITELIST_TOO_LARGE.
@@ -807,7 +810,7 @@ client.api.auth.tokens.update(id: string, data: ApiAuthTokensUpdateRequest)
 
 - `public_storage` — Public JSON profile storage attached to the token public_key (max 64KB)
 - `ip_whitelist` — IP whitelist for this token. Accepts an array of IPv4 addresses/CIDR ranges, a comma-separated string, or "*" wildcard. Defaults to "*" (allow all) if not provided. At most 1000 entries, and at most 65536 characters as a string; larger values are refused with IP_WHITELIST_TOO_LARGE.
-- `realm_ids` — List of realm IDs this token is restricted to (at most 500)
+- `realm_ids` — List of realm IDs this token is restricted to (at most 500). An empty list means every realm, so a token that has realms cannot be set to an empty list (409 LAST_REALM_REMOVAL).
 - `otp_code` — TOTP code (6 digits) or backup code (10 alphanumeric). Required if 2FA is enabled on the account and authenticating via JWT.
 
 **Returns:** `Promise<ApiAuthTokensUpdateResponse>`  |  **HTTP:** `PUT /api/v1/auth/tokens/{id}`
@@ -2810,7 +2813,8 @@ client.api.proxy.aliases.create(data: ApiProxyAliasesCreateRequest)
 
 - `container_id` — Container ID that this alias points to. You must own this container.
 - `alias` — … Two independent uniqueness rules apply, either of which answers 409 ALIAS_IN_USE: the name must be free on the container's physical server (across every tenant hosted there), AND your own account may hold a given name only once across all servers. … Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to a reserved service name (such as "egress") or starting with that name followed by "-" (such as "egress-"). …
-- `program` — Which container service the alias targets — a built-in Hoody program ("terminal", "files", "code", "browser", "agent", "display", …) or a transport protocol ("http", "https", "ssh"). … Must be a known Hoody program name (or one of its aliases) or protocol.
+- `program` — … A port is required for "http"/"https": without one the request is refused (400 PORT_REQUIRED). … Must be a known Hoody program name (or one of its aliases) or protocol.
+- `index` — … For "http"/"https" it is the port your server listens on inside the container and has no default: give it here, in "port" or as "http-<port>", or the request is refused (400 PORT_REQUIRED) — but prefer the dedicated "port" field; if "port" or a port embedded in the program ("http-3000") is also supplied, that wins over this index (so an accidental index of 1 will not route you to port 1).
 - `allow_path_override` — When false, the alias serves only the root, or target_path itself: once the proxy permissions allow the request, a request to either lands on target_path and any other path is refused (404). …
 
 **Returns:** `Promise<ApiProxyAliasesCreateResponse>`  |  **HTTP:** `POST /api/v1/proxy/aliases`
@@ -2955,7 +2959,7 @@ client.api.proxy.aliases.update(id: string, data: ApiProxyAliasesUpdateRequest)
 **Body:** `{ alias: string, program: string, port: int, index: int, target_path: string|null, allow_path_override: bool, expires_at: string|null | number, enabled: bool }`
 
 - `alias` — … Two independent uniqueness rules apply, either of which answers 409 ALIAS_IN_USE: the name must be free on the container's physical server (across every tenant hosted there), AND your own account may hold a given name only once across all servers. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to a reserved service name (such as "egress") or starting with that name followed by "-" (such as "egress-"). …
-- `program` — Program or protocol the alias targets — a built-in Hoody program ("terminal", "files", "code", …) or a transport protocol ("http", "https", "ssh"). … Must be a known Hoody program name (or one of its aliases) or protocol.
+- `program` — … Switching an alias from a built-in program to "http"/"https" needs a port in the same request (400 PORT_REQUIRED). Must be a known Hoody program name (or one of its aliases) or protocol.
 - `allow_path_override` — When false, only the root, or target_path itself, is served, as target_path; other paths 404, and target_path's own parameters cannot be overridden. When true, a request that carries its own path is forwarded as sent.
 
 **Returns:** `Promise<ApiProxyAliasesUpdateResponse>`  |  **HTTP:** `PATCH /api/v1/proxy/aliases/{id}`
@@ -3098,7 +3102,7 @@ client.api.proxy.containerPermissions.set(id: string, data: ApiProxyContainerPer
 | `ifMatch` | `string` | header `if-match` | Yes | file:v<N> ETag precondition — read current file_version from GET first |
 | `data` | `ApiProxyContainerPermissionsSetRequest` | body | Yes |  |
 
-**Body:** `{ project*: string, container*: string, groups*: { [key: string]: { type: "jwt" | "password" | "ip" | "token" | "hoody-identity", secret: string, algorithm: "HS256" | "RS256" | "ES256" | "sha256", sources: string[], claims: object, username: string, password: string, salt: string, range: string, header: string, cookie: string, param: string, value: string, audience: string, allow_types: "user"[], users: string[], max_age_seconds: int, expose_type: bool } }, permissions*: { [key: string]: { [key: string]: bool | number | number[] | string | "*" } }, default: "allow" | "deny", enable_proxy: bool, hooks: { [key: string]: { match*: object, script*: object, timeout: int }[] } }`
+**Body:** `{ project*: string, container*: string, groups*: { [key: string]: { type: "jwt" | "password" | "ip" | "token" | "hoody-identity", secret: string, algorithm: "HS256" | "RS256" | "ES256" | "sha256", sources: string[], claims: object, username: string, password: string, salt: string, range: string, header: string, cookie: string, param: string, value: string, audience: string, allow_types: "user"[], users: string[], max_age_seconds: int, expose_type: bool, header_authoritative: bool } }, permissions*: { [key: string]: { [key: string]: bool | number | number[] | string | "*" } }, default: "allow" | "deny", enable_proxy: bool, hooks: { [key: string]: { match*: object, script*: object, timeout: int }[] } }`
 
 - `container` — Container ID (must match path :id)
 - `hooks` — Per-service proxy hooks. Keys are service names; values are first-match-wins arrays of { match, script, timeout? } rules. Max 8 per service, 32 per container in total. Reserved services (such as logs, egress and cdp) are rejected.
@@ -3180,7 +3184,7 @@ client.api.proxy.containerPermissions.setJwtGroup(id: string, groupName: string,
 | `ifMatch` | `string` | header `if-match` | Yes | file:v<N> ETag precondition — read current file_version from GET first |
 | `data` | `ApiProxyContainerPermissionsSetJwtGroupRequest` | body | Yes |  |
 
-**Body:** `{ secret*: string, algorithm*: "HS256" | "RS256" | "ES256", sources*: string[], claims: { [key: string]: string | number | bool } }`
+**Body:** `{ secret*: string, algorithm*: "HS256" | "RS256" | "ES256", sources*: string[], claims: { [key: string]: string | number | bool }, header_authoritative: bool }`
 
 - `claims` — Optional JWT claims that must be present and match exactly. Values must be string, number, or boolean.
 
@@ -3532,7 +3536,7 @@ client.api.proxy.projectPermissions.set(id: string, data: ApiProxyProjectPermiss
 | `ifMatch` | `string` | header `if-match` | Yes | file:v<N> ETag precondition — read current file_version from GET first |
 | `data` | `ApiProxyProjectPermissionsSetRequest` | body | Yes |  |
 
-**Body:** `{ project*: string, groups*: { [key: string]: { type: "jwt" | "password" | "ip" | "token" | "hoody-identity", secret: string, algorithm: "HS256" | "RS256" | "ES256" | "sha256", sources: string[], claims: object, username: string, password: string, salt: string, range: string, header: string, cookie: string, param: string, value: string, audience: string, allow_types: "user"[], users: string[], max_age_seconds: int, expose_type: bool } }, permissions*: { [key: string]: { [key: string]: bool | number | number[] | string | "*" } }, default: "allow" | "deny", enable_proxy: bool, hooks: object }`
+**Body:** `{ project*: string, groups*: { [key: string]: { type: "jwt" | "password" | "ip" | "token" | "hoody-identity", secret: string, algorithm: "HS256" | "RS256" | "ES256" | "sha256", sources: string[], claims: object, username: string, password: string, salt: string, range: string, header: string, cookie: string, param: string, value: string, audience: string, allow_types: "user"[], users: string[], max_age_seconds: int, expose_type: bool, header_authoritative: bool } }, permissions*: { [key: string]: { [key: string]: bool | number | number[] | string | "*" } }, default: "allow" | "deny", enable_proxy: bool, hooks: object }`
 
 - `project` — Project ID (must match path :id)
 - `hooks` — Not accepted: hooks are container-level only. A project document that carries this field is refused with 422; set hooks on each container instead.
@@ -3614,7 +3618,7 @@ client.api.proxy.projectPermissions.setJwtGroup(id: string, groupName: string, d
 | `ifMatch` | `string` | header `if-match` | Yes | file:v<N> ETag precondition — read current file_version from GET first |
 | `data` | `ApiProxyProjectPermissionsSetJwtGroupRequest` | body | Yes |  |
 
-**Body:** `{ secret*: string, algorithm*: "HS256" | "RS256" | "ES256", sources*: string[], claims: { [key: string]: string | number | bool } }`
+**Body:** `{ secret*: string, algorithm*: "HS256" | "RS256" | "ES256", sources*: string[], claims: { [key: string]: string | number | bool }, header_authoritative: bool }`
 
 - `claims` — Optional JWT claims that must be present and match exactly. Values must be string, number, or boolean.
 

@@ -1,6 +1,8 @@
-> _**CLI skill (FULL: basic + all 21 namespaces)** · ~204,143 tokens · hoody-sdk v1.0.0-beta.16_
+> _**CLI skill (FULL: basic + all 21 namespaces)** · ~214,206 tokens · hoody-sdk v1.0.0-beta.17_
 
 # CLI mode — `hoody` command
+
+**Online? Use HTTP, not this CLI** (`SKILL-HTTP.md`): in a web chat (ChatGPT, claude.ai, …) or a throwaway sandbox that is not a Hoody container or the user's own computer, `hoody` is not installed, a login made there does not last, and it is not the user's machine. Check `command -v hoody`; if it is missing, use HTTP rather than installing it.
 
 Covers a mapped subset of the SDK / HTTP surface (somewhat fewer CLI operations than SDK methods) — not a 1:1 mirror. Command names sometimes differ from SDK accessors (e.g. `hoody files get` for the SDK's `files.get`), a few kits carry commands of their own shape (`pipe`, `tunnel`), and SDK-only helpers (`listAll` / `listIterator`) have no CLI form. For the exact command for a given operation, consult the `SKILL-CLI/<ns>.md` per-namespace pages.
 
@@ -68,11 +70,17 @@ After install: `hoody update` reports whether a newer release exists. With a con
 ## Login
 
 ```bash
+hoody login --web --no-browser   # browser sign-in: prints a link + code for the user, polls, saves the session
+```
+
+Browser sign-in is the default when a person is present: give the user the printed link and code; they sign in and approve on Hoody's page, and the CLI saves the session. If your shell tool shows output only after a command exits, run it in the background and read the link from its output. Never ask for the user's password in chat. The password flags below are for a user who signs in from their own terminal:
+
+```bash
 hoody login --username alex --password "$HOODY_PASSWORD"
 ```
 
 - `--username` (`-u`) is the primary login flag; the CLI accepts `--email` as an alternative for email-based login. The server enforces the alphanumeric/underscore/hyphen pattern, so a malformed value fails at the request.
-- `--password` takes an optional value: a bare `-p` prompts for it securely. In a terminal, `hoody login` with no flags opens a menu (password, browser, or token). Without a terminal (a script, `-o json`, `--non-interactive`) it needs an identifier AND `--password <value>`, and otherwise stops with `Missing credentials.`; exporting `HOODY_PASSWORD` alone does not feed `hoody login`, so read the env var into the flag: `--password "$HOODY_PASSWORD"`. Token cached at `~/.hoody/config.json`.
+- `--password` takes an optional value: a bare `-p` prompts for it securely. In a terminal, `hoody login` with no flags opens a menu (password, browser, or token). Without a terminal (a script, `-o json`, `--non-interactive`) it needs an identifier AND a password, supplied through flags, `--password-stdin` or environment variables: a missing identifier comes from `HOODY_USERNAME`/`HOODY_USER` (a value containing `@` is sent as `email`), a missing password from `HOODY_PASSWORD`/`HOODY_PASS`. Without both it stops with `Missing credentials.`. Token cached at `~/.hoody/config.json`.
 - Base URL: the CLI targets `https://api.hoody.com` by default. Override it with `--base-url <url>` (CLI flag is kebab-case), the `HOODY_BASE_URL` environment variable, or `hoody config set baseUrl <url>` (config key is camelCase); `hoody config get --resolved` prints the effective settings.
 
 ## Config and profiles
@@ -144,7 +152,7 @@ Account-level commands (`hoody login`, `hoody projects`, `hoody wallet`, `hoody 
 |---|---|
 | `projectId` | 24-char hex. |
 | `containerId` | 24-char hex. Bearer credential. |
-| `kit_slug` | Kit id (see Kit slug table); some namespaces differ from their slug (e.g. `notifications` → `n-1`, `proxyLogs` → `logs-1`). |
+| `kit_slug` | Kit id (see Kit slug table); some namespaces differ from their slug (e.g. `notifications` → `n`, `proxyLogs` → `logs`). |
 | `n` | 1-based instance index; single-instance kits use `1`. |
 | `node` | Bare server hostname (use the `server_name` field from container responses). |
 | Suffix | `.containers.hoody.com` |
@@ -180,7 +188,7 @@ Most modern collaboration tools accept iframes (or unfurl URLs into rich preview
 | **Confluence / Jira** | "Smart Link" / iframe macro | Runbook page with the live tool baked in. |
 | **Plain HTML** | `<iframe src="…">` in any page | Internal portal, status page, customer demo. |
 
-The point: **don't make people leave their chat.** When someone hits a bug, drop the `terminal-N` URL with a Cline / Continue extension already focused into the thread — others can read, type, kibitz, take over, all without context-switching to a new tab. The container's filesystem is shared across every embed (same kit URL = same shell), so collaborators land on the *same* state.
+The point: **don't make people leave their chat.** When someone hits a bug, drop a `code-N` URL with `?extension=<publisher>.<name>` (focuses Cline / Continue) or a `terminal-N` URL into the thread — others can read, type, kibitz, take over, all without context-switching to a new tab. The container's filesystem is shared across every embed (same kit URL = same shell), so collaborators land on the *same* state.
 
 > ⚠ **Sharing a terminal / shell embed = giving root.** A `terminal`, `code`, `desktop`, `display`, or `agent` URL in a Slack channel, Notion page, or any other chat is effectively a root-shell credential. Anyone who can render the iframe can:
 > - read every file the container can read (env vars, tokens, vault entries, source code, customer data),
@@ -192,7 +200,7 @@ The point: **don't make people leave their chat.** When someone hits a bug, drop
 > - Gate the container (§ How to gate): an auth group, that group's access to the program, and `default: 'deny'` — so a recipient still has to authenticate.
 > - Use a **dedicated demo container with no secrets** — wallet credentials, vault data, source code only what they need to see.
 > - Set an **`expires_at`** on the alias for auto-expiry.
-> - Watch **`proxyLogs`** for unexpected callers; if a URL leaks, disable its alias instantly with `hoody proxy aliases disable <aliasId>`.
+> - Watch **`proxyLogs`** for unexpected callers; if a URL leaks, disable its alias with `hoody proxy aliases disable <aliasId>` (not instant: it usually stops serving within about 30 seconds and can take longer).
 > - For untrusted reviewers (customers, support tickets, public demos): do not hand out a `display` kit URL as a "read-only" view — its readonly setting is client-side only, and anyone holding the URL can still call the display's input API (clicks, typing). Build a constrained `exec` script that exposes only the operation they need, such as serving a captured screenshot.
 
 ### Tips for embedders
@@ -207,15 +215,15 @@ The point: **don't make people leave their chat.** When someone hits a bug, drop
 
 ## Source IP Guard — every call goes through the kit URL
 
-Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the program's URL gets 403, from inside the same container too. Call kits through the edge proxy on HTTPS, so the proxy's permissions, logging and hooks apply to every call.
+Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the program's URL gets 403. Call kits through the edge proxy on HTTPS, so the proxy's permissions, logging and hooks apply to every call.
 
 Why uniform proxy routing:
 
-- **Security uniformity** — requests from inside containers go through the same `hoody containers proxy *` checks and `hoody proxy logs *` capture as external requests, whether they came from across the internet or from a script in the next process. `hoody containers proxy *` MITM rules apply the same way, but only to services that accept hooks: `logs`, `egress` and `cdp` reject hook operations with `404`. There is no "trusted internal" loophole that leaks to attackers via SSRF.
+- **Security uniformity** — requests from inside containers go through the same `hoody containers proxy *` checks and `hoody proxy logs *` capture as external requests, whether they came from across the internet or from a script in the next process. `hoody containers proxy *` MITM rules apply the same way, but only to services that accept hooks: `logs`, `egress` and `cdp` reject hook operations with `404`.
 - **One mental model** — same URL works from your laptop, from another container, from inside the container itself. You write the same code; the proxy is transparent.
 - **Cost is negligible** — the proxy hop adds microseconds, not a network round-trip.
 
-Practical consequence: from inside a container, when calling its OWN kits, use the same kit URL form as anywhere else (`https://{P}-{C}-<kit>-1.{N}.containers.hoody.com/...`). The `hoody` CLI and the Hoody SDK both already do this. There is no other way in: the Source IP Guard refuses it.
+Practical consequence: from inside a container, when calling its OWN kits, use the same kit URL form as anywhere else (`https://{P}-{C}-<kit>-1.{N}.containers.hoody.com/...`). The `hoody` CLI and the Hoody SDK both already do this.
 
 ### Container ↔ container — anyone reaches anyone (with permissions)
 
@@ -228,7 +236,7 @@ Because routing is uniform, **a process in container X can call any kit on conta
 Cross-container access still goes through the gate stack — Y's `hoody containers proxy *` rules apply to whoever's calling, no matter where they're calling from. So:
 
 - **By default** (no gates set), Y's URL is a capability — anyone with the URL has access. Within your account that's usually fine; for production / shared / multi-tenant fleets you SHOULD gate.
-- **With a gate set** (§ How to gate — an auth group alone is not a gate), X must satisfy it. A Token gate (`setTokenGroup`) is a static shared secret: you choose where it is read (one header, cookie or query parameter) and the exact value it must equal, and X sends that value on every call to Y. It does not check Hoody auth tokens or realms — an `hdy_…` token passes only if it is literally the configured value. A JWT gate (`setJwtGroup`) verifies a signed JWT instead.
+- **With a gate set** (§ How to gate — an auth group alone is not a gate), X must satisfy it. A Token gate (`hoody containers proxy groups token set`) is a static shared secret: you choose where it is read (one header, cookie or query parameter) and the exact value it must equal, and X sends that value on every call to Y. It does not check Hoody auth tokens or realms — an `hdy_…` token passes only if it is literally the configured value. A JWT gate (`hoody containers proxy groups jwt set`) verifies a signed JWT instead; by default a valid token in any of its configured sources counts. For a cookie, use a `__Host-` name set by the address it protects.
 
 This is why edge routing matters: if same-container calls were a backdoor, an attacker who pwned X could quietly read Y's data with no gate checked. Routing everything through the proxy means **every** container-to-container call sees the **same** auth + audit machinery as every external call.
 
@@ -248,14 +256,14 @@ This is why edge routing matters: if same-container calls were a backdoor, an at
 
 Configure under `proxy.containerPermissions` (per-container) or `proxy.projectPermissions` (whole project — applies to every container in the project) on the control plane. Groups are alternatives, not layers: each named group (password, token, JWT or IP — or an OR-array of those) is one way in, a request that satisfies a group gets that group's per-program `permissions`, and a request that matches no group falls to the document's `default` (`allow` or `deny`).
 
-A group on its own restricts nothing. It grants only the programs you give it access to, and a document the API creates for you starts at `default: 'allow'`, so everyone who matches no group still gets in. A working gate takes three calls: define the group (`set{Password,Token,Jwt,Ip}Group`), give it access to each program it should reach (`setGroupPermission` with `{ program, access: true }`), and set `setDefault` to `{ default: 'deny' }`. Every one of these writes is versioned: send the document's current `file_version` as `If-Match: file:v<N>` (`file:v0` while the document has none), which the CLI takes as the required `--if-match file:v<N>`. A missing header is refused with `428` and a stale one with `412`. Each call returns the updated document, so take the next call's version from it. The one partial exception: a password group with an access rule for a program answers a caller without credentials with a `401` challenge for that program even under `default: 'allow'`.
+A group on its own restricts nothing. It grants only the programs you give it access to, and a document the API creates for you starts at `default: 'allow'`, so everyone who matches no group still gets in. A working gate takes three calls: define the group (`hoody containers proxy groups password set`, `hoody containers proxy groups token set`, `hoody containers proxy groups jwt set` or `hoody containers proxy groups ip set`), give it access to each program it should reach (`hoody containers proxy groups permissions set` with `{ program, access: true }`), and set `hoody containers proxy default set` to `{ default: 'deny' }`. Every one of these writes is versioned: send the document's current `file_version` as `If-Match: file:v<N>` (`file:v0` while the document has none), which the CLI takes as the required `--if-match file:v<N>`. A missing header is refused with `428` and a stale one with `412`. Each call returns the updated document, so take the next call's version from it. The one partial exception: a password group with an access rule for a program answers a caller without credentials with a `401` challenge for that program even under `default: 'allow'`.
 
 | Gate | Accessor | Caller behavior |
 |---|---|---|
-| Password | `setPasswordGroup` | Browser / `curl -u user:pass` — HTTP Basic. |
-| Token | `setTokenGroup` | The header, cookie or query parameter you configured must carry exactly the value you configured (a static shared secret). |
-| JWT | `setJwtGroup` | Verifies issuer / audience signed JWT. |
-| IP | `setIpGroup` | Source IP must match a CIDR. |
+| Password | `hoody containers proxy groups password set` | Browser / `curl -u user:pass` — HTTP Basic. |
+| Token | `hoody containers proxy groups token set` | The header, cookie or query parameter you configured must carry exactly the value you configured (a static shared secret). Name a cookie with the `__Host-` prefix. |
+| JWT | `hoody containers proxy groups jwt set` | Verifies issuer / audience signed JWT. |
+| IP | `hoody containers proxy groups ip set` | Source IP must match a CIDR. |
 
 `disable` sets `enable_proxy` to `false` (`enable` sets it back to `true`), which is a kill-switch for the whole proxy, not a gate toggle: while it is `false` every request that reaches the permission layer is refused with `403` before groups or `default` are evaluated, and the configured groups are kept. It never opens access. (A project-level `false` does not apply to a container whose own document sets `enable_proxy: true` — use the container-level call to cut one container reliably.)
 
@@ -265,7 +273,9 @@ Defense in depth: gate the kit URL AND scope any auth-token bearer (realms, IP a
 
 Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` = `server_name` (e.g. `node-example-1`). All URLs route through `*.containers.hoody.com`.
 
-| Namespace | Kit slug | Public URL (single-instance form) |
+The middle column includes the instance index. For `{kit_slug}` in the URL formula, use the bare slug, such as `n`, `logs` or `watch`.
+
+| Namespace | Host service segment (kit slug plus instance index) | Public URL (single-instance form) |
 |---|---|---|
 | `agent` | `agent-{index}` | `https://{P}-{C}-agent-1.{N}.containers.hoody.com` — the in-container AI agent HTTP gateway: sessions/prompt, models, skills, memory, todos, workflows, hooks, github, tools, logs |
 | `api` | — (control plane) | `https://api.hoody.com` (global, not per-container) |
@@ -306,7 +316,7 @@ For project `65f1...c8a`, container `65f2...41e`, server `node-example-1`:
 | Same, but MATE | `https://65f1...c8a-65f2...41e-desktop-1.node-example-1.containers.hoody.com/?desktop_env=mate` |
 | Terminal session 3 | `https://65f1...c8a-65f2...41e-terminal-3.node-example-1.containers.hoody.com/api/v1/terminal/...` |
 | Proxy logs | `https://65f1...c8a-65f2...41e-logs-1.node-example-1.containers.hoody.com/` |
-| Watch (file-events) | `https://65f1...c8a-65f2...41e-watch-1.node-example-1.containers.hoody.com/watchers/...` |
+| Watch (file-events) | `https://65f1...c8a-65f2...41e-watch-1.node-example-1.containers.hoody.com/api/v1/watch/watchers/...` |
 | Coding agent HTTP API | `https://65f1...c8a-65f2...41e-agent-1.node-example-1.containers.hoody.com/api/v1/agent/...` |
 | Hoody Agent GUI (for humans) | `https://65f1...c8a-65f2...41e-agent-1.node-example-1.containers.hoody.com/` |
 | User HTTP server on `:8080` | `https://65f1...c8a-65f2...41e-http-8080.node-example-1.containers.hoody.com/` |
@@ -314,10 +324,10 @@ For project `65f1...c8a`, container `65f2...41e`, server `node-example-1`:
 ### Conventions
 
 - `code` and `display` are multi-instance — append a numeric instance: `-code-1`, `-code-2`, `-display-1`, `-display-7`.
-- `terminal` packs the terminal **session** id into the slug (`terminal-3` = session 3). The proxy sets `?terminal_id=` from that hostname index and overwrites any value you send, so the hostname is authoritative: to act on session N (`/execute`, `/paste`, `/press`, `/raw`), call the `terminal-N` host. `terminal-0` is the "no session" host — use it with `?ephemeral=true` so the kit allocates a fresh session instead of reusing session 1.
+- `terminal` packs the terminal **session** id into the instance index (`terminal-3` = session 3). The proxy sets `?terminal_id=` from that hostname index and overwrites any value you send, so the hostname is authoritative: to act on session N (`/execute`, `/paste`, `/press`, `/raw`), call the `terminal-N` host. `terminal-0` is the "no session" host — use it with `?ephemeral=true` so the kit allocates a fresh session instead of reusing session 1.
 - `display`/`terminal` pairing depends on how the session is created. A session started through a `terminal-N` URL gets `DISPLAY=:N` automatically (the proxy injects `display=N` with `terminal_id=N`; an ephemeral session drops it). A session created with a JSON `/create` body gets `DISPLAY=:N` only when the body sends `display: ':N'`. Use the same number for both by convention — `terminal_id` N, `display` `:N`, then the `display-N` kit URL shows what that session draws.
 - `exec` serves each script at a **path** on the exec host: a file `hello.js` is reachable at `https://{P}-{C}-exec-1.{N}.containers.hoody.com/hello` (the `.js`/`.ts` extension is stripped; the path keeps the file name's case, so `MyTool.ts` is served at `/MyTool`, not `/mytool`). A script placed under a subdirectory `scripts/{sub}/` is ALSO reachable at the `{sub}.` **subdomain** (`{sub}.{P}-{C}-exec-1.{N}…`) — the subdomain maps to that directory, NOT to a flat top-level filename.
-- `notifications` ↔ `display-{n}`: the notification kit pairs with display N at slug `n-N`.
+- `notifications` ↔ `display-{n}`: the notification kit pairs with display N at host segment `n-N`.
 - `hoody proxy aliases create` rejects `program: 'web'`; use `program: 'exec'` for `hoody_kit` runners. Full valid program set is enumerated in the §Proxy aliases table below — note `logs` for the proxy-logs kit (not `proxy` or `proxyLogs`) and `run` (not `app`).
 
 ## Desktop alias — `desktop-<N>` (full XFCE / MATE desktop in a browser tab)
@@ -432,7 +442,7 @@ A **proxy alias** is a custom hostname that points at one specific program insid
 
 - **Hide `containerId`**: shipping `https://my-api.{N}.containers.hoody.com` is fine; shipping `https://65f1...c8a-65f2...41e-http-8080.{node}.containers.hoody.com` leaks the container identifier (which IS the credential of last resort).
 - **Brandable**: short, memorable, copy-pasteable.
-- **Stable**: alias survives container rebuilds — repoint at a new container, public URL stays the same.
+- **Retargetable within its container**: an update can change the alias's program, port, instance index or landing path while the public URL stays the same. It cannot move the alias to another container (the update takes no `container_id`); for a new container, delete the alias and create it there.
 - **Same gate stack**: layer Password / Token / JWT / IP via `proxy.containerPermissions` exactly as on the canonical URL.
 - **No DNS, no TLS work**: the proxy issues the cert and resolves the hostname for you.
 
@@ -445,7 +455,7 @@ A **proxy alias** is a custom hostname that points at one specific program insid
 | `container_id` | 24-char hex id of the target container — required. |
 | `alias` | 3-61 chars, lowercase alphanumeric **plus hyphens** (`a-z0-9-`, no leading/trailing hyphen). Becomes `<alias>.{N}.containers.hoody.com`. Two independent uniqueness rules, either of which answers `409 ALIAS_IN_USE`: the name must be free on the container's physical server (across every tenant there), AND your own account may hold a given name only once across all servers. |
 | `program` | Which kit/protocol to route to. Valid names, protocols first and then programs, with accepted aliases in parentheses: `http`, `https`, `ssh`, `terminal` (`tty`, `ttyd`, `t`), `display` (`d`), `desktop`, `cron`, `watch` (`w`), `notifications` (`notification`, `n`), `files` (`f`), `daemon`, `code`, `agent`, `exec` (`e`), `browser` (`b`), `cdp`, `curl`, `run`, `sqlite`, `logs` (`log`, `l`), `egress`, `pipe`, `notes` (`note`), `tunnel`, `bot`. Use only these names; `cli`, `proxy` and `proxyLogs`, for example, are refused with `400 Unknown program name`. The proxy-logs kit is `logs` (NOT `proxy` or `proxyLogs`), and `run` is NOT `app`. **`'web'` is rejected — for `hoody_kit` runners use `program: 'exec'`**. |
-| `index` | Optional; defaults to `1`. Set explicitly for multi-instance programs: port for `http`/`https`, `terminal_id` for `terminal`, display number for `display`. |
+| `index` | For a built-in program, the instance to route to (`terminal_id` for `terminal`, display number for `display`); defaults to `1`. For `http`/`https` it is the target port and has **no default**: give the port in `port` (preferred; it wins over `index` and over a port in the program name), as `http-<port>` (e.g. `http-8080`), or in `index`; with none of the three the create is refused with `400 PORT_REQUIRED`. |
 | `target_path` | Optional landing path served when the alias is opened with no path (a root request), e.g. `/api/v1`; a query written in it is sent too. It is never used as a prefix: with `allow_path_override: true` a request that carries its own path is forwarded as sent, resolved from the container root, and with `false` it is the only path the alias serves (at the root and at its own path). |
 | `allow_path_override` | Defaults to `true`: a root request lands on `target_path` (its query plus the visitor's parameters), and a request that carries its own path is forwarded as sent. With `false` the alias serves only `target_path`: the root `/` and the `target_path` path itself (e.g. `/run-report` when `target_path` is `/run-report`) are both served as `target_path`, and any other path — sub-paths and assets included — is refused with `404 ALIAS_PATH_PINNED`. A query key written in `target_path` wins over the visitor's value for the same key, and the instance selectors the alias's `index` sets (such as `id`, `terminal_id`, `display`) stay forced; the visitor's method, request body, other query keys, WebSocket upgrade and `Range` header pass through. Either way anyone with the link can open the alias, so restrict who may with proxy permissions. |
 | `expires_at` | Auto-disable timestamp — an ISO 8601 date-time string, or `null` for never. Convert an epoch value to ISO 8601 before sending. Must be in the future. |
@@ -472,7 +482,7 @@ Aliases inherit the container's gate stack — gate the underlying container (§
 
 ### Operational notes
 
-- `hoody proxy aliases disable <aliasId>` disables the alias instantly without releasing the slot — useful to revoke a leaked URL while you investigate.
+- `hoody proxy aliases disable <aliasId>` disables the alias without releasing the slot — useful to revoke a leaked URL while you investigate. Disable, enable, update and delete are not instant: they usually reach the alias URL within about 30 seconds and can take longer, and until then the alias keeps its previous behavior.
 - Wildcards / multi-program aliases not supported — one alias = one `(program, index)` target.
 - Conflicts return `409 ALIAS_IN_USE` under either rule: the name is already taken on that physical server (by any tenant), or your account already holds the same name on any server.
 - Custom apex domain (e.g. `api.example.com`) requires DNS CNAME + cert provisioning — not part of this surface.
@@ -490,7 +500,7 @@ Aliases inherit the container's gate stack — gate the underlying container (§
 
 ## Three credential types
 
-1. **JWT** — `POST /api/v1/users/auth/login` (HTTP only; no CLI command). Access token lives `1d`, refresh token `7d`, by default; a deployment may shorten either, so treat both as values to read from the response rather than constants. The interactive, short-lived credential.
+1. **JWT** — browser sign-in (§ Login) or `hoody login`. Access token lives `1d`, refresh token `7d`, by default; a deployment may shorten either, so treat both as values to read from the response rather than constants. The interactive, short-lived credential.
 2. **Auth token** — `hoody auth tokens create`. Prefix `hdy_`. Scopable (realms, `resources.*`), IP-restrictable, rotatable. Long-lived headless credential.
 3. **Kit URL** — `https://{projectId}-{containerId}-{kit_slug}-{serviceIndex}.{server}.containers.hoody.com` is the bearer for that kit while no proxy permissions are configured for the container. See § Proxy URLs.
 
@@ -510,6 +520,28 @@ Send `Bearer <token>` (one space, case-sensitive) for either credential. An `hdy
 
 ## Login
 
+**Sign the user in through their own browser.** This is the default whenever a person is present. They type their password, use GitHub or Google, and pass two-factor on Hoody's page; you never see a password, and nobody pastes a token into chat. No account yet? Send them to `https://api.hoody.com/auth/signup` to sign up and verify their email in the browser, then start here.
+
+1. **Start.** `POST https://api.hoody.com/api/v1/auth/device/code` with JSON `{"client_name":"<your name>","client":"agent"}`. No bearer token. `data` holds `device_code` (keep it private), `user_code`, `verification_uri`, `verification_uri_complete`, `interval` (seconds, 5) and `expires_in` (seconds, 900); use the returned values.
+2. **Hand over the link.** Give the user `data.verification_uri_complete` and the `data.user_code`: "Open this link, check that the page shows code `<user_code>`, sign in and approve. If you did not ask me to sign you in, choose *Don't authorize this device*." The page shows your `client_name` and marks it as unverified, so name yourself plainly.
+3. **Poll.** `POST https://api.hoody.com/api/v1/auth/device/token` with `{"device_code":"…"}`, one request every `interval` seconds, until `expires_in` runs out. The waiting states are answers, not failures: HTTP 400 with the state in **`data.error`**, not a top-level `error`:
+   - `authorization_pending`: keep polling.
+   - `slow_down`: polled too soon; add 5 seconds to the interval.
+   - `access_denied`: stop. The user refused (or a PKCE verifier was missing or wrong).
+   - `expired_token`: stop; the code expired or was already redeemed. Offer a fresh link.
+   - HTTP `429`: wait `Retry-After`, then continue. HTTP `404`: browser sign-in is not enabled on this deployment.
+4. **Signed in.** HTTP 200 returns the same session as a password login: `data.token` (send as `Authorization: Bearer`), `data.refreshToken`, `data.expires_in`. Keep both tokens for this session only: never repeat them in chat, log them or write them to a file yourself (the `hoody` CLI keeps its own session in `~/.hoody/config.json`, and `hoody logout` clears it). The code redeems once; if that response is lost, start a new sign-in.
+
+Optional PKCE: make a random `code_verifier` of 43–128 characters from `A-Z a-z 0-9 _ -`, send `code_challenge` = unpadded base64url of its SHA-256 when you start, and the `code_verifier` with every poll.
+
+`hoody login --web --no-browser` runs these steps for you: it prints the page and the code, polls until the user approves (up to 15 minutes), and saves the session to `~/.hoody/config.json`. Give the user the printed link and code. If your shell tool shows output only once a command exits, run it in the background, `(hoody login --web --no-browser; echo "exit=$?") > hoody-login.log 2>&1 &`, read the link and code from that file, and check it again later: sign-in is done when its last line is `exit=0`.
+
+Use a long-lived auth token (§ Storing auth tokens) only when the user asks for unattended automation; never mint one just to finish sign-in.
+
+### Password login (fallback)
+
+Only when the user chooses it, or browser sign-in answers `404`. The user runs it themselves; do not ask for their password in chat.
+
 - `username` OR `email` + `password`.
 - Response: `data.token` (not `accessToken`), `data.refreshToken`, `data.expires_in`.
 - 2FA: returns `requires_2fa`, `temp_token` (5-min); exchange at `POST /api/v1/users/auth/2fa/verify`.
@@ -517,7 +549,7 @@ Send `Bearer <token>` (one space, case-sensitive) for either credential. An `hdy
 
 ## Kit URLs as credentials
 
-Bearer by default. Add auth groups via `proxy.containerPermissions`/`proxy.projectPermissions` `.set{Password,Token,Jwt,Ip}Group` — groups are alternatives (a request satisfying any one gets that group's permissions; unmatched requests fall to the `default` policy), not stacked layers. A group alone restricts nothing: give it program access with `setGroupPermission` and set `setDefault` to `deny`, because a new permission document starts at `default: 'allow'`. `disable` / `enable` (`enable_proxy`) is a kill-switch that cuts the proxy entirely. See § Proxy URLs.
+Bearer by default. Add password, token, JWT or IP auth groups in the container's or project's proxy permissions. Groups are alternatives (a request satisfying any one gets that group's permissions; unmatched requests fall to the `default` policy), not stacked layers. A group alone restricts nothing: give it access to the intended programs and set the default policy to `deny`, because a new permission document starts at `default: 'allow'`. Disabling the proxy (`enable_proxy`) is a kill-switch that cuts it entirely. See § Proxy URLs for the operations and the required version headers.
 
 ### Container claim — optional portable credential
 
@@ -550,6 +582,8 @@ Mint a realm-scoped token via `hoody auth tokens create --realm-ids <realm_ids>`
 
 ### Best practice — one realm + one token per project
 
+This is for unattended automation the user asked for, or for handing a scoped credential to another program. For interactive work with the user present, keep the browser sign-in session and select the realm with its realm URL.
+
 Realms are **implicit**: there is no `realms.create` endpoint. A realm comes into existence the first time you reference it on a resource. Pick or generate a 24-hex string (e.g. via `crypto.randomBytes(12).toString('hex')` / `openssl rand -hex 12`) and use it everywhere for the project.
 
 1. **Pick a realm id** — any 24-char lowercase hex; or list existing ones with `hoody realms list`.
@@ -562,7 +596,7 @@ Result: that token can only see projects, containers, tokens, and vault entries 
 
 ## Storing auth tokens
 
-The `hdy_…` token from `hoody auth tokens create` is shown ONCE; the server stores only a hash. Three storage options:
+Mint an `hdy_…` token only when the user asks for unattended automation; the session from browser sign-in is not one, so don't save it yourself. The token from `hoody auth tokens create` is shown ONCE; the server stores only a hash. Three storage options:
 
 - **Write it down outside Hoody** (recommended) — password manager, secrets manager, env file outside the container. The token is a long-lived bearer; treat it like an SSH key.
 - **Vault, plaintext** — `hoody vault set <key> --value 'hdy_…'`. Stored server-side as sent — Hoody does not encrypt the value for you — and readable by anyone holding a JWT or vault-scoped auth-token for the account. Convenient for self-hosted automation.
@@ -572,13 +606,13 @@ Vault gate: any vault read needs BOTH `vault_access===true` on the token AND the
 
 ## Token revocation
 
-- `POST /api/v1/users/auth/logout` (HTTP only; no CLI command) — for a JWT this is a **logout-everywhere**: every access and refresh token minted before the call stops working, on every device, not just the one that called it. Auth tokens are unaffected.
-- `hoody auth refresh` — server requires the refresh token in BOTH the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. The CLI handles both places for you: `hoody auth refresh` takes `--refresh-token`, or falls back to the refresh token saved by the last `hoody login` / `hoody auth refresh`, sends it in the body and as the bearer, and saves the new tokens (`--no-save` skips that). With no saved refresh token, pass `--refresh-token` or run `hoody login` again. For headless flows prefer minting a long-lived `hoody auth tokens create`.
+- `hoody logout --all` — for a JWT this is a **logout-everywhere**: every access and refresh token minted before the call stops working, on every device, not just the one that called it. Auth tokens are unaffected.
+- `hoody auth refresh` — server requires the refresh token in BOTH the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. The CLI handles both places for you: `hoody auth refresh` takes `--refresh-token`, or falls back to the refresh token saved by the last `hoody login` / `hoody auth refresh`, sends it in the body and as the bearer, and saves the new tokens (`--no-save` skips that). With no saved refresh token, pass `--refresh-token` or run `hoody login` again. For unattended automation the user asked for, a long-lived `hoody auth tokens create` token avoids refresh handling.
 - `hoody auth tokens delete` / disable / IP-restrict — effective next request.
 
 ## 2FA
 
-`hoody auth 2fa setup start` returns `{ qr_code, manual_entry_key, backup_codes }`; `hoody auth 2fa setup confirm` enables. Backup codes rotatable, one-time, hashed. `hoody auth 2fa gate enable` on → sensitive auth-token mutations need TOTP+JWT.
+`hoody auth 2fa setup start` returns `data: { qr_code, manual_entry_key, backup_codes }` inside the usual `{ statusCode, message, data }` envelope; `hoody auth 2fa setup confirm` enables. Backup codes rotatable, one-time, hashed. `hoody auth 2fa gate enable` on → sensitive auth-token mutations need TOTP+JWT.
 
 ---
 
@@ -593,7 +627,7 @@ Anything missing? Just `apt install`, `pip install`, `npm i -g`, `cargo install`
 
 ## `kvm: true` — run full VMs inside the container
 
-Containers on **rented / dedicated (bare-metal) servers** can enable `/dev/kvm` passthrough and run hardware-accelerated virtual machines (QEMU/KVM, libvirt, Firecracker, …) inside the container. Pass `kvm: true` on `hoody containers create`, or the `--kvm` flag, or toggle it later on a **stopped** container (`hoody containers kvm enable` / `hoody containers kvm disable`). Defaults to off. **Never available on free-tier servers** — the API refuses with `403`. `dev_kvm` is accepted as an input alias of `kvm` (`kvm` wins; if both are sent they must agree). Every container response carries the current `kvm` boolean.
+Containers on **rented / dedicated (bare-metal) servers** can enable `/dev/kvm` passthrough and run hardware-accelerated virtual machines (QEMU/KVM, libvirt, Firecracker, …) inside the container. Pass `kvm: true` on `hoody containers create`, or the `--kvm` flag, or toggle it later on a **stopped** container (`hoody containers kvm enable -c <container-id>` / `hoody containers kvm disable -c <container-id>`). Defaults to off. **Never available on free-tier servers** — the API refuses with `403`. `dev_kvm` is accepted as an input alias of `kvm` (`kvm` wins; if both are sent they must agree). Every container response carries the current `kvm` boolean.
 
 ```bash
 hoody containers create --project <project-id> --server-id <server-id> --name vm-host --kvm   # enable at creation
@@ -619,13 +653,15 @@ This is the same binary as `hoody` outside the container — every example in th
 
 Containers ship with a **non-root account named `user`** (uid 1000, gid 1000, member of `sudo`). Home is `/home/user`. **`/etc/sudoers.d/user` grants `user ALL=(ALL) NOPASSWD: ALL`** — passwordless `sudo` lets agents (and humans) escalate to root for any operation without prompting.
 
+The Hoody Agent runs as `user` and its shell follows this setting: with the drop-in in place the agent can sudo; once the drop-in is removed (or narrowed to some commands) the agent's shell gets exactly what `user` gets without a password.
+
 **Use `user` for everyday work, sudo when you actually need root.** Reasons:
 
 - Files created under `user` are owned by uid 1000 — friendlier when you copy/sync them out of the container or back-stop with rsync.
 - Many apps (npm, pip in venvs, Bun, Cargo, Go, Nix single-user, Docker rootless, browsers) write into `$HOME` and behave better when `$HOME` is a real user home, not `/root`.
 - `journalctl --user`, `systemctl --user`, dbus user buses all hang off a regular user.
 
-The kit's `terminal` / `daemon` / `cron` namespaces let you pass `user: 'user'` (default in many surfaces is `root` — be explicit). Examples: `hoody daemon programs create --name my-app --command '…' --user user`, `hoody terminal sessions create --terminal-id 100 --user user --shell bash --cwd /home/user` (`terminal_id` is required unless you pass `ephemeral: true`). The generated `GET /{path}` (HTTP only; no CLI command) does NOT take a `user` param — the script runs under whatever uid the kit was started as.
+The kit's `terminal` / `daemon` / `cron` namespaces let you pass `user: 'user'` (default in many surfaces is `root` — be explicit). Examples: `hoody daemon programs create --name my-app --command '…' --user user`, `hoody terminal sessions create --terminal-id 100 --user user --shell bash --cwd /home/user` (`terminal_id` may be omitted when the `terminal-N` host supplies it, or when `ephemeral: true` generates it. If you send a body id on a container-scoped client, set `serviceIndex` to that same id: a mismatch is refused with `400 TERMINAL_ID_MISMATCH`. The `terminal-0` host creates only ephemeral sessions). The generated `GET /{path}` (HTTP only; no CLI command) does NOT take a `user` param — the script runs under whatever uid the kit was started as.
 
 **Production hardening — disable passwordless sudo.** For containers exposed to untrusted callers (open kit URLs without proxy gates, public alias hostnames, agents you don't fully trust), revoke the NOPASSWD line:
 
@@ -731,15 +767,17 @@ State is per-container: `hoody containers copy` clones the disk including everyt
 
 # CLI — Core operations
 
+Use the `hoody` CLI only where it is already installed: a Hoody container, or the user's own computer. In a web chat (ChatGPT, claude.ai, …) or a throwaway code sandbox, use HTTP instead: the CLI isn't installed there, a login made there does not last, and it isn't the user's machine. Do not install it with npx or the install script; check with `command -v hoody`.
+
 `hoody` recipes. Base URL: `https://api.hoody.com` by default; override with `--base-url <url>`, `HOODY_BASE_URL` or `hoody config set baseUrl <url>`. Scope: `-c <cid>` | `HOODY_CONTAINER` | `hoody local defaults set container <id>`.
 
 ---
 
 ### 1. Sign up
-`hoody signup --email you@example.com --password "$HOODY_PASSWORD"` — signup, email verification and login in one command. On a TTY it waits for you to click the verification link and ends logged in; without a TTY it exits 0 after sending the verification email and you must run `hoody login` yourself once the link is clicked. Signup CLI flags are `--email --password [--region]` (no `--username`); username is auto-generated from the email local part. Password 12–128 chars and at most 72 UTF-8 bytes. The server needs **3 of 4** character classes (upper/lower/digit/symbol); the interactive prompt demands all four, so use all four. Resend: `hoody auth email verification send`.
+Default for a person: they sign up at `https://api.hoody.com/auth/signup` in their own browser, then sign in with `hoody login --web --no-browser` (§2). Never collect their password in chat. `hoody signup --email you@example.com --password "$HOODY_PASSWORD"` — signup, email verification and login in one command. On a TTY it waits for you to click the verification link and ends logged in; without a TTY it exits 0 after sending the verification email and you must run `hoody login` yourself once the link is clicked. Signup CLI flags are `--email --password [--region]` (no `--username`); username is auto-generated from the email local part. Password 12–128 chars and at most 72 UTF-8 bytes. The server needs **3 of 4** character classes (upper/lower/digit/symbol); the interactive prompt demands all four, so use all four. Resend: `hoody auth email verification send`.
 
 ### 2. Log in (+2FA)
-`hoody login --username alex --password "$HOODY_PASSWORD"` (or `--email you@example.com`). On a TTY a 2FA account is prompted for its code in the same run. Without a TTY the command saves nothing, prints the challenge and exits 2; finish with `hoody auth 2fa verify --temp-token <temp_token> --code 123456` using the printed temp token (`--code` also accepts a 10-character backup code). Login password ≥8 chars (signup is ≥12).
+`hoody login --web --no-browser` is browser sign-in: it prints a link and a code for the user, polls until they approve on Hoody's page, and saves the session (2FA happens in their browser). If your shell tool shows output only after a command exits, run it in the background and read the link from its output. Password path, for a user signing in from their own terminal: `hoody login --username alex --password "$HOODY_PASSWORD"` (or `--email you@example.com`). On a TTY a 2FA account is prompted for its code in the same run. Without a TTY the command saves nothing, prints the challenge and exits 2; finish with `hoody auth 2fa verify --temp-token <temp_token> --code 123456` using the printed temp token (`--code` also accepts a 10-character backup code). Login password ≥8 chars (signup is ≥12).
 
 ### 3. Base URL / profiles
 Global flags: `--base-url <URL>`, `--profile <P>`. Persist with `hoody config set baseUrl <URL>` (camelCase key).
@@ -751,11 +789,12 @@ Global flags: `--base-url <URL>`, `--profile <P>`. Persist with `hoody config se
 `hoody projects create --alias my-project --color '#10B981'`
 
 ### 6. List containers
-`hoody c list [--realm-id <rid>] [-o wide]` (`c` is the registered alias for `containers`). There is no `--project` filter, and one call returns a single page (50 by default, `--limit 100` at most), so walk the pages (`hoody c list --limit 100 --page N -o json`, N = 1, 2, … until a page returns fewer than 100 rows) and filter each with `jq '.containers[] | select(.project_id=="<pid>")'` (the CLI's `-o json` unwraps the API envelope, so the top level is the `data` body — `.containers`, not `.data.items`).
+`hoody c list [--realm-id <rid>] [-o wide]` (`c` is the registered alias for `containers`). There is no `--project` filter. One call fetches every page, up to 10,000 items or 1,000 requests (`--limit N` caps the total; past the bound the CLI says so on stderr, and `--limit 100 --page 101` continues), so filter the result with `hoody c list -o json | jq '.containers[] | select(.project_id=="<pid>")'` (the CLI's `-o json` unwraps the API envelope, so the top level is the `data` body — `.containers`, not `.data.items`). `--name <text>` keeps the containers whose name contains the text (case-insensitive). `hoody containers get <name>` also accepts an exact, case-sensitive name that matches exactly one container; a 24-hex value is always read as an id, and an ambiguous name, or a lookup that hit the bound, is refused, so pass the id then.
 
 ### 7. Create container
 `hoody containers create --project <pid> --server-id <sid> --name box-1 --hoody-kit`. Flags `--project` and `--server-id` are required.
-Servers: `hoody servers list`; `hoody servers marketplace list`; `hoody servers rent <id>`.
+Servers: `hoody servers list`; `hoody servers marketplace list`. Rent with `hoody servers rent <id> --rental-days <days> --max-charge-cents <total-cents>`: pick a duration the server offers and read its first payment from `pricing.price_tiers[days].total_first_payment` (the ceiling covers any setup fee); only a zero-total rental may omit `--max-charge-cents`, otherwise the call answers `409 CHARGE_CONFIRMATION_REQUIRED`.
+After the container is `running`, give the user the clickable URLs of its main kits (each opens its web UI): `hoody open terminal --url -c <cid>`, then the same with `notifications` (slug `n` in the URL), `desktop`, `browser`, `files` and `agent`. `--url` only prints; without it the command opens the page. See § 24.
 
 ### 8. Lifecycle — get/wait, start/stop/restart
 ```bash
@@ -908,15 +947,15 @@ Status: green=running, yellow=stopped, cyan=starting, red=error.
 
 ## Exit codes
 
-`0`=success; `1`=general command/HTTP failure (4xx and 5xx both); `2`=2FA challenge pending (login saved nothing; finish with `hoody auth 2fa verify --temp-token …`), update failure, or exec-dynamic parse failure; `3`=authenticated but saving credentials failed (or logout could not clear them); `6`=TTY absent (interactive prompt requested but no TTY available); `7`=user abort; `8`=lock contention; `9`=lock validation error; `10`=profile not found; `11`=crypto/lock error; `12`=migration error; `14`=ephemeral-token policy; `130`=SIGINT; `143`=SIGTERM; `149`=SIGBREAK (Windows).
+`0`=success; `1`=general command/HTTP failure (4xx and 5xx both); `2`=2FA challenge pending (login saved nothing; finish with `hoody auth 2fa verify --temp-token …`), update failure, or exec-dynamic parse failure; `3`=authenticated but saving credentials failed (or logout could not clear them); `6`=TTY absent (interactive prompt requested but no TTY available); `7`=user abort, or multiple lock-password sources; `8`=lock contention; `9`=lock validation error; `10`=profile not found; `11`=crypto/lock error; `12`=migration error; `14`=ephemeral-token policy; `130`=SIGINT; `143`=SIGTERM; `149`=SIGBREAK (Windows).
 
 ## Login flow
 
-`POST /api/v1/users/auth/login`. Auto-login from the global `-u`/`--username` (or `HOODY_USERNAME`/config) sends a value containing `@` as `email` and anything else as `username`. The explicit `hoody login` sends exactly the flag you pass: `--username <name>` or `--email <addr>`. If the response carries a `temp_token` without a `token`, the auto-login flow throws `Auto-login cannot complete the 2FA challenge`; finish the flow explicitly with `hoody auth 2fa verify --temp-token <tt> --code <6-digit OTP or 10-char backup code>` (or call `POST /api/v1/users/auth/2fa/verify`). Token persisted; `hoody logout` clears.
+`hoody login --web` is browser sign-in (add `--no-browser` to print the link and code instead of opening a browser); it polls until the user approves and saves the session. The rest of this section is the password path: `POST /api/v1/users/auth/login`. Auto-login from the global `-u`/`--username` (or `HOODY_USERNAME`/config) sends a value containing `@` as `email` and anything else as `username`. The explicit `hoody login` sends exactly the flag you pass: `--username <name>` or `--email <addr>`. If the response carries a `temp_token` without a `token`, the auto-login flow throws `Auto-login cannot complete the 2FA challenge`; finish the flow explicitly with `hoody auth 2fa verify --temp-token <tt> --code <6-digit OTP or 10-char backup code>` (or call `POST /api/v1/users/auth/2fa/verify`). Token persisted; `hoody logout` clears.
 
 ## Local-only operations
 
-`hoody local` — `~/.hoody/`, no server calls. `defaults {set|show|unset} <k> [<v>]` pins `container`/`realm`/`output`/`noColor`/`quiet`. `lock {setup|status|change|reveal|remove|enforce|recover|doctor|purge}` (no `unlock` subcommand) uses `flock()`. `--non-interactive` accepts a password via `--local-password <pw>`, `HOODY_LOCAL_PASSWORD` env var, file/fd, or stdin (any of these is sufficient).
+`hoody local` — `~/.hoody/`, no server calls. `defaults set <key> <value>` pins `container`/`realm`/`output`/`noColor`/`quiet`, `defaults get` shows them and `defaults clear <key>` removes one. `lock {enable|status|password set|reveal|disable|ephemeral enable|ephemeral disable|recover|doctor|purge}` (no `unlock` subcommand) uses `flock()`. `--non-interactive` accepts exactly one password source: `--local-password <pw>`, `HOODY_LOCAL_PASSWORD` env var, file/fd, or stdin. Combining sources (an env var plus a flag included) is refused with exit code 7.
 
 ## Update
 
@@ -963,7 +1002,7 @@ Every namespace page is included below, in this order.
 
 ## Purpose
 
-The `agent` kit exposes the in-container AI agent as a typed namespace: create a chat session, send a prompt, stream the turn (tool calls, gates, output), then confirm/answer/cancel as the agent works. services — `sessions` (with `sessions.turns`), `definitions`, `models`, `providers`, `skills` (with `skills.hub`), `memory`, `github`, `workflows`, `tools`, `hooks`, `mcp`, `settings`, `loops`, `logs`, `tasks`, `stats`, `jobs`, `gates`, `changes`, `headless`, `todos`, `usage`, plus `platform` (token bootstrap) and `hoody agent logs export`.
+The `agent` kit exposes the in-container AI agent as a typed namespace: create a chat session, send a prompt, stream the turn (tool calls, gates, output), then confirm/answer/cancel as the agent works. services — `sessions` (with `sessions.turns`), `bots`, `definitions`, `models`, `providers`, `skills` (with `skills.hub`), `memory`, `github`, `workflows`, `tools`, `hooks`, `mcp`, `settings`, `loops`, `logs`, `tasks`, `stats`, `jobs`, `gates`, `changes`, `headless`, `todos`, `usage`, plus `platform` (token bootstrap) and `hoody agent logs export`.
 
 ## When to use
 
@@ -1007,19 +1046,22 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 3. Resolve gates mid-turn
 
-While a prompt streams, the agent may pause for human input: a confirmation gate → `hoody agent gates approve` / `hoody agent gates deny`; an open question → `hoody agent gates answer` (to get a helper model to DRAFT an answer for a parked question call `hoody agent gates suggest` — it does NOT answer the gate: it dispatches an async job (HTTP 202) whose suggestion arrives via `hoody agent jobs result get` and an `event.question_suggestion` on the session stream — only one assist may be in flight per session — and the real answer still goes through `hoody agent gates answer`; for unattended runs arm `hoody agent sessions autoreply set` (a self-driving auto-user loop that withholds write-class actions unless you opt in with `allow_writes: true`, either on the arm call or later via `hoody agent sessions autoreply writes set`)). The gate identity to echo is the ENVELOPE-level `gate {id, generation, type}` that the stream frame parking the gate carries beside `seq` / `incarnation` / `event`. The `event.confirm_request` payload also has a numeric `gate_id`, but that is the daemon's id space and is never the value to echo. Echoing a wrong/stale `gate_id`/`generation`, or answering when nothing is parked, returns 409 (`no_pending_gate` / `stale_gate` / `gate_already_answered` / `gate_type_mismatch`). On a session whose approval policy is `always` and whose approver lease was ever minted (`hoody agent sessions approver lease claim`, or the lease handed back by a create or attach that asserted `always`), EVERY decision — `hoody agent gates approve` / `hoody agent gates deny`, and the confirmed re-issue of a gated `hoody agent sessions tools run` — must carry the current lease capability in the `X-Hoody-Approver-Lease` request header. (CLI: `--x-hoody-approver-lease`.) Without it the decision is refused `409 approver_lease_required`, a capability that does not verify is `409 approver_lease_invalid`, and an expired one is `approver_lease_expired` until a holder acquires again. Interrupt a running turn with `hoody agent sessions turns cancel`. Tear the session down: `hoody agent sessions close` removes it from the live map; `hoody agent sessions delete --id <id>` always erases the persisted record too (the CLI has no keep-the-record form; re-attach with `hoody agent sessions create --attach <id>` works only after `sessions close`). To roll a session back without tearing it down, `hoody agent sessions trim` with `{ turn_idx }` truncates conversation history to (and including) that turn index.
+While a prompt streams, the agent may pause for human input: a confirmation gate → `hoody agent gates approve` / `hoody agent gates deny`; an open question → `hoody agent gates answer` (to get a helper model to DRAFT an answer for a parked question call `hoody agent gates suggest` — it does NOT answer the gate: it dispatches an async job (HTTP 202) whose suggestion arrives via `hoody agent jobs result get` and an `event.question_suggestion` on the session stream — only one assist may be in flight per session — and the real answer still goes through `hoody agent gates answer`; for unattended runs arm `hoody agent sessions autoreply set` (a self-driving auto-user loop that withholds write-class actions unless you opt in with `allow_writes: true`, either on the arm call or later via `hoody agent sessions autoreply writes set`)). The gate identity to echo is the ENVELOPE-level `gate {id, generation, type}` that the stream frame parking the gate carries beside `seq` / `incarnation` / `event`. The `event.confirm_request` payload also has a numeric `gate_id`, but that is the daemon's id space and is never the value to echo. The answer body for a question gate: the envelope's gate id as `gate_id` (optionally its `generation`), then **answer** (or **text**, used when **answer** is blank) for a single question; for a batch (`event.user_question` carrying `questions[]`), `answers` maps each `questions[].id` to its answer text, for example `{"gate_id":"<gate.id>","answers":{"<questions[].id>":"yes"}}`. A body with no `hoody agent gates answer`, no `text` and no `answers` is `400 bad_request` and the question stays parked. The `question_id` on `event.user_question` is a diagnostic number, not a body field. Echoing a wrong/stale `gate_id`/`generation`, or answering when nothing is parked, returns 409 (`no_pending_gate` / `stale_gate` / `gate_already_answered` / `gate_type_mismatch`). On a session whose approval policy is `always` and whose approver lease was ever minted (`hoody agent sessions approver lease claim`, or the lease handed back by a create or attach that asserted `always`), EVERY decision — `hoody agent gates approve` / `hoody agent gates deny`, and the confirmed re-issue of a gated `hoody agent sessions tools run` — must carry the current lease capability in the `X-Hoody-Approver-Lease` request header. (CLI: `--x-hoody-approver-lease`.) Without it the decision is refused `409 approver_lease_required`, a capability that does not verify is `409 approver_lease_invalid`, and an expired one is `approver_lease_expired` until a holder acquires again. Interrupt a running turn with `hoody agent sessions turns cancel`. Tear the session down: `hoody agent sessions close` removes it from the live map; `hoody agent sessions delete --id <id>` always erases the persisted record too (the CLI has no keep-the-record form; re-attach with `hoody agent sessions create --attach <id>` works only after `sessions close`). To roll a session back without tearing it down, `hoody agent sessions trim` with `{ turn_idx }` truncates conversation history to (and including) that turn index.
 
 ### 4. Pick a model / provider
 
 `hoody agent providers list` to list the catalogued providers (and `hoody agent providers auth status` to check that one is `ready`: a stored credential or passwordless access), `hoody agent models list` to list the catalogued models, then `hoody agent sessions model set` to bind a model to a session before prompting — SYNCHRONOUS: the response reports the actual outcome ({status:'ok', model, persisted} on success; structured 409/422 errors while busy or for an unconstructable spec). A successful switch is live for the session at once and then TRIES to persist into the chat agent's frontmatter (a global repin for future sessions of that agent); that save is best-effort, so only `persisted: true` confirms the repin — `persisted: false` means the session switched but future sessions keep the old pin. PRECEDENCE: the agent's frontmatter `model` is the DEFAULT for a session that does not request one; an explicit model on create (`hoody agent sessions create --model <spec>`), or this live `hoody agent sessions model set`, OVERRIDES that pin for the session — create is session-scoped and does not rewrite the agent, this live switch repins globally. The shipped default agent ships pinned, so its pin is the out-of-the-box default until an explicit model is chosen (an explicit model together with `attach` or `backend: "acp"` is rejected 400 — a resumed/delegated session cannot take an explicit model). Each session has further per-session knobs (all session-scoped PATCHes that apply live): `hoody agent sessions effort set` (`{ effort }` — `low|medium|high|xhigh|max`, or `""` for the model default), `hoody agent sessions verbosity set` (`{ level }` — `normal|concise|terse|minimal`), `hoody agent sessions env set` (`{ enabled }` — toggle whether the `HOODY_*` shell-env contract is injected for the bash tool), and `hoody agent sessions agent set` (`{ agent }` — bind a named profile from `agents`).
 
+To use a model from an endpoint that is not in the catalogue (anything that speaks the OpenAI Chat Completions, OpenAI Responses or Anthropic Messages API from a public HTTPS address, such as a model server you run yourself or a company gateway), add it as a **custom provider** first. `hoody agent providers create` takes `--id`, `--endpoint` (the base URL) and one `--models model=<name>` per model, then `hoody agent providers keys set --id <id> --api-key <key>` stores its key (a key never goes in the create command), and its models are `<model_prefix>/<model>` wherever a model is chosen: `hoody agent sessions create --model <spec>`. `hoody agent providers update` changes it and `hoody agent providers delete` removes it with its stored key. The change applies at once, with no restart: new sessions, model switches and Jev see it, and an open session on one of its models picks it up before its next turn. `id` is 1-40 lowercase letters, digits or inner hyphens and cannot change later; `model_prefix` is the `id` unless given, and must equal it; `wire_format` is `chat_completions` (default), `responses` or `messages`, and `auth_scheme` follows it (`bearer`, or `x-api-key` for `messages`). Built-in providers refuse update and delete (`409 provider_builtin`), as does a provider defined in a project's providers file (`409 provider_not_managed`). See Examples for the full run.
+
 ### 5. Skills, memory, todos, workflows, agents
 
 - **Skills** — `hoody agent skills list` (each carries an enabled + trust state), `hoody agent skills hub install` / `hoody agent skills hub search` / `hoody agent skills hub preview` to find and install from the hub. A newly installed/imported skill must be trusted before its code runs — `hoody agent skills trust` is the gate (identify the skill by `root_dir`+`rel_dir`, set the `trusted` flag); `hoody agent skills enable` / `hoody agent skills disable` only enable or disable by `name` (set the `disabled` flag). Both `hoody agent skills trust` (which grants arbitrary code-execution trust) and `hoody agent skills hub install` (which writes arbitrary skill code to disk) take effect immediately over this namespace: there is no confirmation step, and no privilege beyond ordinary access to the kit is required, so an autonomous caller can silently trust and install skill code. Add your own confirmation before exposing these to one.
-- **Memory** — `hoody agent memory search` for hybrid recall (BM25 + vector + graph) and `hoody agent memory items list` to enumerate by `project`; `hoody agent memory items create` / `hoody agent memory items update` / `hoody agent memory items delete` to write; `hoody agent memory graph get` for the relation graph (or `hoody agent memory items get` to read one record by `id`). `hoody agent memory enable` / `hoody agent memory disable` are the memory capture/privacy switch — they persist `features.memory` and flip the live store — and `hoody agent memory flush` forces the store's durability barrier; none of the three is admin-gated. Memory is project-scoped (pass `project`); the reads (`hoody agent memory search` / `hoody agent memory items list` / `hoody agent memory graph get` / `hoody agent memory projects list`) and `hoody agent memory consolidate` are active-realm-only, and so are the item reads and writes (`hoody agent memory items get` / `hoody agent memory items create` / `hoody agent memory items update` / `hoody agent memory items delete`): send no per-request realm selector, since every one of them answers `400 realm_scope_unsupported` to one. `hoody agent memory search` / `hoody agent memory graph get` also return `503 store_unavailable` while the store is still warming — retry rather than treating it as an empty result.
+- **Memory** — `hoody agent memory search` for hybrid recall (BM25 + vector + graph) and `hoody agent memory items list` to enumerate by `project`; `hoody agent memory items create` / `hoody agent memory items update` / `hoody agent memory items delete` to write; `hoody agent memory graph get` for the relation graph (or `hoody agent memory items get` to read one record by `id`). `hoody agent memory enable` / `hoody agent memory disable` are the memory capture/privacy switch — they persist `features.memory` and flip the live store — and `hoody agent memory flush` forces the store's durability barrier; none of the three is admin-gated. Memory is project-scoped (pass `project`). Memory reads and item writes accept `X-Hoody-Realm` or `?realm=` to select `global` or a realm id (in the SDK, pass `realm` in the method's options); omitted, the agent's current realm is used. A realm this login does not serve returns `404 not_found`; an agent pinned to one realm refuses another with `400 realm_scope_unsupported`. If the selected realm's memory is not connected, the request returns `503 service_unavailable` with `Retry-After` and does not connect it. `hoody agent memory consolidate` remains human-only; see Common errors. `hoody agent memory search` / `hoody agent memory graph get` also return `503 store_unavailable` while the store is still warming — retry rather than treating it as an empty result.
 - **Todos** — `hoody agent todos list` / `hoody agent todos create` to file; then `hoody agent todos triage` (LLM inbox pass), `hoody agent todos claim` / `hoody agent todos release`, `hoody agent todos start` (dispatch a background orchestrator — returns `{job_id, session_id}`), `hoody agent todos cancel` to abort an in-flight run, and `hoody agent todos proposals approve` / `hoody agent todos proposals deny` to resolve a proposed run — approve is NOT inert: it spawns a background worker session equivalent to `hoody agent todos start` (a J-class autonomous run that spends model budget), while `hoody agent todos proposals deny` spawns nothing — plus `hoody agent todos snooze` / `hoody agent todos archive`. To move a todo between states (`inbox`, `ready`, `blocked`, `review`, `done`, `dropped`) or edit its fields, `hoody agent todos update` applies a CAS-guarded patch / `state` transition (`in_progress` is entered only by `hoody agent todos claim` / `hoody agent todos start`; `hoody agent todos update` refuses it, and an unknown state is rejected) — read the todo's OWN `revision` with `hoody agent todos get` and pass it back (`hoody agent todos revision get` is a store-wide change cursor, NOT the CAS token; a stale value → `409 todo_conflict`); a stale revision is rejected (409). `hoody agent todos archive` is not terminal — `hoody agent todos archived purge` permanently and irreversibly deletes archived todos of the selected realm that were archived more than 90 days ago (and those with a missing or invalid archive time); no confirmation gate, treat as destructive. Mind the comment split: `hoody agent todos comments create` (`/messages`, plural) only appends a comment, whereas `hoody agent todos messages send` (`/message`, singular) ALSO kicks an orchestrator turn — a budget-spending LLM run that returns `{job_id}` — so use the plural form for a plain note. The `job_id` returned by `hoody agent todos start`, `hoody agent todos messages send` and `hoody agent todos triage` completes as `succeeded` the moment the dispatch is accepted; it records the dispatch only, not the worker's outcome. Follow the todo itself (`hoody agent todos get`, its state and timeline) rather than polling that job. Note `hoody agent todos start` / `hoody agent todos triage` / `hoody agent todos proposals approve` are J-class autonomous runs with NO confirmation gate on the RPC (reaching the RPC is itself treated as the human approval; that denial lives only on the model-facing `run_todo` *tool*), so calling them from automation silently dispatches a real LLM run — gate them in your own caller.
 - **Workflows** — `hoody agent workflows list` / `hoody agent workflows get` / `hoody agent workflows set` / `hoody agent workflows delete` / `hoody agent workflows hidden set` manage saved definitions; `hoody agent sessions workflows start` dispatches one onto a live session and returns a JOB, not a run (optionally seed the run with a `{ prompt }` body — input text fed to the workflow) — poll `hoody agent jobs get` until its `run_id` populates (null during the brief dispatch window), then track via `hoody agent workflows runs list` / `hoody agent workflows runs get` and stop with `hoody agent workflows runs cancel`; feed a running workflow with `hoody agent workflows messages send` (`{ text }`). Run events flow on the owning session's stream, not a per-run bus.
-- **Agent profiles** — `hoody agent definitions list` to enumerate named profiles; `hoody agent definitions create` / `hoody agent definitions copy` / `hoody agent definitions rename` / `hoody agent definitions delete`; `hoody agent definitions source get` → edit → `hoody agent definitions source set` (pass the `revision` from `hoody agent definitions source get` as `hoody agent definitions source set --expected-revision <rev>`: a stale one is refused `409 revision_conflict` and nothing is written; without it the save is unconditional); `hoody agent definitions model set` / `hoody agent definitions tools set` / `hoody agent definitions tools toggle` / `hoody agent definitions turns limit set` / `hoody agent definitions reset`. To make a session use a profile, `hoody agent sessions agent set` (`{ agent }`) — that selects, it does NOT edit the profile. Two daemon guard rails: `hoody agent definitions delete` refuses the configured default chat agent, and a shipped-default profile that has no removable override of its own (`is_error:true` — use `hoody agent definitions reset` or `hoody agent definitions source set` instead); in a realm that holds its own saved override of a shipped profile, deleting it removes the override and the shipped version shows through again, and `hoody agent definitions reset` refuses a profile that has no shipped default (`is_error:true`).
+- **Bots** — `hoody agent bots create` opens a long-lived assistant that delegates work to sessions on containers; post to it with `hoody agent bots messages send` (HTTP 202; a busy Bot queues the message) rather than prompting its session, and see Examples for the full create, message, follow, forget, delete run. Replace its limits with `hoody agent bots guardrails set --guardrails <guardrails>` (empty clears them): the Bot reads them before its next message and delegates opened afterwards receive them in their first prompt, while delegates already open keep theirs. `allowed_containers` and `allowed_agents` restrict the delegates it opens next (empty means any) and `yolo: true` (default false) asks delegates to approve tool calls automatically. Check `yolo_unapplied` in `hoody agent bots get`: `pending` means a delegate has not confirmed the change yet and it is sent again; `refused` means that delegate's approval policy does not allow YOLO, so it keeps asking for approvals and the change is not sent again until `yolo` changes. `hoody agent bots stream` and `hoody agent bots log get` carry finished rows only; for live reply text, thinking and tool calls follow the Bot's `session_id` (from `hoody agent bots get`, it changes after `hoody agent bots reset`) with `hoody agent sessions stream`, and do not answer questions on that session whose `frame_request.kind` starts with `bot.`, because the Bot runtime answers them. To stop only the Bot's running turn use `hoody agent sessions turns cancel` on its `session_id`.
+- **Agent profiles** — `hoody agent definitions list` to enumerate named profiles; `hoody agent definitions create` / `hoody agent definitions copy` / `hoody agent definitions rename` / `hoody agent definitions delete`; `hoody agent definitions source get` → edit → `hoody agent definitions source set` (pass the `revision` from `hoody agent definitions source get` as `hoody agent definitions source set --expected-revision <rev>`: a stale one is refused `409 revision_conflict` and nothing is written; without it the save is unconditional); `hoody agent definitions model set` / `hoody agent definitions tools set` / `hoody agent definitions tools toggle` / `hoody agent definitions turns limit set` / `hoody agent definitions reset`. The product-owned `bot` profile (the one a Bot runs) allows only a model pin through `hoody agent definitions model set` (an empty model clears it); `hoody agent definitions source set`, `hoody agent definitions tools set`, `hoody agent definitions tools toggle` and `hoody agent definitions turns limit set` are refused for it with `400 bad_request`, as are creating over it and renaming it, and a Bot's own `model` overrides the pin. To make a session use a profile, `hoody agent sessions agent set` (`{ agent }`) — that selects, it does NOT edit the profile. Two daemon guard rails: `hoody agent definitions delete` refuses the configured default chat agent, and a shipped-default profile that has no removable override of its own (`is_error:true` — use `hoody agent definitions reset` or `hoody agent definitions source set` instead); in a realm that holds its own saved override of a shipped profile, deleting it removes the override and the shipped version shows through again, and `hoody agent definitions reset` refuses a profile that has no shipped default (`is_error:true`).
 
 ### 6. Fire-and-observe, recurring prompts, and re-attach
 
@@ -1037,17 +1079,19 @@ Reads first: `hoody agent mcp list` (`{ session_id }`) returns the EFFECTIVE mer
 
 ## Quirks & gotchas
 
-- The bare `hoody agent` verb is a **TUI launcher**, separate from this HTTP namespace; they coexist — the launcher opens the in-container Agent TUI, the namespace is the typed control surface.
-- The global `--realm` never scopes an agent request. It only picks the platform API host that resolves `-c` to the container (`--realm global` is the base host), and no realm reaches the agent from it. The agent's own realm scope is the per-request `--x-hoody-realm` ("global" or a 24-hex id), which a command offers only when its route has a realm dimension; an active-realm-only route refuses a realm with 400 `realm_scope_unsupported`.
-- Source of truth is the agent kit's own OpenAPI document, served at `GET /api/v1/agent/openapi.{json,yaml}`; every route lives under the single `/api/v1/agent` prefix. The kit checks no credential of its own and asks for no bearer header; access is decided by the container's proxy permission policy. Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the kit URL gets 403 `forbidden`, also from inside the container, so call the kit URL.
+- The bare `hoody agent` verb is a **TUI launcher**, separate from this HTTP namespace; they coexist — the launcher opens the in-container Agent TUI, the namespace is the typed control surface. In that TUI, Ctrl+V pastes from the clipboard of the machine the CLI runs on, and Shift+click opens a link (the TUI tracks the mouse).
+- On the realm-scoped agent commands (Bots, sessions, gates, loops, todos, workflow runs, changes and stop calls), an explicit `--realm global` or `--realm <24-hex-id>` also scopes the agent request, through `X-Hoody-Realm`; `--realm all` lists every served realm on the Bots, sessions, gates, loops, todos and workflow-runs list commands. A `--realm` that disagrees with the command's own `--x-hoody-realm` is refused before anything is sent, and a saved or environment realm default is not forwarded this way. Everywhere else the global `--realm` only picks the platform API host that resolves `-c` to the container (`--realm global` is the base host), and a route that serves only the active realm refuses a per-request realm with 400 `realm_scope_unsupported`.
+- Source of truth is the agent kit's own OpenAPI document, served at `GET /api/v1/agent/openapi.{json,yaml}`; every route lives under the single `/api/v1/agent` prefix. The kit checks no credential of its own and asks for no bearer header; access is decided by the container's proxy permission policy. Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the kit URL gets 403 `forbidden`, so call the kit URL.
 - The proxy service slug is `agent` and the kit URL host carries the index segment (`-agent-{index}`). The CLI resolves it from `--container` / `-c`; you do not build it by hand.
 - `hoody agent sessions turns run` waits for the turn to end (or returns `{pending_gate}` the moment a turn parks on a confirm/question), but at most until the server deadline (290 seconds by default): a turn still running then answers `503 service_unavailable` with `details.turn_running: true` and keeps running; prefer streamed prompting for anything non-trivial so you can observe progress and resolve gates as they arrive. (Stream the turn with `hoody agent prompt "<task>" --session <id>` (`-c` picks the container, not the session); it reads the daemon's SSE for you. `hoody agent sessions turns start --id <id> --text "<task>"` is the raw fire-and-observe form: it dispatches the turn and prints the 202 `{job_id, session_id, turn_id}`. Add `--stream` to follow the session event stream instead; that stream does not end with the turn, so stop at the `agent_done` carrying your `turn_id`. `hoody agent sessions turns run` is the blocking form.) For non-interactive turns where you cannot resolve gates by hand, enable the `auto_approve` gate policy to answer confirm gates (off by default). On the blocking form (`hoody agent sessions turns run`, route `prompt:sync`) it stays on for the dispatched turn even after the request ends. On the streamed form (route `prompt:stream`) it is tied to the connection, not the turn: disconnecting before the turn ends stops it, and while the stream stays open it also answers confirm gates of LATER turns on the same session, so close the stream at your turn's `agent_done`. With either form, an ordinary confirm gate is approved, a gate raised by a tool-call rule is DENIED, and a session whose approval policy is `always` refuses the policy with `409 approval_policy_active` before the turn starts. CLI: `hoody agent prompt -y` (`--yes`), or `hoody agent sessions turns run --policy auto_approve` for the blocking form; the bare TUI launcher has no such flag. This only answers **confirm** gates, never questions.
-- Every prompt/gate/cancel call is **session-scoped** — you must hold a session id from `hoody agent sessions create` first; there is no implicit default session. Hook writes are session-scoped too (the guarded writes — `hoody agent hooks upsert` / `hoody agent hooks delete` / `hoody agent hooks enable` / `hoody agent hooks disable` / `hoody agent hooks enable` / `hoody agent hooks disable` — plus `hoody agent hooks intents create`, and the side-effecting `hoody agent hooks run` / `hoody agent hooks trust`, all require a live `session_id` — `hoody agent hooks trust` clears the per-session hook-trust prompt (the execution-trust probe `hoody agent hooks list` reports), the gate that must be acknowledged before a saved hook command is allowed to fire, mirroring `hoody agent skills trust` for skills; `hoody agent hooks reload` accepts one only to also return the reloaded summary) AND nonce-guarded: call `hoody agent hooks intents create` (`{ session_id, op, scope }`, op ∈ upsert|delete|toggle|set_disabled) to mint a single-use nonce, then pass that `nonce` on the matching `hoody agent hooks upsert` / `hoody agent hooks delete` / `hoody agent hooks enable` / `hoody agent hooks disable` / `hoody agent hooks enable` / `hoody agent hooks disable` — the nonce binds to that session+op+scope tuple and the write fails closed without it. Note hooks are an arbitrary-command surface: `hoody agent hooks upsert` persists a command that fires on lifecycle events, and `hoody agent hooks run` on a command hook runs a command at once: running saved hooks goes through the session's hook-trust gate, while a run that supplies an unsaved inline `command` runs it without that saved-hook trust check. Every command-hook run is refused (`approval_policy_unsatisfiable`) while the session's approval policy is `always`, and `hoody agent hooks test` of a shipped hook only evaluates its trigger without running anything. These calls carry no confirmation step of their own — the same access that authorizes any agent-kit call authorizes these too, with nothing extra — so add your own confirmation before exposing this surface to an autonomous caller.
-- **`env` and `headers` VALUES are never returned by the MCP surface; every other field comes back verbatim.** `hoody agent mcp list` reports `env_keys` / `header_keys` — key NAMES only — because a redacted value invites a client to write the placeholder back as the real secret; a write whose body carries the redaction placeholder for a credential is REFUSED rather than stored. Other fields, including `url`, `command` and `args`, are echoed verbatim, so a credential embedded in one of them (a token in a URL, a key on a command line) is NOT redacted: keep secrets in `env` / `headers`, and treat the rest of a listing as sensitive. To change a secret you must supply its real value; to leave one alone, omit the field — `hoody agent mcp upsert` merges FIELD BY FIELD over the existing entry of the same name, so omitted fields keep their stored value (including fields this build does not model), and `hoody agent mcp enable` / `hoody agent mcp disable` flip only the `enabled` flag so credentials and options survive a disable. Writes apply to live sessions before the response returns: a deleted, disabled, or re-pointed server is REVOKED in every live session first (a stdio child is reaped when its last holder releases), so a caller mid-turn cannot still reach it. Import is WHOLE-BATCH — one bad entry aborts everything — it understands the hoody (`mcp_servers` list), Claude/Cursor (`mcpServers` map) and VS Code (`servers` map) dialects, and REFUSES a document carrying more than one of them rather than guessing.
+- **The agent's shell has the container user's own sudo.** The agent runs as the container's `user`, and its bash tool can use sudo exactly as that user can without a password: with the default passwordless sudo it can `sudo apt-get install`, `sudo systemctl enable --now` a unit and so on. When `user` has no passwordless sudo (the drop-in removed, a password required), the agent's shell has none either, because there is no terminal to type a password into; a policy that allows only some commands without a password allows the same commands to the agent (with sudo's default `listpw`). While the agent's shell can sudo, a session's `dir_scope` (`home`) no longer confines its bash commands: the file tools still keep to the scope, but the shell can reach the whole container, like the terminal kit. To take sudo away from the agent, take passwordless sudo away from `user` (see container-tools); the agent keeps everything else `user` has, such as Docker through the `docker` group.
+- Every prompt/gate/cancel call is **session-scoped** — you must hold a session id from `hoody agent sessions create` first; there is no implicit default session. Hook writes are session-scoped too (the guarded writes — `hoody agent hooks upsert` / `hoody agent hooks delete` / `hoody agent hooks enable` / `hoody agent hooks disable` / `hoody agent hooks enable` / `hoody agent hooks disable` — plus `hoody agent hooks intents create`, and the side-effecting `hoody agent hooks run` / `hoody agent hooks trust`, all require a live `session_id` — `hoody agent hooks trust` clears the per-session hook-trust prompt (the execution-trust probe `hoody agent hooks list` reports), the gate that must be acknowledged before a saved hook command is allowed to fire, mirroring `hoody agent skills trust` for skills; `hoody agent hooks reload` accepts one only to also return the reloaded summary) AND nonce-guarded: call `hoody agent hooks intents create` (`{ session_id, op, scope }`, op ∈ upsert|delete|toggle|set_disabled|rules_set; `rules_set` is for `hoody agent hooks rules set` and needs its own matching nonce) to mint a single-use nonce, then pass that `nonce` on the matching `hoody agent hooks upsert` / `hoody agent hooks delete` / `hoody agent hooks enable` / `hoody agent hooks disable` / `hoody agent hooks enable` / `hoody agent hooks disable` — the nonce binds to that session+op+scope tuple and the write fails closed without it. Note hooks are an arbitrary-command surface: `hoody agent hooks upsert` persists a command that fires on lifecycle events, and `hoody agent hooks run` on a command hook runs a command at once: running saved hooks goes through the session's hook-trust gate, while a run that supplies an unsaved inline `command` runs it without that saved-hook trust check. Every command-hook run is refused (`approval_policy_unsatisfiable`) while the session's approval policy is `always`, and `hoody agent hooks test` of a shipped hook only evaluates its trigger without running anything. These calls carry no confirmation step of their own — the same access that authorizes any agent-kit call authorizes these too, with nothing extra — so add your own confirmation before exposing this surface to an autonomous caller.
+- **`env` and `headers` VALUES are never returned by the MCP surface; every other field comes back verbatim.** `hoody agent mcp list` reports `env_keys` / `header_keys` — key NAMES only — because a redacted value invites a client to write the placeholder back as the real secret; a write whose body carries the redaction placeholder for a credential is REFUSED rather than stored. Other fields, including `url`, `command` and `args`, are echoed verbatim, so a credential embedded in one of them (a token in a URL, a key on a command line) is NOT redacted: keep secrets in `env` / `headers`, and treat the rest of a listing as sensitive. To change a secret you must supply its real value; to leave one alone, omit the field — `hoody agent mcp upsert` merges FIELD BY FIELD over the existing entry of the same name, so omitted fields keep their stored value (including fields this build does not model), and `env` / `headers` merge per key (a key set to `null` is deleted, `{}` clears the map). A genuine re-point (a changed `type`, `command`, `args` or `url`) clears `env` and `headers` unless the same request re-supplies them, so send the credentials the new target needs in that write; restating the identity you read back is not a re-point. `hoody agent mcp enable` / `hoody agent mcp disable` flip only the `enabled` flag so credentials and options survive a disable. Writes apply to live sessions before the response returns: a deleted, disabled, or re-pointed server is REVOKED in every live session first (a stdio child is reaped when its last holder releases), so a caller mid-turn cannot still reach it. Import is WHOLE-BATCH — one bad entry aborts everything — it understands the hoody (`mcp_servers` list), Claude/Cursor (`mcpServers` map) and VS Code (`servers` map) dialects, and REFUSES a document carrying more than one of them rather than guessing.
 - `POST /api/v1/agent/hoody/auth/bootstrap` (HTTP only; no CLI command) (token bootstrap) is enabled by default; a deployment can turn it off, and then every call answers 404. Browser clients may call it; the body must be exactly `application/json`. Where the deployment requires a capability, the body must carry the matching `capability` (a mismatch is also 404). The token must belong to this box's owner and carry the full login grant (otherwise 403). On a box with no credential it installs (201 `installed`) and adopts any local sessions or todos that have no owner; on a box logged in to the SAME account it replaces the stored token whether or not it expired (200 `renewed`). A token for a different account is refused `409 agent_login_conflict`, and a credential supplied through the environment is never replaced (`409 credential_present`).
 
 ## Common errors
 
+- A model rate limit can end the turn: `event.error.code` is `quota_wait_too_long` or `rate_limit`, and `agent_done.error_code` carries the same code. For `quota_wait_too_long`, read `retry_after_secs` from the error payload, wait that many seconds, then send the message again: the turn ended instead of waiting. `retry_after_secs` is omitted on other errors, so do not assume it exists for `rate_limit`.
 - A gate or question left unresolved stalls the turn — a streamed prompt that emitted an `event.confirm_request` (confirm gate) or `event.user_question` (question gate) will not complete until you answer it: `hoody agent gates approve` / `hoody agent gates deny` for a confirm, `hoody agent gates answer` for a question. For unattended runs, arm `hoody agent sessions autoreply set` (a self-driving auto-user loop), or pass `policy: "auto_approve"` on the prompt — but `auto_approve` only answers **confirm** gates (approving ordinary ones, denying rule-raised ones; refused with `409 approval_policy_active` on an `always` session), never questions; a parked question still stalls until `hoody agent gates answer` (or the auto-reply loop) answers it.
 - `hoody agent tasks list` and `hoody agent tasks transcript get` return their data INLINE and need no live session and no attached stream. `hoody agent tasks list` is the UNION of the live task registry and the session's PERSISTED task store (keyed by task id, live winning) — the live registry evicts completed tasks when a new one spawns, so a finished task can leave memory while its transcript is still durable, and a live-only list would hide it. `hoody agent tasks transcript get` reads a task that reached a terminal state even for a closed session and after a daemon restart; a task still RUNNING when the daemon died is NOT recoverable and reads 404. Its `source` field is `"live"` or `"store"`, and `complete` reports whether the response reflects a terminal projection DURABLY COMMITTED to that store. `after_seq` is EXCLUSIVE (entries strictly after it, plus any still-open entry); OMITTING it returns the whole transcript, which is distinct from `after_seq=0`. `hoody agent tasks cancel` / `hoody agent sessions tasks cancel` still act on a LIVE session and stop background tasks mid-turn (server-layer; tasks survive `hoody agent sessions turns cancel` but are not restartable).
 - `hoody agent memory consolidate` (POST /memory/consolidate) is **human-only and ALWAYS fails over this namespace** — it has no successful HTTP/SDK/CLI path: a call that passes the admin check returns `403 human_only`, and the admin check can refuse it first with `403 admin_unauthorized`. It can only be triggered from an interactive human session. Do not call it programmatically.
@@ -1056,15 +1100,87 @@ Reads first: `hoody agent mcp list` (`{ session_id }`) returns the EFFECTIVE mer
 - `hoody agent workflows delete` removes **user** workflows and saved customizations. A built-in/**system** workflow that you never customized is refused (`is_error:true`) and re-seeds on every boot; `hoody agent workflows hidden set` is the only way to remove it from view. Deleting your saved customization of a system workflow succeeds and brings the shipped version back: at once in a scoped realm, at the next daemon restart otherwise.
 - Empty values on agent-profile edits mean *inherit / unrestrict*, not *clear to nothing*: `hoody agent definitions model set` with `model: ""` removes the model line (falls back to the default model), and `hoody agent definitions tools set` with `tools: []` removes the allow-list line, which means **all tools are allowed** (NOT zero). Pass a non-empty `tools` array to genuinely restrict.
 - Prompting with no usable model/provider configured fails the turn. `hoody agent providers list` lists every catalogued provider whether or not it is set up, so check the one you intend to use with `hoody agent providers auth status` before you prompt (blocking or streamed): `ready` is true for a stored API key, a stored OAuth login, or a passwordless provider (`no_auth_ready`).
+- A custom provider's `base_url` must be an `https` URL with no user name, password, query or fragment, at a public address; one that is not (an internal address, a name that only resolves inside a network, or a name that resolves to an internal address when a request is made) is refused `422 provider_invalid` with `details.field` `base_url`. Create is not idempotent by itself: repeating a create that went through answers `409 provider_exists`, so send an `Idempotency-Key` to retry safely (the same key with another body is `422 idempotency_key_reused`). Deleting a provider leaves an open session on one of its models unconfigured: its next prompt fails with `session_unconfigured` until you switch it to another model, and agents and Jev settings that name one of its models fail the same way until changed.
 - Calling prompt/gate/cancel against a session whose live connection was torn down (`hoody agent sessions close`) returns not-found. If the record survives, re-attach with `hoody agent sessions create --attach <id>`; otherwise start a fresh session (the same create call without `attach`). After a *hard* delete (`hoody agent sessions delete`, which always erases the record) the record is gone and only a fresh session works.
 
 ## Related namespaces
 
 `terminal`, `exec`, `files`, `notes`, `api`.
 
+## Examples
+
+A **Bot** here is the agent's long-lived assistant (`hoody agent bots`). It opens delegate sessions on containers, follows them and reports back. It is not the chat-app `bot` namespace. Set `P`, `C`, `N` from `hoody containers get` first. The Bot's id below is `release-bot`; omit `id` on create to have one generated, and take it from the response.
+
+### 1. Create a Bot, message it, follow its replies, forget, delete
+
+**Goal:** run a Bot end to end. `guardrails` are limits on the work (they apply to the Bot and every delegate it opens), not instructions. A Bot lives in one realm: pass `realm` (`X-Hoody-Realm`) to pick one, otherwise the agent's current realm is used. The Bot's own session opens when the first message is posted, so `session_id` is empty until then.
+
+**Step 1 — create.** Send `id` to make a retry safe: a second create with the same id answers `409 bot_exists`.
+
+```bash
+hoody agent bots create --id release-bot --name 'Release bot' \
+  --role 'Ships the weekly release.' --guardrails 'Never push to main.'
+```
+
+**Step 2 — message it.** The answer is `202` with `{message_id, state}`: `posted` (with `turn_id`) when the Bot is free, `queued` while it is busy, and the message goes out when its turn ends. Add an `Idempotency-Key` to retry safely.
+
+```bash
+hoody agent bots messages send --id release-bot --text 'Check the staging build and tell me if it is green.'
+```
+
+**Step 3 — follow the replies.** The stream carries finished log rows only: first a `state` frame (the Bot), then `row` frames, plus `lagged`, `archived` and `end`. The reply is one `bot` row written when its turn ends, and a turn with no reply text writes none. Resume with `since` (or `Last-Event-ID`). For live text, thinking and tool calls, follow the Bot's own `session_id` with `hoody agent sessions stream` instead. To read without streaming, page the log: pass `next_since` back as `since` while `has_more` is true.
+
+```bash
+hoody agent bots stream --id release-bot
+hoody agent bots log get --id release-bot --since 0
+```
+
+**Step 4 — forget or reset.** `hoody agent bots forget` moves the log to the archive and clears the conversation; the Bot keeps its settings and delegates. `reset` also archives the log but starts a new session with the Bot's current model, which is how a changed `model` takes effect. The old session is not closed. Neither deletes the archive; `hoody agent bots archive purge` does.
+
+```bash
+hoody agent bots forget --id release-bot --yes
+hoody agent bots reset --id release-bot --yes
+```
+
+**Step 5 — delete.** Removes the Bot with its log and archive, after a best-effort stop of its working delegates. Its session and delegates are not closed: they stay listed under the sessions and a person can continue them. There is no stop route for the Bot itself: to stop its running turn, cancel its `session_id` with `hoody agent sessions turns cancel`.
+
+```bash
+hoody agent bots delete --id release-bot --yes
+```
+
+### 2. Add a custom provider, store its key, use its model
+
+**Goal:** connect an OpenAI-compatible endpoint and run a session on one of its models. The provider id below is `acme`; its model is selected as `acme/llama-3.3-70b`.
+
+**Step 1 — create it.** `id`, `base_url` and `models` are required. Add an `Idempotency-Key` so a retry answers with the provider the first try created instead of `409 provider_exists`. The reply carries the provider, with each model's `spec`.
+
+```bash
+hoody agent providers create --id acme --endpoint https://api.acme.example/v1 \
+  --models model=llama-3.3-70b,context_window=131072
+```
+
+**Step 2 — store its key.** The key has its own route and is never returned.
+
+```bash
+hoody agent providers keys set --id acme --api-key "$KEY"
+```
+
+**Step 3 — use its model.** Start a session on it; `hoody agent sessions model set` switches an open one and `hoody agent definitions model set` pins an agent profile.
+
+```bash
+hoody agent sessions create --model acme/llama-3.3-70b
+```
+
+**Step 4 — change or remove it.** Update names only what changes (`models` and `headers` replace the current list and map; `id` and `model_prefix` are fixed). Delete asks for confirmation on the CLI and removes the stored key too.
+
+```bash
+hoody agent providers update --id acme --endpoint https://eu.api.acme.example/v1
+hoody agent providers delete --id acme --yes
+```
+
 ## Reference
 
-### `hoody agent` (251) — AI agent — sessions, prompting, models, skills, memory, todos, workflows
+### `hoody agent` (273) — AI agent — sessions, prompting, models, skills, memory, todos, workflows
 
 | Command | Aliases | Category | Summary | SDK Link | Example |
 |---------|---------|----------|---------|----------|---------|
@@ -1073,6 +1189,21 @@ Reads first: `hoody agent mcp list` (`{ session_id }`) returns the EFFECTIVE mer
 | `hoody agent acp model set` |  | write | Set the delegated ACP agent's model | `agent.acp.setModel` | `hoody agent acp model set --agent my-agent --model openai/gpt-5.4-nano` |
 | `hoody agent acp secrets set` |  | write | Store an ACP per-agent secret value | `agent.acp.setSecret` | `hoody agent acp secrets set --agent my-agent --key <key> --value hello` |
 | `hoody agent acp status` |  | read | Get BYOA ACP backend status | `agent.acp.getStatus` | `hoody agent acp status` |
+| `hoody agent bots archive get` |  | read | Read a Bot's archive | `agent.bots.getArchive` | `hoody agent bots archive get --id abc-123 --since 1750000000000 --limit 10` |
+| `hoody agent bots archive purge` |  | destructive | Delete a Bot's archive | `agent.bots.purgeArchive` | `hoody agent bots archive purge --id abc-123 -y` |
+| `hoody agent bots create` |  | write | Create a Bot | `agent.bots.create` | `hoody agent bots create --name my-resource --role admin` |
+| `hoody agent bots delegates list` |  | read | List the sessions a Bot opened | `agent.bots.listDelegates` | `hoody agent bots delegates list --id abc-123 --state open --page 10` |
+| `hoody agent bots delegates stop` |  | write | Stop one of a Bot's delegates now (--close also closes its session) | `agent.bots.stopDelegate` | `hoody agent bots delegates stop --id abc-123 --sid <sid> --close` |
+| `hoody agent bots delete` |  | destructive | Delete a Bot with its log and archive | `agent.bots.delete` | `hoody agent bots delete --id abc-123 -y` |
+| `hoody agent bots forget` |  | destructive | Make a Bot forget its conversation | `agent.bots.forget` | `hoody agent bots forget --id abc-123 -y` |
+| `hoody agent bots get` |  | read | Get a Bot: settings, pending gate, open delegates | `agent.bots.get` | `hoody agent bots get --id abc-123` |
+| `hoody agent bots guardrails set` |  | write | Replace a Bot's guardrails | `agent.bots.setGuardrails` | `hoody agent bots guardrails set --id abc-123 --guardrails <guardrails>` |
+| `hoody agent bots list` |  | read | List the Bots | `agent.bots.list` | `hoody agent bots list --page 10 --limit 10` |
+| `hoody agent bots log get` |  | read | Read a Bot's log | `agent.bots.getLog` | `hoody agent bots log get --id abc-123 --since 1750000000000 --limit 10` |
+| `hoody agent bots messages send` |  | write | Post a message to a Bot | `agent.bots.sendMessage` | `hoody agent bots messages send --id abc-123 --text Hello` |
+| `hoody agent bots reset` |  | destructive | Give a Bot a new session | `agent.bots.reset` | `hoody agent bots reset --id abc-123 -y` |
+| `hoody agent bots stream` |  | read | Follow a Bot's log (SSE) | `agent.bots.stream` | `hoody agent bots stream --id abc-123 --since 1750000000000` |
+| `hoody agent bots update` |  | write | Change a Bot's settings | `agent.bots.update` | `hoody agent bots update --id abc-123 --name my-resource --role admin` |
 | `hoody agent changes get` |  | read | Change tokens for the Work lists | `agent.changes.get` | `hoody agent changes get` |
 | `hoody agent changes stream` |  | read | Stream the change tokens (SSE) _(not listed in `--help`)_ | `agent.changes.stream` |  |
 | `hoody agent completions create` |  | write | Run one tool-free model completion | `agent.completions.create` | `hoody agent completions create --stream --model xiaomi-token-plan-sgp/mimo-v2.5 --system linux --messages role=user,content=Hello` |
@@ -1094,7 +1225,7 @@ Reads first: `hoody agent mcp list` (`{ session_id }`) returns the EFFECTIVE mer
 | `hoody agent fusions delete` |  | write | Delete a fusion composite | `agent.fusions.delete` | `hoody agent fusions delete --slug <slug>` |
 | `hoody agent fusions list` |  | read | List fusion composites | `agent.fusions.list` | `hoody agent fusions list --include-invalid --page 10` |
 | `hoody agent fusions set` |  | write | Create or update a fusion composite | `agent.fusions.set` | `hoody agent fusions set --slug <slug> --spec '{}'` |
-| `hoody agent gates answer` |  | write | Answer a parked question gate | `agent.gates.answer` | `hoody agent gates answer --id abc-123 --generation 10 --answer <answer> --text Hello` |
+| `hoody agent gates answer` |  | write | Answer a parked question gate | `agent.gates.answer` | `hoody agent gates answer --id abc-123 --generation 10 --answers key=hello` |
 | `hoody agent gates approve` |  | write | Approve a pending gate | `agent.gates.approve` | `hoody agent gates approve --id abc-123 --generation 10 --persist-dirs` |
 | `hoody agent gates deny` |  | write | Deny a pending gate | `agent.gates.deny` | `hoody agent gates deny --id abc-123 --generation 10 --persist-dirs` |
 | `hoody agent gates list` |  | read | List the gates waiting for a human | `agent.gates.list` | `hoody agent gates list --include-system --page 10` |
@@ -1177,7 +1308,7 @@ Reads first: `hoody agent mcp list` (`{ session_id }`) returns the EFFECTIVE mer
 | `hoody agent mcp test` |  | write | Try a candidate MCP server config without saving it (human-only) | `agent.mcp.testServer` | `hoody agent mcp test --session-id abc-123 --server-name my-resource --server-command 'ls -la'` |
 | `hoody agent mcp upsert` |  | write | Create or update an MCP server (needs a begin-write nonce + expect-hash) | `agent.mcp.upsertServer` | `hoody agent mcp upsert --session-id abc-123 --nonce <nonce> --scope user --expect-hash <expect_hash> --server-name my-resource` |
 | `hoody agent memory consolidate` |  | write | Trigger a memory consolidation pass (human-only) | `agent.memory.consolidate` | `hoody agent memory consolidate --project proj-abc --min-observations 10` |
-| `hoody agent memory datahost claim` |  | write | Assign this computer as the memory data host | `agent.memory.claimDataHost` | `hoody agent memory datahost claim --use-self --expect-realm <expect_realm>` |
+| `hoody agent memory datahost claim` |  | write | Assign this computer as the memory data host | `agent.memory.claimDataHost` | `hoody agent memory datahost claim --use-self` |
 | `hoody agent memory datahost get` |  | read | Read the realm's memory data host | `agent.memory.getDataHost` | `hoody agent memory datahost get` |
 | `hoody agent memory disable` |  | write | Disable agent memory | `agent.memory.disable` | `hoody agent memory disable` |
 | `hoody agent memory enable` |  | write | Enable agent memory | `agent.memory.enable` | `hoody agent memory enable` |
@@ -1203,6 +1334,8 @@ Reads first: `hoody agent mcp list` (`{ session_id }`) returns the EFFECTIVE mer
 | `hoody agent providers accounts use` |  | write | Make a pooled OAuth account active | `agent.providers.useAccount` | `hoody agent providers accounts use --id abc-123 --key <key>` |
 | `hoody agent providers auth default set` |  | write | Set a provider's default credential method | `agent.providers.setDefaultAuth` | `hoody agent providers auth default set --id abc-123 --default <default>` |
 | `hoody agent providers auth status` |  | read | Get a provider's auth status | `agent.providers.getAuth` | `hoody agent providers auth status --id abc-123` |
+| `hoody agent providers create` |  | write | Add a custom AI provider | `agent.providers.create` | `hoody agent providers create --id abc-123 --wire-format chat_completions --endpoint https://api.acme.example/v1 --auth-scheme bearer --models model=llama-3.3-70b` |
+| `hoody agent providers delete` |  | destructive | Remove a custom AI provider and its stored key | `agent.providers.delete` | `hoody agent providers delete --id abc-123 -y` |
 | `hoody agent providers get` |  | read | Get a provider | `agent.providers.get` | `hoody agent providers get --id abc-123` |
 | `hoody agent providers keys delete` |  | write | Delete a provider API key | `agent.providers.deleteApiKey` | `hoody agent providers keys delete --id abc-123` |
 | `hoody agent providers keys set` |  | write | Store a provider API key | `agent.providers.setApiKey` | `hoody agent providers keys set --id abc-123 --api-key <api_key>` |
@@ -1211,8 +1344,10 @@ Reads first: `hoody agent mcp list` (`{ session_id }`) returns the EFFECTIVE mer
 | `hoody agent providers oauth poll` |  | read | Poll a provider OAuth login | `agent.providers.pollOauth` | `hoody agent providers oauth poll --id abc-123 --job <job>` |
 | `hoody agent providers oauth start` |  | write | Start a provider OAuth login | `agent.providers.startOauth` | `hoody agent providers oauth start --id abc-123 --add-account` |
 | `hoody agent providers oauth submit` |  | write | Submit a provider OAuth authorization code | `agent.providers.submitOauthCode` | `hoody agent providers oauth submit --id abc-123 --job <job> --code <code>` |
+| `hoody agent providers update` |  | write | Change a custom AI provider | `agent.providers.update` | `hoody agent providers update --id abc-123 --wire-format chat_completions --endpoint https://api.acme.example/v1` |
 | `hoody agent realms list` |  | read | List realms (for binding) | `agent.realms.list` | `hoody agent realms list --page 10 --limit 10` |
 | `hoody agent realms use` |  | write | Switch the agent's active realm | `agent.realms.use` | `hoody agent realms use --active-realm-id abc-123` |
+| `hoody agent sessions aftercompaction set` |  | write | Set the message a session re-adds after every compaction | `agent.sessions.setAfterCompaction` | `hoody agent sessions aftercompaction set --id abc-123 --text Hello` |
 | `hoody agent sessions agent set` |  | write | Switch the chat agent | `agent.sessions.setAgent` | `hoody agent sessions agent set --id abc-123 --agent my-agent` |
 | `hoody agent sessions approval get` |  | read | Read a session's approval policy | `agent.sessions.getApproval` | `hoody agent sessions approval get --id abc-123` |
 | `hoody agent sessions approval rules delete` |  | write | Remove one session permission rule | `agent.sessions.deleteApprovalRule` | `hoody agent sessions approval rules delete --id abc-123 --tool <tool>` |
@@ -1227,6 +1362,8 @@ Reads first: `hoody agent mcp list` (`{ session_id }`) returns the EFFECTIVE mer
 | `hoody agent sessions autoreply set` |  | write | Arm/disarm the auto-reply loop | `agent.sessions.setAutoReply` | `hoody agent sessions autoreply set --id abc-123 --armed --rounds 10` |
 | `hoody agent sessions autoreply writes set` |  | write | Flip the auto-reply write opt-in | `agent.sessions.setAutoReplyWrites` | `hoody agent sessions autoreply writes set --id abc-123 --allow-writes` |
 | `hoody agent sessions close` |  | write | Close the session (teardown) | `agent.sessions.close` | `hoody agent sessions close --id abc-123` |
+| `hoody agent sessions commands get` |  | read | Get a command's receipt | `agent.sessions.commands.get` | `hoody agent sessions commands get --id abc-123 --command-id abc-123` |
+| `hoody agent sessions commands send` |  | write | Send a message, an interrupt or a stop to a session | `agent.sessions.commands.send` | `hoody agent sessions commands send --id abc-123 --idempotency-key <idempotency_key> --kind message --text Hello --close` |
 | `hoody agent sessions create` |  | write | Create, fork, or attach a session | `agent.sessions.create` | `hoody agent sessions create --model openai/gpt-5.4-nano --tool-mode standard` |
 | `hoody agent sessions delete` |  | write | Delete a session and its stored record (`agent sessions close` only tears the live session down) | `agent.sessions.delete` | `hoody agent sessions delete --id abc-123` |
 | `hoody agent sessions directories list` |  | read | List distinct session working directories | `agent.sessions.listDirectories` | `hoody agent sessions directories list` |
@@ -1254,6 +1391,7 @@ Reads first: `hoody agent mcp list` (`{ session_id }`) returns the EFFECTIVE mer
 | `hoody agent sessions turns run` |  | write | Dispatch a turn and block to completion | `agent.sessions.turns.run` | `hoody agent sessions turns run --id abc-123 --text Hello --tool-mode standard --dir-scope home` |
 | `hoody agent sessions turns start` |  | write | Dispatch a turn (fire-and-observe) _(not listed in `--help`)_ | `agent.sessions.startTurn` | `hoody agent sessions turns start --id <sessionId> --text 'Summarize the open todos' -o json` |
 | `hoody agent sessions turns start` |  | write | Dispatch the turn and follow the session stream from the dispatch cursor (it does not end with the turn) _(not listed in `--help`)_ | `agent.sessions.startTurnAndStream` | `hoody agent sessions turns start --id <sessionId> --text 'Summarize the open todos' -o json` |
+| `hoody agent sessions usage get` |  | read | Read a session's per-call LLM usage and totals | `agent.sessions.getUsage` | `hoody agent sessions usage get --id abc-123 --after-id 10 --limit 10` |
 | `hoody agent sessions verbosity set` |  | write | Set response verbosity | `agent.sessions.setVerbosity` | `hoody agent sessions verbosity set --id abc-123 --level normal` |
 | `hoody agent sessions workflows start` |  | write | Run a workflow onto an existing session | `agent.sessions.startWorkflow` | `hoody agent sessions workflows start --id abc-123 --name my-resource` |
 | `hoody agent sessions yolo set` |  | write | Arm or disarm YOLO auto-approve | `agent.sessions.setYolo` | `hoody agent sessions yolo set --id abc-123 --enabled` |
@@ -1333,7 +1471,7 @@ Control plane outside container kits. Owns identity (signup, login, OAuth, 2FA, 
 
 ## When to use
 
-- Authenticate users; mint auth tokens for headless sessions.
+- Sign users in through their own browser; mint auth tokens only for unattended automation the user asked for.
 - Create/list/mutate/destroy projects, containers, snapshots, proxy-aliases.
 - Grant/revoke project/container access; set proxy auth (password/token/JWT/IP).
 - Wallet, billing, rental ops.
@@ -1347,7 +1485,7 @@ Control plane outside container kits. Owns identity (signup, login, OAuth, 2FA, 
 ## Prerequisites
 
 - Control plane at `https://api.hoody.com`.
-- Bearer token in `Authorization`. Mint via `POST /api/v1/users/auth/login` (HTTP only; no CLI command) (1d JWT / 7d refresh) or `hoody auth tokens create` (long-lived, scopable).
+- Bearer token in `Authorization`. Get it from browser sign-in (`hoody auth device start` + `hoody auth device poll`, see `SKILL-CLI.md` § Login; 1d JWT / 7d refresh), or from `POST /api/v1/users/auth/login` (HTTP only; no CLI command) when the user chooses a password login. `hoody auth tokens create` (long-lived, scopable) is for unattended automation only. Starting and polling a browser sign-in needs no bearer token.
 - 2FA management (`hoody auth 2fa setup start`, `hoody auth 2fa setup confirm`, `hoody auth 2fa disable`, `hoody auth 2fa backup codes rotate` and the status read) takes a login session JWT, or account-password HTTP Basic auth (which is subject to its own password and 2FA checks); a long-lived `hoody auth tokens create` token is refused with 403 there. On top of that, the bodies differ: `hoody auth 2fa setup start` needs the password; `hoody auth 2fa setup confirm` needs the OTP code; `hoody auth 2fa verify` needs `temp_token` + code; `hoody auth 2fa disable` needs password + OTP **or** backup code; `hoody auth 2fa backup codes rotate` needs password + a **6-digit TOTP only** (`^\\d{6}$` — a backup code fails schema validation with 422). Login-time `hoody auth 2fa verify` needs no session.
 - Project/container writes: project owner or matching permission row.
 - Billing: prerequisites depend on the operation. A hosted crypto invoice (`hoody wallet payments crypto invoices create`) needs no saved payment method, only a login session (auth tokens are refused 403); server rentals and extensions debit the general wallet balance, so fund it first.
@@ -1365,15 +1503,18 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Common workflows
 
-### 1. Auth bootstrap (signup → verify → login [+2FA])
+### 1. Auth bootstrap through the user's browser
 
-1. `POST /api/v1/auth/signup` (HTTP only; no CLI command)
-2. `hoody auth email verify`
-3. `POST /api/v1/users/auth/login` (HTTP only; no CLI command)
-4. `hoody auth 2fa verify` (if 2FA enabled — uses `temp_token`)
+1. New user: they sign up and verify their email at `https://api.hoody.com/auth/signup` in their own browser.
+2. `hoody auth device start` — give the user `verification_uri_complete` and `user_code`.
+3. `hoody auth device poll` every `interval` seconds until it returns the session (`data.token`, `data.refreshToken`); the waiting states are 400 with `data.error`. Steps and states: `SKILL-CLI.md` § Login.
+4. Use the session: the CLI saves it for you.
 5. `hoody auth whoami`
 
-### 2. Mint a long-lived auth token
+`hoody login --web --no-browser` runs steps 2 and 3 for you and saves the session.
+Never collect the user's password or ask for a pasted token. Fallback the user chooses and runs themselves: `POST /api/v1/auth/signup` (HTTP only; no CLI command) → `hoody auth email verify` → `POST /api/v1/users/auth/login` (HTTP only; no CLI command) (+ `hoody auth 2fa verify` with the `temp_token` when 2FA is on).
+
+### 2. Mint a long-lived auth token (unattended automation only)
 
 1. `hoody auth tokens create`
 2. `hoody auth tokens list`
@@ -1462,22 +1603,23 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 
 ## Quirks & gotchas
 
+- Browser sign-in (`hoody auth device poll`) is not RFC 8628 on the wire: send only the JSON fields shown, with no OAuth client or grant fields; the waiting states are HTTP 400 `{"statusCode":400,"data":{"error":"authorization_pending"}}` with the state under `data`, and the success body is a login session (`data.token`, `data.refreshToken`), not `access_token`. `expired_token` also covers a code already redeemed; `access_denied` also covers a missing or wrong PKCE verifier.
 - Login accepts `username` OR `email` + `password` (`anyOf`); only the email lookup is lowercased, usernames are matched case-sensitive.
-- JWT lifecycle: `POST /api/v1/users/auth/logout` (HTTP only; no CLI command) is a logout-ALL for JWTs — every access and refresh JWT issued before that moment stops working (all sessions, not just the current one); long-lived auth tokens are unaffected (revoke those with `hoody auth tokens delete`). `hoody auth refresh` requires the refresh token in **both** the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. `hoody auth refresh` uses the saved refresh token, or the value given with `--refresh-token`, and sends it in both the body and the `Authorization` header. For headless flows, mint a long-lived `hoody auth tokens create` token instead.
+- JWT lifecycle: `POST /api/v1/users/auth/logout` (HTTP only; no CLI command) is a logout-ALL for JWTs — every access and refresh JWT issued before that moment stops working (all sessions, not just the current one); long-lived auth tokens are unaffected (revoke those with `hoody auth tokens delete`). `hoody auth refresh` requires the refresh token in **both** the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. Refresh tokens are single-use: each successful refresh replaces both tokens. Never reuse the old refresh token; reuse returns 401 and, after 30 seconds, signs the account out everywhere. `hoody auth refresh` uses the saved refresh token, or the value given with `--refresh-token`, and sends it in both the body and the `Authorization` header. For unattended automation the user asked for, a long-lived `hoody auth tokens create` token avoids refresh handling.
 - `hoody servers regions list` returns `r.data.regions` (single-wrapped, like every other endpoint).
 - Duplicate signup returns `200` (anti-enumeration). For an unverified user the stored password is left unchanged (first writer wins) and a fresh verification email is sent; for a verified user it is a no-op. A second signup therefore cannot fix a mistyped password: logging in with the new one fails with 401. Change it through `hoody auth password recover` → `hoody auth password reset`. Do NOT probe with signup.
 - The `agent` kit needs **no** `X-Hoody-Container-Claim` / `X-Hoody-Token` headers: it accepts the bare per-container kit URL, and access is decided by the container's proxy permission policy. No built-in kit asks for more, `bot` included: its management routes ignore an `Authorization` header and check no container ownership, so the proxy permission policy is their only access control. The `hoody containers claims create` call mints an *optional* portable container claim for offline verification by your own container programs; no built-in kit requires it. See § Auth model.
 - Vault via auth tokens requires `vault_access === true` AND `resources.vault` on the token; else 403. JWT sessions are not gated.
 - Rate limits: login 1000/30min failures-only; signup 5/hour fail-closed.
 - `hoody containers start`, `hoody containers stop`, `hoody containers restart`, `hoody containers pause` and `hoody containers resume` all call `POST /api/v1/containers/{id}/{operation}`: the operation is the last PATH segment, never a body field, and each method fixes it for you.  The optional body field `timeout` (seconds) caps how long the operation may run on the host; for `stop` and `hoody containers restart` it is also the time the container gets to shut down cleanly. CLI: `hoody containers stop <containerId> --timeout 60` (the id is positional; a plain stop sends `stop`, and `--force` sends `force-stop`).
-- A command that acts on one container or project takes its id as a positional: `hoody containers get <containerId>`, `hoody containers stop <containerId>`, `hoody projects get <projectId>`. On `hoody containers get`, `update`, `copy`, `sync`, `stats`, `start`, `stop`, `restart`, `pause` and `resume` the id is optional: left out, it comes from the global `-c` / `--container`, else from `$HOODY_CONTAINER_ID`. `hoody containers delete <containerId> -y` always needs the id typed, and `-c` does not fill it. Commands whose help says `Requires: --container (-c)`, such as `hoody snapshots list`, take the container only from `-c`. Take ids from `hoody containers list` or `hoody projects list`.
+- A command that acts on one container or project takes its id as a positional: `hoody containers get <containerId>`, `hoody containers stop <containerId>`, `hoody projects get <projectId>`. On `hoody containers get`, `update`, `copy`, `sync`, `stats`, `start`, `stop`, `restart`, `pause` and `resume` the id is optional: left out, it comes from the global `-c` / `--container`, else from `$HOODY_CONTAINER_ID`. `hoody containers delete <containerId> -y` always needs the id typed, and `-c` does not fill it. Commands whose help says `Requires: --container (-c)`, such as `hoody snapshots list`, take no positional container id: they use the global `-c` / `--container`, or `$HOODY_CONTAINER_ID`. Take ids from `hoody containers list` or `hoody projects list`.
 - `hoody containers create` needs a `server_id` in its body, and nothing else in workflow 4 produces one: take it from `hoody servers list` (a server you rent). A `name` that another container in the project already uses is refused with 409. `container_image` is optional (omitted, the default image is used); name a public image from `hoody images list`, since `hoody images list` lists only images your account owns and is empty on a new account. A bare `debian` resolves to the canonical base image. CLI flags: `--project <projectId> --server-id <serverId> --container-image debian`.
 - Snapshots are addressed by `name`, never by alias: `hoody snapshots restore`, `hoody snapshots delete` and `hoody snapshots alias set` take the `name` that `hoody snapshots list` returns. `hoody snapshots create` derives it from `alias`: it keeps only letters, digits, `_` and `-`, drops any leading or trailing `-` and `_`, and cuts the result to 64 characters. A derived name shorter than 2 characters is refused with 400. With no alias, or one with no usable characters, the name is `snap-YYYYMMDD-HHMMSS` (UTC). In the CLI the name goes in `--name`.
 - `hoody snapshots create` needs the container `running` or `stopped` (another status is refused with 400). A container holds at most 1000 snapshots, 10 on a free-tier slice; one more is refused with 400 `CONTAINER_SNAPSHOT_LIMIT` until you delete one.
 - `hoody projects create` names the project with `alias` (required, at most 100 characters); there is no `name` field. An alias that one of your projects already uses is refused with 409.
 - Kit URL `<projectId>-<containerId>-<kit>-<n>.<server>.containers.hoody.com` (a terminal id of 10000 or more makes that label longer than DNS allows, so it is `t-<n>` instead of `terminal-<n>`; the SDK and CLI do this for you): with the default proxy permissions, holding the URL is enough to use the kit, `bot` management routes included. Treat it as a secret, since it also exposes the project and container ids; restrict it with `hoody containers proxy *` groups, or publish a `hoody proxy aliases create` alias instead.
 - `hoody containers proxy services list` lists only the services named in the container's proxy permission rules or hooks, so a container with no custom rules returns `services: []`; it is not a list of running kits. `hoody proxy aliases create` takes the kit or protocol as `program` (e.g. `'exec'`, `'terminal'`, or `'http'` with `port`).
-- `hoody wallet invoices list` returns `200 {invoices:[],pagination:{...}}` for never-billed accounts (current). `hoody ip get` returns IP, user-agent, headers, referer, timestamp, auth flag, protocol, and `ip_info` — not just IP.
+- `hoody wallet invoices list` returns HTTP 200 for never-billed accounts, with an empty `data.invoices` array and pagination metadata in `data.pagination`. `hoody ip get` returns IP, user-agent, headers, referer, timestamp, auth flag, protocol, and `ip_info` — not just IP.
 - `hoody servers offers reserve` charges at once, and every reservation whose total is above zero needs `max_charge_cents`, although the body schema marks it optional. Without it the call is refused with 409 `CHARGE_CONFIRMATION_REQUIRED` (409 `SETUP_FEE_CONFIRMATION_REQUIRED` when the offer has a one-time setup fee), and a total above it is refused with 409 `CHARGE_EXCEEDS_MAX`; the error data carries `total_cents`, and nothing is charged. It also needs a caller-generated `idempotency_key`: a retry with the same key returns the first reservation instead of charging again. CLI: `hoody servers offers reserve <offer-id> --days <days> --max-charge-cents <cents> --idempotency-key <key> -y`.
 - `hoody servers extend` needs `expected_rental_end`: the rental's current `rental_end`, as `hoody servers get` returns it. The extension is applied only while that still matches, so a retry after a lost response is refused with 409 `EXTENSION_ALREADY_APPLIED` instead of charging twice; read the rental again before retrying. `max_charge_cents` is optional only when the rental's frozen renewal tiers (`renewal_pricing_frozen`) price `additional_days`; otherwise the call is refused with 409 `CHARGE_CONFIRMATION_REQUIRED`, and the error data carries `total_cents`. CLI: read `rental_end` with `hoody servers get <rental-id> -o json`, then run `hoody servers extend <rental-id> --additional-days <days> --expected-rental-end <rental-end> --max-charge-cents <cents> -y`.
 - `hoody storage containers incoming list` is container-scoped: its `id` is the receiving container's id. For every incoming share across the account use `hoody storage incoming list`.
@@ -1535,8 +1677,8 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 | `hoody auth 2fa verify` |  | action | Verify 2FA Code During Login | `api.auth.twoFactor.verify` | `hoody auth 2fa verify --code <code> --response-mode intent --print-token` |
 | `hoody auth claims create` |  | action | Issue a signed identity claim bound to an audience | `api.auth.createIdentityClaim` | `hoody auth claims create --audience myapp.example.com --expires-in 3600` |
 | `hoody auth config get` |  | read | Show the public sign-in configuration | `api.auth.getConfig` | `hoody auth config get` |
-| `hoody auth device poll` |  | action | Poll for device sign-in tokens and save the session | `api.auth.device.poll` | `hoody auth device poll --device-code <device_code> --print-token` |
-| `hoody auth device start` |  | action | Start a device sign-in and print the code to enter in a browser | `api.auth.device.start` | `hoody auth device start` |
+| `hoody auth device poll` |  | action | Poll for device sign-in tokens and save the session | `api.auth.device.poll` | `hoody auth device poll --device-code <device_code> --code-verifier dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk --print-token` |
+| `hoody auth device start` |  | action | Start a device sign-in and print the code to enter in a browser | `api.auth.device.start` | `hoody auth device start --code-challenge E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM` |
 | `hoody auth email verification send` |  | write | Resend verification email | `api.auth.sendVerificationEmail` | `hoody auth email verification send --email user@example.com` |
 | `hoody auth email verify` |  | write | Verify email address | `api.auth.verifyEmail` | `hoody auth email verify --token <token> --response-mode intent --print-token` |
 | `hoody auth oauth authorize` |  | action | Begin a PKCE authorization with a sign-in intent token | `api.auth.oauth.authorize` | `hoody auth oauth authorize --code-challenge <code_challenge> --redirect-uri <redirect_uri>` |
@@ -1553,8 +1695,8 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 | `hoody auth tokens list` |  | read | List auth tokens | `api.auth.tokens.list` | `hoody auth tokens list` |
 | `hoody auth tokens profiles get` |  | read | Get auth token public profile by public key | `api.auth.tokens.getPublicProfile` | `hoody auth tokens profiles get 4a1f8c2d3e5b6079a1c2d3e4f50617283940a1b2c3d4e5f60718293a4b5c6d7e` |
 | `hoody auth tokens profiles update` |  | write | Update current auth token public profile | `api.auth.tokens.updatePublicProfile` | `hoody auth tokens profiles update --public-key 4a1f8c2d3e5b6079a1c2d3e4f50617283940a1b2c3d4e5f60718293a4b5c6d7e` |
-| `hoody auth tokens realms add` |  | write | Add realm to auth token | `api.auth.tokens.addRealm` | `hoody --realm-id 64f1a2b3c4d5e6f7a8b9c0d1 auth tokens realms add 64f1a2b3c4d5e6f7a8b9c0d1` |
-| `hoody auth tokens realms remove` |  | destructive | Remove realm from auth token | `api.auth.tokens.removeRealm` | `hoody --realm-id 64f1a2b3c4d5e6f7a8b9c0d1 auth tokens realms remove 64f1a2b3c4d5e6f7a8b9c0d1 -y` |
+| `hoody auth tokens realms add` |  | write | Add realm to auth token | `api.auth.tokens.addRealm` | `hoody auth tokens realms add 64f1a2b3c4d5e6f7a8b9c0d1 --realm-id 64f1a2b3c4d5e6f7a8b9c0d1` |
+| `hoody auth tokens realms remove` |  | destructive | Remove realm from auth token | `api.auth.tokens.removeRealm` | `hoody auth tokens realms remove 64f1a2b3c4d5e6f7a8b9c0d1 --realm-id 64f1a2b3c4d5e6f7a8b9c0d1 -y` |
 | `hoody auth tokens templates list` |  | read | List auth token permission templates | `api.auth.tokens.listTemplates` | `hoody auth tokens templates list` |
 | `hoody auth tokens update` |  | write | Update auth token | `api.auth.tokens.update` | `hoody auth tokens update 64f1a2b3c4d5e6f7a8b9c0d1 --alias my-resource --public-key 4a1f8c2d3e5b6079a1c2d3e4f50617283940a1b2c3d4e5f60718293a4b5c6d7e` |
 | `hoody auth waitlist join` |  | write | Join the Hoody waitlist |  | `hoody auth waitlist join --email user@example.com` |
@@ -1573,7 +1715,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 | `hoody containers env list` |  | read | List container environment variables | `api.containers.env.list` | `hoody --container abc-123 containers env list` |
 | `hoody containers env set` |  | write | Set a single environment variable | `api.containers.env.set` | `hoody containers env set --key <key> --value hello` |
 | `hoody containers env update` |  | write | Bulk set container environment variables | `api.containers.env.update` | `hoody containers env update --body '{"APP_MODE":"hello"}'` |
-| `hoody containers get` |  | read | Get a container by ID | `api.containers.get` | `hoody containers get 64f1a2b3c4d5e6f7a8b9c0d1 --include-proxy-domains` |
+| `hoody containers get` |  | read | Get a container by ID or name | `api.containers.get` | `hoody containers get 64f1a2b3c4d5e6f7a8b9c0d1 --include-proxy-domains` |
 | `hoody containers kvm disable` |  | write | Disable /dev/kvm passthrough. Rented/dedicated servers only; the container must be stopped. | `api.containers.disableKvm` | `hoody --container 64f1a2b3c4d5e6f7a8b9c0d1 containers kvm disable` |
 | `hoody containers kvm enable` |  | write | Enable /dev/kvm passthrough (run full VMs inside the container). Rented/dedicated servers only; the container must be stopped. | `api.containers.enableKvm` | `hoody --container 64f1a2b3c4d5e6f7a8b9c0d1 containers kvm enable` |
 | `hoody containers list` |  | read | Get all containers | `api.containers.list` | `hoody containers list --page 1 --limit 50` |
@@ -1583,7 +1725,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 | `hoody containers proxy enable` |  | write | Enable the proxy permissions of a container | `api.proxy.containerPermissions.enable` | `hoody containers proxy enable --if-match file:v42` |
 | `hoody containers proxy groups delete` |  | destructive | Remove container authentication group | `api.proxy.containerPermissions.deleteAuthGroup` | `hoody containers proxy groups delete --group-name <group_name> --if-match file:v42 -y` |
 | `hoody containers proxy groups ip set` |  | write | Set IP authentication group (container) | `api.proxy.containerPermissions.setIpGroup` | `hoody containers proxy groups ip set --group-name <group_name> --if-match file:v42 --range 192.0.2.0/24` |
-| `hoody containers proxy groups jwt set` |  | write | Set JWT authentication group (container) | `api.proxy.containerPermissions.setJwtGroup` | `hoody containers proxy groups jwt set --group-name <group_name> --if-match file:v42 --secret <secret> --algorithm HS256 --sources header:Authorization --claims key=hello` |
+| `hoody containers proxy groups jwt set` |  | write | Set JWT authentication group (container) | `api.proxy.containerPermissions.setJwtGroup` | `hoody containers proxy groups jwt set --group-name <group_name> --if-match file:v42 --secret <secret> --algorithm HS256 --sources header:Authorization --claims key=hello --header-authoritative` |
 | `hoody containers proxy groups list` |  | read | List container proxy groups | `api.proxy.groups.list` | `hoody --container 64f1a2b3c4d5e6f7a8b9c0d1 containers proxy groups list` |
 | `hoody containers proxy groups password set` |  | write | Set password authentication group (container) | `api.proxy.containerPermissions.setPasswordGroup` | `hoody containers proxy groups password set --group-name <group_name> --if-match file:v42 --auth-username alice --auth-password <password> --algorithm sha256 --salt <salt>` |
 | `hoody containers proxy groups permissions clear` |  | destructive | Remove all program permissions for a container group | `api.proxy.containerPermissions.clearGroupPermissions` | `hoody containers proxy groups permissions clear --group-name <group_name> --if-match file:v42 -y` |
@@ -1724,7 +1866,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 | `hoody projects proxy enable` |  | write | Enable the proxy permissions of a project | `api.proxy.projectPermissions.enable` | `hoody projects proxy enable --project 64f1a2b3c4d5e6f7a8b9c0d1 --if-match file:v42` |
 | `hoody projects proxy groups delete` |  | destructive | Remove project authentication group | `api.proxy.projectPermissions.deleteAuthGroup` | `hoody projects proxy groups delete --project 64f1a2b3c4d5e6f7a8b9c0d1 --group-name <group_name> --if-match file:v42 -y` |
 | `hoody projects proxy groups ip set` |  | write | Set IP authentication group (project) | `api.proxy.projectPermissions.setIpGroup` | `hoody projects proxy groups ip set --project 64f1a2b3c4d5e6f7a8b9c0d1 --group-name <group_name> --if-match file:v42 --range 192.0.2.0/24` |
-| `hoody projects proxy groups jwt set` |  | write | Set JWT authentication group (project) | `api.proxy.projectPermissions.setJwtGroup` | `hoody projects proxy groups jwt set --project 64f1a2b3c4d5e6f7a8b9c0d1 --group-name <group_name> --if-match file:v42 --secret <secret> --algorithm HS256 --sources header:Authorization --claims key=hello` |
+| `hoody projects proxy groups jwt set` |  | write | Set JWT authentication group (project) | `api.proxy.projectPermissions.setJwtGroup` | `hoody projects proxy groups jwt set --project 64f1a2b3c4d5e6f7a8b9c0d1 --group-name <group_name> --if-match file:v42 --secret <secret> --algorithm HS256 --sources header:Authorization --claims key=hello --header-authoritative` |
 | `hoody projects proxy groups password set` |  | write | Set password authentication group (project) | `api.proxy.projectPermissions.setPasswordGroup` | `hoody projects proxy groups password set --project 64f1a2b3c4d5e6f7a8b9c0d1 --group-name <group_name> --if-match file:v42 --auth-username alice --auth-password <password> --algorithm sha256 --salt <salt>` |
 | `hoody projects proxy groups permissions clear` |  | destructive | Remove all program permissions for a project group | `api.proxy.projectPermissions.clearGroupPermissions` | `hoody projects proxy groups permissions clear --project 64f1a2b3c4d5e6f7a8b9c0d1 --group-name <group_name> --if-match file:v42 -y` |
 | `hoody projects proxy groups permissions delete` |  | destructive | Remove a single program permission for a project group | `api.proxy.projectPermissions.deleteGroupPermission` | `hoody projects proxy groups permissions delete --project 64f1a2b3c4d5e6f7a8b9c0d1 --group-name <group_name> --program http --if-match file:v42 -y` |
@@ -1946,7 +2088,7 @@ Create the bot in the chat app first and keep its token. `hoody bot create` take
 - The kit holds no token of its own; every working token belongs to a chat user. A login typed into the chat form lives for at most two minutes, while a token a user pastes is kept, encrypted, and used for that user's later commands. The bot tries to delete each chat message that carried a credential, and when the channel refuses the delete it tells the user to delete it themselves. Deleting a registration therefore does not revoke what its users still hold; that is what the revoke operations are for.
 - The channel token is write-only. Registration posts it once, the kit validates it with the channel before storing it, encrypts it, and no read ever returns it. A registration whose token was rotated in the chat app has to be deleted and registered again with the new token: registering the same bot while the old registration exists is refused `409 registration_duplicate` (and deleting a registration does not revoke the credentials its users hold).
 - Health is unauthenticated by design and reports exactly nine fields. `open_by_default` stays null until the self-probe resolves and is never reported as safe by default, so treat null as unknown rather than as protected.
-- Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the bot's kit URL, also from inside the same container, gets 403 with the JSON body `{ "error": { "code": "forbidden", ... } }`.
+- Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the bot's kit URL gets 403 with the JSON body `{ "error": { "code": "forbidden", ... } }`.
 - Bare `/health` is 404. The management API and health live under the versioned prefix; the only route outside it is the management UI page at the root.
 - Errors do not use the account-plane envelope. Management refusals answer `{ error: { code, message } }` with an enumerated code, and the message never carries a credential or an upstream error string, though a validation message may name a query parameter or body field you sent. An unknown path (404) or method (405) answers a bare string instead, `{ error: "not_found" }` or `{ error: "method_not_allowed" }`.
 - A repeated query parameter is refused rather than resolved on every management route. Sending the same control twice makes the request say two things at once, and no handler answers it. The manifest route (which parses no query string) and the unauthenticated health route are outside that rule.
@@ -2047,7 +2189,7 @@ After browse: `hoody browser html get`/`hoody browser text get`/`hoody browser s
 5. `hoody browser cookies clear`.
 
 ### 4. JS eval + logs
-1. `hoody browser start` → `hoody browser navigate`.
+1. `hoody browser start` with `stealth=false` for full console capture (stop a slot that already runs with `stealth=true` first) → `hoody browser navigate`.
 2. `hoody browser evaluate` (`{script}` JSON body). On the default stealth engine the script cannot see page JS globals (see Quirks).
 3. `hoody browser logs console list` (`since`,`type`,`clear=true`).
 4. `hoody browser logs network list`.
@@ -2060,7 +2202,7 @@ When the work is a website project or business research, **offer** the user a de
 1. Pick a slot number X (e.g. 2) and start headful on that slot: `hoody browser start` addressed to the `browser-X` hostname (`--browser-id X`) with `showBrowser=true`. The proxy derives `browser_port` 30000+X and `display` 500+X from the hostname and overrides any values you send. Add any per-project identity: own egress proxy (`proxyServer`/`proxyUsername`/`proxyPassword`/`proxyBypass`), `stealth`, `userAgent`, `viewport`, `locale`, `geolocation`, extensions.
 2. Give the user the direct live-view URL — the standard kit URL with the `browser-` slug and `?view=display`: `https://{P}-{C}-browser-X.{N}.containers.hoody.com/?view=display`. That page embeds display 500+X live (the bare root URL shows an instance status page with a View Display link instead), so an instance started on display 500+X gets its own stable viewing URL — changing the X in the URL is how you address each browser's live window. `hoody browser devtools urls get` adds a live DevTools inspector as a second link; that link gives full control of the browser, so hand it only to someone you would give the browser to.
 3. Everything browsed there — by the user clicking around in the live view or by the agent via the API — lands in persistent per-slot history (`hoody browser history list` with `browser_id=X`): live debugging and business research accumulate into one durable project trail. The instance itself is reaped once it has been idle past the deployment's max age (see Quirks) — history survives; re-run `hoody browser start` with the same options to revive the window.
-4. Then offer log capture as a follow-up: console/network buffers hold only the last 500 entries and die with the instance, so a recurring `cron` job (or agent loop) draining `hoody browser logs console list`/`hoody browser logs network list` with `clear=true` into `sqlite`/`files`/agent memory preserves full context for later sessions.
+4. Then offer log capture as a follow-up: console/network buffers hold only the last 500 entries and die with the instance, so a recurring `cron` job (or agent loop) draining `hoody browser logs console list`/`hoody browser logs network list` with `clear=true` into `sqlite`/`files`/agent memory preserves the captured entries for later sessions. For full console capture start the slot with `stealth=false`: the default stealth engine omits the page's console calls and errors.
 
 ### 7. Drive a page: snapshot, act, wait
 These three operations never start an instance (404 `NOT_FOUND` on an empty slot), so run `hoody browser start` and `hoody browser navigate` first.
@@ -2079,7 +2221,7 @@ These three operations never start an instance (404 `NOT_FOUND` on an empty slot
 - `stealth=true` is ignored on Firefox: the stealth engine is Chromium-only.
 - Extensions need `showBrowser=true` and run on a persistent profile.
 - `chromiumVersion`: full / major / channel (`stable|beta|dev|canary`); first new version blocks on download.
-- Console/network logs: 500-entry ring buffers — drain or filter `since`.
+- Console/network logs: 500-entry ring buffers — drain or filter `since`. On the default `stealth=true` engine, console capture leaves out the page's `console.*` calls, uncaught errors and unhandled rejections; the response reports `capture: "partial"` with a `reason`. Start with `stealth=false` for full console capture.
 - **A sweep runs every 5 min and SIGTERMs any instance idle for 1 h (deployment defaults), healthy or not.** The idle clock is restarted by real use: every API request routed to the instance (counted from the END of the request), a top-level page navigation (including a person clicking around in the live view), attaching over CDP, and starting an instance that already exists. An instance with a request in flight or an open CDP connection is never reaped. The instance's own heartbeat is liveness only and does NOT keep it alive, so an instance you want to keep (logged-in cookies, session state) needs a request at least once per idle window. A reaped instance's next call starts a fresh one, with none of the cookies or session state the old one held; recorded history survives.
 - Instances do NOT survive kit-process restarts: graceful shutdown (SIGTERM/SIGINT) terminates every child.
 - History records ALL navs (incl. headful clicks) at `/hoody/storage/hoody-browser/history`, retained 30 d by default. Where a deployment turns history off, the history endpoints answer `404 HISTORY_DISABLED`.
@@ -2087,7 +2229,7 @@ These three operations never start an instance (404 `NOT_FOUND` on an empty slot
 - `browser_id` history filter sanitised as path component.
 - **On the default stealth engine (`stealth=true`, `engine: patchright`), `eval` runs the script in an isolated JavaScript world.** It sees the DOM, but not the globals the page's own scripts define (`window.__NEXT_DATA__`, SPA stores, config objects): those read as `undefined` and the call still returns 200. On `stealth=false` (`engine: playwright`) the script runs in the page's main world. To read page JS state, start the slot with `stealth=false`, or read what the page wrote into the DOM (for example the text of `<script id="__NEXT_DATA__">`).
 - `eval` POST accepts JSON `{"script":"..."}` (what the SDK and CLI send) or a `Content-Type: text/plain` body holding the raw script. The response is `{ "result": ... }`.
-- **A ref-addressed `hoody browser act` that navigates the page itself (a link click, a submit, a `pushState`) can answer `409 STALE_SNAPSHOT` with `details.outcome: "unknown"` after the action already ran.** `outcome` is `not-started` (never dispatched, safe to repeat), `unknown` (dispatched, result not observed) or `completed`. On `unknown`, check the page (`hoody browser wait`, a new snapshot, the URL) before repeating a click or submit. Selector, role, label, text, placeholder and testId targets are not affected.
+- **A ref-addressed `hoody browser act` that navigates the page itself (a link click, a submit, a `pushState`) answers 200; the NEXT use of that snapshot's refs is stale.** A 200 means the browser operation completed, not that the site's transaction succeeded: observe the result with `hoody browser wait` and a new snapshot. A main-frame navigation that lands BEFORE the input is dispatched answers `409 STALE_SNAPSHOT` (`details.reason: "navigated"`, `details.outcome: "not-started"`: nothing was dispatched, safe to repeat). If the tab navigates after the input went out and the action then fails, the 409 carries `outcome: "unknown"` (dispatched, result not observed): check the page (`hoody browser wait`, a new snapshot, the URL) before repeating a click or submit. Selector, role, label, text, placeholder and testId targets are not affected.
 - Chromium CDP defaults to `useRemoteDebuggingPort=true`; pass `useRemoteDebuggingPort=false` at start to turn it off. `hoody browser devtools urls get` answers 404 only when the instance is missing; with CDP off it returns 200 with null URLs. Use the URLs `hoody browser devtools urls get` returns rather than building one. By default the returned URLs are on the `cdp-X` relay host paired 1:1 with `browser-X` (`https://{P}-{C}-cdp-X.{N}.containers.hoody.com/`); a deployment that turns the relay URLs off returns the legacy `http-<port>` host instead, where `<port>` is the debugging port. Point a CDP client at the returned URL (for example `connectOverCDP("https://{P}-{C}-cdp-X.{N}.containers.hoody.com/")`). The rest of this bullet describes the `cdp-X` relay. A discovery request (`/`, `/json`, `/json/list`, `/json/version`) may cold-start Chromium instance X when it is not running: only when cold start is enabled (the default; a deployment can turn it off) and the request does not come from a web page, which gets `403 CDP_CSRF_COLD_START` instead. A DevTools WebSocket only attaches to a running instance. Only read-only endpoints (the discovery paths, `/json/protocol`, the `/devtools/` front end) and DevTools WebSocket sessions are relayed; `/json/new`, `/json/activate` and `/json/close` return 404. Treat the `cdp-X` URL like a credential: anyone who can reach it controls the browser (navigate, run script, read cookies and page content), so start with `useRemoteDebuggingPort=false` when the container is shared.
 - Launch options: the `viewport` and `geolocation` query parameters are **JSON strings**, not free-form `"WxH"` / `"lat,lng"`; the kit `JSON.parse`s a string value and rejects one that does not parse. In a JSON request body the same fields may also be plain objects. Examples: `viewport='{"width":1280,"height":800}'`, `geolocation='{"latitude":48.8,"longitude":2.3,"accuracy":50}'`. A launch `viewport` of `null` or `none` turns off fixed-viewport emulation. The runtime `hoody browser viewport set` is different: its body is an object, `{"viewport":{"width":1280,"height":800}}` or `{"viewport":null}` (integers 1–8192); a string there is a 400 `VALIDATION_ERROR`.
 - `hoody browser viewport set` takes `{viewport:{width, height}}` (1-8192 px) or `{viewport:null}` for responsive. `hoody browser viewport set` sends only a fixed size. Responsive works only on Chromium (`501 NOT_SUPPORTED`) and only on an instance started responsive (`409 REQUIRES_RESTART`: stop it and start it again with `viewport=null`). `502 VIEWPORT_APPLY_INCOMPLETE` means the policy was kept but some tabs did not apply it (`details.failedTabs`). `hoody browser viewport get` never starts an instance.
@@ -2164,7 +2306,7 @@ hoody --container "$C" browser text get --browser-id 1 | head -c 200
 
 ### 4. Execute JavaScript in the page and capture the return value
 
-**Goal:** run a script in the page context. Over HTTP, `GET /eval?script=` puts the script in the query (size-bound by URL). `hoody browser evaluate` accepts `{ script }` JSON via the SDK / CLI / `Content-Type: application/json`; raw `Content-Type: text/plain` HTTP also works (body = script source). Either shape returns `{ result }`. The script reads the DOM on every engine; page JS globals (`window.__NEXT_DATA__`, app stores) are visible only on a `stealth=false` instance, and read as `undefined` on the default stealth engine (see Quirks).
+**Goal:** run a script in the page context. Over HTTP, `GET /api/v1/browser/eval?script=` puts the script in the query (size-bound by URL). `hoody browser evaluate` accepts `{ script }` JSON via the SDK / CLI / `Content-Type: application/json`; raw `Content-Type: text/plain` HTTP also works (body = script source). Either shape returns `{ result }`. The script reads the DOM on every engine; page JS globals (`window.__NEXT_DATA__`, app stores) are visible only on a `stealth=false` instance, and read as `undefined` on the default stealth engine (see Quirks).
 
 ```bash
 hoody --container "$C" browser evaluate --browser-id 1 \
@@ -2310,7 +2452,7 @@ A `404 Instance not found` from `hoody browser stop` means it was already gone �
 
 On a `code-N` host the platform's edge fills in the two parameters the entry page needs. It sets the instance selector `id` from the hostname, overwriting anything the caller sent, and it sets `folder` to the container's default workspace when the request names none. Add `?folder=<abs-path>` to open a different folder. Talking to a bare kit server with no edge in front of it, a client must send both `folder` and `id` itself: with neither the entry path returns the kit specification, with only one it returns `400`.
 
-The methods in this namespace read the service's state (health, running instances, versions), stage extensions and confirm what an instance has installed, and build embed URLs. Day-to-day use is "open the URL".
+The methods in this namespace read the service's state (health, running instances, versions), stop editor instances, stage extensions and confirm what an instance has installed, and build embed URLs. Day-to-day use is "open the URL".
 
 Like every Hoody kit URL, `code` is **iframable**: drop the `code-N` URL into an `<iframe>` and you've embedded VS Code in your own page. Same for every other kit (`files`, `terminal`, `display`, `desktop`, `browser`, `notes`, `agent`, …) — you can compose a full HTML "operating system" out of Hoody kit iframes with no native code, just URLs and standard CSP / cookie wiring.
 
@@ -2338,7 +2480,7 @@ Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → 
 ## Prerequisites
 
 - A running container. Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get`.
-- Address the service through its `code-N` URL. That hostname selects the instance. The CLI's `code extensions list` and `code extensions install` take `--id <N>` (default 1), which sends the request to the `code-N` host, and the generated SDK sends no `id` unless you pass one. An SDK client pointed at a bare kit server passes `id` itself.
+- Address the service through its `code-N` URL. That hostname selects the instance. `hoody code extensions list` and `hoody code extensions install` take `--id <N>` (default 1), which sends the request to the `code-N` host. 
 - VSIX staging needs a downloadable `.vsix` URL that the service may fetch: `http` or `https`, no credentials in the URL, and not an address inside the container or on a private network.
 
 ## Capability URL
@@ -2369,6 +2511,14 @@ Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → 
 1. `hoody code status` lists the running instances (id, port, folder, uptime) and the orchestrator's `basePort`.
 2. `hoody code version` reports the orchestrator build and the packaged editor tree separately.
 
+### 5. Stop an editor instance and release capacity
+
+Stop an instance you no longer need: it ends its editors, integrated terminals, tasks and extension host, and keeps its settings, installed extensions and workspace state for its next start.
+
+Run `hoody --container "$C" code stop N`.
+
+A `200` means the instance's process has exited; `404` with `unknown-instance` means it was not running.
+
 ## Quirks & gotchas
 
 - On a `code-N` host the edge sets `id` from the hostname and overwrites a caller's value, so a query-string `id` cannot pick another instance. `code-0` is treated as `code-1`.
@@ -2389,7 +2539,8 @@ Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → 
 
 ## Common errors
 
-- `403` — Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. The body is the plain text `Forbidden`, not JSON. Use the `code-N` URL, also from inside the container.
+- `429` HTML page from the entry path — starting another instance would pass the instance limit this deployment is configured with (none by default). Nothing was started; stop an instance you do not need (workflow 5), then retry. An already running instance is still served at the limit.
+- `403` — Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. The body is the plain text `Forbidden`, not JSON. Use the `code-N` URL.
 - `400` HTML page from the entry path: exactly one of `folder` and `id` carried a value, `id` is not an unsigned decimal integer or was sent twice, `id` exceeds `65535 - basePort`, or the query is over 8192 bytes. Only a bare kit server hits the first case; behind the edge both are filled.
 - `409` from the entry path: the instance's port is held by a process the orchestrator did not start. Retrying does not help until it is released.
 - `503` from the entry path: the instance did not finish starting in time. Worth retrying.
@@ -2588,7 +2739,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 4. Bulk replace
 
-`hoody cron crontabs get` (sweep) then `hoody cron crontabs set` body — revalidates `# hoody-cron:` blocks; response has `removed_expired`.
+For a normal bulk replace, read with `hoody cron crontabs get` (sweep), edit the returned text, then call `hoody cron crontabs set` with the body — it revalidates `# hoody-cron:` blocks, and the response has `removed_expired`. If a read or entry call fails with `409 STORED_CRONTAB_INVALID` (the stored crontab cannot be used), read `details` and repair it by calling `hoody cron crontabs set` directly with a complete, valid replacement: PUT does not read the stored crontab, and anything you leave out of the replacement is removed.
 
 ### 5. Audit all users
 
@@ -2603,7 +2754,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - A managed entry's command is read back from the spool exactly as written, runs of whitespace included, so a later write for that user stores it unchanged: `echo "a  b"` stays `echo "a  b"`.
 - `expires_at` RFC 3339, strictly future.
 - Body cap 256 KiB by default, which the deployment can change, AND 10,000 lines; duplicate entry id rejected, and a duplicate `id=` within one metadata line is rejected.
-- **`hoody cron crontabs set` replaces the whole crontab.** `hoody cron crontabs get` returns each managed entry as its `# hoody-cron:` metadata line followed by its rule line, and PUT parses those pairs back into the same managed entries with the same ids. So a read, edit, write cycle keeps every managed entry whose two lines are still in the body; a managed entry left out of the body is deleted. Edit the text from `hoody cron crontabs get` instead of writing a fresh body, and do not re-create managed entries after a PUT: they are still there, and re-creating them makes every job run twice. Comment or blank lines placed between a metadata line and its rule line are dropped.
+- **`hoody cron crontabs set` replaces the whole crontab.** `hoody cron crontabs get` returns each managed entry as its `# hoody-cron:` metadata line followed by its rule line, and PUT parses those pairs back into the same managed entries with the same ids. So a read, edit, write cycle keeps every managed entry whose two lines are still in the body; a managed entry left out of the body is deleted. Edit the text from `hoody cron crontabs get` instead of writing a fresh body, and do not re-create managed entries after a PUT: they are still there. Re-creating an identical entry answers 200 with the existing one and writes nothing; the same schedule and command with a different name, comment, `expires_at` or `enabled` is `409 ENTRY_EXISTS` (details give its id), so change it with PATCH. Comment or blank lines placed between a metadata line and its rule line are dropped.
 - A PUT body may contain `# hoody-cron:` metadata lines written by the caller. The kit revalidates every managed entry it parses from them (schedule, command, name, comment) and rejects duplicate ids, but it does not check where the metadata came from: a well-formed pair written by hand is accepted as a managed entry, and a metadata line it cannot parse or pair is kept as a raw line. Every other non-comment line gets the syntax check of `crontab(1)`: a line it would refuse is `400 INVALID_CRONTAB` naming that line, and nothing is written.
 - `hoody cron entries list`/`hoody cron entries get` clean expired entries before serializing under a per-user mutex — a GET can mutate the spool.
 - `hoody cron entries list` items have `type: "managed"` or `"raw"`; only `managed` items carry `id`.
@@ -2613,6 +2764,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 Error bodies are `{ code, message, details }`, except where noted.
 
+- `409 STORED_CRONTAB_INVALID` — the crontab already stored for the user cannot be used (a Unicode line break, a `# hoody-cron:` line with two id fields, or over the line or byte cap); nothing in your request is wrong. Repair it with `hoody cron crontabs set` (workflow 4).
 - `400 INVALID_EXPIRES_AT` / `EXPIRES_IN_PAST`.
 - `400 INVALID_SCHEDULE / Invalid schedule` — Vixie 5-field plus `@`-macros only; Quartz / 6-field rejected.
 - `400 INVALID_USER` (bad user name), `INVALID_COMMAND`, `INVALID_NAME`, `INVALID_COMMENT`: a field failed validation (see Quirks for the rules).
@@ -2665,19 +2817,15 @@ hoody --container "$C" cron entries update root "$ID" \
 
 **Goal:** disable every managed entry so nothing fires during a 30-min DB migration; re-enable once clean.
 
-**Step 1 — capture every enabled managed id.** The listing is paginated (50 per page by default, at most 200), so read every page before filtering: a job left on a later page stays enabled through the migration. Run steps 1 and 2 as one script that exits on any listing or update failure, and start the migration only when it exits successfully; a partial list or a failed disable leaves jobs enabled.
+**Step 1 — capture every enabled managed id.** The listing is paginated (50 per page by default, at most 200), so over HTTP read every page before filtering: a job left on a later page stays enabled through the migration. The CLI fetches every page itself, up to 10,000 items or 1,000 requests, so check that it returned `total` rows. Run steps 1 and 2 as one script that exits on any listing or update failure, and start the migration only when it exits successfully; a partial list or a failed disable leaves jobs enabled.
 
 ```bash
-IDS=""; page=1
-while :; do
-  body=$(hoody --container "$C" cron entries list root --page "$page" --limit 200 -o json) \
-    || { echo "listing page $page failed" >&2; exit 1; }
-  ids=$(jq -r '.entries[] | select(.type=="managed" and .enabled) | .id' <<<"$body") \
-    || { echo "unreadable listing" >&2; exit 1; }
-  IDS="$IDS $ids"
-  [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
-  page=$((page + 1))
-done
+# One call fetches every page.
+body=$(hoody --container "$C" cron entries list root -o json) \
+  || { echo "listing failed" >&2; exit 1; }
+[ "$(jq '.entries | length' <<<"$body")" -eq "$(jq .total <<<"$body")" ] || { echo "listing incomplete" >&2; exit 1; }
+IDS=$(jq -r '.entries[] | select(.type=="managed" and .enabled) | .id' <<<"$body") \
+  || { echo "unreadable listing" >&2; exit 1; }
 ```
 
 **Step 2 — bulk disable.**
@@ -2700,14 +2848,9 @@ done
 
 ```bash
 # Raw items only; skip blanks, comments and environment lines (SHELL=, MAILTO = ..., "A B" = c).
-: > /tmp/cron-migrate.txt; page=1
-while :; do
-  body=$(hoody --container "$C" cron entries list root --page "$page" --limit 200 -o json) || exit 1
-  jq -r '.entries[] | select(.type=="raw") | .line' <<<"$body" \
-    | grep -Ev "^[[:space:]]*(\$|#|([A-Za-z_][A-Za-z0-9_]*|\"[^\"]*\"|'[^']*')[[:space:]]*=)" >> /tmp/cron-migrate.txt
-  [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
-  page=$((page + 1))
-done
+body=$(hoody --container "$C" cron entries list root -o json) || exit 1   # every page
+jq -r '.entries[] | select(.type=="raw") | .line' <<<"$body" \
+  | grep -Ev "^[[:space:]]*(\$|#|([A-Za-z_][A-Za-z0-9_]*|\"[^\"]*\"|'[^']*')[[:space:]]*=)" > /tmp/cron-migrate.txt
 cat /tmp/cron-migrate.txt
 ```
 
@@ -2748,13 +2891,9 @@ hoody --container "$C" cron crontabs set root --crontab "$NEW"
 **Step 1 — find the entry id by name.** Names are not unique and the listing is paginated, so read every page and stop unless exactly one managed entry carries the name.
 
 ```bash
-ID=""; page=1
-while :; do
-  body=$(hoody --container "$C" cron entries list root --page "$page" --limit 200 -o json) || exit 1
-  ID="$ID $(jq -r '.entries[] | select(.type=="managed" and .name=="health-poll") | .id' <<<"$body")"
-  [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
-  page=$((page + 1))
-done
+body=$(hoody --container "$C" cron entries list root -o json) || exit 1   # every page
+[ "$(jq '.entries | length' <<<"$body")" -eq "$(jq .total <<<"$body")" ] || { echo "listing incomplete" >&2; exit 1; }
+ID=$(jq -r '.entries[] | select(.type=="managed" and .name=="health-poll") | .id' <<<"$body")
 set -- $ID
 [ $# -eq 1 ] || { echo "expected one entry named health-poll, found $#: $ID" >&2; exit 1; }
 ID=$1
@@ -2803,13 +2942,9 @@ hoody --container "$C" cron entries update root "$ID" --clear-expiration
 **Step 1 — find its id by name.** Read every page and require exactly one match; if several entries share the name, pick the intended id explicitly.
 
 ```bash
-ENTRY_ID=""; page=1
-while :; do
-  body=$(hoody --container "$C" cron entries list root --page "$page" --limit 200 -o json) || exit 1
-  ENTRY_ID="$ENTRY_ID $(jq -r '.entries[] | select(.type=="managed" and .name=="noisy-job") | .id' <<<"$body")"
-  [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
-  page=$((page + 1))
-done
+body=$(hoody --container "$C" cron entries list root -o json) || exit 1   # every page
+[ "$(jq '.entries | length' <<<"$body")" -eq "$(jq .total <<<"$body")" ] || { echo "listing incomplete" >&2; exit 1; }
+ENTRY_ID=$(jq -r '.entries[] | select(.type=="managed" and .name=="noisy-job") | .id' <<<"$body")
 set -- $ENTRY_ID
 [ $# -eq 1 ] || { echo "expected one entry named noisy-job, found $#: $ENTRY_ID" >&2; exit 1; }
 ENTRY_ID=$1
@@ -2831,13 +2966,8 @@ hoody --container "$C" cron entries update root "$ENTRY_ID" \
 `hoody cron crontabs list` returns one record per account in `/etc/passwd` (`{ user, crontab }`), 50 per page by default and at most 200. Filter client-side for non-empty `crontab`.
 
 ```bash
-page=1
-while :; do
-  body=$(hoody --container "$C" cron crontabs list --page "$page" --limit 200 -o json) || break
-  jq '.items[] | select(.crontab | test("\\S")) | {user, crontab}' <<<"$body"
-  [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
-  page=$((page + 1))
-done
+body=$(hoody --container "$C" cron crontabs list -o json) || exit 1   # every page
+jq '.items[] | select(.crontab | test("\\S")) | {user, crontab}' <<<"$body"
 ```
 
 For each non-empty user, drill in via `hoody cron entries list` for that user for the managed view, or read the `crontab` text directly from the listing above.
@@ -2874,7 +3004,7 @@ hoody --container "$C" cron entries update root "$ID" \
 
 **Goal:** a teammate wants ONE hand-written line gone without disturbing the rest. You don't have an id (it's raw). Match the whole line exactly, and skip a matching line that follows a `# hoody-cron:` metadata line: that one is a managed entry's rule, and dropping it orphans the entry.
 
-**Step 1 — fetch** the multi-line string. **Step 2 — edit client-side** (split, drop, rejoin). **Step 3 — write back.** Managed entries survive: the fetched text holds each one as a `# hoody-cron:` metadata line plus its rule line, and the PUT parses them back with the same ids. Leave those lines untouched and do not re-create the entries afterwards, or every managed job runs twice.
+**Step 1 — fetch** the multi-line string. **Step 2 — edit client-side** (split, drop, rejoin). **Step 3 — write back.** Managed entries survive: the fetched text holds each one as a `# hoody-cron:` metadata line plus its rule line, and the PUT parses them back with the same ids. Leave those lines untouched; there is nothing to re-create afterwards (an identical create answers 200 with the existing entry, a changed one `409 ENTRY_EXISTS`).
 
 ```bash
 # Check the read and the parse separately: a failed read must never become an empty PUT.
@@ -2892,12 +3022,12 @@ hoody --container "$C" cron crontabs set root --crontab "$NEW"
 | Command | Aliases | Category | Summary | SDK Link | Example |
 |---------|---------|----------|---------|----------|---------|
 | `hoody cron crontabs get` |  | read | get crontab | `cron.crontabs.get` | `hoody cron crontabs get alice` |
-| `hoody cron crontabs list` |  | read | list all crontabs | `cron.crontabs.list` | `hoody cron crontabs list --page 10 --limit 50` |
+| `hoody cron crontabs list` |  | read | list all crontabs | `cron.crontabs.list` | `hoody cron crontabs list --page 10 --limit 10` |
 | `hoody cron crontabs set` |  | write | put crontab | `cron.crontabs.set` | `hoody cron crontabs set alice --crontab <crontab>` |
 | `hoody cron entries create` |  | write | create entry | `cron.entries.create` | `hoody cron entries create alice --command 'ls -la' --comment Hello --enabled --schedule '0 * * * *'` |
 | `hoody cron entries delete` |  | destructive | delete entry | `cron.entries.delete` | `hoody cron entries delete alice 3fa85f64-5717-4562-b3fc-2c963f66afa6 -y` |
 | `hoody cron entries get` |  | read | get entry | `cron.entries.get` | `hoody cron entries get alice 3fa85f64-5717-4562-b3fc-2c963f66afa6` |
-| `hoody cron entries list` |  | read | list entries | `cron.entries.list` | `hoody cron entries list alice --page 10 --limit 50` |
+| `hoody cron entries list` |  | read | list entries | `cron.entries.list` | `hoody cron entries list alice --page 10 --limit 10` |
 | `hoody cron entries update` |  | write | update entry | `cron.entries.update` | `hoody cron entries update alice 3fa85f64-5717-4562-b3fc-2c963f66afa6 --clear-expiration --command 'ls -la'` |
 | `hoody cron health` |  | read | health check | `cron.kit.getHealth` | `hoody cron health` |
 | `hoody cron open` |  | action | Open the Cron kit job manager in your browser |  | `hoody cron open` |
@@ -2968,7 +3098,7 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 
 1. `hoody curl run` with `mode:"async"` → `job_id`.
 2. Poll `hoody curl jobs get` or subscribe `hoody curl jobs stream` (SSE) filtered by `job_id` (`hoody curl jobs stream --job-id <id>`; the CLI has no WebSocket form).
-3. `hoody curl jobs result get`; `hoody curl jobs cancel` aborts.
+3. `hoody curl jobs result get`; `hoody curl jobs cancel` aborts. `hoody curl jobs get` reports `retry_attempts`: 1 for a job that ran once, plus one per retry after a transfer error.
 
 ### 4. Cookie-jar session
 
@@ -2983,7 +3113,7 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 
 ### 6. Scheduled request
 
-1. `hoody curl schedules create` with `{cron,request}` → `schedule_id`.
+1. `hoody curl schedules create` with `{cron,request}` → `schedule_id`. Add `enabled: false` to create it paused: it never fires until `hoody curl schedules update` sets `enabled: true`.
 2. `hoody curl schedules list`/`hoody curl schedules get`/`hoody curl schedules update` (`{"enabled":bool}` pauses or resumes)/`hoody curl schedules delete`.
 3. Each admitted occurrence creates a job; inspect via `hoody curl jobs list`. An occurrence is skipped, with no job, while the previous run is still in flight or when the job queue rejects it.
 
@@ -2998,14 +3128,17 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 - `*.list` returns ALL when `limit` omitted; always pass `limit`.
 - `hoody curl schedules *` 404s if disabled.
 - `hoody curl schedules update` changes any of `cron`, `request` and `enabled`; omitted fields keep their current value, so pause or resume by sending `enabled: false` or `enabled: true` alone.
+- `hoody curl schedules create` takes `enabled` (default `true`). A schedule created with `enabled: false` has no `next_run` and does not fire; its `cron` must still parse but need not have a future occurrence yet. Any field other than `cron`, `request` and `enabled` is refused with 400 `INVALID_PARAMETER`.
+- `bearer_token` sends `Authorization: Bearer <token>`, but an `Authorization` entry in `headers` wins: the token is then not sent, so the request carries one `Authorization` header.
+- `hoody curl jobs result get` always answers `200` with the target's body and headers, whatever the target answered; the target's status code is in the `X-Curl-Status` header (and in `response.status_code` from `hoody curl jobs get`). A stored `429` or `503` is therefore not retried as a kit failure.
 - **`schedules.create.cron` is 6-field (with seconds), NOT the standard 5-field crontab.** `*/15 * * * *` is rejected as `Invalid cron expression`; use `0 */15 * * * *` (at second 0 every 15 min). The standard @-nicknames (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`) ARE accepted (expanded internally to 6-field), but Go-style `@every 15m` is NOT — for anything else use explicit 6-field expressions. Different syntax from the `cron` namespace, which uses Vixie 5-field.
 - `session_id` is caller-provided.
 - Job events stream over a WebSocket at `/api/v1/curl/ws`; filter by `job_id`.
 
 ## Common errors
 
-- `504` — the upstream request timed out (libcurl timeout); raise `timeout`. An async job does not wait on the caller's connection, but the same `timeout` still applies to the upstream request. The kit itself does not answer `408`; a transparent response passes the upstream's own status through, so an upstream `408` arrives as `408`.
-- `410 cancelled`.
+- `504` — the upstream request timed out (libcurl timeout); raise `timeout`. An async job does not wait on the caller's connection, but the same `timeout` still applies to the upstream request. The kit itself does not answer `408`; a transparent `run` response passes the upstream's own status through (`hoody curl jobs result get` does not: it answers 200 with `X-Curl-Status`), so an upstream `408` arrives as `408`.
+- Cancelling a job answers `200`; no REST call answers `410`. Read `hoody curl jobs get` for `status: "cancelled"`, and stop waiting once a job is `failed` or `cancelled`. `hoody curl jobs result get` answers `404 JOB_RESULT_NOT_READY` when the job has no response body (still pending or running, or finished without an upstream response).
 - `503 queue full` (also SSE capacity exhausted) — back off.
 
 ## Related namespaces
@@ -3117,7 +3250,7 @@ while :; do
 done
 ```
 
-**Step 3 — collect bodies.** `hoody curl jobs result get` returns just the upstream body.
+**Step 3 — collect bodies.** `hoody curl jobs result get` returns just the upstream body, always with status 200; the upstream's status is in `X-Curl-Status`.
 
 ```bash
 # --out-file saves each body as received: JSON, text or binary.
@@ -3246,15 +3379,12 @@ hoody proxy aliases create --container-id "$C" --alias rebuild-main --no-allow-p
 **Step 1 — find the right job** (the schedule was created with `request.job_name: 'prod-health'`). The listing is ordered by creation time, newest first, and runs do not necessarily complete in that order; a schedule firing every 15 minutes also leaves many runs with the same name. So read every page and select by completion time: here, the completed run with the latest `completed_at` at or before 18 hours ago. `completed_at` carries fractional seconds, which jq's `fromdate` rejects; strip them first.
 
 ```bash
-CUTOFF=$(( $(date +%s) - 18 * 3600 )); : > /tmp/curl-runs.txt; page=1
-while :; do
-  body=$(hoody --container "$C" curl jobs list --page "$page" --limit 200 -o json) || exit 1
-  # One "<completed epoch> <id>" line per completed prod-health run on this page.
-  jq -r '.items[] | select(.status=="completed" and .name=="prod-health" and .completed_at != null)
-      | "\(.completed_at | sub("\\.[0-9]+Z$"; "Z") | fromdate) \(.id)"' <<<"$body" >> /tmp/curl-runs.txt || exit 1
-  [ $((page * 200)) -lt "$(jq -r .meta.total <<<"$body")" ] || break
-  page=$((page + 1))
-done
+CUTOFF=$(( $(date +%s) - 18 * 3600 ))
+body=$(hoody --container "$C" curl jobs list -o json) || exit 1   # every page
+[ "$(jq '.items | length' <<<"$body")" -eq "$(jq .meta.total <<<"$body")" ] || { echo "listing incomplete" >&2; exit 1; }
+# One "<completed epoch> <id>" line per completed prod-health run.
+jq -r '.items[] | select(.status=="completed" and .name=="prod-health" and .completed_at != null)
+    | "\(.completed_at | sub("\\.[0-9]+Z$"; "Z") | fromdate) \(.id)"' <<<"$body" > /tmp/curl-runs.txt || exit 1
 JID=$(awk -v c="$CUTOFF" '$1 <= c' /tmp/curl-runs.txt | sort -n | tail -1 | cut -d' ' -f2)
 [ -n "$JID" ] || { echo "no completed prod-health run 18 h ago" >&2; exit 1; }
 ```
@@ -3272,14 +3402,10 @@ hoody --container "$C" curl jobs get "$JID"
 
 ```bash
 CUTOFF=$(date -u -d '30 days ago' +%Y-%m-%d)
-: > /tmp/curl-purge.txt; page=1
-while :; do
-  body=$(hoody --container "$C" curl storage list --page "$page" --limit 200 -o json) || exit 1
-  jq -r --arg c "$CUTOFF" '.items[] | select(.path | startswith("by-date/")) | select((.path | split("/")[1]) < $c) | .path' \
-    <<<"$body" >> /tmp/curl-purge.txt
-  [ $((page * 200)) -lt "$(jq -r .meta.total <<<"$body")" ] || break
-  page=$((page + 1))
-done
+body=$(hoody --container "$C" curl storage list -o json) || exit 1   # every page
+[ "$(jq '.items | length' <<<"$body")" -eq "$(jq .meta.total <<<"$body")" ] || { echo "listing incomplete" >&2; exit 1; }
+jq -r --arg c "$CUTOFF" '.items[] | select(.path | startswith("by-date/")) | select((.path | split("/")[1]) < $c) | .path' \
+  <<<"$body" > /tmp/curl-purge.txt || exit 1
 while IFS= read -r P; do
   hoody --container "$C" curl storage delete "$P" -y
 done < /tmp/curl-purge.txt
@@ -3300,7 +3426,7 @@ done < /tmp/curl-purge.txt
 | `hoody curl jobs stream` |  | read | Stream job lifecycle events live | `curl.jobs.stream` | `hoody curl jobs stream --job-id 550e8400-e29b-41d4-a716-446655440000 --since 0` |
 | `hoody curl metrics` |  | read | Prometheus metrics | `curl.kit.getMetrics` | `hoody curl metrics` |
 | `hoody curl run` |  | action | Execute HTTP request with full cURL capabilities | `curl.run` | `hoody curl run --compressed --connect-timeout 10 --url https://example.com` |
-| `hoody curl schedules create` |  | write | Create a recurring scheduled job | `curl.schedules.create` | `hoody curl schedules create --cron '0 0 * * * *' --request-compressed --request-connect-timeout 10 --request-url https://example.com` |
+| `hoody curl schedules create` |  | write | Create a recurring scheduled job | `curl.schedules.create` | `hoody curl schedules create --cron '0 0 * * * *' --enabled --request-compressed --request-url https://example.com` |
 | `hoody curl schedules delete` |  | destructive | Delete a schedule | `curl.schedules.delete` | `hoody curl schedules delete 770e8400-e29b-41d4-a716-446655440000 -y` |
 | `hoody curl schedules get` |  | read | Get schedule details | `curl.schedules.get` | `hoody curl schedules get 770e8400-e29b-41d4-a716-446655440000` |
 | `hoody curl schedules list` |  | read | List all scheduled jobs | `curl.schedules.list` | `hoody curl schedules list --page 1 --limit 50` |
@@ -3326,7 +3452,7 @@ done < /tmp/curl-purge.txt
 
 Two flavours:
 
-- **Quick-start (ephemeral, not added to the program list)** — `hoody daemon ephemeral programs start --command <command> --user <user> [--ttl <ttl>] [--wait] [--timeout <timeout>]`. Returns `temporary_id = quick_<ts>_<seq>`. Best for one-offs and short-lived jobs (build steps, batch transforms, "run this once and tell me the output"). It adds no durable program entry, but it does write a temporary supervisord configuration and records the program in the kit's ephemeral tracking file so the cleanup pass can find it. The log files stay on disk, but `hoody daemon ephemeral programs logs get` works only while the tracking entry exists. The cleanup pass (every 30 s) finalizes a program that is `stopped` or `fatal`, or `exited` with autorestart turned off; under the default `unexpected` policy an `exited` program is finalized when its exit code is known to be 0, and is kept while its exit code is unknown. A finalized program's result and logs stay readable for 10 minutes; then the pass drops the entry and the logs route 404s. Stopping a program that already finished does not extend that window. Optional `ttl` auto-stops after N seconds.
+- **Quick-start (ephemeral, not added to the program list)** — `hoody daemon ephemeral programs start --command <command> --user <user> [--ttl <ttl>] [--wait] [--timeout <timeout>]`. Returns `temporary_id = quick_<ts>_<seq>`. Best for one-offs and short-lived jobs (build steps, batch transforms, "run this once and tell me the output"). It adds no durable program entry, but it does write a temporary supervisord configuration and records the program in the kit's ephemeral tracking file so the cleanup pass can find it. The log files stay on disk, but `hoody daemon ephemeral programs logs get` works only while the tracking entry exists. The cleanup pass (every 30 s) finalizes a program that is `stopped` or `fatal`, or `exited` with autorestart turned off; under `autorestart: "unexpected"` an `exited` program is finalized when its exit code is known to be 0, and is kept while its exit code is unknown. A finalized program's result and logs stay readable for 10 minutes; then the pass drops the entry and the logs route 404s. Stopping a program that already finished does not extend that window. Optional `ttl` auto-stops after N seconds. A quick-start defaults to `autorestart: "false"` and runs once, even when the command fails; set `autorestart: "unexpected"` to restart it after a nonzero exit.
 - **Registered program (durable, persists across kit restarts)** — `hoody daemon programs create --name <name> --command <command> --user <user> --enabled [--boot] --autorestart unexpected ...` → `hoody daemon programs start <id>`, then poll `hoody daemon programs status`. Use this when the process should come back after a container restart, when you want auto-restart on crash, or when you need port-range fan-out / lazy-load on first proxy hit.
 
 ## When to use
@@ -3340,6 +3466,7 @@ Two flavours:
 - **Traditional system services that ship native systemd units** (apache2, nginx, postgresql, mysql, redis, mosquitto, sshd, postfix, …) — leave them on `systemd`. Hoody containers are full Linux boxes with systemd + root (they behave like VMs, not Docker), so the standard `apt install nginx && systemctl enable --now nginx` flow Just Works and benefits from the upstream unit's hardening (drop-in directories, sd_notify, journal integration, etc.). Mixing systemd-managed and `daemon`-managed processes in the same container is fine — pick whichever fits the program.
 - Need an interactive TTY (Claude Code, Codex, htop, vim, anything that paints the screen) → a one-off or hand-driven session is `terminal` with a **pinned non-ephemeral `terminal_id`**; a program that must be supervised (auto-restart, start at boot) is a `daemon` program with `terminal_id`, which runs on that terminal's PTY. Without `terminal_id` a daemon program has no TTY. A program with `terminal_id` cannot also have an effective sandbox.
 - Watch or type into a daemon program's terminal → `hoody daemon programs attach <id|name>` (Ctrl-] detaches and leaves the program running; `--readonly` watches only). Snapshot, press, paste, write and wait drive it over REST without a WebSocket. Execute and session create on that id answer `409 DAEMON_TERMINAL`; a stopped program answers `409 DAEMON_PROGRAM_NOT_RUNNING` and closes a WebSocket with `4404`.
+- After starting a program with `terminal_id`, attach to its terminal or use the terminal's REST automation at least once. Until something connects, its output waits in the terminal up to about 19 KB, and a program that writes more blocks and can stall. Once connected, hoody-terminal stays connected until the program ends or the terminal session is deleted.
 - Need to pipe input mid-run / send keystrokes → `terminal` (`hoody terminal sessions press`, `hoody terminal sessions paste`).
 - One-shot synchronous request/response → `exec` (HTTP handler, returns body).
 - Schedule (cron syntax) → `cron`. Access logs → `proxyLogs`. File-system events → `watch`.
@@ -3403,7 +3530,7 @@ Edge is always `https://`; the slug only describes the inner protocol. Gate acce
 ## Quirks & gotchas
 
 - Boolean query params (`hoody_kit`, `lazy_load`, `enabled`, `boot`, `include_status`, `include_stats`) STRICT: only `true`/`false`, in any letter case; `1`/`yes`/`0`/`""` -> 400. Send lowercase, which is what the SDK's typed values are.
-- Webhook URLs are validated only in an enabled block: `webhooks.enabled: false` skips every URL, event, header, timeout and retry check (the block must still carry `enabled` and `urls`). In an enabled block, URLs are HTTPS-only unless `NODE_ENV=development` (which also skips every host check below). Userinfo is rejected; in production the literal label `localhost` and private/CGNAT/link-local/v6-ULA addresses are too, including when written as NAT64, v4-mapped-v6, or non-standard v4 (`2130706433`, `0x7f000001`, `127.1`), when the URL authority is an IP literal or `localhost`. A DNS name is not resolved when the block is saved; at delivery time, in production, private and reserved addresses are dropped from its resolution and delivery fails when none remains. Delivery never follows redirects and ignores the environment's HTTP proxy settings.
+- Webhook URLs are validated only in an enabled block: `webhooks.enabled: false` skips every URL, event, header, timeout and retry check (the block must still carry `enabled` and `urls`). In an enabled block, URLs are HTTPS-only. Userinfo is rejected; the literal label `localhost` and private/CGNAT/link-local/v6-ULA addresses are too, including when written as NAT64, v4-mapped-v6, or non-standard v4 (`2130706433`, `0x7f000001`, `127.1`), when the URL authority is an IP literal or `localhost`. A DNS name is not resolved when the block is saved; at delivery time, private and reserved addresses are dropped from its resolution and delivery fails when none remains. Delivery never follows redirects and ignores the environment's HTTP proxy settings.
 - A `webhooks` edit must send `enabled` AND `urls` (a block without `urls` is a 400, `missing field urls`) and replaces both; `events`, `headers`, `timeout` and `retry` keep their stored values when omitted. An enabled block with an empty `urls` is a 400. Callbacks are delivered only when the deployment enables event delivery for the kit; the block is validated and stored either way.
 - Duplicate names + overlapping port ranges rejected on create AND update (adjacent OK); `port_param` requires `port_range`.
 - `command` no newlines/CR/NUL; `user` `(?i)[a-z_][a-z0-9_-]*\$?` (case-insensitive) via `id`; `*_logfile` must resolve under `/hoody/storage/hoody-daemon/logs/`.
@@ -3438,7 +3565,7 @@ Edge is always `https://`; the slug only describes the inner protocol. Gate acce
 - 400 `name already in use` / `Port range overlaps` / `port_param requires port_range`.
 - success=false `Port parameter required for port-range programs` -> resend with a `port` from the program's range, via `--port`. success=false `Program with ID {id} is disabled` -> `hoody daemon programs enable` first.
 - `403 Forbidden` — Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. The body is the plain text `Forbidden` with no reason; use the capability URL.
-- 1 MB JSON body limit.
+- 1 MB request body limit.
 
 ## Related namespaces
 
@@ -3533,11 +3660,11 @@ The instance is reachable at `https://${P}-${C}-http-18800.${N}.containers.hoody
 hoody --container "$C" daemon programs logs get "$ID" --type stderr --lines 200
 ```
 
-For a port-range program, pass `?port=18800` to read the per-instance log file.
+For a port-range program, select the instance when reading logs: add `--port 18800`.
 
 ### 5. Webhook on supervisord process events (e.g. crash → HTTPS callback)
 
-**Goal:** when the program enters the `FATAL` state, POST to your HTTPS endpoint. ⚠ Webhook URLs must be **HTTPS** unless `NODE_ENV=development` (and reject userinfo, `localhost`, and private/CGNAT/link-local ranges). ⚠ **Event names are kit-specific, not the supervisord canonical `PROCESS_STATE_*` ones**: the kit accepts only `STARTING, RUNNING, BACKOFF, STOPPING, STOPPED, EXITED, FATAL, UNKNOWN, "all", "*"`. Sending `PROCESS_STATE_FATAL` returns `400 Invalid event type`.
+**Goal:** when the program enters the `FATAL` state, POST to your HTTPS endpoint. ⚠ Webhook URLs must be **HTTPS** (and reject userinfo, `localhost`, and private/CGNAT/link-local ranges). ⚠ **Event names are kit-specific, not the supervisord canonical `PROCESS_STATE_*` ones**: the kit accepts only `STARTING, RUNNING, BACKOFF, STOPPING, STOPPED, EXITED, FATAL, UNKNOWN, "all", "*"`. Sending `PROCESS_STATE_FATAL` returns `400 Invalid event type`.
 
 ```bash
 # `programs update` needs only the id; every other flag is optional.
@@ -3628,21 +3755,21 @@ hoody --container "$C" daemon programs start "$ID" --if-not-running
 | `hoody daemon ephemeral programs status` |  | read | Get ephemeral program status | `daemon.ephemeralPrograms.getStatus` | `hoody daemon ephemeral programs status quick_1731605123456_0` |
 | `hoody daemon ephemeral programs stop` |  | write | Stop ephemeral program | `daemon.ephemeralPrograms.stop` | `hoody daemon ephemeral programs stop quick_1731605123456_0` |
 | `hoody daemon health` |  | read | Service health check | `daemon.kit.getHealth` | `hoody daemon health` |
-| `hoody daemon programs create` |  | write | Add a new CUSTOM program | `daemon.programs.create` | `hoody daemon programs create --id 10 --name my-app --description 'My Node.js application' --command 'node app.js' --user nodejs` |
-| `hoody daemon programs delete` |  | destructive | Remove a program | `daemon.programs.delete` | `hoody daemon programs delete 1 -y` |
-| `hoody daemon programs disable` |  | write | Disable a program | `daemon.programs.disable` | `hoody daemon programs disable 1` |
-| `hoody daemon programs enable` |  | write | Enable a program | `daemon.programs.enable` | `hoody daemon programs enable 1` |
-| `hoody daemon programs get` |  | read | Get a specific program | `daemon.programs.get` | `hoody daemon programs get 1` |
+| `hoody daemon programs create` |  | write | Add a new CUSTOM program | `daemon.programs.create` | `hoody daemon programs create --id 100 --name my-app --description 'My Node.js application' --command 'node app.js' --user nodejs` |
+| `hoody daemon programs delete` |  | destructive | Remove a program | `daemon.programs.delete` | `hoody daemon programs delete 100 -y` |
+| `hoody daemon programs disable` |  | write | Disable a program | `daemon.programs.disable` | `hoody daemon programs disable 100` |
+| `hoody daemon programs enable` |  | write | Enable a program | `daemon.programs.enable` | `hoody daemon programs enable 100` |
+| `hoody daemon programs get` |  | read | Get a specific program | `daemon.programs.get` | `hoody daemon programs get 100` |
 | `hoody daemon programs list` |  | read | List all programs | `daemon.programs.list` | `hoody daemon programs list --hoody-kit true --lazy-load true` |
-| `hoody daemon programs logs get` |  | read | Get program logs | `daemon.programs.getLogs` | `hoody daemon programs logs get 10 --type stdout --lines 100` |
-| `hoody daemon programs logs stream` |  | read | Follow a program's log live: replays the last --lines lines, then prints every new line. A reconnect resumes after the last line received | `daemon.programs.streamLogs` | `hoody daemon programs logs stream --id 10 --type stdout --port 8080` |
-| `hoody daemon programs reset` |  | write | Reset programs to default | `daemon.programs.reset` | `hoody daemon programs reset -y` |
-| `hoody daemon programs sandbox get` |  | read | Show a program's sandbox: the stored block, the policy revision, what it resolves to, and what the firewall is holding | `daemon.programs.getSandbox` | `hoody daemon programs sandbox get 1` |
-| `hoody daemon programs start` |  | write | Start a program or port instance | `daemon.programs.start` | `hoody daemon programs start 1 --port 8042 --wait` |
+| `hoody daemon programs logs get` |  | read | Get program logs | `daemon.programs.getLogs` | `hoody daemon programs logs get 100 --type stdout --lines 100` |
+| `hoody daemon programs logs stream` |  | read | Follow a program's log live: replays the last --lines lines, then prints every new line. A reconnect resumes after the last line received | `daemon.programs.streamLogs` | `hoody daemon programs logs stream --id 100 --type stdout --port 8080` |
+| `hoody daemon programs reset` |  | destructive | Reset programs to default | `daemon.programs.reset` | `hoody daemon programs reset -y` |
+| `hoody daemon programs sandbox get` |  | read | Show a program's sandbox: the stored block, the policy revision, what it resolves to, and what the firewall is holding | `daemon.programs.getSandbox` | `hoody daemon programs sandbox get 100` |
+| `hoody daemon programs start` |  | write | Start a program or port instance | `daemon.programs.start` | `hoody daemon programs start 100 --port 8042 --wait` |
 | `hoody daemon programs status` |  | read | Get the status of every program (no id) | `daemon.programs.listStatus` | `hoody daemon programs status --port 8080` |
 | `hoody daemon programs status` |  | read | Get the status of one program | `daemon.programs.getStatus` | `hoody daemon programs status --port 8080` |
-| `hoody daemon programs stop` |  | write | Stop a program or port instance | `daemon.programs.stop` | `hoody daemon programs stop 1 --port 8042` |
-| `hoody daemon programs update` |  | write | Edit a program | `daemon.programs.update` | `hoody daemon programs update 1 --name my-app --description 'My Node.js application'` |
+| `hoody daemon programs stop` |  | write | Stop a program or port instance | `daemon.programs.stop` | `hoody daemon programs stop 100 --port 8042` |
+| `hoody daemon programs update` |  | write | Edit a program | `daemon.programs.update` | `hoody daemon programs update 100 --name my-app --description 'My Node.js application'` |
 
 
 ---
@@ -3685,16 +3812,18 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 ### 1. See-then-act loop
 
 1. `hoody display screenshots capture` with `base64` on (for vision). One response carries the image (`image.data`) and its metadata (`info.timestamp`, `info.full.width`/`height`).
-2. `hoody display input click` / `hoody display input type` at root-window coordinates (on a seamless session these differ from screenshot pixels; see Quirks).
+2. `hoody display input click` / `hoody display input type` at a point picked on that screenshot: a screenshot spans the whole screen, so its pixel (x, y) is the point (x, y) these act on.
 3. `hoody display screenshots capture` again to see the result. There is no cheap change check: `hoody display screenshots capture` takes a full new capture as well, and `timestamp` is the capture time in whole seconds, not a "screen changed" marker.
 
 ### 2. Find and focus a window
 
 1. `hoody display windows list` (`onlyVisible` on).
 2. `hoody display windows search` — a `pattern` plus which fields to match (`name`, `class`, `classname`). Add `-o json` to the list and search commands to get the full response, window ids included.
-3. `hoody display windows focus` with `sync` on (or `hoody display windows raise`). Read `details.inputFocus` in the focus response: `false` means the window was activated but is not viewable, so keyboard input cannot reach it.
+3. `hoody display windows focus` with `sync` on. Read `details.inputFocus` in the response: proceed with keyboard input only when it is `true`. `false` means the window was activated but is not viewable, so keyboard input cannot reach it. `hoody display windows raise` is not a substitute for focusing.
 4. `hoody display windows geometry get` — coords.
 5. `hoody display windows active get` — confirms activation only, not keyboard focus.
+
+`hoody display windows list`, `hoody display windows focus` and `hoody display windows active get` need a window manager on the display: `409 NO_WINDOW_MANAGER` means none is running, and retrying does not help. Start a window manager (for example a desktop session), or use `hoody display windows search`, window geometry and name queries, and mouse and keyboard actions, which work without one.
 
 ### 3. Drag / select
 
@@ -3715,6 +3844,12 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 2. `hoody display input wait` — interleave waits.
 3. `hoody display screenshots capture` — confirm.
 
+### 6. Press a key or a key combination
+
+1. `hoody display keyboard press` with `keys`, a list of up to 20 combinations pressed in turn: `["Return"]`, `["Escape"]`, `["ctrl+l"]`, `["ctrl+shift+t"]`, `["Tab", "Down", "Return"]`. Names are X keysym names (`Return`, `Escape`, `Tab`, `BackSpace`, `Delete`, `Up`/`Down`/`Left`/`Right`, `Home`, `End`, `Page_Up`, `F1`…) joined to modifiers (`ctrl`, `shift`, `alt`, `super`) with `+`. `hoody display keyboard press --display-id 1 --keys ctrl+l`.
+2. To submit typed text, end it with a line break instead: in `hoody display keyboard type` and `hoody display input type`, `\n` presses Return.
+3. `hoody display keyboard down` / `hoody display keyboard up` hold and release one key; `hoody display input reset` releases anything left held.
+
 ## Quirks & gotchas
 
 - `?displayId=N` overrides `*-display-N.*` host.
@@ -3722,7 +3857,10 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - All endpoints except `hoody display health` and the HTML client root (`GET /api/v1/display/`) need a displayId or return `400 NO_DISPLAY_CONTEXT`.
 - Screenshot GETs return binary PNG; turn `base64` on for JSON.
 - `hoody display screenshots get` needs numeric `timestamp`, not `timestamp_human`.
-- **A screenshot pixel is not always a click coordinate.** A seamless session captures only the windows it shows, so the capture's origin is the top-left of their bounding box, while `hoody display input click` and the other pointer calls take root-window coordinates. When the shown windows do not start at (0,0), add the capture origin (the smallest `x` and `y` among the shown windows' "geometry" objects in the `hoody display windows list` response) to a point picked on the screenshot, or use `hoody display windows geometry get` to target a window directly.
+- **A screenshot pixel is a click coordinate.** A screenshot spans the whole screen at its current size, read from the windows as they are when it is taken, so pixel (x, y) is the point `hoody display input click` and the other pointer calls act on at (x, y). Where no window is, the image is transparent. A `region` crop starts at its `x1,y1`: add them to a point picked on the crop. Take a new screenshot after a viewer attaches: the screen then takes the viewer's size and the windows move.
+- `hoody display input click` and `hoody display input type` refuse a point with no viewable window with `409 WINDOW_NOT_VIEWABLE` and click nothing. While no viewer is attached to the display that is every point; with one attached, it is the bare desktop between windows. Attach a viewer and pick a point on a window in a fresh screenshot.
+- A line break in `text` (`\n`, `\r\n` or `\r`) presses Return in `hoody display keyboard type` and `hoody display input type`, so `"https://example.com\n"` types the address and submits it; `\t` presses Tab. Every other key or combination (Escape, ctrl+l, arrows) goes through `hoody display keyboard press`.
+- `hoody display input click` refuses a point outside the display's current size with `400 VALIDATION_ERROR` instead of clicking the screen edge, and its `details.pointer` reports where the pointer was after the click and the window under it (`x`, `y`, `window`). A `200` means the click was delivered there, not that the program acted on it: take a new screenshot to see the effect.
 - Clipboard `selection`: `clipboard` (default), `primary`, `secondary`. PRIMARY ≠ Ctrl+V.
 - Clipboard reads and writes can fail with `CLIPBOARD_FAILED`, carrying a shortened tool error; read the clipboard back after a write to confirm it landed.
 - Window IDs are accepted as decimal or hex (`0x...`). `hoody display windows list`, `hoody display windows search` and `hoody display windows active get` return decimal numbers; the path-parameter routes (`hoody display windows get`, `hoody display windows geometry get`, `hoody display windows title get`) echo `windowId` exactly as sent, as a string. Compare ids as numbers, not strings.{1,8}$/"]
@@ -3730,7 +3868,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `hoody display get` returns display info, a window list (each with per-window `position`/`size`), and the screenshot list — but NOT the virtual screen dimensions (those live on `hoody display geometry get`). 
 - `hoody display input reset` clears stuck modifiers/buttons.
 - `hoody display windows wait` answers 200 even when it times out: the body is `success: false, timedOut: true`, so check `timedOut`, not the status. `timeoutMs` is 100-25000 (default 10000). Too many waits at once on one display give `429 QUEUE_FULL`.
-- `hoody display windows restore` waits by default (`sync`, up to 2 s) until the window manager reports the window as no longer minimized, unlike the other window actions; a window still minimized after that is `500 INPUT_ACTION_FAILED`. With `sync: false` the answer has `state: null`.
+- `hoody display windows restore` waits by default (`sync`, up to 2 s) until the window manager reports the window as no longer minimized, unlike the other window actions; a window still minimized after that is `500 INPUT_ACTION_FAILED`. With `sync: false` the answer's `details.state` is `null`, unless the window was already normal: that no-op answers `details.state: "normal"` with `details.synced: true`.
 
 ## Common errors
 
@@ -3778,7 +3916,8 @@ hoody --container "$C" display screenshots capture --display-id 1 --base64 -o js
 
 ```bash
 WID=$(hoody --container "$C" display windows search --display-id 1 \
-  --pattern xeyes --name --class --classname -o json | jq -r '.windows[0]')
+  --pattern xeyes --name --class --classname -o json \
+  | jq -er '.windows[0] // error("No window matched xeyes")') || exit 1
 ```
 
 **Step 2 — focus + confirm.** Focus with `sync` on, then read `details.inputFocus` in the focus response. The call answers `success: true` even when it could only activate the window: `inputFocus: false` (with a `warning`) means the window is not viewable (no viewer attached, or unmapped), so keyboard input cannot reach it. `hoody display windows active get` reports the active window, which confirms the activation only.
@@ -3798,7 +3937,7 @@ hoody --container "$C" display input click --display-id 1 --x 120 --y 80
 hoody --container "$C" display keyboard type --display-id 1 --text "hello world" --delay 20
 ```
 
-`hoody display input type` collapses click-then-type into one call when you only need plain ASCII at one point: `{ x, y, text, delay }`.
+`hoody display input type` collapses click-then-type into one call when you only need plain ASCII at one point: `{ x, y, text, delay }`. End `text` with `\n` to press Return after it (to submit a form or an address bar).
 
 ### 4. Drag from one position to another
 
@@ -3879,7 +4018,7 @@ hoody --container "$C" display get --display-id 1 -o json
 hoody --container "$C" display geometry get --display-id 1 -o json
 ```
 
-Note: the geometry returned is the display's virtual screen (often `8192x4096`), not a physical monitor size. Pointer coordinates (`hoody display input click` and the rest) are in this root-window space. A screenshot of a seamless session can start at a different origin, so a point picked on a screenshot may need an offset first (see Quirks).
+Note: the geometry returned is the display's virtual screen (often `8192x4096`), not a physical monitor size. Pointer coordinates (`hoody display input click` and the rest) are in this screen space, and a screenshot covers the same space, pixel for pixel.
 
 ### 10. Reset stuck modifiers / buttons after a misfired drag
 
@@ -3976,7 +4115,7 @@ Do not use it as a general ingress path: any request whose target begins with `/
 
 A running container whose provision registered egress — the overwhelmingly common case, not something to arrange. Provisioning registers egress on a new container by default, and containers created before egress existed are backfilled over time, so the gaps to expect are a container whose host has it turned off and one that has not been backfilled yet. No kit program needs enabling first — where registered, hoody-egress is eager (`boot: true`, `lazy_load: false`, unlike lazily-loaded siblings such as `pipe` or `run`), so the endpoint answers as soon as the container is up. To confirm before relying on it, probe the unauthenticated health route: `hoody --container <id> egress health` printing the standard health blob confirms egress is live; an error does not establish that it is absent. A failed probe cannot separate an unregistered kit from an overloaded or unreachable one: the server checks its connection cap before reading the request, so it can answer 503 while alive, and an edge or transport failure looks the same from outside. Registration can also be read from the always-present daemon kit: look for a `hoody-egress` entry in `hoody daemon programs list`. Setting an upstream needs nothing beyond the container URL and whatever proxy permissions guard it.
 
-A local exit (`hoody egress local start`) needs more: the container's hoody-tunnel kit must be running, because the exit is wired as a tunnel PULL bind onto the container's loopback, and the CLI must be logged in (`hoody login`), because the tunnel WebSocket authenticates with your account token even though the plain upstream commands need none. If the tunnel kit is down, startup fails before the container is touched.
+A local exit (`hoody egress local start`) needs more: the container's hoody-tunnel kit must be running, because the exit is wired as a tunnel PULL bind onto the container's loopback, and the CLI must be logged in (`hoody login`), because the tunnel WebSocket authenticates with your account token. Every `hoody --container` command, the plain upstream commands included, also needs that login the first time it meets a container: the CLI looks up the container's routing with your account token and then caches it. If the tunnel kit is down, startup fails before the container is touched.
 
 ## Capability URL
 
@@ -4072,7 +4211,7 @@ The setting lands in the config file atomically and is picked up within about a 
 **Goal:** turn the container's egress URL into a proxy whose traffic leaves from the machine you are sitting at. Needs the container's tunnel kit running; nothing listens on your machine (see Quirks).
 
 ```bash
-hoody login                              # the tunnel WebSocket authenticates with your account token
+hoody login --web --no-browser           # browser sign-in; the tunnel WebSocket authenticates with your account token
 hoody --container "$C" egress local start
 #   Proxy URL:     https://P-C-egress.N.containers.hoody.com
 #   Exit IP:       203.0.113.42 (SG)  confirmed
@@ -4145,13 +4284,13 @@ To give a script a **public** address: create an alias with `hoody proxy aliases
 - **Untrusted-input code execution** — it's not sandboxed. Use a fresh container (or a stricter runtime) per untrusted caller.
 - Long-lived processes / supervisors → `daemon` (exec is request/response).
 - Schedules outliving the kit → `cron` (`exec.schedules.*` is in-process and dies with the kit).
-- File I/O outside the scripts dir → `files`. Interactive shells → `terminal`. Container lifecycle → `daemon`. Headless web → `browser`.
+- File I/O outside the scripts dir → `files`. Interactive shells → `terminal`. Container lifecycle → `api`. Headless web → `browser`.
 
 ## Prerequisites
 
 - Scripts dir `/hoody/storage/hoody-exec/scripts/{subdomain}/{instanceId}/` (subdomain defaults to `default`, e.g. `…/scripts/default/1/`) is service-managed; write only via `hoody exec scripts write`.
 - **`require('hoody-sdk')` works with no install step** — it loads the installed npm package from the scripts root's `node_modules`. Exec installs a missing SDK automatically (at startup, or on a script's first `require`), honors a version you declare in the scripts-root `package.json` (an exact version or a tag stops updates, a range keeps them inside it), and stages a newer registry release that the next kit startup swaps in; a running kit never replaces its live copy. (Other `require()`d npm packages are auto-installed on first execution.) Import from `'hoody-sdk'`. The constructor takes an explicit config; `withContainer` is async and returns a container-scoped client. Calls go through the edge proxy, so all the usual capability gates / request hooks / proxy logs apply (see § Source IP Guard in `SKILL-CLI.md`).
-- The `hoody` CLI is also on `$PATH` if you'd rather shell out: `Bun.$\`hoody projects list\`` from the same script works end-to-end.
+- The `hoody` CLI is also on `$PATH` if you'd rather shell out, but exec sets no account token and the CLI needs one (for a kit command too: it looks the container up). Put `HOODY_TOKEN=<token>` in the script's `.env` companion and pass the script's env on: `Bun.$\`hoody projects list\`.env({ ...process.env })`.
 
 ## Capability URL
 
@@ -4184,13 +4323,13 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 1. `hoody exec logs list` / `hoody exec logs search` / `hoody exec logs get` (one JSON response; `lines` and `tail` pick the slice). For a live tail use `hoody exec logs stream` (SSE).
 2. `hoody exec requests list` / `hoody exec stats`; per script, `hoody exec scripts stats list` first, then `hoody exec scripts stats get` with one `scriptPath` from that listing (an empty body returns an empty `metrics` stub).
-3. `hoody exec openapi scripts list`, then `hoody exec openapi generate` / `hoody exec openapi get` (a document built from the current scripts) or `hoody exec openapi merge`. Merge scans scripts only for the `directories` you name (`['scripts']` for the calling deployment's scripts directory — the `<subdomain|default>/<execId>` the kit URL names, unless you pass `subdomain` / `execId`) and otherwise merges just the `specs` you pass; it answers `{success, data, meta}` with the document in `data`. None of the three writes anything to disk, so store a merge result yourself if you need to keep it. `hoody exec openapi schema validate` checks one script's `.openapi.json` sidecar.
+3. `hoody exec openapi scripts list`, then `hoody exec openapi generate` / `hoody exec openapi get` (a document built from the current scripts) or `hoody exec openapi merge`. Merge scans scripts only for the `directories` you name (`['scripts']` for the calling deployment's scripts directory — the `<subdomain|default>/<execId>` the kit URL names, unless you pass `subdomain` / `execId`) and otherwise merges just the `specs` you pass; it answers `{success, data}` with the document in `data`. None of the three writes anything to disk, so store a merge result yourself if you need to keep it. `hoody exec openapi schema validate` checks one script's `.openapi.json` sidecar.
 
 ## Quirks & gotchas
 
-- **Direct execution / top-level `return` is the canonical script shape**; `req`, `res`, `metadata`, `shared`, `console`, and `require` are auto-injected. `module.exports = handler` and many `export default` forms are accepted as compatibility inputs. The pattern-normaliser never rewrites the stored file; it rewrites the code at load time on every request, independent of `validate`.
+- **Direct execution / top-level `return` is the canonical script shape**; `req`, `res`, `metadata`, `shared`, `console`, and `require` are auto-injected. `module.exports = handler` and many `export default` forms are accepted as compatibility inputs. A script may instead export one function per HTTP method (`export async function GET(request)`, `POST`, …; the first argument is a Web `Request`): `HEAD` falls back to `GET`, `OPTIONS` is answered automatically, and any other method without an export answers 405 with `Allow`. The pattern-normaliser never rewrites the stored file; it rewrites the code at load time on every request, independent of `validate`.
 - **Reads redact secrets.** `hoody exec scripts read` replaces the values of `// @token` and `// @ai-key` lines with `[REDACTED]`. Writing that content back keeps the stored secret for each placeholder; a placeholder with no stored secret to restore is refused.
-- **`req.rawBody` holds the request bytes as received** (a Buffer), next to the parsed `req.body`, whenever the kit parses the body for you. Verify webhook signatures against `req.rawBody`; re-serialising `req.body` does not reproduce the sender's bytes. A script that declares `// @rawBody` gets neither field: `req` stays the raw request stream, so read and hash that stream yourself. `GET` and `HEAD` bodies are never read.
+- **`req.rawBody` holds the request bytes as received** (a Buffer), next to the parsed `req.body`, whenever the kit parses the body for you. Verify webhook signatures against `req.rawBody`; re-serialising `req.body` does not reproduce the sender's bytes. A script that declares `// @rawBody` gets neither field: `req` stays the raw request stream, so read and hash that stream yourself. The line must be exactly `// @rawBody` (or `// @rawBody true` / `false`): with any other text after it the line is ignored and the body is parsed. `GET` and `HEAD` bodies are never read.
 - Prefer top-level code with auto-injected `req`/`res` (or just `return …` from the script body); use `module.exports = handler` only as a compatibility style.
 - `hoody exec scripts delete` needs literal `confirm=true`.
 - `hoody exec scripts write` defaults `createDirs:true`, `validate:true`. `.md`/`.yaml`/`.env`/any other non-`.ts`/`.js`/`.json` extension skip; `.json` JSON.parse; only `.ts`/`.js` full pipeline.
@@ -4200,7 +4339,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `hoody exec scripts write`/`delete` accept optional `execId` (alias `exec_id`) + `subdomain`; query wins.
 - `hoody exec magic comments update` and `hoody exec magic comments get` resolve `path` like `hoody exec scripts write`: through the `exec-1` kit URL, `tick.js` is looked up as `default/1/tick.js` first (the `execId` / `subdomain` parameters pick another deployment), then as given relative to the scripts root, so the root-relative `default/1/tick.js` (the write's `resolvedPath`, or its `path` in `hoody exec scripts list`) also works; the first that exists is used, and none answers 404 `Script not found`.
 - `hoody exec magic comments batch update` with neither `directory` nor `execId` edits the calling deployment's own tree (`default/1` through `exec-1`); a `directory` resolves like a script path (under the calling deployment's tree first, then relative to the scripts root).
-- `hoody exec magic comments update` sets `// @schedule` (`comments.schedule`; an empty string removes it). The value is a 5-field cron expression (`minute hour day month weekday`) or a nickname (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`), always in UTC, one per file. `// @schedule-timeout <ms>` is the max run time of one scheduled run; HTTP requests keep `@timeout` (a scheduled run without it uses `@timeout`, else 30 s). It is registered at once, as by a write whose header has the line (no `hoody exec schedules reload`); `hoody exec schedules list` shows its `nextFire`.
+- `hoody exec magic comments update` sets `// @schedule` (`comments.schedule`; an empty string removes it). The value is a 5-field cron expression (`minute hour day month weekday`) or a nickname (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`), always in UTC, one per file. `// @schedule-timeout <ms>` is the time limit of one scheduled run (the run is released, not stopped), as `@timeout` is for HTTP, where an unstarted response gets 504 and the script keeps running; HTTP requests keep `@timeout` (a scheduled run without it uses `@timeout`, else 30 s). It is registered at once, as by a write whose header has the line (no `hoody exec schedules reload`); `hoody exec schedules list` shows its `nextFire`.
 - A `@schedule` fire bypasses the script's `@token`, and a script that also declares `@websocket` is not registered (`hoody exec schedules history list` records it as `incompatible`). The `curl` kit's schedules take 6 fields (seconds first); the `cron` namespace takes 5, in the container's own crontab.
 - **Built-in AI, zero setup — never wire up your own provider/key for AI in a script.** Every endpoint gets these script-scoped bindings, enabled by default (off with `// @ai false`; not on `globalThis`; `pre.js` / `post.js` get none): `ai` (`ai.generate(prompt)` / `ai.stream(prompt)` / `ai.object({ schema, prompt })`), plus `openai` (provider factory), `model` (the default model instance), and `generateText`/`streamText`/`generateObject`. They are already wired to **Hoody AI** (`https://ai.hoody.com/api/v1` unless the kit runs with another `--ai-url`; default model **`hoody-ai/hoody-free`** unless `--ai-default-model` changes it). **No `require()`, no base URL, and no API key**: the key defaults to `container-<hash>`, and `// @ai-key` replaces it. Exec does not price, meter or refuse models; what a model costs and what happens without wallet credit is decided by the AI service. Override per-script with magic comments (`// @ai-model <provider/model>`, `// @ai-temperature 0.7`, `// @ai-max-tokens 2048`, `// @ai-key <custom-tag>`); set a default system prompt via a sibling `<script>.system.md` (or directory-level `_system.md`).
 - **How the built-in AI is called.** `ai` is a name in the script's own scope, not a global: `globalThis.ai` is undefined, a module the script imports does not see it (pass `ai` in), and `pre.js` / `post.js` get no AI helpers. Every helper returns the SDK result object, never a bare string: `(await ai.generate(prompt)).text`, `return (await ai.stream(prompt)).textStream` (streamed as `text/plain`), `(await ai.object({ schema, prompt })).object`. `ai.generate` also takes `{ prompt, system, messages, model, temperature, maxTokens }`. `<script>.system.md` beside the script, else `_system.md` in the same directory, is the default `system` of `ai.generate` / `ai.stream` / `ai.object` (never read it yourself); an explicit `system` option replaces it, and the raw `generateText` / `streamText` / `generateObject` get none, so pass `system` to them yourself. `@ai-model`, `@ai-temperature` and `@ai-max-tokens` set the defaults of the `ai` helpers; `@ai-model` also picks the injected `model` that `generateText({ model, prompt })` takes.
@@ -4208,8 +4347,9 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - **Request body.** `req.body` is parsed JSON, a urlencoded form as an object (a repeated key keeps its last value), or for `multipart/form-data` the text fields only; any other content type is a Buffer. Uploaded files are in `req.files`, one entry per file (empty files and repeated field names included): `{ fieldName, filename, type, size, data }` with `data` a Buffer and `type` the MIME type the runtime reports, which may differ from the part's declared Content-Type and can come from the filename (observed on Bun 1.4.2: `a.pdf` sent as `text/plain` gave `application/pdf`, `a.txt` gave `text/plain;charset=utf-8`, an unknown extension gave `""`), so check the bytes when the type matters.
 - **`pre.js` / `post.js` are per directory.** They run around each HTTP request to a script in their own directory (its `index` included) and never for subdirectories or parent directories, so `admin/pre.js` does not guard `admin/deep/x.js`. `.ts` works too. A non-null return from `pre.js` (or a response it already ended) skips the script; to pass data on, set it on `req`. `post.js` receives the script's return value as `mainResult`, and a non-null return replaces the response. `post.js` still runs after a script that answered with `res.json()` / `res.send()`, but that answer stays as sent and `res.setHeader` then throws: check `res.headersSent` before touching the response. `post.js` also runs after a `pre.js` stop, with the `pre.js` value as `mainResult` (return nothing to keep it). A WebSocket connection runs `pre.js` once, before the handshake (never per message, never `post.js`): a non-null return or a started or ended `res` refuses the upgrade with that error status (else 403) and no socket opens (`req.body` is `null` on an upgrade, so body-reading checks must allow for it); what it sets on `req` reaches `ws.open(socket, req)`; `// @websocket-pre false` in the socket script skips it.
 - **WebSocket scripts register handlers; they do not handle upgrades.** Both `// @websocket` and `// @mode worker` are required, or the socket is closed with `4400`. Assign `ws.open = (socket, req) => …`, `ws.message = (socket, data) => …`, `ws.close = (socket, code, reason) => …` (or `ws.on('message', …)`); never start a `ws` server or call `handleUpgrade`. The script body runs when the first socket connects, with `metadata.method === 'WEBSOCKET_INIT'`: once per script, or for a dynamic route once per route value while it has sockets (after that room's last socket closes, the next connection runs the body again with fresh variables; a changed script file serves new sockets from a fresh run, while sockets already open keep the old handlers and connection pool, so a broadcast from one run does not reach the other). Its top-level variables are shared by all sockets of that run, and its `req` / `metadata` are the first socket's request (`metadata.query` its query string alone, `metadata.parameters` its route params), so read each socket's own query from `socket.data.query` (or the `req` that `ws.open(socket, req)` receives) and keep per-connection state on `socket.data` (which also holds `headers`, `ip`). `data` is a string for text frames and a Buffer for binary ones; `socket.send` / `ws.broadcast(data, exceptSocket?)` send a plain object or array as JSON text and a string, Buffer or other binary value as given. An HTTP request to the same script re-runs the body and sees the same `ws.connections` / `ws.broadcast`.
-- **Helper files and other directives.** Load a file of your own with `await import('./lib/x.js')` (resolved from the script's file). The helper exports with `export function x` or `module.exports = { x }`, then `const { x } = await import(…)`; a bare `module.exports = fn` arrives as `.default`. The helper can `require('./sibling.js')`; `require('./lib/x.js')` from the script body works too (resolved from the script's file). A helper file the script loads with `require` or an ES import statement sees the server's own `process.env`, not the script's `.env` values, so a key that only `quote.env` sets is `undefined` inside `./lib/rates.js`. Read the value in the script and pass it in (`const { rate } = await import('./lib/rates.js'); return { eur: await rate(process.env.RATES_KEY, 'USD', 'EUR') };`). The script's `process.env` is the kit's environment plus every `_default.env` from the scripts root down to the script's directory, then the script's own `<name>.env`, merged per variable (the nearest file wins). `__dirname` and `__filename` are not defined. `// @description …`, `// @tags a,b` and `// @label x` only describe the script for `hoody exec scripts list` (which filters on `label` / `tags`) and change nothing at runtime. `// @enabled false` answers 404 without running the script; repeat `// @token` to accept several tokens; `@token` takes one word (the rest of the line is ignored, with a warning). A returned object is always the JSON body: `return { status: 301, body }` answers 200 with that object, so set a status with `res.status()`.
-- **URL, query and CORS.** `req.url` is the path and query (`/x?a=1`), not a full URL. `metadata.query` is decoded like a form (`+` is a space) and keeps only the last value of a repeated key. On HTTP requests route params are merged into `metadata.query` and `metadata.parameters` (and a socket's `socket.data.query`) over query keys of the same name, so for the query string alone use `new URL(req.url, 'http://x').searchParams` (`.getAll('key')` for every value). By default each response reflects the caller's `Origin` and sends `Access-Control-Allow-Credentials: true`; `// @cors-credentials false` keeps the reflection without it. With any `@cors` line (`*` reflects any origin, `https://app.example` one origin, `none` blocks), credentials are sent only with `// @cors-credentials true`. These directives shape the script's own responses: an ordinary `OPTIONS` preflight is answered by the kit's global policy (reflected origin, credentials) and never reaches the script (platform hook dispatch is the exception).
+- **Helper files and other directives.** Load a file of your own with `await import('./lib/x.js')` (resolved from the script's file). The helper exports with `export function x` or `module.exports = { x }`, then `const { x } = await import(…)`; a bare `module.exports = fn` arrives as `.default`. The helper can `require('./sibling.js')`: a helper's relative paths count from the helper's own directory (a `./round.js` inside the helper `./lib/price.js` is the `round.js` next to that helper, not next to the script); `require('./lib/x.js')` from the script body works too (resolved from the script's file). A helper file runs in its deployment's context (the one `// @mode worker` scripts of that exec ID share): it sees the script's `fetch` and `process.env` (the script's `.env` values included), and its module-level state (`const items = []`, `globalThis.store ??= {}` in the helper) is kept between requests in both modes, separate per exec ID, in memory like `shared`. A relative helper path counted from the wrong directory (`require('../../lib/store.js')` one level too high) is looked up from each parent directory up to the deployment's own directory and loads the one file it matches, with a warning naming the path to write; several matches or none fail with the paths tried. The script's `process.env` is the kit's environment plus every `_default.env` from the scripts root down to the script's directory, then the script's own `<name>.env`, merged per variable (the nearest file wins). `__dirname` and `__filename` are not defined in the script itself (using one throws), and a relative path is not resolved from the script's directory: in the script and its helpers, `new Database('app.sqlite')`, `fs.writeFileSync('x.json', …)`, `Bun.write` and `process.cwd()` use the deployment's own data directory (persistent, separate per exec ID). Read a file that sits beside the script with `fs.readFileSync(require.resolve('./data.json'), 'utf8')`, or build its path from `import.meta.dirname`. `// @description …`, `// @tags a,b` and `// @label x` only describe the script for `hoody exec scripts list` (which filters on `label` / `tags`) and change nothing at runtime. `// @enabled false` answers 404 without running the script; repeat `// @token` to accept several tokens; a caller sends the token as `Authorization: Bearer`, as the password of `Authorization: Basic`, as `X-Token` or as `?token=`, and only the first token found in that order is compared (a wrong Bearer token fails even beside a good `X-Token`; an `Authorization` header with another scheme, or a Basic value without a password, is skipped); `@token` takes one word (the rest of the line is ignored, with a warning). A returned object is always the JSON body: `return { status: 301, body }` answers 200 with that object, so set a status with `res.status()`.
+- **`cookie` is v2.** `const { parseCookie, stringifySetCookie } = require('cookie')`: `parseCookie(req.headers.cookie ?? '')` reads cookies, `stringifySetCookie({ name: 'sid', value: 'abc', httpOnly: true, path: '/' })` writes one (`stringifySetCookie(name, value, options)` works too). The v1 `cookie.parse(header)` and `cookie.serialize(name, value, options)` also work in scripts (`require`, `hoody exec sdks import`, the preloaded `cookie`).
+- **URL, query and CORS.** `req.url` is the path and query (`/x?a=1`), not a full URL. `metadata.query` is decoded like a form (`+` is a space) and keeps only the last value of a repeated key. On HTTP requests route params are merged into `metadata.query` and `metadata.parameters` (and a socket's `socket.data.query`) over query keys of the same name, so for the query string alone use `new URL(req.url, 'http://x').searchParams` (`.getAll('key')` for every value). By default each response reflects the caller's `Origin` and sends `Access-Control-Allow-Credentials: true`; `// @cors-credentials false` keeps the reflection without it. With any `@cors` line (`*` reflects any origin, `https://app.example` one origin, `none` blocks), credentials are sent only with `// @cors-credentials true`. For a literal `Access-Control-Allow-Origin: *`, call `res.setHeader('Access-Control-Allow-Origin', '*')` and add `// @cors-credentials false`: the policy is applied before the script runs, so the script's header is sent as set, but without that line `Access-Control-Allow-Credentials: true` goes out beside it and browsers refuse the pair on a credentialed request. These directives shape the script's own responses: an ordinary `OPTIONS` preflight is answered by the kit's global policy (reflected origin, credentials) and never reaches the script (platform hook dispatch is the exception).
 - **`.md` URLs serve Markdown files, never scripts.** `/guide.md` serves the file `guide.md` as `text/markdown`, behind the `@token` of `guide.ts` / `guide.js` beside it; a script named `guide.md.ts` is never reached. (A proxy hook names its target script, so it can still run one for a `.md` URL.)
 
 ## Common errors
@@ -4307,7 +4447,7 @@ hoody --container "$C" exec scripts write --path webhook.js --content "$WEBHOOK"
 **Step 1 — check.** Returns `installed[]` and `missing[]` per module so you can decide what to install.
 
 ```bash
-hoody --container "$C" exec modules test --code 'const leftPad = require("left-pad");'
+hoody --container "$C" exec modules test --code 'const leftPad = require("left-pad");' -o json
 ```
 
 **Step 2 — install.** `modules` accepts a string or array; specs may pin (`"left-pad@1.3.0"`).
@@ -4319,7 +4459,7 @@ hoody --container "$C" exec modules install --modules left-pad
 **Step 3 — pin to exact versions.** Each declared range is replaced by the version actually installed, provided it satisfies the range. For a range, a package that is not installed, or whose installed version falls outside the range, is listed under `unpinnable` with the reason instead. A declaration that is already an exact version is left as it is, without checking that it is installed.
 
 ```bash
-hoody --container "$C" exec packages pin --packages left-pad   # repeat --packages, or comma-separate, for several packages
+hoody --container "$C" exec packages pin --packages left-pad -o json   # repeat --packages, or comma-separate, for several packages
 ```
 
 ### 5. Validate-only flow + magic comments
@@ -4331,8 +4471,8 @@ CODE='// @cors *
 // @timeout 5000
 // @description Greeting handler
 module.exports = (req, res) => res.json({ hi: 1 });'
-hoody --container "$C" exec scripts validate --code "$CODE"
-hoody --container "$C" exec magic comments validate --code "$CODE"
+hoody --container "$C" exec scripts validate --code "$CODE" -o json   # without -o json only a success line prints
+hoody --container "$C" exec magic comments validate --code "$CODE" -o json
 ```
 
 If `valid:true`, ship it via `hoody exec scripts write` (default `validate:true` re-runs the checks server-side). If `valid:false`, the `results.{syntax,typescript,dependencies}` slots tell you which checker rejected it. Magic comments never make a script invalid: a directive whose value cannot be used falls back to its default and is reported in `results.magicCommentWarnings` (or `warnings` from `hoody exec magic comments validate`) while `valid` stays `true`, so read those warnings separately. The two paths differ on one point: `hoody exec scripts validate` counts a `require()`d module that is not installed yet as a failure, while `hoody exec scripts write` only warns about it and the runtime installs it on first execution. A `valid:false` whose only failing slot is `dependencies` can be written for the runtime to install when `results.dependencies.invalidModules` is empty, so the failure is only missing packages. A versioned import specifier such as `require('lodash@4')` is listed in `invalidModules` and refused at runtime: pin the version in the scripts-root `package.json` (`hoody exec packages pin`) and import the bare package name.
@@ -4353,7 +4493,7 @@ hoody --container "$C" exec openapi scripts list
 hoody --container "$C" exec openapi get --format json > /tmp/user-scripts.openapi.json
 ```
 
-**Step 3 — merge a hand-written spec layer** (auth / examples / hosts) on top of the auto-generated one with `hoody exec openapi merge`. Merge generates from the scripts only for the `directories` you name (`scripts` means the calling deployment's scripts directory, not every deployment's); without them it merges just the `specs` you pass. It answers `{success, data, meta}` with the merged document in `data`.
+**Step 3 — merge a hand-written spec layer** (auth / examples / hosts) on top of the auto-generated one with `hoody exec openapi merge`. Merge generates from the scripts only for the `directories` you name (`scripts` means the calling deployment's scripts directory, not every deployment's); without them it merges just the `specs` you pass. It answers `{success, data}` with the merged document in `data`.
 
 ```bash
 # --specs takes a file holding an ARRAY of document objects. Without -o json the
@@ -4371,7 +4511,7 @@ hoody --container "$C" exec openapi merge --directories scripts --specs @/tmp/sp
 
 ```bash
 hoody --container "$C" exec logs list
-hoody --container "$C" exec logs get --file "$LOGNAME" --lines 200 --tail   # $LOGNAME from `exec logs list` → .logs[].name
+hoody --container "$C" exec logs get --file "$LOGNAME" --lines 200 --tail -o json   # $LOGNAME from `exec logs list` → .logs[].name
 # Live tail: prints each event as it arrives until you stop it (Ctrl-C).
 hoody --container "$C" exec logs stream --file "$LOGNAME"
 # One-shot dump of the whole file; the command exits when the server closes the stream.
@@ -4382,13 +4522,13 @@ Per-request execution logging is ON by default (`@log-level` defaults to `standa
 
 ### 8. Monitor active requests + per-script stats
 
-**Goal:** "is anything stuck?" + "which script is the hot path?". `hoody exec stats` is a single snapshot; `hoody exec requests list` lists in-flight HTTP/WS; `hoody exec scripts stats list` lists every script with traffic, with its request and error counters (sort by `requests`, `errors`, `p95`, `ws_active` or the default `lastActivity`); `hoody exec scripts stats get` then reports on ONE script, named by the `scriptPath` from that listing. An empty body returns the stub `{"metrics":{}}`, which means "no script asked for", not "no traffic".
+**Goal:** "is anything stuck?" + "which script is the hot path?". `hoody exec stats` is a single snapshot; `hoody exec requests list` lists in-flight script HTTP requests (for WebSocket counts use `hoody exec stats` `websocket.active`, or each script's `activeWs` from `hoody exec scripts stats list`); `hoody exec scripts stats list` lists every script with traffic, with its request and error counters (sort by `requests`, `errors`, `p95`, `ws_active` or the default `lastActivity`); `hoody exec scripts stats get` then reports on ONE script, named by the `scriptPath` from that listing. An empty body returns the stub `{"metrics":{}}`, which means "no script asked for", not "no traffic".
 
 ```bash
 hoody --container "$C" exec stats
 hoody --container "$C" exec requests list
 hoody --container "$C" exec scripts stats list --sort requests --limit 10
-hoody --container "$C" exec scripts stats get --script-path default/1/echo.js
+hoody --container "$C" exec scripts stats get --script-path default/1/echo.js -o json
 ```
 
 For Prometheus scraping, `GET /api/v1/exec/monitor/metrics` returns text/plain in standard exposition format.
@@ -4439,7 +4579,7 @@ hoody --container "$C" exec schedules list
 
 ```bash
 hoody --container "$C" exec schedules run \
-  --script-path /hoody/storage/hoody-exec/scripts/default/1/tick.js --force
+  --script-path /hoody/storage/hoody-exec/scripts/default/1/tick.js --force -o json
 hoody --container "$C" exec schedules history list --limit 5
 ```
 
@@ -4558,25 +4698,20 @@ if (!doc) { res.status(400); return { error: 'document missing' }; }
 return { title: req.body.title, filename: doc.filename, type: doc.type, size: doc.size, text: doc.data.toString('utf8') };
 ```
 
-**Step 2 — post a form** (any HTTP client; here curl with a 5-byte `a.txt` holding `hello`):
-
-```
-curl -s "https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload" -F title=notes -F 'document=@a.txt;type=text/plain'
-# → {"title":"notes","filename":"a.txt","type":"text/plain;charset=utf-8","size":5,"text":"hello"}   (the type observed for a .txt file on Bun 1.4.2)
-```
+**Step 2 — post a form.** Submit a `multipart/form-data` request to the script's `/upload` URL (`https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload`) with the text field `title=notes` and a file field named `document`. Uploading `a.txt` containing the five bytes `hello` returns `title: "notes"`, `filename: "a.txt"`, `size: 5` and `text: "hello"`; `type` is the MIME type reported by the runtime (`text/plain;charset=utf-8` on Bun 1.4.2).
 
 ## Reference
 
-### `hoody exec` (67) — Script execution and templates
+### `hoody exec` (68) — Script execution and templates
 
 | Command | Aliases | Category | Summary | SDK Link | Example |
 |---------|---------|----------|---------|----------|---------|
 | `hoody exec cache clear` |  | destructive | Clear Cache | `exec.cache.clear` | `hoody exec cache clear --hostname example.com --clear-vm` |
 | `hoody exec health` |  | read | Health Check | `exec.kit.getHealth` | `hoody exec health` |
-| `hoody exec logs clear` |  | destructive | Clear Logs | `exec.logs.clear` | `hoody exec logs clear --file /home/user/file.txt --confirm true` |
+| `hoody exec logs clear` |  | destructive | Clear Logs | `exec.logs.clear` | `hoody exec logs clear --file /home/user/file.txt --type all --confirm true` |
 | `hoody exec logs get` |  | read | Read Log | `exec.logs.get` | `hoody exec logs get --file execution.log --lines 100 --tail` |
-| `hoody exec logs list` |  | read | List Logs | `exec.logs.list` | `hoody exec logs list --limit 10` |
-| `hoody exec logs search` |  | read | Search Logs | `exec.logs.search` | `hoody exec logs search --query 'my search' --limit 1000` |
+| `hoody exec logs list` |  | read | List Logs | `exec.logs.list` | `hoody exec logs list --type all --limit 10` |
+| `hoody exec logs search` |  | read | Search Logs | `exec.logs.search` | `hoody exec logs search --query 'my search' --regex '.*'` |
 | `hoody exec logs stream` |  | read | Stream Logs | `exec.logs.stream` | `hoody exec logs stream --file /home/user/file.txt --follow` |
 | `hoody exec magic comments batch update` |  | write | Bulk Update Magic Comments | `exec.magicComments.updateMany` | `hoody exec magic comments batch update --directory /home/user/src --exec-id 64f1a2b3c4d5e6f7a8b9c0d1` |
 | `hoody exec magic comments get` |  | read | Read Magic Comments | `exec.magicComments.get` | `hoody exec magic comments get --path reports/report.pdf --exec-id 64f1a2b3c4d5e6f7a8b9c0d1` |
@@ -4599,7 +4734,7 @@ curl -s "https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload" -F title=notes 
 | `hoody exec packages install` |  | write | Install Packages | `exec.packages.install` | `hoody exec packages install --packages axios --dev` |
 | `hoody exec packages manifest create` |  | write | Init Package Json | `exec.packages.createManifest` | `hoody exec packages manifest create --name hoody-exec-project --version 1.0.0` |
 | `hoody exec packages manifest get` |  | read | Read Package Json | `exec.packages.getManifest` | `hoody exec packages manifest get` |
-| `hoody exec packages manifest update` |  | write | Update Package Json | `exec.packages.updateManifest` | `hoody exec packages manifest update --dependencies key=hello --scripts key=hello` |
+| `hoody exec packages manifest update` |  | write | Update Package Json | `exec.packages.updateManifest` | `hoody exec packages manifest update --dependencies 'lodash=^4.17.21' --scripts 'my-task=node scripts/my-task.js'` |
 | `hoody exec packages pin` |  | write | Pin Versions | `exec.packages.pin` | `hoody exec packages pin --packages axios` |
 | `hoody exec requests list` |  | read | Get Active Requests | `exec.kit.listRequests` | `hoody exec requests list` |
 | `hoody exec restart` |  | destructive | Restart Server | `exec.kit.restart` | `hoody exec restart --graceful --drain-timeout-ms 5000 -y` |
@@ -4623,6 +4758,7 @@ curl -s "https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload" -F title=notes 
 | `hoody exec scripts types validate` |  | read | Validate Type Script | `exec.scripts.validateTypes` | `hoody exec scripts types validate --code <code>` |
 | `hoody exec scripts validate` |  | read | Validate Script | `exec.scripts.validate` | `hoody exec scripts validate --code <code>` |
 | `hoody exec scripts write` |  | write | Write Script | `exec.scripts.write` | `hoody exec scripts write --exec-id 64f1a2b3c4d5e6f7a8b9c0d1 --path /home/user/file.txt --content Hello --create-dirs` |
+| `hoody exec sdk types list` |  | read | List SDK methods | `exec.sdkTypes.list` | `hoody exec sdk types list --limit 20 --raw true` |
 | `hoody exec sdks delete` |  | destructive | Delete S D K | `exec.sdks.delete` | `hoody exec sdks delete --id abc-123 -y` |
 | `hoody exec sdks get` |  | read | Get S D K | `exec.sdks.get` | `hoody exec sdks get --id abc-123` |
 | `hoody exec sdks import` |  | write | Import S D K | `exec.sdks.import` | `hoody exec sdks import --exec-id 64f1a2b3c4d5e6f7a8b9c0d1 --source-url https://example.com/openapi.json --source-auth-type bearer --source-auth-token <source_auth.token>` |
@@ -4706,7 +4842,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 2. Download, extract, FUSE-mount
 
-1. `hoody files downloads create <dir> --download <url>`; `hoody files downloads list <dir> --downloads` to poll.
+1. `hoody files downloads create <dir> --download <url>`; `hoody files downloads list <dir>` to poll.
 2. `hoody files archives preview <archive>`; `hoody files archives extract <archive> --extract src/ --dest work-src` (`--extract` is an exact entry name, or a directory prefix ending in `/`; no globs. `--dest` MUST be relative).
 3. `hoody files backends s3 create` (49 backend types) -> `hoody files get <path> --backend <id>` for one-shot reads OR `hoody files mounts create` -> `hoody files get /hoody/mounts/permanent/...` for a regular FS view -> `hoody files mounts delete`, then `hoody files backends delete`. (A mounted path needs no `--backend`; `hoody files get`/`upload`/`delete` take it for a backend read.)
 
@@ -4733,11 +4869,11 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - **Exclusions decide which paths are journalled.** Built-in dev-dir excludes (`node_modules`, `target`, `.next`, `.nuxt`, `.svelte-kit`, `.turbo`, `__pycache__`, `.venv`, `venv`, `env`, `__pypackages__`, `.tox`, `.nox`, `bower_components`, …) skip journaling unless the deployment turned the dev-dir exclusions off. `.git` is always excluded regardless of that setting (separate hardcoded check, not part of the toggleable list). The deployment can add further excludes of its own. This is why "I wrote to `node_modules/x` and saw no journal entry" is expected.
 - **Journal does NOT cover everything by default.** Live behaviour observed: a fresh `PUT` (create) and an overwriting `PUT` (write) on `/home/user/...` produce entries; URL downloads (`?download=`) and archive extraction are NOT journaled — those write through paths with no journal hook. `hoody files chmod`, `hoody files chown`, `hoody files touch`, `?append=true` and copy/move ARE recorded. Always call `hoody files journal flush` then `hoody files journal list` (or `?history=1`) to inspect what was actually recorded — don't assume coverage.
 - **Built-in dev-dir exclude list always skips journaling** for `node_modules`, `__pycache__`, `.venv`, `target`, `.next`, `.nuxt`, etc. — even on `/home/user/...` paths. Only the deployment can turn these off, at kit start. `.git` is hardcoded to ALWAYS be excluded and stays excluded even then.
-- **`HEAD` answers like `GET` with no body** on both routes: `HEAD /api/v1/files/{path}` returns the status and headers its `GET` would, and so does `HEAD /{path}`. It carries no metadata body; for a JSON metadata envelope use `hoody files stat`.
+- **`HEAD` returns no body** on both routes. `HEAD /api/v1/files/{path}` ignores `Range`, so its status and headers need not match a ranged `GET`. It carries no metadata body; for a JSON metadata envelope use `hoody files stat`.
 - **`hoody files chown` to root is rejected** with `400 Cannot change ownership to root (UID 0)` (owner) or `400 Cannot change group to root (GID 0)` (group) — even where the deployment enabled chown. Use a non-root user (`nobody`, `user`, …).
 - **FUSE mount paths live under a configured mount directory** (`/hoody/mounts/permanent` by default, fixed by the deployment at kit start). An absolute `mount_path` must be under it (`400 Mount path must be under the configured mount directory` otherwise); a relative `mount_path` is resolved under it; an omitted one becomes `<mount dir>/mount_<id>`. If the path already exists and is not a symlink, the create fails with `409 Mount path already exists and is not a symlink`.
 - **Listing-style query params (`?downloads`, `?download_history`, `?extractions`, `?extraction_history`) are honoured on the WebDAV root route, NOT on `/api/v1/files/...`** — calling `GET /api/v1/files/<dir>?downloads` returns a regular directory listing (the query is ignored). Use `GET /<dir>?downloads` (or `GET /?download_history` for the global feed).
-- **Mount the whole FS as a local drive on the USER's machine (client-side WebDAV).** Because the kit serves a WebDAV API at its URL root, the OS's built-in WebDAV client can mount the container's files as a drive/folder: on **Windows** *Map network drive* to `https://{P}-{C}-files-1.{N}.containers.hoody.com/`, on **macOS** Finder → *Connect to Server* to the same URL. For a cross-platform, scriptable mount use `hoody mount <containerId> <localDir>` (`--read-only`/`--background`/`--auth-token`/`--auth-password`/`--auth-ip` flags); it runs rclone over WebDAV, so rclone must be installed on the local machine. This is the inverse of the server-side FUSE mounts (which mount remote backends INTO the container).
+- **Mount the whole FS as a local drive on the USER's machine (client-side WebDAV).** Because the kit serves a WebDAV API at its URL root, the OS's built-in WebDAV client can mount the container's files as a drive/folder: on **Windows** *Map network drive* to `https://{P}-{C}-files-1.{N}.containers.hoody.com/`, on **macOS** Finder → *Connect to Server* to the same URL. For a cross-platform, scriptable mount use `hoody mount <containerId> <localDir>` (`--read-only`/`--background`/`--auth-token`/`--auth-password`/`--auth-ip` flags); it runs rclone over WebDAV, so rclone must be installed on the local machine. A changed file is uploaded whole once it has been closed and idle for about 1 s. When the file on the kit is a version this mount never received (another machine or the container changed it meanwhile), the files kit keeps that version as a conflict copy beside it (`<name> (conflict <host> <time>).<ext>`) and the mount's upload lands at the name, with no error on either side (safe save); conflict copies stay until someone deletes them, so look for them after concurrent edits. A program on the local machine that saves an older buffer after the mount re-read the newer version is not covered. A change made elsewhere shows at the next lookup once it has landed and the mount's 5 s directory cache has expired, while a program that already has the file open may keep its old view (`hoody mount --help`). This is the inverse of the server-side FUSE mounts (which mount remote backends INTO the container); those have no safe save: the upload that reaches the backend last wins, so keep one writer per file there.
 - **Known defect (CLI):** `hoody files exists` sends `HEAD`, and the CLI prints no body for a `HEAD` answer, so it shows no metadata, history or diff. For metadata use `files stat <path>` or `files get <path> --stat`; for history and diffs use `files get <path> --history` or `--diff --from-seq <N>`.
 - **`hoody files chunks write <path> --input <file>` only appends, and only to a file that already exists.** It sends the bytes raw (a piped stdin works too), the append position is fixed, so there is no position flag to set, and it replies `204` with no body. It creates nothing: `hoody files upload <path> --append` creates a missing file and answers JSON.
 - **Replace, refuse, create parents.** `hoody files upload` replaces an existing file (`--append` adds to its end instead) and creates missing parent directories. `hoody files copy` refuses an existing destination unless you pass `--overwrite true`. `hoody files move` never replaces a destination and has no overwrite option: delete the destination first. Both create the destination's missing parent directories.
@@ -4752,8 +4888,8 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - 400 Cannot preview a directory as archive.
 - 400 Unknown operation -- POST needs one query op.
 - 400 Missing query parameter or request body -- PATCH needs op or body.
-- Refusals on the WebDAV path route (`/{path}`) answer JSON `{success: false, error, code}`: `ACCESS_FORBIDDEN` 403, `RESOURCE_NOT_FOUND` 404, `INVALID_PATH` 400, `PATH_CONFLICT` 409, `OVERWRITE_REFUSED` 412 (a WebDAV `COPY`/`MOVE` with `Overwrite: F` onto an existing target), `DIRECTORY_EXISTS` 405 (creating a directory that exists), `PAYLOAD_TOO_LARGE` 413, `UPLOAD_INCOMPLETE` 400 and `REMOTE_UPLOAD_FAILED` 502 (an upload to a remote backend), and `MOUNT_PATH_RESERVED` 409 for a change to a path a mount holds. `INVALID_PARAMETER` means the request itself is wrong; a failure that a changed request would not fix (an OS error, a backend failure, the concurrent-download limit's 429) carries no `code`, so branch on the status. On `/api/v1/files/{path}` many refusals carry no `code` — a REST copy or move onto an existing target without overwrite is 409 `{success: false, error}`. The REST codes are `INVALID_PATH` 400 (`{success: false, error: "Invalid path", code: "INVALID_PATH"}`), `ACCESS_FORBIDDEN` 403 (a path rule), `CONTAINS_SERVICE_STORAGE` 409, `FILE_MOVE_CROSSES_DEVICES` 409, `INVALID_PARAMETER` 400 on some parameter checks, and `FILE_PATH_BUSY`, `FILE_PATH_CHANGED` and `MOUNT_PATH_RESERVED` 409 for a change to a path that is in use or held for a mount. When `code` is absent, branch on the HTTP status.
-- A URL download streams into a hidden part file, `.hoody-download-<id>.part`, in the destination folder, and the file gets its final name only once it is complete. Cancelling the download (or a failure or timeout) removes that part file: where inode numbers identify a file (local filesystems such as ext4, xfs, btrfs, tmpfs) only if its inode is still the one the download created, and elsewhere (FUSE mounts, network filesystems) by its download-specific name while it is a regular file.
+- Refusals on the WebDAV path route (`/{path}`) answer JSON `{success: false, error, code}`: `ACCESS_FORBIDDEN` 403, `RESOURCE_NOT_FOUND` 404, `INVALID_PATH` 400, `PATH_CONFLICT` 409, `OVERWRITE_REFUSED` 412 (a WebDAV `COPY`/`MOVE` with `Overwrite: F` onto an existing target), `DIRECTORY_EXISTS` 405 (creating a directory that exists), `PAYLOAD_TOO_LARGE` 413, `UPLOAD_INCOMPLETE` 400 and `REMOTE_UPLOAD_FAILED` 502 (an upload to a remote backend), and `MOUNT_PATH_RESERVED` 409 for a change to a path a mount holds. `INVALID_PARAMETER` means the request itself is wrong; a failure that a changed request would not fix (an OS error, a backend failure, the concurrent-download limit's 429) carries no `code`, so branch on the status. On `/api/v1/files/{path}` many refusals carry no `code` — a REST copy or move onto an existing target without overwrite is 409 `{success: false, error}`. REST codes include `INVALID_PATH` 400 (`{success: false, error: "Invalid path", code: "INVALID_PATH"}`), `ACCESS_FORBIDDEN` 403 (a path rule), `CONTAINS_SERVICE_STORAGE` 409, `FILE_MOVE_CROSSES_DEVICES` 409, `INVALID_PARAMETER` 400 on some parameter checks, and `FILE_PATH_BUSY`, `FILE_PATH_CHANGED` and `MOUNT_PATH_RESERVED` 409 for a change to a path that is in use or held for a mount. `PERMISSIONS_NOT_APPLIED` and `OWNER_NOT_APPLIED` 409 mean the filesystem does not retain the requested permission bits or owner, as on a mount of remote storage: use storage that retains them when you need them. A chmod, or an upload whose requested permissions are narrower than the file's fixed ones, changes nothing; an upload requesting broader permissions writes its whole body under the fixed ones and still answers `PERMISSIONS_NOT_APPLIED`, so read the message before deciding whether to resend the body. When `code` is absent, branch on the HTTP status.
+- A URL download streams into a hidden part file, `.hoody-download-<id>.part`, in the destination folder, and the file gets its final name only once it is complete. Cancelling the download (or a failure or timeout) removes that part file on a local filesystem (ext4, xfs, btrfs, tmpfs) only if its inode is still the one the download created. On FUSE mounts and network filesystems the partial file is kept, so check the destination for leftovers.
 
 ## Related namespaces
 
@@ -4902,8 +5038,8 @@ hoody --container "$C" files downloads create /home/user/inbox \
 **Step 2 — list active** (from a second request while a download runs; a finished one moves to the history). `?downloads` ONLY works on the WebDAV root route — `GET /api/v1/files/<dir>?downloads` ignores the flag and returns a normal listing.
 
 ```bash
-hoody --container "$C" files downloads list /home/user/inbox --downloads
-hoody --container "$C" files downloads history list --download-history
+hoody --container "$C" files downloads list /home/user/inbox
+hoody --container "$C" files downloads history list
 ```
 
 ### 7. Archive workflow — preview, then selective extract
@@ -5121,13 +5257,13 @@ hoody --container "$C" files journal list --path /home/user/files-examples-clean
 | `hoody files open` |  | action | Open the Files kit file explorer at a folder in your browser |  | `hoody files open --path /home/user` |
 | `hoody files realpath` |  | read | Resolve canonical path (realpath) | `files.realpath` | `hoody files realpath /home/user/file.txt` |
 | `hoody files s3 get` |  | read | Access file from S3 | `files.s3.get` | `hoody files s3 get /home/user/file.txt --type s3 --server s3.amazonaws.com --s3-bucket <s3_bucket> --s3-region us-east-1 --user alice` |
-| `hoody files search` |  | read | Search directory | `files.search` | `hoody files search /home/user/src --q <q> --json --theme oc-1` |
+| `hoody files search` |  | read | Search directory | `files.search` | `hoody files search /home/user/src --q <q> --theme oc-1 --color-scheme light` |
 | `hoody files ssh get` |  | read | Access file via SSH/SFTP | `files.ssh.get` | `hoody files ssh get /home/user/file.txt --type ssh --server nas.local:22 --user alice` |
 | `hoody files ssh upload` |  | write | Upload file via SSH/SFTP | `files.ssh.upload` | `hoody files ssh upload /home/user/file.txt --server nas.local:22 --user alice --input ./local-file` |
 | `hoody files stat` |  | read | Get file metadata (stat) | `files.stat` | `hoody files stat /home/user/file.txt` |
 | `hoody files touch` |  | write | Touch file (create or update mtime) | `files.touch` | `hoody files touch /home/user/file.txt` |
 | `hoody files update` |  | write | Modify file properties or move/rename | `files.update` | `hoody files update /home/user/file.txt --body '{"move_to":"/new/dir/file.txt"}'` |
-| `hoody files upload` |  | write | Upload or append file | `files.upload` | `hoody files upload /home/user/file.txt --append --input ./local-file` |
+| `hoody files upload` |  | write | Upload or append file | `files.upload` | `hoody files upload /home/user/file.txt --append --x-expected-length 16777216 --input ./local-file` |
 | `hoody files uploads delete` |  | destructive | Delete every held file of a pending upload. They are the only copy of those changes; the backend is not touched | `files.uploads.delete` | `hoody files uploads delete abc-123 -y` |
 | `hoody files uploads deliver` |  | write | Upload held files of a pending upload to a backend, overwriting newer versions there. Without --paths or --paths-b64, every complete file is delivered | `files.uploads.deliver` | `hoody files uploads deliver abc-123 --paths /home/user/src -y` |
 | `hoody files uploads download` |  | read | Write the held copy of one file of a pending upload, byte for byte; save it with --out-file <path>. Name it with exactly one of --path or --path-b64, as listed | `files.uploads.download` | `hoody files uploads download abc-123 --path /home/user/file.txt` |
@@ -5164,7 +5300,7 @@ SQL/KV → `sqlite`, container fs → `files`, desktop notifs → `notifications
 
 - **To add a note, create a page in a notebook you already have; do not create a notebook for it.** Your default notebook (the `notebookId` from `hoody notes whoami`) and every new notebook come with a `Home` section. A page is `hoody notes nodes create` with `type:"page"`, `parentId:<Home section id>` (from `hoody notes nodes list` with `type:"section"`) and `attributes:{name}`; then write its text with `hoody notes document append`.
 - `notebookId` on every notebook-scoped call (identity and notebook list/create take none). Notebook-scoped commands fall back to your default notebook when `--notebook-id` is omitted. Without a Bearer token or export ticket, identity comes from the `?username=` / `?role=` query parameters on each request (default username `user`, default role `owner`). The first request for a username adds that user to the container's single shared default notebook (`Hoody Notes`); every query-identity user joins that same notebook, so it is not private. Use `hoody notes notebooks create` for a separate notebook.
-- `hoody notes document append` takes `--x-idempotency-key <key>`, so the recommended document-writing path is retry-safe from the CLI. Most other commands have no idempotency flag; use raw HTTP with an `X-Idempotency-Key` header when you need a retry-safe node or record create. Notebook create, comment create and version create ignore that header, so retrying those can create duplicates. Export `ticket` is HTML-export-only.
+- `hoody notes document append` and `hoody notes nodes create` take `--x-idempotency-key <key>`, so the recommended document-writing path and node creation are retry-safe from the CLI. Most other commands have no idempotency flag; use raw HTTP with an `X-Idempotency-Key` header when you need a retry-safe record create. Notebook create, comment create and version create ignore that header, so retrying those can create duplicates. Export `ticket` is HTML-export-only.
 - **Writing a document needs editor-or-admin role on the node** — `hoody notes document set`/`hoody notes document update`/`hoody notes document append` reject viewers and read-only collaborators with `403`. Documents attach only to `page` and `record` nodes; `message`/`channel`/`database` nodes do not support documents.
 
 ## Capability URL
@@ -5184,8 +5320,8 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 2. **Bootstrap identity + notebook** — `hoody notes whoami` → `{userId,username,role,notebookId}`. The `notebookId` is the container's shared default notebook (`Hoody Notes`, with a `Home` section and starter pages), which every query-identity username joins; create your own with `hoody notes notebooks create` when the content must not be shared. `hoody notes notebooks list`/`create`/`get` open to any non-`none` member; `update`/`delete` are owner-gated.
 3. **Build a structured document with `hoody notes document set`** — use this only when you need full control over layout/ordering (append cannot create lists, tables, or nested blocks). `hoody notes document set` OVERWRITES the whole document; `hoody notes document update` merges: top-level keys replace the stored ones, and `content.blocks` merges by block id (each sent block replaces the stored block with that id wholesale, omitted blocks are kept; removing a block takes `hoody notes document set`). The body is `{content:{type:"rich_text",blocks:{<id>:<block>}}}`. **Use the real block `type` strings and the `attrs` key, and remember container blocks (lists/tasks/blockquote/table cells) hold their text in a CHILD `paragraph` block** — see §Examples 0 (block-model cheat-sheet) and 2.
 4. **Database CRUD** — `hoody notes nodes create` `type:"database"`; then `hoody notes records create`/`hoody notes records list`/`hoody notes records search`/`hoody notes records update` (merges `fields`)/`hoody notes records delete`. Page with `page`/`count` on `hoody notes records list` (count max 100).
-5. **Comments + versions** — `hoody notes collaborators add` (`admin`/`editor`/`collaborator`/`viewer`). `hoody notes comments create` (top-level, anchored, or reply); `hoody notes comments update` / `hoody notes comments delete` / `hoody notes comments resolve` accept optional `expectedVersion` for optimistic concurrency. `hoody notes versions create`/`list`/`get`/`hoody notes versions restore`.
-6. **TUS upload + download** — the `fileId` is an input, not something the upload returns. First create the file node yourself: `hoody notes nodes create` with `id: <22 lowercase hex chars> + '18'` (the file-id suffix; a node created without an explicit `id` gets the generic `…08` suffix, which the upload routes reject), `type: 'file'`, `parentId` (a node where you have editor rights), and `attributes: { subtype: 'image'|'video'|'audio'|'pdf'|'other', name, originalName, mimeType, extension: '' or '.ext', size, version: <22 lowercase hex chars> + '03', status: 0 }`. Only that node's creator can upload to it. Then run the TUS calls on that id: create (`POST …/files/{fileId}/tus` with `Tus-Resumable: 1.0.0` and `Upload-Length`), send chunks (`PATCH` with `Upload-Offset` and `Content-Type: application/offset+octet-stream`), check the resume offset (`HEAD`), or cancel (`DELETE`). Download with `hoody notes files download`. The CLI has no TUS commands (`hoody notes files` only lists and downloads), so upload over HTTP.{22}18$/.test(fileId)"]
+5. **Collaborators, comments + versions** — before sharing a node with someone new to the notebook, call `hoody notes members invite --users <users>`, check the returned `errors`, and use the created user's `id` as the `collaboratorId` for `hoody notes collaborators add` (`admin`/`editor`/`collaborator`/`viewer`; managing node collaborators needs admin permission): a collaborator who is not yet a member of that notebook is refused with `404 user_not_found`. `hoody notes comments create` (top-level, anchored, or reply); `hoody notes comments update` / `hoody notes comments delete` / `hoody notes comments resolve` accept optional `expectedVersion` for optimistic concurrency. `hoody notes versions create`/`list`/`get`/`hoody notes versions restore`.
+6. **TUS upload + download** — the `fileId` is an input, not something the upload returns. First create the file node yourself: `hoody notes nodes create` with `type: 'file'` (without an `id`, the kit gives the node a file id, which ends in `18`, the only shape the upload routes accept; an `id` you pass yourself must be 22 lowercase hex chars + `'18'`), `parentId` (a node where you have editor rights), and `attributes: { subtype: 'image'|'video'|'audio'|'pdf'|'other', name, originalName, mimeType, extension: '' or '.ext', size, version: <22 lowercase hex chars> + '03', status: 0 }`. Only that node's creator can upload to it. Then run the TUS calls on that id. Send `Tus-Resumable: 1.0.0` on every one of them (POST, PATCH, HEAD and DELETE); any other value is refused with `412`. On `…/files/{fileId}/tus`: create the upload with `POST` and `Upload-Length`, send chunks with `PATCH` plus `Upload-Offset` and `Content-Type: application/offset+octet-stream`, check the resume offset with `HEAD`, or cancel with `DELETE`. Download with `hoody notes files download`. The CLI has no TUS commands (`hoody notes files` only lists and downloads), so upload over HTTP.{22}18$/.test(fileId)"]
 
 ## Quirks & gotchas
 
@@ -5625,7 +5761,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 2. Read recent notifications
 
-`hoody notifications list` — `display`: `":0"`, `"0"`, `"0,:1,2"`, or `"all"`. Optional `limit` (1–1000, default 100), `since` (ms, inclusive), `after_id` (exclusive id), `cursor`, `username`, `session`. Without `since`/`after_id`/`cursor` one call returns the newest `limit` entries, listed newest-first. With `since` the page holds the OLDEST `limit` entries at or after that timestamp, with `after_id` the OLDEST `limit` ids above it, and with `cursor` the OLDEST `limit` entries after it; these forward pages are listed oldest-first, in the order they were selected, so consecutive pages join into one ascending list. Each response carries an opaque `next_cursor` and `has_more`: pass `next_cursor` back as `cursor` while `has_more` is `true` to page forward (`has_more` is always `false` on a plain newest page). `cursor` cannot be combined with `since` or `after_id` (`400`). `count` is the size of that page, not a total. There is no reverse cursor; to walk the whole retained history, start at `since=0` and page forward. The CLI takes it as `--cursor <next_cursor>` (omit `--since` and `--after-id` beside it); one cursor continues a listing of one display or of several; see Example 8.
+`hoody notifications list` — `display`: `":0"`, `"0"`, `"0,:1,2"`, or `"all"`. Optional `--limit N` (caps the total items returned, at most 10,000; each request carries up to 1000, and without `--limit` the CLI walks all pages), `since` (ms, inclusive), `after_id` (exclusive id), `cursor`, `username`, `session`. Without `since`/`after_id`/`cursor` one call returns the newest `limit` entries, listed newest-first. With `since` the page holds the OLDEST `limit` entries at or after that timestamp, with `after_id` the OLDEST `limit` ids above it, and with `cursor` the OLDEST `limit` entries after it; these forward pages are listed oldest-first, in the order they were selected, so consecutive pages join into one ascending list. Each response carries an opaque `next_cursor` and `has_more`: pass `next_cursor` back as `cursor` while `has_more` is `true` to page forward (`has_more` is always `false` on a plain newest page). `cursor` cannot be combined with `since` or `after_id` (`400`). `count` is the size of that page, not a total. There is no reverse cursor; to walk the whole retained history, start at `since=0` and page forward. The CLI takes it as `--cursor <next_cursor>` (omit `--since` and `--after-id` beside it); one cursor continues a listing of one display or of several; see Example 8.
 
 ### 3. Subscribe to events
 
@@ -5649,7 +5785,7 @@ Reach a human who isn't watching the session — on their phone, desktop, or sma
 - `dismiss.notificationIds` must be a non-empty array; non-integer elements are silently dropped, and only when no integer remains does it return `400 "notificationIds must contain valid integer IDs"` (so `[12,"13"]` dismisses only `12`). `displayId` strips leading `:`.
 - `hoody notifications send` limits: `summary` ≤200 and `body` ≤1000 by default (a deployment can change them with `NOTIFY_SEND_MAX_SUMMARY_LENGTH` / `NOTIFY_SEND_MAX_BODY_LENGTH`), `category` ≤50, `expire_time` 0–300000; `urgency` ∈ `low|normal|critical`; `display` 1–40000 (display 0 and higher numbers are a `400`).
 - `list.display` numeric or `"all"`; `connect.displays` accepts `all`, `*`, or a comma list of 1–5-digit IDs, each optionally `:`-prefixed (`1000` and `20001` are valid; 6+ digits rejected).
-- `list.limit` `[1,1000]` def 100; forward start points `since`/`after_id`, continuation `cursor` (a `next_cursor` value; not combinable with `since`/`after_id`); `username`/`session` 1–100 ASCII alnum.
+- `--limit N` caps the total items returned (CLI ceiling 10,000; requests carry at most 1000 items); forward start points `since`/`after_id`, continuation `cursor` (a `next_cursor` value; not combinable with `since`/`after_id`); `username`/`session` 1–100 ASCII alnum.
 - `username`/`session` are owner filters, with specific displays and with `all`: only history files named for that owner are read (`<username>-<session>-notifications.json`, `<username>-display-<N>-notifications.json`), so the generic `display-<N>`/`user-<N>` history is excluded. A `session` filter also excludes the `<username>-display-<N>` files, which carry no session. The display selection still filters the rows read.
 - Dismissal scope on `hoody notifications list`: every returned row is checked against the global dismissals and against its own display's scoped dismissals, for one display, a multi-display list (`2,3`) and `all` alike. A dismissal scoped to `:2` hides that id on `:2` everywhere it is listed; the same id on `:3` stays visible. `hoody notifications restore` without `displayId` clears every scope (global and all displays); with one it clears only that display.
 - `iconId` ext whitelist `jpg|jpeg|png|webp|avif|gif|bmp`; traversal rejected.
@@ -5666,7 +5802,7 @@ Reach a human who isn't watching the session — on their phone, desktop, or sma
 
 - Invalid input on `hoody notifications send` (including text the dispatcher's sanitizer rejects) → `400` `error: "Validation Error"` with the reason in `details`. A failed dispatch carries a fixed `code` and one fixed `details` sentence: no display running and none can be started → `503` `error: "Display not available"`, `code: "DISPLAY_NOT_AVAILABLE"`; the display's notification session not up yet → `503` `error: "Display not ready"`, `code: "DISPLAY_NOT_READY"`, with `Retry-After` and `details: "The display's notification session is not available yet. Retry in a few seconds."`; a timeout ("Sending the notification timed out. Retry later.") or any other failure ("The notification service failed to send the notification.") → `500` `error: "Notification dispatch failed"`, `code: "DISPATCH_FAILED"`.
 - WS origin-deny → `403` `Origin not allowed` before the upgrade; close `1008` on message rate limit; `1001` heartbeat timeout. `429` on `send` / `hoody notifications icons get`; both are enforced by the shared per-IP rate-limit middleware.
-- `/health` 200 ≠ authorised endpoints reachable.
+- `GET /api/v1/notifications/health` returning 200 does not establish that authorised endpoints are reachable.
 
 ## Related namespaces
 
@@ -5730,13 +5866,15 @@ hoody --container "$C" notifications send --display 2 \
 ```bash
 IDS=$(hoody --container "$C" notifications list 2 --limit 50 -o json \
   | jq -r '.data.notifications[].id' | paste -sd, -)
-hoody --container "$C" notifications dismiss \
-  --display-id 2 --notification-ids "$IDS"
+if [ -n "$IDS" ]; then   # an empty list is refused
+  hoody --container "$C" notifications dismiss \
+    --display-id 2 --notification-ids "$IDS"
+fi
 ```
 
 ### 5. Restore everything you just dismissed
 
-**Goal:** undo Example 4, bring dismissed items back into the listing. `hoody notifications restore` is `DELETE /dismiss` (same path as POST `hoody notifications dismiss`). With `displayId: "2"` it undoes Example 4 and nothing else; omitting `displayId` clears every dismissal, global and on every display.
+**Goal:** undo Example 4, bring dismissed items back into the listing. `hoody notifications restore` is `DELETE /dismiss` (same path as POST `hoody notifications dismiss`). With `displayId: "2"` it clears every dismissal scoped to display 2, including dismissals made before Example 4; global dismissals and other displays' scoped dismissals remain. Omitting `displayId` clears every dismissal, global and on every display.
 
 ```bash
 hoody --container "$C" notifications restore --display-id 2   # display 2 scope
@@ -5770,16 +5908,18 @@ hoody --container "$C" notifications list 2 \
 
 The CLI takes the cursor as `--cursor <next_cursor>`.
 
+`hoody notifications list` walks every page itself and, when an unfiltered walk finishes at a page boundary, keeps the last page's `data.next_cursor` in its output: save it and pass it as `--cursor` on the next poll. The cursor is `null` when the result was cut within a page or filtered. The HTTP loop below is another way to keep the cursor yourself:
+
 ```bash
+KIT="https://${P}-${C}-n-1.${N}.containers.hoody.com"
 # First read: the newest page. Keep its next_cursor (null only when nothing is listed).
-CUR=$(hoody --container "$C" notifications list all --limit 50 -o json \
-  | jq -r '.data.next_cursor // empty')   # -o json keeps the kit envelope
+CUR=$(curl -sf "$KIT/api/v1/notifications/all?limit=50" | jq -r '.data.next_cursor // empty')
 # Each poll: follow next_cursor while has_more; every page is the OLDEST rows past the cursor.
 while :; do
   if [ -n "$CUR" ]; then
-    PAGE=$(hoody --container "$C" notifications list all --limit 1000 --cursor "$CUR" -o json)
+    PAGE=$(curl -sfG "$KIT/api/v1/notifications/all" --data-urlencode "cursor=$CUR" --data-urlencode "limit=1000")
   else
-    PAGE=$(hoody --container "$C" notifications list all --limit 1000 --since 0 -o json)
+    PAGE=$(curl -sfG "$KIT/api/v1/notifications/all" --data-urlencode "since=0" --data-urlencode "limit=1000")
   fi
   echo "$PAGE" | jq -c '.data.notifications[]'   # handle the rows (oldest first)
   CUR=$(echo "$PAGE" | jq -r '.data.next_cursor // empty')
@@ -5800,7 +5940,7 @@ hoody --container "$C" notifications list 2 \
 
 ### 10. Survive a 429 rate-limit burst on `hoody notifications send`
 
-**Goal:** you're shipping a flood of toasts (CI, monitoring, …) and the kit pushes back with `429 Too Many Requests`. The kit per-IP rate-limits both `hoody notifications send` and `hoody notifications icons get`. Strategy: cap concurrency client-side, exponential-backoff on `429`, and never retry on `400` (validation — fix the body instead). A `503` with `code: "DISPLAY_NOT_READY"` means the display's notification session is not up yet: wait for its `Retry-After` and resend. A `503` with `code: "DISPLAY_NOT_AVAILABLE"` means no display can be started, so bring one up (→ `display`) instead of looping on the same call. A `500` (`code: "DISPATCH_FAILED"`) is a failed or timed-out send; its `details` says which.
+**Goal:** you're shipping a flood of toasts (CI, monitoring, …) and the kit pushes back with `429 Too Many Requests`. The kit per-IP rate-limits both `hoody notifications send` and `hoody notifications icons get`. Strategy: cap concurrency client-side, exponential-backoff on `429`, and never retry on `400` (validation — fix the body instead). A `503` with `code: "DISPLAY_NOT_READY"` means the display's notification session is not up yet: wait for its `Retry-After` and resend. A `503` with `code: "DISPLAY_NOT_AVAILABLE"` means the target display is not running and the container has no display server to start it: use a container image with display support, because retrying the same call does not help. A `500` (`code: "DISPATCH_FAILED"`) is a failed or timed-out send; its `details` says which.
 
 ```bash
 # By default the CLI retries a send only when it was never dispatched, never on a 429.
@@ -6005,7 +6145,7 @@ A live sender streams at once, with nobody watching; any number of viewers (256 
   - Cancel frees the name. The page stores nothing in the browser and sends a nonce CSP with `connect-src 'self'`.
   - Pre-fill: `name` (≤1024; absent → random), `n` (1–256, invalid → 1), `text` (≤100000, selects text mode), `mode=file|text`, `filename` (≤255), `autostart=1` (text mode with a text only; never for a file; a refused name shows the reason instead). Over-long values are cut without splitting a character.
 - To hand a person a ready send link, build `<kit>/api/v1/pipe/?name=<name>&text=<text>` (add `&autostart=1` to send it on open, `&filename=<name.ext>`, `&n=N`). For a file, give `?name=<name>`: they pick the file and click Send.
-- WebSocket relay: `GET /{name}?ws` with an upgrade pairs exactly two peers. Messages pass both ways with their type and boundaries kept, at most 1 MiB each. The first peer's messages are held (4096 / 2 MiB) until the second arrives (`?wait`, default 300 s, then close `4408`). A slow reader more than 2 MiB behind closes the pair with `1013`. Close codes 1000-1003, 1007-1014 and 3000-4999 are forwarded; a drop arrives as `1001`. The first peer's subprotocol binds the pair. A name holds either a transfer or a pair, never both (409 both ways); `?status` shows `kind: "ws"`, `peers`. SDK: `PipeStream.connect(name, { wait, protocols, signal })` → `{ readable, writable, closed, close }`, one chunk = one message; a refusal is a `PipeWsError` with `.status`; `forwardTcp({ transport: 'ws', path, listen|connect })`.
+- WebSocket relay: `GET /{name}?ws` with an upgrade pairs exactly two peers. Messages pass both ways with their type and boundaries kept, at most 1 MiB each. The first peer's messages are held (4096 / 2 MiB) until the second arrives (`?wait`, default 300 s, then close `4408`). A slow reader more than 2 MiB behind closes the pair with `1013`. Close codes 1000-1003, 1007-1014 and 3000-4999 are forwarded; a drop arrives as `1001`. The first peer's subprotocol binds the pair. A name holds either a transfer or a pair, never both (409 both ways); `?status` shows `kind: "ws"`, `peers`. 
 - To hand a person a ready receive link, build `<kit>/api/v1/pipe/<name>?receive&autostart=1&filename=<name.ext>` (add `&n=N` for N receivers); they open it and the file lands in their downloads when the sender sends. A share link is `<kit>/api/v1/pipe/<name>?share&source=screen|camera|audio` (capture still needs their click on Start); viewers open `<kit>/api/v1/pipe/<name>?video`.
 - `Service-Worker: script` → 400.
 - `Content-Range` on POST/PUT → 400.
@@ -6204,14 +6344,14 @@ cat /tmp/file.bin                             # → first-file-content
 
 **Result:**
 - 1100-char path POST: kit returned `414` with body `[ERROR] Path too long (max 1024 characters).`
-- A 1024-char path name is the longest the kit accepts, matching the SDK and CLI checks; 1025 characters gets `414`.
+- The kit accepts at most 1024 characters in the path name as it is sent (percent-encoded); 1025 gets `414`. The SDK and CLI check the unencoded name, so a name that passes can still exceed the limit once percent-encoded and receive `414`.
 
 ```bash
 # The CLI refuses names over 1024 characters before any request:
 LONG=$(printf 'x%.0s' {1..1100})
 hoody --container "$C" pipe send "$LONG" --text data
 # → Error: pipe path must be <= 1024 characters
-# Names up to 1024 characters pass both the CLI and the kit; keep names short anyway:
+# Percent-encoding can push a name past the kit's 1024-character limit even when the CLI accepts it; keep names short:
 SHORT="t-$(openssl rand -hex 8)"  # ~18 chars total
 ```
 
@@ -6323,7 +6463,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `level` accepts ONE value at a time on the kit URL: `level=warn,error` returns `total: 0`, so query each level separately and union client-side.
 - `serviceName` is not honoured on the kit URL for `GET /_logs` (the list handler ignores it); filter client-side. It IS honoured on `GET /_logs/stream`, so tail with `serviceName=` and list without it.
 - `hoody proxy logs stream` forwards `--service-name`, `--source` and `--after-id` to the stream endpoint, so `--service-name` filters the stream on the server; no client-side post-filter is needed.
-- Every `hoody proxy logs list` read returns `{entries,total,limit,offset}`. `last=N` returns the newest N entries, oldest first, in one response (`total` is the number returned, `offset` does not apply, and `last` wins over `afterId`); on the kit URL without bodies or time filters those entries come from the in-memory recent buffer and carry `id: 0`, so never cursor from them. `afterId` always reads the log database: real row ids, oldest first, `total` counts every entry after the cursor and `offset` pages through them.
+- Every `hoody proxy logs list` read returns `{entries,total,limit,offset}`. `last=N` returns the newest N entries, oldest first, in one response (`total` is the number returned, `offset` does not apply, and `last` wins over `afterId`); on the kit URL without bodies or time filters those entries come from the in-memory recent buffer, which holds the newest entries of every container on the server, so a busy neighbour can leave fewer than N there, and it starts empty after a server restart. Every entry carries its row `id`, so pass the last one as `afterId` to follow on. `afterId` always reads the log database: oldest first, `total` counts every entry after the cursor and `offset` pages through them.
 - `includeRequestBody`/`includeResponseBody` default `false`.
 - The resume buffer holds at most 2,000 frames and 8 MiB, shared by every stream on the server, so a busy neighbour shortens your window; past it you get `event: gap`.
 - A server restart ends the stream with no event; ids then resume at least 10,000 past the last value the server saved, which can trail the last id you saw, and the buffer starts empty, so a pre-restart `Last-Event-ID` gets `event: gap`. On `event: reset` drop your saved id and reconnect without it.
@@ -6349,13 +6489,13 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first.
 
-> **CLI note.** `hoody proxy logs list|stats|stream` target the kit's `logs` service for the container selected with `--container` (`{project}-{container}-logs-1.…`), authorised by that container's proxy permissions — no account bearer is sent. The kit-URL behaviours documented below (`id: 0` on `last=N` rows) therefore apply to the CLI form as well.
+> **CLI note.** `hoody proxy logs list|stats|stream` target the kit's `logs` service for the container selected with `--container` (`{project}-{container}-logs-1.…`), authorised by that container's proxy permissions — no account bearer is sent. The kit-URL behaviours documented below (`last=N` rows come from the recent buffer) therefore apply to the CLI form as well.
 
 `proxyLogs` is read-only (no destructive writes — clear/reset/repair are not exposed via the kit URL), so the surface is small. The 7 recipes below cover every working filter, both paging modes, the stats endpoint, and SSE resume. The list endpoint does **not** filter by program, source IP (`clientIp`), alias hostname or `serviceName` server-side (none of them is honoured as a query parameter on `GET /_logs`); scope by those fields client-side after a paged scan, as §2 (status) and §5 (traceId) do.
 
 ### 1. Tail the last N requests across every kit
 
-**Goal:** glance at the most recent ~50 requests handled by the container's edge proxy. Uses `last=N`, which returns the newest N entries in the usual `{entries,total,…}` envelope, ordered **oldest-first within the returned slice**. On the kit URL they come from the in-memory recent buffer and carry `id: 0` placeholders, so use §3 for a cursor. It is the cheapest call you can make.
+**Goal:** glance at the most recent ~50 requests handled by the container's edge proxy. Uses `last=N`, which returns the newest N entries in the usual `{entries,total,…}` envelope, ordered **oldest-first within the returned slice**. On the kit URL they come from the in-memory recent buffer. Each entry carries its row `id`: pass the last one as `afterId` (§3) to read what came after. It is the cheapest call you can make.
 
 ```bash
 hoody --container "$C" proxy logs list --last 50 -o json \
@@ -6373,7 +6513,7 @@ hoody --container "$C" proxy logs list --level error --limit 200 -o json \
 
 ### 3. Walk the full window with an `afterId` cursor (oldest → newest)
 
-**Goal:** sweep every entry without skipping or double-reading rows. Page by row id: `afterId` always reads the log database, returns entries **oldest first** with real row ids, and `total` counts every entry after the cursor. Start at `afterId=0`, then pass the last `id` of each page as the next `afterId`; new traffic lands after your cursor, so nothing shifts under you. Plain `limit`/`offset` without `afterId` counts from the **newest** entry, so arriving entries move every page during a walk. Do not cursor from a `last=N` read: its rows carry `id: 0`. Walk until `entries` is empty.
+**Goal:** sweep every entry without skipping or double-reading rows. Page by row id: `afterId` always reads the log database, returns entries **oldest first** with real row ids, and `total` counts every entry after the cursor. Start at `afterId=0`, then pass the last `id` of each page as the next `afterId`; new traffic lands after your cursor, so nothing shifts under you. Plain `limit`/`offset` without `afterId` counts from the **newest** entry, so arriving entries move every page during a walk. To start from the present instead of the oldest entry, take the cursor from the last entry of a `last=N` read. Walk until `entries` is empty.
 
 **Rate limit:** kit-URL reads are limited per scope: by default a burst of 10, then 30 per minute (one every 2 s), and some deployments differ (see Common errors). A walk longer than about 10 pages therefore gets `429 {"error":"rate_limited"}`. That reply has no `entries`, so a loop that reads it as an empty page stops early and looks finished. The loops below treat any failed call, or any reply without an `entries` array, as a failure. After each failure they wait (2 s, then 4, 8, 16 and 32 s) and retry. The walk stops with an error and exit status 1 on the 6th failed call in a row, after 5 retries and about 62 s of waiting.
 
@@ -6422,6 +6562,8 @@ hoody --container "$C" proxy logs list --limit 1000 \
 ### 6. Live-tail with SSE and resume after disconnect
 
 **Goal:** stream new log entries as they happen, and resume after a network blip. Live frames carry an `id:` line holding an increasing integer cursor; the initial replay frame may be `data: [...]` with no `id:` line, so seed your cursor only after you see the first `id:` line. Resume by sending `Last-Event-ID: <last>` on reconnect. The resume is complete only while your cursor is still in the server's replay buffer: when it is not, the first frame is `event: gap` (no `id:`, data `{"after","resumedFrom"}`), and the entries in between are NOT replayed. Treat `gap` as a control event, not a log entry: backfill the missing window with `hoody proxy logs list` (`sinceMs` = the `tsMs` of the last entry you processed), skip entries you already handled, then carry on with the stream. `event: purged` carries an `id:` and `data: {}`: advance the cursor past it, but it is not an entry. On `event: reset` clear your cursor and reconnect fresh; on `event: scope-destroyed` exit cleanly — the container is gone.
+
+A frame larger than 256 KiB is replaced by a stub that keeps the entry's row `id` and carries `truncated: true` and `originalFrameBytes`. To get the whole record, read that row with `hoody proxy logs list --after-id <afterId> --limit 1` and check that the returned entry's `id` matches; the SSE `id:` line is a different cursor from this row id. If the row cannot be read, report the missing entry instead of treating the stub as complete.
 
 ```bash
 # The CLI seeds the first request's Last-Event-ID header from --last-event-id and
@@ -6495,8 +6637,8 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 1. Search then pick
 
-1. `hoody run search [--page-size <page_size>] [--cursor <cursor>]` (this is the paged route: `page_size`, default 25, max 100, sets the page; `selector.limit` is ignored here) → `{ set_id, total_count, items[], next_cursor? }`.
-2. `hoody run resolve ...` → `shell_command`.
+1. `hoody run search --app <app> --page-size 25 -o json` (`page_size`, default 25, max 100, sets the page; `--cursor` for the next page) → `set_id`, `total_count`, `items`, `next_cursor`.
+2. `hoody run resolve --app <app> --set-id <set_id> --pick index --pick-index <N> -o json` → `shell_command`.
 
 ### 2. Preflight
 
@@ -6820,7 +6962,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### KV CRUD + CAS + counters
 
-- `hoody kv set` — `ttl`, `if_match` (CAS), `path`, `history`.
+- `hoody kv set` — `ttl`, `if_match` (CAS on the value, the `--if-value` flag; `--if-match` is the ETag header), `path`, `history`.
 - `hoody kv get` — `path`, `at_timestamp`. `hoody kv exists` takes `db`, plus optional `table` and `timeout`; `hoody kv delete` takes `db`/`table`/`history` (`history`, default true, records the deleted value; `false` records only that a delete happened) plus `create_db_if_missing` (alias `auto_create`) and `timeout`.
 - `hoody kv increment` / `hoody kv decrement` / `hoody kv arrays push` / `hoody kv arrays pop` / `hoody kv arrays remove` — atomic, `path`-aware (`path` is a JSON path inside the value, such as `.user.tags`). The push body is any JSON value, appended as one element; the remove body is `{"value": <any>}` (matches by value), or pass the `index` query parameter instead. 
 
@@ -6862,7 +7004,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `400 GET /query only accepts read-only SELECT/WITH queries; use POST /db for mutating SQL` (returned for non-SELECT input; a non-base64 `sql` value is not an error — it is interpreted as raw SQL).
 - `400 Invalid JSON body` on `hoody kv batch set` — wire shape requires each `value` to be a JSON-encoded string, not an object.
 - `409` with `"error": "TIME_TRAVEL_CHAIN_GAP"` (message `time-travel: chain gap straddles target timestamp`) when the history needed for the answer has an unrecorded (`history: false`) or pruned gap. Timestamp reads, `hoody kv snapshots get` at an `op_number`, and the rollbacks (`hoody kv rollback`, `hoody kv table rollback`) all return it. Per-key rollback puts the detail in `error` after the code (`"TIME_TRAVEL_CHAIN_GAP: ..."`); table rollback returns `error: "TIME_TRAVEL_CHAIN_GAP"` and puts the detail in `message`.
-- A failing transaction item aborts and rolls back the whole transaction by default: the response is that item's HTTP status (4xx or 5xx) with `{ "reqIdx": <index>, "error": "...", "code": "..." }`. A failure of your own SQL is classified: `400 SQL_ERROR` (syntax, unknown table or column) or `400 SQL_BIND_ERROR` (parameters that do not fit the statement), `409 SQL_CONSTRAINT` or `409 DATABASE_READONLY`, which carry SQLite's message, and `503 DATABASE_BUSY` or `503 REQUEST_TIMEOUT`, which carry the generic `internal database error` (no 5xx body carries SQLite's text). Anything else is `500 DATABASE_ERROR` with the same generic message, so do not retry it blindly. Set `"noFail": true` on an item to keep going instead: the call returns `200`, and that item's result is `{ "success": false, "error": "...", "code": "..." }` (no `reqIdx`). A `valuesBatch` item under `noFail` can instead succeed in part: rows with bad parameters are skipped and listed in `rowErrors` while `success` is `true`, so inspect `rowErrors` too. = responseItem{"]
+- A failing transaction item aborts and rolls back the whole transaction by default: the response is that item's HTTP status (4xx or 5xx) with `{ "reqIdx": <index>, "error": "...", "code": "..." }`. A failure of your own SQL is classified: `400 SQL_ERROR` (syntax, unknown table or column) or `400 SQL_BIND_ERROR` (parameters that do not fit the statement), `409 SQL_CONSTRAINT` or `409 DATABASE_READONLY`, which carry SQLite's message, and `503 DATABASE_BUSY` or `503 REQUEST_TIMEOUT`, which carry the generic `internal database error` (no 5xx body carries SQLite's text). Anything else is `500 DATABASE_ERROR` with the same generic message, so do not retry it blindly. Set `"noFail": true` on an item to keep going after a failure that leaves the transaction active: the call returns `200`, and that item's result is `{ "success": false, "error": "...", "code": "..." }` (no `reqIdx`). A conflict that rolls back the transaction itself (`INSERT OR ROLLBACK`, or `RAISE(ROLLBACK)` in a trigger) still ends the request with `409 SQL_CONSTRAINT` even under `noFail`, and nothing is committed. A `valuesBatch` item under `noFail` can instead succeed in part: rows with bad parameters are skipped and listed in `rowErrors` while `success` is `true`, so inspect `rowErrors` too. = responseItem{"]
 
 ## Related namespaces
 
@@ -6870,7 +7012,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Examples
 
-Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first, then choose a `DB` path. Bare names (`./mydb`) auto-resolve under `/hoody/databases/`; absolute paths outside that tree are refused unless the deployment allows any absolute database path (`/tmp/...` works on dev kits).
+Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first, then choose a `DB` path. Bare names (`./mydb`) auto-resolve under `/hoody/databases/`; absolute paths outside that tree are refused unless the deployment allows any absolute database path.
 
 **Two SQL field names:** in a transaction item, use the `"query":"..."` key for SELECT (returns `resultSet`/`resultHeaders`) and the `"statement":"..."` key for DDL/DML (returns `rowsUpdated`, or rows when the SQL produces columns, such as a write with `RETURNING`). The `"sql"` alias maps to `"statement"`, not `"query"`.
 
@@ -6941,14 +7083,14 @@ hoody --container "$C" kv set config --db "$DB" --body '{"version":1,"feature_x"
 # -o raw, an object comes back pretty-printed), so reuse the exact bytes you wrote:
 CUR='{"version":1,"feature_x":false}'
 # (to compare against the stored bytes instead, read them with a raw HTTP GET of the key)
-hoody --container "$C" kv set config --db "$DB" --if-match "$CUR" \
+hoody --container "$C" kv set config --db "$DB" --if-value "$CUR" \
   --body '{"version":2,"feature_x":true}'
 ```
 
 **Step 3 — observe a conflict** by sending stale `if_match`. Expect `HTTP 412 {"error":"Value mismatch for CAS"}` — the write is rejected without modifying the stored value.
 
 ```bash
-hoody --container "$C" kv set config --db "$DB" --if-match 'stale' --body '{"version":99}' || echo 'CAS rejected as expected'
+hoody --container "$C" kv set config --db "$DB" --if-value 'stale' --body '{"version":99}' || echo 'CAS rejected as expected'
 ```
 
 ### 4. Atomic counter for per-user rate limiting
@@ -7228,7 +7370,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 2. Ephemeral one-off execute
 
-`hoody terminal commands run` `ephemeral=true`, `wait=true` — auto ID 40000–65535, runs `command`, cleans up. Through the proxy, send it to the `terminal-0` hostname: any other `terminal-N` host pins the request to terminal N. Later: `hoody terminal commands get` before the session goes: an ephemeral session holding results is removed after `ephemeral-result-timeout` (300 s default) of inactivity with no attached client.
+`hoody terminal commands run` `ephemeral=true`, `wait=true` — auto ID 40000–65535, runs `command`, cleans up. Through the proxy, send it to the `terminal-0` hostname: any other `terminal-N` host pins the request to terminal N, so the command runs inside that terminal and every later execute on that host waits behind it for up to 600 s if it hangs. Later: `hoody terminal commands get` before the session goes: an ephemeral session holding results is removed after `ephemeral-result-timeout` (300 s default) of inactivity with no attached client.
 
 ### 3. Automate a TUI
 
@@ -7287,7 +7429,7 @@ A daemon program configured with `terminal_id: N` runs on terminal N's PTY, and 
 
 - **Sharing a terminal URL = handing out root.** A `terminal-N` kit URL (or any alias pointed at it) lets anyone who can render it run arbitrary commands as root: read env / tokens / vault, exfiltrate files, install backdoors, mutate state. Capability-token semantics treat the URL itself as the credential — there is no per-recipient gate beyond what's configured in `proxy.containerPermissions`. Share only with people you'd trust with `ssh root@…`. For wider audiences, gate (`setPasswordGroup` / `setTokenGroup` / `setIpGroup`), set an alias `expires_at`, watch `proxyLogs`, and prefer a constrained `exec` script over a live PTY (a `display` URL is no read-only alternative: its readonly setting is client-side only, and its holder can still send input).
 - `terminal_id` numeric **1–65535**. **40000–65535 reserved for ephemeral**; pin manual IDs in 1–39999.
-- `terminal_id=0` = sentinel "treat as absent".
+- `terminal_id=0` (the `terminal-0` host) only starts a new ephemeral session. A WebSocket connection naming zero without `ephemeral=true`, or in agent mode, is refused rather than attached to terminal 1, and `hoody terminal sessions read` on terminal zero answers `400 TERMINAL_ID_ZERO`: use the terminal id returned for the session and its `terminal-N` host.
 - **Display pairing.** `hoody terminal sessions create` builds the session's `DISPLAY` from its `display` field and ignores any `display` in the request URL, so there is no automatic `terminal_id=N ⇒ DISPLAY=:N` mapping — pass `display` explicitly (either `"N"` or `":N"` — the kit normalises a bare number to `:N`). `hoody terminal commands run` differs: a session it has to create is configured from the request URL, where `display=N` (or the `display_id=N` alias) sets `DISPLAY=:N` — and on a `terminal-N` host that parameter is supplied for you, so a session first created that way already renders on `:N`. `ephemeral=true` still strips it, and an already-running session keeps the `DISPLAY` it spawned with. The `display-N` kit URL surface is independent of session id.
 - `ephemeral=true` strips `DISPLAY`, skips display/dbus init — X11 won't render.
 - `defer_pid` returns `/execute` immediately even with `wait=true`; queues until named PID exits (TUI-safe), for at most `defer_timeout_ms` (60000 ms default) — on expiry the command never runs.
@@ -7306,6 +7448,8 @@ A daemon program configured with `terminal_id: N` runs on terminal N's PTY, and 
 
 - `400 Invalid terminal_id (must be numeric 1-65535)` on a non-numeric or out-of-range id.
 - `400` config-error on `hoody terminal sessions create` — SSH/SOCKS5 partial validation (e.g. `ssh_user` without `ssh_host`, `socks5_port` out of range). The kit does NOT enforce mutual exclusion of `ssh_password` + `ssh_key`; both can coexist on a single session.
+- `409 EPHEMERAL_SESSION` on `hoody terminal sessions create` — the `terminal_id` names a running ephemeral session, usually left by an `ephemeral=true` command sent to that id's own `terminal-N` host (the proxy pins it to N). That session has no `DISPLAY` and is reaped when idle, so it is not handed back as the session you asked for: `hoody terminal sessions delete` it and create it again, and send one-off ephemeral commands to the `terminal-0` host.
+- `409 PERSISTENT_SESSION` on `hoody terminal commands run` with `ephemeral=true` — the `terminal_id` names a running session that has a display; turning it ephemeral would strip its display and reap it, so nothing runs. Drop `ephemeral`, or send the command to the `terminal-0` host.
 - `404` on `hoody terminal commands get` once the result is gone: its session was removed (an ephemeral session holding results goes after `ephemeral-result-timeout` of inactivity with no attached client), or the session's result buffer filled and evicted it.
 - `Unknown program name "<name>"` (400) on `hoody proxy aliases create` → the `program` is not in the platform's program catalog. For a terminal alias use `program=terminal` (not `hoody-terminal` or `terminal-N`); pick the instance with `index`.
 
@@ -7317,13 +7461,13 @@ A daemon program configured with `terminal_id: N` runs on terminal N's PTY, and 
 
 Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first.
 
-⚠ Through the containers proxy, the **`terminal-N` hostname selects the terminal**: the proxy sets `terminal_id` from `N` and overwrites any value you send, so every example addresses the session's own host (`terminal-100` for session 100; `terminal-0` for ephemeral allocation). A DNS label holds at most 63 characters, so from id 10000 up the `<projectId>-<containerId>-terminal-<N>` label is too long: use the short alias `t-<N>` (`<projectId>-<containerId>-t-<N>.<server>.containers.hoody.com`), which selects the same terminal. The SDK and CLI switch to it automatically."] In the SDK, pass `{ serviceIndex: N }` as the last, template-vars argument (default 1); the CLI derives the host from `--terminal-id`. When calling the kit directly, the HTTP routes take **`terminal_id` as a query parameter on `/execute`**, not in the body — a `terminal_id` field in the JSON body is silently ignored (the body carries `command`, `wait`, `mode` (`pty` by default, or `raw` for a one-shot process with no terminal session), `stdin_b64` and `user` (raw mode only), `id`, `timeout`, `cwd` and `env`); missing the query param returns 400 `terminal_id parameter required` unless `?ephemeral=true`. Always pass `?terminal_id=N`. The `command` body field is **plain UTF-8**, not base64 (only the URL form `?cmd=<base64>` is base64-decoded); the kit wraps it with its own shell bookkeeping and completion-marker echo before PTY delivery. `wait=true` normally returns when the kit sees the completion marker; a non-ephemeral command with no `timeout` is also reported completed after 10 s without new output once stdout was captured or its start marker was seen (`completion: "output_quiet"`, `exit_code: null`; the program may still be running), and programs that swallow the marker or only background-fork can return `status:"completed"` with empty or partial stdout — re-check via `hoody terminal sessions read` if in doubt. Add `-o json` to `hoody terminal commands run` to get the full result body (`stdout`, `exit_code`, `command_id`) for scripting.
+⚠ Through the containers proxy, the **`terminal-N` hostname selects the terminal**: the proxy sets `terminal_id` from `N` and overwrites any value you send, so every example addresses the session's own host (`terminal-100` for session 100; `terminal-0` for ephemeral allocation). A DNS label holds at most 63 characters, so from id 10000 up the `<projectId>-<containerId>-terminal-<N>` label is too long: use the short alias `t-<N>` (`<projectId>-<containerId>-t-<N>.<server>.containers.hoody.com`), which selects the same terminal. The SDK and CLI switch to it automatically."] The CLI derives the host from `--terminal-id`. When calling the kit directly, the HTTP routes take **`terminal_id` as a query parameter on `/execute`**, not in the body — a `terminal_id` field in the JSON body is silently ignored (the body carries `command`, `wait`, `mode` (`pty` by default, or `raw` for a one-shot process with no terminal session), `stdin_b64` and `user` (raw mode only), `id`, `timeout`, `cwd` and `env`); missing the query param returns 400 `terminal_id parameter required` unless `?ephemeral=true`. Always pass `?terminal_id=N`. The `command` body field is **plain UTF-8**, not base64 (only the URL form `?cmd=<base64>` is base64-decoded); the kit wraps it with its own shell bookkeeping and completion-marker echo before PTY delivery. `wait=true` normally returns when the kit sees the completion marker; a non-ephemeral command with no `timeout` is also reported completed after 10 s without new output once stdout was captured or its start marker was seen (`completion: "output_quiet"`, `exit_code: null`; the program may still be running), and programs that swallow the marker or only background-fork can return `status:"completed"` with empty or partial stdout — re-check via `hoody terminal sessions read` if in doubt. Add `-o json` to `hoody terminal commands run` to get the full result body (`stdout`, `exit_code`, `command_id`) for scripting.
 
 ### 1. Persistent interactive session — create, run, capture, tear down
 
 **Goal:** pin a stable PTY at `terminal_id=100`, run a command, fetch the result by `command_id`, then delete the session.
 
-**Step 1 — create the session.** `terminal_id` is required in the body; pin in `1–39999`.
+**Step 1 — create the session.** Pin in `1–39999`. On the session's `terminal-N` host the proxy supplies the query `terminal_id=N`, so an HTTP body may omit `terminal_id`; if it names one, it must match N or creation answers `400 TERMINAL_ID_MISMATCH`. The examples below send matching ids.
 
 ```bash
 hoody --container "$C" terminal sessions create --terminal-id 100 --shell /bin/bash --cols 120 --rows 30
@@ -7388,7 +7532,7 @@ hoody --container "$C" terminal sessions search --terminal-id 101 --pattern PAST
 hoody --container "$C" terminal keys list -o json | jq '.keys | length, .[0:8]'
 ```
 
-Cleanup: `DELETE /api/v1/terminal/101`.
+Cleanup: `hoody --container "$C" terminal sessions delete 101 -y`.
 
 ### 4. WebSocket attach for live streaming
 
@@ -7436,7 +7580,7 @@ hoody --container "$C" terminal commands run --terminal-id 10 --command 'xeyes &
 **Step 2 — verify display-10 actually has a window** — query system displays from the same kit, then drive it from the `display-10` URL:
 
 ```bash
-hoody --container "$C" terminal system displays list | jq '.[] | select(.display==10)'
+hoody --container "$C" terminal system displays list | jq '.[] | select((.display | tostring) == "10")'
 hoody --container "$C" display screenshots capture --display-id 10
 ```
 
@@ -7448,7 +7592,7 @@ Cleanup: kill `xeyes` via `hoody terminal processes signal --name xeyes --signal
 
 ```bash
 hoody --container "$C" terminal sessions create --terminal-id 11 \
-  --shell ssh --ssh-host 10.0.0.42 --ssh-user deploy --ssh-port 22 --ssh-password "$SSH_PASSWORD"
+  --shell ssh --ssh-host ssh.example.com --ssh-user deploy --ssh-port 22 --ssh-password "$SSH_PASSWORD"
 hoody --container "$C" terminal commands run --terminal-id 11 --command 'hostname; whoami' --wait -o json
 ```
 
@@ -7525,7 +7669,7 @@ Cleanup: `hoody terminal sessions delete <terminal-id>`. ⚠ Never call `hoody t
 | `hoody terminal automation stats` |  | read | Get terminal automation metrics | `terminal.automation.getStats` | `hoody terminal automation stats` |
 | `hoody terminal commands cancel` |  | write | Abort a running command | `terminal.commands.cancel` | `hoody terminal commands cancel abc-123 --force` |
 | `hoody terminal commands get` |  | read | Get command result | `terminal.commands.get` | `hoody terminal commands get 45678` |
-| `hoody terminal commands list` |  | read | Get terminal command history | `terminal.commands.list` | `hoody terminal commands list 12345` |
+| `hoody terminal commands list` |  | read | Get terminal command history | `terminal.commands.list` | `hoody terminal commands list 1` |
 | `hoody terminal commands run` |  | action | Execute command in terminal session | `terminal.commands.run` | `hoody terminal commands run --ephemeral --defer-pid 4242 --command 'ls -la'` |
 | `hoody terminal health` |  | read | Service health check | `terminal.kit.getHealth` | `hoody terminal health` |
 | `hoody terminal keys list` |  | read | List supported key names for /press endpoint | `terminal.keys.list` | `hoody terminal keys list` |
@@ -7536,19 +7680,19 @@ Cleanup: `hoody terminal sessions delete <terminal-id>`. ⚠ Never call `hoody t
 | `hoody terminal processes resume` |  | write | Resume a suspended process or process tree (SIGCONT) | `terminal.processes.resume` | `hoody terminal processes resume --pid 1234 --include-descendants` |
 | `hoody terminal processes signal` |  | write | Send signal to process(es) | `terminal.processes.signal` | `hoody terminal processes signal --pid 1234 --force` |
 | `hoody terminal sessions automation status` |  | read | Get per-session automation state | `terminal.sessions.getAutomationStatus` | `hoody terminal sessions automation status 1` |
-| `hoody terminal sessions connect` |  | read | WebSocket terminal connection | `terminal.sessions.connect` | `hoody terminal sessions connect --terminal-id 12345 --readonly` |
+| `hoody terminal sessions connect` |  | read | WebSocket terminal connection | `terminal.sessions.connect` | `hoody terminal sessions connect --terminal-id 1 --readonly` |
 | `hoody terminal sessions create` |  | write | Create a terminal session | `terminal.sessions.create` | `hoody terminal sessions create --ephemeral --display 5` |
-| `hoody terminal sessions delete` |  | destructive | Delete a terminal session | `terminal.sessions.delete` | `hoody terminal sessions delete 12345 -y` |
+| `hoody terminal sessions delete` |  | destructive | Delete a terminal session | `terminal.sessions.delete` | `hoody terminal sessions delete 1 -y` |
 | `hoody terminal sessions list` |  | read | List all terminal sessions | `terminal.sessions.list` | `hoody terminal sessions list --history-limit 50` |
 | `hoody terminal sessions mouse send` |  | write | Send a cell-based mouse event to a terminal session | `terminal.sessions.sendMouseEvents` | `hoody terminal sessions mouse send --terminal-id 1 --event-type move --event-row 10 --event-col 10 --event-button 1` |
 | `hoody terminal sessions paste` |  | write | Paste text into terminal | `terminal.sessions.paste` | `hoody terminal sessions paste --terminal-id 1 --text Hello --bracketed` |
 | `hoody terminal sessions press` |  | write | Send named key presses to terminal | `terminal.sessions.pressKeys` | `hoody terminal sessions press --terminal-id 1 --keys ctrl+c` |
-| `hoody terminal sessions read` |  | read | Get raw terminal output | `terminal.sessions.read` | `hoody terminal sessions read --terminal-id 12345 --format download` |
-| `hoody terminal sessions screenshots capture` |  | read | Capture terminal screenshot | `terminal.sessions.captureScreenshot` | `hoody terminal sessions screenshots capture --terminal-id 12345 --format png --foreground white` |
+| `hoody terminal sessions read` |  | read | Get raw terminal output | `terminal.sessions.read` | `hoody terminal sessions read --terminal-id 1 --format download` |
+| `hoody terminal sessions screenshots capture` |  | read | Capture terminal screenshot | `terminal.sessions.captureScreenshot` | `hoody terminal sessions screenshots capture --terminal-id 1 --format png --foreground white` |
 | `hoody terminal sessions search` |  | read | Search terminal screen with regex | `terminal.sessions.search` | `hoody terminal sessions search --terminal-id 1 --pattern TODO --scope screen --limit 100` |
 | `hoody terminal sessions snapshot get` |  | read | Get rendered terminal snapshot | `terminal.sessions.getSnapshot` | `hoody terminal sessions snapshot get --terminal-id 1 --include-colors --include-highlights` |
 | `hoody terminal sessions wait` |  | write | Wait for terminal condition | `terminal.sessions.wait` | `hoody terminal sessions wait --terminal-id 1 --mode stable --debounce-ms 100` |
-| `hoody terminal sessions write` |  | write | Write input to terminal | `terminal.sessions.write` | `hoody terminal sessions write --terminal-id 40001 --input <input> --enter` |
+| `hoody terminal sessions write` |  | write | Write input to terminal | `terminal.sessions.write` | `hoody terminal sessions write --terminal-id 1 --input <input> --enter` |
 | `hoody terminal system daemon programs list` |  | read | Get daemon programs configuration | `terminal.system.listDaemonPrograms` | `hoody terminal system daemon programs list` |
 | `hoody terminal system displays list` |  | read | Get display information | `terminal.system.listDisplays` | `hoody terminal system displays list` |
 | `hoody terminal system displays stop` |  | destructive | Stop an X display and everything drawing on it, including a display a deleted terminal session left running | `terminal.system.stopDisplay` | `hoody terminal system displays stop 1 -y` |
@@ -7633,7 +7777,7 @@ Tunnel traffic flows through the same proxy as every other kit URL, so:
 - `BIND_OK.publicUrl` is `null` on deployments that do not mint public tunnel URLs — the bind still works, you just reach it another way.
 - `grace_ms` capped at 5000ms; over → `400`.
 - `containerPort: 0` requests an automatically allocated port; ports 1–79 are rejected; `80..=1023` are refused unless the deployment allows privileged ports (gated separately for expose and for pull).
-- PULL loopback-only. EXPOSE has atomic takeover (`takeover:true`); the displaced owner gets a `RESET` frame on each stream of the old binding carrying the **numeric** code `13`, then a takeover notice: frame type `0x40` (`TunnelFrameType.BindRevoked` in the SDK), whose JSON body is `{bindId, reason}` — `reason` is free text, so branch on the frame type, never on its wording. The `tunnelExpose` driver does not surface that notice; only code that decodes frames itself sees it. PULL takeover → `BIND_ERR` with `code:"INVALID_KIND"`.
+- PULL loopback-only. EXPOSE has atomic takeover (`takeover:true`); the displaced owner gets a `RESET` frame on each stream of the old binding carrying the **numeric** code `13`, then a takeover notice: frame type `0x40`, whose JSON body is `{bindId, reason}` — `reason` is free text, so branch on the frame type, never on its wording. The bundled tunnel driver does not surface that notice; only code that decodes frames itself sees it. PULL takeover → `BIND_ERR` with `code:"INVALID_KIND"`.
 - Idle reaping needs zero streams AND zero bindings. Orphans with parked bindings wait out the configured takeover grace (default 60 s; zero disables parking).
 - v1 vs v2 subprotocols share `/connect` (`hoody-tunnel.v1` for single-WS sessions, `hoody-tunnel.v2` for multi-WS shard pools); `isV2` on `hoody tunnel sessions list` reports the shape. Both subprotocols support graceful resume via `resume.sessionId` in HELLO; `isV2:false` does NOT mean "no resume".
 - Multi-WS (v2) drop semantics: dropping the **primary** socket closes the whole session; dropping a **secondary** shard makes the driver close streams pinned to that shard while the kit detaches the shard and the session continues.
@@ -7824,7 +7968,7 @@ Bulk replay: `hoody watch events list` with `since_id`, one page per call; persi
 ### 4. WebSocket consumer
 
 1. Create the watcher as in workflow 1
-2. `GET /watchers/{id}/events/ws` (HTTP only; no CLI command) — the server pings every 20 s and closes the socket when the pong is missing; most WebSocket clients answer pings on their own
+2. `GET /api/v1/watch/watchers/{id}/events/ws` (HTTP only; no CLI command) — the server pings every 20 s and closes the socket when the pong is missing; most WebSocket clients answer pings on their own
 3. `{"type":"lag",...}` text frame = same handling as SSE lag
 
 ### 5. Inventory, reconfiguration and teardown
@@ -7841,7 +7985,7 @@ List with `hoody watch list`, inspect with `hoody watch get`, reconfigure in pla
 - Watcher ids are UUIDs; a path segment that is not a UUID is rejected with `400` before the route runs
 - `hoody watch get`, `hoody watch update`, `hoody watch delete`, `hoody watch events list` and `hoody watch events stream` name the watcher with `--id <watcherId>` (the UUID that `watch list -o json` shows), never with a positional argument.
 - `since_id` and `since_timestamp` mutually exclusive — both = 400 `INVALID_CURSOR`
-- A cursor older than the retained history returns 409 `HISTORY_GAP`. For `since_id` that means `since_id > 0` and `since_id + 1` is below the oldest retained id, so `since_id=0` never gaps. For `since_timestamp` it means the timestamp is earlier than the oldest retained event, which is common on a young or quiet watcher ("the last 5 minutes" of a watcher created 2 minutes ago gaps as soon as it has one event). An empty history never gaps for `since_id` or `since_timestamp`; an `after_id` walk (next bullet) can still gap on an empty history, when an event after its cursor was evicted or was too large to keep.
+- 409 `HISTORY_GAP` means an event after your cursor is lost: it was evicted from the replay history, or it was too large to keep. The test is exact for every cursor (`since_id`, `since_timestamp`, `after_id`): a cursor older than the oldest retained event does not gap by itself, so "the last 5 minutes" of a watcher created 2 minutes ago returns everything it has. `since_id=0` means "everything retained" and never gaps.
 - Walking history page by page: pass `after_id` (the previous response's `next_after_id`; the response also carries `has_more`). If an event you have not read yet was evicted between two requests, the next one fails with 409 `HISTORY_GAP` instead of skipping it. A `page` walk counts from the oldest retained event, so an eviction between pages skips events silently. `since_id`, `since_timestamp` and `page` are ignored when `after_id` is set.
 - `since_timestamp` accepts RFC3339, unix seconds, or millis (switches to ms when `|n| >= 100_000_000_000`)
 - WS message cap 64 KiB by default; the server sends JSON text frames only, ignores text and binary frames from the client, pings every 20 s and disconnects on a missed pong
@@ -7854,10 +7998,10 @@ List with `hoody watch list`, inspect with `hoody watch get`, reconfigure in pla
 - `400 INVALID_CURSOR` — both cursor fields, or unparseable timestamp
 - `404 WATCHER_NOT_FOUND` — UUID syntactically valid but no watcher; also raised pre-upgrade on stream endpoints
 - `409 LIMIT_EXCEEDED` — more than 32 `paths` in one watcher, or 128 watchers already live on the container
-- `409 HISTORY_GAP` — cursor older than oldest retained; body `details` carries `oldest_available_id` / `newest_available_id`
+- `409 HISTORY_GAP` — an event after the cursor was evicted or too large to keep; body `details` carries `oldest_available_id` / `newest_available_id`
 - `429 MAX_CLIENTS_REACHED` — >64 concurrent SSE+WS on one watcher; capacity incremented after checks pass (no slot leak)
 - `500 WATCHER_START_FAILED` — the kit could not start the inotify watch for a new watcher
-- `503 SHUTTING_DOWN` — the kit is stopping: `hoody watch events stream`/`GET /watchers/{id}/events/ws` (HTTP only; no CLI command) and `hoody watch create` return it. Watchers are removed at shutdown, so reads of a watcher or its history return 404 `WATCHER_NOT_FOUND` instead
+- `503 SHUTTING_DOWN` — the kit is stopping: `hoody watch events stream`/`GET /api/v1/watch/watchers/{id}/events/ws` (HTTP only; no CLI command) and `hoody watch create` return it. Watchers are removed at shutdown, so reads of a watcher or its history return 404 `WATCHER_NOT_FOUND` instead
 - Mid-stream `event: lag` (SSE) / `{"type":"lag",...}` (WS) — broadcast lagged AND replay buffer cannot fill gap; connection closed after lag frame
 
 ## Related namespaces
@@ -7899,7 +8043,7 @@ hoody --container "$C" watch get --id "$WID" -o json | jq '.stats'
 hoody --container "$C" watch events stream --id "$WID"
 ```
 
-**Step 2 — reconnect with `since_id`.** Server replays from the buffer; if the buffer rolled past your cursor you get **HTTP 409 `HISTORY_GAP`** with `details` (a JSON-encoded string) holding `oldest_available_id` / `newest_available_id` / `requested_cursor`. Treat that as data loss and rebuild from a fresh listing.
+**Step 2 — reconnect with `since_id`.** Server replays from the buffer; if an event after your cursor was evicted you get **HTTP 409 `HISTORY_GAP`** with `details` (a JSON-encoded string) holding `oldest_available_id` / `newest_available_id` / `requested_cursor`. Treat that as data loss and rebuild from a fresh listing.
 
 ```bash
 hoody --container "$C" watch events stream --id "$WID" --since-id "$LAST_ID"
@@ -7924,14 +8068,11 @@ A lag frame is `{"type":"lag", …}` (text); after it, the server closes the soc
 
 ```bash
 CURSOR=${CURSOR:-0}   # highest id already stored; 0 = everything retained
-# One call returns one page (at most 200 events). Follow next_after_id until has_more is false.
-R=$(hoody --container "$C" watch events list --id "$WID" --since-id "$CURSOR" --limit 200 -o json) || exit 1
-jq -c '.items[]' <<< "$R" >> /tmp/events.ndjson
-while [ "$(jq -r .has_more <<< "$R")" = true ]; do
-  R=$(hoody --container "$C" watch events list --id "$WID" \
-        --after-id "$(jq -r .next_after_id <<< "$R")" --limit 200 -o json) || exit 1   # 409 = replay incomplete
-  jq -c '.items[]' <<< "$R" >> /tmp/events.ndjson
-done
+# One call walks every page by after_id (up to 10,000 events); it fails on a 409 (replay incomplete).
+R=$(hoody --container "$C" watch events list --id "$WID" --since-id "$CURSOR" -o json) || exit 1
+jq -c '.items[]' <<< "$R" >> /tmp/events.ndjson || exit 1
+# has_more true = the walk hit its bound: run again from the last id stored.
+[ "$(jq -r .has_more <<< "$R")" = false ] || echo "more events: rerun from the last stored id" >&2
 ```
 
 ### 5. Filter by event kind — only writes, ignore creates / removes / metadata
@@ -7977,7 +8118,7 @@ If the new configuration cannot be started, the request fails with 500 and the w
 
 ### 9. Tear down on shutdown + verify events stop
 
-**Goal:** clean up. After delete, both `GET /watchers/{id}` and `/events` return **404 `WATCHER_NOT_FOUND`**, and any open SSE/WS sockets close. The DELETE response body is `{ id, deleted: true }`.
+**Goal:** clean up. After delete, both `GET /api/v1/watch/watchers/{id}` and `/api/v1/watch/watchers/{id}/events` return **404 `WATCHER_NOT_FOUND`**, and any open SSE/WS sockets close. The DELETE response body is `{ id, deleted: true }`.
 
 ```bash
 hoody --container "$C" watch delete --id "$WID"
@@ -7986,13 +8127,12 @@ hoody --container "$C" watch get    --id "$WID"   # exits non-zero
 
 ### 10. Recent history without a stream — `since_timestamp` for one-shot tail
 
-**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. If the oldest retained event is newer than the timestamp (a watcher younger than 5 minutes, or a buffer that has rolled over), the call returns **409 `HISTORY_GAP`**. That only means the history does not reach back that far: every retained event is newer than the timestamp, so read them all from `since_id=0`. One call returns at most 200 events; walk further pages with `after_id` set to the last id received, not `since_id`: `since_id` only checks the oldest retained id, so it misses an event evicted, or too large to keep, between two pages without an error. A 409 on one of those later `after_id` pages means such an event was lost while paging, so the result is incomplete. Treat it as a failure and run the recovery again from the start.
+**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. A watcher younger than 5 minutes is fine: the call returns every event it has. It answers **409 `HISTORY_GAP`** only when an event after the timestamp was lost (evicted, or too large to keep), so the result would be incomplete. One call returns at most 200 events; walk further pages with `after_id` set to the last id received, which answers 409 the same way when an event after it was lost while paging. Treat any 409 as a failure: the history for that window is incomplete.
 
 ```bash
-# One page only (at most 200 events). For more, repeat with --after-id set to the
-# previous response's next_after_id while has_more is true (see example 4).
+# One call walks every page (up to 10,000 events) and fails on a 409: history incomplete.
 hoody --container "$C" watch events list --id "$WID" \
-  --since-timestamp "$(date -u -d '5 minutes ago' +%FT%TZ)" --limit 200
+  --since-timestamp "$(date -u -d '5 minutes ago' +%FT%TZ)"
 ```
 
 When the filesystem reports a rename as a single event carrying both paths, the kit emits **one** `renamed` event with `(path=new, old_path=old)`. Renames the backend reports as separate from/to halves (e.g. across mount boundaries) fall through to one event per side without an `old_path` field (it is omitted, not null). Keep only events that have `old_path` to get the paired form.

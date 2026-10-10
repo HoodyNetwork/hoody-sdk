@@ -1,4 +1,4 @@
-> _**HTTP skill · `proxyLogs` namespace** · ~4,074 tokens · hoody-sdk v1.0.0-beta.16_
+> _**HTTP skill · `proxyLogs` namespace** · ~4,310 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `proxyLogs` — Per-container request/response/event log query, stats, and SSE tail
 
@@ -65,7 +65,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `traceId` is per log source: edge entries carry the edge's hex request ID, backend request/response pairs share their own UUID. Entries from the edge and the backend, or from different kits, never share one.
 - `level` accepts ONE value at a time on the kit URL: `level=warn,error` returns `total: 0`, so query each level separately and union client-side.
 - `serviceName` is not honoured on the kit URL for `GET /_logs` (the list handler ignores it); filter client-side. It IS honoured on `GET /_logs/stream`, so tail with `serviceName=` and list without it.
-- Every `GET /_logs` read returns `{entries,total,limit,offset}`. `last=N` returns the newest N entries, oldest first, in one response (`total` is the number returned, `offset` does not apply, and `last` wins over `afterId`); on the kit URL without bodies or time filters those entries come from the in-memory recent buffer and carry `id: 0`, so never cursor from them. `afterId` always reads the log database: real row ids, oldest first, `total` counts every entry after the cursor and `offset` pages through them.
+- Every `GET /_logs` read returns `{entries,total,limit,offset}`. `last=N` returns the newest N entries, oldest first, in one response (`total` is the number returned, `offset` does not apply, and `last` wins over `afterId`); on the kit URL without bodies or time filters those entries come from the in-memory recent buffer, which holds the newest entries of every container on the server, so a busy neighbour can leave fewer than N there, and it starts empty after a server restart. Every entry carries its row `id`, so pass the last one as `afterId` to follow on. `afterId` always reads the log database: oldest first, `total` counts every entry after the cursor and `offset` pages through them.
 - `includeRequestBody`/`includeResponseBody` default `false`.
 - The resume buffer holds at most 2,000 frames and 8 MiB, shared by every stream on the server, so a busy neighbour shortens your window; past it you get `event: gap`.
 - A server restart ends the stream with no event; ids then resume at least 10,000 past the last value the server saved, which can trail the last id you saw, and the buffer starts empty, so a pre-restart `Last-Event-ID` gets `event: gap`. On `event: reset` drop your saved id and reconnect without it.
@@ -95,7 +95,7 @@ Each step has a copy-pasteable code block in the mode you're reading (curl for H
 
 ### 1. Tail the last N requests across every kit
 
-**Goal:** glance at the most recent ~50 requests handled by the container's edge proxy. Uses `last=N`, which returns the newest N entries in the usual `{entries,total,…}` envelope, ordered **oldest-first within the returned slice**. On the kit URL they come from the in-memory recent buffer and carry `id: 0` placeholders, so use §3 for a cursor. It is the cheapest call you can make.
+**Goal:** glance at the most recent ~50 requests handled by the container's edge proxy. Uses `last=N`, which returns the newest N entries in the usual `{entries,total,…}` envelope, ordered **oldest-first within the returned slice**. On the kit URL they come from the in-memory recent buffer. Each entry carries its row `id`: pass the last one as `afterId` (§3) to read what came after. It is the cheapest call you can make.
 
 ```bash
 KIT="https://${P}-${C}-logs-1.${N}.containers.hoody.com"
@@ -114,7 +114,7 @@ curl -s "$KIT/_logs?level=error&limit=200" \
 
 ### 3. Walk the full window with an `afterId` cursor (oldest → newest)
 
-**Goal:** sweep every entry without skipping or double-reading rows. Page by row id: `afterId` always reads the log database, returns entries **oldest first** with real row ids, and `total` counts every entry after the cursor. Start at `afterId=0`, then pass the last `id` of each page as the next `afterId`; new traffic lands after your cursor, so nothing shifts under you. Plain `limit`/`offset` without `afterId` counts from the **newest** entry, so arriving entries move every page during a walk. Do not cursor from a `last=N` read: its rows carry `id: 0`. Walk until `entries` is empty.
+**Goal:** sweep every entry without skipping or double-reading rows. Page by row id: `afterId` always reads the log database, returns entries **oldest first** with real row ids, and `total` counts every entry after the cursor. Start at `afterId=0`, then pass the last `id` of each page as the next `afterId`; new traffic lands after your cursor, so nothing shifts under you. Plain `limit`/`offset` without `afterId` counts from the **newest** entry, so arriving entries move every page during a walk. To start from the present instead of the oldest entry, take the cursor from the last entry of a `last=N` read. Walk until `entries` is empty.
 
 **Rate limit:** kit-URL reads are limited per scope: by default a burst of 10, then 30 per minute (one every 2 s), and some deployments differ (see Common errors). A walk longer than about 10 pages therefore gets `429 {"error":"rate_limited"}`. That reply has no `entries`, so a loop that reads it as an empty page stops early and looks finished. The loops below treat any failed call, or any reply without an `entries` array, as a failure. After each failure they wait (2 s, then 4, 8, 16 and 32 s) and retry. The walk stops with an error and exit status 1 on the 6th failed call in a row, after 5 retries and about 62 s of waiting.
 
@@ -168,6 +168,8 @@ curl -s "$KIT/_logs?limit=1000&includeRequestBody=true&includeResponseBody=true"
 
 **Goal:** stream new log entries as they happen, and resume after a network blip. Live frames carry an `id:` line holding an increasing integer cursor; the initial replay frame may be `data: [...]` with no `id:` line, so seed your cursor only after you see the first `id:` line. Resume by sending `Last-Event-ID: <last>` on reconnect. The resume is complete only while your cursor is still in the server's replay buffer: when it is not, the first frame is `event: gap` (no `id:`, data `{"after","resumedFrom"}`), and the entries in between are NOT replayed. Treat `gap` as a control event, not a log entry: backfill the missing window with `GET /_logs` (`sinceMs` = the `tsMs` of the last entry you processed), skip entries you already handled, then carry on with the stream. `event: purged` carries an `id:` and `data: {}`: advance the cursor past it, but it is not an entry. On `event: reset` clear your cursor and reconnect fresh; on `event: scope-destroyed` exit cleanly — the container is gone.
 
+A frame larger than 256 KiB is replaced by a stub that keeps the entry's row `id` and carries `truncated: true` and `originalFrameBytes`. To get the whole record, read that row with `GET /_logs?afterId=<afterId>&limit=1` and check that the returned entry's `id` matches; the SSE `id:` line is a different cursor from this row id. If the row cannot be read, report the missing entry instead of treating the stub as complete.
+
 ```bash
 KIT="https://${P}-${C}-logs-1.${N}.containers.hoody.com"
 # Send Last-Event-ID only once you hold a real cursor. Any non-empty value, "0"
@@ -212,13 +214,15 @@ curl -s "$KIT/_logs?level=warn&limit=20&includeRequestBody=true&includeResponseB
 - `offset` — Entries to skip: counted from the newest match, or with `afterId` from the oldest entry after the cursor. Ignored with `last`.
 - `serviceName` — Filter to one service. The per-container logs URL ignores it, so filter the returned entries client-side. GET /_logs/stream honours it. _(on `GET /_logs`)_
 - `level` — Log level: exactly ONE of debug, info, warn or error. A comma-separated value matches nothing.
-- `last` — Return only the newest N matching entries, oldest first, in one response: `total` is the number returned and `offset` does not apply. Takes precedence over `afterId`.
+- `includeRequestBody` — Include each entry's stored request body (redacted as described above).
+- `includeResponseBody` — Include each entry's stored response body (redacted as described above).
+- `last` — Return only the newest N matching entries, oldest first, in one response: `total` is the number returned and `offset` does not apply. Takes precedence over `afterId`. To follow on, pass the `id` of the last entry as `afterId`.
 - `afterId` — Return the entries whose row id (`id`) is greater than this, oldest first. `total` counts every such entry and `offset` pages through them. _(on `GET /_logs`)_
 - `sinceMs` — Only entries whose `tsMs` is at least this (Unix milliseconds).
 - `untilMs` — Only entries whose `tsMs` is at most this (Unix milliseconds).
 - `projectId` — Filter to a single project
 - `containerId` — Filter to a single container
 - `serviceName` — Filter the stream to one service, e.g. tunnel. Honoured here, unlike GET /_logs. _(on `GET /_logs/stream`)_
-- `afterId` — Limits the initial batch of a fresh connection to entries whose `id` is greater than this. Entries in that batch carry `id: 0`, so a value of 0 or more leaves it empty. Live frames are unaffected. _(on `GET /_logs/stream`)_
+- `afterId` — Limits the initial batch of a fresh connection to entries whose row id (`id`) is greater than this: the same `id` that GET /_logs returns and takes as `afterId`. Live frames are unaffected. _(on `GET /_logs/stream`)_
 - `Last-Event-ID` — The numeric `id` of the last event received. On reconnect the server skips buffered entries whose `id` is at most this value.
 

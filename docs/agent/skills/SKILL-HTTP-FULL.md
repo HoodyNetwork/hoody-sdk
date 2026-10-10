@@ -1,4 +1,4 @@
-> _**HTTP skill (FULL: basic + all 21 namespaces)** · ~302,496 tokens · hoody-sdk v1.0.0-beta.16_
+> _**HTTP skill (FULL: basic + all 21 namespaces)** · ~318,825 tokens · hoody-sdk v1.0.0-beta.17_
 
 # HTTP mode — drive Hoody with curl
 
@@ -12,7 +12,7 @@ Hoody is a remote-first computing platform: every workflow — coding, browsing,
 
 **Need a custom API, script-as-service, or multi-step workflow?** Default to `exec`. Drop a `.ts` / `.js` (or shell-out via Bun) into the scripts dir and it auto-mounts as an HTTP endpoint — no framework, no deploy, schema-validated, logged, metric-instrumented, alias-able to a public hostname. Each script is a micro-service, kept warm by the kit; **multi-step workflows** (call agent A → check with agent B → trigger action C) are just one script orchestrating the steps. (Not a sandbox for untrusted code — see `exec` namespace.)
 
-**Need a GET-only URL for something that's actually a POST?** Use `curl` — `GET /api/v1/curl/request?url=…&method=POST` on the curl kit URL turns any REST call into a single GET-able link (the GET surface takes 21 query params (`body` and `body_base64` are aliases of `data` and `data_base64`) — including `data`, `json`, `data_base64` and a repeatable `header`, so bodies AND headers DO work as query params, and supplying a body auto-upgrades the upstream call GET→POST; only multipart `form` uploads stay `POST /api/v1/curl/request`-only). See `curl` namespace.
+**Need a GET-only URL for something that's actually a POST?** Use `curl` — `GET /api/v1/curl/request?url=…&method=POST` on the curl kit URL turns any REST call into a single GET-able link (the GET surface takes 21 query params (`body` and `body_base64` are aliases of `data` and `data_base64`) — including `data`, `json`, `data_base64` and a repeatable `header`, so bodies AND headers DO work as query params, and supplying a body auto-upgrades the upstream call GET→POST; URL-encoded `form` fields, a headers map, cookies, Basic auth and the connection limits stay `POST /api/v1/curl/request`-only, and neither form sends multipart uploads). See `curl` namespace.
 
 **Stuck, or unsure how to do something?** Ask Hoody's public docs assistant — an unauthenticated MCP endpoint at `https://chatbot.hoody.com/mcp` (one tool, `search_hoody_docs`; or the `POST /api/chat` SSE fallback) answers any "how do I…" with cited doc URLs. Use it for discovery when you're not sure which namespace fits.
 
@@ -45,8 +45,9 @@ Bare `body*` rows are spelled out under the same service in a **Body shapes** bl
 ## Auth
 
 - Control plane: header starts with `Bearer ` (one space, capital B); an `hdy_` auth token may also be sent bare. Kit URL: none, on every kit including `bot`'s management routes — gate kit URLs with proxy permissions.
-- Login: `POST /api/v1/users/auth/login` with `{ username, password }` **or** `{ email, password }` — field **`token`**. `password` plus one identifier (`username` or `email`) is required; `username` must match `^[a-zA-Z0-9_-]+$` (3–50 chars), so an email address authenticates **only** through the `email` field — sending one as `username` returns `422 Validation failed`. Every Hoody account is created with an email, so `email` is the common path.
-- Long-lived: `POST /api/v1/auth/tokens`.
+- Sign-in: browser sign-in is the default — `POST /api/v1/auth/device/code`, give the user the link and code, poll `POST /api/v1/auth/device/token` (§ Login). Never collect a password in chat.
+- Password login (fallback the user chooses): `POST /api/v1/users/auth/login` with `{ username, password }` **or** `{ email, password }` — field **`token`**. `password` plus one identifier (`username` or `email`) is required; `username` must match `^[a-zA-Z0-9_-]+$` (3–50 chars), so an email address authenticates **only** through the `email` field — sending one as `username` returns `422 Validation failed`. Every Hoody account is created with an email, so `email` is the common path.
+- Long-lived: `POST /api/v1/auth/tokens`, only for unattended automation the user asked for.
 
 ## Response envelope
 
@@ -58,11 +59,11 @@ Paginated: shape varies per route. The page-based shape is `data.{<resource>: [.
 
 Errors: `{ "statusCode": 401, "error": "...", "message": "..." }`. Codes: § Reference appendix.
 
-Kit URLs use per-kit shapes: many answer bare JSON with no `data` wrapper (e.g. watch `POST /watchers` returns `{id,...}` at the root; tunnel `GET /tunnels` returns `{sessions,...}`). Check the kit's response schema before writing a `jq` path.
+Kit URLs use per-kit shapes: many answer bare JSON with no `data` wrapper (e.g. watch `POST /api/v1/watch/watchers` returns `{id,...}` at the root; tunnel `GET /api/v1/tunnel/tunnels` returns `{sessions,...}`). Check the kit's response schema before writing a `jq` path.
 
 ## Streaming
 
-- **SSE** — `Accept: text/event-stream`; use `curl --no-buffer`. Resume mechanism is per-endpoint: watcher uses `?since_id=` / `?since_timestamp=`; proxy-logs `/_logs/stream` honours `Last-Event-ID:` (on `event: reset` discard the saved id and reconnect fresh); `exec/logs/stream` has no resume cursor (re-reads the file). Endpoints: watcher events, `exec/logs/stream`, proxy-logs `/_logs/stream`. (Notifications `GET /api/v1/notifications/stream` serves both: a WebSocket upgrade, or SSE on a plain GET with `?displays=all` or a display list; the SDK's `notifications.connect` uses WebSocket.)
+- **SSE** — `Accept: text/event-stream`; use `curl --no-buffer`. Resume mechanism is per-endpoint: watcher uses `?since_id=` / `?since_timestamp=`; proxy-logs `/_logs/stream` honours `Last-Event-ID:` (on `event: reset` discard the saved id and reconnect fresh); `/api/v1/exec/logs/stream?file=<log-file>` has no resume cursor (re-reads the file). Endpoints: watcher events, `/api/v1/exec/logs/stream?file=<log-file>`, proxy-logs `/_logs/stream`. (Notifications `GET /api/v1/notifications/stream` serves both: a WebSocket upgrade, or SSE on a plain GET with `?displays=all` or a display list; the SDK's `notifications.connect` uses WebSocket.)
 - **WebSocket** — watcher `events/ws`, tunnel data planes. Use `websocat`/`wscat`.
 
 ## Index of common ops
@@ -89,7 +90,7 @@ Per-namespace recipes in `SKILL-HTTP/<ns>.md`: `agent api bot browser code cron 
 |---|---|
 | `projectId` | 24-char hex. |
 | `containerId` | 24-char hex. Bearer credential. |
-| `kit_slug` | Kit id (see Kit slug table); some namespaces differ from their slug (e.g. `notifications` → `n-1`, `proxyLogs` → `logs-1`). |
+| `kit_slug` | Kit id (see Kit slug table); some namespaces differ from their slug (e.g. `notifications` → `n`, `proxyLogs` → `logs`). |
 | `n` | 1-based instance index; single-instance kits use `1`. |
 | `node` | Bare server hostname (use the `server_name` field from container responses). |
 | Suffix | `.containers.hoody.com` |
@@ -125,7 +126,7 @@ Most modern collaboration tools accept iframes (or unfurl URLs into rich preview
 | **Confluence / Jira** | "Smart Link" / iframe macro | Runbook page with the live tool baked in. |
 | **Plain HTML** | `<iframe src="…">` in any page | Internal portal, status page, customer demo. |
 
-The point: **don't make people leave their chat.** When someone hits a bug, drop the `terminal-N` URL with a Cline / Continue extension already focused into the thread — others can read, type, kibitz, take over, all without context-switching to a new tab. The container's filesystem is shared across every embed (same kit URL = same shell), so collaborators land on the *same* state.
+The point: **don't make people leave their chat.** When someone hits a bug, drop a `code-N` URL with `?extension=<publisher>.<name>` (focuses Cline / Continue) or a `terminal-N` URL into the thread — others can read, type, kibitz, take over, all without context-switching to a new tab. The container's filesystem is shared across every embed (same kit URL = same shell), so collaborators land on the *same* state.
 
 > ⚠ **Sharing a terminal / shell embed = giving root.** A `terminal`, `code`, `desktop`, `display`, or `agent` URL in a Slack channel, Notion page, or any other chat is effectively a root-shell credential. Anyone who can render the iframe can:
 > - read every file the container can read (env vars, tokens, vault entries, source code, customer data),
@@ -137,7 +138,7 @@ The point: **don't make people leave their chat.** When someone hits a bug, drop
 > - Gate the container (§ How to gate): an auth group, that group's access to the program, and `default: 'deny'` — so a recipient still has to authenticate.
 > - Use a **dedicated demo container with no secrets** — wallet credentials, vault data, source code only what they need to see.
 > - Set an **`expires_at`** on the alias for auto-expiry.
-> - Watch **`proxyLogs`** for unexpected callers; if a URL leaks, disable its alias instantly with `PATCH /api/v1/proxy/aliases/{aliasId}/state` with body `{"enabled":false}`.
+> - Watch **`proxyLogs`** for unexpected callers; if a URL leaks, disable its alias with `PATCH /api/v1/proxy/aliases/{aliasId}/state` with body `{"enabled":false}` (not instant: it usually stops serving within about 30 seconds and can take longer).
 > - For untrusted reviewers (customers, support tickets, public demos): do not hand out a `display` kit URL as a "read-only" view — its readonly setting is client-side only, and anyone holding the URL can still call the display's input API (clicks, typing). Build a constrained `exec` script that exposes only the operation they need, such as serving a captured screenshot.
 
 ### Tips for embedders
@@ -152,15 +153,15 @@ The point: **don't make people leave their chat.** When someone hits a bug, drop
 
 ## Source IP Guard — every call goes through the kit URL
 
-Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the program's URL gets 403, from inside the same container too. Call kits through the edge proxy on HTTPS, so the proxy's permissions, logging and hooks apply to every call.
+Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the program's URL gets 403. Call kits through the edge proxy on HTTPS, so the proxy's permissions, logging and hooks apply to every call.
 
 Why uniform proxy routing:
 
-- **Security uniformity** — requests from inside containers go through the same `* /api/v1/containers/{id}/proxy/permissions*` checks and `* /_logs*` capture as external requests, whether they came from across the internet or from a script in the next process. `* /api/v1/containers/{id}/proxy/hooks*` MITM rules apply the same way, but only to services that accept hooks: `logs`, `egress` and `cdp` reject hook operations with `404`. There is no "trusted internal" loophole that leaks to attackers via SSRF.
+- **Security uniformity** — requests from inside containers go through the same `* /api/v1/containers/{id}/proxy/permissions*` checks and `* /_logs*` capture as external requests, whether they came from across the internet or from a script in the next process. `* /api/v1/containers/{id}/proxy/hooks*` MITM rules apply the same way, but only to services that accept hooks: `logs`, `egress` and `cdp` reject hook operations with `404`.
 - **One mental model** — same URL works from your laptop, from another container, from inside the container itself. You write the same code; the proxy is transparent.
 - **Cost is negligible** — the proxy hop adds microseconds, not a network round-trip.
 
-Practical consequence: from inside a container, when calling its OWN kits, use the same kit URL form as anywhere else (`https://{P}-{C}-<kit>-1.{N}.containers.hoody.com/...`). The `hoody` CLI and the Hoody SDK both already do this. There is no other way in: the Source IP Guard refuses it.
+Practical consequence: from inside a container, when calling its OWN kits, use the same kit URL form as anywhere else (`https://{P}-{C}-<kit>-1.{N}.containers.hoody.com/...`). The `hoody` CLI and the Hoody SDK both already do this.
 
 ### Container ↔ container — anyone reaches anyone (with permissions)
 
@@ -173,7 +174,7 @@ Because routing is uniform, **a process in container X can call any kit on conta
 Cross-container access still goes through the gate stack — Y's `* /api/v1/containers/{id}/proxy/permissions*` rules apply to whoever's calling, no matter where they're calling from. So:
 
 - **By default** (no gates set), Y's URL is a capability — anyone with the URL has access. Within your account that's usually fine; for production / shared / multi-tenant fleets you SHOULD gate.
-- **With a gate set** (§ How to gate — an auth group alone is not a gate), X must satisfy it. A Token gate (`setTokenGroup`) is a static shared secret: you choose where it is read (one header, cookie or query parameter) and the exact value it must equal, and X sends that value on every call to Y. It does not check Hoody auth tokens or realms — an `hdy_…` token passes only if it is literally the configured value. A JWT gate (`setJwtGroup`) verifies a signed JWT instead.
+- **With a gate set** (§ How to gate — an auth group alone is not a gate), X must satisfy it. A Token gate (`PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/token`) is a static shared secret: you choose where it is read (one header, cookie or query parameter) and the exact value it must equal, and X sends that value on every call to Y. It does not check Hoody auth tokens or realms — an `hdy_…` token passes only if it is literally the configured value. A JWT gate (`PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/jwt`) verifies a signed JWT instead; by default a valid token in any of its configured sources counts. For a cookie, use a `__Host-` name set by the address it protects.
 
 This is why edge routing matters: if same-container calls were a backdoor, an attacker who pwned X could quietly read Y's data with no gate checked. Routing everything through the proxy means **every** container-to-container call sees the **same** auth + audit machinery as every external call.
 
@@ -193,14 +194,14 @@ This is why edge routing matters: if same-container calls were a backdoor, an at
 
 Configure under `proxy.containerPermissions` (per-container) or `proxy.projectPermissions` (whole project — applies to every container in the project) on the control plane. Groups are alternatives, not layers: each named group (password, token, JWT or IP — or an OR-array of those) is one way in, a request that satisfies a group gets that group's per-program `permissions`, and a request that matches no group falls to the document's `default` (`allow` or `deny`).
 
-A group on its own restricts nothing. It grants only the programs you give it access to, and a document the API creates for you starts at `default: 'allow'`, so everyone who matches no group still gets in. A working gate takes three calls: define the group (`set{Password,Token,Jwt,Ip}Group`), give it access to each program it should reach (`setGroupPermission` with `{ program, access: true }`), and set `setDefault` to `{ default: 'deny' }`. Every one of these writes is versioned: send the document's current `file_version` as `If-Match: file:v<N>` (`file:v0` while the document has none). A missing header is refused with `428` and a stale one with `412`. Each call returns the updated document, so take the next call's version from it. The one partial exception: a password group with an access rule for a program answers a caller without credentials with a `401` challenge for that program even under `default: 'allow'`.
+A group on its own restricts nothing. It grants only the programs you give it access to, and a document the API creates for you starts at `default: 'allow'`, so everyone who matches no group still gets in. A working gate takes three calls: define the group (`PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/password`, `PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/token`, `PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/jwt` or `PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/ip`), give it access to each program it should reach (`PUT /api/v1/containers/{id}/proxy/permissions/permissions/{groupName}` with `{ program, access: true }`), and set `PATCH /api/v1/containers/{id}/proxy/permissions/default` to `{ default: 'deny' }`. Every one of these writes is versioned: send the document's current `file_version` as `If-Match: file:v<N>` (`file:v0` while the document has none). A missing header is refused with `428` and a stale one with `412`. Each call returns the updated document, so take the next call's version from it. The one partial exception: a password group with an access rule for a program answers a caller without credentials with a `401` challenge for that program even under `default: 'allow'`.
 
 | Gate | Accessor | Caller behavior |
 |---|---|---|
-| Password | `setPasswordGroup` | Browser / `curl -u user:pass` — HTTP Basic. |
-| Token | `setTokenGroup` | The header, cookie or query parameter you configured must carry exactly the value you configured (a static shared secret). |
-| JWT | `setJwtGroup` | Verifies issuer / audience signed JWT. |
-| IP | `setIpGroup` | Source IP must match a CIDR. |
+| Password | `PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/password` | Browser / `curl -u user:pass` — HTTP Basic. |
+| Token | `PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/token` | The header, cookie or query parameter you configured must carry exactly the value you configured (a static shared secret). Name a cookie with the `__Host-` prefix. |
+| JWT | `PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/jwt` | Verifies issuer / audience signed JWT. |
+| IP | `PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/ip` | Source IP must match a CIDR. |
 
 `disable` sets `enable_proxy` to `false` (`enable` sets it back to `true`), which is a kill-switch for the whole proxy, not a gate toggle: while it is `false` every request that reaches the permission layer is refused with `403` before groups or `default` are evaluated, and the configured groups are kept. It never opens access. (A project-level `false` does not apply to a container whose own document sets `enable_proxy: true` — use the container-level call to cut one container reliably.)
 
@@ -210,7 +211,9 @@ Defense in depth: gate the kit URL AND scope any auth-token bearer (realms, IP a
 
 Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` = `server_name` (e.g. `node-example-1`). All URLs route through `*.containers.hoody.com`.
 
-| Namespace | Kit slug | Public URL (single-instance form) |
+The middle column includes the instance index. For `{kit_slug}` in the URL formula, use the bare slug, such as `n`, `logs` or `watch`.
+
+| Namespace | Host service segment (kit slug plus instance index) | Public URL (single-instance form) |
 |---|---|---|
 | `agent` | `agent-{index}` | `https://{P}-{C}-agent-1.{N}.containers.hoody.com` — the in-container AI agent HTTP gateway: sessions/prompt, models, skills, memory, todos, workflows, hooks, github, tools, logs |
 | `api` | — (control plane) | `https://api.hoody.com` (global, not per-container) |
@@ -251,7 +254,7 @@ For project `65f1...c8a`, container `65f2...41e`, server `node-example-1`:
 | Same, but MATE | `https://65f1...c8a-65f2...41e-desktop-1.node-example-1.containers.hoody.com/?desktop_env=mate` |
 | Terminal session 3 | `https://65f1...c8a-65f2...41e-terminal-3.node-example-1.containers.hoody.com/api/v1/terminal/...` |
 | Proxy logs | `https://65f1...c8a-65f2...41e-logs-1.node-example-1.containers.hoody.com/` |
-| Watch (file-events) | `https://65f1...c8a-65f2...41e-watch-1.node-example-1.containers.hoody.com/watchers/...` |
+| Watch (file-events) | `https://65f1...c8a-65f2...41e-watch-1.node-example-1.containers.hoody.com/api/v1/watch/watchers/...` |
 | Coding agent HTTP API | `https://65f1...c8a-65f2...41e-agent-1.node-example-1.containers.hoody.com/api/v1/agent/...` |
 | Hoody Agent GUI (for humans) | `https://65f1...c8a-65f2...41e-agent-1.node-example-1.containers.hoody.com/` |
 | User HTTP server on `:8080` | `https://65f1...c8a-65f2...41e-http-8080.node-example-1.containers.hoody.com/` |
@@ -259,10 +262,10 @@ For project `65f1...c8a`, container `65f2...41e`, server `node-example-1`:
 ### Conventions
 
 - `code` and `display` are multi-instance — append a numeric instance: `-code-1`, `-code-2`, `-display-1`, `-display-7`.
-- `terminal` packs the terminal **session** id into the slug (`terminal-3` = session 3). The proxy sets `?terminal_id=` from that hostname index and overwrites any value you send, so the hostname is authoritative: to act on session N (`/execute`, `/paste`, `/press`, `/raw`), call the `terminal-N` host. `terminal-0` is the "no session" host — use it with `?ephemeral=true` so the kit allocates a fresh session instead of reusing session 1.
+- `terminal` packs the terminal **session** id into the instance index (`terminal-3` = session 3). The proxy sets `?terminal_id=` from that hostname index and overwrites any value you send, so the hostname is authoritative: to act on session N (`/execute`, `/paste`, `/press`, `/raw`), call the `terminal-N` host. `terminal-0` is the "no session" host — use it with `?ephemeral=true` so the kit allocates a fresh session instead of reusing session 1.
 - `display`/`terminal` pairing depends on how the session is created. A session started through a `terminal-N` URL gets `DISPLAY=:N` automatically (the proxy injects `display=N` with `terminal_id=N`; an ephemeral session drops it). A session created with a JSON `/create` body gets `DISPLAY=:N` only when the body sends `display: ':N'`. Use the same number for both by convention — `terminal_id` N, `display` `:N`, then the `display-N` kit URL shows what that session draws.
 - `exec` serves each script at a **path** on the exec host: a file `hello.js` is reachable at `https://{P}-{C}-exec-1.{N}.containers.hoody.com/hello` (the `.js`/`.ts` extension is stripped; the path keeps the file name's case, so `MyTool.ts` is served at `/MyTool`, not `/mytool`). A script placed under a subdirectory `scripts/{sub}/` is ALSO reachable at the `{sub}.` **subdomain** (`{sub}.{P}-{C}-exec-1.{N}…`) — the subdomain maps to that directory, NOT to a flat top-level filename.
-- `notifications` ↔ `display-{n}`: the notification kit pairs with display N at slug `n-N`.
+- `notifications` ↔ `display-{n}`: the notification kit pairs with display N at host segment `n-N`.
 - `POST /api/v1/proxy/aliases` rejects `program: 'web'`; use `program: 'exec'` for `hoody_kit` runners. Full valid program set is enumerated in the §Proxy aliases table below — note `logs` for the proxy-logs kit (not `proxy` or `proxyLogs`) and `run` (not `app`).
 
 ## Desktop alias — `desktop-<N>` (full XFCE / MATE desktop in a browser tab)
@@ -377,7 +380,7 @@ A **proxy alias** is a custom hostname that points at one specific program insid
 
 - **Hide `containerId`**: shipping `https://my-api.{N}.containers.hoody.com` is fine; shipping `https://65f1...c8a-65f2...41e-http-8080.{node}.containers.hoody.com` leaks the container identifier (which IS the credential of last resort).
 - **Brandable**: short, memorable, copy-pasteable.
-- **Stable**: alias survives container rebuilds — repoint at a new container, public URL stays the same.
+- **Retargetable within its container**: an update can change the alias's program, port, instance index or landing path while the public URL stays the same. It cannot move the alias to another container (the update takes no `container_id`); for a new container, delete the alias and create it there.
 - **Same gate stack**: layer Password / Token / JWT / IP via `proxy.containerPermissions` exactly as on the canonical URL.
 - **No DNS, no TLS work**: the proxy issues the cert and resolves the hostname for you.
 
@@ -390,7 +393,7 @@ A **proxy alias** is a custom hostname that points at one specific program insid
 | `container_id` | 24-char hex id of the target container — required. |
 | `alias` | 3-61 chars, lowercase alphanumeric **plus hyphens** (`a-z0-9-`, no leading/trailing hyphen). Becomes `<alias>.{N}.containers.hoody.com`. Two independent uniqueness rules, either of which answers `409 ALIAS_IN_USE`: the name must be free on the container's physical server (across every tenant there), AND your own account may hold a given name only once across all servers. |
 | `program` | Which kit/protocol to route to. Valid names, protocols first and then programs, with accepted aliases in parentheses: `http`, `https`, `ssh`, `terminal` (`tty`, `ttyd`, `t`), `display` (`d`), `desktop`, `cron`, `watch` (`w`), `notifications` (`notification`, `n`), `files` (`f`), `daemon`, `code`, `agent`, `exec` (`e`), `browser` (`b`), `cdp`, `curl`, `run`, `sqlite`, `logs` (`log`, `l`), `egress`, `pipe`, `notes` (`note`), `tunnel`, `bot`. Use only these names; `cli`, `proxy` and `proxyLogs`, for example, are refused with `400 Unknown program name`. The proxy-logs kit is `logs` (NOT `proxy` or `proxyLogs`), and `run` is NOT `app`. **`'web'` is rejected — for `hoody_kit` runners use `program: 'exec'`**. |
-| `index` | Optional; defaults to `1`. Set explicitly for multi-instance programs: port for `http`/`https`, `terminal_id` for `terminal`, display number for `display`. |
+| `index` | For a built-in program, the instance to route to (`terminal_id` for `terminal`, display number for `display`); defaults to `1`. For `http`/`https` it is the target port and has **no default**: give the port in `port` (preferred; it wins over `index` and over a port in the program name), as `http-<port>` (e.g. `http-8080`), or in `index`; with none of the three the create is refused with `400 PORT_REQUIRED`. |
 | `target_path` | Optional landing path served when the alias is opened with no path (a root request), e.g. `/api/v1`; a query written in it is sent too. It is never used as a prefix: with `allow_path_override: true` a request that carries its own path is forwarded as sent, resolved from the container root, and with `false` it is the only path the alias serves (at the root and at its own path). |
 | `allow_path_override` | Defaults to `true`: a root request lands on `target_path` (its query plus the visitor's parameters), and a request that carries its own path is forwarded as sent. With `false` the alias serves only `target_path`: the root `/` and the `target_path` path itself (e.g. `/run-report` when `target_path` is `/run-report`) are both served as `target_path`, and any other path — sub-paths and assets included — is refused with `404 ALIAS_PATH_PINNED`. A query key written in `target_path` wins over the visitor's value for the same key, and the instance selectors the alias's `index` sets (such as `id`, `terminal_id`, `display`) stay forced; the visitor's method, request body, other query keys, WebSocket upgrade and `Range` header pass through. Either way anyone with the link can open the alias, so restrict who may with proxy permissions. |
 | `expires_at` | Auto-disable timestamp — an ISO 8601 date-time string, or `null` for never. Convert an epoch value to ISO 8601 before sending. Must be in the future. |
@@ -417,7 +420,7 @@ Aliases inherit the container's gate stack — gate the underlying container (§
 
 ### Operational notes
 
-- `PATCH /api/v1/proxy/aliases/{aliasId}/state` with `{"enabled":false}` disables the alias instantly without releasing the slot — useful to revoke a leaked URL while you investigate.
+- `PATCH /api/v1/proxy/aliases/{aliasId}/state` with `{"enabled":false}` disables the alias without releasing the slot — useful to revoke a leaked URL while you investigate. Disable, enable, update and delete are not instant: they usually reach the alias URL within about 30 seconds and can take longer, and until then the alias keeps its previous behavior.
 - Wildcards / multi-program aliases not supported — one alias = one `(program, index)` target.
 - Conflicts return `409 ALIAS_IN_USE` under either rule: the name is already taken on that physical server (by any tenant), or your account already holds the same name on any server.
 - Custom apex domain (e.g. `api.example.com`) requires DNS CNAME + cert provisioning — not part of this surface.
@@ -435,7 +438,7 @@ Aliases inherit the container's gate stack — gate the underlying container (§
 
 ## Three credential types
 
-1. **JWT** — `POST /api/v1/users/auth/login`. Access token lives `1d`, refresh token `7d`, by default; a deployment may shorten either, so treat both as values to read from the response rather than constants. The interactive, short-lived credential.
+1. **JWT** — browser sign-in (§ Login) or `POST /api/v1/users/auth/login`. Access token lives `1d`, refresh token `7d`, by default; a deployment may shorten either, so treat both as values to read from the response rather than constants. The interactive, short-lived credential.
 2. **Auth token** — `POST /api/v1/auth/tokens`. Prefix `hdy_`. Scopable (realms, `resources.*`), IP-restrictable, rotatable. Long-lived headless credential.
 3. **Kit URL** — `https://{projectId}-{containerId}-{kit_slug}-{serviceIndex}.{server}.containers.hoody.com` is the bearer for that kit while no proxy permissions are configured for the container. See § Proxy URLs.
 
@@ -455,6 +458,65 @@ Send `Bearer <token>` (one space, case-sensitive) for either credential. An `hdy
 
 ## Login
 
+**Sign the user in through their own browser.** This is the default whenever a person is present. They type their password, use GitHub or Google, and pass two-factor on Hoody's page; you never see a password, and nobody pastes a token into chat. No account yet? Send them to `https://api.hoody.com/auth/signup` to sign up and verify their email in the browser, then start here.
+
+1. **Start.** `POST https://api.hoody.com/api/v1/auth/device/code` with JSON `{"client_name":"<your name>","client":"agent"}`. No bearer token. `data` holds `device_code` (keep it private), `user_code`, `verification_uri`, `verification_uri_complete`, `interval` (seconds, 5) and `expires_in` (seconds, 900); use the returned values.
+2. **Hand over the link.** Give the user `data.verification_uri_complete` and the `data.user_code`: "Open this link, check that the page shows code `<user_code>`, sign in and approve. If you did not ask me to sign you in, choose *Don't authorize this device*." The page shows your `client_name` and marks it as unverified, so name yourself plainly.
+3. **Poll.** `POST https://api.hoody.com/api/v1/auth/device/token` with `{"device_code":"…"}`, one request every `interval` seconds, until `expires_in` runs out. The waiting states are answers, not failures: HTTP 400 with the state in **`data.error`**, not a top-level `error`:
+   - `authorization_pending`: keep polling.
+   - `slow_down`: polled too soon; add 5 seconds to the interval.
+   - `access_denied`: stop. The user refused (or a PKCE verifier was missing or wrong).
+   - `expired_token`: stop; the code expired or was already redeemed. Offer a fresh link.
+   - HTTP `429`: wait `Retry-After`, then continue. HTTP `404`: browser sign-in is not enabled on this deployment.
+4. **Signed in.** HTTP 200 returns the same session as a password login: `data.token` (send as `Authorization: Bearer`), `data.refreshToken`, `data.expires_in`. Keep both tokens for this session only: never repeat them in chat, log them or write them to a file yourself (the `hoody` CLI keeps its own session in `~/.hoody/config.json`, and `hoody logout` clears it). The code redeems once; if that response is lost, start a new sign-in.
+
+Optional PKCE: make a random `code_verifier` of 43–128 characters from `A-Z a-z 0-9 _ -`, send `code_challenge` = unpadded base64url of its SHA-256 when you start, and the `code_verifier` with every poll.
+
+Run these as two separate commands, so the user gets the link before you start polling. Each command stands alone: carry the values over by hand.
+
+```bash
+# Start: prints device_code, user_code, verification_uri_complete, interval and deadline (epoch seconds).
+curl -sS --max-time 20 -X POST https://api.hoody.com/api/v1/auth/device/code \
+  -H 'Content-Type: application/json' -d '{"client_name":"<your name>","client":"agent"}' \
+  | jq '.data + {deadline: ((now | floor) + .data.expires_in)}'
+```
+
+Now give the user `verification_uri_complete` and `user_code`. Then poll; one run lasts at most a minute and prints one line. While it prints `pending INTERVAL=… NEXT=…`, run it again with those two values (on the first run `NEXT` is `0`). `NEXT` carries a wait across runs: a `slow_down` or an HTTP 429 (which waits the `Retry-After` the API sends) can push the next poll past the end of a run.
+
+```bash
+( DEVICE='<device_code>'; INTERVAL='<interval>'; DEADLINE='<deadline>'; NEXT='<next, 0 on the first run>'
+  STOP=$(( $(date +%s) + 50 )); RESULT=
+  while :; do
+    NOW=$(date +%s); [ "$NEXT" -gt 0 ] || NEXT=$((NOW + INTERVAL))
+    [ "$NEXT" -lt "$DEADLINE" ] || { RESULT=expired; break; }
+    [ "$NEXT" -le "$STOP" ] || break
+    [ "$NEXT" -le "$NOW" ] || sleep $((NEXT - NOW))
+    NOW=$(date +%s); [ "$NOW" -lt "$DEADLINE" ] || { RESULT=expired; break; }
+    [ "$NOW" -le "$STOP" ] || break
+    NEXT=0
+    R=$(curl -sS --max-time 10 -w '\n%{http_code} %header{retry-after}' -X POST https://api.hoody.com/api/v1/auth/device/token \
+      -H 'Content-Type: application/json' -d "{\"device_code\":\"$DEVICE\"}") || continue
+    TAIL=${R##*$'\n'}; CODE=${TAIL%% *}; WAIT=${TAIL#* }; BODY=${R%$'\n'*}
+    STATE=$(jq -r '.data.error? // empty' <<<"$BODY" 2>/dev/null)
+    case "$CODE:$STATE" in
+      400:authorization_pending) ;;
+      400:slow_down) INTERVAL=$((INTERVAL + 5)) ;;
+      429:*) case "$WAIT" in ''|*[!0-9]*) WAIT=300 ;; esac; NEXT=$(( $(date +%s) + WAIT )) ;;
+      200:*) RESULT="signed in $(jq -c '{token: .data.token, refreshToken: .data.refreshToken}' <<<"$BODY")"; break ;;
+      *) RESULT="stopped: HTTP $CODE ${STATE:-$(head -c 200 <<<"$BODY")}"; break ;;
+    esac
+  done
+  echo "${RESULT:-pending INTERVAL=$INTERVAL NEXT=$NEXT}" )
+```
+
+The signed-in result carries the session for you, not for the chat: send `token` as `Authorization: Bearer` on later calls.
+
+Use a long-lived auth token (§ Storing auth tokens) only when the user asks for unattended automation; never mint one just to finish sign-in.
+
+### Password login (fallback)
+
+Only when the user chooses it, or browser sign-in answers `404`. The user runs it themselves; do not ask for their password in chat.
+
 - `username` OR `email` + `password`.
 - Response: `data.token` (not `accessToken`), `data.refreshToken`, `data.expires_in`.
 - 2FA: returns `requires_2fa`, `temp_token` (5-min); exchange at `POST /api/v1/users/auth/2fa/verify`.
@@ -462,7 +524,7 @@ Send `Bearer <token>` (one space, case-sensitive) for either credential. An `hdy
 
 ## Kit URLs as credentials
 
-Bearer by default. Add auth groups via `proxy.containerPermissions`/`proxy.projectPermissions` `.set{Password,Token,Jwt,Ip}Group` — groups are alternatives (a request satisfying any one gets that group's permissions; unmatched requests fall to the `default` policy), not stacked layers. A group alone restricts nothing: give it program access with `setGroupPermission` and set `setDefault` to `deny`, because a new permission document starts at `default: 'allow'`. `disable` / `enable` (`enable_proxy`) is a kill-switch that cuts the proxy entirely. See § Proxy URLs.
+Bearer by default. Add password, token, JWT or IP auth groups in the container's or project's proxy permissions. Groups are alternatives (a request satisfying any one gets that group's permissions; unmatched requests fall to the `default` policy), not stacked layers. A group alone restricts nothing: give it access to the intended programs and set the default policy to `deny`, because a new permission document starts at `default: 'allow'`. Disabling the proxy (`enable_proxy`) is a kill-switch that cuts it entirely. See § Proxy URLs for the operations and the required version headers.
 
 ### Container claim — optional portable credential
 
@@ -495,6 +557,8 @@ Mint a realm-scoped token via `POST /api/v1/auth/tokens` with `{ realm_ids: ['<i
 
 ### Best practice — one realm + one token per project
 
+This is for unattended automation the user asked for, or for handing a scoped credential to another program. For interactive work with the user present, keep the browser sign-in session and select the realm with its realm URL.
+
 Realms are **implicit**: there is no `realms.create` endpoint. A realm comes into existence the first time you reference it on a resource. Pick or generate a 24-hex string (e.g. via `crypto.randomBytes(12).toString('hex')` / `openssl rand -hex 12`) and use it everywhere for the project.
 
 1. **Pick a realm id** — any 24-char lowercase hex; or list existing ones with `GET /api/v1/realms/`.
@@ -507,7 +571,7 @@ Result: that token can only see projects, containers, tokens, and vault entries 
 
 ## Storing auth tokens
 
-The `hdy_…` token from `POST /api/v1/auth/tokens` is shown ONCE; the server stores only a hash. Three storage options:
+Mint an `hdy_…` token only when the user asks for unattended automation; the session from browser sign-in is not one, so don't save it yourself. The token from `POST /api/v1/auth/tokens` is shown ONCE; the server stores only a hash. Three storage options:
 
 - **Write it down outside Hoody** (recommended) — password manager, secrets manager, env file outside the container. The token is a long-lived bearer; treat it like an SSH key.
 - **Vault, plaintext** — `PUT /api/v1/vault/keys/{key}` with `{ value: 'hdy_…' }`. Stored server-side as sent — Hoody does not encrypt the value for you — and readable by anyone holding a JWT or vault-scoped auth-token for the account. Convenient for self-hosted automation.
@@ -518,12 +582,12 @@ Vault gate: any vault read needs BOTH `vault_access===true` on the token AND the
 ## Token revocation
 
 - `POST /api/v1/users/auth/logout` — for a JWT this is a **logout-everywhere**: every access and refresh token minted before the call stops working, on every device, not just the one that called it. Auth tokens are unaffected.
-- `POST /api/v1/users/auth/refresh` — server requires the refresh token in BOTH the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. Nothing adds the header for you: send the same refresh token in the `{"refreshToken":"…"}` body and as `Authorization: Bearer <refreshToken>`. For headless flows prefer minting a long-lived `POST /api/v1/auth/tokens`.
+- `POST /api/v1/users/auth/refresh` — server requires the refresh token in BOTH the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. Nothing adds the header for you: send the same refresh token in the `{"refreshToken":"…"}` body and as `Authorization: Bearer <refreshToken>`. For unattended automation the user asked for, a long-lived `POST /api/v1/auth/tokens` token avoids refresh handling.
 - `DELETE /api/v1/auth/tokens/{id}` / disable / IP-restrict — effective next request.
 
 ## 2FA
 
-`POST /api/v1/users/auth/2fa/setup` returns `{ qr_code, manual_entry_key, backup_codes }`; `POST /api/v1/users/auth/2fa/verify-setup` enables. Backup codes rotatable, one-time, hashed. `PUT /api/v1/users/auth/2fa/token-gate` on → sensitive auth-token mutations need TOTP+JWT.
+`POST /api/v1/users/auth/2fa/setup` returns `data: { qr_code, manual_entry_key, backup_codes }` inside the usual `{ statusCode, message, data }` envelope; `POST /api/v1/users/auth/2fa/verify-setup` enables. Backup codes rotatable, one-time, hashed. `PUT /api/v1/users/auth/2fa/token-gate` on → sensitive auth-token mutations need TOTP+JWT.
 
 ---
 
@@ -538,7 +602,7 @@ Anything missing? Just `apt install`, `pip install`, `npm i -g`, `cargo install`
 
 ## `kvm: true` — run full VMs inside the container
 
-Containers on **rented / dedicated (bare-metal) servers** can enable `/dev/kvm` passthrough and run hardware-accelerated virtual machines (QEMU/KVM, libvirt, Firecracker, …) inside the container. Pass `kvm: true` on `POST /api/v1/projects/{id}/containers`, or toggle it later on a **stopped** container (`PUT /api/v1/containers/{id}/kvm` / `PUT /api/v1/containers/{id}/kvm`). Defaults to off. **Never available on free-tier servers** — the API refuses with `403`. `dev_kvm` is accepted as an input alias of `kvm` (`kvm` wins; if both are sent they must agree). Every container response carries the current `kvm` boolean.
+Containers on **rented / dedicated (bare-metal) servers** can enable `/dev/kvm` passthrough and run hardware-accelerated virtual machines (QEMU/KVM, libvirt, Firecracker, …) inside the container. Pass `kvm: true` on `POST /api/v1/projects/{id}/containers`, or toggle it later on a **stopped** container using `PUT /api/v1/containers/{id}/kvm` with JSON body `{"kvm":true}` to enable or `{"kvm":false}` to disable. Defaults to off. **Never available on free-tier servers** — the API refuses with `403`. `dev_kvm` is accepted as an input alias of `kvm` (`kvm` wins; if both are sent they must agree). Every container response carries the current `kvm` boolean.
 
 ## `hoody` CLI is pre-installed inside every container
 
@@ -552,13 +616,15 @@ This is the same binary as `hoody` outside the container — every example in th
 
 Containers ship with a **non-root account named `user`** (uid 1000, gid 1000, member of `sudo`). Home is `/home/user`. **`/etc/sudoers.d/user` grants `user ALL=(ALL) NOPASSWD: ALL`** — passwordless `sudo` lets agents (and humans) escalate to root for any operation without prompting.
 
+The Hoody Agent runs as `user` and its shell follows this setting: with the drop-in in place the agent can sudo; once the drop-in is removed (or narrowed to some commands) the agent's shell gets exactly what `user` gets without a password.
+
 **Use `user` for everyday work, sudo when you actually need root.** Reasons:
 
 - Files created under `user` are owned by uid 1000 — friendlier when you copy/sync them out of the container or back-stop with rsync.
 - Many apps (npm, pip in venvs, Bun, Cargo, Go, Nix single-user, Docker rootless, browsers) write into `$HOME` and behave better when `$HOME` is a real user home, not `/root`.
 - `journalctl --user`, `systemctl --user`, dbus user buses all hang off a regular user.
 
-The kit's `terminal` / `daemon` / `cron` namespaces let you pass `user: 'user'` (default in many surfaces is `root` — be explicit). Examples: `POST /api/v1/daemon/programs/add` with `{ name: 'my-app', command: '…', user: 'user' }`, `POST /api/v1/terminal/create` with `{ terminal_id: '100', user: 'user', shell: 'bash', cwd: '/home/user' }` (`terminal_id` is required unless you pass `ephemeral: true`). The generated `GET /{path}` does NOT take a `user` param — the script runs under whatever uid the kit was started as.
+The kit's `terminal` / `daemon` / `cron` namespaces let you pass `user: 'user'` (default in many surfaces is `root` — be explicit). Examples: `POST /api/v1/daemon/programs/add` with `{ name: 'my-app', command: '…', user: 'user' }`, `POST /api/v1/terminal/create` with `{ terminal_id: '100', user: 'user', shell: 'bash', cwd: '/home/user' }` (`terminal_id` may be omitted when the `terminal-N` host supplies it, or when `ephemeral: true` generates it. If you send a body id on a container-scoped client, set `serviceIndex` to that same id: a mismatch is refused with `400 TERMINAL_ID_MISMATCH`. The `terminal-0` host creates only ephemeral sessions). The generated `GET /{path}` does NOT take a `user` param — the script runs under whatever uid the kit was started as.
 
 **Production hardening — disable passwordless sudo.** For containers exposed to untrusted callers (open kit URLs without proxy gates, public alias hostnames, agents you don't fully trust), revoke the NOPASSWD line:
 
@@ -664,9 +730,11 @@ State is per-container: `POST /api/v1/containers/{id}/copy` clones the disk incl
 
 # HTTP — Core ops cheat-sheet
 
-Vars (P=projectId, C=containerId, N=`server_name`): `API=https://api.hoody.com/api/v1` (already includes `/api/v1`); `K(k)=https://{P}-{C}-${k}-1.{N}.containers.hoody.com/api/v1/${k}`; `T=K(terminal)`, `F=K(files)`, `D=K(display)`, `S=K(sqlite)`. Watch exception (routes mounted at root, NOT `/api/v1/watch/...`): `W=https://{P}-{C}-watch-1.{N}.containers.hoody.com/watchers`.
+Vars (P=projectId, C=containerId, N=`server_name`): `API=https://api.hoody.com/api/v1` (already includes `/api/v1`); `K(k)=https://{P}-{C}-${k}-1.{N}.containers.hoody.com/api/v1/${k}`; `T=K(terminal)`, `F=K(files)`, `D=K(display)`, `S=K(sqlite)`. Watch: `W=https://{P}-{C}-watch-1.{N}.containers.hoody.com/api/v1/watch/watchers`.
 
 All curls assume `-sS`; SSE adds `-N`. Every JSON body needs `-H 'Content-Type: application/json'` (plain `curl -d` sends a form content type, which the API refuses with `415`). API calls need `-H "Authorization: Bearer $TOKEN"` (double quotes, so the shell expands `$TOKEN`); kit URLs (T/F/D/S/W) don't. That includes the `bot` kit's management routes; gate kit URLs with proxy permissions. The commands below spell both headers out.
+
+Default for a person: they sign up at `https://api.hoody.com/auth/signup` in their own browser, and you sign them in through the browser (§2). Never collect their password in chat; the signup and password calls below are for a user who runs them from their own terminal or script.
 
 ### 1. Sign up + verify email — 200 on success / 422 on request-schema validation (missing field, bad email, short password) / 400 on other invalid input (e.g. unknown region) / 403 when registration disabled; user=`<local>-<4hex>`
 ```bash
@@ -677,8 +745,14 @@ curl -X POST "$API/auth/signup" -H 'Content-Type: application/json' -d '{"email"
 curl -X POST "$API/auth/verify-email" -H 'Content-Type: application/json' -d '{"token":"{64-char-token}"}'
 ```
 
-### 2. Login (+ 2FA branch) — returns `{data:{token,refreshToken,expires_in}}`; 2FA branch returns `{data:{requires_2fa:true,temp_token}}`
+### 2. Login — browser sign-in first; returns `{data:{token,refreshToken,expires_in}}`
 ```bash
+# Browser sign-in (default; every state and a polling loop: § Login). No bearer token on either call.
+curl -X POST "$API/auth/device/code" -H 'Content-Type: application/json' -d '{"client_name":"<your name>","client":"agent"}'
+# → give the user data.verification_uri_complete + data.user_code; then every data.interval seconds:
+curl -X POST "$API/auth/device/token" -H 'Content-Type: application/json' -d '{"device_code":"<data.device_code>"}'
+# → 400 {data:{error:"authorization_pending"|"slow_down"|"access_denied"|"expired_token"}} until approved, then 200 with data.token
+# Password login (fallback the user runs; 2FA branch returns {data:{requires_2fa:true,temp_token}}):
 # Body takes EITHER {email,password} OR {username,password}: password AND one identifier are required.
 # `username` must match ^[a-zA-Z0-9_-]+$ — an email sent as `username` returns 422.
 TOKEN=$(curl -X POST "$API/users/auth/login" -H 'Content-Type: application/json' \
@@ -695,7 +769,7 @@ curl -X POST "$API/users/auth/refresh" \
   -d "{\"refreshToken\":\"${REFRESH_TOKEN}\"}"
 ```
 
-### 4. Long-lived token (one-shot)
+### 4. Long-lived token (unattended automation the user asked for)
 ```bash
 curl -X POST "$API/auth/tokens" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"alias":"ci"}'
 ```
@@ -712,6 +786,7 @@ curl "$API/projects/{P}/containers" -H "Authorization: Bearer $TOKEN" | jq '.dat
 curl -X POST "$API/projects/{P}/containers" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
   -d '{"server_id":"{s}","hoody_kit":true,"dev_kit":true}'
 ```
+Once the container is `running`, give the user the clickable URLs of its main kits (each opens its web UI at `/`), built from the response's `project_id` (P), `id` (C) and `server_name` (N): `https://{P}-{C}-terminal-1.{N}.containers.hoody.com/`, then the same host with `n-1` for notifications (the slug is `n`, not `notifications`), `desktop-1`, `browser-1`, `files-1` and `agent-1`.
 
 ### 7. Lifecycle — start/stop/force-stop/restart/pause/resume; poll until `running`
 ```bash
@@ -729,7 +804,7 @@ T0=https://{P}-{C}-terminal-0.{N}.containers.hoody.com/api/v1/terminal
 curl -X POST "$T0/execute?ephemeral=true" -H 'Content-Type: application/json' -d '{"command":"ls","wait":true}'
 ```
 
-### 10. Terminal session — later calls for session N go to the host `terminal-N` (`T` is session 1). `/create` reads `terminal_id` only from the JSON body (without it it returns `400 Missing 'terminal_id' field`, unless the body sends `"ephemeral":true`, which allocates an id in 40000-65535), so send the same N in the body
+### 10. Terminal session — later calls for session N go to the host `terminal-N` (`T` is session 1). `/create` takes the `terminal_id` the host supplies (N), so the JSON body may omit it; a body `terminal_id` that differs from N answers `400 TERMINAL_ID_MISMATCH`. The `terminal-0` host creates only ephemeral sessions: send `"ephemeral":true` to allocate an id in 40000-65535
 ```bash
 curl -X POST "$T/create" -H 'Content-Type: application/json' -d '{"terminal_id":"1","shell":"/bin/bash"}'   # T is the terminal-1 host → id "1"
 ```
@@ -748,6 +823,7 @@ curl -o s.png "$D/screenshot"
 ```
 
 ### 13. Click coord — `button` is **numeric** (1=left, 2=middle, 3=right; 4..7 also valid)
+Input reaches only a viewable window, and a window is viewable only while a viewer is attached: open the display kit URL in a browser first, then take a fresh screenshot and pick a point on a window (screenshot pixels are screen coordinates). With no viewer, or no window at the point, `click-at` and `type-at` answer `409 WINDOW_NOT_VIEWABLE` and send nothing; attach the viewer, re-shoot and retry.
 ```bash
 curl -X POST "$D/input/click-at" -H 'Content-Type: application/json' -d '{"x":640,"y":480,"button":1}'
 ```
@@ -812,9 +888,9 @@ curl -X POST "$S/db?db=app&create_db_if_missing=true" -H 'Content-Type: applicat
 #    {"success":true,"resultHeaders":["id","title"],"resultSet":[{"id":1,"title":"Write docs"}]}]}   (no envelope)
 ```
 
-### 23. Cron entries — routes at the ROOT of the cron kit URL (no `/api/v1`); `{user}` is the system user (`user` is the container's login user)
+### 23. Cron entries — routes under `/api/v1/cron`; `{user}` is the system user (`user` is the container's login user)
 ```bash
-CR="https://{P}-{C}-cron-1.{N}.containers.hoody.com"
+CR="https://{P}-{C}-cron-1.{N}.containers.hoody.com/api/v1/cron"
 curl "$CR/users/user/entries"                                       # → {user, entries:[{type:"managed",id,schedule,command,enabled,…} | {type:"raw",line}], total, page, limit}
 curl -X POST "$CR/users/user/entries" -H 'Content-Type: application/json' -d '{"schedule":"*/5 * * * *","command":"/home/user/bin/sync.sh"}'   # → 201 {id,…}
 curl -X PATCH "$CR/users/user/entries/$ID" -H 'Content-Type: application/json' -d '{"enabled":false}'
@@ -831,10 +907,10 @@ curl "$CR/users/user/crontab"                                       # → {user,
 | Code | Meaning |
 |---|---|
 | 200/201 | OK/Created. `{statusCode,message,data}` |
-| 400/401 | Bad JSON / missing-or-bad JWT (`Bearer `) |
+| 400/401 | Other bad requests / missing-or-bad JWT (`Bearer `) |
 | 403/404 | Forbidden / missing-or-no-perm |
 | 409/412/415 | Conflict / cond-failed / wrong CT |
-| 422/428/429 | Field errors / If-Match required / rate-limited |
+| 422/428/429 | Request-schema validation or unparseable JSON body / If-Match required / rate-limited |
 | 500/503 | Sanitised internal / retriable |
 
 Kit URLs (`*.containers.hoody.com`) use per-kit shapes.
@@ -846,6 +922,8 @@ Kit URLs (`*.containers.hoody.com`) use per-kit shapes.
 ```
 
 Request-schema failures return `422` with `error: "Validation Error"` and the failing fields in `data`. Other refusals use the same shape with their own status, and `error` may carry a machine-readable code instead of the status name.
+
+One exception: browser sign-in polling (`POST /api/v1/auth/device/token`) answers its waiting states with HTTP 400 `{"statusCode":400,"data":{"error":"authorization_pending"}}`, the state under `data` and no top-level `error` or `message`. Read `data.error` for `authorization_pending`, `slow_down`, `access_denied` or `expired_token`; the steps are in § Login.
 
 200-on-missing (don't infer existence): `POST /api/v1/auth/{forgot-password,resend-verification,signup}`.
 
@@ -859,9 +937,9 @@ Control-plane list routes: `?page=N&limit=M`. Shared fallback: `page=1`, `limit=
 
 ## SSE
 
-WHATWG `field: value` + blank line. `id:` is per-endpoint: watch and proxy-logs send monotonic ids for resuming (proxy-logs also sends some id-less frames), pipe progress sends none. `:keepalive` interval is per-kit — observed: watch SSE 10s, pipe 15s, proxy-logs 15s — ignore the heartbeat lines. Reconnect mechanism is per-endpoint: `Last-Event-ID` header (proxy-logs — a server restart drops the stream; reconnecting with the saved id answers `event: gap` (`{after, resumedFrom}`) when the retained history no longer reaches it, so treat a `gap` as lost events. An `event: reset` you do receive means discard the saved id and reconnect fresh. It also sends `event: scope-destroyed` when the container is destroyed, after which the stream closes); `?since_id=` / `?since_timestamp=` (watch — emits `lag` on id gaps). Curl: `--no-buffer -N`.
+WHATWG `field: value` + blank line. `id:` is per-endpoint: watch and proxy-logs send monotonic ids for resuming (proxy-logs also sends some id-less frames), pipe progress sends none. `:keepalive` interval is per-kit — observed: watch SSE 10s, pipe 15s, proxy-logs 5s — ignore the heartbeat lines. Reconnect mechanism is per-endpoint: `Last-Event-ID` header (proxy-logs — a server restart drops the stream; reconnecting with the saved id answers `event: gap` (`{after, resumedFrom}`) when the retained history no longer reaches it, so treat a `gap` as lost events. An `event: reset` you do receive means discard the saved id and reconnect fresh. It also sends `event: scope-destroyed` when the container is destroyed, after which the stream closes); `?since_id=` / `?since_timestamp=` (watch — emits `lag` on id gaps). Curl: `--no-buffer -N`.
 
-**WebSocket** — `GET /api/v1/notifications/stream` is a WebSocket (`wss://...-n-1.{N}.containers.hoody.com/api/v1/notifications/stream`; kit slug is `n-{serviceIndex}`, not `notifications-`), 15s heartbeat, NOT SSE.
+**WebSocket** — `GET /api/v1/notifications/stream` (`GET /api/v1/notifications/stream`, e.g. `wss://...-n-1.{N}.containers.hoody.com/api/v1/notifications/stream`; kit slug is `n`, so the host segment is `n-{serviceIndex}`, not `notifications-`) is a WebSocket when the request carries `Upgrade`, otherwise SSE (which requires `displays`); 15s heartbeat either way.
 
 ## Rate limits
 
@@ -924,7 +1002,7 @@ Every namespace page is included below, in this order.
 
 ## Purpose
 
-The `agent` kit exposes the in-container AI agent as a typed namespace: create a chat session, send a prompt, stream the turn (tool calls, gates, output), then confirm/answer/cancel as the agent works. services — `sessions` (with `sessions.turns`), `definitions`, `models`, `providers`, `skills` (with `skills.hub`), `memory`, `github`, `workflows`, `tools`, `hooks`, `mcp`, `settings`, `loops`, `logs`, `tasks`, `stats`, `jobs`, `gates`, `changes`, `headless`, `todos`, `usage`, plus `platform` (token bootstrap) and `GET /api/v1/agent/logs/export`.
+The `agent` kit exposes the in-container AI agent as a typed namespace: create a chat session, send a prompt, stream the turn (tool calls, gates, output), then confirm/answer/cancel as the agent works. services — `sessions` (with `sessions.turns`), `bots`, `definitions`, `models`, `providers`, `skills` (with `skills.hub`), `memory`, `github`, `workflows`, `tools`, `hooks`, `mcp`, `settings`, `loops`, `logs`, `tasks`, `stats`, `jobs`, `gates`, `changes`, `headless`, `todos`, `usage`, plus `platform` (token bootstrap) and `GET /api/v1/agent/logs/export`.
 
 ## When to use
 
@@ -968,19 +1046,22 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 3. Resolve gates mid-turn
 
-While a prompt streams, the agent may pause for human input: a confirmation gate → `POST /api/v1/agent/sessions/{id}/confirm` / `POST /api/v1/agent/sessions/{id}/confirm`; an open question → `POST /api/v1/agent/sessions/{id}/answer` (to get a helper model to DRAFT an answer for a parked question call `POST /api/v1/agent/sessions/{id}/answer:assist` — it does NOT answer the gate: it dispatches an async job (HTTP 202) whose suggestion arrives via `GET /api/v1/agent/jobs/{id}/result` and an `event.question_suggestion` on the session stream — only one assist may be in flight per session — and the real answer still goes through `POST /api/v1/agent/sessions/{id}/answer`; for unattended runs arm `PATCH /api/v1/agent/sessions/{id}/auto-reply` (a self-driving auto-user loop that withholds write-class actions unless you opt in with `allow_writes: true`, either on the arm call or later via `PATCH /api/v1/agent/sessions/{id}/auto-reply/writes`)). The gate identity to echo is the ENVELOPE-level `gate {id, generation, type}` that the stream frame parking the gate carries beside `seq` / `incarnation` / `event`. The `event.confirm_request` payload also has a numeric `gate_id`, but that is the daemon's id space and is never the value to echo. Echoing a wrong/stale `gate_id`/`generation`, or answering when nothing is parked, returns 409 (`no_pending_gate` / `stale_gate` / `gate_already_answered` / `gate_type_mismatch`). On a session whose approval policy is `always` and whose approver lease was ever minted (`POST /api/v1/agent/sessions/{id}/approver-lease`, or the lease handed back by a create or attach that asserted `always`), EVERY decision — `POST /api/v1/agent/sessions/{id}/confirm` / `POST /api/v1/agent/sessions/{id}/confirm`, and the confirmed re-issue of a gated `POST /api/v1/agent/sessions/{id}/tools/{name}/run` — must carry the current lease capability in the `X-Hoody-Approver-Lease` request header. Without it the decision is refused `409 approver_lease_required`, a capability that does not verify is `409 approver_lease_invalid`, and an expired one is `approver_lease_expired` until a holder acquires again. Interrupt a running turn with `POST /api/v1/agent/sessions/{id}/cancel`. Tear the session down: `POST /api/v1/agent/sessions/{id}/close` removes it from the live map; `DELETE /api/v1/agent/sessions/{id}` drops the live connection but keeps the persisted record (re-attach with `POST /api/v1/agent/sessions` with `{ "attach": "<id>" }`), while a *hard* delete also erases the persisted record: `DELETE /api/v1/agent/sessions/{id}?hard=true`. To roll a session back without tearing it down, `POST /api/v1/agent/sessions/{id}/trim` with `{ turn_idx }` truncates conversation history to (and including) that turn index.
+While a prompt streams, the agent may pause for human input: a confirmation gate → `POST /api/v1/agent/sessions/{id}/confirm` / `POST /api/v1/agent/sessions/{id}/confirm`; an open question → `POST /api/v1/agent/sessions/{id}/answer` (to get a helper model to DRAFT an answer for a parked question call `POST /api/v1/agent/sessions/{id}/answer:assist` — it does NOT answer the gate: it dispatches an async job (HTTP 202) whose suggestion arrives via `GET /api/v1/agent/jobs/{id}/result` and an `event.question_suggestion` on the session stream — only one assist may be in flight per session — and the real answer still goes through `POST /api/v1/agent/sessions/{id}/answer`; for unattended runs arm `PATCH /api/v1/agent/sessions/{id}/auto-reply` (a self-driving auto-user loop that withholds write-class actions unless you opt in with `allow_writes: true`, either on the arm call or later via `PATCH /api/v1/agent/sessions/{id}/auto-reply/writes`)). The gate identity to echo is the ENVELOPE-level `gate {id, generation, type}` that the stream frame parking the gate carries beside `seq` / `incarnation` / `event`. The `event.confirm_request` payload also has a numeric `gate_id`, but that is the daemon's id space and is never the value to echo. The answer body for a question gate: the envelope's gate id as `gate_id` (optionally its `generation`), then **answer** (or **text**, used when **answer** is blank) for a single question; for a batch (`event.user_question` carrying `questions[]`), `answers` maps each `questions[].id` to its answer text, for example `{"gate_id":"<gate.id>","answers":{"<questions[].id>":"yes"}}`. A body with no `POST /api/v1/agent/sessions/{id}/answer`, no `text` and no `answers` is `400 bad_request` and the question stays parked. The `question_id` on `event.user_question` is a diagnostic number, not a body field. Echoing a wrong/stale `gate_id`/`generation`, or answering when nothing is parked, returns 409 (`no_pending_gate` / `stale_gate` / `gate_already_answered` / `gate_type_mismatch`). On a session whose approval policy is `always` and whose approver lease was ever minted (`POST /api/v1/agent/sessions/{id}/approver-lease`, or the lease handed back by a create or attach that asserted `always`), EVERY decision — `POST /api/v1/agent/sessions/{id}/confirm` / `POST /api/v1/agent/sessions/{id}/confirm`, and the confirmed re-issue of a gated `POST /api/v1/agent/sessions/{id}/tools/{name}/run` — must carry the current lease capability in the `X-Hoody-Approver-Lease` request header. Without it the decision is refused `409 approver_lease_required`, a capability that does not verify is `409 approver_lease_invalid`, and an expired one is `approver_lease_expired` until a holder acquires again. Interrupt a running turn with `POST /api/v1/agent/sessions/{id}/cancel`. Tear the session down: `POST /api/v1/agent/sessions/{id}/close` removes it from the live map; `DELETE /api/v1/agent/sessions/{id}` drops the live connection but keeps the persisted record (re-attach with `POST /api/v1/agent/sessions` with `{ "attach": "<id>" }`), while a *hard* delete also erases the persisted record: `DELETE /api/v1/agent/sessions/{id}?hard=true`. To roll a session back without tearing it down, `POST /api/v1/agent/sessions/{id}/trim` with `{ turn_idx }` truncates conversation history to (and including) that turn index.
 
 ### 4. Pick a model / provider
 
 `GET /api/v1/agent/providers` to list the catalogued providers (and `GET /api/v1/agent/providers/{id}/auth` to check that one is `ready`: a stored credential or passwordless access), `GET /api/v1/agent/models` to list the catalogued models, then `PATCH /api/v1/agent/sessions/{id}/model` to bind a model to a session before prompting — SYNCHRONOUS: the response reports the actual outcome ({status:'ok', model, persisted} on success; structured 409/422 errors while busy or for an unconstructable spec). A successful switch is live for the session at once and then TRIES to persist into the chat agent's frontmatter (a global repin for future sessions of that agent); that save is best-effort, so only `persisted: true` confirms the repin — `persisted: false` means the session switched but future sessions keep the old pin. PRECEDENCE: the agent's frontmatter `model` is the DEFAULT for a session that does not request one; an explicit model on create (`POST /api/v1/agent/sessions` with `{ "model": "..." }`), or this live `PATCH /api/v1/agent/sessions/{id}/model`, OVERRIDES that pin for the session — create is session-scoped and does not rewrite the agent, this live switch repins globally. The shipped default agent ships pinned, so its pin is the out-of-the-box default until an explicit model is chosen (an explicit model together with `attach` or `backend: "acp"` is rejected 400 — a resumed/delegated session cannot take an explicit model). Each session has further per-session knobs (all session-scoped PATCHes that apply live): `PATCH /api/v1/agent/sessions/{id}/effort` (`{ effort }` — `low|medium|high|xhigh|max`, or `""` for the model default), `PATCH /api/v1/agent/sessions/{id}/verbosity` (`{ level }` — `normal|concise|terse|minimal`), `PATCH /api/v1/agent/sessions/{id}/hoody-env` (`{ enabled }` — toggle whether the `HOODY_*` shell-env contract is injected for the bash tool), and `PATCH /api/v1/agent/sessions/{id}/agent` (`{ agent }` — bind a named profile from `agents`).
 
+To use a model from an endpoint that is not in the catalogue (anything that speaks the OpenAI Chat Completions, OpenAI Responses or Anthropic Messages API from a public HTTPS address, such as a model server you run yourself or a company gateway), add it as a **custom provider** first. `POST /api/v1/agent/providers` takes `id`, `base_url` and `models`, then `PUT /api/v1/agent/providers/{id}/auth/api-key` stores its key (a key never goes in the create body), and its models are `<model_prefix>/<model>` wherever a model is chosen: `model` on `POST /api/v1/agent/sessions`, `PATCH /api/v1/agent/sessions/{id}/model` or `PATCH /api/v1/agent/agents/{name}/model`. `PATCH /api/v1/agent/providers/{id}` changes it and `DELETE /api/v1/agent/providers/{id}` removes it with its stored key. The change applies at once, with no restart: new sessions, model switches and Jev see it, and an open session on one of its models picks it up before its next turn. `id` is 1-40 lowercase letters, digits or inner hyphens and cannot change later; `model_prefix` is the `id` unless given, and must equal it; `wire_format` is `chat_completions` (default), `responses` or `messages`, and `auth_scheme` follows it (`bearer`, or `x-api-key` for `messages`). Built-in providers refuse update and delete (`409 provider_builtin`), as does a provider defined in a project's providers file (`409 provider_not_managed`). See Examples for the full run.
+
 ### 5. Skills, memory, todos, workflows, agents
 
 - **Skills** — `GET /api/v1/agent/skills` (each carries an enabled + trust state), `POST /api/v1/agent/skills/hub/install` / `GET /api/v1/agent/skills/hub/search` / `GET /api/v1/agent/skills/hub/preview` to find and install from the hub. A newly installed/imported skill must be trusted before its code runs — `POST /api/v1/agent/skills/trust` is the gate (identify the skill by `root_dir`+`rel_dir`, set the `trusted` flag); `POST /api/v1/agent/skills/toggle` / `POST /api/v1/agent/skills/toggle` only enable or disable by `name` (set the `disabled` flag). Both `POST /api/v1/agent/skills/trust` (which grants arbitrary code-execution trust) and `POST /api/v1/agent/skills/hub/install` (which writes arbitrary skill code to disk) take effect immediately over this namespace: there is no confirmation step, and no privilege beyond ordinary access to the kit is required, so an autonomous caller can silently trust and install skill code. Add your own confirmation before exposing these to one.
-- **Memory** — `POST /api/v1/agent/memory/search` for hybrid recall (BM25 + vector + graph) and `GET /api/v1/agent/memory/items` to enumerate by `project`; `POST /api/v1/agent/memory/items` / `PATCH /api/v1/agent/memory/items/{id}` / `DELETE /api/v1/agent/memory/items` to write; `GET /api/v1/agent/memory/graph` for the relation graph (or `GET /api/v1/agent/memory/items/{id}` to read one record by `id`). `PUT /api/v1/agent/memory/enabled` / `PUT /api/v1/agent/memory/enabled` are the memory capture/privacy switch — they persist `features.memory` and flip the live store — and `POST /api/v1/agent/memory/flush` forces the store's durability barrier; none of the three is admin-gated. Memory is project-scoped (pass `project`); the reads (`POST /api/v1/agent/memory/search` / `GET /api/v1/agent/memory/items` / `GET /api/v1/agent/memory/graph` / `GET /api/v1/agent/memory/projects`) and `POST /api/v1/agent/memory/consolidate` are active-realm-only, and so are the item reads and writes (`GET /api/v1/agent/memory/items/{id}` / `POST /api/v1/agent/memory/items` / `PATCH /api/v1/agent/memory/items/{id}` / `DELETE /api/v1/agent/memory/items`): send no per-request realm selector, since every one of them answers `400 realm_scope_unsupported` to one. `POST /api/v1/agent/memory/search` / `GET /api/v1/agent/memory/graph` also return `503 store_unavailable` while the store is still warming — retry rather than treating it as an empty result.
+- **Memory** — `POST /api/v1/agent/memory/search` for hybrid recall (BM25 + vector + graph) and `GET /api/v1/agent/memory/items` to enumerate by `project`; `POST /api/v1/agent/memory/items` / `PATCH /api/v1/agent/memory/items/{id}` / `DELETE /api/v1/agent/memory/items` to write; `GET /api/v1/agent/memory/graph` for the relation graph (or `GET /api/v1/agent/memory/items/{id}` to read one record by `id`). `PUT /api/v1/agent/memory/enabled` / `PUT /api/v1/agent/memory/enabled` are the memory capture/privacy switch — they persist `features.memory` and flip the live store — and `POST /api/v1/agent/memory/flush` forces the store's durability barrier; none of the three is admin-gated. Memory is project-scoped (pass `project`). Memory reads and item writes accept `X-Hoody-Realm` or `?realm=` to select `global` or a realm id (in the SDK, pass `realm` in the method's options); omitted, the agent's current realm is used. A realm this login does not serve returns `404 not_found`; an agent pinned to one realm refuses another with `400 realm_scope_unsupported`. If the selected realm's memory is not connected, the request returns `503 service_unavailable` with `Retry-After` and does not connect it. `POST /api/v1/agent/memory/consolidate` remains human-only; see Common errors. `POST /api/v1/agent/memory/search` / `GET /api/v1/agent/memory/graph` also return `503 store_unavailable` while the store is still warming — retry rather than treating it as an empty result.
 - **Todos** — `GET /api/v1/agent/todos` / `POST /api/v1/agent/todos` to file; then `POST /api/v1/agent/todos/triage` (LLM inbox pass), `POST /api/v1/agent/todos/{id}/claim` / `POST /api/v1/agent/todos/{id}/release`, `POST /api/v1/agent/todos/{id}/run` (dispatch a background orchestrator — returns `{job_id, session_id}`), `POST /api/v1/agent/todos/{id}/cancel-run` to abort an in-flight run, and `POST /api/v1/agent/todos/{id}/proposals/{pid}/approve` / `POST /api/v1/agent/todos/{id}/proposals/{pid}/deny` to resolve a proposed run — approve is NOT inert: it spawns a background worker session equivalent to `POST /api/v1/agent/todos/{id}/run` (a J-class autonomous run that spends model budget), while `POST /api/v1/agent/todos/{id}/proposals/{pid}/deny` spawns nothing — plus `POST /api/v1/agent/todos/{id}/snooze` / `POST /api/v1/agent/todos/{id}/archive`. To move a todo between states (`inbox`, `ready`, `blocked`, `review`, `done`, `dropped`) or edit its fields, `PATCH /api/v1/agent/todos/{id}` applies a CAS-guarded patch / `state` transition (`in_progress` is entered only by `POST /api/v1/agent/todos/{id}/claim` / `POST /api/v1/agent/todos/{id}/run`; `PATCH /api/v1/agent/todos/{id}` refuses it, and an unknown state is rejected) — read the todo's OWN `revision` with `GET /api/v1/agent/todos/{id}` and pass it back (`GET /api/v1/agent/todos/revision` is a store-wide change cursor, NOT the CAS token; a stale value → `409 todo_conflict`); a stale revision is rejected (409). `POST /api/v1/agent/todos/{id}/archive` is not terminal — `POST /api/v1/agent/todos/purge` permanently and irreversibly deletes archived todos of the selected realm that were archived more than 90 days ago (and those with a missing or invalid archive time); no confirmation gate, treat as destructive. Mind the comment split: `POST /api/v1/agent/todos/{id}/messages` (`/messages`, plural) only appends a comment, whereas `POST /api/v1/agent/todos/{id}/message` (`/message`, singular) ALSO kicks an orchestrator turn — a budget-spending LLM run that returns `{job_id}` — so use the plural form for a plain note. The `job_id` returned by `POST /api/v1/agent/todos/{id}/run`, `POST /api/v1/agent/todos/{id}/message` and `POST /api/v1/agent/todos/triage` completes as `succeeded` the moment the dispatch is accepted; it records the dispatch only, not the worker's outcome. Follow the todo itself (`GET /api/v1/agent/todos/{id}`, its state and timeline) rather than polling that job. Note `POST /api/v1/agent/todos/{id}/run` / `POST /api/v1/agent/todos/triage` / `POST /api/v1/agent/todos/{id}/proposals/{pid}/approve` are J-class autonomous runs with NO confirmation gate on the RPC (reaching the RPC is itself treated as the human approval; that denial lives only on the model-facing `run_todo` *tool*), so calling them from automation silently dispatches a real LLM run — gate them in your own caller.
 - **Workflows** — `GET /api/v1/agent/workflows` / `GET /api/v1/agent/workflows/{name}` / `PUT /api/v1/agent/workflows/{name}` / `DELETE /api/v1/agent/workflows/{name}` / `POST /api/v1/agent/workflows/{name}/hide` manage saved definitions; `POST /api/v1/agent/sessions/{id}/workflows/{name}/runs` dispatches one onto a live session and returns a JOB, not a run (optionally seed the run with a `{ prompt }` body — input text fed to the workflow) — poll `GET /api/v1/agent/jobs/{id}` until its `run_id` populates (null during the brief dispatch window), then track via `GET /api/v1/agent/workflows/runs` / `GET /api/v1/agent/workflows/runs/{run_id}` and stop with `POST /api/v1/agent/workflows/runs/{run_id}/cancel`; feed a running workflow with `POST /api/v1/agent/sessions/{id}/workflow/messages` (`{ text }`). Run events flow on the owning session's stream, not a per-run bus.
-- **Agent profiles** — `GET /api/v1/agent/agents` to enumerate named profiles; `POST /api/v1/agent/agents` / `POST /api/v1/agent/agents/{name}/copy` / `POST /api/v1/agent/agents/{name}/rename` / `DELETE /api/v1/agent/agents/{name}`; `GET /api/v1/agent/agents/{name}/source` → edit → `PUT /api/v1/agent/agents/{name}/source` (put the read's `revision` in the body as `expected_revision`: a stale one is refused `409 revision_conflict` and nothing is written; without it the save is unconditional); `PATCH /api/v1/agent/agents/{name}/model` / `PATCH /api/v1/agent/agents/{name}/tools` / `POST /api/v1/agent/agents/{name}/tools/{tool}/toggle` / `PATCH /api/v1/agent/agents/{name}/turns` / `POST /api/v1/agent/agents/{name}/reset-to-shipped`. To make a session use a profile, `PATCH /api/v1/agent/sessions/{id}/agent` (`{ agent }`) — that selects, it does NOT edit the profile. Two daemon guard rails: `DELETE /api/v1/agent/agents/{name}` refuses the configured default chat agent, and a shipped-default profile that has no removable override of its own (`is_error:true` — use `POST /api/v1/agent/agents/{name}/reset-to-shipped` or `PUT /api/v1/agent/agents/{name}/source` instead); in a realm that holds its own saved override of a shipped profile, deleting it removes the override and the shipped version shows through again, and `POST /api/v1/agent/agents/{name}/reset-to-shipped` refuses a profile that has no shipped default (`is_error:true`).
+- **Bots** — `POST /api/v1/agent/bots` opens a long-lived assistant that delegates work to sessions on containers; post to it with `POST /api/v1/agent/bots/{id}/messages` (HTTP 202; a busy Bot queues the message) rather than prompting its session, and see Examples for the full create, message, follow, forget, delete run. Replace its limits with `PUT /api/v1/agent/bots/{id}/guardrails` with `{ guardrails }` (empty clears them): the Bot reads them before its next message and delegates opened afterwards receive them in their first prompt, while delegates already open keep theirs. `allowed_containers` and `allowed_agents` restrict the delegates it opens next (empty means any) and `yolo: true` (default false) asks delegates to approve tool calls automatically. Check `yolo_unapplied` in `GET /api/v1/agent/bots/{id}`: `pending` means a delegate has not confirmed the change yet and it is sent again; `refused` means that delegate's approval policy does not allow YOLO, so it keeps asking for approvals and the change is not sent again until `yolo` changes. `GET /api/v1/agent/bots/{id}/stream` and `GET /api/v1/agent/bots/{id}/log` carry finished rows only; for live reply text, thinking and tool calls follow the Bot's `session_id` (from `GET /api/v1/agent/bots/{id}`, it changes after `POST /api/v1/agent/bots/{id}/reset`) with `GET /api/v1/agent/sessions/{id}/stream`, and do not answer questions on that session whose `frame_request.kind` starts with `bot.`, because the Bot runtime answers them. To stop only the Bot's running turn use `POST /api/v1/agent/sessions/{id}/cancel` on its `session_id`.
+- **Agent profiles** — `GET /api/v1/agent/agents` to enumerate named profiles; `POST /api/v1/agent/agents` / `POST /api/v1/agent/agents/{name}/copy` / `POST /api/v1/agent/agents/{name}/rename` / `DELETE /api/v1/agent/agents/{name}`; `GET /api/v1/agent/agents/{name}/source` → edit → `PUT /api/v1/agent/agents/{name}/source` (put the read's `revision` in the body as `expected_revision`: a stale one is refused `409 revision_conflict` and nothing is written; without it the save is unconditional); `PATCH /api/v1/agent/agents/{name}/model` / `PATCH /api/v1/agent/agents/{name}/tools` / `POST /api/v1/agent/agents/{name}/tools/{tool}/toggle` / `PATCH /api/v1/agent/agents/{name}/turns` / `POST /api/v1/agent/agents/{name}/reset-to-shipped`. The product-owned `bot` profile (the one a Bot runs) allows only a model pin through `PATCH /api/v1/agent/agents/{name}/model` (an empty model clears it); `PUT /api/v1/agent/agents/{name}/source`, `PATCH /api/v1/agent/agents/{name}/tools`, `POST /api/v1/agent/agents/{name}/tools/{tool}/toggle` and `PATCH /api/v1/agent/agents/{name}/turns` are refused for it with `400 bad_request`, as are creating over it and renaming it, and a Bot's own `model` overrides the pin. To make a session use a profile, `PATCH /api/v1/agent/sessions/{id}/agent` (`{ agent }`) — that selects, it does NOT edit the profile. Two daemon guard rails: `DELETE /api/v1/agent/agents/{name}` refuses the configured default chat agent, and a shipped-default profile that has no removable override of its own (`is_error:true` — use `POST /api/v1/agent/agents/{name}/reset-to-shipped` or `PUT /api/v1/agent/agents/{name}/source` instead); in a realm that holds its own saved override of a shipped profile, deleting it removes the override and the shipped version shows through again, and `POST /api/v1/agent/agents/{name}/reset-to-shipped` refuses a profile that has no shipped default (`is_error:true`).
 
 ### 6. Fire-and-observe, recurring prompts, and re-attach
 
@@ -998,16 +1079,18 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 
 ## Quirks & gotchas
 
-- The bare `hoody agent` verb is a **TUI launcher**, separate from this HTTP namespace; they coexist — the launcher opens the in-container Agent TUI, the namespace is the typed control surface.
-- Source of truth is the agent kit's own OpenAPI document, served at `GET /api/v1/agent/openapi.{json,yaml}`; every route lives under the single `/api/v1/agent` prefix. The kit checks no credential of its own and asks for no bearer header; access is decided by the container's proxy permission policy. Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the kit URL gets 403 `forbidden`, also from inside the container, so call the kit URL.
+- The bare `hoody agent` verb is a **TUI launcher**, separate from this HTTP namespace; they coexist — the launcher opens the in-container Agent TUI, the namespace is the typed control surface. In that TUI, Ctrl+V pastes from the clipboard of the machine the CLI runs on, and Shift+click opens a link (the TUI tracks the mouse).
+- Source of truth is the agent kit's own OpenAPI document, served at `GET /api/v1/agent/openapi.{json,yaml}`; every route lives under the single `/api/v1/agent` prefix. The kit checks no credential of its own and asks for no bearer header; access is decided by the container's proxy permission policy. Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the kit URL gets 403 `forbidden`, so call the kit URL.
 - The proxy service slug is `agent` and the kit URL host carries the index segment (`-agent-{index}`). Build it as `https://{projectId}-{containerId}-agent-{index}.{server}.containers.hoody.com` (see § Proxy URLs).
 - `POST /api/v1/agent/sessions/{id}/prompt:sync` waits for the turn to end (or returns `{pending_gate}` the moment a turn parks on a confirm/question), but at most until the server deadline (290 seconds by default): a turn still running then answers `503 service_unavailable` with `details.turn_running: true` and keeps running; prefer streamed prompting for anything non-trivial so you can observe progress and resolve gates as they arrive. (The `prompt:stream` route emits **SSE** (`Content-Type: text/event-stream`), so POST it and read the event stream directly. It does NOT close when the turn ends: stop reading at the `agent_done` whose `turn_id` matches the `X-Hoody-Turn-Id` response header and close the connection yourself.) For non-interactive turns where you cannot resolve gates by hand, enable the `auto_approve` gate policy to answer confirm gates (off by default). On the blocking form (`POST /api/v1/agent/sessions/{id}/prompt:sync`, route `prompt:sync`) it stays on for the dispatched turn even after the request ends. On the streamed form (route `prompt:stream`) it is tied to the connection, not the turn: disconnecting before the turn ends stops it, and while the stream stays open it also answers confirm gates of LATER turns on the same session, so close the stream at your turn's `agent_done`. With either form, an ordinary confirm gate is approved, a gate raised by a tool-call rule is DENIED, and a session whose approval policy is `always` refuses the policy with `409 approval_policy_active` before the turn starts. HTTP: `?policy=auto_approve` (or the `X-Hoody-Gate-Policy: auto_approve` header) on `prompt:stream` / `prompt:sync`. This only answers **confirm** gates, never questions.
-- Every prompt/gate/cancel call is **session-scoped** — you must hold a session id from `POST /api/v1/agent/sessions` first; there is no implicit default session. Hook writes are session-scoped too (the guarded writes — `PUT /api/v1/agent/hooks` / `DELETE /api/v1/agent/hooks` / `POST /api/v1/agent/hooks/toggle` / `POST /api/v1/agent/hooks/toggle` / `POST /api/v1/agent/hooks/disable-all` / `POST /api/v1/agent/hooks/disable-all` — plus `POST /api/v1/agent/hooks/begin-write`, and the side-effecting `POST /api/v1/agent/hooks/test` / `POST /api/v1/agent/hooks/trust/ack`, all require a live `session_id` — `POST /api/v1/agent/hooks/trust/ack` clears the per-session hook-trust prompt (the execution-trust probe `GET /api/v1/agent/hooks` reports), the gate that must be acknowledged before a saved hook command is allowed to fire, mirroring `POST /api/v1/agent/skills/trust` for skills; `POST /api/v1/agent/hooks/reload` accepts one only to also return the reloaded summary) AND nonce-guarded: call `POST /api/v1/agent/hooks/begin-write` (`{ session_id, op, scope }`, op ∈ upsert|delete|toggle|set_disabled) to mint a single-use nonce, then pass that `nonce` on the matching `PUT /api/v1/agent/hooks` / `DELETE /api/v1/agent/hooks` / `POST /api/v1/agent/hooks/toggle` / `POST /api/v1/agent/hooks/toggle` / `POST /api/v1/agent/hooks/disable-all` / `POST /api/v1/agent/hooks/disable-all` — the nonce binds to that session+op+scope tuple and the write fails closed without it. Note hooks are an arbitrary-command surface: `PUT /api/v1/agent/hooks` persists a command that fires on lifecycle events, and `POST /api/v1/agent/hooks/test` on a command hook runs a command at once: running saved hooks goes through the session's hook-trust gate, while a run that supplies an unsaved inline `command` runs it without that saved-hook trust check. Every command-hook run is refused (`approval_policy_unsatisfiable`) while the session's approval policy is `always`, and `POST /api/v1/agent/hooks/test` of a shipped hook only evaluates its trigger without running anything. These calls carry no confirmation step of their own — the same access that authorizes any agent-kit call authorizes these too, with nothing extra — so add your own confirmation before exposing this surface to an autonomous caller.
-- **`env` and `headers` VALUES are never returned by the MCP surface; every other field comes back verbatim.** `GET /api/v1/agent/mcp/servers` reports `env_keys` / `header_keys` — key NAMES only — because a redacted value invites a client to write the placeholder back as the real secret; a write whose body carries the redaction placeholder for a credential is REFUSED rather than stored. Other fields, including `url`, `command` and `args`, are echoed verbatim, so a credential embedded in one of them (a token in a URL, a key on a command line) is NOT redacted: keep secrets in `env` / `headers`, and treat the rest of a listing as sensitive. To change a secret you must supply its real value; to leave one alone, omit the field — `PUT /api/v1/agent/mcp/servers` merges FIELD BY FIELD over the existing entry of the same name, so omitted fields keep their stored value (including fields this build does not model), and `POST /api/v1/agent/mcp/servers/enable` / `POST /api/v1/agent/mcp/servers/enable` flip only the `enabled` flag so credentials and options survive a disable. Writes apply to live sessions before the response returns: a deleted, disabled, or re-pointed server is REVOKED in every live session first (a stdio child is reaped when its last holder releases), so a caller mid-turn cannot still reach it. Import is WHOLE-BATCH — one bad entry aborts everything — it understands the hoody (`mcp_servers` list), Claude/Cursor (`mcpServers` map) and VS Code (`servers` map) dialects, and REFUSES a document carrying more than one of them rather than guessing.
+- **The agent's shell has the container user's own sudo.** The agent runs as the container's `user`, and its bash tool can use sudo exactly as that user can without a password: with the default passwordless sudo it can `sudo apt-get install`, `sudo systemctl enable --now` a unit and so on. When `user` has no passwordless sudo (the drop-in removed, a password required), the agent's shell has none either, because there is no terminal to type a password into; a policy that allows only some commands without a password allows the same commands to the agent (with sudo's default `listpw`). While the agent's shell can sudo, a session's `dir_scope` (`home`) no longer confines its bash commands: the file tools still keep to the scope, but the shell can reach the whole container, like the terminal kit. To take sudo away from the agent, take passwordless sudo away from `user` (see container-tools); the agent keeps everything else `user` has, such as Docker through the `docker` group.
+- Every prompt/gate/cancel call is **session-scoped** — you must hold a session id from `POST /api/v1/agent/sessions` first; there is no implicit default session. Hook writes are session-scoped too (the guarded writes — `PUT /api/v1/agent/hooks` / `DELETE /api/v1/agent/hooks` / `POST /api/v1/agent/hooks/toggle` / `POST /api/v1/agent/hooks/toggle` / `POST /api/v1/agent/hooks/disable-all` / `POST /api/v1/agent/hooks/disable-all` — plus `POST /api/v1/agent/hooks/begin-write`, and the side-effecting `POST /api/v1/agent/hooks/test` / `POST /api/v1/agent/hooks/trust/ack`, all require a live `session_id` — `POST /api/v1/agent/hooks/trust/ack` clears the per-session hook-trust prompt (the execution-trust probe `GET /api/v1/agent/hooks` reports), the gate that must be acknowledged before a saved hook command is allowed to fire, mirroring `POST /api/v1/agent/skills/trust` for skills; `POST /api/v1/agent/hooks/reload` accepts one only to also return the reloaded summary) AND nonce-guarded: call `POST /api/v1/agent/hooks/begin-write` (`{ session_id, op, scope }`, op ∈ upsert|delete|toggle|set_disabled|rules_set; `rules_set` is for `POST /api/v1/agent/hooks/rules` and needs its own matching nonce) to mint a single-use nonce, then pass that `nonce` on the matching `PUT /api/v1/agent/hooks` / `DELETE /api/v1/agent/hooks` / `POST /api/v1/agent/hooks/toggle` / `POST /api/v1/agent/hooks/toggle` / `POST /api/v1/agent/hooks/disable-all` / `POST /api/v1/agent/hooks/disable-all` — the nonce binds to that session+op+scope tuple and the write fails closed without it. Note hooks are an arbitrary-command surface: `PUT /api/v1/agent/hooks` persists a command that fires on lifecycle events, and `POST /api/v1/agent/hooks/test` on a command hook runs a command at once: running saved hooks goes through the session's hook-trust gate, while a run that supplies an unsaved inline `command` runs it without that saved-hook trust check. Every command-hook run is refused (`approval_policy_unsatisfiable`) while the session's approval policy is `always`, and `POST /api/v1/agent/hooks/test` of a shipped hook only evaluates its trigger without running anything. These calls carry no confirmation step of their own — the same access that authorizes any agent-kit call authorizes these too, with nothing extra — so add your own confirmation before exposing this surface to an autonomous caller.
+- **`env` and `headers` VALUES are never returned by the MCP surface; every other field comes back verbatim.** `GET /api/v1/agent/mcp/servers` reports `env_keys` / `header_keys` — key NAMES only — because a redacted value invites a client to write the placeholder back as the real secret; a write whose body carries the redaction placeholder for a credential is REFUSED rather than stored. Other fields, including `url`, `command` and `args`, are echoed verbatim, so a credential embedded in one of them (a token in a URL, a key on a command line) is NOT redacted: keep secrets in `env` / `headers`, and treat the rest of a listing as sensitive. To change a secret you must supply its real value; to leave one alone, omit the field — `PUT /api/v1/agent/mcp/servers` merges FIELD BY FIELD over the existing entry of the same name, so omitted fields keep their stored value (including fields this build does not model), and `env` / `headers` merge per key (a key set to `null` is deleted, `{}` clears the map). A genuine re-point (a changed `type`, `command`, `args` or `url`) clears `env` and `headers` unless the same request re-supplies them, so send the credentials the new target needs in that write; restating the identity you read back is not a re-point. `POST /api/v1/agent/mcp/servers/enable` / `POST /api/v1/agent/mcp/servers/enable` flip only the `enabled` flag so credentials and options survive a disable. Writes apply to live sessions before the response returns: a deleted, disabled, or re-pointed server is REVOKED in every live session first (a stdio child is reaped when its last holder releases), so a caller mid-turn cannot still reach it. Import is WHOLE-BATCH — one bad entry aborts everything — it understands the hoody (`mcp_servers` list), Claude/Cursor (`mcpServers` map) and VS Code (`servers` map) dialects, and REFUSES a document carrying more than one of them rather than guessing.
 - `POST /api/v1/agent/hoody/auth/bootstrap` (token bootstrap) is enabled by default; a deployment can turn it off, and then every call answers 404. Browser clients may call it; the body must be exactly `application/json`. Where the deployment requires a capability, the body must carry the matching `capability` (a mismatch is also 404). The token must belong to this box's owner and carry the full login grant (otherwise 403). On a box with no credential it installs (201 `installed`) and adopts any local sessions or todos that have no owner; on a box logged in to the SAME account it replaces the stored token whether or not it expired (200 `renewed`). A token for a different account is refused `409 agent_login_conflict`, and a credential supplied through the environment is never replaced (`409 credential_present`).
 
 ## Common errors
 
+- A model rate limit can end the turn: `event.error.code` is `quota_wait_too_long` or `rate_limit`, and `agent_done.error_code` carries the same code. For `quota_wait_too_long`, read `retry_after_secs` from the error payload, wait that many seconds, then send the message again: the turn ended instead of waiting. `retry_after_secs` is omitted on other errors, so do not assume it exists for `rate_limit`.
 - A gate or question left unresolved stalls the turn — a streamed prompt that emitted an `event.confirm_request` (confirm gate) or `event.user_question` (question gate) will not complete until you answer it: `POST /api/v1/agent/sessions/{id}/confirm` / `POST /api/v1/agent/sessions/{id}/confirm` for a confirm, `POST /api/v1/agent/sessions/{id}/answer` for a question. For unattended runs, arm `PATCH /api/v1/agent/sessions/{id}/auto-reply` (a self-driving auto-user loop), or pass `policy: "auto_approve"` on the prompt — but `auto_approve` only answers **confirm** gates (approving ordinary ones, denying rule-raised ones; refused with `409 approval_policy_active` on an `always` session), never questions; a parked question still stalls until `POST /api/v1/agent/sessions/{id}/answer` (or the auto-reply loop) answers it.
 - `GET /api/v1/agent/sessions/{id}/tasks` and `GET /api/v1/agent/sessions/{id}/tasks/{tid}/transcript` return their data INLINE and need no live session and no attached stream. `GET /api/v1/agent/sessions/{id}/tasks` is the UNION of the live task registry and the session's PERSISTED task store (keyed by task id, live winning) — the live registry evicts completed tasks when a new one spawns, so a finished task can leave memory while its transcript is still durable, and a live-only list would hide it. `GET /api/v1/agent/sessions/{id}/tasks/{tid}/transcript` reads a task that reached a terminal state even for a closed session and after a daemon restart; a task still RUNNING when the daemon died is NOT recoverable and reads 404. Its `source` field is `"live"` or `"store"`, and `complete` reports whether the response reflects a terminal projection DURABLY COMMITTED to that store. `after_seq` is EXCLUSIVE (entries strictly after it, plus any still-open entry); OMITTING it returns the whole transcript, which is distinct from `after_seq=0`. `POST /api/v1/agent/sessions/{id}/tasks/{tid}/cancel` / `POST /api/v1/agent/sessions/{id}/tasks/cancel` still act on a LIVE session and stop background tasks mid-turn (server-layer; tasks survive `POST /api/v1/agent/sessions/{id}/cancel` but are not restartable).
 - `POST /api/v1/agent/memory/consolidate` (POST /memory/consolidate) is **human-only and ALWAYS fails over this namespace** — it has no successful HTTP/SDK/CLI path: a call that passes the admin check returns `403 human_only`, and the admin check can refuse it first with `403 admin_unauthorized`. It can only be triggered from an interactive human session. Do not call it programmatically.
@@ -1016,11 +1099,90 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 - `DELETE /api/v1/agent/workflows/{name}` removes **user** workflows and saved customizations. A built-in/**system** workflow that you never customized is refused (`is_error:true`) and re-seeds on every boot; `POST /api/v1/agent/workflows/{name}/hide` is the only way to remove it from view. Deleting your saved customization of a system workflow succeeds and brings the shipped version back: at once in a scoped realm, at the next daemon restart otherwise.
 - Empty values on agent-profile edits mean *inherit / unrestrict*, not *clear to nothing*: `PATCH /api/v1/agent/agents/{name}/model` with `model: ""` removes the model line (falls back to the default model), and `PATCH /api/v1/agent/agents/{name}/tools` with `tools: []` removes the allow-list line, which means **all tools are allowed** (NOT zero). Pass a non-empty `tools` array to genuinely restrict.
 - Prompting with no usable model/provider configured fails the turn. `GET /api/v1/agent/providers` lists every catalogued provider whether or not it is set up, so check the one you intend to use with `GET /api/v1/agent/providers/{id}/auth` before you prompt (blocking or streamed): `ready` is true for a stored API key, a stored OAuth login, or a passwordless provider (`no_auth_ready`).
+- A custom provider's `base_url` must be an `https` URL with no user name, password, query or fragment, at a public address; one that is not (an internal address, a name that only resolves inside a network, or a name that resolves to an internal address when a request is made) is refused `422 provider_invalid` with `details.field` `base_url`. Create is not idempotent by itself: repeating a create that went through answers `409 provider_exists`, so send an `Idempotency-Key` to retry safely (the same key with another body is `422 idempotency_key_reused`). Deleting a provider leaves an open session on one of its models unconfigured: its next prompt fails with `session_unconfigured` until you switch it to another model, and agents and Jev settings that name one of its models fail the same way until changed.
 - Calling prompt/gate/cancel against a session whose live connection was torn down (`POST /api/v1/agent/sessions/{id}/close`, or `DELETE /api/v1/agent/sessions/{id}` without `hard`) returns not-found. If the record survives, re-attach with `POST /api/v1/agent/sessions` with `{ "attach": "<id>" }`; otherwise start a fresh session (the same create call without `attach`). After a *hard* delete (the `hard` flag set) the record is gone and only a fresh session works.
 
 ## Related namespaces
 
 `terminal`, `exec`, `files`, `notes`, `api`.
+
+## Examples
+
+A **Bot** here is the agent's long-lived assistant (routes under `/api/v1/agent/bots`). It opens delegate sessions on containers, follows them and reports back. It is not the chat-app `bot` namespace. Set `P`, `C`, `N` from `GET /api/v1/containers/{id}` first. The Bot's id below is `release-bot`; omit `id` on create to have one generated, and take it from the response.
+
+### 1. Create a Bot, message it, follow its replies, forget, delete
+
+**Goal:** run a Bot end to end. `guardrails` are limits on the work (they apply to the Bot and every delegate it opens), not instructions. A Bot lives in one realm: pass `realm` (`X-Hoody-Realm`) to pick one, otherwise the agent's current realm is used. The Bot's own session opens when the first message is posted, so `session_id` is empty until then.
+
+**Step 1 — create.** Send `id` to make a retry safe: a second create with the same id answers `409 bot_exists`.
+
+```bash
+K="https://${P}-${C}-agent-1.${N}.containers.hoody.com"
+curl -sS -X POST "$K/api/v1/agent/bots" -H 'Content-Type: application/json' \
+  -d '{"id":"release-bot","name":"Release bot","role":"Ships the weekly release.","guardrails":"Never push to main."}'
+```
+
+**Step 2 — message it.** The answer is `202` with `{message_id, state}`: `posted` (with `turn_id`) when the Bot is free, `queued` while it is busy, and the message goes out when its turn ends. Add an `Idempotency-Key` to retry safely.
+
+```bash
+curl -sS -X POST "$K/api/v1/agent/bots/release-bot/messages" -H 'Content-Type: application/json' \
+  -d '{"text":"Check the staging build and tell me if it is green."}'
+```
+
+**Step 3 — follow the replies.** The stream carries finished log rows only: first a `state` frame (the Bot), then `row` frames, plus `lagged`, `archived` and `end`. The reply is one `bot` row written when its turn ends, and a turn with no reply text writes none. Resume with `since` (or `Last-Event-ID`). For live text, thinking and tool calls, follow the Bot's own `session_id` with `GET /api/v1/agent/sessions/{id}/stream` instead. To read without streaming, page the log: pass `next_since` back as `since` while `has_more` is true.
+
+```bash
+curl -sS -N "$K/api/v1/agent/bots/release-bot/stream"
+curl -sS "$K/api/v1/agent/bots/release-bot/log?since=0"
+```
+
+**Step 4 — forget or reset.** `POST /api/v1/agent/bots/{id}/forget` moves the log to the archive and clears the conversation; the Bot keeps its settings and delegates. `reset` also archives the log but starts a new session with the Bot's current model, which is how a changed `model` takes effect. The old session is not closed. Neither deletes the archive; `POST /api/v1/agent/bots/{id}/purge` does.
+
+```bash
+curl -sS -X POST "$K/api/v1/agent/bots/release-bot/forget"
+curl -sS -X POST "$K/api/v1/agent/bots/release-bot/reset"
+```
+
+**Step 5 — delete.** Removes the Bot with its log and archive, after a best-effort stop of its working delegates. Its session and delegates are not closed: they stay listed under the sessions and a person can continue them. There is no stop route for the Bot itself: to stop its running turn, cancel its `session_id` with `POST /api/v1/agent/sessions/{id}/cancel`.
+
+```bash
+curl -sS -X DELETE "$K/api/v1/agent/bots/release-bot"
+```
+
+### 2. Add a custom provider, store its key, use its model
+
+**Goal:** connect an OpenAI-compatible endpoint and run a session on one of its models. The provider id below is `acme`; its model is selected as `acme/llama-3.3-70b`.
+
+**Step 1 — create it.** `id`, `base_url` and `models` are required. Add an `Idempotency-Key` so a retry answers with the provider the first try created instead of `409 provider_exists`. The reply carries the provider, with each model's `spec`.
+
+```bash
+K="https://${P}-${C}-agent-1.${N}.containers.hoody.com"
+curl -sS -X POST "$K/api/v1/agent/providers" -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: acme-create-1' \
+  -d '{"id":"acme","base_url":"https://api.acme.example/v1","models":[{"model":"llama-3.3-70b","context_window":131072}]}'
+```
+
+**Step 2 — store its key.** The key has its own route and is never returned.
+
+```bash
+curl -sS -X PUT "$K/api/v1/agent/providers/acme/auth/api-key" -H 'Content-Type: application/json' \
+  -d "{\"api_key\":\"$KEY\"}"
+```
+
+**Step 3 — use its model.** Start a session on it; `PATCH /api/v1/agent/sessions/{id}/model` switches an open one and `PATCH /api/v1/agent/agents/{name}/model` pins an agent profile.
+
+```bash
+curl -sS -X POST "$K/api/v1/agent/sessions" -H 'Content-Type: application/json' \
+  -d '{"model":"acme/llama-3.3-70b"}'
+```
+
+**Step 4 — change or remove it.** Update names only what changes (`models` and `headers` replace the current list and map; `id` and `model_prefix` are fixed). Delete asks for confirmation on the CLI and removes the stored key too.
+
+```bash
+curl -sS -X PATCH "$K/api/v1/agent/providers/acme" -H 'Content-Type: application/json' \
+  -d '{"base_url":"https://eu.api.acme.example/v1"}'
+curl -sS -X DELETE "$K/api/v1/agent/providers/acme"
+```
 
 ## Reference
 
@@ -1028,19 +1190,18 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `PUT /api/v1/agent/acp/agents/{agent}/enabled` | Enable or disable a BYOA ACP backend. | `body` |
-| `GET /api/v1/agent/acp/agents` | Get BYOA ACP backend status. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `PUT /api/v1/agent/acp/agents/{agent}/model` | Set a BYOA backend's default model and effort. | `body` |
+| `PUT /api/v1/agent/acp/agents/{agent}/enabled` | Enable or disable a BYOA ACP backend. | `H:X-Hoody-Realm` `body` |
+| `GET /api/v1/agent/acp/agents` | Get BYOA ACP backend status. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `PUT /api/v1/agent/acp/agents/{agent}/model` | Set a BYOA backend's default model and effort. | `H:X-Hoody-Realm` `body` |
 | `PUT /api/v1/agent/acp/agents/{agent}/secrets/{key}` | Store an ACP per-agent secret value. | `body` |
 
 **Param notes:**
 
 - `agent` — The agent.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
 - `key` — The key.
 
 **Body shapes:**
@@ -1058,8 +1219,12 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 | Method | Summary | Params |
 |--------|---------|--------|
 | `POST /api/v1/agent/hoody/auth/bootstrap` | Sign this container's agent in to the Hoody platform with a token of the box's owner. Until then the agent's shell and file tools answer "not logged in". | `body*` |
-| `POST /api/v1/agent/stop` | Stop everything running in the realm. | `body` |
+| `POST /api/v1/agent/stop` | Stop everything running in the realm. | `H:X-Hoody-Realm` `body` |
 | `GET /api/v1/agent/hoody/auth/status` | Hoody platform identity and realm scope. |  |
+
+**Param notes:**
+
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 
 **Body shapes:**
 
@@ -1069,17 +1234,79 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 - `POST /api/v1/agent/stop` body — `{ after: string }` — Optional. Omit (or send {}) to start from the first item.
   - `after` — A next_cursor from an earlier call, unchanged (the cursor is opaque): act only on the items after it. Any other value is 400 bad_request.
 
+### `bots` (15) — Bots operations
+
+| Method | Summary | Params |
+|--------|---------|--------|
+| `POST /api/v1/agent/bots` | Create a Bot. | `H:X-Hoody-Realm` `body` |
+| `DELETE /api/v1/agent/bots/{id}` | Delete a Bot. | `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/bots/{id}/forget` | Make a Bot forget its conversation. | `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/bots/{id}` | Get a Bot. | `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/bots/{id}/archive` | Read a Bot's archive. | `?since` `?limit` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/bots/{id}/log` | Read a Bot's log. | `?since` `?limit` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/bots` | List the Bots. | `?realm` `?page` `?limit` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/bots/{id}/delegates` | List a Bot's delegates. | `?state` `?page` `?limit` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/bots/{id}/purge` | Delete a Bot's archive. | `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/bots/{id}/reset` | Give a Bot a new session. | `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/bots/{id}/messages` | Post a message to a Bot. | `H:Idempotency-Key` `H:X-Hoody-Realm` `body*` |
+| `PUT /api/v1/agent/bots/{id}/guardrails` | Replace a Bot's guardrails. | `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/bots/{id}/delegates/{sid}/stop` | Stop one of a Bot's delegates now. | `H:Idempotency-Key` `H:X-Hoody-Realm` `body` |
+| `GET /api/v1/agent/bots/{id}/stream` | Follow a Bot's log (SSE). | `?since` `H:Last-Event-ID` `H:X-Hoody-Realm` |
+| `PATCH /api/v1/agent/bots/{id}` | Change a Bot's settings. | `H:X-Hoody-Realm` `body` |
+
+**Param notes:**
+
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
+- `since` — Return only rows whose seq is greater than this: the next_since of the previous page. Default 0. _(on `GET /api/v1/agent/bots/{id}/archive`, `GET /api/v1/agent/bots/{id}/log`)_
+- `limit` — At most this many rows: 100 when omitted or 0, at most 500 (a larger value reads 500). Negative or non-integer = 400. These routes page by since, not by page number: ?page is 400. _(on `GET /api/v1/agent/bots/{id}/archive`, `GET /api/v1/agent/bots/{id}/log`)_
+- `realm` — The realm to list: "global" (Bots not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves, global included. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm.
+- `page` — 1-based page number for pagination.
+- `limit` — Maximum items per page (0 = no pagination). _(on `GET /api/v1/agent/bots`, `GET /api/v1/agent/bots/{id}/delegates`)_
+- `state` — open or closed: list only the delegates in that state. Omitted: both.
+- `Idempotency-Key` — Opaque retry key (1–255 printable ASCII, no whitespace). A retry with the same key and text returns the same message_id and the message's current state, and queues nothing again; the same key with a different text is 422. A key is remembered while its message is queued and for at least 24 hours after it was accepted. _(on `POST /api/v1/agent/bots/{id}/messages`)_
+- `Idempotency-Key` — Opaque retry key (1–255 printable ASCII, no whitespace). The same stop sent again with the same key returns its outcome; the same key with a different close is 422. _(on `POST /api/v1/agent/bots/{id}/delegates/{sid}/stop`)_
+- `since` — Return only rows whose seq is greater than this. Default 0. _(on `GET /api/v1/agent/bots/{id}/stream`)_
+- `Last-Event-ID` — SSE resume cursor: the id (a non-negative integer seq) of the last frame received. It overrides ?since, and an SSE client sends it on reconnect. Another value is 400 bad_request.
+
+**Body shapes:**
+
+- `POST /api/v1/agent/bots` body — `{ id: string, name: string, role: string, model: string, guardrails: string, allowed_containers: string[], allowed_agents: string[], yolo: bool, guardrail_check: "strict" | "lenient" | "off" }` — All fields are optional.
+  - `id` — The Bot's id. Omit it to have one generated. It cannot be changed later. To retry a create safely, pass an id: when the first try created the Bot, the retry answers 409 bot_exists.
+  - `name` — Display name. Omitted, it is the id.
+  - `role` — What the Bot is for, in one paragraph.
+  - `model` — The model the Bot's session runs. Omit it for the bot agent's own model. A model no session could start with is refused 422 model_unavailable.
+  - `guardrails` — Limits that apply to the Bot and to every delegate it opens.
+  - `allowed_containers` — Containers delegates may run on. Empty or omitted means any.
+  - `allowed_agents` — Agents delegates may run. Empty or omitted means any.
+  - `yolo` — Run every delegate with YOLO mode on (approvals granted without asking). Default false.
+  - `guardrail_check` — How the Bot's dispatches and delegate messages are checked against its guardrails before they go out. strict: work that may break a guardrail is refused, and so is work whose check cannot be completed (the Bot tells you and can try again). lenient: work that may break a guardrail is refused; when the check cannot be completed, the work goes ahead unchecked. off: no check. …
+- `POST /api/v1/agent/bots/{id}/messages` body — `{ text*: string }`
+  - `text` — The message (at most 64 KiB).
+- `PUT /api/v1/agent/bots/{id}/guardrails` body — `{ guardrails*: string }`
+  - `guardrails` — The new limits; empty clears them.
+- `POST /api/v1/agent/bots/{id}/delegates/{sid}/stop` body — `{ close: bool }` — Optional.
+  - `close` — Also close the delegate's session for good. Default false.
+- `PATCH /api/v1/agent/bots/{id}` body — `{ name: string, role: string, model: string, allowed_containers: string[], allowed_agents: string[], yolo: bool, guardrail_check: "strict" | "lenient" | "off" }` — The fields to change; omitted fields are kept. id, uid, realm, created, created_at and created_by are fixed at creation: naming one is refused 400 field_immutable.
+  - `name` — Display name.
+  - `role` — What the Bot is for, in one paragraph. Empty clears it.
+  - `model` — The model of the Bot's next session, started by POST /bots/{id}/reset; the running session keeps its model. Empty for the bot agent's own model. A model no session could start with is refused 422 model_unavailable and nothing changes.
+  - `allowed_containers` — Containers delegates may run on. Empty means any.
+  - `allowed_agents` — Agents delegates may run. Empty means any.
+  - `yolo` — YOLO mode for every delegate.
+  - `guardrail_check` — How the Bot's dispatches and delegate messages are checked against its guardrails before they go out. strict: work that may break a guardrail is refused, and so is work whose check cannot be completed (the Bot tells you and can try again). lenient: work that may break a guardrail is refused; when the check cannot be completed, the work goes ahead unchecked. off: no check. …
+
 ### `changes` (2) — Changes operations
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /api/v1/agent/changes` | Change tokens for the Work lists. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `GET /api/v1/agent/changes/stream` | Stream the change tokens (SSE). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
+| `GET /api/v1/agent/changes` | Change tokens for the Work lists. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/changes/stream` | Stream the change tokens (SSE). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
 
 **Param notes:**
 
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 
 ### `completions` (1) — Catalogued models and fusion composites
 
@@ -1105,7 +1332,7 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /api/v1/agent/containers` | List containers in a realm (for binding). | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `?realm` |
+| `GET /api/v1/agent/containers` | List containers in a realm (for binding). | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
 
 **Param notes:**
 
@@ -1113,25 +1340,24 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 - `limit` — Maximum items per page (0 = no pagination).
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 
 ### `definitions` (12) — Chat-agent definitions and per-agent settings
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /api/v1/agent/agents/{name}/copy` | Copy a chat agent. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/agents` | Create a chat-agent definition. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `DELETE /api/v1/agent/agents/{name}` | Delete a custom chat agent. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/agents/{name}/source` | Read a chat agent's source. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/agents` | List chat-agent definitions. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `?realm` |
-| `POST /api/v1/agent/agents/{name}/rename` | Rename a chat agent. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/agents/{name}/reset-to-shipped` | Reset an agent to its shipped default. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `PATCH /api/v1/agent/agents/{name}/model` | Set an agent's model. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `PUT /api/v1/agent/agents/{name}/source` | Write a chat agent's source. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `PATCH /api/v1/agent/agents/{name}/tools` | Set an agent's tool allow-list. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `PATCH /api/v1/agent/agents/{name}/turns` | Set an agent's max-turns. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `POST /api/v1/agent/agents/{name}/tools/{tool}/toggle` | Toggle a single tool for an agent. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
+| `POST /api/v1/agent/agents/{name}/copy` | Copy a chat agent. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/agents` | Create a chat-agent definition. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `DELETE /api/v1/agent/agents/{name}` | Delete a custom chat agent. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/agents/{name}/source` | Read a chat agent's source. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/agents` | List chat-agent definitions. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/agents/{name}/rename` | Rename a chat agent. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/agents/{name}/reset-to-shipped` | Reset an agent to its shipped default. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `PATCH /api/v1/agent/agents/{name}/model` | Set an agent's model. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `PUT /api/v1/agent/agents/{name}/source` | Write a chat agent's source. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `PATCH /api/v1/agent/agents/{name}/tools` | Set an agent's tool allow-list. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `PATCH /api/v1/agent/agents/{name}/turns` | Set an agent's max-turns. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `POST /api/v1/agent/agents/{name}/tools/{tool}/toggle` | Toggle a single tool for an agent. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
 
 **Param notes:**
 
@@ -1139,8 +1365,7 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 - `page` — 1-based page number for pagination.
 - `limit` — Maximum items per page (0 = no pagination).
 - `tool` — The tool.
@@ -1149,7 +1374,7 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 
 - `POST /api/v1/agent/agents/{name}/copy` body — `{ new_name*: string }` — Destination name (the source {name} comes from the path).
   - `new_name` — Name for the copied agent.
-- `POST /api/v1/agent/agents` body — `{ name*: string, frontmatter: { description: string, model: string, tools: string[], effort: "adaptive" | "low" | "medium" | "high" | "max", max_turns: int, labels: string[], strict_tools: bool, mcp_tools: string[], skills: string[], prompt_blocks: object, ask_timeout: string | int, thinking: "enabled" | "disabled", temperature: number, response_format: "json_object" }, system_prompt: string }` — Chat-agent definition.
+- `POST /api/v1/agent/agents` body — `{ name*: string, frontmatter: { description: string, model: string, tools: string[], effort: "adaptive" | "low" | "medium" | "high" | "max", max_turns: int, max_steps_per_turn: int, labels: string[], strict_tools: bool, mcp_tools: string[], skills: string[], prompt_blocks: object, ask_timeout: string | int, thinking: "enabled" | "disabled", temperature: number, response_format: "json_object", compaction: "same_prefix", compaction_max_tokens: int }, system_prompt: string }` — Chat-agent definition.
   - `name` — Agent name (the definition file stem).
   - `frontmatter` — … Any other key is rejected. strict_tools is a boolean: true gives the agent EXACTLY its tools list — no skill or workflow tool is added, no MCP tool unless mcp_tools names it, and a call to any other tool is refused — and with no tools list it gets only ask_question_to_user, todo_read …
   - `system_prompt` — The agent's system prompt body.
@@ -1170,7 +1395,7 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /api/v1/agent/agent-files` | List the files that shape the agents. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `?realm` |
+| `GET /api/v1/agent/agent-files` | List the files that shape the agents. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
 
 **Param notes:**
 
@@ -1178,8 +1403,7 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 - `limit` — Maximum items per page (0 = no pagination).
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 
 ### `fusions` (3) — Process-wide settings (home settings.json)
 
@@ -1207,36 +1431,39 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /api/v1/agent/sessions/{id}/answer` | Answer a parked question gate. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/sessions/{id}/confirm` | Answer a parked confirm gate (on an always-approval session also --gate-id, --generation and the approver lease). | `H:X-Hoody-Approver-Lease` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `GET /api/v1/agent/gates` | List the gates waiting for a human. | `?include_system` `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `POST /api/v1/agent/sessions/{id}/answer:assist` | Propose answers for a parked question (helper model). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
+| `POST /api/v1/agent/sessions/{id}/answer` | Answer a parked question gate. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `POST /api/v1/agent/sessions/{id}/confirm` | Answer a parked confirm gate (on an always-approval session also --gate-id, --generation and the approver lease). | `H:X-Hoody-Approver-Lease` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `GET /api/v1/agent/gates` | List the gates waiting for a human. | `?include_system` `?realm` `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/sessions/{id}/answer:assist` | Propose answers for a parked question (helper model). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
 
 **Param notes:**
 
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 - `X-Hoody-Approver-Lease` — The approver-lease capability returned by POST /sessions/{id}/approver-lease. Required on every decision (/confirm, or the confirmed re-issue of a gated tool run) on an "always" session whose lease was minted; the daemon verifies it at decision consumption. On renew/release it names the lease to act on.
 - `include_system` — When true, also list the gates of daemon-owned system/resident sessions (as `GET /api/v1/curl/sessions` does).
+- `realm` — The realm to list: "global" (gates not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm.
 - `page` — 1-based page number for pagination.
 - `limit` — Maximum items per page, at most 100: 0 or omitted means 100, and a larger value is served as 100 (meta.limit echoes the value used).
 
 **Body shapes:**
 
-- `POST /api/v1/agent/sessions/{id}/answer` body — `{ gate_id: string, generation: int, answer*: string, text: string, answers: { [key: string]: string } }` — Question-gate answer. Provide answer/text for a free-form reply, or answers (a map) for a structured multi-field question. gate_id/generation are echoes of the parked gate (a mismatch is 409).
+- `POST /api/v1/agent/sessions/{id}/answer` body — `{ gate_id: string, generation: int, answer: string, text: string, answers: { [key: string]: string } }` — Question-gate answer. … A body with no answer, no text and no answers is 400 bad_request: nothing is sent and the question stays parked. gate_id/generation are echoes of the parked gate (a mismatch is 409).
   - `gate_id` — Echo of the parked gate id, as published on the frame that parked it (gate.id), by GET /sessions/{id} (pending_gate.id) and in 409 details. Valid only for the session in the path. Optional for compatibility, but an answer without it applies to whatever gate is parked when it arrives — a client binding an answer to a gate the user saw must send it. Ids are unique per session incarnation, so an id from before a re-attach never matches (stale/mismatch → 409).
   - `generation` — Optional echo of the parked gate generation. It restarts when the session is re-attached, so it is not an identity on its own — send gate_id.
-  - `answer` — Free-form answer text. Always send it; it may be empty when answers carries a structured answer.
-  - `text` — Alternate answer text field (forwarded alongside answer).
+  - `answer` — Free-form answer text. When it is absent or blank, text is used in its place. It may be empty when text or answers carries the answer.
+  - `text` — Answer text used when answer is absent or blank; ignored otherwise.
   - `answers` — Structured per-field answers for a multi-field question.
-- `POST /api/v1/agent/sessions/{id}/confirm` body — `{ gate_id: string, generation: int, approved*: bool, persist_dirs: bool, session_scope: bool, trust_container: bool, request_id: string, lease_generation: int }` — … On a session that requires approval on every action, gate_id and generation are required as well as approved, and once the session's approver lease was minted every decision also carries it in X-Hoody-Approver-Lease. gate_id/generation are echoes of the parked gate (a mismatch is 409). request_id is optional. approved is always required: a confirm without a boolean approved is rejected 400 (approved_required) and the gate stays parked. … On a session that requires approval on every action they are required too: a confirm missing any of them is rejected 400 and the gate stays parked.
+- `POST /api/v1/agent/sessions/{id}/confirm` body — `{ gate_id: string, generation: int, approved*: bool, reason: string, persist_dirs: bool, remember: bool, superseded: bool, session_scope: bool, trust_container: bool, request_id: string, lease_generation: int }` — … On a session that requires approval on every action, gate_id and generation are required as well as approved, and once the session's approver lease was minted every decision also carries it in X-Hoody-Approver-Lease. gate_id/generation are echoes of the parked gate (a mismatch is 409). request_id is optional. approved is always required: a confirm without a boolean approved is rejected 400 (approved_required) and the gate stays parked. … On a session that requires approval on every action they are required too: a confirm missing any of them is rejected 400 and the gate stays parked.
   - `gate_id` — Echo of the parked gate id, as published on the frame that parked it (gate.id), by GET /sessions/{id} (pending_gate.id) and in 409 details. Valid only for the session in the path. Optional for compatibility, but an answer without it applies to whatever gate is parked when it arrives — a client binding an answer to a gate the user saw must send it. Ids are unique per session incarnation, so an id from before a re-attach never matches (stale/mismatch → 409). Required on a session that requires approval on every action: a confirm without it is rejected 400.
   - `generation` — Echo of the parked gate generation. It restarts when the session is re-attached, so it is not an identity on its own — send gate_id. Optional on a default-policy session; required, and non-zero, on a session that requires approval on every action.
   - `approved` — Required: true to approve, false to deny. There is no default; a missing, null or non-boolean value is rejected 400.
+  - `reason` — Optional, with approved false only: why the action is refused. The agent reads it in the refused call's result, flattened to one line, together with the instruction not to reach the same effect another way. At most 500 characters; sent with approved true, or longer, it is rejected 400 bad_request.
   - `persist_dirs` — Persist an approved directory grant to settings.json (WS↔REST parity).
+  - `remember` — … Omitted or true, approving a file change also lets later changes to that file run without asking for the rest of the session, and persist_dirs is honoured; false asks again for the next change and saves nothing to settings.json (persist_dirs is ignored).
+  - `superseded` — With approved false only, and no reason or session_scope: the call is declined because the user sent a new message instead of answering. … Sent with approved true, a reason or session_scope, it is rejected 400 bad_request.
   - `session_scope` — Remember this decision for the rest of the session (the Allow/Deny for session answer): with approved true the tool stops asking, with approved false it is refused without asking. Offer allow-for-session only when the gate's event.confirm_request carried offer_session_allow. Under a locked approval policy the wider grant is refused, but the one-shot decision still applies and the reply says so (session_scope_applied false, note).
   - `trust_container` — With approved true, accept the gate's exec_trust offer (event.confirm_request): the call runs and exec cards on that container in this realm stop until the grant is revoked (`POST /api/v1/agent/hooks/rules` exec_trust). Ignored when the gate carried no offer or the approval policy is locked.
   - `request_id` — Optional: the caller's own id for this decision, at most 64 characters from A-Z, a-z, 0-9, '.', '_' and '-' (anything else is 400 bad_request). When this decision is the one the gate consumed, a later 409 gate_already_resolved for the gate echoes it as details.request_id, so a caller that lost the 200 knows the recorded decision is its own.
@@ -1250,44 +1477,43 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /api/v1/agent/github/pr/checkout` | Check out a pull request. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/github/clone` | Clone a GitHub repository. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `POST /api/v1/agent/github/branch` | Create a branch. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/github/commit` | Stage all and commit. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` `?push` |
-| `POST /api/v1/agent/github/issues` | Open an issue. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/github/pr` | Open a pull request. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/github/worktrees` | Add a linked worktree. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/github/branch/delete` | Force-delete a local branch. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/github/worktrees/remove` | Remove a linked worktree. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `GET /api/v1/agent/github/diff` | Read the working-tree diff. | `?staged` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` |
-| `GET /api/v1/agent/github/auth/status` | GitHub auth status. |  |
-| `GET /api/v1/agent/github/status` | GitHub working-tree status. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/github/branches` | List GitHub branches. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/github/log` | Read recent commit history. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/github/issues` | List issues. | `?owner*` `?repo*` `?state` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` |
-| `GET /api/v1/agent/github/pr` | List pull requests. | `?owner*` `?repo*` `?state` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` |
-| `GET /api/v1/agent/github/repos` | List GitHub repos. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` |
-| `GET /api/v1/agent/github/worktrees` | List linked worktrees. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `POST /api/v1/agent/github/auth/login` | Start a GitHub device-flow login (or add a PAT). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `POST /api/v1/agent/github/auth/logout` | Remove a linked GitHub account. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/github/pr/merge` | Merge a pull request. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/github/auth/login/poll` | Poll a GitHub device-flow login to completion. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/github/stash/pop` | Restore the most recent stash entry. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `POST /api/v1/agent/github/stash` | Stash the working tree. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `GET /api/v1/agent/github/identity` | Resolve the bound repository's owner/name. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `POST /api/v1/agent/github/repo/reconnect` | Re-write a checkout's GitHub credential. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `POST /api/v1/agent/github/commit/suggest-message` | Draft a commit message with a model. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/github/sync` | Sync (fetch → pull → push). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `POST /api/v1/agent/github/auth/active` | Switch the active GitHub account. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/github/branch/switch` | Switch to an existing branch. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
+| `POST /api/v1/agent/github/pr/checkout` | Check out a pull request. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/github/clone` | Clone a GitHub repository. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `POST /api/v1/agent/github/branch` | Create a branch. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/github/commit` | Stage all and commit. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` `?push` |
+| `POST /api/v1/agent/github/issues` | Open an issue. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/github/pr` | Open a pull request. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/github/worktrees` | Add a linked worktree. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/github/branch/delete` | Force-delete a local branch. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/github/worktrees/remove` | Remove a linked worktree. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `GET /api/v1/agent/github/diff` | Read the working-tree diff. | `?staged` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/github/auth/status` | GitHub auth status. | `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/github/status` | GitHub working-tree status. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/github/branches` | List GitHub branches. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/github/log` | Read recent commit history. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/github/issues` | List issues. | `?owner*` `?repo*` `?state` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/github/pr` | List pull requests. | `?owner*` `?repo*` `?state` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/github/repos` | List GitHub repos. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/github/worktrees` | List linked worktrees. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/github/auth/login` | Start a GitHub device-flow login (or add a PAT). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `POST /api/v1/agent/github/auth/logout` | Remove a linked GitHub account. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/github/pr/merge` | Merge a pull request. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/github/auth/login/poll` | Poll a GitHub device-flow login to completion. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/github/stash/pop` | Restore the most recent stash entry. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `POST /api/v1/agent/github/stash` | Stash the working tree. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `GET /api/v1/agent/github/identity` | Resolve the bound repository's owner/name. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/github/repo/reconnect` | Re-write a checkout's GitHub credential. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `POST /api/v1/agent/github/commit/suggest-message` | Draft a commit message with a model. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/github/sync` | Sync (fetch → pull → push). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `POST /api/v1/agent/github/auth/active` | Switch the active GitHub account. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/github/branch/switch` | Switch to an existing branch. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
 
 **Param notes:**
 
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 - `push` — Stage, commit and push in one call.
 - `staged` — When true, return the STAGED (index) diff — what a commit would record — instead of the unstaged working-tree diff. Defaults to false. Accepts true/1/yes/on; every other value, including an empty one, is false.
 - `owner` — Repository owner (user or org login). Required — not derived from the bound checkout; `GET /api/v1/agent/github/identity` returns it. _(on `GET /api/v1/agent/github/issues`)_
@@ -1362,15 +1588,14 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /api/v1/agent/headless/runs` | Create a headless one-shot run. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
+| `POST /api/v1/agent/headless/runs` | Create a headless one-shot run. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
 
 **Param notes:**
 
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 
 **Body shapes:**
 
@@ -1387,25 +1612,24 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /api/v1/agent/hooks/begin-write` | Begin a hook write (nonce). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `DELETE /api/v1/agent/hooks` | Delete a hook. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/hooks/toggle` | Toggle a hook. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/hooks/disable-all` | Disable all hooks. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `GET /api/v1/agent/hooks/rules` | Get the tool-call rules. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `GET /api/v1/agent/hooks` | List hooks. | `?session_id` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `POST /api/v1/agent/hooks/reload` | Reload hooks from disk. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `POST /api/v1/agent/hooks/test` | Test-fire a hook. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/hooks/rules` | Set the tool-call rules. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/hooks/trust/ack` | Acknowledge hook trust. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `PUT /api/v1/agent/hooks` | Upsert a hook. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
+| `POST /api/v1/agent/hooks/begin-write` | Begin a hook write (nonce). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `DELETE /api/v1/agent/hooks` | Delete a hook. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/hooks/toggle` | Toggle a hook. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/hooks/disable-all` | Disable all hooks. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `GET /api/v1/agent/hooks/rules` | Get the tool-call rules. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/hooks` | List hooks. | `?session_id` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/hooks/reload` | Reload hooks from disk. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `POST /api/v1/agent/hooks/test` | Test-fire a hook. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/hooks/rules` | Set the tool-call rules. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/hooks/trust/ack` | Acknowledge hook trust. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `PUT /api/v1/agent/hooks` | Upsert a hook. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
 
 **Param notes:**
 
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 - `session_id` — Live session id (hooks are session-scoped; required by the daemon RPC).
 
 **Body shapes:**
@@ -1432,7 +1656,7 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
   - `nonce` — The single-use write nonce from `POST /api/v1/agent/hooks/begin-write` minted for op:set_disabled + this scope; the RPC fails closed without it.
   - `value` — New kill-switch state: true disables all hooks in this scope, false clears the setting and re-enables them. REQUIRED — an absent value is read as false, i.e. as a re-enable.
 - `POST /api/v1/agent/hooks/reload` body — `{ session_id: string }` — Optional session the reload reports on.
-  - `session_id` — Optional: without it every live session reloads its own hooks and the reply has no summary; with it the session must be visible to the caller, and the reply adds its summary.
+  - `session_id` — Optional: without it every live session in a realm the login serves reloads its own hooks, sessions counts those, and the reply has no summary; with it only that session reloads (it must be visible to the caller), sessions is 1, and the reply adds its summary.
 - `POST /api/v1/agent/hooks/test` body — `{ session_id*: string, shipped_id: string, event: "Notification" | "PostToolUse" | "PreCompact" | "PreToolUse" | "SessionEnd" | "SessionStart" | "Stop" | "SubagentStart" | "SubagentStop" | "UserPromptSubmit", match_value: string, command: string, timeout: int, exit_code: int, payload: object }` — Live session the op resolves against, plus the operation's own fields.
   - `shipped_id` — Id of a SHIPPED (catalogue) hook to DRY-RUN. Selects the predicate-only branch: nothing is executed and `event` is not consulted.
   - `event` — Lifecycle event to fire. Required on every branch except the shipped dry-run; the daemon rejects any value outside the enum.
@@ -1444,7 +1668,7 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 - `POST /api/v1/agent/hooks/rules` body — `{ session_id*: string, nonce*: string, scope: string, rules: { id*: string, text*: string, kind*: "limit" | "check_in" | "guidance" | "playbook", tools: string[], agents: string[] }[], timeout_ms: int, exec_trust: { container_id*: string, realm*: string, name: string, granted_at: string, source: "card" | "rules_panel" }[], expected_revision: string }` — The begin-write nonce (op:rules_set) + the session/scope it binds to, plus the operation's own fields.
   - `nonce` — The single-use write nonce from `POST /api/v1/agent/hooks/begin-write` minted for op:rules_set + this scope; the RPC fails closed without it.
   - `rules` — The complete rule list for the scope (at most 32 checked and 32 guidance/playbook rules; ids unique). An empty array removes the scope's rules.
-  - `timeout_ms` — Optional: the scope's Jev budget for one rules check, 100 to 120000 ms; 0 removes it (back to the default 1200). Omit to leave it unchanged. This is the only way to write rules_timeout_ms.
+  - `timeout_ms` — Optional: the scope's Jev budget for one rules check, 100 to 120000 ms; 0 removes it (back to the default 3000). Omit to leave it unchanged. This is the only way to write rules_timeout_ms.
   - `exec_trust` — Optional: the COMPLETE list of per-container exec trust grants, replacing the scope's (at most 64 rows, each (container_id, realm) once, validated all-or-nothing); [] revokes every grant. Accepted only for the user scope (the realm's profile, or the X-Hoody-Config-Dir override); any other scope is 400. …
   - `expected_revision` — … When it no longer matches the scope file (another tab, a hand edit, a timeout change), the write is refused with 409 revision_conflict, nothing is written, and details.current_revision carries the current value: re-read, re-apply the change, begin a new write (the refused call used up its nonce) and retry. … The revision is bound to the realm of the session it is read and written through, so a revision read through another realm's session is refused 409 revision_conflict, on a gateway with or without a realm pin.
 - `POST /api/v1/agent/hooks/trust/ack` body — `{ session_id*: string, hash*: string, high_risk: bool }` — Live session the op resolves against, plus the operation's own fields.
@@ -1464,7 +1688,7 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 | Method | Summary | Params |
 |--------|---------|--------|
 | `POST /api/v1/agent/jev/decide` | Ask Jev to decide. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `body*` |
-| `POST /api/v1/agent/sessions/{id}/jev/decide` | Ask Jev to decide on behalf of a session. | `body*` |
+| `POST /api/v1/agent/sessions/{id}/jev/decide` | Ask Jev to decide on behalf of a session. | `H:X-Hoody-Realm` `body*` |
 | `GET /api/v1/agent/jev/settings` | Read the Jev settings. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` |
 | `GET /api/v1/agent/jev/models` | List the models Jev can use. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` |
 | `POST /api/v1/agent/jev/test` | Test Jev with one tiny decision. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `body` |
@@ -1475,6 +1699,7 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 
 **Body shapes:**
 
@@ -1510,15 +1735,13 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 |--------|---------|--------|
 | `GET /api/v1/agent/health` | Standardized health check. |  |
 | `GET /api/v1/agent/metrics` | Prometheus metrics. |  |
-| `GET /api/v1/agent/version` | Agent API version and capabilities. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
+| `GET /api/v1/agent/version` | Agent API version and capabilities. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` |
 
 **Param notes:**
 
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
 
 ### `logs` (6) — Structured log query and read
 
@@ -1581,16 +1804,18 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /api/v1/agent/sessions/{id}/loops` | Create a loop. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `body*` |
-| `DELETE /api/v1/agent/sessions/{id}/loops/{loopId}` | Delete a loop. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `body` |
-| `GET /api/v1/agent/loops` | List loops across all sessions. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `POST /api/v1/agent/sessions/{id}/loops/{loopId}/run-now` | Run a loop immediately. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `body` |
-| `PATCH /api/v1/agent/sessions/{id}/loops/{loopId}` | Update a loop. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `body` |
+| `POST /api/v1/agent/sessions/{id}/loops` | Create a loop. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `body*` |
+| `DELETE /api/v1/agent/sessions/{id}/loops/{loopId}` | Delete a loop. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `body` |
+| `GET /api/v1/agent/loops` | List loops across all sessions. | `?realm` `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/sessions/{id}/loops/{loopId}/run-now` | Run a loop immediately. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `body` |
+| `PATCH /api/v1/agent/sessions/{id}/loops/{loopId}` | Update a loop. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `body` |
 
 **Param notes:**
 
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
+- `realm` — The realm to list: "global" (loops not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm.
 - `page` — 1-based page number for pagination.
 - `limit` — Maximum items per page (0 = no pagination).
 
@@ -1617,23 +1842,22 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /api/v1/agent/mcp/write-intents` | Begin an MCP config write. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `DELETE /api/v1/agent/mcp/servers` | Delete an MCP server. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/mcp/servers/enable` | Enable or disable an MCP server. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/mcp/import` | Import MCP servers from another tool's config. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `GET /api/v1/agent/mcp/servers` | List configured MCP servers. | `?session_id*` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `POST /api/v1/agent/mcp/parse` | Preview an MCP config import. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/mcp/reconnect` | Reload MCP config and reconnect. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/mcp/probe` | Probe an MCP server without saving it. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `PUT /api/v1/agent/mcp/servers` | Create or update an MCP server. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
+| `POST /api/v1/agent/mcp/write-intents` | Begin an MCP config write. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `DELETE /api/v1/agent/mcp/servers` | Delete an MCP server. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/mcp/servers/enable` | Enable or disable an MCP server. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/mcp/import` | Import MCP servers from another tool's config. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `GET /api/v1/agent/mcp/servers` | List configured MCP servers. | `?session_id*` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/mcp/parse` | Preview an MCP config import. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/mcp/reconnect` | Reload MCP config and reconnect. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/mcp/probe` | Probe an MCP server without saving it. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `PUT /api/v1/agent/mcp/servers` | Create or update an MCP server. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
 
 **Param notes:**
 
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 - `session_id` — Live session id (MCP config is resolved against the session's settings layers).
 
 **Body shapes:**
@@ -1671,27 +1895,28 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `PUT /api/v1/agent/memory/datahost` | Assign this computer as the memory data host. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `body*` |
-| `POST /api/v1/agent/memory/consolidate` | Trigger a memory consolidation pass (human-only). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `body*` |
-| `POST /api/v1/agent/memory/items` | Save a memory item. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `body*` |
-| `POST /api/v1/agent/memory/write-intents` | Begin a guarded memory write (intent). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `body*` |
-| `DELETE /api/v1/agent/memory/items` | Delete a memory item. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `body` |
-| `DELETE /api/v1/agent/memory/projects/{project}` | Erase a memory project. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `body*` |
-| `PUT /api/v1/agent/memory/enabled` | Toggle memory capture. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `body` |
-| `POST /api/v1/agent/memory/flush` | Flush the memory store. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `body` |
-| `GET /api/v1/agent/memory/datahost` | Read the realm's memory data host. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `GET /api/v1/agent/memory/graph` | Read a project's memory relation graph. | `?project` `?node_type` `?limit` `?offset` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `GET /api/v1/agent/memory/items/{id}` | Read a memory item. | `?project` `?kind` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `GET /api/v1/agent/memory/status` | Read memory subsystem status. | `?project` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `GET /api/v1/agent/memory/items` | List memory items. | `?project` `?kind` `?type` `?query` `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `GET /api/v1/agent/memory/projects` | List memory projects. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `POST /api/v1/agent/memory/search` | Search memory (hybrid recall). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `body` |
-| `PATCH /api/v1/agent/memory/items/{id}` | Edit a memory item. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `body` |
+| `PUT /api/v1/agent/memory/datahost` | Assign this computer as the memory data host. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/memory/consolidate` | Trigger a memory consolidation pass (human-only). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/memory/items` | Save a memory item. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/memory/write-intents` | Begin a guarded memory write (intent). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `body*` |
+| `DELETE /api/v1/agent/memory/items` | Delete a memory item. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `body` |
+| `DELETE /api/v1/agent/memory/projects/{project}` | Erase a memory project. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `body*` |
+| `PUT /api/v1/agent/memory/enabled` | Toggle memory capture. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `body` |
+| `POST /api/v1/agent/memory/flush` | Flush the memory store. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `body` |
+| `GET /api/v1/agent/memory/datahost` | Read the realm's memory data host. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/memory/graph` | Read a project's memory relation graph. | `?project` `?node_type` `?limit` `?offset` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/memory/items/{id}` | Read a memory item. | `?project` `?kind` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/memory/status` | Read memory subsystem status. | `?project` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/memory/items` | List memory items. | `?project` `?kind` `?type` `?query` `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/memory/projects` | List memory projects. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/memory/search` | Search memory (hybrid recall). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `body` |
+| `PATCH /api/v1/agent/memory/items/{id}` | Edit a memory item. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `body` |
 
 **Param notes:**
 
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 - `project` — The project. _(on `DELETE /api/v1/agent/memory/projects/{project}`)_
 - `project` — Project key whose graph to read. _(on `GET /api/v1/agent/memory/graph`)_
 - `node_type` — Optional node-type filter.
@@ -1711,9 +1936,9 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 
 **Body shapes:**
 
-- `PUT /api/v1/agent/memory/datahost` body — `{ use_self*: bool, expect_realm*: string }` — The assignment, and the realm it is asserted against.
+- `PUT /api/v1/agent/memory/datahost` body — `{ use_self*: bool, expect_realm: string }` — The assignment, and the realm it is asserted against.
   - `use_self` — Assign THIS computer. Only true is implemented; false is refused 400 unsupported.
-  - `expect_realm` — REQUIRED. The realm this assignment is for: "global" for the global partition, or a 24-hex realm id. Refused 400 when absent — an empty value means the global realm to the daemon, never "unspecified".
+  - `expect_realm` — … Required unless X-Hoody-Realm or ?realm= names the realm; refused 400 when neither does (an empty value means the global realm to the daemon, never "unspecified"), and 400 bad_request when it names another realm than they do.
 - `POST /api/v1/agent/memory/consolidate` body — `{ project*: string, min_observations: int }` — The consolidation target.
   - `project` — Project key to consolidate (required).
   - `min_observations` — Optional minimum-observations threshold for a fact to be consolidated.
@@ -1724,11 +1949,11 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
   - `files` — File paths the memory is about.
   - `ttl_days` — … Must be a whole number between -2147483648 and 106751 (about 292 years — the longest expiry the store can represent); a value outside that range is REFUSED, never clamped and never treated as no expiry. A fractional value like 30.5 and a numeric string like "30" are both REFUSED too, never truncated or coerced — a silent coercion to 0 would store the memory with no expiry at all while reporting success.
   - `strength` — Initial ranking strength, a whole number from 1 (weakest) to 10 (strongest). Omitted or 0 takes the store's default of 7. Any other value — a negative number, anything above 10, a fractional value or a numeric string — is REFUSED, never coerced and never silently replaced with the default.
-  - `expect_realm` — Optional realm assertion: "global" or a 24-hex realm id. The write is refused when the daemon's active realm no longer matches, so it cannot land in a realm the caller switched away from.
+  - `expect_realm` — Optional realm assertion: "global" or a 24-hex realm id. The write is refused when it does not name the realm the request acts in (the named realm, else the agent's active realm), so it cannot land in a realm the caller switched away from.
 - `POST /api/v1/agent/memory/write-intents` body — `{ op*: "wipe_project", project*: string, expect_realm: string }` — Which write the intent authorizes, and against which project.
   - `op` — The write this intent authorizes. The minted intent is valid for this op alone.
   - `project` — Project key the write will target. The intent is valid for this project alone.
-  - `expect_realm` — Optional realm assertion: "global" or a 24-hex realm id. The request is refused when the daemon's active realm no longer matches.
+  - `expect_realm` — Optional realm assertion: "global" or a 24-hex realm id. The request is refused when it does not name the realm the request acts in (the named realm, else the agent's active realm).
 - `DELETE /api/v1/agent/memory/items` body — `{ ids: string[], id: string, name: string, project: string, kind: "memory" | "observation" | "lesson" | "slot", reason: string, expect_realm: string }` — Which memory records to delete. Address them by `ids` (one or many) or, for a slot, by `name` or `id`. A lone `id` is accepted and treated as a one-element `ids`; a native `ids` array wins when both are present.
   - `ids` — Record ids to delete. Required for kind memory/observation/lesson (the empty/default kind included). A `summary:<session_id>`-prefixed id deletes a summary.
   - `id` — A single record id — shorthand for a one-element `ids`. For kind=slot it is the slot NAME (an alias for `name`).
@@ -1736,7 +1961,7 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
   - `project` — Project key the records belong to.
   - `kind` — Which store the records live in. Omitted means memory.
   - `reason` — Optional reason recorded on the governance audit row.
-  - `expect_realm` — Optional realm assertion: "global" or a 24-hex realm id. The delete is refused when the daemon's active realm no longer matches.
+  - `expect_realm` — Optional realm assertion: "global" or a 24-hex realm id. The delete is refused when it does not name the realm the request acts in (the named realm, else the agent's active realm).
 - `DELETE /api/v1/agent/memory/projects/{project}` body — `{ nonce*: string, reason: string, expect_realm: string }` — The write intent, and optionally why the project was erased.
   - `nonce` — The single-use intent from `POST /api/v1/agent/memory/write-intents`, minted for op "wipe_project" and this project.
   - `reason` — Optional reason recorded on the audit row.
@@ -1761,7 +1986,7 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
   - `tier` — kind=memory: replacement storage tier.
   - `context` — kind=lesson: replacement context. Send it verbatim to preserve it — an absent value preserves the stored one, but the field is how the TUI resends it unchanged.
   - `confidence` — kind=lesson: replacement confidence.
-  - `expect_realm` — Optional realm assertion: "global" or a 24-hex realm id. The edit is refused when the daemon's active realm no longer matches.
+  - `expect_realm` — Optional realm assertion: "global" or a 24-hex realm id. The edit is refused when it does not name the realm the request acts in (the named realm, else the agent's active realm).
 
 ### `models` (2) — Catalogued models and fusion composites
 
@@ -1790,11 +2015,13 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
   - `token` — The raw Hoody platform token to install. Write-only; validated via the sidecar before install and never echoed.
   - `capability` — The operator bootstrap capability, required only on deployments configured with one; a mismatch is answered 404.
 
-### `providers` (14) — Catalogued models and fusion composites
+### `providers` (17) — Catalogued models and fusion composites
 
 | Method | Summary | Params |
 |--------|---------|--------|
 | `POST /api/v1/agent/providers/{id}/auth/accounts` | Add an OAuth account to a provider's pool. | `body` |
+| `POST /api/v1/agent/providers` | Create a custom provider. | `H:Idempotency-Key` `body*` |
+| `DELETE /api/v1/agent/providers/{id}` | Delete a custom provider. |  |
 | `DELETE /api/v1/agent/providers/{id}/auth/api-key` | Delete a provider API key. |  |
 | `GET /api/v1/agent/providers/{id}` | Get a provider. |  |
 | `GET /api/v1/agent/providers/{id}/auth` | Get a provider's auth status. |  |
@@ -1807,10 +2034,12 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 | `PUT /api/v1/agent/providers/{id}/auth/default` | Set a provider's default credential method. | `body*` |
 | `POST /api/v1/agent/providers/{id}/auth/oauth` | Start a provider OAuth login. | `body` |
 | `POST /api/v1/agent/providers/{id}/auth/oauth/{job}/code` | Submit a provider OAuth authorization code. | `body*` |
+| `PATCH /api/v1/agent/providers/{id}` | Change a custom provider. | `body` |
 | `PUT /api/v1/agent/providers/{id}/auth/accounts/{key}/active` | Make a pooled OAuth account active. | `body` |
 
 **Param notes:**
 
+- `Idempotency-Key` — Opaque retry key (1-255 printable ASCII, no whitespace). A retry with the same key and body answers 201 with the provider the first try created; the same key with another body is 422 idempotency_key_reused. Keys are remembered for 24 hours, until the agent restarts.
 - `page` — 1-based page number for pagination.
 - `limit` — Maximum items per page (0 = no pagination).
 - `job` — The job.
@@ -1819,6 +2048,15 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 **Body shapes:**
 
 - `POST /api/v1/agent/providers/{id}/auth/accounts` body — `object` — No fields are required; the login flow is started for the {id} provider.
+- `POST /api/v1/agent/providers` body — `{ id*: string, model_prefix: string, display_name: string, wire_format: "chat_completions" | "responses" | "messages", base_url*: string, auth_scheme: "bearer" | "x-api-key", headers: { [key: string]: string }, models*: { model*: string, context_window: int, output_limit: int, reasoning: bool }[] }` — The provider definition. id, base_url and models are required.
+  - `id` — The provider id: 1-40 lowercase letters, digits or inner hyphens. It cannot be changed later.
+  - `model_prefix` — The prefix of the provider's model specs (acme for acme/<model>). It must equal the id; omitted, it is the id. No provider's id or prefix may already use it, and fusion is reserved.
+  - `display_name` — Display name. Omitted on create, it is the id.
+  - `wire_format` — The API the endpoint speaks: chat_completions (OpenAI-compatible Chat Completions, the default on create), responses (OpenAI Responses) or messages (Anthropic Messages).
+  - `base_url` — The endpoint's base URL, the part before /chat/completions, /responses or /v1/messages (e.g. https://api.acme.example/v1). base_url must be an https URL with no user name, password, query or fragment, at a public address: an internal address, a name that only resolves inside a network, or a name that resolves to an internal address when a request is made is refused.
+  - `auth_scheme` — How the stored key is sent. It follows wire_format: bearer (Authorization: Bearer <key>) with chat_completions and responses, x-api-key with messages. Omitted, it is that value; any other pairing is refused 422 provider_invalid.
+  - `headers` — Static request headers sent on every request, chat_completions only, at most 16. Credential and transport headers (Authorization, x-api-key, api-key, Cookie, Host, Content-Type, Content-Length, Connection and the other hop-by-hop headers) are refused. Values must not contain ${...}. …
+  - `models` — The provider's models, 1 to 500, each selectable as <model_prefix>/<model>. On PATCH the list replaces the current one.
 - `PUT /api/v1/agent/providers/{id}/auth/api-key` body — `{ api_key*: string }` — The provider API key to store (never returned).
   - `api_key` — The provider API key. Stored in the agent's owner-only credential file; the reply echoes only a prefix.
 - `PUT /api/v1/agent/providers/{id}/auth/default` body — `{ default*: string }` — The default credential method to set.
@@ -1827,13 +2065,15 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
   - `add_account` — When true, the login ADDS to the provider's OAuth account pool instead of replacing the primary login.
 - `POST /api/v1/agent/providers/{id}/auth/oauth/{job}/code` body — `{ code*: string }` — The authorization code or full redirect URL the flow is waiting for.
   - `code` — The authorization code (or the full redirect URL) to complete the exchange.
+- `PATCH /api/v1/agent/providers/{id}` body — `{ display_name: string, wire_format: "chat_completions" | "responses" | "messages", base_url: string, auth_scheme: "bearer" | "x-api-key", headers: { [key: string]: string }, models: { model*: string, context_window: int, output_limit: int, reasoning: bool }[], model_prefix: string }` — The members to change; omitted members are kept.
+  - `model_prefix` — Fixed at creation. Accepted only when equal to the current prefix; any other value is refused 400 provider_field_immutable.
 - `PUT /api/v1/agent/providers/{id}/auth/accounts/{key}/active` body — `object` — No body fields are required; the account is identified by the {key} path value.
 
 ### `realms` (2) — API discovery and related-operation hints
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /api/v1/agent/realms` | List realms (for binding). | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `?realm` |
+| `GET /api/v1/agent/realms` | List realms (for binding). | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
 | `PUT /api/v1/agent/hoody/realm` | Switch the agent's active realm. | `body*` |
 
 **Param notes:**
@@ -1842,65 +2082,64 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 - `limit` — Maximum items per page (0 = no pagination).
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
 
 **Body shapes:**
 
 - `PUT /api/v1/agent/hoody/realm` body — `{ realm_id*: string }` — The realm to select.
   - `realm_id` — A 24-hex realm id, or an empty string for all realms.
 
-### `sessions` (39) — Create, drive, and tear down agent sessions
+### `sessions` (41) — Create, drive, and tear down agent sessions
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /api/v1/agent/sessions/{id}/tasks/cancel` | Cancel all background tasks. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `POST /api/v1/agent/sessions/{id}/approver-lease` | Acquire the right to answer this session's gates. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/sessions/{id}/attachments` | Hold a live session (and its parked gate) alive. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `POST /api/v1/agent/sessions/{id}/close` | Close the session (teardown). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/sessions/{id}/stream` | Attach to a session's event stream (WebSocket / SSE). | `?since` `?incarnation` `H:Last-Event-ID` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `POST /api/v1/agent/sessions` | Create, fork, or attach a session. | `H:Idempotency-Key` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `DELETE /api/v1/agent/sessions/{id}` | Close (and optionally hard-delete) a session. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `DELETE /api/v1/agent/sessions/{id}/approval/rules/{tool}` | Remove one session permission rule. | `H:If-Match` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/sessions/{id}` | Get a session summary. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `GET /api/v1/agent/sessions/{id}/approval` | Read a session's approval policy. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/sessions/{id}/state` | Read a session's recoverable state. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/sessions/{id}/transcript` | Read a session's transcript without attaching. | `?after_turn` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `GET /api/v1/agent/sessions` | List sessions. | `?include_system` `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `GET /api/v1/agent/sessions/{id}/rules/applies` | Which tool-call rules apply. | `?agent` `?tool` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/sessions/cwds` | List distinct session working directories. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `GET /api/v1/agent/sessions/{id}/loops` | List a session's loops. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `GET /api/v1/agent/sessions/{id}/tools/mcp` | List a session's MCP tools. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/sessions/{id}/tools` | List a session's effective tool set. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `DELETE /api/v1/agent/sessions/{id}/approver-lease` | Release the approver lease. | `H:X-Hoody-Approver-Lease` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `DELETE /api/v1/agent/sessions/{id}/attachments/{lease_id}` | Release an attachment lease. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `PATCH /api/v1/agent/sessions/{id}` | Rename a session. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `body*` |
-| `PATCH /api/v1/agent/sessions/{id}/approver-lease` | Renew the approver lease. | `H:X-Hoody-Approver-Lease` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `PATCH /api/v1/agent/sessions/{id}/attachments/{lease_id}` | Renew an attachment lease. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `GET /api/v1/agent/sessions/{id}/replay` | Replay a live session's buffered events. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `POST /api/v1/agent/sessions/{id}/tools/{name}/run` | Run a tool inside a live session (gated). | `?confirm` `?confirm_token` `H:X-Hoody-Approver-Lease` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `PATCH /api/v1/agent/sessions/{id}/agent` | Switch the chat agent. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `PUT /api/v1/agent/sessions/{id}/approval/rules/{tool}` | Set one session permission rule. | `H:If-Match` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `PATCH /api/v1/agent/sessions/{id}/auto-reply` | Arm/disarm the auto-reply loop. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `PATCH /api/v1/agent/sessions/{id}/auto-reply/writes` | Flip the auto-reply write opt-in. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `PATCH /api/v1/agent/sessions/{id}/effort` | Set reasoning effort. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `PATCH /api/v1/agent/sessions/{id}/hoody-env` | Toggle Hoody shell-env injection. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `PATCH /api/v1/agent/sessions/{id}/model` | Switch the session model. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `PATCH /api/v1/agent/sessions/{id}/verbosity` | Set response verbosity. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `PATCH /api/v1/agent/sessions/{id}/yolo` | Arm or disarm YOLO auto-approve. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/sessions/{id}/messages` | Dispatch a turn (fire-and-observe). | `H:Idempotency-Key` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/sessions/{id}/prompt:stream` | Dispatch a turn and stream the response. | `?policy` `H:X-Hoody-Gate-Policy` `H:Idempotency-Key` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/sessions/{id}/workflows/{name}/runs` | Run a workflow onto an existing session. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `POST /api/v1/agent/sessions/{id}/trim` | Trim session history to a turn index. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `PUT /api/v1/agent/sessions/{id}/approval` | Set a session's approval mode and lock. | `H:If-Match` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
+| `POST /api/v1/agent/sessions/{id}/tasks/cancel` | Cancel all background tasks. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/sessions/{id}/approver-lease` | Acquire the right to answer this session's gates. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/sessions/{id}/attachments` | Hold a live session (and its parked gate) alive. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `POST /api/v1/agent/sessions/{id}/close` | Close the session (teardown). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/sessions/{id}/stream` | Attach to a session's event stream (WebSocket / SSE). | `?since` `?incarnation` `H:Last-Event-ID` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/sessions` | Create, fork, or attach a session. | `H:Idempotency-Key` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `DELETE /api/v1/agent/sessions/{id}` | Close (and optionally hard-delete) a session. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `DELETE /api/v1/agent/sessions/{id}/approval/rules/{tool}` | Remove one session permission rule. | `H:If-Match` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/sessions/{id}` | Get a session summary. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/sessions/{id}/approval` | Read a session's approval policy. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/sessions/{id}/state` | Read a session's recoverable state. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/sessions/{id}/transcript` | Read a session's transcript without attaching. | `?after_turn` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/sessions/{id}/usage` | Read a session's per-call LLM usage. | `?after_id` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/sessions` | List sessions. | `?include_system` `?realm` `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/sessions/{id}/rules/applies` | Which tool-call rules apply. | `?agent` `?tool` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/sessions/cwds` | List distinct session working directories. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/sessions/{id}/loops` | List a session's loops. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/sessions/{id}/tools/mcp` | List a session's MCP tools. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/sessions/{id}/tools` | List a session's effective tool set. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `DELETE /api/v1/agent/sessions/{id}/approver-lease` | Release the approver lease. | `H:X-Hoody-Approver-Lease` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `DELETE /api/v1/agent/sessions/{id}/attachments/{lease_id}` | Release an attachment lease. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `PATCH /api/v1/agent/sessions/{id}` | Rename a session. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `body*` |
+| `PATCH /api/v1/agent/sessions/{id}/approver-lease` | Renew the approver lease. | `H:X-Hoody-Approver-Lease` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `PATCH /api/v1/agent/sessions/{id}/attachments/{lease_id}` | Renew an attachment lease. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `GET /api/v1/agent/sessions/{id}/replay` | Replay a live session's buffered events. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/sessions/{id}/tools/{name}/run` | Run a tool inside a live session (gated). | `?confirm` `?confirm_token` `H:X-Hoody-Approver-Lease` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `PUT /api/v1/agent/sessions/{id}/after-compaction` | Set the message re-added after every compaction. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `PATCH /api/v1/agent/sessions/{id}/agent` | Switch the chat agent. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `PUT /api/v1/agent/sessions/{id}/approval/rules/{tool}` | Set one session permission rule. | `H:If-Match` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `PATCH /api/v1/agent/sessions/{id}/auto-reply` | Arm/disarm the auto-reply loop. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `PATCH /api/v1/agent/sessions/{id}/auto-reply/writes` | Flip the auto-reply write opt-in. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `PATCH /api/v1/agent/sessions/{id}/effort` | Set reasoning effort. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `PATCH /api/v1/agent/sessions/{id}/hoody-env` | Toggle Hoody shell-env injection. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `PATCH /api/v1/agent/sessions/{id}/model` | Switch the session model. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `PATCH /api/v1/agent/sessions/{id}/verbosity` | Set response verbosity. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `PATCH /api/v1/agent/sessions/{id}/yolo` | Arm or disarm YOLO auto-approve. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/sessions/{id}/messages` | Dispatch a turn (fire-and-observe). | `H:Idempotency-Key` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/sessions/{id}/prompt:stream` | Dispatch a turn and stream the response. | `?policy` `H:X-Hoody-Gate-Policy` `H:Idempotency-Key` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/sessions/{id}/workflows/{name}/runs` | Run a workflow onto an existing session. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `POST /api/v1/agent/sessions/{id}/trim` | Trim session history to a turn index. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `PUT /api/v1/agent/sessions/{id}/approval` | Set a session's approval mode and lock. | `H:If-Match` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
 
 **Param notes:**
 
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 - `since` — Resume from this gateway int64 seq (also accepted as the Last-Event-ID header).
 - `incarnation` — The incarnation the since cursor belongs to (from a frame, replay_boundary, or GET /sessions/{id}). When it differs from the live session's, the cursor is treated as invalid: a replay_gap frame, then the full retained ring.
 - `Last-Event-ID` — SSE resume cursor — the gateway int64 seq to resume from (the in:header alias of ?since); sent automatically by an SSE client on reconnect.
@@ -1908,9 +2147,12 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 - `tool` — The tool. _(on `DELETE /api/v1/agent/sessions/{id}/approval/rules/{tool}`, `PUT /api/v1/agent/sessions/{id}/approval/rules/{tool}`)_
 - `If-Match` — Conditional-request precondition: the ETag from GET /sessions/{id}/approval (a quoted policy revision, e.g. "3") or *. A mismatch is 412 precondition_failed.
 - `after_turn` — Exclusive completed-turn skip cursor: return content strictly after completed turn N (0 = full transcript; values past the end clamp; negative/non-integer = 400).
+- `after_id` — Exclusive cursor: return rows whose id is greater than this. Omit (or 0) to start from the session's first row. Negative or non-integer = 400.
+- `limit` — Return at most this many rows (1 to 5000, default 500). Out of range or non-integer = 400. _(on `GET /api/v1/agent/sessions/{id}/usage`)_
 - `include_system` — When true, also include daemon-owned system/resident sessions in the listing.
+- `realm` — The realm to list: "global" (sessions not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm.
 - `page` — 1-based page number for pagination.
-- `limit` — Maximum items per page (0 = no pagination).
+- `limit` — Maximum items per page (0 = no pagination). _(on `GET /api/v1/agent/sessions`, `GET /api/v1/agent/sessions/{id}/loops`, `GET /api/v1/agent/sessions/{id}/tools/mcp` +1 more)_
 - `agent` — Agent name to ask about (default: the session's own agent).
 - `tool` — Tool name to ask about (default: any tool). _(on `GET /api/v1/agent/sessions/{id}/rules/applies`)_
 - `X-Hoody-Approver-Lease` — The approver-lease capability returned by POST /sessions/{id}/approver-lease. Required on every decision (/confirm, or the confirmed re-issue of a gated tool run) on an "always" session whose lease was minted; the daemon verifies it at decision consumption. On renew/release it names the lease to act on.
@@ -1942,8 +2184,10 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
   - `confirm` — Re-issue a previously-parked confirmation. MUST be paired with the confirm_token from the prior 409; a bare confirm:true with no valid token does NOT bypass the gate (it re-parks). A wire confirmed key in params is always scrubbed.
   - `confirm_token` — The single-use token returned in the 409 tool_needs_confirmation details. Bound to the tool/session/params it was minted for; present it with confirm:true and the echoed params to approve the parked run.
   - `allow_mutations` — Sessionless only: opt a non-read-only tool into running with every permission check applied (else a sessionless mutating run is refused 400 tool_mutation_refused).
+- `PUT /api/v1/agent/sessions/{id}/after-compaction` body — `{ text*: string }` — The after-compaction message.
+  - `text` — The message text, at most 16384 bytes in UTF-8. Empty or whitespace-only removes the message.
 - `PATCH /api/v1/agent/sessions/{id}/agent` body — `{ agent: string }` — New chat agent.
-  - `agent` — Chat-agent name to switch to.
+  - `agent` — Chat-agent name to switch to. The bot agent is refused 400 bad_request (details.field agent) on every session: it runs only inside a Bot (POST /bots).
 - `PUT /api/v1/agent/sessions/{id}/approval/rules/{tool}` body — `{ decision*: "allow" | "deny" }` — One permission rule.
   - `decision` — allow | deny.
 - `PATCH /api/v1/agent/sessions/{id}/auto-reply` body — `{ armed: bool, rounds: int, model: string, allow_writes: bool }` — Auto-reply loop config.
@@ -1978,15 +2222,41 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
   - `mode` — "default" or "always". Omit to keep the current mode.
   - `locked` — Freeze the policy for the session's lifetime (monotonic; never unlocked). Omit to keep the current lock.
 
+### `sessions.commands` (2) — Create, drive, and tear down agent sessions
+
+| Method | Summary | Params |
+|--------|---------|--------|
+| `GET /api/v1/agent/sessions/{id}/commands/{command_id}` | Get a command's receipt. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/sessions/{id}/commands` | Send a message, an interrupt or a stop to a session. | `H:Idempotency-Key` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+
+**Param notes:**
+
+- `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
+- `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
+- `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
+- `Idempotency-Key` — Retry key, required on this route; the SDK and CLI send one automatically. 1–255 printable ASCII, no whitespace. A retry with the same key and command returns the stored receipt and admits nothing; the same key with a different command is 422. The key is remembered while the command waits and for 24 hours after it settled. Past 4096 remembered keys a new key is 429 idempotency_keys_exhausted; a stop is never refused because of the remembered-key limit.
+
+**Body shapes:**
+
+- `POST /api/v1/agent/sessions/{id}/commands` body — `{ kind*: "message" | "interrupt" | "stop", text: string, close: bool, on_gate: "deny" | "wait", order: int, from: { kind*: "user" | "bot" | "delegate" | "system", id: string }, trigger: "human" | "wake" | "clear" }` — The command.
+  - `kind` — message, interrupt or stop.
+  - `text` — The message (message and interrupt: required, non-empty, at most 32 KiB). Delivered verbatim. A stop takes none.
+  - `close` — A stop only: close the session once its work is stopped.
+  - `on_gate` — A message only: deny (default) declines a confirmation or question the session is waiting on so the message is read now; wait leaves it waiting.
+  - `order` — Optional, at least 0: a sequence number for one caller's commands. A message or interrupt with a lower order than a stop already received is superseded.
+  - `from` — Optional: who sends it. … Set it only when your client relays a message on someone's behalf (a Bot runtime, a session forwarding to another); a client sending a person's own message leaves it out, which reads as from the user.
+  - `trigger` — Optional: what caused it, recorded on the receipt. With from kind bot, human introduces the message as the user's via their Bot and wake or clear as the Bot's own. Like from, it is the caller's claim, not verified, and grants nothing; leave it out unless your client relays messages.
+
 ### `sessions.turns` (5) — Create, drive, and tear down agent sessions
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /api/v1/agent/sessions/{id}/cancel` | Cancel the active turn (Esc), or one named turn. | `?turn_id` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `POST /api/v1/agent/sessions/{id}/turns` | Dispatch a turn (retry-safe). | `H:Idempotency-Key` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `GET /api/v1/agent/sessions/{id}/turns/{turn_id}` | Get a turn's durable receipt. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/sessions/{id}/turns` | List a session's durable turn receipts. | `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `POST /api/v1/agent/sessions/{id}/prompt:sync` | Dispatch a turn and block until it ends (no reply text: read it from the transcript) | `?policy` `H:X-Hoody-Gate-Policy` `H:Idempotency-Key` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
+| `POST /api/v1/agent/sessions/{id}/cancel` | Cancel the active turn (Esc), or one named turn. | `?turn_id` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `POST /api/v1/agent/sessions/{id}/turns` | Dispatch a turn (retry-safe). | `H:Idempotency-Key` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `GET /api/v1/agent/sessions/{id}/turns/{turn_id}` | Get a turn's durable receipt. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/sessions/{id}/turns` | List a session's durable turn receipts. | `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/sessions/{id}/prompt:sync` | Dispatch a turn and block until it ends (no reply text: read it from the transcript) | `?policy` `H:X-Hoody-Gate-Policy` `H:Idempotency-Key` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
 
 **Param notes:**
 
@@ -1994,8 +2264,7 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 - `Idempotency-Key` — Opaque retry key (1–255 printable ASCII, no whitespace). A retry with the same key returns the same receipt and never re-runs the turn; the same key with a different request body is 422. _(on `POST /api/v1/agent/sessions/{id}/turns`)_
 - `limit` — Return at most this many receipts, newest first (1–1000). A cap, not a page size: there is no next page.
 - `policy` — auto_approve adopts the headless auto-answer posture (alias of the X-Hoody-Gate-Policy header); off by default; the gateway asks for no separate credentials to use it; access is decided by the container's proxy permission policy.
@@ -2034,24 +2303,23 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /api/v1/agent/skills` | Create a skill. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/skills/delete` | Delete a skill. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/skills/toggle` | Enable/disable a skill. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `GET /api/v1/agent/skills/source` | Read a skill's source. | `?root_dir` `?rel_dir` `?root` `?rel` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `POST /api/v1/agent/skills/import/apply` | Apply a skill import. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `GET /api/v1/agent/skills` | List skills. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `?realm` |
-| `POST /api/v1/agent/skills/rename` | Rename a skill. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `GET /api/v1/agent/skills/import/scan` | Scan for importable skills. | `?source*` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `PUT /api/v1/agent/skills/source` | Write a skill's source. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/skills/trust` | Set a skill's trust state. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
+| `POST /api/v1/agent/skills` | Create a skill. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/skills/delete` | Delete a skill. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/skills/toggle` | Enable/disable a skill. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `GET /api/v1/agent/skills/source` | Read a skill's source. | `?root_dir` `?rel_dir` `?root` `?rel` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/skills/import/apply` | Apply a skill import. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `GET /api/v1/agent/skills` | List skills. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/skills/rename` | Rename a skill. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `GET /api/v1/agent/skills/import/scan` | Scan for importable skills. | `?source*` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` |
+| `PUT /api/v1/agent/skills/source` | Write a skill's source. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/skills/trust` | Set a skill's trust state. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
 
 **Param notes:**
 
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 - `root_dir` — Skill root directory (identity; alias: root).
 - `rel_dir` — Skill relative directory (identity; alias: rel).
 - `root` — Friendly alias of root_dir (translated to root_dir server-side).
@@ -2084,19 +2352,18 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `DELETE /api/v1/agent/skills/hub/cache` | Clear the skill hub cache. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/skills/hub/cache` | Skill hub cache stats. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `POST /api/v1/agent/skills/hub/install` | Install a hub skill. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `GET /api/v1/agent/skills/hub/preview` | Preview a hub skill. | `?provider*` `?source*` `?skill_id*` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/skills/hub/search` | Search the skill hub. | `?query*` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
+| `DELETE /api/v1/agent/skills/hub/cache` | Clear the skill hub cache. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` |
+| `GET /api/v1/agent/skills/hub/cache` | Skill hub cache stats. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` |
+| `POST /api/v1/agent/skills/hub/install` | Install a hub skill. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `GET /api/v1/agent/skills/hub/preview` | Preview a hub skill. | `?provider*` `?source*` `?skill_id*` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` |
+| `GET /api/v1/agent/skills/hub/search` | Search the skill hub. | `?query*` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` |
 
 **Param notes:**
 
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 - `provider` — Hub provider of the skill (a search result's ref.provider).
 - `source` — Source of the skill on the hub, such as owner/repo (a search result's ref.source).
 - `skill_id` — Hub skill id (a search result's ref.skill_id).
@@ -2112,66 +2379,66 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /api/v1/agent/statistics` | Cross-session statistics. | `?scope` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
+| `GET /api/v1/agent/statistics` | Cross-session statistics. | `?scope` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
 
 **Param notes:**
 
 - `scope` — cwd (default) rolls up the current working directory; all rolls up every session.
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 
 ### `tasks` (3) — Background task management
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /api/v1/agent/sessions/{id}/tasks/{tid}/cancel` | Cancel a background task. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/sessions/{id}/tasks/{tid}/transcript` | Read a background task's transcript. | `?after_seq` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/sessions/{id}/tasks` | List a session's background tasks. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
+| `POST /api/v1/agent/sessions/{id}/tasks/{tid}/cancel` | Cancel a background task. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/sessions/{id}/tasks/{tid}/transcript` | Read a background task's transcript. | `?after_seq` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/sessions/{id}/tasks` | List a session's background tasks. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
 
 **Param notes:**
 
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 - `after_seq` — Exclusive int64 upsert-poll cursor: entries with seq strictly greater than it, plus any still-OPEN entry regardless of its seq. Omit for the whole transcript (distinct from 0, which skips a closed seq-0 entry). Negative/non-integer = 400.
 
 ### `todos` (17) — Container-aware task list management
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /api/v1/agent/todos/{id}/proposals/{pid}/approve` | Approve a todo proposal. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `POST /api/v1/agent/todos/{id}/archive` | Archive a todo. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/todos/{id}/cancel-run` | Cancel a todo's run. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `POST /api/v1/agent/todos/{id}/claim` | Claim a todo. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/todos` | File a todo. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/todos/{id}/messages` | Comment on a todo. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/todos/{id}/proposals/{pid}/deny` | Deny a todo proposal. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `GET /api/v1/agent/todos/{id}` | Read a todo. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/todos/revision` | Get the todos store revision. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `GET /api/v1/agent/todos` | List todos. | `?states` `?tags` `?query` `?open_only` `?all` `?sort` `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `POST /api/v1/agent/todos/purge` | Purge archived todos. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `POST /api/v1/agent/todos/{id}/release` | Release a todo. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/todos/{id}/message` | Comment + run an orchestrator turn. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/todos/{id}/snooze` | Snooze a todo. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/todos/{id}/run` | Run a todo's orchestrator. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `POST /api/v1/agent/todos/triage` | Run an LLM triage pass. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `PATCH /api/v1/agent/todos/{id}` | Update a todo (CAS). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
+| `POST /api/v1/agent/todos/{id}/proposals/{pid}/approve` | Approve a todo proposal. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `POST /api/v1/agent/todos/{id}/archive` | Archive a todo. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/todos/{id}/cancel-run` | Cancel a todo's run. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `POST /api/v1/agent/todos/{id}/claim` | Claim a todo. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/todos` | File a todo. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/todos/{id}/messages` | Comment on a todo. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/todos/{id}/proposals/{pid}/deny` | Deny a todo proposal. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `GET /api/v1/agent/todos/{id}` | Read a todo. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/todos/revision` | Get the todos store revision. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/todos` | List todos. | `?states` `?tags` `?query` `?open_only` `?all` `?sort` `?realm` `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/todos/purge` | Purge archived todos. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `POST /api/v1/agent/todos/{id}/release` | Release a todo. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/todos/{id}/message` | Comment + run an orchestrator turn. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/todos/{id}/snooze` | Snooze a todo. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/todos/{id}/run` | Run a todo's orchestrator. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `POST /api/v1/agent/todos/triage` | Run an LLM triage pass. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `PATCH /api/v1/agent/todos/{id}` | Update a todo (CAS). | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
 
 **Param notes:**
 
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 - `states` — Only todos in one of these states. Repeat the parameter for several (?states=ready&states=blocked).
 - `tags` — Only todos carrying these tags. Repeat the parameter for several (?tags=a&tags=b).
 - `query` — Free-text filter over title/body.
 - `open_only` — When true, only open (non-terminal) todos.
 - `all` — When true, include archived/closed todos.
 - `sort` — List order. `default` (or omitted): open todos first, then priority, rank, number. `closed_at`: closed todos by `closed_at`, newest first; todos without a `closed_at` follow in the default order. Any other value is 400.
+- `realm` — The realm to list: "global" (todos not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm.
 - `page` — 1-based page number for pagination.
 - `limit` — Maximum items per page (0 = no pagination).
 
@@ -2224,8 +2491,8 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 | `GET /api/v1/agent/tools/{name}` | Get one tool schema. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
 | `GET /api/v1/agent/tools` | List the tool catalogue. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
 | `GET /api/v1/agent/tools/read-only` | List the read-only tool subset. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `POST /api/v1/agent/tools/{name}/run` | Run a tool (sessionless, gated). | `?confirm` `?confirm_token` `H:X-Hoody-Tool-Mode` `H:X-Hoody-Dir-Scope` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` `?stream` |
-| `POST /api/v1/agent/tools/{name}/runAsync` | Run a tool asynchronously (sessionless, gated). | `?confirm` `?confirm_token` `H:X-Hoody-Tool-Mode` `H:X-Hoody-Dir-Scope` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
+| `POST /api/v1/agent/tools/{name}/run` | Run a tool (sessionless, gated). | `?confirm` `?confirm_token` `H:X-Hoody-Tool-Mode` `H:X-Hoody-Dir-Scope` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` `?stream` |
+| `POST /api/v1/agent/tools/{name}/runAsync` | Run a tool asynchronously (sessionless, gated). | `?confirm` `?confirm_token` `H:X-Hoody-Tool-Mode` `H:X-Hoody-Dir-Scope` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
 
 **Param notes:**
 
@@ -2239,8 +2506,7 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 - `X-Hoody-Tool-Mode` — Sessionless tool-mode for the ephemeral session: `standard` (the default) or `orchestrator`. Any other value is refused 400 invalid_tool_mode. Ignored on the in-session run (it inherits the session's frozen tool-mode).
 - `X-Hoody-Dir-Scope` — Sessionless directory-access scope for the ephemeral session: home (the default) or full. Any other value is refused 400 invalid_dir_scope. Ignored on the in-session run (it inherits the session's frozen dir-scope).
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 - `stream` — Stream the tool output as server-sent events.
 
 **Body shapes:**
@@ -2269,30 +2535,30 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /api/v1/agent/workflows/runs/{run_id}/cancel` | Cancel a workflow run. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `DELETE /api/v1/agent/workflows/{name}` | Delete a workflow definition. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/workflows/{name}` | Read one workflow definition. | `?include_revision` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/workflows/runs/{run_id}` | Get one workflow run by id. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `GET /api/v1/agent/workflows` | List workflow definitions. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/workflows/runs` | Snapshot in-flight and recent workflow runs. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` |
-| `POST /api/v1/agent/workflows/runs/{run_id}/resume` | Resume a failed or cancelled workflow run. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `body*` |
-| `POST /api/v1/agent/sessions/{id}/workflow/messages` | Send a message to a running workflow. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `PUT /api/v1/agent/workflows/{name}` | Create or replace a workflow definition. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/workflows/{name}/hide` | Hide or un-hide a workflow. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
-| `PUT /api/v1/agent/workflows/{name}/summary` | Set or clear a workflow's summary. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body*` |
-| `POST /api/v1/agent/workflows/{name}/runs` | Run a workflow in a new session. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` `body` |
+| `POST /api/v1/agent/workflows/runs/{run_id}/cancel` | Cancel a workflow run. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `DELETE /api/v1/agent/workflows/{name}` | Delete a workflow definition. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/workflows/{name}` | Read one workflow definition. | `?include_revision` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/workflows/runs/{run_id}` | Get one workflow run by id. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/workflows` | List workflow definitions. | `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `GET /api/v1/agent/workflows/runs` | Snapshot in-flight and recent workflow runs. | `?realm` `?page` `?limit` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` |
+| `POST /api/v1/agent/workflows/runs/{run_id}/resume` | Resume a failed or cancelled workflow run. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/sessions/{id}/workflow/messages` | Send a message to a running workflow. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `PUT /api/v1/agent/workflows/{name}` | Create or replace a workflow definition. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/workflows/{name}/hide` | Hide or un-hide a workflow. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
+| `PUT /api/v1/agent/workflows/{name}/summary` | Set or clear a workflow's summary. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body*` |
+| `POST /api/v1/agent/workflows/{name}/runs` | Run a workflow in a new session. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `body` |
 
 **Param notes:**
 
 - `X-Hoody-Cwd` — Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `POST /api/v1/agent/todos` also accepts a body cwd).
 - `X-Hoody-Config-Dir` — Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against.
+- `X-Hoody-Realm` — Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm.
 - `name` — The name.
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
-- `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
 - `include_revision` — If "true", the tool output's first line is `revision: <opaque>` — pass that value as `PUT /api/v1/agent/workflows/{name}`'s expected_revision to guard against concurrent edits; the JSON below it is unchanged. Strictly parsed: exactly one value, "true" or "false"; anything else (empty, "TRUE", "1", repeated) is a 400 bad_request.
 - `page` — 1-based page number for pagination.
 - `limit` — Maximum items per page (0 = no pagination).
+- `realm` — The realm to list: "global" (runs not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm.
 
 **Body shapes:**
 
@@ -2335,7 +2601,7 @@ Control plane outside container kits. Owns identity (signup, login, OAuth, 2FA, 
 
 ## When to use
 
-- Authenticate users; mint auth tokens for headless sessions.
+- Sign users in through their own browser; mint auth tokens only for unattended automation the user asked for.
 - Create/list/mutate/destroy projects, containers, snapshots, proxy-aliases.
 - Grant/revoke project/container access; set proxy auth (password/token/JWT/IP).
 - Wallet, billing, rental ops.
@@ -2349,7 +2615,7 @@ Control plane outside container kits. Owns identity (signup, login, OAuth, 2FA, 
 ## Prerequisites
 
 - Control plane at `https://api.hoody.com`.
-- Bearer token in `Authorization`. Mint via `POST /api/v1/users/auth/login` (1d JWT / 7d refresh) or `POST /api/v1/auth/tokens` (long-lived, scopable).
+- Bearer token in `Authorization`. Get it from browser sign-in (`POST /api/v1/auth/device/code` + `POST /api/v1/auth/device/token`, see `SKILL-HTTP.md` § Login; 1d JWT / 7d refresh), or from `POST /api/v1/users/auth/login` when the user chooses a password login. `POST /api/v1/auth/tokens` (long-lived, scopable) is for unattended automation only. Starting and polling a browser sign-in needs no bearer token.
 - 2FA management (`POST /api/v1/users/auth/2fa/setup`, `POST /api/v1/users/auth/2fa/verify-setup`, `DELETE /api/v1/users/auth/2fa`, `POST /api/v1/users/auth/2fa/backup-codes/regenerate` and the status read) takes a login session JWT, or account-password HTTP Basic auth (which is subject to its own password and 2FA checks); a long-lived `POST /api/v1/auth/tokens` token is refused with 403 there. On top of that, the bodies differ: `POST /api/v1/users/auth/2fa/setup` needs the password; `POST /api/v1/users/auth/2fa/verify-setup` needs the OTP code; `POST /api/v1/users/auth/2fa/verify` needs `temp_token` + code; `DELETE /api/v1/users/auth/2fa` needs password + OTP **or** backup code; `POST /api/v1/users/auth/2fa/backup-codes/regenerate` needs password + a **6-digit TOTP only** (`^\\d{6}$` — a backup code fails schema validation with 422). Login-time `POST /api/v1/users/auth/2fa/verify` needs no session.
 - Project/container writes: project owner or matching permission row.
 - Billing: prerequisites depend on the operation. A hosted crypto invoice (`POST /api/v1/wallet/payments/crypto/invoice`) needs no saved payment method, only a login session (auth tokens are refused 403); server rentals and extensions debit the general wallet balance, so fund it first.
@@ -2367,15 +2633,17 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Common workflows
 
-### 1. Auth bootstrap (signup → verify → login [+2FA])
+### 1. Auth bootstrap through the user's browser
 
-1. `POST /api/v1/auth/signup`
-2. `POST /api/v1/auth/verify-email`
-3. `POST /api/v1/users/auth/login`
-4. `POST /api/v1/users/auth/2fa/verify` (if 2FA enabled — uses `temp_token`)
+1. New user: they sign up and verify their email at `https://api.hoody.com/auth/signup` in their own browser.
+2. `POST /api/v1/auth/device/code` — give the user `verification_uri_complete` and `user_code`.
+3. `POST /api/v1/auth/device/token` every `interval` seconds until it returns the session (`data.token`, `data.refreshToken`); the waiting states are 400 with `data.error`. Steps and states: `SKILL-HTTP.md` § Login.
+4. Use the session: send `data.token` as `Authorization: Bearer`.
 5. `GET /api/v1/users/auth/me`
 
-### 2. Mint a long-lived auth token
+Never collect the user's password or ask for a pasted token. Fallback the user chooses and runs themselves: `POST /api/v1/auth/signup` → `POST /api/v1/auth/verify-email` → `POST /api/v1/users/auth/login` (+ `POST /api/v1/users/auth/2fa/verify` with the `temp_token` when 2FA is on).
+
+### 2. Mint a long-lived auth token (unattended automation only)
 
 1. `POST /api/v1/auth/tokens`
 2. `GET /api/v1/auth/tokens`
@@ -2464,8 +2732,9 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 
 ## Quirks & gotchas
 
+- Browser sign-in (`POST /api/v1/auth/device/token`) is not RFC 8628 on the wire: send only the JSON fields shown, with no OAuth client or grant fields; the waiting states are HTTP 400 `{"statusCode":400,"data":{"error":"authorization_pending"}}` with the state under `data`, and the success body is a login session (`data.token`, `data.refreshToken`), not `access_token`. `expired_token` also covers a code already redeemed; `access_denied` also covers a missing or wrong PKCE verifier.
 - Login accepts `username` OR `email` + `password` (`anyOf`); only the email lookup is lowercased, usernames are matched case-sensitive.
-- JWT lifecycle: `POST /api/v1/users/auth/logout` is a logout-ALL for JWTs — every access and refresh JWT issued before that moment stops working (all sessions, not just the current one); long-lived auth tokens are unaffected (revoke those with `DELETE /api/v1/auth/tokens/{id}`). `POST /api/v1/users/auth/refresh` requires the refresh token in **both** the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. Send the same refresh token in the `{"refreshToken":"…"}` body and as `Authorization: Bearer <refreshToken>`. For headless flows, mint a long-lived `POST /api/v1/auth/tokens` token instead.
+- JWT lifecycle: `POST /api/v1/users/auth/logout` is a logout-ALL for JWTs — every access and refresh JWT issued before that moment stops working (all sessions, not just the current one); long-lived auth tokens are unaffected (revoke those with `DELETE /api/v1/auth/tokens/{id}`). `POST /api/v1/users/auth/refresh` requires the refresh token in **both** the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. Refresh tokens are single-use: each successful refresh replaces both tokens. Never reuse the old refresh token; reuse returns 401 and, after 30 seconds, signs the account out everywhere. Send the same refresh token in the `{"refreshToken":"…"}` body and as `Authorization: Bearer <refreshToken>`. After success, replace your stored credentials with the returned `data.token` and `data.refreshToken` before making further requests. For unattended automation the user asked for, a long-lived `POST /api/v1/auth/tokens` token avoids refresh handling.
 - `GET /api/v1/auth/available-regions` returns `r.data.regions` (single-wrapped, like every other endpoint).
 - Duplicate signup returns `200` (anti-enumeration). For an unverified user the stored password is left unchanged (first writer wins) and a fresh verification email is sent; for a verified user it is a no-op. A second signup therefore cannot fix a mistyped password: logging in with the new one fails with 401. Change it through `POST /api/v1/auth/forgot-password` → `POST /api/v1/auth/reset-password`. Do NOT probe with signup.
 - The `agent` kit needs **no** `X-Hoody-Container-Claim` / `X-Hoody-Token` headers: it accepts the bare per-container kit URL, and access is decided by the container's proxy permission policy. No built-in kit asks for more, `bot` included: its management routes ignore an `Authorization` header and check no container ownership, so the proxy permission policy is their only access control. The `POST /api/v1/containers/{id}/authorize` call mints an *optional* portable container claim for offline verification by your own container programs; no built-in kit requires it. See § Auth model.
@@ -2478,7 +2747,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 - `POST /api/v1/projects/` names the project with `alias` (required, at most 100 characters); there is no `name` field. An alias that one of your projects already uses is refused with 409.
 - Kit URL `<projectId>-<containerId>-<kit>-<n>.<server>.containers.hoody.com` (a terminal id of 10000 or more makes that label longer than DNS allows, so it is `t-<n>` instead of `terminal-<n>`; the SDK and CLI do this for you): with the default proxy permissions, holding the URL is enough to use the kit, `bot` management routes included. Treat it as a secret, since it also exposes the project and container ids; restrict it with `* /api/v1/containers/{id}/proxy/permissions*` groups, or publish a `POST /api/v1/proxy/aliases` alias instead.
 - `GET /api/v1/containers/{id}/proxy/services` lists only the services named in the container's proxy permission rules or hooks, so a container with no custom rules returns `services: []`; it is not a list of running kits. `POST /api/v1/proxy/aliases` takes the kit or protocol as `program` (e.g. `'exec'`, `'terminal'`, or `'http'` with `port`).
-- `GET /api/v1/wallet/invoices/` returns `200 {invoices:[],pagination:{...}}` for never-billed accounts (current). `GET /api/v1/ip` returns IP, user-agent, headers, referer, timestamp, auth flag, protocol, and `ip_info` — not just IP.
+- `GET /api/v1/wallet/invoices/` returns HTTP 200 for never-billed accounts, with an empty `data.invoices` array and pagination metadata in `data.pagination`. `GET /api/v1/ip` returns IP, user-agent, headers, referer, timestamp, auth flag, protocol, and `ip_info` — not just IP.
 - `POST /api/v1/offers/{id}/reserve` charges at once, and every reservation whose total is above zero needs `max_charge_cents`, although the body schema marks it optional. Without it the call is refused with 409 `CHARGE_CONFIRMATION_REQUIRED` (409 `SETUP_FEE_CONFIRMATION_REQUIRED` when the offer has a one-time setup fee), and a total above it is refused with 409 `CHARGE_EXCEEDS_MAX`; the error data carries `total_cents`, and nothing is charged. It also needs a caller-generated `idempotency_key`: a retry with the same key returns the first reservation instead of charging again.
 - `POST /api/v1/rentals/{id}/extend` needs `expected_rental_end`: the rental's current `rental_end`, as `GET /api/v1/rentals/{id}` returns it. The extension is applied only while that still matches, so a retry after a lost response is refused with 409 `EXTENSION_ALREADY_APPLIED` instead of charging twice; read the rental again before retrying. `max_charge_cents` is optional only when the rental's frozen renewal tiers (`renewal_pricing_frozen`) price `additional_days`; otherwise the call is refused with 409 `CHARGE_CONFIRMATION_REQUIRED`, and the error data carries `total_cents`.
 - `GET /api/v1/containers/{id}/storage/incoming` is container-scoped: its `id` is the receiving container's id. For every incoming share across the account use `GET /api/v1/storage/incoming`.
@@ -2602,7 +2871,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
   - `password` — Account password
 - `POST /api/v1/auth/device/token` body — `{ device_code*: string, code_verifier: string }`
 - `POST /api/v1/auth/device/code` body — `{ client_name: string, client: string, code_challenge: string }`
-  - `client_name` — Shown on the verification page as "X is requesting access"
+  - `client_name` — Shown on the verification page as the name of the client requesting access, marked there as not verified by Hoody
   - `client` — Optional client-declared source channel for analytics: web | ssh | webssh | cli | sdk | agent. Unrecognised values are recorded as "unknown"; never affects authentication.
   - `code_challenge` — Optional PKCE on the device flow itself; if present the poll REQUIRES the verifier
 - `POST /api/v1/auth/device/verify_code` body — `{ user_code*: string }`
@@ -2655,7 +2924,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 - `POST /api/v1/auth/tokens/{id}/copy` body — `{ alias: string, expires_at: string|null | "today" | "tomorrow" | number, otp_code: string }`
   - `alias` — Optional alias for the copied token. If omitted, a deterministic alias like "<source> copy" is generated.
   - `expires_at` — Optional expiration override for the copied token. If omitted, source expiration is copied when still in the future.
-- `POST /api/v1/auth/tokens` body — `{ alias: string, public_key: string|null, public_storage: object|null, ip_whitelist: string[] | string, permission_template: "full_access" | "external_customer" | "dev_team" | "finance_team" | "read_only" | null, permissions: { containers: object, projects: object, financial: object, resources: object }, realm_ids: string[], allow_no_realm: bool, vault_access: bool, event_access: bool, deny_reauthorization: bool, expires_at: string | "today" | "tomorrow" | number, otp_code: string }`
+- `POST /api/v1/auth/tokens` body — `{ alias: string, public_key: string|null, public_storage: object|null, ip_whitelist: string[] | string, permission_template: "full_access" | "external_customer" | "dev_team" | "finance_team" | "read_only"|null, permissions: { containers: object, projects: object, financial: object, resources: object }, realm_ids: string[], allow_no_realm: bool, vault_access: bool, event_access: bool, deny_reauthorization: bool, expires_at: string | "today" | "tomorrow" | number, otp_code: string }`
   - `alias` — User-friendly alias for the token. If not provided, a random animal name will be generated (e.g., "clever-dolphin").
   - `public_key` — Optional ED25519 public key used for client identity derivation
   - `public_storage` — Public JSON profile storage attached to the token public_key (max 64KB)
@@ -2672,7 +2941,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
   - `realm_id` — Realm ID to remove from the token
 - `PUT /api/v1/auth/tokens/{id}` body — `{ alias: string, public_key: string|null, public_storage: object|null, ip_whitelist: string[] | string, permissions: { containers: object, projects: object, financial: object, resources: object }, realm_ids: string[], allow_no_realm: bool, vault_access: bool, event_access: bool, expires_at: string|null | "today" | "tomorrow" | number, is_enabled: bool, otp_code: string }`
   - `alias` — User-friendly alias for the token
-  - `realm_ids` — List of realm IDs this token is restricted to (at most 500)
+  - `realm_ids` — List of realm IDs this token is restricted to (at most 500). An empty list means every realm, so a token that has realms cannot be set to an empty list (409 LAST_REALM_REMOVAL).
   - `allow_no_realm` — Whether this token can be used without a realm scope
   - `vault_access` — Whether this token can access user vault endpoints
   - `event_access` — Whether this token can access real-time event streams and event history endpoints
@@ -3086,16 +3355,16 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 - `POST /api/v1/proxy/aliases` body — `{ container_id*: string, alias: string|null | false, program*: string, port: int, index: int, target_path: string|null, allow_path_override: bool=true, expires_at: string|null, enabled: bool=true }`
   - `container_id` — Container ID that this alias points to. You must own this container.
   - `alias` — … Two independent uniqueness rules apply, either of which answers 409 ALIAS_IN_USE: the name must be free on the container's physical server (across every tenant hosted there), AND your own account may hold a given name only once across all servers. … Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to a reserved service name (such as "egress") or starting with that name followed by "-" (such as "egress-"). …
-  - `program` — Which container service the alias targets — a built-in Hoody program ("terminal", "files", "code", "browser", "agent", "display", …) or a transport protocol ("http", "https", "ssh"). … Must be a known Hoody program name (or one of its aliases) or protocol.
+  - `program` — … A port is required for "http"/"https": without one the request is refused (400 PORT_REQUIRED). … Must be a known Hoody program name (or one of its aliases) or protocol.
   - `port` — Target port for the "http"/"https" protocol — the port your server listens on inside the container (e.g. program "http" + port 3000 → http://<container>:3000). … Ignored for built-in Hoody programs, which have fixed kit ports.
-  - `index` — Instance index, or target port for the "http"/"https" protocol. Defaults to 1. For a built-in Hoody program it selects which running instance to route to (e.g. terminal 2). …
+  - `index` — … For "http"/"https" it is the port your server listens on inside the container and has no default: give it here, in "port" or as "http-<port>", or the request is refused (400 PORT_REQUIRED) — but prefer the dedicated "port" field; if "port" or a port embedded in the program ("http-3000") is also supplied, that wins over this index (so an accidental index of 1 will not route you to port 1).
   - `target_path` — Landing path served when https://{alias}.../ is requested with no path (a root request); a query written in it is sent too. With allow_path_override true, a request that carries its own path is forwarded as-sent, resolved from the container root — this value is never used as a prefix. …
   - `allow_path_override` — When false, the alias serves only the root, or target_path itself: once the proxy permissions allow the request, a request to either lands on target_path and any other path is refused (404). …
   - `expires_at` — Optional ISO 8601 expiration date. Alias will be automatically disabled after this date.
   - `enabled` — Whether the alias is initially enabled (defaults to true)
 - `PATCH /api/v1/proxy/aliases/{id}` body — `{ alias: string, program: string, port: int, index: int, target_path: string|null, allow_path_override: bool, expires_at: string|null | number, enabled: bool }`
   - `alias` — … Two independent uniqueness rules apply, either of which answers 409 ALIAS_IN_USE: the name must be free on the container's physical server (across every tenant hosted there), AND your own account may hold a given name only once across all servers. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to a reserved service name (such as "egress") or starting with that name followed by "-" (such as "egress-"). …
-  - `program` — Program or protocol the alias targets — a built-in Hoody program ("terminal", "files", "code", …) or a transport protocol ("http", "https", "ssh"). … Must be a known Hoody program name (or one of its aliases) or protocol.
+  - `program` — … Switching an alias from a built-in program to "http"/"https" needs a port in the same request (400 PORT_REQUIRED). Must be a known Hoody program name (or one of its aliases) or protocol.
   - `port` — Target port for the "http"/"https" protocol — the port your server listens on inside the container (e.g. program "http" + port 3000). Preferred over "index"; takes precedence over "index" and over any port embedded in the program string. Ignored for built-in Hoody programs.
   - `index` — Instance index, or target port when program is "http"/"https". Prefer the dedicated "port" field; if "port" or a port embedded in the program ("http-3000") is also supplied, that wins over this index.
   - `target_path` — Landing path served for root requests, with its own query. With allow_path_override true, requests carrying their own path are forwarded as-sent (never a prefix); with false, it is the only path served. Set to null to remove it.
@@ -3132,7 +3401,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 
 - `PATCH /api/v1/containers/{id}/proxy/permissions/state` body — `{ enable_proxy*: bool }`
   - `enable_proxy` — Enable or disable the proxy entirely
-- `PUT /api/v1/containers/{id}/proxy/permissions` body — `{ project*: string, container*: string, groups*: { [key: string]: { type: "jwt" | "password" | "ip" | "token" | "hoody-identity", secret: string, algorithm: "HS256" | "RS256" | "ES256" | "sha256", sources: string[], claims: object, username: string, password: string, salt: string, range: string, header: string, cookie: string, param: string, value: string, audience: string, allow_types: "user"[], users: string[], max_age_seconds: int, expose_type: bool } }, permissions*: { [key: string]: { [key: string]: bool | number | number[] | string | "*" } }, default: "allow" | "deny", enable_proxy: bool, hooks: { [key: string]: { match*: object, script*: object, timeout: int }[] } }`
+- `PUT /api/v1/containers/{id}/proxy/permissions` body — `{ project*: string, container*: string, groups*: { [key: string]: { type: "jwt" | "password" | "ip" | "token" | "hoody-identity", secret: string, algorithm: "HS256" | "RS256" | "ES256" | "sha256", sources: string[], claims: object, username: string, password: string, salt: string, range: string, header: string, cookie: string, param: string, value: string, audience: string, allow_types: "user"[], users: string[], max_age_seconds: int, expose_type: bool, header_authoritative: bool } }, permissions*: { [key: string]: { [key: string]: bool | number | number[] | string | "*" } }, default: "allow" | "deny", enable_proxy: bool, hooks: { [key: string]: { match*: object, script*: object, timeout: int }[] } }`
   - `project` — Project ID owning this container
   - `container` — Container ID (must match path :id)
   - `groups` — Authentication groups. Key is group name, value is group config.
@@ -3147,11 +3416,12 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
   - `access` — Access control rule defining WHICH instances/ports are ALLOWED for this program. This is NOT a list of what exists, but a RULE for what is PERMITTED. For programs "files", "services", "notifications", "exec" only boolean is allowed. …
 - `PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/ip` body — `{ range*: string }`
   - `range` — IPv4 CIDR range specifying allowed IP addresses. Format: "IP/mask" where mask is 0-32. Examples: "192.168.1.0/24" (subnet), "10.0.0.0/8" (class A), "203.0.113.5/32" (single IP).
-- `PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/jwt` body — `{ secret*: string, algorithm*: "HS256" | "RS256" | "ES256", sources*: string[], claims: { [key: string]: string | number | bool } }`
+- `PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/jwt` body — `{ secret*: string, algorithm*: "HS256" | "RS256" | "ES256", sources*: string[], claims: { [key: string]: string | number | bool }, header_authoritative: bool }`
   - `secret` — JWT secret key used to verify token signatures. For HS256: any string. For RS256/ES256: PEM-encoded SPKI public key.
   - `algorithm` — JWT algorithm to use for signature verification. HS256 uses symmetric keys, RS256/ES256 use asymmetric keys.
-  - `sources` — Where to look for JWT tokens in incoming requests. Format: "header:Name" or "cookie:Name" ("param:Name" is no longer accepted)
+  - `sources` — Where to look for JWT tokens in incoming requests. Format: "header:Name" or "cookie:Name" ("param:Name" is no longer accepted). By default a valid token in any listed source counts (see header_authoritative). Name cookie sources with the __Host- prefix.
   - `claims` — Optional JWT claims that must be present and match exactly. Values must be string, number, or boolean.
+  - `header_authoritative` — When true and any configured header source is present in the request (any value, even empty), only header sources decide membership. When false or omitted, any configured source with a valid token counts.
 - `PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/password` body — `{ username*: string, password*: string, algorithm: "sha256", salt*: string }`
   - `username` — Username for authentication. Must match exactly what the client provides.
   - `password` — Password for authentication. Can be plaintext (will be hashed) or pre-hashed SHA256(salt+password) in lowercase hex format.
@@ -3220,7 +3490,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 
 - `PATCH /api/v1/projects/{id}/proxy/permissions/state` body — `{ enable_proxy*: bool }`
   - `enable_proxy` — Enable or disable the proxy entirely
-- `PUT /api/v1/projects/{id}/proxy/permissions` body — `{ project*: string, groups*: { [key: string]: { type: "jwt" | "password" | "ip" | "token" | "hoody-identity", secret: string, algorithm: "HS256" | "RS256" | "ES256" | "sha256", sources: string[], claims: object, username: string, password: string, salt: string, range: string, header: string, cookie: string, param: string, value: string, audience: string, allow_types: "user"[], users: string[], max_age_seconds: int, expose_type: bool } }, permissions*: { [key: string]: { [key: string]: bool | number | number[] | string | "*" } }, default: "allow" | "deny", enable_proxy: bool, hooks: object }`
+- `PUT /api/v1/projects/{id}/proxy/permissions` body — `{ project*: string, groups*: { [key: string]: { type: "jwt" | "password" | "ip" | "token" | "hoody-identity", secret: string, algorithm: "HS256" | "RS256" | "ES256" | "sha256", sources: string[], claims: object, username: string, password: string, salt: string, range: string, header: string, cookie: string, param: string, value: string, audience: string, allow_types: "user"[], users: string[], max_age_seconds: int, expose_type: bool, header_authoritative: bool } }, permissions*: { [key: string]: { [key: string]: bool | number | number[] | string | "*" } }, default: "allow" | "deny", enable_proxy: bool, hooks: object }`
   - `project` — Project ID (must match path :id)
   - `groups` — Authentication groups. Key is group name (^[A-Za-z0-9_-]{1,50}$), value is group config.
   - `permissions` — Per-group program permissions. Key is group name, value is map of program→access-rule. These are ACCESS CONTROL rules defining WHAT IS ALLOWED, not inventory of what exists.
@@ -3234,11 +3504,12 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
   - `access` — Access control rule defining WHICH instances/ports are ALLOWED for this program. This is NOT a list of what exists, but a RULE for what is PERMITTED. For programs "files", "services", "notifications", "exec" only boolean is allowed. …
 - `PUT /api/v1/projects/{id}/proxy/permissions/groups/{groupName}/ip` body — `{ range*: string }`
   - `range` — IPv4 CIDR range specifying allowed IP addresses. Format: "IP/mask" where mask is 0-32. Examples: "192.168.1.0/24" (subnet), "10.0.0.0/8" (class A), "203.0.113.5/32" (single IP).
-- `PUT /api/v1/projects/{id}/proxy/permissions/groups/{groupName}/jwt` body — `{ secret*: string, algorithm*: "HS256" | "RS256" | "ES256", sources*: string[], claims: { [key: string]: string | number | bool } }`
+- `PUT /api/v1/projects/{id}/proxy/permissions/groups/{groupName}/jwt` body — `{ secret*: string, algorithm*: "HS256" | "RS256" | "ES256", sources*: string[], claims: { [key: string]: string | number | bool }, header_authoritative: bool }`
   - `secret` — JWT secret key used to verify token signatures. For HS256: any string. For RS256/ES256: PEM-encoded SPKI public key.
   - `algorithm` — JWT algorithm to use for signature verification. HS256 uses symmetric keys, RS256/ES256 use asymmetric keys.
-  - `sources` — Where to look for JWT tokens in incoming requests. Format: "header:Name" or "cookie:Name" ("param:Name" is no longer accepted)
+  - `sources` — Where to look for JWT tokens in incoming requests. Format: "header:Name" or "cookie:Name" ("param:Name" is no longer accepted). By default a valid token in any listed source counts (see header_authoritative). Name cookie sources with the __Host- prefix.
   - `claims` — Optional JWT claims that must be present and match exactly. Values must be string, number, or boolean.
+  - `header_authoritative` — When true and any configured header source is present in the request (any value, even empty), only header sources decide membership. When false or omitted, any configured source with a valid token counts.
 - `PUT /api/v1/projects/{id}/proxy/permissions/groups/{groupName}/password` body — `{ username*: string, password*: string, algorithm: "sha256", salt*: string }`
   - `username` — Username for authentication. Must match exactly what the client provides.
   - `password` — Password for authentication. Can be plaintext (will be hashed) or pre-hashed SHA256(salt+password) in lowercase hex format.
@@ -3668,7 +3939,7 @@ Create the bot in the chat app first and keep its token. `POST /api/v1/bot/regis
 - The kit holds no token of its own; every working token belongs to a chat user. A login typed into the chat form lives for at most two minutes, while a token a user pastes is kept, encrypted, and used for that user's later commands. The bot tries to delete each chat message that carried a credential, and when the channel refuses the delete it tells the user to delete it themselves. Deleting a registration therefore does not revoke what its users still hold; that is what the revoke operations are for.
 - The channel token is write-only. Registration posts it once, the kit validates it with the channel before storing it, encrypts it, and no read ever returns it. A registration whose token was rotated in the chat app has to be deleted and registered again with the new token: registering the same bot while the old registration exists is refused `409 registration_duplicate` (and deleting a registration does not revoke the credentials its users hold).
 - Health is unauthenticated by design and reports exactly nine fields. `open_by_default` stays null until the self-probe resolves and is never reported as safe by default, so treat null as unknown rather than as protected.
-- Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the bot's kit URL, also from inside the same container, gets 403 with the JSON body `{ "error": { "code": "forbidden", ... } }`.
+- Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the bot's kit URL gets 403 with the JSON body `{ "error": { "code": "forbidden", ... } }`.
 - Bare `/health` is 404. The management API and health live under the versioned prefix; the only route outside it is the management UI page at the root.
 - Errors do not use the account-plane envelope. Management refusals answer `{ error: { code, message } }` with an enumerated code, and the message never carries a credential or an upstream error string, though a validation message may name a query parameter or body field you sent. An unknown path (404) or method (405) answers a bare string instead, `{ error: "not_found" }` or `{ error: "method_not_allowed" }`.
 - A repeated query parameter is refused rather than resolved on every management route. Sending the same control twice makes the request say two things at once, and no handler answers it. The manifest route (which parses no query string) and the unauthenticated health route are outside that rule.
@@ -3761,7 +4032,7 @@ Create the bot in the chat app first and keep its token. `POST /api/v1/bot/regis
 - Console/network capture.
 - Dedicated recorded "project browser" the user can watch live and you can inspect anytime (workflow 6).
 - Clicking, typing and waiting on page elements without writing JS (workflow 7).
-- External CDP on Chromium through the URL that `GET /devtools-url` returns (on by default; `useRemoteDebuggingPort=false` turns it off; Firefox never exposes it).
+- External CDP on Chromium through the URL that `GET /api/v1/browser/devtools-url` returns (on by default; `useRemoteDebuggingPort=false` turns it off; Firefox never exposes it).
 
 ## When NOT to use
 
@@ -3770,7 +4041,7 @@ Create the bot in the chat app first and keep its token. `POST /api/v1/bot/regis
 ## Prerequisites
 
 - Headful (default `showBrowser=true`) needs X display: `?display=` or `DISPLAY`. Extensions also require `showBrowser=true`.
-- `GET /pdf` works only on a headless Chromium instance: start it with `showBrowser=false`. Firefox and headful instances return `501 NOT_SUPPORTED`. 
+- `GET /api/v1/browser/pdf` works only on a headless Chromium instance: start it with `showBrowser=false`. Firefox and headful instances return `501 NOT_SUPPORTED`. 
 
 ## Capability URL
 
@@ -3779,79 +4050,79 @@ Create the bot in the chat app first and keep its token. `POST /api/v1/bot/regis
 ## Common workflows
 
 ### 1. Start + navigate
-1. `GET /start` on the slot's hostname + overrides (proxy, stealth, fingerprintId, viewport, locale, timezoneId, userAgent, geolocation).
-2. `POST /browse` — `tabId`, `onlyIfNotExists=true`. 
-3. `GET /metadata`.
+1. `GET /api/v1/browser/start` on the slot's hostname + overrides (proxy, stealth, fingerprintId, viewport, locale, timezoneId, userAgent, geolocation).
+2. `POST /api/v1/browser/browse` — `tabId`, `onlyIfNotExists=true`. 
+3. `GET /api/v1/browser/metadata`.
 
 ### 2. Extract content
-After browse: `GET /html`/`GET /text`/`GET /screenshot`/`GET /pdf` — params in Reference. `GET /pdf` needs a headless Chromium instance (see Prerequisites).
+After browse: `GET /api/v1/browser/html`/`GET /api/v1/browser/text`/`GET /api/v1/browser/screenshot`/`GET /api/v1/browser/pdf` — params in Reference. `GET /api/v1/browser/pdf` needs a headless Chromium instance (see Prerequisites).
 
 ### 3. Authenticated scraping
-1. `GET /start` matching `userAgent`/`viewport`/`locale`.
-2. `POST /cookies` with a `cookies` list of `{name, value, url}` entries; each cookie needs `name`, `value` and either an absolute http(s) `url` or both `domain` and `path` (never `url` together with `domain` or `path`). 
-3. `POST /browse` to protected URL.
-4. `GET /html`/`GET /text`.
-5. `DELETE /cookies`.
+1. `GET /api/v1/browser/start` matching `userAgent`/`viewport`/`locale`.
+2. `POST /api/v1/browser/cookies` with a `cookies` list of `{name, value, url}` entries; each cookie needs `name`, `value` and either an absolute http(s) `url` or both `domain` and `path` (never `url` together with `domain` or `path`). 
+3. `POST /api/v1/browser/browse` to protected URL.
+4. `GET /api/v1/browser/html`/`GET /api/v1/browser/text`.
+5. `DELETE /api/v1/browser/cookies`.
 
 ### 4. JS eval + logs
-1. `GET /start` → `POST /browse`.
-2. `POST /eval` (`{script}` JSON body; a raw `text/plain` body also works, and `GET /eval?script=` takes the script in the query). On the default stealth engine the script cannot see page JS globals (see Quirks).
-3. `GET /console` (`since`,`type`,`clear=true`).
-4. `GET /network`.
+1. `GET /api/v1/browser/start` with `stealth=false` for full console capture (stop a slot that already runs with `stealth=true` first) → `POST /api/v1/browser/browse`.
+2. `POST /api/v1/browser/eval` (`{script}` JSON body; a raw `text/plain` body also works, and `GET /api/v1/browser/eval?script=` takes the script in the query). On the default stealth engine the script cannot see page JS globals (see Quirks).
+3. `GET /api/v1/browser/console` (`since`,`type`,`clear=true`).
+4. `GET /api/v1/browser/network`.
 
 ### 5. History
-`GET /history` (filters: `since`/`domain`/`browser_id`) and `DELETE /history` (`before` + `browser_id` AND). In history, `browser_id` is the slot number X the navigation ran on.
+`GET /api/v1/browser/history` (filters: `since`/`domain`/`browser_id`) and `DELETE /api/v1/browser/history` (`before` + `browser_id` AND). In history, `browser_id` is the slot number X the navigation ran on.
 
 ### 6. Dedicated project browser — suggest it to the user
 When the work is a website project or business research, **offer** the user a dedicated recorded browser. This is a suggestion to the user only — set it up when they ask, don't spin it up unprompted.
-1. Pick a slot number X (e.g. 2) and start headful on that slot: `GET /start` addressed to the `browser-X` hostname (the `browser-X` host) with `showBrowser=true`. The proxy derives `browser_port` 30000+X and `display` 500+X from the hostname and overrides any values you send. Add any per-project identity: own egress proxy (`proxyServer`/`proxyUsername`/`proxyPassword`/`proxyBypass`), `stealth`, `userAgent`, `viewport`, `locale`, `geolocation`, extensions.
-2. Give the user the direct live-view URL — the standard kit URL with the `browser-` slug and `?view=display`: `https://{P}-{C}-browser-X.{N}.containers.hoody.com/?view=display`. That page embeds display 500+X live (the bare root URL shows an instance status page with a View Display link instead), so an instance started on display 500+X gets its own stable viewing URL — changing the X in the URL is how you address each browser's live window. `GET /devtools-url` adds a live DevTools inspector as a second link; that link gives full control of the browser, so hand it only to someone you would give the browser to.
-3. Everything browsed there — by the user clicking around in the live view or by the agent via the API — lands in persistent per-slot history (`GET /history` with `browser_id=X`): live debugging and business research accumulate into one durable project trail. The instance itself is reaped once it has been idle past the deployment's max age (see Quirks) — history survives; re-run `GET /start` with the same options to revive the window.
-4. Then offer log capture as a follow-up: console/network buffers hold only the last 500 entries and die with the instance, so a recurring `cron` job (or agent loop) draining `GET /console`/`GET /network` with `clear=true` into `sqlite`/`files`/agent memory preserves full context for later sessions.
+1. Pick a slot number X (e.g. 2) and start headful on that slot: `GET /api/v1/browser/start` addressed to the `browser-X` hostname (the `browser-X` host) with `showBrowser=true`. The proxy derives `browser_port` 30000+X and `display` 500+X from the hostname and overrides any values you send. Add any per-project identity: own egress proxy (`proxyServer`/`proxyUsername`/`proxyPassword`/`proxyBypass`), `stealth`, `userAgent`, `viewport`, `locale`, `geolocation`, extensions.
+2. Give the user the direct live-view URL — the standard kit URL with the `browser-` slug and `?view=display`: `https://{P}-{C}-browser-X.{N}.containers.hoody.com/?view=display`. That page embeds display 500+X live (the bare root URL shows an instance status page with a View Display link instead), so an instance started on display 500+X gets its own stable viewing URL — changing the X in the URL is how you address each browser's live window. `GET /api/v1/browser/devtools-url` adds a live DevTools inspector as a second link; that link gives full control of the browser, so hand it only to someone you would give the browser to.
+3. Everything browsed there — by the user clicking around in the live view or by the agent via the API — lands in persistent per-slot history (`GET /api/v1/browser/history` with `browser_id=X`): live debugging and business research accumulate into one durable project trail. The instance itself is reaped once it has been idle past the deployment's max age (see Quirks) — history survives; re-run `GET /api/v1/browser/start` with the same options to revive the window.
+4. Then offer log capture as a follow-up: console/network buffers hold only the last 500 entries and die with the instance, so a recurring `cron` job (or agent loop) draining `GET /api/v1/browser/console`/`GET /api/v1/browser/network` with `clear=true` into `sqlite`/`files`/agent memory preserves the captured entries for later sessions. For full console capture start the slot with `stealth=false`: the default stealth engine omits the page's console calls and errors.
 
 ### 7. Drive a page: snapshot, act, wait
-These three operations never start an instance (404 `NOT_FOUND` on an empty slot), so run `GET /start` and `POST /browse` first.
-1. `GET /metadata` and keep `instanceGeneration`. Passing it back on the calls below turns "the instance was replaced" into a 409 `INSTANCE_CHANGED` instead of acting on a fresh browser.
-2. `GET /snapshot` returns the tab's accessibility tree as YAML with `[ref=eN]` markers, plus a `snapshotId`. Entered form values read as `<value hidden>` unless `includeValues=true`.
-3. `POST /action` with `action` (one of `click | fill | type | press | select | check | hover`) and a `target`: either `{ref, snapshotId}` from the latest snapshot, or exactly one of `selector`, `role` (+ `name`), `label`, `text`, `placeholder`, `testId`. A 200 means the browser operation completed, not that the site accepted it.
-4. `POST /wait` with a condition (`kind`: `target`, `text`, `url` or `loadState`) to observe the result. A miss is 504 `TIMEOUT`, never `matched: false`.
+These three operations never start an instance (404 `NOT_FOUND` on an empty slot), so run `GET /api/v1/browser/start` and `POST /api/v1/browser/browse` first.
+1. `GET /api/v1/browser/metadata` and keep `instanceGeneration`. Passing it back on the calls below turns "the instance was replaced" into a 409 `INSTANCE_CHANGED` instead of acting on a fresh browser.
+2. `GET /api/v1/browser/snapshot` returns the tab's accessibility tree as YAML with `[ref=eN]` markers, plus a `snapshotId`. Entered form values read as `<value hidden>` unless `includeValues=true`.
+3. `POST /api/v1/browser/action` with `action` (one of `click | fill | type | press | select | check | hover`) and a `target`: either `{ref, snapshotId}` from the latest snapshot, or exactly one of `selector`, `role` (+ `name`), `label`, `text`, `placeholder`, `testId`. A 200 means the browser operation completed, not that the site accepted it.
+4. `POST /api/v1/browser/wait` with a condition (`kind`: `target`, `text`, `url` or `loadState`) to observe the result. A miss is 504 `TIMEOUT`, never `matched: false`.
 5. Take a new snapshot before using refs again: a newer snapshot or a main-frame navigation invalidates the old refs (409 `STALE_SNAPSHOT`).
-`GET /viewport`/`POST /viewport` read and change the viewport of a running instance without a restart.
+`GET /api/v1/browser/viewport`/`POST /api/v1/browser/viewport` read and change the viewport of a running instance without a restart.
 
 ## Quirks & gotchas
 
 - The `browser-X` hostname selects the instance: the proxy derives `browser_port` 30000+X and `display` 500+X from it and overrides caller-supplied values. A `browser_id` (or another instance selector in the query or JSON body) that names a different instance is refused with 400 `INSTANCE_SELECTOR_CONFLICT`, `details.field` naming it, and nothing runs: leave it out or call that instance's own host. Choose the slot with the `browser-X` host. On history, `browser_id` also filters, equal to X.
-- Endpoints auto-create unless `start=false`. Where a deployment disables auto-start, only an explicit `start=true` creates an instance. `GET /snapshot`, `POST /action` and `POST /wait` never create one.
-- `stealth` defaults true; bare `?stealth`=true. Mid-flight change throws `Instance backend mismatch` — `GET /stop` first.
+- Endpoints auto-create unless `start=false`. Where a deployment disables auto-start, only an explicit `start=true` creates an instance. `GET /api/v1/browser/snapshot`, `POST /api/v1/browser/action` and `POST /api/v1/browser/wait` never create one.
+- `stealth` defaults true; bare `?stealth`=true. Mid-flight change throws `Instance backend mismatch` — `GET /api/v1/browser/stop` first.
 - `stealth=true` is ignored on Firefox: the stealth engine is Chromium-only.
 - Extensions need `showBrowser=true` and run on a persistent profile.
 - `chromiumVersion`: full / major / channel (`stable|beta|dev|canary`); first new version blocks on download.
-- Console/network logs: 500-entry ring buffers — drain or filter `since`.
+- Console/network logs: 500-entry ring buffers — drain or filter `since`. On the default `stealth=true` engine, console capture leaves out the page's `console.*` calls, uncaught errors and unhandled rejections; the response reports `capture: "partial"` with a `reason`. Start with `stealth=false` for full console capture.
 - **A sweep runs every 5 min and SIGTERMs any instance idle for 1 h (deployment defaults), healthy or not.** The idle clock is restarted by real use: every API request routed to the instance (counted from the END of the request), a top-level page navigation (including a person clicking around in the live view), attaching over CDP, and starting an instance that already exists. An instance with a request in flight or an open CDP connection is never reaped. The instance's own heartbeat is liveness only and does NOT keep it alive, so an instance you want to keep (logged-in cookies, session state) needs a request at least once per idle window. A reaped instance's next call starts a fresh one, with none of the cookies or session state the old one held; recorded history survives.
 - Instances do NOT survive kit-process restarts: graceful shutdown (SIGTERM/SIGINT) terminates every child.
 - History records ALL navs (incl. headful clicks) at `/hoody/storage/hoody-browser/history`, retained 30 d by default. Where a deployment turns history off, the history endpoints answer `404 HISTORY_DISABLED`.
-- **`DELETE /history` is scoped by the host:** through a `browser-N` host it clears only instance N's history (add `before` to keep newer entries); a `browser_id` naming another instance is refused with 400 `INSTANCE_SELECTOR_CONFLICT`. To clear several instances, call it on each instance's host.
+- **`DELETE /api/v1/browser/history` is scoped by the host:** through a `browser-N` host it clears only instance N's history (add `before` to keep newer entries); a `browser_id` naming another instance is refused with 400 `INSTANCE_SELECTOR_CONFLICT`. To clear several instances, call it on each instance's host.
 - `browser_id` history filter sanitised as path component.
 - **On the default stealth engine (`stealth=true`, `engine: patchright`), `eval` runs the script in an isolated JavaScript world.** It sees the DOM, but not the globals the page's own scripts define (`window.__NEXT_DATA__`, SPA stores, config objects): those read as `undefined` and the call still returns 200. On `stealth=false` (`engine: playwright`) the script runs in the page's main world. To read page JS state, start the slot with `stealth=false`, or read what the page wrote into the DOM (for example the text of `<script id="__NEXT_DATA__">`).
 - `eval` POST accepts JSON `{"script":"..."}` (what the SDK and CLI send) or a `Content-Type: text/plain` body holding the raw script. The response is `{ "result": ... }`.
-- **A ref-addressed `POST /action` that navigates the page itself (a link click, a submit, a `pushState`) can answer `409 STALE_SNAPSHOT` with `details.outcome: "unknown"` after the action already ran.** `outcome` is `not-started` (never dispatched, safe to repeat), `unknown` (dispatched, result not observed) or `completed`. On `unknown`, check the page (`POST /wait`, a new snapshot, the URL) before repeating a click or submit. Selector, role, label, text, placeholder and testId targets are not affected.
-- Chromium CDP defaults to `useRemoteDebuggingPort=true`; pass `useRemoteDebuggingPort=false` at start to turn it off. `GET /devtools-url` answers 404 only when the instance is missing; with CDP off it returns 200 with null URLs. Use the URLs `GET /devtools-url` returns rather than building one. By default the returned URLs are on the `cdp-X` relay host paired 1:1 with `browser-X` (`https://{P}-{C}-cdp-X.{N}.containers.hoody.com/`); a deployment that turns the relay URLs off returns the legacy `http-<port>` host instead, where `<port>` is the debugging port. Point a CDP client at the returned URL (for example `connectOverCDP("https://{P}-{C}-cdp-X.{N}.containers.hoody.com/")`). The rest of this bullet describes the `cdp-X` relay. A discovery request (`/`, `/json`, `/json/list`, `/json/version`) may cold-start Chromium instance X when it is not running: only when cold start is enabled (the default; a deployment can turn it off) and the request does not come from a web page, which gets `403 CDP_CSRF_COLD_START` instead. A DevTools WebSocket only attaches to a running instance. Only read-only endpoints (the discovery paths, `/json/protocol`, the `/devtools/` front end) and DevTools WebSocket sessions are relayed; `/json/new`, `/json/activate` and `/json/close` return 404. Treat the `cdp-X` URL like a credential: anyone who can reach it controls the browser (navigate, run script, read cookies and page content), so start with `useRemoteDebuggingPort=false` when the container is shared.
-- Launch options: the `viewport` and `geolocation` query parameters are **JSON strings**, not free-form `"WxH"` / `"lat,lng"`; the kit `JSON.parse`s a string value and rejects one that does not parse. In a JSON request body the same fields may also be plain objects. Examples: `viewport='{"width":1280,"height":800}'`, `geolocation='{"latitude":48.8,"longitude":2.3,"accuracy":50}'`. A launch `viewport` of `null` or `none` turns off fixed-viewport emulation. The runtime `POST /viewport` is different: its body is an object, `{"viewport":{"width":1280,"height":800}}` or `{"viewport":null}` (integers 1–8192); a string there is a 400 `VALIDATION_ERROR`.
-- `POST /viewport` takes `{viewport:{width, height}}` (1-8192 px) or `{viewport:null}` for responsive. Responsive works only on Chromium (`501 NOT_SUPPORTED`) and only on an instance started responsive (`409 REQUIRES_RESTART`: stop it and start it again with `viewport=null`). `502 VIEWPORT_APPLY_INCOMPLETE` means the policy was kept but some tabs did not apply it (`details.failedTabs`). `GET /viewport` never starts an instance.
+- **A ref-addressed `POST /api/v1/browser/action` that navigates the page itself (a link click, a submit, a `pushState`) answers 200; the NEXT use of that snapshot's refs is stale.** A 200 means the browser operation completed, not that the site's transaction succeeded: observe the result with `POST /api/v1/browser/wait` and a new snapshot. A main-frame navigation that lands BEFORE the input is dispatched answers `409 STALE_SNAPSHOT` (`details.reason: "navigated"`, `details.outcome: "not-started"`: nothing was dispatched, safe to repeat). If the tab navigates after the input went out and the action then fails, the 409 carries `outcome: "unknown"` (dispatched, result not observed): check the page (`POST /api/v1/browser/wait`, a new snapshot, the URL) before repeating a click or submit. Selector, role, label, text, placeholder and testId targets are not affected.
+- Chromium CDP defaults to `useRemoteDebuggingPort=true`; pass `useRemoteDebuggingPort=false` at start to turn it off. `GET /api/v1/browser/devtools-url` answers 404 only when the instance is missing; with CDP off it returns 200 with null URLs. Use the URLs `GET /api/v1/browser/devtools-url` returns rather than building one. By default the returned URLs are on the `cdp-X` relay host paired 1:1 with `browser-X` (`https://{P}-{C}-cdp-X.{N}.containers.hoody.com/`); a deployment that turns the relay URLs off returns the legacy `http-<port>` host instead, where `<port>` is the debugging port. Point a CDP client at the returned URL (for example `connectOverCDP("https://{P}-{C}-cdp-X.{N}.containers.hoody.com/")`). The rest of this bullet describes the `cdp-X` relay. A discovery request (`/`, `/json`, `/json/list`, `/json/version`) may cold-start Chromium instance X when it is not running: only when cold start is enabled (the default; a deployment can turn it off) and the request does not come from a web page, which gets `403 CDP_CSRF_COLD_START` instead. A DevTools WebSocket only attaches to a running instance. Only read-only endpoints (the discovery paths, `/json/protocol`, the `/devtools/` front end) and DevTools WebSocket sessions are relayed; `/json/new`, `/json/activate` and `/json/close` return 404. Treat the `cdp-X` URL like a credential: anyone who can reach it controls the browser (navigate, run script, read cookies and page content), so start with `useRemoteDebuggingPort=false` when the container is shared.
+- Launch options: the `viewport` and `geolocation` query parameters are **JSON strings**, not free-form `"WxH"` / `"lat,lng"`; the kit `JSON.parse`s a string value and rejects one that does not parse. In a JSON request body the same fields may also be plain objects. Examples: `viewport='{"width":1280,"height":800}'`, `geolocation='{"latitude":48.8,"longitude":2.3,"accuracy":50}'`. A launch `viewport` of `null` or `none` turns off fixed-viewport emulation. The runtime `POST /api/v1/browser/viewport` is different: its body is an object, `{"viewport":{"width":1280,"height":800}}` or `{"viewport":null}` (integers 1–8192); a string there is a 400 `VALIDATION_ERROR`.
+- `POST /api/v1/browser/viewport` takes `{viewport:{width, height}}` (1-8192 px) or `{viewport:null}` for responsive. Responsive works only on Chromium (`501 NOT_SUPPORTED`) and only on an instance started responsive (`409 REQUIRES_RESTART`: stop it and start it again with `viewport=null`). `502 VIEWPORT_APPLY_INCOMPLETE` means the policy was kept but some tabs did not apply it (`details.failedTabs`). `GET /api/v1/browser/viewport` never starts an instance.
 - Screenshot `format` enum is `png | jpeg | base64` (NO `json`). Base64 mode returns `{ data: "<b64>" }` only — there is NO `mimeType` or `dataUrl` in the response (the kit's JSON body has `data` only).
 
 ## Common errors
 
 - `VALIDATION_ERROR` 400 — malformed `viewport`/`geolocation`, history `limit` not 1–500, `offset`<0.
-- `NOT_FOUND` 404 `Instance not found` — `GET /stop`, `GET /shutdown`, `GET /devtools-url`, `start=false` no instance; also `GET /snapshot`/`POST /action`/`POST /wait` on an empty slot, since they never auto-start.
+- `NOT_FOUND` 404 `Instance not found` — `GET /api/v1/browser/stop`, `GET /api/v1/browser/shutdown`, `GET /api/v1/browser/devtools-url`, `start=false` no instance; also `GET /api/v1/browser/snapshot`/`POST /api/v1/browser/action`/`POST /api/v1/browser/wait` on an empty slot, since they never auto-start.
 - `HISTORY_DISABLED` 404 `History is disabled` — history endpoints where the deployment turned history off.
-- `INSTANCE_BACKEND_MISMATCH` 409 (message starts `Instance backend mismatch`) — `stealth` differs from the running instance's backend; `GET /stop` then `GET /start`.
-- `VALIDATION_ERROR` 400 `display is required when showBrowser=true (no DISPLAY detected)` — `showBrowser=true` with no `display` field on `GET /start` and no `$DISPLAY` env.
-- `TIMEOUT` 408 / 504 — the request passed the kit's request deadline (600 s by default). While the request is launching or restarting the instance this is a 504 with `details.phase: "launch"` and `details.outcome: "unknown"`: the instance may still come up, so check `GET /metadata` with `start=false` before retrying. After the request was forwarded to a running instance it is a 504 with `details.phase: "proxy"` and `details.outcome: "unknown"`: the call may already have taken effect (a `POST /viewport` included), so inspect the state before repeating a mutation. A request that times out before either is a 408.
-- `TIMEOUT` 504 — an automation call (`GET /snapshot`, `POST /action`, `POST /wait`) spent its `timeoutMs` budget (default 10000, max 30000). `details.phase` says where; `details.outcome` `not-started` means the action was never dispatched. For `POST /wait` this is how a condition that never held is reported.
+- `INSTANCE_BACKEND_MISMATCH` 409 (message starts `Instance backend mismatch`) — `stealth` differs from the running instance's backend; `GET /api/v1/browser/stop` then `GET /api/v1/browser/start`.
+- `VALIDATION_ERROR` 400 `display is required when showBrowser=true (no DISPLAY detected)` — `showBrowser=true` with no `display` field on `GET /api/v1/browser/start` and no `$DISPLAY` env.
+- `TIMEOUT` 408 / 504 — the request passed the kit's request deadline (600 s by default). While the request is launching or restarting the instance this is a 504 with `details.phase: "launch"` and `details.outcome: "unknown"`: the instance may still come up, so check `GET /api/v1/browser/metadata` with `start=false` before retrying. After the request was forwarded to a running instance it is a 504 with `details.phase: "proxy"` and `details.outcome: "unknown"`: the call may already have taken effect (a `POST /api/v1/browser/viewport` included), so inspect the state before repeating a mutation. A request that times out before either is a 408.
+- `TIMEOUT` 504 — an automation call (`GET /api/v1/browser/snapshot`, `POST /api/v1/browser/action`, `POST /api/v1/browser/wait`) spent its `timeoutMs` budget (default 10000, max 30000). `details.phase` says where; `details.outcome` `not-started` means the action was never dispatched. For `POST /api/v1/browser/wait` this is how a condition that never held is reported.
 - `STALE_SNAPSHOT` 409 — the ref's snapshot is no longer the tab's latest, or the main frame navigated; take a new snapshot. Read `details.outcome` before repeating an action (see Quirks).
-- `INSTANCE_CHANGED` 409 — the `instanceGeneration` sent no longer matches the running instance (`details.expected` is null when no instance exists); re-read `GET /metadata`.
-- `TAB_BUSY` 409 — another `POST /action`, `GET /snapshot` or `POST /browse` is in flight on that tab (`details.op` names it); wait for it.
+- `INSTANCE_CHANGED` 409 — the `instanceGeneration` sent no longer matches the running instance (`details.expected` is null when no instance exists); re-read `GET /api/v1/browser/metadata`.
+- `TAB_BUSY` 409 — another `POST /api/v1/browser/action`, `GET /api/v1/browser/snapshot` or `POST /api/v1/browser/browse` is in flight on that tab (`details.op` names it); wait for it.
 - `AMBIGUOUS_TARGET` 409 — the target matched more than one element; narrow it or use a ref.
 - `TAB_NOT_FOUND` 404 — no tab with that `tabId`; `details.openTabs` lists the open ones.
 - `INSTANCE_QUARANTINED` 502 — the slot's previous browser process has not been confirmed exited, so no new instance can start there yet; retry later.
@@ -3875,15 +4146,15 @@ Each step has a copy-pasteable code block in the mode you're reading (curl for H
 
 **Goal:** boot a Chromium instance, point it at a page, confirm it's alive. Headless avoids the X-display dependency (`showBrowser=false`).
 
-**Step 1 — start.** Returns the start-response payload (`engine`, `headless`, `chromiumBuildId`, `browser_host`, `browser_port`). `GET /start` is idempotent — calling it again on the same slot returns the existing instance and ignores new options (a different `stealth` value is rejected with `409`).
+**Step 1 — start.** Returns the start-response payload (`engine`, `headless`, `chromiumBuildId`, `browser_host`, `browser_port`). `GET /api/v1/browser/start` is idempotent — calling it again on the same slot returns the existing instance and ignores new options (a different `stealth` value is rejected with `409`).
 
 ```bash
-KIT="https://${P}-${C}-browser-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-browser-1.${N}.containers.hoody.com/api/v1/browser"
 curl -sf "$KIT/start?showBrowser=false&stealth=false" \
   | jq '{engine,headless,chromiumBuildId,browser_port}'
 ```
 
-**Step 2 — navigate.** `POST /browse` opens or reuses a tab and waits for load.
+**Step 2 — navigate.** `POST /api/v1/browser/browse` opens or reuses a tab and waits for load.
 
 ```bash
 curl -sf "$KIT/browse?url=https%3A%2F%2Fhttpbin.org%2Fhtml" | jq '.'
@@ -3894,7 +4165,7 @@ curl -sf "$KIT/browse?url=https%3A%2F%2Fhttpbin.org%2Fhtml" | jq '.'
 **Goal:** capture the entire scrolled height (not just the viewport). `format=base64` returns `{ data: "<b64>" }`; the default `format=png` returns raw `image/png` bytes.
 
 ```bash
-KIT="https://${P}-${C}-browser-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-browser-1.${N}.containers.hoody.com/api/v1/browser"
 # Raw PNG bytes:
 curl -sf "$KIT/screenshot?fullPage=true&url=https%3A%2F%2Fhttpbin.org%2Fhtml" \
   -o /tmp/page.png
@@ -3905,10 +4176,10 @@ curl -sf "$KIT/screenshot?fullPage=true&format=base64" | jq -r .data | head -c 8
 
 ### 3. Get the page HTML and the rendered text
 
-**Goal:** read the post-JS DOM (HTML) and the visible text the user would see (`GET /text` returns the `innerText` of `body`).
+**Goal:** read the post-JS DOM (HTML) and the visible text the user would see (`GET /api/v1/browser/text` returns the `innerText` of `body`).
 
 ```bash
-KIT="https://${P}-${C}-browser-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-browser-1.${N}.containers.hoody.com/api/v1/browser"
 curl -sf "$KIT/html"  | head -c 200
 echo
 curl -sf "$KIT/text"  | head -c 200
@@ -3916,10 +4187,10 @@ curl -sf "$KIT/text"  | head -c 200
 
 ### 4. Execute JavaScript in the page and capture the return value
 
-**Goal:** run a script in the page context. Over HTTP, `GET /eval?script=` puts the script in the query (size-bound by URL). `POST /eval` accepts `{ script }` JSON via the SDK / CLI / `Content-Type: application/json`; raw `Content-Type: text/plain` HTTP also works (body = script source). Either shape returns `{ result }`. The script reads the DOM on every engine; page JS globals (`window.__NEXT_DATA__`, app stores) are visible only on a `stealth=false` instance, and read as `undefined` on the default stealth engine (see Quirks).
+**Goal:** run a script in the page context. Over HTTP, `GET /api/v1/browser/eval?script=` puts the script in the query (size-bound by URL). `POST /api/v1/browser/eval` accepts `{ script }` JSON via the SDK / CLI / `Content-Type: application/json`; raw `Content-Type: text/plain` HTTP also works (body = script source). Either shape returns `{ result }`. The script reads the DOM on every engine; page JS globals (`window.__NEXT_DATA__`, app stores) are visible only on a `stealth=false` instance, and read as `undefined` on the default stealth engine (see Quirks).
 
 ```bash
-KIT="https://${P}-${C}-browser-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-browser-1.${N}.containers.hoody.com/api/v1/browser"
 # GET — small expression:
 curl -sf "$KIT/eval?script=$(python3 -c 'import urllib.parse; print(urllib.parse.quote("document.title"))')"
 echo
@@ -3934,7 +4205,7 @@ curl -sf -X POST "$KIT/eval" \
 **Goal:** prime the cookie jar, then verify. POST body is a JSON object `{ cookies: [...] }` whose entries need `name`, `value`, and either an absolute http(s) `url` or both `domain` and `path`; do not combine `url` with `domain` or `path` (400 `VALIDATION_ERROR` naming the field). Optional: `httpOnly`, `secure`, `sameSite` (`Strict|Lax|None`), `expires` (Unix seconds, -1 = session).
 
 ```bash
-KIT="https://${P}-${C}-browser-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-browser-1.${N}.containers.hoody.com/api/v1/browser"
 curl -sf -X POST "$KIT/cookies" \
   -H 'Content-Type: application/json' \
   -d '{"cookies":[
@@ -3950,7 +4221,7 @@ curl -sf "$KIT/cookies?url=https%3A%2F%2Fhttpbin.org" | jq .
 **Goal:** scrape a logged-in page without re-doing OAuth. Pre-load the session cookie a real login would have set, hit the protected URL, read text, then DELETE the jar.
 
 ```bash
-KIT="https://${P}-${C}-browser-2.${N}.containers.hoody.com"   # slot 2
+KIT="https://${P}-${C}-browser-2.${N}.containers.hoody.com/api/v1/browser"   # slot 2
 curl -sf "$KIT/start?showBrowser=false&stealth=false" >/dev/null
 curl -sf -X POST "$KIT/cookies" \
   -H 'Content-Type: application/json' \
@@ -3960,14 +4231,14 @@ curl -sf "$KIT/text"   | head -c 400
 curl -sX DELETE "$KIT/cookies"   # → {"cleared": true}
 ```
 
-### 7. `POST /browse` with explicit viewport, locale, and User-Agent
+### 7. `POST /api/v1/browser/browse` with explicit viewport, locale, and User-Agent
 
-**Goal:** mimic a French mobile Safari to test geo/UA-gated content. Browser-context settings (`viewport`, `locale`, `timezoneId`, `userAgent`) are set at `GET /start`; `POST /browse` carries the navigation body.
+**Goal:** mimic a French mobile Safari to test geo/UA-gated content. Browser-context settings (`viewport`, `locale`, `timezoneId`, `userAgent`) are set at `GET /api/v1/browser/start`; `POST /api/v1/browser/browse` carries the navigation body.
 
 `viewport` is a JSON string such as `'{"width":390,"height":844}'`. `geolocation` is a JSON string such as `'{"latitude":48.8566,"longitude":2.3522,"accuracy":20}'`.
 
 ```bash
-KIT="https://${P}-${C}-browser-3.${N}.containers.hoody.com"   # slot 3
+KIT="https://${P}-${C}-browser-3.${N}.containers.hoody.com/api/v1/browser"   # slot 3
 curl -sf "$KIT/start?showBrowser=false&stealth=true\
 &viewport=%7B%22width%22%3A390%2C%22height%22%3A844%7D\
 &locale=fr-FR\
@@ -3985,7 +4256,7 @@ curl -sf "$KIT/text" | head -c 500
 **Goal:** the kit records every navigation under `/hoody/storage/hoody-browser/history` (30-day retention, 500-entry pagination cap). Query, then selectively delete.
 
 ```bash
-KIT="https://${P}-${C}-browser-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-browser-1.${N}.containers.hoody.com/api/v1/browser"
 # All navs in the last hour, max 50:
 SINCE=$(date -u -d '1 hour ago' +%FT%TZ)
 curl -sf "$KIT/history?since=$SINCE&limit=50" | jq '{total, has_more, sample: .entries[0]}'
@@ -4002,31 +4273,31 @@ curl -sX DELETE "$KIT/history?before=$BEFORE&browser_id=1" | jq .
 **Goal:** introspect what the kit actually launched — engine (`playwright`/`patchright`), Chromium build, executable path, current display, debug socket. Use `start=false` to query *without* auto-starting (404 if no instance exists).
 
 ```bash
-KIT="https://${P}-${C}-browser-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-browser-1.${N}.containers.hoody.com/api/v1/browser"
 curl -sf "$KIT/metadata?start=false" \
   | jq '{engine, stealth, headless, chromiumBuildId, browser_host, browser_port, fingerprintId, display, iframe_url}'
 # Live tabs in the instance:
 curl -sf "$KIT/tabs?start=false" | jq '.'
 ```
 
-For an external CDP attachment, `GET /devtools-url` returns the live `webSocketDebuggerUrl` (CDP is on by default; default `useRemoteDebuggingPort=true`). If you started with `useRemoteDebuggingPort=false`, the call still returns 200 but `webSocketDebuggerUrl` is null. A 404 `Instance not found` means no instance exists at all (e.g. queried with `start=false`).
+For an external CDP attachment, `GET /api/v1/browser/devtools-url` returns the live `webSocketDebuggerUrl` (CDP is on by default; default `useRemoteDebuggingPort=true`). If you started with `useRemoteDebuggingPort=false`, the call still returns 200 but `webSocketDebuggerUrl` is null. A 404 `Instance not found` means no instance exists at all (e.g. queried with `start=false`).
 
 ### 10. Stop and shutdown — the ONLY safe ending
 
 **Goal:** browser instances stay alive across requests until they are stopped or the kit process restarts (graceful kit restart SIGTERMs every child — see Quirks & gotchas). The idle sweep reaps an instance nobody has used for the max age (1 h by default), so a forgotten instance is eventually reclaimed, and one you still need must see a request at least once per idle window. Each slot has a fixed port, so a slot whose previous process has not been confirmed exited answers `502 INSTANCE_QUARANTINED` until it has; retry later rather than restarting the container.
 
-`GET /stop` and `GET /shutdown` both terminate the child and delete its profile dir (the child's SIGTERM handler runs the same cleanup as `/shutdown`). Every Chromium instance runs on a persistent profile of its own, with or without extensions (an extension profile under the kit's browser data dir, otherwise under the temp dir), and every exit removes it, so cookies and logins do not carry over to the next instance. One `GET /stop` per instance is a complete teardown — calling both is redundant.
+`GET /api/v1/browser/stop` and `GET /api/v1/browser/shutdown` both terminate the child and delete its profile dir (the child's SIGTERM handler runs the same cleanup as `/shutdown`). Every Chromium instance runs on a persistent profile of its own, with or without extensions (an extension profile under the kit's browser data dir, otherwise under the temp dir), and every exit removes it, so cookies and logins do not carry over to the next instance. One `GET /api/v1/browser/stop` per instance is a complete teardown — calling both is redundant.
 
 ```bash
 for X in 1 2 3; do
-  curl -sX GET "https://${P}-${C}-browser-${X}.${N}.containers.hoody.com/stop" | jq .
+  curl -sX GET "https://${P}-${C}-browser-${X}.${N}.containers.hoody.com/api/v1/browser/stop" | jq .
 done
 # /shutdown never creates an instance either (404 on an empty slot); start=false is unnecessary.
 # Confirm nothing's left:
-curl -sf "https://${P}-${C}-browser-1.${N}.containers.hoody.com/metrics" | jq '.instances'
+curl -sf "https://${P}-${C}-browser-1.${N}.containers.hoody.com/api/v1/browser/metrics" | jq '.instances'
 ```
 
-A `404 Instance not found` from `GET /stop` means it was already gone — safe to ignore. Neither `GET /stop` nor `GET /shutdown` creates an instance: on an empty slot both answer `404 Instance not found`. `GET /stop` terminates the child before it answers; `GET /shutdown` answers 200 as soon as shutdown starts and finishes in the background, so poll `GET /metadata` with `start=false` until it answers 404 to confirm the instance is gone.
+A `404 Instance not found` from `GET /api/v1/browser/stop` means it was already gone — safe to ignore. Neither `GET /api/v1/browser/stop` nor `GET /api/v1/browser/shutdown` creates an instance: on an empty slot both answer `404 Instance not found`. `GET /api/v1/browser/stop` terminates the child before it answers; `GET /api/v1/browser/shutdown` answers 200 as soon as shutdown starts and finishes in the background, so poll `GET /api/v1/browser/metadata` with `start=false` until it answers 404 to confirm the instance is gone.
 
 ## Reference
 
@@ -4034,34 +4305,34 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `DELETE /cookies` | Clear all cookies | `?browser_id` `?start` |
-| `GET /cookies` | Get cookies | `?browser_id` `?start` `?url` |
-| `POST /cookies` | Set cookies | `?browser_id` `?start` `body*` |
+| `DELETE /api/v1/browser/cookies` | Clear all cookies | `?browser_id` `?start` |
+| `GET /api/v1/browser/cookies` | Get cookies | `?browser_id` `?start` `?url` |
+| `POST /api/v1/browser/cookies` | Set cookies | `?browser_id` `?start` `body*` |
 
 **Param notes:**
 
 - `browser_id` — Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`.
-- `start` — Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `GET /devtools-url` is the exception: it answers 404 when no instance is running and never consults this value.
+- `start` — Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `GET /api/v1/browser/devtools-url` is the exception: it answers 404 when no instance is running and never consults this value.
 - `url` — Filter cookies by URL Repeating this key in the query string is a `400 VALIDATION_ERROR` (`url must not be repeated`): the parent's rule is on the key, not on the operation, so it applies here too even though this parameter is declared inline rather than shared.
 
 **Body shapes:**
 
-- `POST /cookies` body — `{ cookies*: { name*: string, value*: string, url: string, domain: string, path: string, expires: number, httpOnly: bool, secure: bool, sameSite: "Strict" | "Lax" | "None" }[] }`
+- `POST /api/v1/browser/cookies` body — `{ cookies*: { name*: string, value*: string, url: string, domain: string, path: string, expires: number, httpOnly: bool, secure: bool, sameSite: "Strict" | "Lax" | "None" }[] }`
 
 ### `history` (2) — Operations for querying and managing persistent browsing history
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `DELETE /history` | Delete browsing history | `?before` `?browser_id` |
-| `GET /history` | Query browsing history | `?since` `?domain` `?browser_id` `?limit` `?offset` |
+| `DELETE /api/v1/browser/history` | Delete browsing history | `?before` `?browser_id` |
+| `GET /api/v1/browser/history` | Query browsing history | `?since` `?domain` `?browser_id` `?limit` `?offset` |
 
 **Param notes:**
 
 - `before` — Delete entries before this ISO 8601 timestamp
-- `browser_id` — Delete entries for specific browser ID only. Through a `browser-{N}` service hostname it may only be `N` (the default there). _(on `DELETE /history`)_
+- `browser_id` — Delete entries for specific browser ID only. Through a `browser-{N}` service hostname it may only be `N` (the default there). _(on `DELETE /api/v1/browser/history`)_
 - `since` — Return entries after this ISO 8601 timestamp
 - `domain` — Filter by domain (exact match)
-- `browser_id` — Filter by browser ID. Through a `browser-{N}` service hostname it may only be `N` (the default there). _(on `GET /history`)_
+- `browser_id` — Filter by browser ID. Through a `browser-{N}` service hostname it may only be `N` (the default there). _(on `GET /api/v1/browser/history`)_
 - `limit` — Maximum entries to return (1-500)
 - `offset` — Number of entries to skip for pagination
 
@@ -4069,17 +4340,17 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /metadata` | Get instance metadata | `?browser_id` `?start` |
-| `GET /devtools-url` | Get DevTools URLs | `?browser_id` `?start` |
-| `GET /restart` | Restart browser instance | `?browser_id` `?start` `?chromiumVersion` `?fingerprintId` `?useRemoteDebuggingPort` `?remoteDebuggingPort` `?remoteDebuggingAddress` `?extensions` `?extensionsDir` `?extensionsStoreIds` `?proxyServer` `?proxyUsername` `?proxyPassword` `?proxyBypass` `?enableQuic` `?enableDnsOverHttps` `?dnsOverHttpsUrl` `?display` `?showBrowser` `?sessionName` `?timezoneId` `?locale` `?userAgent` `?viewport` `?noViewport` `?geolocation` `?launchArguments` `?browser` `?firefoxVersion` `?firefoxExecutablePath` `?showDevtools` `?userProfile` `?stealth` `?iframe` `?iframe_url` `?maximize_new_windows` |
-| `GET /shutdown` | Shutdown browser instance | `?browser_id` |
-| `GET /start` | Create or retrieve browser instance | `?browser_id` `?chromiumVersion` `?fingerprintId` `?useRemoteDebuggingPort` `?remoteDebuggingPort` `?remoteDebuggingAddress` `?extensions` `?extensionsDir` `?extensionsStoreIds` `?proxyServer` `?proxyUsername` `?proxyPassword` `?proxyBypass` `?enableQuic` `?enableDnsOverHttps` `?dnsOverHttpsUrl` `?display` `?showBrowser` `?sessionName` `?timezoneId` `?locale` `?userAgent` `?viewport` `?noViewport` `?geolocation` `?launchArguments` `?browser` `?firefoxVersion` `?firefoxExecutablePath` `?showDevtools` `?userProfile` `?stealth` `?iframe` `?iframe_url` `?maximize_new_windows` |
-| `GET /stop` | Stop browser instance | `?browser_id` |
+| `GET /api/v1/browser/metadata` | Get instance metadata | `?browser_id` `?start` |
+| `GET /api/v1/browser/devtools-url` | Get DevTools URLs | `?browser_id` `?start` |
+| `GET /api/v1/browser/restart` | Restart browser instance | `?browser_id` `?start` `?chromiumVersion` `?fingerprintId` `?useRemoteDebuggingPort` `?remoteDebuggingPort` `?remoteDebuggingAddress` `?extensions` `?extensionsDir` `?extensionsStoreIds` `?proxyServer` `?proxyUsername` `?proxyPassword` `?proxyBypass` `?enableQuic` `?enableDnsOverHttps` `?dnsOverHttpsUrl` `?display` `?showBrowser` `?sessionName` `?timezoneId` `?locale` `?userAgent` `?viewport` `?noViewport` `?geolocation` `?launchArguments` `?browser` `?firefoxVersion` `?firefoxExecutablePath` `?showDevtools` `?userProfile` `?stealth` `?iframe` `?iframe_url` `?maximize_new_windows` |
+| `GET /api/v1/browser/shutdown` | Shutdown browser instance | `?browser_id` |
+| `GET /api/v1/browser/start` | Create or retrieve browser instance | `?browser_id` `?chromiumVersion` `?fingerprintId` `?useRemoteDebuggingPort` `?remoteDebuggingPort` `?remoteDebuggingAddress` `?extensions` `?extensionsDir` `?extensionsStoreIds` `?proxyServer` `?proxyUsername` `?proxyPassword` `?proxyBypass` `?enableQuic` `?enableDnsOverHttps` `?dnsOverHttpsUrl` `?display` `?showBrowser` `?sessionName` `?timezoneId` `?locale` `?userAgent` `?viewport` `?noViewport` `?geolocation` `?launchArguments` `?browser` `?firefoxVersion` `?firefoxExecutablePath` `?showDevtools` `?userProfile` `?stealth` `?iframe` `?iframe_url` `?maximize_new_windows` |
+| `GET /api/v1/browser/stop` | Stop browser instance | `?browser_id` |
 
 **Param notes:**
 
 - `browser_id` — Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`.
-- `start` — Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `GET /devtools-url` is the exception: it answers 404 when no instance is running and never consults this value.
+- `start` — Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `GET /api/v1/browser/devtools-url` is the exception: it answers 404 when no instance is running and never consults this value.
 - `chromiumVersion` — Chromium/Chrome version selection for the instance. This option applies only when `browser=chromium`. Supported formats: Full version: `136.0.7103.113`; Major version: `136` (mapped to a known stable patch for the current OS); Channel tag: `stable`, `beta`, `dev`, `canary` Any other value is a `400 VALIDATION_ERROR` naming `chromiumVersion`. A full version that no download source has is a `400 VALIDATION_ERROR` too, answered once the download is refused. A major version with no known build falls back to `stable`. The request **blocks** until the requested browser build is available on the server.
 - `fingerprintId` — Base fingerprint profile id. The server uses the `context` and `launch` defaults of the configured fingerprint profile with this id, then applies any request overrides over them (top-level options and `userProfile` values both win over the profile). An unknown id starts with an empty profile.
 - `useRemoteDebuggingPort` — If `true`, the child process will launch Chromium with `--remote-debugging-port` and will populate `webSocketDebuggerUrl` in metadata responses.
@@ -4087,8 +4358,8 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 - `remoteDebuggingAddress` — Interface address the DevTools port binds to. Defaults to `0.0.0.0` unless the deployment overrides it; the port is only reachable through the container proxy's `cdp-{N}` relay.
 - `extensions` — Comma-separated list (or JSON array string) of absolute extension directory paths to load. Extensions require `showBrowser=true` (headful mode) and will launch a persistent profile.
 - `extensionsDir` — Directory containing extension subfolders to load (each subfolder is treated as an extension). Extensions require `showBrowser=true` (headful mode) and will launch a persistent profile.
-- `extensionsStoreIds` — Chrome Web Store extension IDs to download and load (Chromium only). Requires `showBrowser=true` and works only with `browser=chromium`. Downloads of the same extension are serialized across instances; an instance that waits more than 5 minutes for another instance's download fails with a "try again later" error. _(on `GET /restart`)_
-- `proxyServer` — Proxy server URL (http, https, socks5, socks5h) _(on `GET /restart`)_
+- `extensionsStoreIds` — Chrome Web Store extension IDs to download and load (Chromium only). Requires `showBrowser=true` and works only with `browser=chromium`. Downloads of the same extension are serialized across instances; an instance that waits more than 5 minutes for another instance's download fails with a "try again later" error. _(on `GET /api/v1/browser/restart`)_
+- `proxyServer` — Proxy server URL (http, https, socks5, socks5h) _(on `GET /api/v1/browser/restart`)_
 - `proxyUsername` — Proxy username (if required)
 - `proxyPassword` — Proxy password (if required)
 - `proxyBypass` — Comma-separated list of hosts that should bypass the proxy
@@ -4111,34 +4382,34 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 - `showDevtools` — Whether to open DevTools on launch (Chromium only)
 - `userProfile` — Optional user profile object (JSON string): `locale`, `timezoneId`, `userAgentString`, `geolocation` and `deviceProfile.viewport`. Precedence for each field: the top-level request option (`locale`, `timezoneId`, `userAgent`, `geolocation`, `viewport`) > `userProfile` > the fingerprint profile (`fingerprintId`, `default` when omitted) > the engine default. A value set here always replaces the fingerprint profile's value.
 - `stealth` — Launch Chromium in stealth mode using Patchright (anti-detection patches). Only applies to `browser=chromium`. Ignored for Firefox. Defaults to `true`. Bare `?stealth` is treated as `true`.
-- `iframe` — Enable or disable the full-page display iframe on the root URL. _(on `GET /restart`)_
-- `iframe_url` — Explicit URL for the display iframe. _(on `GET /restart`)_
-- `maximize_new_windows` — Control the `maximize_new_windows` flag stamped onto the generated display URL (always explicit `true`/`false`); when true the hoody-display client opens new top-level app windows maximized. Enabled by default; set to `false` to opt out. _(on `GET /restart`)_
-- `extensionsStoreIds` — Comma-separated list (or JSON array string) of Chrome Web Store extension IDs to download and load. Requires `showBrowser=true` and works only with `browser=chromium`. Downloads of the same extension are serialized across instances; an instance that waits more than 5 minutes for another instance's download fails with a "try again later" error. _(on `GET /start`)_
-- `proxyServer` — Proxy server for browser traffic. Supports `http://`, `https://`, `socks5://`, or `socks5h://`. Example: `socks5://127.0.0.1:9050` _(on `GET /start`)_
-- `iframe` — Enable or disable the full-page display iframe on the root URL. When enabled (default), navigating to `/` serves an HTML page with an iframe pointing to the Hoody display URL. _(on `GET /start`)_
-- `iframe_url` — Explicit URL for the display iframe. If not provided, the URL is auto-detected from the Host header subdomain pattern. _(on `GET /start`)_
-- `maximize_new_windows` — Control the `maximize_new_windows` flag stamped onto generated display URLs (iframe pages, status pages, `iframe_url` metadata). The flag is always explicit (`true` or `false`); when true the hoody-display client opens new top-level app windows maximized. Enabled by default; set to `false` to keep the display client's centered default-size placement (the explicit `false` also overrides a display-side `default-settings.txt` enable). Explicit `iframe_url` values are never modified. _(on `GET /start`)_
+- `iframe` — Enable or disable the full-page display iframe on the root URL. _(on `GET /api/v1/browser/restart`)_
+- `iframe_url` — Explicit URL for the display iframe. _(on `GET /api/v1/browser/restart`)_
+- `maximize_new_windows` — Control the `maximize_new_windows` flag stamped onto the generated display URL (always explicit `true`/`false`); when true the hoody-display client opens new top-level app windows maximized. Enabled by default; set to `false` to opt out. _(on `GET /api/v1/browser/restart`)_
+- `extensionsStoreIds` — Comma-separated list (or JSON array string) of Chrome Web Store extension IDs to download and load. Requires `showBrowser=true` and works only with `browser=chromium`. Downloads of the same extension are serialized across instances; an instance that waits more than 5 minutes for another instance's download fails with a "try again later" error. _(on `GET /api/v1/browser/start`)_
+- `proxyServer` — Proxy server for browser traffic. Supports `http://`, `https://`, `socks5://`, or `socks5h://`. Example: `socks5://127.0.0.1:9050` _(on `GET /api/v1/browser/start`)_
+- `iframe` — Enable or disable the full-page display iframe on the root URL. When enabled (default), navigating to `/` serves an HTML page with an iframe pointing to the Hoody display URL. _(on `GET /api/v1/browser/start`)_
+- `iframe_url` — Explicit URL for the display iframe. If not provided, the URL is auto-detected from the Host header subdomain pattern. _(on `GET /api/v1/browser/start`)_
+- `maximize_new_windows` — Control the `maximize_new_windows` flag stamped onto generated display URLs (iframe pages, status pages, `iframe_url` metadata). The flag is always explicit (`true` or `false`); when true the hoody-display client opens new top-level app windows maximized. Enabled by default; set to `false` to keep the display client's centered default-size placement (the explicit `false` also overrides a display-side `default-settings.txt` enable). Explicit `iframe_url` values are never modified. _(on `GET /api/v1/browser/start`)_
 
 ### `kit` (2) — Server monitoring and health check operations
 
 | Method | Summary | Params |
 |--------|---------|--------|
 | `GET /api/v1/browser/health` | Health check |  |
-| `GET /metrics` | Server metrics |  |
+| `GET /api/v1/browser/metrics` | Server metrics |  |
 
 ### `logs` (2) — Debugging
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /console` | Get console logs | `?browser_id` `?tabId` `?start` `?type` `?since` `?clear` |
-| `GET /network` | Get network logs | `?browser_id` `?tabId` `?start` `?since` `?clear` |
+| `GET /api/v1/browser/console` | Get console logs | `?browser_id` `?tabId` `?start` `?type` `?since` `?clear` |
+| `GET /api/v1/browser/network` | Get network logs | `?browser_id` `?tabId` `?start` `?since` `?clear` |
 
 **Param notes:**
 
 - `browser_id` — Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`.
 - `tabId` — The ID of the tab to interact with (from `/tabs`). Omitted: the active tab. Supplied: exactly that tab — an unknown id returns `404 TAB_NOT_FOUND` (with `details.openTabs`) and a malformed id `400 VALIDATION_ERROR`; the request never falls back to another tab. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`tabId must not be repeated`); a body property of the same name is governed by the body schema.
-- `start` — Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `GET /devtools-url` is the exception: it answers 404 when no instance is running and never consults this value.
+- `start` — Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `GET /api/v1/browser/devtools-url` is the exception: it answers 404 when no instance is running and never consults this value.
 - `type` — Filter by message type (log, error, warning, info, etc.). Repeating this key in the query string is a `400 VALIDATION_ERROR` (`type must not be repeated`).
 - `since` — Only return entries at or after this time: an ISO 8601 date or date-time, like `2026-10-05T12:00:00Z`. Any other value (an epoch number, a word like `yesterday`) is a `400 VALIDATION_ERROR` naming `since`, never an unfiltered list. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`since must not be repeated`).
 - `clear` — Clear the buffer after reading. `true` or `false`; any other value is a `400 VALIDATION_ERROR` naming `clear`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`clear must not be repeated`).
@@ -4147,27 +4418,27 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /action` | Perform a native element action | `?browser_id` `body*` |
-| `GET /screenshot` | Capture browser screenshot | `?browser_id` `?start` `?url` `?tabId` `?format` `?quality` `?fullPage` |
-| `POST /eval` | Execute JavaScript (POST) | `?browser_id` `?start` `body*:application/json,text/plain` |
-| `GET /pdf` | Export page as PDF | `?browser_id` `?tabId` `?start` `?url` `?format` `?landscape` `?printBackground` `?margin` |
-| `GET /html` | Get page HTML | `?browser_id` `?tabId` `?start` |
-| `GET /snapshot` | Accessibility snapshot of a tab with element refs | `?browser_id` `?instanceGeneration` `?tabId` `?timeoutMs` `?maxChars` `?includeValues` |
-| `GET /text` | Get page text | `?browser_id` `?tabId` `?start` |
-| `POST /browse` | Navigate to URL (POST) | `?browser_id` `?start` `body*` |
-| `POST /wait` | Wait for a condition in a tab | `?browser_id` `body*` |
+| `POST /api/v1/browser/action` | Perform a native element action | `?browser_id` `body*` |
+| `GET /api/v1/browser/screenshot` | Capture browser screenshot | `?browser_id` `?start` `?url` `?tabId` `?format` `?quality` `?fullPage` |
+| `POST /api/v1/browser/eval` | Execute JavaScript (POST) | `?browser_id` `?start` `body*:application/json,text/plain` |
+| `GET /api/v1/browser/pdf` | Export page as PDF | `?browser_id` `?tabId` `?start` `?url` `?format` `?landscape` `?printBackground` `?margin` |
+| `GET /api/v1/browser/html` | Get page HTML | `?browser_id` `?tabId` `?start` |
+| `GET /api/v1/browser/snapshot` | Accessibility snapshot of a tab with element refs | `?browser_id` `?instanceGeneration` `?tabId` `?timeoutMs` `?maxChars` `?includeValues` |
+| `GET /api/v1/browser/text` | Get page text | `?browser_id` `?tabId` `?start` |
+| `POST /api/v1/browser/browse` | Navigate to URL (POST) | `?browser_id` `?start` `body*` |
+| `POST /api/v1/browser/wait` | Wait for a condition in a tab | `?browser_id` `body*` |
 
 **Param notes:**
 
 - `browser_id` — Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`.
-- `start` — Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `GET /devtools-url` is the exception: it answers 404 when no instance is running and never consults this value.
-- `url` — The URL to navigate to. Repeating this key IN THE QUERY STRING is a `400 VALIDATION_ERROR` (`url must not be repeated`), on GET and on POST alike — a request naming two destinations is answered rather than silently resolved to one of them. The rule is about the query string only — a JSON body property named `url` is governed by the body schema. Only an absolute `http`, `https` or `data` URL, `about:blank`, or (on Chromium engines only) a `chrome:` URL is accepted. Any other scheme (`file:` in any spelling, `view-source:`, `javascript:`, `blob:` and the rest) is a `400 VALIDATION_ERROR` (`url must be an http, https or data URL, about:blank, or a chrome URL on Chromium; file and other local schemes are refused`), and a value that is not an absolute URL (such as `/etc/hostname`) is a `400 VALIDATION_ERROR` (`url must be an absolute URL, like https://example.com/`). Every other `about:` page is refused (Firefox's `about:reader?url=file:…` loads a local file), and `chrome:` is refused on Firefox, where it is the browser's own privileged UI. A value that is not a string is `url must be a string`. The `url` is checked before an instance is started, a tab is looked up, created or reused, or anything is navigated, and before `/pdf`'s `501 NOT_SUPPORTED`. On `/screenshot` and `/pdf` a supplied but empty `url=` is a `400 VALIDATION_ERROR` too (omit `url` to capture the current tab). This checks the request only; it does not stop the browser from opening local files (see "Local files" in the API overview). _(on `GET /screenshot`)_
+- `start` — Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `GET /api/v1/browser/devtools-url` is the exception: it answers 404 when no instance is running and never consults this value.
+- `url` — The URL to navigate to. Repeating this key IN THE QUERY STRING is a `400 VALIDATION_ERROR` (`url must not be repeated`), on GET and on POST alike — a request naming two destinations is answered rather than silently resolved to one of them. The rule is about the query string only — a JSON body property named `url` is governed by the body schema. Only an absolute `http`, `https` or `data` URL, `about:blank`, or (on Chromium engines only) a `chrome:` URL is accepted. Any other scheme (`file:` in any spelling, `view-source:`, `javascript:`, `blob:` and the rest) is a `400 VALIDATION_ERROR` (`url must be an http, https or data URL, about:blank, or a chrome URL on Chromium; file and other local schemes are refused`), and a value that is not an absolute URL (such as `/etc/hostname`) is a `400 VALIDATION_ERROR` (`url must be an absolute URL, like https://example.com/`). Every other `about:` page is refused (Firefox's `about:reader?url=file:…` loads a local file), and `chrome:` is refused on Firefox, where it is the browser's own privileged UI. A value that is not a string is `url must be a string`. The `url` is checked before an instance is started, a tab is looked up, created or reused, or anything is navigated, and before `/pdf`'s `501 NOT_SUPPORTED`. On `/screenshot` and `/pdf` a supplied but empty `url=` is a `400 VALIDATION_ERROR` too (omit `url` to capture the current tab). This checks the request only; it does not stop the browser from opening local files (see "Local files" in the API overview). _(on `GET /api/v1/browser/screenshot`)_
 - `tabId` — The ID of the tab to interact with (from `/tabs`). Omitted: the active tab. Supplied: exactly that tab — an unknown id returns `404 TAB_NOT_FOUND` (with `details.openTabs`) and a malformed id `400 VALIDATION_ERROR`; the request never falls back to another tab. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`tabId must not be repeated`); a body property of the same name is governed by the body schema.
-- `format` — Output format. `base64` answers JSON with the PNG bytes base64-encoded. Any other value is a `400 VALIDATION_ERROR` naming `format`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`format must not be repeated`). _(on `GET /screenshot`)_
+- `format` — Output format. `base64` answers JSON with the PNG bytes base64-encoded. Any other value is a `400 VALIDATION_ERROR` naming `format`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`format must not be repeated`). _(on `GET /api/v1/browser/screenshot`)_
 - `quality` — Image quality for JPEG format (0-100); not used for `png` or `base64`. A value that is not an integer from 0 to 100 is a `400 VALIDATION_ERROR` naming `quality`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`quality must not be repeated`).
 - `fullPage` — Capture the entire scrollable page. `true` or `false`; any other value is a `400 VALIDATION_ERROR` naming `fullPage`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`fullPage must not be repeated`).
-- `url` — Optional URL to navigate to before generating the PDF. Only an absolute `http`, `https` or `data` URL, `about:blank`, or (on Chromium engines only) a `chrome:` URL is accepted. Any other scheme (`file:` in any spelling, `view-source:`, `javascript:`, `blob:` and the rest) is a `400 VALIDATION_ERROR` (`url must be an http, https or data URL, about:blank, or a chrome URL on Chromium; file and other local schemes are refused`), and a value that is not an absolute URL (such as `/etc/hostname`) is a `400 VALIDATION_ERROR` (`url must be an absolute URL, like https://example.com/`). Every other `about:` page is refused (Firefox's `about:reader?url=file:…` loads a local file), and `chrome:` is refused on Firefox, where it is the browser's own privileged UI. A value that is not a string is `url must be a string`. The `url` is checked before an instance is started, a tab is looked up, created or reused, or anything is navigated, and before `/pdf`'s `501 NOT_SUPPORTED`. On `/screenshot` and `/pdf` a supplied but empty `url=` is a `400 VALIDATION_ERROR` too (omit `url` to capture the current tab). This checks the request only; it does not stop the browser from opening local files (see "Local files" in the API overview). Repeating this key in the query string is a `400 VALIDATION_ERROR` (`url must not be repeated`): the parent's rule is on the key, not on the operation, so it applies here too even though this parameter is declared inline rather than shared. _(on `GET /pdf`)_
-- `format` — Paper format: one of Letter, Legal, Tabloid, Ledger, A0, A1, A2, A3, A4, A5 or A6 (any letter case). Any other value is a `400 VALIDATION_ERROR` naming `format`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`format must not be repeated`). _(on `GET /pdf`)_
+- `url` — Optional URL to navigate to before generating the PDF. Only an absolute `http`, `https` or `data` URL, `about:blank`, or (on Chromium engines only) a `chrome:` URL is accepted. Any other scheme (`file:` in any spelling, `view-source:`, `javascript:`, `blob:` and the rest) is a `400 VALIDATION_ERROR` (`url must be an http, https or data URL, about:blank, or a chrome URL on Chromium; file and other local schemes are refused`), and a value that is not an absolute URL (such as `/etc/hostname`) is a `400 VALIDATION_ERROR` (`url must be an absolute URL, like https://example.com/`). Every other `about:` page is refused (Firefox's `about:reader?url=file:…` loads a local file), and `chrome:` is refused on Firefox, where it is the browser's own privileged UI. A value that is not a string is `url must be a string`. The `url` is checked before an instance is started, a tab is looked up, created or reused, or anything is navigated, and before `/pdf`'s `501 NOT_SUPPORTED`. On `/screenshot` and `/pdf` a supplied but empty `url=` is a `400 VALIDATION_ERROR` too (omit `url` to capture the current tab). This checks the request only; it does not stop the browser from opening local files (see "Local files" in the API overview). Repeating this key in the query string is a `400 VALIDATION_ERROR` (`url must not be repeated`): the parent's rule is on the key, not on the operation, so it applies here too even though this parameter is declared inline rather than shared. _(on `GET /api/v1/browser/pdf`)_
+- `format` — Paper format: one of Letter, Legal, Tabloid, Ledger, A0, A1, A2, A3, A4, A5 or A6 (any letter case). Any other value is a `400 VALIDATION_ERROR` naming `format`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`format must not be repeated`). _(on `GET /api/v1/browser/pdf`)_
 - `landscape` — Use landscape orientation. `true` or `false`; any other value is a `400 VALIDATION_ERROR` naming `landscape`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`landscape must not be repeated`).
 - `printBackground` — Include background graphics. `true` or `false`; any other value is a `400 VALIDATION_ERROR` naming `printBackground`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`printBackground must not be repeated`).
 - `margin` — Uniform margin: a non-negative number of pixels, or a number followed by `px`, `in`, `cm` or `mm` (e.g. '1cm', '0.5in'). Any other value is a `400 VALIDATION_ERROR` naming `margin`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`margin must not be repeated`).
@@ -4178,7 +4449,7 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 
 **Body shapes:**
 
-- `POST /action` body — `{ instanceGeneration: string, tabId: int, timeoutMs: int=10000, action*: "click" | "fill" | "type" | "press" | "select" | "check" | "hover", target*: browser_Target, dialog: browser_DialogPolicy, value: string, delayMs: int=0, key: string, values: string[], checked: bool, button: "left" | "middle" | "right"="left", clickCount: int=1, modifiers: ("Alt" | "Control" | "Meta" | "Shift")[] }`
+- `POST /api/v1/browser/action` body — `{ instanceGeneration: string, tabId: int, timeoutMs: int=10000, action*: "click" | "fill" | "type" | "press" | "select" | "check" | "hover", target*: browser_Target, dialog: browser_DialogPolicy, value: string, delayMs: int=0, key: string, values: string[], checked: bool, button: "left" | "middle" | "right"="left", clickCount: int=1, modifiers: ("Alt" | "Control" | "Meta" | "Shift")[] }`
   - `instanceGeneration` — From /metadata; mismatch → 409 INSTANCE_CHANGED.
   - `tabId` — Tab to act on (from /tabs); omitted → active tab; unknown → 404 TAB_NOT_FOUND.
   - `timeoutMs` — Budget for the whole browser operation (body overrides query).
@@ -4187,42 +4458,42 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
   - `key` — press: Playwright key syntax (e.g. "Enter", "Control+a"). Unknown → 400.
   - `values` — select: option values or labels (first match wins). No match → 504 with details.availableOptions.
   - `checked` — check: desired state (idempotent).
-- `POST /eval` body — `{ script: string, tabId: int, scriptBase64: bool, timeoutMs: int=30000 }` — Executes a JavaScript snippet provided in the request body. …
+- `POST /api/v1/browser/eval` body — `{ script: string, tabId: int, scriptBase64: bool, timeoutMs: int=30000 }` — Executes a JavaScript snippet provided in the request body. …
   - `script` — JavaScript code to execute
   - `tabId` — Tab to evaluate in (from `/tabs`). Omitted: the active tab. Unknown → `404 TAB_NOT_FOUND`, malformed → `400`.
   - `scriptBase64` — Set to `true` when `script` is base64-encoded.
   - `timeoutMs` — Time limit for the script, in milliseconds (1 to 30000, default 30000). A script still running when it is spent is stopped and the answer is `504 TIMEOUT` (`details.phase` `evaluate`). Repeating this key in the query string is a `400 VALIDATION_ERROR` (`timeoutMs must not be repeated`).
-- `POST /browse` body — `{ url*: string, tabId: int, waitUntil: "commit" | "domcontentloaded" | "load"="load", timeoutMs: int, instanceGeneration: string, active: bool=true, onlyIfNotExists: bool=false, ignoreGetParameters: bool=false }`
+- `POST /api/v1/browser/browse` body — `{ url*: string, tabId: int, waitUntil: "commit" | "domcontentloaded" | "load"="load", timeoutMs: int, instanceGeneration: string, active: bool=true, onlyIfNotExists: bool=false, ignoreGetParameters: bool=false }`
   - `url` — … Any other scheme (`file:` in any spelling, `view-source:`, `javascript:`, `blob:` and the rest) is a `400 VALIDATION_ERROR` (`url must be an http, https or data URL, about:blank, or a chrome URL on Chromium; file and other local schemes are refused`), and a value that is not an absolute URL (such as `/etc/hostname`) is a `400 VALIDATION_ERROR` (`url must be an absolute URL, like https://example.com/`). Every other `about:` page is refused (Firefox's `about:reader?url=file:…` loads a local file), and `chrome:` is refused on Firefox, where it is the browser's own privileged UI. …
   - `timeoutMs` — Omitted: the navigation may take up to 30000 ms. Present: the whole budget. Either way a navigation that runs out of time is a 504 TIMEOUT (phase navigation).
   - `active` — Whether the tab becomes the active one. … ANY other value (`0`, `1`, `"yes"`, `"on"`, `""`, `null`, or an array) is rejected with `400 VALIDATION_ERROR` (`details.field` names the property) before a tab is created or reused; it is never coerced. …
   - `onlyIfNotExists` — Reuse an existing tab already on this URL instead of opening a new one. Same value rule as `active`: send a JSON boolean (the strings `"true"`/`"false"` are tolerated because one parser reads both the query and the body spelling); anything else is `400 VALIDATION_ERROR`, never coerced.
   - `ignoreGetParameters` — Compare URLs for `onlyIfNotExists` with the query string stripped. Same value rule as `active`: send a JSON boolean (the strings `"true"`/`"false"` are tolerated because one parser reads both the query and the body spelling); anything else is `400 VALIDATION_ERROR`, never coerced.
-- `POST /wait` body — `{ instanceGeneration: string, tabId: int, timeoutMs: int=10000, condition*: browser_WaitCondition }`
+- `POST /api/v1/browser/wait` body — `{ instanceGeneration: string, tabId: int, timeoutMs: int=10000, condition*: browser_WaitCondition }`
 
 ### `tabs` (2) — Operations for inspecting and controlling browser instances
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /tab/close` | Close a browser tab | `?browser_id` `?start` `body` |
-| `GET /tabs` | List browser tabs | `?browser_id` `?start` |
+| `POST /api/v1/browser/tab/close` | Close a browser tab | `?browser_id` `?start` `body` |
+| `GET /api/v1/browser/tabs` | List browser tabs | `?browser_id` `?start` |
 
 **Param notes:**
 
 - `browser_id` — Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`.
-- `start` — Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `GET /devtools-url` is the exception: it answers 404 when no instance is running and never consults this value.
+- `start` — Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `GET /api/v1/browser/devtools-url` is the exception: it answers 404 when no instance is running and never consults this value.
 
 **Body shapes:**
 
-- `POST /tab/close` body — `{ tabId: int }`
+- `POST /api/v1/browser/tab/close` body — `{ tabId: int }`
   - `tabId` — The ID of the tab to close
 
 ### `viewport` (2) — Operations for inspecting and controlling browser instances
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /viewport` | Get the current viewport policy | `?browser_host` `?browser_port` |
-| `POST /viewport` | Change the viewport at runtime | `?browser_host` `?browser_port` `body*` |
+| `GET /api/v1/browser/viewport` | Get the current viewport policy | `?browser_host` `?browser_port` |
+| `POST /api/v1/browser/viewport` | Change the viewport at runtime | `?browser_host` `?browser_port` `body*` |
 
 **Param notes:**
 
@@ -4231,7 +4502,7 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 
 **Body shapes:**
 
-- `POST /viewport` body — `{ viewport*: { width*: int, height*: int }|null }`
+- `POST /api/v1/browser/viewport` body — `{ viewport*: { width*: int, height*: int }|null }`
   - `viewport` — Fixed size {width,height} (integers 1..8192, no other keys), or null for responsive.
 
 
@@ -4262,7 +4533,7 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 
 On a `code-N` host the platform's edge fills in the two parameters the entry page needs. It sets the instance selector `id` from the hostname, overwriting anything the caller sent, and it sets `folder` to the container's default workspace when the request names none. Add `?folder=<abs-path>` to open a different folder. Talking to a bare kit server with no edge in front of it, a client must send both `folder` and `id` itself: with neither the entry path returns the kit specification, with only one it returns `400`.
 
-The methods in this namespace read the service's state (health, running instances, versions), stage extensions and confirm what an instance has installed, and build embed URLs. Day-to-day use is "open the URL".
+The methods in this namespace read the service's state (health, running instances, versions), stop editor instances, stage extensions and confirm what an instance has installed, and build embed URLs. Day-to-day use is "open the URL".
 
 Like every Hoody kit URL, `code` is **iframable**: drop the `code-N` URL into an `<iframe>` and you've embedded VS Code in your own page. Same for every other kit (`files`, `terminal`, `display`, `desktop`, `browser`, `notes`, `agent`, …) — you can compose a full HTML "operating system" out of Hoody kit iframes with no native code, just URLs and standard CSP / cookie wiring.
 
@@ -4290,7 +4561,7 @@ Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → 
 ## Prerequisites
 
 - A running container. Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}`.
-- Address the service through its `code-N` URL. That hostname selects the instance. The CLI's `code extensions list` and `code extensions install` take `--id <N>` (default 1), which sends the request to the `code-N` host, and the generated SDK sends no `id` unless you pass one. An SDK client pointed at a bare kit server passes `id` itself.
+- Address the service through its `code-N` URL. That hostname selects the instance. 
 - VSIX staging needs a downloadable `.vsix` URL that the service may fetch: `http` or `https`, no credentials in the URL, and not an address inside the container or on a private network.
 
 ## Capability URL
@@ -4321,6 +4592,14 @@ Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → 
 1. `GET /status` lists the running instances (id, port, folder, uptime) and the orchestrator's `basePort`.
 2. `GET /api/v1/code/version` reports the orchestrator build and the packaged editor tree separately.
 
+### 5. Stop an editor instance and release capacity
+
+Stop an instance you no longer need: it ends its editors, integrated terminals, tasks and extension host, and keeps its settings, installed extensions and workspace state for its next start.
+
+Send `DELETE /api/v1/code` to that instance's `code-N` URL.
+
+A `200` means the instance's process has exited; `404` with `unknown-instance` means it was not running.
+
 ## Quirks & gotchas
 
 - On a `code-N` host the edge sets `id` from the hostname and overwrites a caller's value, so a query-string `id` cannot pick another instance. `code-0` is treated as `code-1`.
@@ -4341,7 +4620,8 @@ Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → 
 
 ## Common errors
 
-- `403` — Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. The body is the plain text `Forbidden`, not JSON. Use the `code-N` URL, also from inside the container.
+- `429` HTML page from the entry path — starting another instance would pass the instance limit this deployment is configured with (none by default). Nothing was started; stop an instance you do not need (workflow 5), then retry. An already running instance is still served at the limit.
+- `403` — Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. The body is the plain text `Forbidden`, not JSON. Use the `code-N` URL.
 - `400` HTML page from the entry path: exactly one of `folder` and `id` carried a value, `id` is not an unsigned decimal integer or was sent twice, `id` exceeds `65535 - basePort`, or the query is over 8192 bytes. Only a bare kit server hits the first case; behind the edge both are filled.
 - `409` from the entry path: the instance's port is held by a process the orchestrator did not start. Retrying does not help until it is released.
 - `503` from the entry path: the instance did not finish starting in time. Worth retrying.
@@ -4578,43 +4858,44 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 1. Schedule
 
-`POST /users/{user}/entries` takes a schedule + command (plus name/comment/expires_at/enabled) and returns the created entry with its `id`.
+`POST /api/v1/cron/users/{user}/entries` takes a schedule + command (plus name/comment/expires_at/enabled) and returns the created entry with its `id`.
 
 ### 2. List
 
-`GET /users/{user}/entries` (`page`/`limit`, max 200).
+`GET /api/v1/cron/users/{user}/entries` (`page`/`limit`, max 200).
 
 ### 3. Edit / disable / extend
 
-`PATCH /users/{user}/entries/{id}` PATCH. `clear_expiration: true` overrides `expires_at`. `enabled: false` keeps rule prefixed `# hoody-cron-disabled:`.
+`PATCH /api/v1/cron/users/{user}/entries/{id}` PATCH. `clear_expiration: true` overrides `expires_at`. `enabled: false` keeps rule prefixed `# hoody-cron-disabled:`.
 
 ### 4. Bulk replace
 
-`GET /users/{user}/crontab` (sweep) then `PUT /users/{user}/crontab` body — revalidates `# hoody-cron:` blocks; response has `removed_expired`.
+For a normal bulk replace, read with `GET /api/v1/cron/users/{user}/crontab` (sweep), edit the returned text, then call `PUT /api/v1/cron/users/{user}/crontab` with the body — it revalidates `# hoody-cron:` blocks, and the response has `removed_expired`. If a read or entry call fails with `409 STORED_CRONTAB_INVALID` (the stored crontab cannot be used), read `details` and repair it by calling `PUT /api/v1/cron/users/{user}/crontab` directly with a complete, valid replacement: PUT does not read the stored crontab, and anything you leave out of the replacement is removed.
 
 ### 5. Audit all users
 
-`GET /crontab` → paginated `{ items: [{ user, crontab }], total, page, limit }`.
+`GET /api/v1/cron/crontab` → paginated `{ items: [{ user, crontab }], total, page, limit }`.
 
 ## Quirks & gotchas
 
 - `user`: matches `^[A-Za-z0-9_.-]{1,32}$` for the character class, but the validator additionally rejects a **leading** `-` (trailing `-` is allowed).
 - Vixie 5-field plus standard `@`-macros; Quartz rejected.
 - `command`/`name`/`comment` reject newline/null/VT/FF/NEL/LS/PS; caps 4096/120/500.
-- Send a managed entry's command exactly as a shell would run it, and do not escape `%`: the kit writes it into the crontab as `\%` so cron runs the command unchanged and reads it back the same way. A `\%` you send is escaped again and runs as `\%`, backslash included. Raw lines in a `PUT /users/{user}/crontab` body are written as given, so a `%` there follows crontab rules: a bare `%` ends the command, and `\%` is a literal `%`.
+- Send a managed entry's command exactly as a shell would run it, and do not escape `%`: the kit writes it into the crontab as `\%` so cron runs the command unchanged and reads it back the same way. A `\%` you send is escaped again and runs as `\%`, backslash included. Raw lines in a `PUT /api/v1/cron/users/{user}/crontab` body are written as given, so a `%` there follows crontab rules: a bare `%` ends the command, and `\%` is a literal `%`.
 - A managed entry's command is read back from the spool exactly as written, runs of whitespace included, so a later write for that user stores it unchanged: `echo "a  b"` stays `echo "a  b"`.
 - `expires_at` RFC 3339, strictly future.
 - Body cap 256 KiB by default, which the deployment can change, AND 10,000 lines; duplicate entry id rejected, and a duplicate `id=` within one metadata line is rejected.
-- **`PUT /users/{user}/crontab` replaces the whole crontab.** `GET /users/{user}/crontab` returns each managed entry as its `# hoody-cron:` metadata line followed by its rule line, and PUT parses those pairs back into the same managed entries with the same ids. So a read, edit, write cycle keeps every managed entry whose two lines are still in the body; a managed entry left out of the body is deleted. Edit the text from `GET /users/{user}/crontab` instead of writing a fresh body, and do not re-create managed entries after a PUT: they are still there, and re-creating them makes every job run twice. Comment or blank lines placed between a metadata line and its rule line are dropped.
+- **`PUT /api/v1/cron/users/{user}/crontab` replaces the whole crontab.** `GET /api/v1/cron/users/{user}/crontab` returns each managed entry as its `# hoody-cron:` metadata line followed by its rule line, and PUT parses those pairs back into the same managed entries with the same ids. So a read, edit, write cycle keeps every managed entry whose two lines are still in the body; a managed entry left out of the body is deleted. Edit the text from `GET /api/v1/cron/users/{user}/crontab` instead of writing a fresh body, and do not re-create managed entries after a PUT: they are still there. Re-creating an identical entry answers 200 with the existing one and writes nothing; the same schedule and command with a different name, comment, `expires_at` or `enabled` is `409 ENTRY_EXISTS` (details give its id), so change it with PATCH. Comment or blank lines placed between a metadata line and its rule line are dropped.
 - A PUT body may contain `# hoody-cron:` metadata lines written by the caller. The kit revalidates every managed entry it parses from them (schedule, command, name, comment) and rejects duplicate ids, but it does not check where the metadata came from: a well-formed pair written by hand is accepted as a managed entry, and a metadata line it cannot parse or pair is kept as a raw line. Every other non-comment line gets the syntax check of `crontab(1)`: a line it would refuse is `400 INVALID_CRONTAB` naming that line, and nothing is written.
-- `GET /users/{user}/entries`/`GET /users/{user}/entries/{id}` clean expired entries before serializing under a per-user mutex — a GET can mutate the spool.
-- `GET /users/{user}/entries` items have `type: "managed"` or `"raw"`; only `managed` items carry `id`.
+- `GET /api/v1/cron/users/{user}/entries`/`GET /api/v1/cron/users/{user}/entries/{id}` clean expired entries before serializing under a per-user mutex — a GET can mutate the spool.
+- `GET /api/v1/cron/users/{user}/entries` items have `type: "managed"` or `"raw"`; only `managed` items carry `id`.
 - Sweep every 60s default; per-user lock.
 
 ## Common errors
 
 Error bodies are `{ code, message, details }`, except where noted.
 
+- `409 STORED_CRONTAB_INVALID` — the crontab already stored for the user cannot be used (a Unicode line break, a `# hoody-cron:` line with two id fields, or over the line or byte cap); nothing in your request is wrong. Repair it with `PUT /api/v1/cron/users/{user}/crontab` (workflow 4).
 - `400 INVALID_EXPIRES_AT` / `EXPIRES_IN_PAST`.
 - `400 INVALID_SCHEDULE / Invalid schedule` — Vixie 5-field plus `@`-macros only; Quartz / 6-field rejected.
 - `400 INVALID_USER` (bad user name), `INVALID_COMMAND`, `INVALID_NAME`, `INVALID_COMMENT`: a field failed validation (see Quirks for the rules).
@@ -4643,7 +4924,7 @@ Each step has a copy-pasteable code block in the mode you're reading (curl for H
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
 EXP=$(date -u -d '+1 year' +%FT%TZ)   # expires_at must be in the future
-ID=$(curl -sX POST "$KIT/users/root/entries" \
+ID=$(curl -sX POST "$KIT/api/v1/cron/users/root/entries" \
   -H 'Content-Type: application/json' \
   -d "$(jq -nc --arg e "$EXP" '{
     schedule: "0 2 * * *",
@@ -4657,7 +4938,7 @@ echo "id=$ID"
 **Step 2 — trial-run** by tightening to every minute. Wait ~70 s then `tail /var/log/syslog` (via the `terminal` kit) to confirm cron actually fired the job.
 
 ```bash
-curl -sX PATCH "$KIT/users/root/entries/$ID" \
+curl -sX PATCH "$KIT/api/v1/cron/users/root/entries/$ID" \
   -H 'Content-Type: application/json' \
   -d '{"schedule":"* * * * *","comment":"TEST MODE — revert before merge"}'
 ```
@@ -4665,7 +4946,7 @@ curl -sX PATCH "$KIT/users/root/entries/$ID" \
 **Step 3 — promote back to nightly** with a clean comment.
 
 ```bash
-curl -sX PATCH "$KIT/users/root/entries/$ID" \
+curl -sX PATCH "$KIT/api/v1/cron/users/root/entries/$ID" \
   -H 'Content-Type: application/json' \
   -d '{"schedule":"0 2 * * *","comment":"production schedule"}'
 ```
@@ -4674,13 +4955,13 @@ curl -sX PATCH "$KIT/users/root/entries/$ID" \
 
 **Goal:** disable every managed entry so nothing fires during a 30-min DB migration; re-enable once clean.
 
-**Step 1 — capture every enabled managed id.** The listing is paginated (50 per page by default, at most 200), so read every page before filtering: a job left on a later page stays enabled through the migration. Run steps 1 and 2 as one script that exits on any listing or update failure, and start the migration only when it exits successfully; a partial list or a failed disable leaves jobs enabled.
+**Step 1 — capture every enabled managed id.** The listing is paginated (50 per page by default, at most 200), so over HTTP read every page before filtering: a job left on a later page stays enabled through the migration. The CLI fetches every page itself, up to 10,000 items or 1,000 requests, so check that it returned `total` rows. Run steps 1 and 2 as one script that exits on any listing or update failure, and start the migration only when it exits successfully; a partial list or a failed disable leaves jobs enabled.
 
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
 IDS=""; page=1
 while :; do
-  body=$(curl -sf "$KIT/users/root/entries?page=$page&limit=200") \
+  body=$(curl -sf "$KIT/api/v1/cron/users/root/entries?page=$page&limit=200") \
     || { echo "listing page $page failed" >&2; exit 1; }
   ids=$(jq -r '.entries[] | select(.type=="managed" and .enabled) | .id' <<<"$body") \
     || { echo "unreadable listing" >&2; exit 1; }
@@ -4695,7 +4976,7 @@ echo "$IDS"
 
 ```bash
 for id in $IDS; do
-  curl -sf -X PATCH "$KIT/users/root/entries/$id" \
+  curl -sf -X PATCH "$KIT/api/v1/cron/users/root/entries/$id" \
     -H 'Content-Type: application/json' \
     -d '{"enabled":false}' >/dev/null \
     || { echo "disable failed for $id: do not start the migration" >&2; exit 1; }
@@ -4708,14 +4989,14 @@ done
 
 **Goal:** convert legacy raw lines (no `id`, no metadata) into managed entries with names + lifecycle fields, then remove the raw originals so nothing runs twice.
 
-**Step 1 — collect the raw lines to migrate.** `GET /users/{user}/entries` returns hand-written lines as `{ type: 'raw', line }` items; managed entries are `type: 'managed'` and are left alone.
+**Step 1 — collect the raw lines to migrate.** `GET /api/v1/cron/users/{user}/entries` returns hand-written lines as `{ type: 'raw', line }` items; managed entries are `type: 'managed'` and are left alone.
 
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
 # Raw items only; skip blanks, comments and environment lines (SHELL=, MAILTO = ..., "A B" = c).
 : > /tmp/cron-migrate.txt; page=1
 while :; do
-  body=$(curl -sf "$KIT/users/root/entries?page=$page&limit=200") || exit 1
+  body=$(curl -sf "$KIT/api/v1/cron/users/root/entries?page=$page&limit=200") || exit 1
   jq -r '.entries[] | select(.type=="raw") | .line' <<<"$body" \
     | grep -Ev "^[[:space:]]*(\$|#|([A-Za-z_][A-Za-z0-9_]*|\"[^\"]*\"|'[^']*')[[:space:]]*=)" >> /tmp/cron-migrate.txt
   [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
@@ -4735,7 +5016,7 @@ while IFS= read -r LINE; do
   case "$(echo "$LINE" | sed -E 's/^[[:space:]]+//')" in @*) F=1 ;; *) F=5 ;; esac
   SCHED=$(echo "$LINE" | awk -v f="$F" '{s=$1; for (k = 2; k <= f; k++) s = s " " $k; print s}')
   CMD=$(echo "$LINE" | sed -E "s/^[[:space:]]*([^[:space:]]+[[:space:]]+){$F}//")
-  curl -sf -X POST "$KIT/users/root/entries" \
+  curl -sf -X POST "$KIT/api/v1/cron/users/root/entries" \
     -H 'Content-Type: application/json' \
     -d "$(jq -nc --arg s "$SCHED" --arg c "$CMD" --arg n "migrated-$i" '{schedule:$s,command:$c,name:$n}')" >/dev/null \
     || { echo "create failed for: $LINE" >&2; FAILED=1; break; }
@@ -4747,12 +5028,12 @@ done < /tmp/cron-migrate.txt
 
 ```bash
 [ -s /tmp/cron-migrate.txt ] || exit 0   # nothing to drop
-BODY=$(curl -sf "$KIT/users/root/crontab") || exit 1
+BODY=$(curl -sf "$KIT/api/v1/cron/users/root/crontab") || exit 1
 CUR=$(jq -er '.crontab | select(type == "string")' <<<"$BODY") || exit 1
 # Drop a listed line only when it does not follow a "# hoody-cron:" metadata line.
 NEW=$(printf '%s\n' "$CUR" | awk 'NR == FNR { drop[$0] = 1; next }
   { keep = !($0 in drop) || prev ~ /^[[:space:]]*# hoody-cron:/; prev = $0 } keep' /tmp/cron-migrate.txt -)
-curl -sf -X PUT "$KIT/users/root/crontab" \
+curl -sf -X PUT "$KIT/api/v1/cron/users/root/crontab" \
   -H 'Content-Type: application/json' \
   -d "$(jq -nc --arg c "$NEW" '{crontab:$c}')"
 ```
@@ -4767,7 +5048,7 @@ curl -sf -X PUT "$KIT/users/root/crontab" \
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
 ID=""; page=1
 while :; do
-  body=$(curl -sf "$KIT/users/root/entries?page=$page&limit=200") || exit 1
+  body=$(curl -sf "$KIT/api/v1/cron/users/root/entries?page=$page&limit=200") || exit 1
   ID="$ID $(jq -r '.entries[] | select(.type=="managed" and .name=="health-poll") | .id' <<<"$body")"
   [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
   page=$((page + 1))
@@ -4780,7 +5061,7 @@ ID=$1
 **Step 2 — tighten to `*/5 * * * *`.** `schedule_human` becomes `"Every 5 minutes"` immediately on the response.
 
 ```bash
-curl -sX PATCH "$KIT/users/root/entries/$ID" \
+curl -sX PATCH "$KIT/api/v1/cron/users/root/entries/$ID" \
   -H 'Content-Type: application/json' -d '{"schedule":"*/5 * * * *"}'
 ```
 
@@ -4795,7 +5076,7 @@ curl -sX PATCH "$KIT/users/root/entries/$ID" \
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
 EXP=$(date -u -d '+30 days' +%FT%TZ)
-ID=$(curl -sX POST "$KIT/users/root/entries" \
+ID=$(curl -sX POST "$KIT/api/v1/cron/users/root/entries" \
   -H 'Content-Type: application/json' \
   -d "$(jq -nc --arg e "$EXP" '{
     schedule: "@daily",
@@ -4805,12 +5086,12 @@ ID=$(curl -sX POST "$KIT/users/root/entries" \
   }')" | jq -r .id)
 ```
 
-After the timestamp passes, the kit's 60 s sweep **deletes** expired managed entries. `GET /users/{user}/entries`/`GET /users/{user}/entries/{id}` also clean expired entries before serializing, so once the sweep runs you can no longer read the expired entry — the entry simply disappears from listings. The `removed_expired` count on `PUT /users/{user}/crontab` tells you how many expired entries got dropped during a bulk replace.
+After the timestamp passes, the kit's 60 s sweep **deletes** expired managed entries. `GET /api/v1/cron/users/{user}/entries`/`GET /api/v1/cron/users/{user}/entries/{id}` also clean expired entries before serializing, so once the sweep runs you can no longer read the expired entry — the entry simply disappears from listings. The `removed_expired` count on `PUT /api/v1/cron/users/{user}/crontab` tells you how many expired entries got dropped during a bulk replace.
 
 **Step 2a — extend the deadline mid-experiment** (to 60 days from now):
 
 ```bash
-curl -sX PATCH "$KIT/users/root/entries/$ID" \
+curl -sX PATCH "$KIT/api/v1/cron/users/root/entries/$ID" \
   -H 'Content-Type: application/json' \
   -d "$(jq -nc --arg e "$(date -u -d '+60 days' +%FT%TZ)" '{expires_at:$e}')"
 ```
@@ -4818,7 +5099,7 @@ curl -sX PATCH "$KIT/users/root/entries/$ID" \
 **Step 2b — make it permanent** instead. Pass `clear_expiration: true`. If you also send `expires_at` in the same call, `clear_expiration` silently wins (server returns `200` with `expires_at: null` — no error).
 
 ```bash
-curl -sX PATCH "$KIT/users/root/entries/$ID" \
+curl -sX PATCH "$KIT/api/v1/cron/users/root/entries/$ID" \
   -H 'Content-Type: application/json' -d '{"clear_expiration":true}'
 ```
 
@@ -4832,7 +5113,7 @@ curl -sX PATCH "$KIT/users/root/entries/$ID" \
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
 ENTRY_ID=""; page=1
 while :; do
-  body=$(curl -sf "$KIT/users/root/entries?page=$page&limit=200") || exit 1
+  body=$(curl -sf "$KIT/api/v1/cron/users/root/entries?page=$page&limit=200") || exit 1
   ENTRY_ID="$ENTRY_ID $(jq -r '.entries[] | select(.type=="managed" and .name=="noisy-job") | .id' <<<"$body")"
   [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
   page=$((page + 1))
@@ -4845,7 +5126,7 @@ ENTRY_ID=$1
 **Step 2 — disable it (entry stays in the listing for forensics; cron won't fire it).**
 
 ```bash
-curl -sX PATCH "$KIT/users/root/entries/$ENTRY_ID" \
+curl -sX PATCH "$KIT/api/v1/cron/users/root/entries/$ENTRY_ID" \
   -H 'Content-Type: application/json' \
   -d "{\"enabled\":false,\"comment\":\"disabled $(date -u +%FT%TZ) — investigating\"}"
 ```
@@ -4856,20 +5137,20 @@ curl -sX PATCH "$KIT/users/root/entries/$ENTRY_ID" \
 
 **Goal:** compliance question — "who has scheduled jobs?". A container has 60+ system users, more than the default page of 50, so read every page.
 
-`GET /crontab` returns one record per account in `/etc/passwd` (`{ user, crontab }`), 50 per page by default and at most 200. Filter client-side for non-empty `crontab`.
+`GET /api/v1/cron/crontab` returns one record per account in `/etc/passwd` (`{ user, crontab }`), 50 per page by default and at most 200. Filter client-side for non-empty `crontab`.
 
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
 page=1
 while :; do
-  body=$(curl -sf "$KIT/crontab?page=$page&limit=200") || break
+  body=$(curl -sf "$KIT/api/v1/cron/crontab?page=$page&limit=200") || break
   jq '.items[] | select(.crontab | test("\\S")) | {user, crontab}' <<<"$body"
   [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
   page=$((page + 1))
 done
 ```
 
-For each non-empty user, drill in via `GET /users/{user}/entries` for that user for the managed view, or read the `crontab` text directly from the listing above.
+For each non-empty user, drill in via `GET /api/v1/cron/users/{user}/entries` for that user for the managed view, or read the `crontab` text directly from the listing above.
 
 ### 8. Atomic full-crontab replace from versioned config
 
@@ -4879,14 +5160,14 @@ For each non-empty user, drill in via `GET /users/{user}/entries` for that user 
 
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
-curl -sf "$KIT/users/root/crontab" > /tmp/cron-snapshot.json
+curl -sf "$KIT/api/v1/cron/users/root/crontab" > /tmp/cron-snapshot.json
 ```
 
 **Step 2 — push the canonical config.** Body MUST use `application/json` or an `application/*+json` Content-Type (raw `text/plain` returns `415`). Response carries `removed_expired` (count of managed entries that were dropped because their `expires_at` had passed).
 
 ```bash
 NEW=$(cat /etc/iac/canonical-crontab.txt)
-curl -sX PUT "$KIT/users/root/crontab" \
+curl -sX PUT "$KIT/api/v1/cron/users/root/crontab" \
   -H 'Content-Type: application/json' \
   -d "$(jq -nc --arg c "$NEW" '{crontab:$c}')"
 ```
@@ -4897,7 +5178,7 @@ curl -sX PUT "$KIT/users/root/crontab" \
 
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
-curl -sX PATCH "$KIT/users/root/entries/$ID" \
+curl -sX PATCH "$KIT/api/v1/cron/users/root/entries/$ID" \
   -H 'Content-Type: application/json' \
   -d '{"comment":"owner: @team · runbook: https://wiki.example.com/cron-x"}'
 ```
@@ -4908,16 +5189,16 @@ curl -sX PATCH "$KIT/users/root/entries/$ID" \
 
 **Goal:** a teammate wants ONE hand-written line gone without disturbing the rest. You don't have an id (it's raw). Match the whole line exactly, and skip a matching line that follows a `# hoody-cron:` metadata line: that one is a managed entry's rule, and dropping it orphans the entry.
 
-**Step 1 — fetch** the multi-line string. **Step 2 — edit client-side** (split, drop, rejoin). **Step 3 — write back.** Managed entries survive: the fetched text holds each one as a `# hoody-cron:` metadata line plus its rule line, and the PUT parses them back with the same ids. Leave those lines untouched and do not re-create the entries afterwards, or every managed job runs twice.
+**Step 1 — fetch** the multi-line string. **Step 2 — edit client-side** (split, drop, rejoin). **Step 3 — write back.** Managed entries survive: the fetched text holds each one as a `# hoody-cron:` metadata line plus its rule line, and the PUT parses them back with the same ids. Leave those lines untouched; there is nothing to re-create afterwards (an identical create answers 200 with the existing entry, a changed one `409 ENTRY_EXISTS`).
 
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
 # Check the read and the parse separately: a failed read must never become an empty PUT.
-BODY=$(curl -sf "$KIT/users/root/crontab") || exit 1
+BODY=$(curl -sf "$KIT/api/v1/cron/users/root/crontab") || exit 1
 CUR=$(jq -er '.crontab | select(type == "string")' <<<"$BODY") || exit 1
 NEW=$(printf '%s\n' "$CUR" | awk -v target='*/30 * * * * /old.sh' \
   '{ keep = $0 != target || prev ~ /^[[:space:]]*# hoody-cron:/; prev = $0 } keep')
-curl -sX PUT "$KIT/users/root/crontab" \
+curl -sX PUT "$KIT/api/v1/cron/users/root/crontab" \
   -H 'Content-Type: application/json' \
   -d "$(jq -nc --arg c "$NEW" '{crontab:$c}')"
 ```
@@ -4928,9 +5209,9 @@ curl -sX PUT "$KIT/users/root/crontab" \
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /users/{user}/crontab` | Get Crontab |  |
-| `GET /crontab` | List All Crontabs | `?page` `?limit` |
-| `PUT /users/{user}/crontab` | Put Crontab | `body*:cron_RawCrontabRequest` |
+| `GET /api/v1/cron/users/{user}/crontab` | Get Crontab |  |
+| `GET /api/v1/cron/crontab` | List All Crontabs | `?page` `?limit` |
+| `PUT /api/v1/cron/users/{user}/crontab` | Put Crontab | `body*:cron_RawCrontabRequest` |
 
 **Param notes:**
 
@@ -4942,11 +5223,11 @@ curl -sX PUT "$KIT/users/root/crontab" \
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /users/{user}/entries` | Create Entry | `body*:cron_CreateEntryRequest` |
-| `DELETE /users/{user}/entries/{id}` | Delete Entry |  |
-| `GET /users/{user}/entries/{id}` | Get Entry |  |
-| `GET /users/{user}/entries` | List Entries | `?page` `?limit` |
-| `PATCH /users/{user}/entries/{id}` | Update Entry | `body*:cron_UpdateEntryRequest` |
+| `POST /api/v1/cron/users/{user}/entries` | Create Entry | `body*:cron_CreateEntryRequest` |
+| `DELETE /api/v1/cron/users/{user}/entries/{id}` | Delete Entry |  |
+| `GET /api/v1/cron/users/{user}/entries/{id}` | Get Entry |  |
+| `GET /api/v1/cron/users/{user}/entries` | List Entries | `?page` `?limit` |
+| `PATCH /api/v1/cron/users/{user}/entries/{id}` | Update Entry | `body*:cron_UpdateEntryRequest` |
 
 **Param notes:**
 
@@ -4958,7 +5239,7 @@ curl -sX PUT "$KIT/users/root/crontab" \
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /health` | Health Check |  |
+| `GET /api/v1/cron/health` | Health Check |  |
 
 
 ### Body schemas
@@ -5032,7 +5313,7 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 
 1. `POST /api/v1/curl/request` with `mode:"async"` → `job_id`.
 2. Poll `GET /api/v1/curl/jobs/{id}` or subscribe `GET /api/v1/curl/sse` (SSE) filtered by `job_id`.
-3. `GET /api/v1/curl/jobs/{id}/result`; `DELETE /api/v1/curl/jobs/{id}` aborts.
+3. `GET /api/v1/curl/jobs/{id}/result`; `DELETE /api/v1/curl/jobs/{id}` aborts. `GET /api/v1/curl/jobs/{id}` reports `retry_attempts`: 1 for a job that ran once, plus one per retry after a transfer error.
 
 ### 4. Cookie-jar session
 
@@ -5047,7 +5328,7 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 
 ### 6. Scheduled request
 
-1. `POST /api/v1/curl/schedule` with `{cron,request}` → `schedule_id`.
+1. `POST /api/v1/curl/schedule` with `{cron,request}` → `schedule_id`. Add `enabled: false` to create it paused: it never fires until `PATCH /api/v1/curl/schedule/{id}` sets `enabled: true`.
 2. `GET /api/v1/curl/schedule`/`GET /api/v1/curl/schedule/{id}`/`PATCH /api/v1/curl/schedule/{id}` (`{"enabled":bool}` pauses or resumes)/`DELETE /api/v1/curl/schedule/{id}`.
 3. Each admitted occurrence creates a job; inspect via `GET /api/v1/curl/jobs`. An occurrence is skipped, with no job, while the previous run is still in flight or when the job queue rejects it.
 
@@ -5061,14 +5342,17 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 - `*.list` returns ALL when `limit` omitted; always pass `limit`.
 - `* /api/v1/curl/schedule*` 404s if disabled.
 - `PATCH /api/v1/curl/schedule/{id}` changes any of `cron`, `request` and `enabled`; omitted fields keep their current value, so pause or resume by sending `enabled: false` or `enabled: true` alone. The `PATCH /api/v1/curl/schedule/{id}/toggle` route instead requires an explicit boolean `enabled`; else 400.
+- `POST /api/v1/curl/schedule` takes `enabled` (default `true`). A schedule created with `enabled: false` has no `next_run` and does not fire; its `cron` must still parse but need not have a future occurrence yet. Any field other than `cron`, `request` and `enabled` is refused with 400 `INVALID_PARAMETER`.
+- `bearer_token` sends `Authorization: Bearer <token>`, but an `Authorization` entry in `headers` (or `header=Authorization: …` on the GET bridge) wins: the token is then not sent, so the request carries one `Authorization` header.
+- `GET /api/v1/curl/jobs/{id}/result` always answers `200` with the target's body and headers, whatever the target answered; the target's status code is in the `X-Curl-Status` header (and in `response.status_code` from `GET /api/v1/curl/jobs/{id}`). A stored `429` or `503` is therefore not retried as a kit failure.
 - **`schedules.create.cron` is 6-field (with seconds), NOT the standard 5-field crontab.** `*/15 * * * *` is rejected as `Invalid cron expression`; use `0 */15 * * * *` (at second 0 every 15 min). The standard @-nicknames (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`) ARE accepted (expanded internally to 6-field), but Go-style `@every 15m` is NOT — for anything else use explicit 6-field expressions. Different syntax from the `cron` namespace, which uses Vixie 5-field.
 - `session_id` is caller-provided.
 - Job events stream over a WebSocket at `/api/v1/curl/ws`; filter by `job_id`.
 
 ## Common errors
 
-- `504` — the upstream request timed out (libcurl timeout); raise `timeout`. An async job does not wait on the caller's connection, but the same `timeout` still applies to the upstream request. The kit itself does not answer `408`; a transparent response passes the upstream's own status through, so an upstream `408` arrives as `408`.
-- `410 cancelled`.
+- `504` — the upstream request timed out (libcurl timeout); raise `timeout`. An async job does not wait on the caller's connection, but the same `timeout` still applies to the upstream request. The kit itself does not answer `408`; a transparent `run` response passes the upstream's own status through (`GET /api/v1/curl/jobs/{id}/result` does not: it answers 200 with `X-Curl-Status`), so an upstream `408` arrives as `408`.
+- Cancelling a job answers `200`; no REST call answers `410`. Read `GET /api/v1/curl/jobs/{id}` for `status: "cancelled"`, and stop waiting once a job is `failed` or `cancelled`. `GET /api/v1/curl/jobs/{id}/result` answers `404 JOB_RESULT_NOT_READY` when the job has no response body (still pending or running, or finished without an upstream response).
 - `503 queue full` (also SSE capacity exhausted) — back off.
 
 ## Related namespaces
@@ -5190,7 +5474,7 @@ while :; do
 done
 ```
 
-**Step 3 — collect bodies.** `GET /api/v1/curl/jobs/{id}/result` returns just the upstream body.
+**Step 3 — collect bodies.** `GET /api/v1/curl/jobs/{id}/result` returns just the upstream body, always with status 200; the upstream's status is in `X-Curl-Status`.
 
 ```bash
 for JID in "${JOBS[@]}"; do
@@ -5485,7 +5769,7 @@ done < /tmp/curl-purge.txt
 - `curl_CurlRequest` — `{ auth_method: string|null, auth_password: string|null, auth_user: string|null, bearer_token: string|null, compressed: bool|null, connect_timeout: int|null, cookie: string|null, data: string|null, follow_redirects: bool|null, form: { [key: string]: string }|null, headers: { [key: string]: string }|null, insecure: bool|null, job_name: string|null, json: any, keepalive: bool|null, keepalive_time: int|null, max_filesize: int|null, max_redirects: int|null, method: string|null, mode: null | curl_ExecutionMode, range: string|null, referer: string|null, response: null | curl_ResponseMode, retry_count: int|null, retry_delay: int|null, save: bool|null, save_path: string|null, session_id: string|null, speed_limit: int|null, speed_time: int|null, tcp_nodelay: bool|null, timeout: int|null, url*: string, user_agent: string|null }`
   - cURL request parameters A JSON body carrying any field not listed here is rejected with `400`. This protects against silently sending a removed or not-yet-released field that would otherwise slip past validation unnoticed.
   - `save_path` — Relative path under this job's download directory (downloads/by-job/{job_id}). Must not be absolute or contain `..`.
-- `curl_CreateScheduleRequest` — `{ cron*: string, request*: curl_CurlRequest }`
+- `curl_CreateScheduleRequest` — `{ cron*: string, enabled: bool|null, request*: curl_CurlRequest }`
 - `curl_UpdateScheduleRequest` — `{ cron: string|null, enabled: bool|null, request: null | curl_CurlRequest }`
   - Partial update of a schedule. Every field is optional, at least one is required; absent fields keep their current value.
 - `curl_ExecutionMode` — `"sync" | "async"`
@@ -5503,7 +5787,7 @@ done < /tmp/curl-purge.txt
 
 Two flavours:
 
-- **Quick-start (ephemeral, not added to the program list)** — `POST /api/v1/daemon/quick-start` with `{ command, user, ttl?, wait?, timeout? }`. Returns `temporary_id = quick_<ts>_<seq>`. Best for one-offs and short-lived jobs (build steps, batch transforms, "run this once and tell me the output"). It adds no durable program entry, but it does write a temporary supervisord configuration and records the program in the kit's ephemeral tracking file so the cleanup pass can find it. The log files stay on disk, but `GET /api/v1/daemon/quick-start/{id}/logs` works only while the tracking entry exists. The cleanup pass (every 30 s) finalizes a program that is `stopped` or `fatal`, or `exited` with autorestart turned off; under the default `unexpected` policy an `exited` program is finalized when its exit code is known to be 0, and is kept while its exit code is unknown. A finalized program's result and logs stay readable for 10 minutes; then the pass drops the entry and the logs route 404s. Stopping a program that already finished does not extend that window. Optional `ttl` auto-stops after N seconds.
+- **Quick-start (ephemeral, not added to the program list)** — `POST /api/v1/daemon/quick-start` with `{ command, user, ttl?, wait?, timeout? }`. Returns `temporary_id = quick_<ts>_<seq>`. Best for one-offs and short-lived jobs (build steps, batch transforms, "run this once and tell me the output"). It adds no durable program entry, but it does write a temporary supervisord configuration and records the program in the kit's ephemeral tracking file so the cleanup pass can find it. The log files stay on disk, but `GET /api/v1/daemon/quick-start/{id}/logs` works only while the tracking entry exists. The cleanup pass (every 30 s) finalizes a program that is `stopped` or `fatal`, or `exited` with autorestart turned off; under `autorestart: "unexpected"` an `exited` program is finalized when its exit code is known to be 0, and is kept while its exit code is unknown. A finalized program's result and logs stay readable for 10 minutes; then the pass drops the entry and the logs route 404s. Stopping a program that already finished does not extend that window. Optional `ttl` auto-stops after N seconds. A quick-start defaults to `autorestart: "false"` and runs once, even when the command fails; set `autorestart: "unexpected"` to restart it after a nonzero exit.
 - **Registered program (durable, persists across kit restarts)** — `POST /api/v1/daemon/programs/add` with `{ name, command, user, enabled: true, boot: true?, autorestart: 'unexpected', … }` → `POST /api/v1/daemon/programs/{id}/start` with `{ wait: false }`, then poll `GET /api/v1/daemon/status/{id}`. Use this when the process should come back after a container restart, when you want auto-restart on crash, or when you need port-range fan-out / lazy-load on first proxy hit.
 
 ## When to use
@@ -5517,6 +5801,7 @@ Two flavours:
 - **Traditional system services that ship native systemd units** (apache2, nginx, postgresql, mysql, redis, mosquitto, sshd, postfix, …) — leave them on `systemd`. Hoody containers are full Linux boxes with systemd + root (they behave like VMs, not Docker), so the standard `apt install nginx && systemctl enable --now nginx` flow Just Works and benefits from the upstream unit's hardening (drop-in directories, sd_notify, journal integration, etc.). Mixing systemd-managed and `daemon`-managed processes in the same container is fine — pick whichever fits the program.
 - Need an interactive TTY (Claude Code, Codex, htop, vim, anything that paints the screen) → a one-off or hand-driven session is `terminal` with a **pinned non-ephemeral `terminal_id`**; a program that must be supervised (auto-restart, start at boot) is a `daemon` program with `terminal_id`, which runs on that terminal's PTY. Without `terminal_id` a daemon program has no TTY. A program with `terminal_id` cannot also have an effective sandbox.
 - Watch or type into a daemon program's terminal → the terminal WebSocket `/api/v1/terminal/ws` on host `terminal-<terminal_id>`, with no spawn parameters. Snapshot, press, paste, write and wait drive it over REST without a WebSocket. Execute and session create on that id answer `409 DAEMON_TERMINAL`; a stopped program answers `409 DAEMON_PROGRAM_NOT_RUNNING` and closes a WebSocket with `4404`.
+- After starting a program with `terminal_id`, attach to its terminal or use the terminal's REST automation at least once. Until something connects, its output waits in the terminal up to about 19 KB, and a program that writes more blocks and can stall. Once connected, hoody-terminal stays connected until the program ends or the terminal session is deleted.
 - Need to pipe input mid-run / send keystrokes → `terminal` (`POST /api/v1/terminal/press`, `POST /api/v1/terminal/paste`).
 - One-shot synchronous request/response → `exec` (HTTP handler, returns body).
 - Schedule (cron syntax) → `cron`. Access logs → `proxyLogs`. File-system events → `watch`.
@@ -5580,7 +5865,7 @@ Edge is always `https://`; the slug only describes the inner protocol. Gate acce
 ## Quirks & gotchas
 
 - Boolean query params (`hoody_kit`, `lazy_load`, `enabled`, `boot`, `include_status`, `include_stats`) STRICT: only `true`/`false`, in any letter case; `1`/`yes`/`0`/`""` -> 400. Send lowercase, which is what the SDK's typed values are.
-- Webhook URLs are validated only in an enabled block: `webhooks.enabled: false` skips every URL, event, header, timeout and retry check (the block must still carry `enabled` and `urls`). In an enabled block, URLs are HTTPS-only unless `NODE_ENV=development` (which also skips every host check below). Userinfo is rejected; in production the literal label `localhost` and private/CGNAT/link-local/v6-ULA addresses are too, including when written as NAT64, v4-mapped-v6, or non-standard v4 (`2130706433`, `0x7f000001`, `127.1`), when the URL authority is an IP literal or `localhost`. A DNS name is not resolved when the block is saved; at delivery time, in production, private and reserved addresses are dropped from its resolution and delivery fails when none remains. Delivery never follows redirects and ignores the environment's HTTP proxy settings.
+- Webhook URLs are validated only in an enabled block: `webhooks.enabled: false` skips every URL, event, header, timeout and retry check (the block must still carry `enabled` and `urls`). In an enabled block, URLs are HTTPS-only. Userinfo is rejected; the literal label `localhost` and private/CGNAT/link-local/v6-ULA addresses are too, including when written as NAT64, v4-mapped-v6, or non-standard v4 (`2130706433`, `0x7f000001`, `127.1`), when the URL authority is an IP literal or `localhost`. A DNS name is not resolved when the block is saved; at delivery time, private and reserved addresses are dropped from its resolution and delivery fails when none remains. Delivery never follows redirects and ignores the environment's HTTP proxy settings.
 - A `webhooks` edit must send `enabled` AND `urls` (a block without `urls` is a 400, `missing field urls`) and replaces both; `events`, `headers`, `timeout` and `retry` keep their stored values when omitted. An enabled block with an empty `urls` is a 400. Callbacks are delivered only when the deployment enables event delivery for the kit; the block is validated and stored either way.
 - Duplicate names + overlapping port ranges rejected on create AND update (adjacent OK); `port_param` requires `port_range`.
 - `command` no newlines/CR/NUL; `user` `(?i)[a-z_][a-z0-9_-]*\$?` (case-insensitive) via `id`; `*_logfile` must resolve under `/hoody/storage/hoody-daemon/logs/`.
@@ -5615,7 +5900,7 @@ Edge is always `https://`; the slug only describes the inner protocol. Gate acce
 - 400 `name already in use` / `Port range overlaps` / `port_param requires port_range`.
 - success=false `Port parameter required for port-range programs` -> resend with a `port` from the program's range. success=false `Program with ID {id} is disabled` -> `POST /api/v1/daemon/programs/{id}/enable` first.
 - `403 Forbidden` — Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. The body is the plain text `Forbidden` with no reason; use the capability URL.
-- 1 MB JSON body limit.
+- 1 MB request body limit.
 
 ## Related namespaces
 
@@ -5727,11 +6012,11 @@ KIT="https://${P}-${C}-daemon-1.${N}.containers.hoody.com"
 curl -sf "$KIT/api/v1/daemon/programs/$ID/logs?type=stderr&lines=200" | jq -r .logs
 ```
 
-For a port-range program, pass `?port=18800` to read the per-instance log file.
+For a port-range program, select the instance when reading logs: append `&port=18800` to the example's existing query string.
 
 ### 5. Webhook on supervisord process events (e.g. crash → HTTPS callback)
 
-**Goal:** when the program enters the `FATAL` state, POST to your HTTPS endpoint. ⚠ Webhook URLs must be **HTTPS** unless `NODE_ENV=development` (and reject userinfo, `localhost`, and private/CGNAT/link-local ranges). ⚠ **Event names are kit-specific, not the supervisord canonical `PROCESS_STATE_*` ones**: the kit accepts only `STARTING, RUNNING, BACKOFF, STOPPING, STOPPED, EXITED, FATAL, UNKNOWN, "all", "*"`. Sending `PROCESS_STATE_FATAL` returns `400 Invalid event type`.
+**Goal:** when the program enters the `FATAL` state, POST to your HTTPS endpoint. ⚠ Webhook URLs must be **HTTPS** (and reject userinfo, `localhost`, and private/CGNAT/link-local ranges). ⚠ **Event names are kit-specific, not the supervisord canonical `PROCESS_STATE_*` ones**: the kit accepts only `STARTING, RUNNING, BACKOFF, STOPPING, STOPPED, EXITED, FATAL, UNKNOWN, "all", "*"`. Sending `PROCESS_STATE_FATAL` returns `400 Invalid event type`.
 
 ```bash
 KIT="https://${P}-${C}-daemon-1.${N}.containers.hoody.com"
@@ -5966,16 +6251,18 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 ### 1. See-then-act loop
 
 1. `GET /api/v1/display/screenshot` with `base64` on (for vision). One response carries the image (`image.data`) and its metadata (`info.timestamp`, `info.full.width`/`height`).
-2. `POST /api/v1/display/input/click-at` / `POST /api/v1/display/input/type-at` at root-window coordinates (on a seamless session these differ from screenshot pixels; see Quirks).
+2. `POST /api/v1/display/input/click-at` / `POST /api/v1/display/input/type-at` at a point picked on that screenshot: a screenshot spans the whole screen, so its pixel (x, y) is the point (x, y) these act on.
 3. `GET /api/v1/display/screenshot` again to see the result. There is no cheap change check: `GET /api/v1/display/screenshot` takes a full new capture as well, and `timestamp` is the capture time in whole seconds, not a "screen changed" marker.
 
 ### 2. Find and focus a window
 
 1. `GET /api/v1/display/windows` (`onlyVisible` on).
 2. `POST /api/v1/display/window/search` — a `pattern` plus which fields to match (`name`, `class`, `classname`). 
-3. `POST /api/v1/display/window/focus` with `sync` on (or `POST /api/v1/display/window/raise`). Read `details.inputFocus` in the focus response: `false` means the window was activated but is not viewable, so keyboard input cannot reach it.
+3. `POST /api/v1/display/window/focus` with `sync` on. Read `details.inputFocus` in the response: proceed with keyboard input only when it is `true`. `false` means the window was activated but is not viewable, so keyboard input cannot reach it. `POST /api/v1/display/window/raise` is not a substitute for focusing.
 4. `GET /api/v1/display/window/{windowId}/geometry` — coords.
 5. `GET /api/v1/display/window/active` — confirms activation only, not keyboard focus.
+
+`GET /api/v1/display/windows`, `POST /api/v1/display/window/focus` and `GET /api/v1/display/window/active` need a window manager on the display: `409 NO_WINDOW_MANAGER` means none is running, and retrying does not help. Start a window manager (for example a desktop session), or use `POST /api/v1/display/window/search`, window geometry and name queries, and mouse and keyboard actions, which work without one.
 
 ### 3. Drag / select
 
@@ -5996,6 +6283,12 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 2. `POST /api/v1/display/input/wait` — interleave waits.
 3. `GET /api/v1/display/screenshot` — confirm.
 
+### 6. Press a key or a key combination
+
+1. `POST /api/v1/display/keyboard/key` with `keys`, a list of up to 20 combinations pressed in turn: `["Return"]`, `["Escape"]`, `["ctrl+l"]`, `["ctrl+shift+t"]`, `["Tab", "Down", "Return"]`. Names are X keysym names (`Return`, `Escape`, `Tab`, `BackSpace`, `Delete`, `Up`/`Down`/`Left`/`Right`, `Home`, `End`, `Page_Up`, `F1`…) joined to modifiers (`ctrl`, `shift`, `alt`, `super`) with `+`. 
+2. To submit typed text, end it with a line break instead: in `POST /api/v1/display/keyboard/type` and `POST /api/v1/display/input/type-at`, `\n` presses Return.
+3. `POST /api/v1/display/keyboard/key-down` / `POST /api/v1/display/keyboard/key-up` hold and release one key; `POST /api/v1/display/input/reset` releases anything left held.
+
 ## Quirks & gotchas
 
 - `?displayId=N` overrides `*-display-N.*` host.
@@ -6003,7 +6296,10 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - All endpoints except `GET /api/v1/display/health` and the HTML client root (`GET /api/v1/display/`) need a displayId or return `400 NO_DISPLAY_CONTEXT`.
 - Screenshot GETs return binary PNG; turn `base64` on for JSON.
 - `GET /api/v1/display/screenshot/{timestamp}` needs numeric `timestamp`, not `timestamp_human`.
-- **A screenshot pixel is not always a click coordinate.** A seamless session captures only the windows it shows, so the capture's origin is the top-left of their bounding box, while `POST /api/v1/display/input/click-at` and the other pointer calls take root-window coordinates. When the shown windows do not start at (0,0), add the capture origin (the smallest `x` and `y` among the shown windows' "geometry" objects in the `GET /api/v1/display/windows` response) to a point picked on the screenshot, or use `GET /api/v1/display/window/{windowId}/geometry` to target a window directly.
+- **A screenshot pixel is a click coordinate.** A screenshot spans the whole screen at its current size, read from the windows as they are when it is taken, so pixel (x, y) is the point `POST /api/v1/display/input/click-at` and the other pointer calls act on at (x, y). Where no window is, the image is transparent. A `region` crop starts at its `x1,y1`: add them to a point picked on the crop. Take a new screenshot after a viewer attaches: the screen then takes the viewer's size and the windows move.
+- `POST /api/v1/display/input/click-at` and `POST /api/v1/display/input/type-at` refuse a point with no viewable window with `409 WINDOW_NOT_VIEWABLE` and click nothing. While no viewer is attached to the display that is every point; with one attached, it is the bare desktop between windows. Attach a viewer and pick a point on a window in a fresh screenshot.
+- A line break in `text` (`\n`, `\r\n` or `\r`) presses Return in `POST /api/v1/display/keyboard/type` and `POST /api/v1/display/input/type-at`, so `"https://example.com\n"` types the address and submits it; `\t` presses Tab. Every other key or combination (Escape, ctrl+l, arrows) goes through `POST /api/v1/display/keyboard/key`.
+- `POST /api/v1/display/input/click-at` refuses a point outside the display's current size with `400 VALIDATION_ERROR` instead of clicking the screen edge, and its `details.pointer` reports where the pointer was after the click and the window under it (`x`, `y`, `window`). A `200` means the click was delivered there, not that the program acted on it: take a new screenshot to see the effect.
 - Clipboard `selection`: `clipboard` (default), `primary`, `secondary`. PRIMARY ≠ Ctrl+V.
 - Clipboard reads and writes can fail with `CLIPBOARD_FAILED`, carrying a shortened tool error; read the clipboard back after a write to confirm it landed.
 - Window IDs are accepted as decimal or hex (`0x...`). `GET /api/v1/display/windows`, `POST /api/v1/display/window/search` and `GET /api/v1/display/window/active` return decimal numbers; the path-parameter routes (`GET /api/v1/display/window/{windowId}/properties`, `GET /api/v1/display/window/{windowId}/geometry`, `GET /api/v1/display/window/{windowId}/name`) echo `windowId` exactly as sent, as a string. Compare ids as numbers, not strings.{1,8}$/"]
@@ -6011,7 +6307,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `GET /api/v1/display/info` returns display info, a window list (each with per-window `position`/`size`), and the screenshot list — but NOT the virtual screen dimensions (those live on `GET /api/v1/display/input/display-geometry`). 
 - `POST /api/v1/display/input/reset` clears stuck modifiers/buttons.
 - `POST /api/v1/display/input/wait-until` answers 200 even when it times out: the body is `success: false, timedOut: true`, so check `timedOut`, not the status. `timeoutMs` is 100-25000 (default 10000). Too many waits at once on one display give `429 QUEUE_FULL`.
-- `POST /api/v1/display/window/restore` waits by default (`sync`, up to 2 s) until the window manager reports the window as no longer minimized, unlike the other window actions; a window still minimized after that is `500 INPUT_ACTION_FAILED`. With `sync: false` the answer has `state: null`.
+- `POST /api/v1/display/window/restore` waits by default (`sync`, up to 2 s) until the window manager reports the window as no longer minimized, unlike the other window actions; a window still minimized after that is `500 INPUT_ACTION_FAILED`. With `sync: false` the answer's `details.state` is `null`, unless the window was already normal: that no-op answers `details.state: "normal"` with `details.synced: true`.
 
 ## Common errors
 
@@ -6064,7 +6360,7 @@ KIT="https://${P}-${C}-display-1.${N}.containers.hoody.com"
 WID=$(curl -sX POST "$KIT/api/v1/display/window/search?displayId=1" \
   -H 'Content-Type: application/json' \
   -d '{"pattern":"xeyes","name":true,"class":true,"classname":true}' \
-  | jq -r '.windows[0]')
+  | jq -er '.windows[0] // error("No window matched xeyes")') || exit 1
 echo "wid=$WID"
 ```
 
@@ -6093,7 +6389,7 @@ curl -sX POST "$KIT/api/v1/display/keyboard/type?displayId=1" \
   -d '{"text":"hello world","delay":20}'
 ```
 
-`POST /api/v1/display/input/type-at` collapses click-then-type into one call when you only need plain ASCII at one point: `{ x, y, text, delay }`.
+`POST /api/v1/display/input/type-at` collapses click-then-type into one call when you only need plain ASCII at one point: `{ x, y, text, delay }`. End `text` with `\n` to press Return after it (to submit a form or an address bar).
 
 ### 4. Drag from one position to another
 
@@ -6188,7 +6484,7 @@ curl -sf "$KIT/api/v1/display/input/display-geometry?displayId=1" | jq '{width,h
 # → e.g. { width: 8192, height: 4096, screen: 0 }  (the virtual screen, much larger than any monitor)
 ```
 
-Note: the geometry returned is the display's virtual screen (often `8192x4096`), not a physical monitor size. Pointer coordinates (`POST /api/v1/display/input/click-at` and the rest) are in this root-window space. A screenshot of a seamless session can start at a different origin, so a point picked on a screenshot may need an offset first (see Quirks).
+Note: the geometry returned is the display's virtual screen (often `8192x4096`), not a physical monitor size. Pointer coordinates (`POST /api/v1/display/input/click-at` and the rest) are in this screen space, and a screenshot covers the same space, pixel for pixel.
 
 ### 10. Reset stuck modifiers / buttons after a misfired drag
 
@@ -6306,7 +6602,7 @@ Safe to call any time, even when nothing is stuck. Pair it with the start of eve
 
 - `base64` — Return base64-encoded JSON response instead of binary image. Useful for AI agents and systems that can't handle binary data. Accepted values: `true`, `1`, `` (empty) - Return base64 JSON; `false`, `0` - Return binary (default)
 - `displayId` — Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999
-- `region` — Crop the returned image to `x1,y1,x2,y2`. Minimum 10x10 px, maximum 65535 on each axis, `x2 > x1` and `y2 > y1`; anything else is a 400. The coordinates are **capture coordinates**, not root-window coordinates. A seamless session composites only the windows it is showing, so the capture's origin is the bounding box of those windows. Crop against the width and height reported for the capture itself, not against the geometry from `GET /input/display-geometry`.
+- `region` — Crop the returned image to `x1,y1,x2,y2`. Minimum 10x10 px, maximum 65535 on each axis, `x2 > x1` and `y2 > y1`; anything else is a 400. A capture spans the whole screen, so these are screen coordinates: the same ones `POST /input/click-at` takes and `GET /input/display-geometry` describes. The cropped image starts at `x1,y1`: its pixel (x, y) is screen point (x1 + x, y1 + y).
 - `cursor` — Include the pointer position in the response. Only has an effect on the base64 JSON form, which gains a `cursor` object; a binary PNG response has nowhere to put it. Accepted values: `true`, `1`, `` (empty). Anything else is off.
 - `metadata` — Answer the screenshot metadata instead of the image. _(on `GET /api/v1/display/screenshot`)_
 - `timestamp` — Unix timestamp of the screenshot. Use the `timestamp` field returned by screenshot metadata/list endpoints. Do not use `timestamp_human` for path queries. Must be numeric only for security.
@@ -6581,13 +6877,13 @@ To give a script a **public** address: create an alias with `POST /api/v1/proxy/
 - **Untrusted-input code execution** — it's not sandboxed. Use a fresh container (or a stricter runtime) per untrusted caller.
 - Long-lived processes / supervisors → `daemon` (exec is request/response).
 - Schedules outliving the kit → `cron` (`exec.schedules.*` is in-process and dies with the kit).
-- File I/O outside the scripts dir → `files`. Interactive shells → `terminal`. Container lifecycle → `daemon`. Headless web → `browser`.
+- File I/O outside the scripts dir → `files`. Interactive shells → `terminal`. Container lifecycle → `api`. Headless web → `browser`.
 
 ## Prerequisites
 
 - Scripts dir `/hoody/storage/hoody-exec/scripts/{subdomain}/{instanceId}/` (subdomain defaults to `default`, e.g. `…/scripts/default/1/`) is service-managed; write only via `POST /api/v1/exec/scripts/write`.
 - **`require('hoody-sdk')` works with no install step** — it loads the installed npm package from the scripts root's `node_modules`. Exec installs a missing SDK automatically (at startup, or on a script's first `require`), honors a version you declare in the scripts-root `package.json` (an exact version or a tag stops updates, a range keeps them inside it), and stages a newer registry release that the next kit startup swaps in; a running kit never replaces its live copy. (Other `require()`d npm packages are auto-installed on first execution.) Import from `'hoody-sdk'`. The constructor takes an explicit config; `withContainer` is async and returns a container-scoped client. Calls go through the edge proxy, so all the usual capability gates / request hooks / proxy logs apply (see § Source IP Guard in `SKILL-HTTP.md`).
-- The `hoody` CLI is also on `$PATH` if you'd rather shell out: `Bun.$\`hoody projects list\`` from the same script works end-to-end.
+- The `hoody` CLI is also on `$PATH` if you'd rather shell out, but exec sets no account token and the CLI needs one (for a kit command too: it looks the container up). Put `HOODY_TOKEN=<token>` in the script's `.env` companion and pass the script's env on: `Bun.$\`hoody projects list\`.env({ ...process.env })`.
 
 ## Capability URL
 
@@ -6620,13 +6916,13 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 1. `GET /api/v1/exec/logs/list` / `POST /api/v1/exec/logs/search` / `POST /api/v1/exec/logs/read` (one JSON response; `lines` and `tail` pick the slice). For a live tail use `GET /api/v1/exec/logs/stream` (SSE).
 2. `GET /api/v1/exec/monitor/active-requests` / `GET /api/v1/exec/monitor/stats`; per script, `GET /api/v1/exec/monitor/scripts` first, then `POST /api/v1/exec/monitor/script-performance` with one `scriptPath` from that listing (an empty body returns an empty `metrics` stub).
-3. `GET /api/v1/exec/user-openapi/list`, then `POST /api/v1/exec/user-openapi/generate` / `GET /api/v1/exec/user-openapi/spec` (a document built from the current scripts) or `POST /api/v1/exec/user-openapi/merge`. Merge scans scripts only for the `directories` you name (`['scripts']` for the calling deployment's scripts directory — the `<subdomain|default>/<execId>` the kit URL names, unless you pass `subdomain` / `execId`) and otherwise merges just the `specs` you pass; it answers `{success, data, meta}` with the document in `data`. None of the three writes anything to disk, so store a merge result yourself if you need to keep it. `POST /api/v1/exec/user-openapi/validate` checks one script's `.openapi.json` sidecar.
+3. `GET /api/v1/exec/user-openapi/list`, then `POST /api/v1/exec/user-openapi/generate` / `GET /api/v1/exec/user-openapi/spec` (a document built from the current scripts) or `POST /api/v1/exec/user-openapi/merge`. Merge scans scripts only for the `directories` you name (`['scripts']` for the calling deployment's scripts directory — the `<subdomain|default>/<execId>` the kit URL names, unless you pass `subdomain` / `execId`) and otherwise merges just the `specs` you pass; it answers `{success, data}` with the document in `data`. None of the three writes anything to disk, so store a merge result yourself if you need to keep it. `POST /api/v1/exec/user-openapi/validate` checks one script's `.openapi.json` sidecar.
 
 ## Quirks & gotchas
 
-- **Direct execution / top-level `return` is the canonical script shape**; `req`, `res`, `metadata`, `shared`, `console`, and `require` are auto-injected. `module.exports = handler` and many `export default` forms are accepted as compatibility inputs. The pattern-normaliser never rewrites the stored file; it rewrites the code at load time on every request, independent of `validate`.
+- **Direct execution / top-level `return` is the canonical script shape**; `req`, `res`, `metadata`, `shared`, `console`, and `require` are auto-injected. `module.exports = handler` and many `export default` forms are accepted as compatibility inputs. A script may instead export one function per HTTP method (`export async function GET(request)`, `POST`, …; the first argument is a Web `Request`): `HEAD` falls back to `GET`, `OPTIONS` is answered automatically, and any other method without an export answers 405 with `Allow`. The pattern-normaliser never rewrites the stored file; it rewrites the code at load time on every request, independent of `validate`.
 - **Reads redact secrets.** `GET /api/v1/exec/scripts/read` replaces the values of `// @token` and `// @ai-key` lines with `[REDACTED]`. Writing that content back keeps the stored secret for each placeholder; a placeholder with no stored secret to restore is refused.
-- **`req.rawBody` holds the request bytes as received** (a Buffer), next to the parsed `req.body`, whenever the kit parses the body for you. Verify webhook signatures against `req.rawBody`; re-serialising `req.body` does not reproduce the sender's bytes. A script that declares `// @rawBody` gets neither field: `req` stays the raw request stream, so read and hash that stream yourself. `GET` and `HEAD` bodies are never read.
+- **`req.rawBody` holds the request bytes as received** (a Buffer), next to the parsed `req.body`, whenever the kit parses the body for you. Verify webhook signatures against `req.rawBody`; re-serialising `req.body` does not reproduce the sender's bytes. A script that declares `// @rawBody` gets neither field: `req` stays the raw request stream, so read and hash that stream yourself. The line must be exactly `// @rawBody` (or `// @rawBody true` / `false`): with any other text after it the line is ignored and the body is parsed. `GET` and `HEAD` bodies are never read.
 - Prefer top-level code with auto-injected `req`/`res` (or just `return …` from the script body); use `module.exports = handler` only as a compatibility style.
 - `DELETE /api/v1/exec/scripts/delete` needs literal `confirm=true`.
 - `POST /api/v1/exec/scripts/write` defaults `createDirs:true`, `validate:true`. `.md`/`.yaml`/`.env`/any other non-`.ts`/`.js`/`.json` extension skip; `.json` JSON.parse; only `.ts`/`.js` full pipeline.
@@ -6636,7 +6932,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `POST /api/v1/exec/scripts/write`/`delete` accept optional `execId` (alias `exec_id`) + `subdomain`; query wins.
 - `PUT /api/v1/exec/magic-comments/update` and `GET /api/v1/exec/magic-comments/read` resolve `path` like `POST /api/v1/exec/scripts/write`: through the `exec-1` kit URL, `tick.js` is looked up as `default/1/tick.js` first (the `execId` / `subdomain` parameters pick another deployment), then as given relative to the scripts root, so the root-relative `default/1/tick.js` (the write's `resolvedPath`, or its `path` in `GET /api/v1/exec/scripts/list`) also works; the first that exists is used, and none answers 404 `Script not found`.
 - `POST /api/v1/exec/magic-comments/bulk-update` with neither `directory` nor `execId` edits the calling deployment's own tree (`default/1` through `exec-1`); a `directory` resolves like a script path (under the calling deployment's tree first, then relative to the scripts root).
-- `PUT /api/v1/exec/magic-comments/update` sets `// @schedule` (`comments.schedule`; an empty string removes it). The value is a 5-field cron expression (`minute hour day month weekday`) or a nickname (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`), always in UTC, one per file. `// @schedule-timeout <ms>` is the max run time of one scheduled run; HTTP requests keep `@timeout` (a scheduled run without it uses `@timeout`, else 30 s). It is registered at once, as by a write whose header has the line (no `POST /api/v1/exec/schedules/reload`); `GET /api/v1/exec/schedules/list` shows its `nextFire`.
+- `PUT /api/v1/exec/magic-comments/update` sets `// @schedule` (`comments.schedule`; an empty string removes it). The value is a 5-field cron expression (`minute hour day month weekday`) or a nickname (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`), always in UTC, one per file. `// @schedule-timeout <ms>` is the time limit of one scheduled run (the run is released, not stopped), as `@timeout` is for HTTP, where an unstarted response gets 504 and the script keeps running; HTTP requests keep `@timeout` (a scheduled run without it uses `@timeout`, else 30 s). It is registered at once, as by a write whose header has the line (no `POST /api/v1/exec/schedules/reload`); `GET /api/v1/exec/schedules/list` shows its `nextFire`.
 - A `@schedule` fire bypasses the script's `@token`, and a script that also declares `@websocket` is not registered (`GET /api/v1/exec/schedules/history` records it as `incompatible`). The `curl` kit's schedules take 6 fields (seconds first); the `cron` namespace takes 5, in the container's own crontab.
 - **Built-in AI, zero setup — never wire up your own provider/key for AI in a script.** Every endpoint gets these script-scoped bindings, enabled by default (off with `// @ai false`; not on `globalThis`; `pre.js` / `post.js` get none): `ai` (`ai.generate(prompt)` / `ai.stream(prompt)` / `ai.object({ schema, prompt })`), plus `openai` (provider factory), `model` (the default model instance), and `generateText`/`streamText`/`generateObject`. They are already wired to **Hoody AI** (`https://ai.hoody.com/api/v1` unless the kit runs with another `--ai-url`; default model **`hoody-ai/hoody-free`** unless `--ai-default-model` changes it). **No `require()`, no base URL, and no API key**: the key defaults to `container-<hash>`, and `// @ai-key` replaces it. Exec does not price, meter or refuse models; what a model costs and what happens without wallet credit is decided by the AI service. Override per-script with magic comments (`// @ai-model <provider/model>`, `// @ai-temperature 0.7`, `// @ai-max-tokens 2048`, `// @ai-key <custom-tag>`); set a default system prompt via a sibling `<script>.system.md` (or directory-level `_system.md`).
 - **How the built-in AI is called.** `ai` is a name in the script's own scope, not a global: `globalThis.ai` is undefined, a module the script imports does not see it (pass `ai` in), and `pre.js` / `post.js` get no AI helpers. Every helper returns the SDK result object, never a bare string: `(await ai.generate(prompt)).text`, `return (await ai.stream(prompt)).textStream` (streamed as `text/plain`), `(await ai.object({ schema, prompt })).object`. `ai.generate` also takes `{ prompt, system, messages, model, temperature, maxTokens }`. `<script>.system.md` beside the script, else `_system.md` in the same directory, is the default `system` of `ai.generate` / `ai.stream` / `ai.object` (never read it yourself); an explicit `system` option replaces it, and the raw `generateText` / `streamText` / `generateObject` get none, so pass `system` to them yourself. `@ai-model`, `@ai-temperature` and `@ai-max-tokens` set the defaults of the `ai` helpers; `@ai-model` also picks the injected `model` that `generateText({ model, prompt })` takes.
@@ -6644,8 +6940,9 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - **Request body.** `req.body` is parsed JSON, a urlencoded form as an object (a repeated key keeps its last value), or for `multipart/form-data` the text fields only; any other content type is a Buffer. Uploaded files are in `req.files`, one entry per file (empty files and repeated field names included): `{ fieldName, filename, type, size, data }` with `data` a Buffer and `type` the MIME type the runtime reports, which may differ from the part's declared Content-Type and can come from the filename (observed on Bun 1.4.2: `a.pdf` sent as `text/plain` gave `application/pdf`, `a.txt` gave `text/plain;charset=utf-8`, an unknown extension gave `""`), so check the bytes when the type matters.
 - **`pre.js` / `post.js` are per directory.** They run around each HTTP request to a script in their own directory (its `index` included) and never for subdirectories or parent directories, so `admin/pre.js` does not guard `admin/deep/x.js`. `.ts` works too. A non-null return from `pre.js` (or a response it already ended) skips the script; to pass data on, set it on `req`. `post.js` receives the script's return value as `mainResult`, and a non-null return replaces the response. `post.js` still runs after a script that answered with `res.json()` / `res.send()`, but that answer stays as sent and `res.setHeader` then throws: check `res.headersSent` before touching the response. `post.js` also runs after a `pre.js` stop, with the `pre.js` value as `mainResult` (return nothing to keep it). A WebSocket connection runs `pre.js` once, before the handshake (never per message, never `post.js`): a non-null return or a started or ended `res` refuses the upgrade with that error status (else 403) and no socket opens (`req.body` is `null` on an upgrade, so body-reading checks must allow for it); what it sets on `req` reaches `ws.open(socket, req)`; `// @websocket-pre false` in the socket script skips it.
 - **WebSocket scripts register handlers; they do not handle upgrades.** Both `// @websocket` and `// @mode worker` are required, or the socket is closed with `4400`. Assign `ws.open = (socket, req) => …`, `ws.message = (socket, data) => …`, `ws.close = (socket, code, reason) => …` (or `ws.on('message', …)`); never start a `ws` server or call `handleUpgrade`. The script body runs when the first socket connects, with `metadata.method === 'WEBSOCKET_INIT'`: once per script, or for a dynamic route once per route value while it has sockets (after that room's last socket closes, the next connection runs the body again with fresh variables; a changed script file serves new sockets from a fresh run, while sockets already open keep the old handlers and connection pool, so a broadcast from one run does not reach the other). Its top-level variables are shared by all sockets of that run, and its `req` / `metadata` are the first socket's request (`metadata.query` its query string alone, `metadata.parameters` its route params), so read each socket's own query from `socket.data.query` (or the `req` that `ws.open(socket, req)` receives) and keep per-connection state on `socket.data` (which also holds `headers`, `ip`). `data` is a string for text frames and a Buffer for binary ones; `socket.send` / `ws.broadcast(data, exceptSocket?)` send a plain object or array as JSON text and a string, Buffer or other binary value as given. An HTTP request to the same script re-runs the body and sees the same `ws.connections` / `ws.broadcast`.
-- **Helper files and other directives.** Load a file of your own with `await import('./lib/x.js')` (resolved from the script's file). The helper exports with `export function x` or `module.exports = { x }`, then `const { x } = await import(…)`; a bare `module.exports = fn` arrives as `.default`. The helper can `require('./sibling.js')`; `require('./lib/x.js')` from the script body works too (resolved from the script's file). A helper file the script loads with `require` or an ES import statement sees the server's own `process.env`, not the script's `.env` values, so a key that only `quote.env` sets is `undefined` inside `./lib/rates.js`. Read the value in the script and pass it in (`const { rate } = await import('./lib/rates.js'); return { eur: await rate(process.env.RATES_KEY, 'USD', 'EUR') };`). The script's `process.env` is the kit's environment plus every `_default.env` from the scripts root down to the script's directory, then the script's own `<name>.env`, merged per variable (the nearest file wins). `__dirname` and `__filename` are not defined. `// @description …`, `// @tags a,b` and `// @label x` only describe the script for `GET /api/v1/exec/scripts/list` (which filters on `label` / `tags`) and change nothing at runtime. `// @enabled false` answers 404 without running the script; repeat `// @token` to accept several tokens; `@token` takes one word (the rest of the line is ignored, with a warning). A returned object is always the JSON body: `return { status: 301, body }` answers 200 with that object, so set a status with `res.status()`.
-- **URL, query and CORS.** `req.url` is the path and query (`/x?a=1`), not a full URL. `metadata.query` is decoded like a form (`+` is a space) and keeps only the last value of a repeated key. On HTTP requests route params are merged into `metadata.query` and `metadata.parameters` (and a socket's `socket.data.query`) over query keys of the same name, so for the query string alone use `new URL(req.url, 'http://x').searchParams` (`.getAll('key')` for every value). By default each response reflects the caller's `Origin` and sends `Access-Control-Allow-Credentials: true`; `// @cors-credentials false` keeps the reflection without it. With any `@cors` line (`*` reflects any origin, `https://app.example` one origin, `none` blocks), credentials are sent only with `// @cors-credentials true`. These directives shape the script's own responses: an ordinary `OPTIONS` preflight is answered by the kit's global policy (reflected origin, credentials) and never reaches the script (platform hook dispatch is the exception).
+- **Helper files and other directives.** Load a file of your own with `await import('./lib/x.js')` (resolved from the script's file). The helper exports with `export function x` or `module.exports = { x }`, then `const { x } = await import(…)`; a bare `module.exports = fn` arrives as `.default`. The helper can `require('./sibling.js')`: a helper's relative paths count from the helper's own directory (a `./round.js` inside the helper `./lib/price.js` is the `round.js` next to that helper, not next to the script); `require('./lib/x.js')` from the script body works too (resolved from the script's file). A helper file runs in its deployment's context (the one `// @mode worker` scripts of that exec ID share): it sees the script's `fetch` and `process.env` (the script's `.env` values included), and its module-level state (`const items = []`, `globalThis.store ??= {}` in the helper) is kept between requests in both modes, separate per exec ID, in memory like `shared`. A relative helper path counted from the wrong directory (`require('../../lib/store.js')` one level too high) is looked up from each parent directory up to the deployment's own directory and loads the one file it matches, with a warning naming the path to write; several matches or none fail with the paths tried. The script's `process.env` is the kit's environment plus every `_default.env` from the scripts root down to the script's directory, then the script's own `<name>.env`, merged per variable (the nearest file wins). `__dirname` and `__filename` are not defined in the script itself (using one throws), and a relative path is not resolved from the script's directory: in the script and its helpers, `new Database('app.sqlite')`, `fs.writeFileSync('x.json', …)`, `Bun.write` and `process.cwd()` use the deployment's own data directory (persistent, separate per exec ID). Read a file that sits beside the script with `fs.readFileSync(require.resolve('./data.json'), 'utf8')`, or build its path from `import.meta.dirname`. `// @description …`, `// @tags a,b` and `// @label x` only describe the script for `GET /api/v1/exec/scripts/list` (which filters on `label` / `tags`) and change nothing at runtime. `// @enabled false` answers 404 without running the script; repeat `// @token` to accept several tokens; a caller sends the token as `Authorization: Bearer`, as the password of `Authorization: Basic`, as `X-Token` or as `?token=`, and only the first token found in that order is compared (a wrong Bearer token fails even beside a good `X-Token`; an `Authorization` header with another scheme, or a Basic value without a password, is skipped); `@token` takes one word (the rest of the line is ignored, with a warning). A returned object is always the JSON body: `return { status: 301, body }` answers 200 with that object, so set a status with `res.status()`.
+- **`cookie` is v2.** `const { parseCookie, stringifySetCookie } = require('cookie')`: `parseCookie(req.headers.cookie ?? '')` reads cookies, `stringifySetCookie({ name: 'sid', value: 'abc', httpOnly: true, path: '/' })` writes one (`stringifySetCookie(name, value, options)` works too). The v1 `cookie.parse(header)` and `cookie.serialize(name, value, options)` also work in scripts (`require`, `POST /api/v1/exec/sdk/import`, the preloaded `cookie`).
+- **URL, query and CORS.** `req.url` is the path and query (`/x?a=1`), not a full URL. `metadata.query` is decoded like a form (`+` is a space) and keeps only the last value of a repeated key. On HTTP requests route params are merged into `metadata.query` and `metadata.parameters` (and a socket's `socket.data.query`) over query keys of the same name, so for the query string alone use `new URL(req.url, 'http://x').searchParams` (`.getAll('key')` for every value). By default each response reflects the caller's `Origin` and sends `Access-Control-Allow-Credentials: true`; `// @cors-credentials false` keeps the reflection without it. With any `@cors` line (`*` reflects any origin, `https://app.example` one origin, `none` blocks), credentials are sent only with `// @cors-credentials true`. For a literal `Access-Control-Allow-Origin: *`, call `res.setHeader('Access-Control-Allow-Origin', '*')` and add `// @cors-credentials false`: the policy is applied before the script runs, so the script's header is sent as set, but without that line `Access-Control-Allow-Credentials: true` goes out beside it and browsers refuse the pair on a credentialed request. These directives shape the script's own responses: an ordinary `OPTIONS` preflight is answered by the kit's global policy (reflected origin, credentials) and never reaches the script (platform hook dispatch is the exception).
 - **`.md` URLs serve Markdown files, never scripts.** `/guide.md` serves the file `guide.md` as `text/markdown`, behind the `@token` of `guide.ts` / `guide.js` beside it; a script named `guide.md.ts` is never reached. (A proxy hook names its target script, so it can still run one for a `.md` URL.)
 
 ## Common errors
@@ -6814,7 +7111,7 @@ curl -sf "$KIT/api/v1/exec/user-openapi/list" | jq '.data.scripts[] | {path, rou
 curl -sf "$KIT/api/v1/exec/user-openapi/spec?format=json" > /tmp/user-scripts.openapi.json
 ```
 
-**Step 3 — merge a hand-written spec layer** (auth / examples / hosts) on top of the auto-generated one with `POST /api/v1/exec/user-openapi/merge`. Merge generates from the scripts only for the `directories` you name (`scripts` means the calling deployment's scripts directory, not every deployment's); without them it merges just the `specs` you pass. It answers `{success, data, meta}` with the merged document in `data`.
+**Step 3 — merge a hand-written spec layer** (auth / examples / hosts) on top of the auto-generated one with `POST /api/v1/exec/user-openapi/merge`. Merge generates from the scripts only for the `directories` you name (`scripts` means the calling deployment's scripts directory, not every deployment's); without them it merges just the `specs` you pass. It answers `{success, data}` with the merged document in `data`.
 
 ```bash
 # /tmp/layer.json holds one hand-written OpenAPI document object
@@ -6847,7 +7144,7 @@ Per-request execution logging is ON by default (`@log-level` defaults to `standa
 
 ### 8. Monitor active requests + per-script stats
 
-**Goal:** "is anything stuck?" + "which script is the hot path?". `GET /api/v1/exec/monitor/stats` is a single snapshot; `GET /api/v1/exec/monitor/active-requests` lists in-flight HTTP/WS; `GET /api/v1/exec/monitor/scripts` lists every script with traffic, with its request and error counters (sort by `requests`, `errors`, `p95`, `ws_active` or the default `lastActivity`); `POST /api/v1/exec/monitor/script-performance` then reports on ONE script, named by the `scriptPath` from that listing. An empty body returns the stub `{"metrics":{}}`, which means "no script asked for", not "no traffic".
+**Goal:** "is anything stuck?" + "which script is the hot path?". `GET /api/v1/exec/monitor/stats` is a single snapshot; `GET /api/v1/exec/monitor/active-requests` lists in-flight script HTTP requests (for WebSocket counts use `GET /api/v1/exec/monitor/stats` `websocket.active`, or each script's `activeWs` from `GET /api/v1/exec/monitor/scripts`); `GET /api/v1/exec/monitor/scripts` lists every script with traffic, with its request and error counters (sort by `requests`, `errors`, `p95`, `ws_active` or the default `lastActivity`); `POST /api/v1/exec/monitor/script-performance` then reports on ONE script, named by the `scriptPath` from that listing. An empty body returns the stub `{"metrics":{}}`, which means "no script asked for", not "no traffic".
 
 ```bash
 curl -sf "$KIT/api/v1/exec/monitor/stats" \
@@ -7030,12 +7327,7 @@ if (!doc) { res.status(400); return { error: 'document missing' }; }
 return { title: req.body.title, filename: doc.filename, type: doc.type, size: doc.size, text: doc.data.toString('utf8') };
 ```
 
-**Step 2 — post a form** (any HTTP client; here curl with a 5-byte `a.txt` holding `hello`):
-
-```
-curl -s "https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload" -F title=notes -F 'document=@a.txt;type=text/plain'
-# → {"title":"notes","filename":"a.txt","type":"text/plain;charset=utf-8","size":5,"text":"hello"}   (the type observed for a .txt file on Bun 1.4.2)
-```
+**Step 2 — post a form.** Submit a `multipart/form-data` request to the script's `/upload` URL (`https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload`) with the text field `title=notes` and a file field named `document`. Uploading `a.txt` containing the five bytes `hello` returns `title: "notes"`, `filename: "a.txt"`, `size: 5` and `text: "hello"`; `type` is the MIME type reported by the runtime (`text/plain;charset=utf-8` on Bun 1.4.2).
 
 ## Reference
 
@@ -7097,9 +7389,10 @@ curl -s "https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload" -F title=notes 
 **Param notes:**
 
 - `file` — File query parameter
-- `type` — Type query parameter
+- `type` — Which logs to clear. Any other value is refused with 400. _(on `DELETE /api/v1/exec/logs/clear`)_
 - `olderThanDays` — OlderThanDays query parameter
 - `confirm` — Safety confirmation; must be the literal `true` or the request is rejected with 400.
+- `type` — Which logs to list. Any other value is refused with 400. _(on `GET /api/v1/exec/logs/list`)_
 - `limit` — Limit query parameter
 - `follow` — Keep the stream open and send new lines as they are written. Default `true`. Accepts `true`/`false`/`1`/`0`.
 
@@ -7110,6 +7403,7 @@ curl -s "https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload" -F title=notes 
   - `executionId` — Execution whose log to read: 1 to 64 letters, digits, hyphens or underscores. An empty string is the same as omitting it.
   - `lines` — Maximum number of lines to return, 1 to 10000. Default 100. A string of digits in that range is also accepted (surrounding whitespace and leading zeros are ignored); any other value is refused with a 400.
 - `POST /api/v1/exec/logs/search` body — `{ query: string, regex: string, files: string[], limit: int=1000, caseSensitive: bool=false }`
+  - `regex` — Regular expression to search for, at most 64 characters (a longer one is refused with 400 `Invalid regex: pattern exceeds 64 chars`). Takes the place of `query` when both are sent.
   - `caseSensitive` — Case Sensitive
 
 ### `magicComments` (5) — API
@@ -7131,11 +7425,11 @@ curl -s "https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload" -F title=notes 
 
 **Body shapes:**
 
-- `PUT /api/v1/exec/magic-comments/update` body — `{ path*: string, comments*: { enabled: bool|null, token: string|null | string[], mode: "worker" | "serverless" | null, timeout: int|null | string, log-level: "none" | "minimal" | "standard" | "full" | "debug" | null, debug: bool|null, log-request-body: bool|null | "full" | "redacted" | "off", log-response-body: bool|null | "full" | "redacted" | "off", log-max-body-size: int|null | string, log-exclude-headers: string[]|null, log-retention-days: int|null, debug-instrument: bool|null, await-promises: bool|null, concurrent: bool|null | int, cors: string|null, cors-credentials: bool|null, cors-methods: string|null, cors-headers: string|null, cors-max-age: int|null, websocket: bool|null, websocket-pre: bool|null, ai: bool|null, ai-model: string|null, ai-temperature: number|null, ai-max-tokens: int|null, ai-key: string|null, description: string|null, tags: string[]|null, label: string|null, schedule: string|null, schedule-timeout: int|null | string, remote-messages: bool|null, remote-call: bool|null, remote-eval: bool|null, remote-token: "[REDACTED]" | null | object | object[], tokens: string[]|null }, dry_run: bool|null=false, execId: string, exec_id: string, subdomain: string }`
+- `PUT /api/v1/exec/magic-comments/update` body — `{ path*: string, comments*: { enabled: bool|null, token: string|null | string[], mode: "worker" | "serverless"|null, timeout: int|null | string, log-level: "none" | "minimal" | "standard" | "full" | "debug"|null, debug: bool|null, log-request-body: bool|null | "full" | "redacted" | "off", log-response-body: bool|null | "full" | "redacted" | "off", log-max-body-size: int|null | string, log-exclude-headers: string[]|null, log-retention-days: int|null, debug-instrument: bool|null, await-promises: bool|null, concurrent: bool|null | int, cors: string|null, cors-credentials: bool|null, cors-methods: string|null, cors-headers: string|null, cors-max-age: int|null, websocket: bool|null, websocket-pre: bool|null, ai: bool|null, ai-model: string|null, ai-temperature: number|null, ai-max-tokens: int|null, ai-key: string|null, description: string|null, tags: string[]|null, label: string|null, schedule: string|null, schedule-timeout: int|null | string, remote-messages: bool|null, remote-call: bool|null, remote-eval: bool|null, remote-token: "[REDACTED]"|null | object | object[], tokens: string[]|null }, dry_run: bool|null=false, execId: string, exec_id: string, subdomain: string }`
   - `comments` — Directives to set, keyed by directive name. … Keys that are not directives are ignored. A value that would not read back from the script as sent is refused with a 400, and so is a CORS sub-directive set in the same request as `cors: none`, which the script would ignore.
   - `dry_run` — When true, the file is not written: the response returns its `current` and `proposed` magic comments. When false (the default), the change is written and the response returns `previous` and `updated`.
   - `execId` — Optional execution scope in request body. Query execId/exec_id takes precedence when both are provided. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
-- `POST /api/v1/exec/magic-comments/bulk-update` body — `{ directory: string|null, execId: string|null, comments*: { enabled: bool|null, token: string|null | string[], mode: "worker" | "serverless" | null, timeout: int|null | string, log-level: "none" | "minimal" | "standard" | "full" | "debug" | null, debug: bool|null, log-request-body: bool|null | "full" | "redacted" | "off", log-response-body: bool|null | "full" | "redacted" | "off", log-max-body-size: int|null | string, log-exclude-headers: string[]|null, log-retention-days: int|null, debug-instrument: bool|null, await-promises: bool|null, concurrent: bool|null | int, cors: string|null, cors-credentials: bool|null, cors-methods: string|null, cors-headers: string|null, cors-max-age: int|null, websocket: bool|null, websocket-pre: bool|null, ai: bool|null, ai-model: string|null, ai-temperature: number|null, ai-max-tokens: int|null, ai-key: string|null, description: string|null, tags: string[]|null, label: string|null, schedule: string|null, schedule-timeout: int|null | string, remote-messages: bool|null, remote-call: bool|null, remote-eval: bool|null, remote-token: "[REDACTED]" | null | object | object[], tokens: string[]|null }, extension: string|null=".ts", recursive: bool|null=true, dry_run: bool|null=false }`
+- `POST /api/v1/exec/magic-comments/bulk-update` body — `{ directory: string|null, execId: string|null, comments*: { enabled: bool|null, token: string|null | string[], mode: "worker" | "serverless"|null, timeout: int|null | string, log-level: "none" | "minimal" | "standard" | "full" | "debug"|null, debug: bool|null, log-request-body: bool|null | "full" | "redacted" | "off", log-response-body: bool|null | "full" | "redacted" | "off", log-max-body-size: int|null | string, log-exclude-headers: string[]|null, log-retention-days: int|null, debug-instrument: bool|null, await-promises: bool|null, concurrent: bool|null | int, cors: string|null, cors-credentials: bool|null, cors-methods: string|null, cors-headers: string|null, cors-max-age: int|null, websocket: bool|null, websocket-pre: bool|null, ai: bool|null, ai-model: string|null, ai-temperature: number|null, ai-max-tokens: int|null, ai-key: string|null, description: string|null, tags: string[]|null, label: string|null, schedule: string|null, schedule-timeout: int|null | string, remote-messages: bool|null, remote-call: bool|null, remote-eval: bool|null, remote-token: "[REDACTED]"|null | object | object[], tokens: string[]|null }, extension: string|null=".ts", recursive: bool|null=true, dry_run: bool|null=false }`
   - `directory` — Directory to edit, resolved like a script path: under the scope scripts/write would use for the same call first (the body `execId`, with the Host's subdomain and execId filling what the body leaves out: `<subdomain|default>/<execId>`), as `<scope>/<directory>` unless it already starts with that …
   - `execId` — Without `directory`: edits the whole `default/<execId>` tree (or `<subdomain>/<execId>` when taken from the Host). With `directory`: the execId of the scope `directory` resolves under first (`<subdomain|default>/<execId>/<directory>`, the subdomain from the Host). …
   - `dry_run` — When true, no file is written: the response lists every matching file under `would_affect`, each with its `current` and `proposed` magic comments, or with an `error` in their place when that file could not be processed. …
@@ -7332,17 +7626,33 @@ curl -s "https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload" -F title=notes 
   - `includeMetadata` — Include Metadata
   - `execId` — Optional execution scope in request body. Query execId/exec_id takes precedence when both are provided. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
 - `POST /api/v1/exec/scripts/move` body — `{ from*: string, to*: string, overwrite: bool=false, execId: string, exec_id: string, subdomain: string }`
-- `POST /api/v1/exec/validate/script` body — `{ code*: string, language: string, extension: string }`
+- `POST /api/v1/exec/validate/script` body — `{ code*: string, language: string, extension: string, typecheck: bool=false }`
+  - `typecheck` — When true, also type-check the code with the TypeScript compiler against the hoody-sdk declarations in `<scripts>/node_modules` and the script globals (`hoody`, `req`, `res`, …). Imports TypeScript cannot resolve are not reported; types from relative helper files are not checked (`any`). …
 - `POST /api/v1/exec/validate/dependencies` body — `{ code*: string }`
 - `POST /api/v1/exec/validate/return-type` body — `{ typeDefinition*: string, value*: any }`
   - `typeDefinition` — Type Definition
   - `value` — Arbitrary JSON value to validate against the declared return type
 - `POST /api/v1/exec/validate/syntax` body — `{ code*: string }`
-- `POST /api/v1/exec/validate/typescript` body — `{ code*: string }`
-- `POST /api/v1/exec/scripts/write` body — `{ path*: string, content*: string, createDirs: bool=true, validate: bool=true, ifNotExists: bool=false, execId: string, exec_id: string, subdomain: string }`
+- `POST /api/v1/exec/validate/typescript` body — `{ code*: string, typecheck: bool=false }`
+  - `typecheck` — When true, also type-check the code with the TypeScript compiler against the hoody-sdk declarations in `<scripts>/node_modules` and the script globals (`hoody`, `req`, `res`, …). Imports TypeScript cannot resolve are not reported; types from relative helper files are not checked (`any`). …
+- `POST /api/v1/exec/scripts/write` body — `{ path*: string, content*: string, createDirs: bool=true, validate: bool=true, ifNotExists: bool=false, typecheck: bool=false, execId: string, exec_id: string, subdomain: string }`
   - `content` — Content. … In a `.js` / `.ts` script or a `.sdk.json` marker, a placeholder with no stored value (a new file, or no matching line) is refused with 400 and `details.code` `REDACTED_SECRET_UNRESOLVED`; the placeholder is never stored as a secret.
   - `createDirs` — Create Dirs
   - `ifNotExists` — … When true and the name already exists as anything (a file, a directory, a live or dangling symlink, which is never followed), nothing is written and the answer is 409; a symlinked ancestor directory is still 403. The existence check and the create are one atomic step, so of several concurrent creates (from any process) exactly one succeeds. …
+  - `typecheck` — … Imports TypeScript cannot resolve are not reported; types from relative helper files are not checked (`any`). … Only with validation on, for a .js/.ts path: a type error refuses the write with 400 (`details.validation.typecheck.diagnostics`); a check that could not run does not.
+
+### `sdkTypes` (1) — Sdk-types
+
+| Method | Summary | Params |
+|--------|---------|--------|
+| `GET /api/v1/exec/sdk-types` | Get Sdk Types | `?kit` `?q` `?limit` `?raw` |
+
+**Param notes:**
+
+- `kit` — Kit to list: a client property (`files`, `api`, `exec`, `sqlite`, …), or `client` for the client's own methods (`withContainer`, `login`, …). Any letter case. An unknown kit is a 404 with `details.kits`.
+- `q` — Words, all of which must appear in the method's path, name or summary (any letter case).
+- `limit` — Most methods to return, 1 to 100 (default 20). `total` counts every match.
+- `raw` — When true, also return the `.d.ts` text of the files declaring the returned methods (`dts`, at most 256 KB). Needs `kit` or `q`.
 
 ### `sdks` (4) — Sdk
 
@@ -7359,7 +7669,7 @@ curl -s "https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload" -F title=notes 
 
 **Body shapes:**
 
-- `POST /api/v1/exec/sdk/import` body — `{ execId: string|null, source_url*: string, source_auth: { type*: "bearer" | "basic", token: string, username: string, password: string } (at least one of: token | username+password required)|null, middleware: { pre: string|null, post: string|null }|null, magic_comments: { enabled: bool|null, token: string|null | string[], mode: "worker" | "serverless" | null, timeout: int|null | string, log-level: "none" | "minimal" | "standard" | "full" | "debug" | null, concurrent: bool|null | int, cors: string|null, websocket: bool|null }|null, force: bool|null=false }`
+- `POST /api/v1/exec/sdk/import` body — `{ execId: string|null, source_url*: string, source_auth: { type*: "bearer" | "basic", token: string, username: string, password: string } (at least one of: token | username+password required)|null, middleware: { pre: string|null, post: string|null }|null, magic_comments: { enabled: bool|null, token: string|null | string[], mode: "worker" | "serverless"|null, timeout: int|null | string, log-level: "none" | "minimal" | "standard" | "full" | "debug"|null, concurrent: bool|null | int, cors: string|null, websocket: bool|null }|null, force: bool|null=false }`
   - `execId` — Exec ID the SDK is imported under: 1 to 64 lowercase letters or digits. When omitted, it is taken from the Host header.
   - `source_url` — HTTPS URL of the OpenAPI document to import. It must name a domain (not an IP address), use port 443, and end in `.json`, `.yaml`, `/documentation/json` or `/documentation/yaml`.
   - `source_auth` — Credentials sent when fetching `source_url`: either `{"type": "bearer", "token": "…"}` or `{"type": "basic", "username": "…", "password": "…"}`. Credentials that could not be sent as given are refused with a 400, never dropped. Other members are ignored.
@@ -7513,11 +7823,11 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - **Exclusions decide which paths are journalled.** Built-in dev-dir excludes (`node_modules`, `target`, `.next`, `.nuxt`, `.svelte-kit`, `.turbo`, `__pycache__`, `.venv`, `venv`, `env`, `__pypackages__`, `.tox`, `.nox`, `bower_components`, …) skip journaling unless the deployment turned the dev-dir exclusions off. `.git` is always excluded regardless of that setting (separate hardcoded check, not part of the toggleable list). The deployment can add further excludes of its own. This is why "I wrote to `node_modules/x` and saw no journal entry" is expected.
 - **Journal does NOT cover everything by default.** Live behaviour observed: a fresh `PUT` (create) and an overwriting `PUT` (write) on `/home/user/...` produce entries; URL downloads (`?download=`) and archive extraction are NOT journaled — those write through paths with no journal hook. `PATCH /api/v1/files/chmod/{path}`, `PATCH /api/v1/files/chown/{path}`, `PUT /{path}?touch`, `?append=true` and copy/move ARE recorded. Always call `POST /api/v1/journal/flush` then `GET /api/v1/journal` (or `?history=1`) to inspect what was actually recorded — don't assume coverage.
 - **Built-in dev-dir exclude list always skips journaling** for `node_modules`, `__pycache__`, `.venv`, `target`, `.next`, `.nuxt`, etc. — even on `/home/user/...` paths. Only the deployment can turn these off, at kit start. `.git` is hardcoded to ALWAYS be excluded and stays excluded even then.
-- **`HEAD` answers like `GET` with no body** on both routes: `HEAD /api/v1/files/{path}` returns the status and headers its `GET` would, and so does `HEAD /{path}`. It carries no metadata body; for a JSON metadata envelope use `GET /api/v1/files/stat/{path}`.
+- **`HEAD` returns no body** on both routes. `HEAD /api/v1/files/{path}` ignores `Range`, so its status and headers need not match a ranged `GET`. It carries no metadata body; for a JSON metadata envelope use `GET /api/v1/files/stat/{path}`.
 - **`PATCH /api/v1/files/chown/{path}` to root is rejected** with `400 Cannot change ownership to root (UID 0)` (owner) or `400 Cannot change group to root (GID 0)` (group) — even where the deployment enabled chown. Use a non-root user (`nobody`, `user`, …).
 - **FUSE mount paths live under a configured mount directory** (`/hoody/mounts/permanent` by default, fixed by the deployment at kit start). An absolute `mount_path` must be under it (`400 Mount path must be under the configured mount directory` otherwise); a relative `mount_path` is resolved under it; an omitted one becomes `<mount dir>/mount_<id>`. If the path already exists and is not a symlink, the create fails with `409 Mount path already exists and is not a symlink`.
 - **Listing-style query params (`?downloads`, `?download_history`, `?extractions`, `?extraction_history`) are honoured on the WebDAV root route, NOT on `/api/v1/files/...`** — calling `GET /api/v1/files/<dir>?downloads` returns a regular directory listing (the query is ignored). Use `GET /<dir>?downloads` (or `GET /?download_history` for the global feed).
-- **Mount the whole FS as a local drive on the USER's machine (client-side WebDAV).** Because the kit serves a WebDAV API at its URL root, the OS's built-in WebDAV client can mount the container's files as a drive/folder: on **Windows** *Map network drive* to `https://{P}-{C}-files-1.{N}.containers.hoody.com/`, on **macOS** Finder → *Connect to Server* to the same URL. This is the inverse of the server-side FUSE mounts (which mount remote backends INTO the container).
+- **Mount the whole FS as a local drive on the USER's machine (client-side WebDAV).** Because the kit serves a WebDAV API at its URL root, the OS's built-in WebDAV client can mount the container's files as a drive/folder: on **Windows** *Map network drive* to `https://{P}-{C}-files-1.{N}.containers.hoody.com/`, on **macOS** Finder → *Connect to Server* to the same URL. This is the inverse of the server-side FUSE mounts (which mount remote backends INTO the container); those have no safe save: the upload that reaches the backend last wins, so keep one writer per file there.
 
 ## Common errors
 
@@ -7526,8 +7836,8 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - 400 Cannot preview a directory as archive.
 - 400 Unknown operation -- POST needs one query op.
 - 400 Missing query parameter or request body -- PATCH needs op or body.
-- Refusals on the WebDAV path route (`/{path}`) answer JSON `{success: false, error, code}`: `ACCESS_FORBIDDEN` 403, `RESOURCE_NOT_FOUND` 404, `INVALID_PATH` 400, `PATH_CONFLICT` 409, `OVERWRITE_REFUSED` 412 (a WebDAV `COPY`/`MOVE` with `Overwrite: F` onto an existing target), `DIRECTORY_EXISTS` 405 (creating a directory that exists), `PAYLOAD_TOO_LARGE` 413, `UPLOAD_INCOMPLETE` 400 and `REMOTE_UPLOAD_FAILED` 502 (an upload to a remote backend), and `MOUNT_PATH_RESERVED` 409 for a change to a path a mount holds. `INVALID_PARAMETER` means the request itself is wrong; a failure that a changed request would not fix (an OS error, a backend failure, the concurrent-download limit's 429) carries no `code`, so branch on the status. On `/api/v1/files/{path}` many refusals carry no `code` — a REST copy or move onto an existing target without overwrite is 409 `{success: false, error}`. The REST codes are `INVALID_PATH` 400 (`{success: false, error: "Invalid path", code: "INVALID_PATH"}`), `ACCESS_FORBIDDEN` 403 (a path rule), `CONTAINS_SERVICE_STORAGE` 409, `FILE_MOVE_CROSSES_DEVICES` 409, `INVALID_PARAMETER` 400 on some parameter checks, and `FILE_PATH_BUSY`, `FILE_PATH_CHANGED` and `MOUNT_PATH_RESERVED` 409 for a change to a path that is in use or held for a mount. When `code` is absent, branch on the HTTP status.
-- A URL download streams into a hidden part file, `.hoody-download-<id>.part`, in the destination folder, and the file gets its final name only once it is complete. Cancelling the download (or a failure or timeout) removes that part file: where inode numbers identify a file (local filesystems such as ext4, xfs, btrfs, tmpfs) only if its inode is still the one the download created, and elsewhere (FUSE mounts, network filesystems) by its download-specific name while it is a regular file.
+- Refusals on the WebDAV path route (`/{path}`) answer JSON `{success: false, error, code}`: `ACCESS_FORBIDDEN` 403, `RESOURCE_NOT_FOUND` 404, `INVALID_PATH` 400, `PATH_CONFLICT` 409, `OVERWRITE_REFUSED` 412 (a WebDAV `COPY`/`MOVE` with `Overwrite: F` onto an existing target), `DIRECTORY_EXISTS` 405 (creating a directory that exists), `PAYLOAD_TOO_LARGE` 413, `UPLOAD_INCOMPLETE` 400 and `REMOTE_UPLOAD_FAILED` 502 (an upload to a remote backend), and `MOUNT_PATH_RESERVED` 409 for a change to a path a mount holds. `INVALID_PARAMETER` means the request itself is wrong; a failure that a changed request would not fix (an OS error, a backend failure, the concurrent-download limit's 429) carries no `code`, so branch on the status. On `/api/v1/files/{path}` many refusals carry no `code` — a REST copy or move onto an existing target without overwrite is 409 `{success: false, error}`. REST codes include `INVALID_PATH` 400 (`{success: false, error: "Invalid path", code: "INVALID_PATH"}`), `ACCESS_FORBIDDEN` 403 (a path rule), `CONTAINS_SERVICE_STORAGE` 409, `FILE_MOVE_CROSSES_DEVICES` 409, `INVALID_PARAMETER` 400 on some parameter checks, and `FILE_PATH_BUSY`, `FILE_PATH_CHANGED` and `MOUNT_PATH_RESERVED` 409 for a change to a path that is in use or held for a mount. `PERMISSIONS_NOT_APPLIED` and `OWNER_NOT_APPLIED` 409 mean the filesystem does not retain the requested permission bits or owner, as on a mount of remote storage: use storage that retains them when you need them. A chmod, or an upload whose requested permissions are narrower than the file's fixed ones, changes nothing; an upload requesting broader permissions writes its whole body under the fixed ones and still answers `PERMISSIONS_NOT_APPLIED`, so read the message before deciding whether to resend the body. When `code` is absent, branch on the HTTP status.
+- A URL download streams into a hidden part file, `.hoody-download-<id>.part`, in the destination folder, and the file gets its final name only once it is complete. Cancelling the download (or a failure or timeout) removes that part file on a local filesystem (ext4, xfs, btrfs, tmpfs) only if its inode is still the one the download created. On FUSE mounts and network filesystems the partial file is kept, so check the destination for leftovers.
 
 ## Related namespaces
 
@@ -7662,7 +7972,7 @@ The response carries `has_more`. `next_after_id` is set only while `has_more` is
 ```bash
 LAST=${LAST:-0}   # cursor; persist client-side
 R=$(curl -sf "$KIT/api/v1/journal?after_id=$LAST&limit=200")
-echo "$R" | jq '{count, has_more, ops: [.entries[] | {id, seq, op, path, ts, size_after, hash}]}'
+echo "$R" | jq '{count, has_more, ops: [.entries[] | {id, seq, op, path, ts, size_after, before, after, hash}]}'   # before/after: content SHA-256; hash: move/copy
 LAST=$(echo "$R" | jq --argjson last "$LAST" '.next_after_id // (.entries | last | .id) // $last')
 ```
 
@@ -7796,7 +8106,7 @@ curl -sf -X DELETE "$KIT/api/v1/backends/$BID"
 KIT="https://${P}-${C}-files-1.${N}.containers.hoody.com"
 DIR=/home/user/files-examples-cleanup
 curl -sf -X DELETE "$KIT/api/v1/files$DIR"
-# → {"success":true,"path":"…"}
+# → 204 No Content (no response body)
 ```
 
 **Step 2 — verify.** A `404` from `GET /api/v1/files/stat/{path}` is what you want.
@@ -7914,7 +8224,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
   - `client_secret` — OAuth Client Secret. Leave blank normally.
   - `commit_retries` — Max number of times to try committing a multipart file.
   - `description` — Description of the remote.
-  - `encoding` — The encoding for the backend. See the [encoding section in the overview](/overview/#encoding) for more info.
+  - `encoding` — The encoding for the backend.
   - `impersonate` — Impersonate this user ID when using a service account. Setting this flag allows Hoody, when using a JWT service account, to act on behalf of another user by setting the as-user header. The user ID is the Box identifier for a user. …
   - `list_chunk` — Size of listing chunk 1-1000.
   - `owned_by` — Only show items owned by the login (email address) passed in.
@@ -8102,7 +8412,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 - `POST /api/v1/backends/oracleobjectstorage` body — `{ attempt_resume_upload: bool=false, chunk_size: string="5242880", compartment: string="", copy_cutoff: string="4999610368", copy_timeout: int=60, decompress: bool=false, description: string="", disable_checksum: bool=false, encoding: string="50331650", endpoint: string="", leave_parts_on_error: bool=false, max_upload_parts: int=10000, namespace*: string="", no_check_bucket: bool=false, provider*: "no_auth"="no_auth", region*: string="", sse_customer_algorithm: "" | "AES256"="", sse_customer_key: ""="", sse_customer_key_sha256: ""="", sse_kms_key_id: ""="", storage_tier: "Standard" | "InfrequentAccess" | "Archive"="Standard", upload_concurrency: int=10, upload_cutoff: string="209715200" }` — oracleobjectstorage backend configuration
   - _(23 fields carry longer docs — see the spec shipped as `hoody-sdk/openapi.json` for full field semantics)_
 - `POST /api/v1/backends/pcloud` body — `{ auth_url: string="", client_credentials: bool=false, client_id: string="", client_secret: string="", description: string="", encoding: string="50438146", hostname: "api.pcloud.com" | "eapi.pcloud.com"="api.pcloud.com", password: string="", root_folder_id: string="d0", token: string="", token_url: string="", username: string="" }` — pcloud backend configuration
-  - `hostname` — Hostname to connect to. This is normally set when Hoody initially does the oauth connection, however you will need to set it by hand if you are using remote config with Hoody authorize.
+  - `hostname` — Hostname to connect to. This is normally set when Hoody initially does the oauth connection, however you will need to set it by hand if the token was obtained elsewhere.
   - `password` — Your pcloud password.
   - `username` — Your pcloud username. This is only required when you want to use the cleanup command. Due to a bug in the pcloud API the required API does not support OAuth authentication so we have to rely on user password authentication for it.
 - `POST /api/v1/backends/pikpak` body — `{ chunk_size: string="5242880", description: string="", device_id: string="", encoding: string="56829838", hash_memory_limit: string="10485760", no_media_link: bool=false, pass: string="", root_folder_id: string="", trashed_only: bool=false, upload_concurrency: int=4, upload_cutoff: string="209715200", use_trash: bool=true, user: string="", user_agent: string="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0" }` — pikpak backend configuration
@@ -8208,7 +8518,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 - `POST /api/v1/backends/webdav` body — `{ auth_redirect: bool=false, bearer_token: string="", description: string="", encoding: string="", headers: string="", nextcloud_chunk_size: string="10485760", owncloud_exclude_mounts: bool=false, owncloud_exclude_shares: bool=false, pacer_min_sleep: int=0, pass: string="", url*: string="", user: string="", vendor: "fastmail" | "nextcloud" | "owncloud" | "infinitescale" | "sharepoint" | "sharepoint-ntlm" | "hoody-vfs" | "other"="" }` — webdav backend configuration
   - `auth_redirect` — Preserve authentication on redirect. … Note that enabling this also permits sending your credentials over a plaintext HTTP connection if the server redirects from HTTPS to HTTP, which Hoody otherwise refuses to do.
   - `bearer_token` — Bearer token instead of user/pass (e.g. a Macaroon).
-  - `encoding` — The encoding for the backend. See the [encoding section in the overview](/overview/#encoding) for more info. …
+  - `encoding` — The encoding for the backend. Default encoding is Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Hash,Percent,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8 for sharepoint-ntlm or identity otherwise.
   - `headers` — Set HTTP headers for all transactions. Use this to set additional HTTP headers for all transactions The input format is comma separated list of key,value pairs. Standard [CSV encoding](https://godoc.org/encoding/csv) may be used. …
   - `nextcloud_chunk_size` — Nextcloud upload chunk size. We recommend configuring your NextCloud instance to increase the max chunk size to 1 GB for better upload performances. …
   - `owncloud_exclude_mounts` — Exclude ownCloud mounted storages
@@ -8269,10 +8579,10 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 | `POST /api/v1/files/move/{path}` | Move file or directory | `?move_to*` `?owner` |
 | `GET /api/v1/files/realpath/{path}` | Resolve canonical path (realpath) |  |
 | `GET /{directory}?q` | Search directory | `?q*` `?json` `?theme` `?colorScheme` `?font` `?fontSize` `?embedderOrigin` `?chromeless` `?borderless` `?hideHeader` `?hideSidebar` `?hidePreview` `?hideFooter` `?embedBg` |
-| `GET /api/v1/files/stat/{path}` | Get file metadata (stat) |  |
+| `GET /api/v1/files/stat/{path}` | Get file metadata (stat) | `?backend` |
 | `PUT /{path}?touch` | Touch file (create or update mtime) | `?touch*` |
 | `PATCH /api/v1/files/{path}` | Modify file properties or move/rename | `?owner` `?chmod` `?chown` `body` |
-| `PUT /api/v1/files/{path}` | Upload or append file | `?backend` `?append` `?chmod` `?owner` `H:If-Match` `H:If-None-Match` `H:If-Unmodified-Since` `body*:application/octet-stream` |
+| `PUT /api/v1/files/{path}` | Upload or append file | `?backend` `?append` `?chmod` `?owner` `H:X-Expected-Length` `H:If-Match` `H:If-None-Match` `H:If-Unmodified-Since` `body*:application/octet-stream` |
 | `CHECKAUTH /{path}` | Check authentication status |  |
 | `PATCH /{path}` | File operations | `H:If-Match` `H:If-None-Match` `H:If-Unmodified-Since` `body:application/json,application/octet-stream` |
 | `GET /{directory}?zip` | Download directory as ZIP | `?zip*` |
@@ -8337,7 +8647,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 - `sort` — Sort glob results by: mtime (default), name, or size _(on `GET /api/v1/files/{path}`)_
 - `order` — Sort order for glob results. Default: desc for mtime, asc for name/size _(on `GET /api/v1/files/{path}`)_
 - `lines` — Extract specific lines from a file. Formats: '10-50' (range, 1-indexed inclusive), '100' (single line), '-20' (last 20 lines / tail), '50-' (line 50 to end). Returns text/plain with X-Line-Range header. X-Total-Lines header included when naturally known (scan reached EOF). Max 100,000 lines or 64MB per request.
-- `zip` — Download a directory as a streaming zip archive (bare flag, e.g. ?zip). Local directories only (a folder of a remote backend, named with backend, answers 501), and only where the deployment enabled archive downloads (403 otherwise). Same behavior as the WebDAV-style /{directory}?zip.
+- `zip` — Download a directory as a streaming zip archive (bare flag, e.g. ?zip). Local directories only (a folder of a remote backend, named with backend, answers 501), and only where the deployment enabled archive downloads (403 otherwise). Same behavior as the WebDAV-style /{directory}?zip, including its limits: a folder one archive cannot hold whole (more than 100000 files, more than 1000000 files and folders in all, or folders nested deeper than 50 levels) is refused with 422 `ARCHIVE_TOO_LARGE`.
 - `Range` — File download only: ask for part of the file, as 'bytes=first-last', 'bytes=first-' or 'bytes=-suffix_length'. A last position past the end is clamped to the last byte, and a suffix longer than the file selects all of it. One satisfiable range answers 206 with Content-Range; several answer 206 as multipart/byteranges for a local file, while a remote file (with backend) answers 200 with the whole file. Ranges that cannot be satisfied are dropped from a list, and 416 comes only when none is left. A malformed header, another unit or more than 100 ranges is ignored (200, whole file). HEAD ignores Range.
 - `If-Range` — File download only: honour Range only if the file still has this ETag, exactly; otherwise answer 200 with the whole file. A date never matches, since two versions saved within the same second share it. A remote file's (with backend) ETag is weak, so with If-Range a remote file is always sent whole.
 - `path` — Directory path to search within _(on `GET /api/v1/files/glob/{path}`)_
@@ -8368,7 +8678,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 - `colorScheme` — HTML page only: light or dark colour scheme. Without it the page follows the system setting.
 - `font` — HTML page only: monospace font of the editor and listing.
 - `fontSize` — HTML page only: editor font size in pixels. Default 14.
-- `embedderOrigin` — HTML page only: origin of the page that embeds this one, such as https://app.example.com. The page then accepts theme and layout messages from that origin and tells it when it is ready. Only https origins, and http on localhost or 127.0.0.1, are accepted.
+- `embedderOrigin` — HTML page only: origin of the page that embeds this one, such as https://app.example.com. The page then accepts theme and layout messages from that origin and tells it when it is ready. Only https origins are accepted.
 - `chromeless` — HTML page only: hide the header, sidebar, preview, footer and borders at once. Each can be turned back on with its own parameter set to false.
 - `borderless` — HTML page only: hide the page borders.
 - `hideHeader` — HTML page only: hide the header bar.
@@ -8376,6 +8686,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 - `hidePreview` — HTML page only: hide the preview pane.
 - `hideFooter` — HTML page only: hide the footer.
 - `embedBg` — HTML page only: transparent lets the background of the embedding page show through.
+- `backend` — Backend ID: the metadata of the path on that remote backend instead of a local path _(on `GET /api/v1/files/stat/{path}`)_
 - `path` — File path to touch _(on `PUT /{path}?touch`)_
 - `touch` — Flag to indicate touch operation
 - `owner` — Create-time owner (user[:group]/uid[:gid]) for newly-created destination parent directories on a JSON-body move_to. Requires the deployment to have enabled chown and to permit the owner you name; cannot be root. The moved item keeps its own owner. Absent → server default. _(on `PATCH /api/v1/files/{path}`)_
@@ -8383,8 +8694,9 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 - `chown` — Set file ownership (e.g., ?chown=user:group or ?chown=user) _(on `PATCH /api/v1/files/{path}`)_
 - `backend` — Backend ID for remote upload _(on `PUT /api/v1/files/{path}`)_
 - `append` — Append body to end of existing file (create if missing) instead of overwriting
-- `chmod` — Permission bits the local file ends with, in octal (`644`, `0600`, `0o755`, `000`), whatever the server's umask; the response echoes them in `mode`. Requires both upload and chmod to be enabled (403 otherwise). setuid, setgid and sticky bits are refused, as are values above 777. Refused with 400 together with `backend` or `append`, and when the path names something other than a regular file (a directory, a pipe, a device, a socket). Every refusal comes before the body is read: nothing is created or changed. _(on `PUT /api/v1/files/{path}`)_
+- `chmod` — Permission bits the local file ends with, in octal (`644`, `0600`, `0o755`, `000`), whatever the server's umask; the response gives them in `mode`, read back from the file. Where the filesystem keeps no permission bits of its own (a mount of a remote storage without them), the upload is answered 409 PERMISSIONS_NOT_APPLIED instead: nothing is changed when the bits asked for are narrower than the file's, and otherwise the body is written whole under the file's bits. Requires both upload and chmod to be enabled (403 otherwise). setuid, setgid and sticky bits are refused, as are values above 777. Refused with 400 together with `backend` or `append`, and when the path names something other than a regular file (a directory, a pipe, a device, a socket). Each of these refusals comes before the body is read: nothing is created or changed. _(on `PUT /api/v1/files/{path}`)_
 - `owner` — Create-time owner (user[:group]/uid[:gid]) for a newly-created file. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. Overwrites/appends to an existing file preserve its owner. Absent → server default. _(on `PUT /api/v1/files/{path}`)_
+- `X-Expected-Length` — The length of the whole body in bytes, for a body streamed without Content-Length. A body that ends before this many bytes, or runs past them, is refused with 400 and nothing is written or appended: the file stays as it was. Send it whenever the length is known: some HTTP/2 clients end a request's body normally when they are aborted, so without it a cut-off body can look complete. Over the upload size limit it is refused with 413 before the body is read.
 - `If-Match` — Local files only; with backend it is refused with 400. Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. _(on `PUT /api/v1/files/{path}`)_
 - `If-None-Match` — Local files only; with backend it is refused with 400. '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. _(on `PUT /api/v1/files/{path}`)_
 - `If-Unmodified-Since` — Local files only; with backend it is refused with 400. Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. _(on `PUT /api/v1/files/{path}`)_
@@ -8441,7 +8753,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 
 - `path` — Filter entries by path prefix
 - `op` — Filter by operation type(s), comma-separated (e.g. 'write,delete')
-- `since` — Filter entries since timestamp (RFC3339 or Unix ms)
+- `since` — Return entries at or after this time: an RFC3339 timestamp (Z or an offset, any fractional precision), or a Unix timestamp in seconds or milliseconds. A number below 100000000000 is read as seconds. Omitted or empty, no time filter applies; any other value is refused with 400.
 - `limit` — Max entries to return
 - `after_id` — Cursor: return entries with id > after_id
 
@@ -8541,7 +8853,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 - `colorScheme` — HTML page only: light or dark colour scheme. Without it the page follows the system setting.
 - `font` — HTML page only: monospace font of the editor and listing.
 - `fontSize` — HTML page only: editor font size in pixels. Default 14.
-- `embedderOrigin` — HTML page only: origin of the page that embeds this one, such as https://app.example.com. The page then accepts theme and layout messages from that origin and tells it when it is ready. Only https origins, and http on localhost or 127.0.0.1, are accepted.
+- `embedderOrigin` — HTML page only: origin of the page that embeds this one, such as https://app.example.com. The page then accepts theme and layout messages from that origin and tells it when it is ready. Only https origins are accepted.
 - `chromeless` — HTML page only: hide the header, sidebar, preview, footer and borders at once. Each can be turned back on with its own parameter set to false.
 - `borderless` — HTML page only: hide the page borders.
 - `hideHeader` — HTML page only: hide the header bar.
@@ -8666,8 +8978,8 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 2. **Bootstrap identity + notebook** — `GET /api/v1/notes/me` → `{userId,username,role,notebookId}`. The `notebookId` is the container's shared default notebook (`Hoody Notes`, with a `Home` section and starter pages), which every query-identity username joins; create your own with `POST /api/v1/notes/notebooks` when the content must not be shared. `GET /api/v1/notes/notebooks`/`create`/`get` open to any non-`none` member; `update`/`delete` are owner-gated.
 3. **Build a structured document with `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`** — use this only when you need full control over layout/ordering (append cannot create lists, tables, or nested blocks). `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` OVERWRITES the whole document; `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` merges: top-level keys replace the stored ones, and `content.blocks` merges by block id (each sent block replaces the stored block with that id wholesale, omitted blocks are kept; removing a block takes `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`). The body is `{content:{type:"rich_text",blocks:{<id>:<block>}}}`. **Use the real block `type` strings and the `attrs` key, and remember container blocks (lists/tasks/blockquote/table cells) hold their text in a CHILD `paragraph` block** — see §Examples 0 (block-model cheat-sheet) and 2.
 4. **Database CRUD** — `POST /api/v1/notes/notebooks/{notebookId}/nodes` `type:"database"`; then `POST /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`/`GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`/`GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/search`/`PATCH /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}` (merges `fields`)/`DELETE /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}`. Page with `page`/`count` on `GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records` (count max 100).
-5. **Comments + versions** — `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/collaborators` (`admin`/`editor`/`collaborator`/`viewer`). `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments` (top-level, anchored, or reply); `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}` / `DELETE /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}` / `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}/resolve` accept optional `expectedVersion` for optimistic concurrency. `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/versions`/`list`/`get`/`POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/versions/{versionId}/restore`.
-6. **TUS upload + download** — the `fileId` is an input, not something the upload returns. First create the file node yourself: `POST /api/v1/notes/notebooks/{notebookId}/nodes` with `id: <22 lowercase hex chars> + '18'` (the file-id suffix; a node created without an explicit `id` gets the generic `…08` suffix, which the upload routes reject), `type: 'file'`, `parentId` (a node where you have editor rights), and `attributes: { subtype: 'image'|'video'|'audio'|'pdf'|'other', name, originalName, mimeType, extension: '' or '.ext', size, version: <22 lowercase hex chars> + '03', status: 0 }`. Only that node's creator can upload to it. Then run the TUS calls on that id: create (`POST …/files/{fileId}/tus` with `Tus-Resumable: 1.0.0` and `Upload-Length`), send chunks (`PATCH` with `Upload-Offset` and `Content-Type: application/offset+octet-stream`), check the resume offset (`HEAD`), or cancel (`DELETE`). Download with `GET /api/v1/notes/notebooks/{notebookId}/files/{fileId}`. {22}18$/.test(fileId)"]
+5. **Collaborators, comments + versions** — before sharing a node with someone new to the notebook, call `POST /api/v1/notes/notebooks/{notebookId}/users` with `{ users: [{ username, role: 'guest' }] }`, check the returned `errors`, and use the created user's `id` as the `collaboratorId` for `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/collaborators` (`admin`/`editor`/`collaborator`/`viewer`; managing node collaborators needs admin permission): a collaborator who is not yet a member of that notebook is refused with `404 user_not_found`. `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments` (top-level, anchored, or reply); `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}` / `DELETE /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}` / `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}/resolve` accept optional `expectedVersion` for optimistic concurrency. `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/versions`/`list`/`get`/`POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/versions/{versionId}/restore`.
+6. **TUS upload + download** — the `fileId` is an input, not something the upload returns. First create the file node yourself: `POST /api/v1/notes/notebooks/{notebookId}/nodes` with `type: 'file'` (without an `id`, the kit gives the node a file id, which ends in `18`, the only shape the upload routes accept; an `id` you pass yourself must be 22 lowercase hex chars + `'18'`), `parentId` (a node where you have editor rights), and `attributes: { subtype: 'image'|'video'|'audio'|'pdf'|'other', name, originalName, mimeType, extension: '' or '.ext', size, version: <22 lowercase hex chars> + '03', status: 0 }`. Only that node's creator can upload to it. Then run the TUS calls on that id. Send `Tus-Resumable: 1.0.0` on every one of them (POST, PATCH, HEAD and DELETE); any other value is refused with `412`. On `…/files/{fileId}/tus`: create the upload with `POST` and `Upload-Length`, send chunks with `PATCH` plus `Upload-Offset` and `Content-Type: application/offset+octet-stream`, check the resume offset with `HEAD`, or cancel with `DELETE`. Download with `GET /api/v1/notes/notebooks/{notebookId}/files/{fileId}`. {22}18$/.test(fileId)"]
 
 ## Quirks & gotchas
 
@@ -9082,8 +9394,8 @@ fi
 
 **Body shapes:**
 
-- `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append` body — `{ text*: string, type: "paragraph" | "heading1" | "heading2" | "heading3" | "codeBlock"="paragraph", attrs: object | null } | { blocks*: object[] }`
-- `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/export-ticket` body — `{ output: "html"="html", includeComments: "none" | "appendix"="none", includeBackground: bool=true, themeMode: "light" | "dark"="dark", themeId: string | null, themeVariables: { [key: string]: string }, fileName: string }`
+- `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append` body — `{ text*: string, type: "paragraph" | "heading1" | "heading2" | "heading3" | "codeBlock"="paragraph", attrs: object|null } | { blocks*: object[] }`
+- `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/export-ticket` body — `{ output: "html"="html", includeComments: "none" | "appendix"="none", includeBackground: bool=true, themeMode: "light" | "dark"="dark", themeId: string|null, themeVariables: { [key: string]: string }, fileName: string }`
 - `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` body — `{ content*: { [key: string]: any } }`
 - `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` body — `{ content*: { [key: string]: any } }`
 
@@ -9142,7 +9454,7 @@ fi
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /api/v1/notes/notebooks/{notebookId}/nodes` | Create a node | `body*` |
+| `POST /api/v1/notes/notebooks/{notebookId}/nodes` | Create a node | `H:X-Idempotency-Key` `body*` |
 | `DELETE /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}` | Delete a node |  |
 | `GET /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}` | Get a node |  |
 | `GET /api/v1/notes/notebooks/{notebookId}/nodes` | List nodes | `?type` `?parentId` `?rootId` `?limit` `?offset` |
@@ -9151,6 +9463,10 @@ fi
 | `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/seen` | Mark node as seen | `body*` |
 | `GET /api/v1/notes/notebooks/{notebookId}/nodes/alias/{alias}` | Resolve page by alias |  |
 | `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}` | Update a node | `body*` |
+
+**Param notes:**
+
+- `X-Idempotency-Key` — Optional idempotency key (max 256 chars), such as a random UUID per node. Reusing the same key with an identical request body replays the original response instead of creating a second node; reusing it with a different body returns 409.
 
 **Body shapes:**
 
@@ -9275,7 +9591,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 2. Read recent notifications
 
-`GET /api/v1/notifications/{display}` — `display`: `":0"`, `"0"`, `"0,:1,2"`, or `"all"`. Optional `limit` (1–1000, default 100), `since` (ms, inclusive), `after_id` (exclusive id), `cursor`, `username`, `session`. Without `since`/`after_id`/`cursor` one call returns the newest `limit` entries, listed newest-first. With `since` the page holds the OLDEST `limit` entries at or after that timestamp, with `after_id` the OLDEST `limit` ids above it, and with `cursor` the OLDEST `limit` entries after it; these forward pages are listed oldest-first, in the order they were selected, so consecutive pages join into one ascending list. Each response carries an opaque `next_cursor` and `has_more`: pass `next_cursor` back as `cursor` while `has_more` is `true` to page forward (`has_more` is always `false` on a plain newest page). `cursor` cannot be combined with `since` or `after_id` (`400`). `count` is the size of that page, not a total. There is no reverse cursor; to walk the whole retained history, start at `since=0` and page forward. See Example 8 for the forward-paging loop.
+`GET /api/v1/notifications/{display}` — `display`: `":0"`, `"0"`, `"0,:1,2"`, or `"all"`. Optional `limit` (per-request page size, 1–1000, default 100), `since` (ms, inclusive), `after_id` (exclusive id), `cursor`, `username`, `session`. Without `since`/`after_id`/`cursor` one call returns the newest `limit` entries, listed newest-first. With `since` the page holds the OLDEST `limit` entries at or after that timestamp, with `after_id` the OLDEST `limit` ids above it, and with `cursor` the OLDEST `limit` entries after it; these forward pages are listed oldest-first, in the order they were selected, so consecutive pages join into one ascending list. Each response carries an opaque `next_cursor` and `has_more`: pass `next_cursor` back as `cursor` while `has_more` is `true` to page forward (`has_more` is always `false` on a plain newest page). `cursor` cannot be combined with `since` or `after_id` (`400`). `count` is the size of that page, not a total. There is no reverse cursor; to walk the whole retained history, start at `since=0` and page forward. See Example 8 for the forward-paging loop.
 
 ### 3. Subscribe to events
 
@@ -9299,7 +9615,7 @@ Reach a human who isn't watching the session — on their phone, desktop, or sma
 - `dismiss.notificationIds` must be a non-empty array; non-integer elements are silently dropped, and only when no integer remains does it return `400 "notificationIds must contain valid integer IDs"` (so `[12,"13"]` dismisses only `12`). `displayId` strips leading `:`.
 - `POST /api/v1/notifications/notify` limits: `summary` ≤200 and `body` ≤1000 by default (a deployment can change them with `NOTIFY_SEND_MAX_SUMMARY_LENGTH` / `NOTIFY_SEND_MAX_BODY_LENGTH`), `category` ≤50, `expire_time` 0–300000; `urgency` ∈ `low|normal|critical`; `display` 1–40000 (display 0 and higher numbers are a `400`).
 - `list.display` numeric or `"all"`; `connect.displays` accepts `all`, `*`, or a comma list of 1–5-digit IDs, each optionally `:`-prefixed (`1000` and `20001` are valid; 6+ digits rejected).
-- `list.limit` `[1,1000]` def 100; forward start points `since`/`after_id`, continuation `cursor` (a `next_cursor` value; not combinable with `since`/`after_id`); `username`/`session` 1–100 ASCII alnum.
+- `list.limit` `[1,1000]` def 100 per request; forward start points `since`/`after_id`, continuation `cursor` (a `next_cursor` value; not combinable with `since`/`after_id`); `username`/`session` 1–100 ASCII alnum.
 - `username`/`session` are owner filters, with specific displays and with `all`: only history files named for that owner are read (`<username>-<session>-notifications.json`, `<username>-display-<N>-notifications.json`), so the generic `display-<N>`/`user-<N>` history is excluded. A `session` filter also excludes the `<username>-display-<N>` files, which carry no session. The display selection still filters the rows read.
 - Dismissal scope on `GET /api/v1/notifications/{display}`: every returned row is checked against the global dismissals and against its own display's scoped dismissals, for one display, a multi-display list (`2,3`) and `all` alike. A dismissal scoped to `:2` hides that id on `:2` everywhere it is listed; the same id on `:3` stays visible. `DELETE /api/v1/notifications/dismiss` without `displayId` clears every scope (global and all displays); with one it clears only that display.
 - `iconId` ext whitelist `jpg|jpeg|png|webp|avif|gif|bmp`; traversal rejected.
@@ -9314,7 +9630,7 @@ Reach a human who isn't watching the session — on their phone, desktop, or sma
 
 - Invalid input on `POST /api/v1/notifications/notify` (including text the dispatcher's sanitizer rejects) → `400` `error: "Validation Error"` with the reason in `details`. A failed dispatch carries a fixed `code` and one fixed `details` sentence: no display running and none can be started → `503` `error: "Display not available"`, `code: "DISPLAY_NOT_AVAILABLE"`; the display's notification session not up yet → `503` `error: "Display not ready"`, `code: "DISPLAY_NOT_READY"`, with `Retry-After` and `details: "The display's notification session is not available yet. Retry in a few seconds."`; a timeout ("Sending the notification timed out. Retry later.") or any other failure ("The notification service failed to send the notification.") → `500` `error: "Notification dispatch failed"`, `code: "DISPATCH_FAILED"`.
 - WS origin-deny → `403` `Origin not allowed` before the upgrade; close `1008` on message rate limit; `1001` heartbeat timeout. `429` on `send` / `GET /api/v1/notifications/icons/{iconId}`; both are enforced by the shared per-IP rate-limit middleware.
-- `/health` 200 ≠ authorised endpoints reachable.
+- `GET /api/v1/notifications/health` returning 200 does not establish that authorised endpoints are reachable.
 
 ## Related namespaces
 
@@ -9390,15 +9706,17 @@ curl -sX POST "$KIT/api/v1/notifications/notify" \
 KIT="https://${P}-${C}-n-1.${N}.containers.hoody.com"
 IDS=$(curl -sf "$KIT/api/v1/notifications/2?limit=50" \
   | jq -c '[.data.notifications[].id]')   # e.g. [2,3,4]
-curl -sX POST "$KIT/api/v1/notifications/dismiss" \
-  -H 'Content-Type: application/json' \
-  -d "{\"notificationIds\":$IDS,\"displayId\":\"2\"}"
-# → {"success":true,"message":"3 notification(s) dismissed"}
+# notificationIds must hold at least one id, so skip an empty listing
+if [ "$(printf '%s' "$IDS" | jq 'length')" -gt 0 ]; then
+  curl -sX POST "$KIT/api/v1/notifications/dismiss" \
+    -H 'Content-Type: application/json' \
+    -d "{\"notificationIds\":$IDS,\"displayId\":\"2\"}"   # → {"success":true,"message":"3 notification(s) dismissed"}
+fi
 ```
 
 ### 5. Restore everything you just dismissed
 
-**Goal:** undo Example 4, bring dismissed items back into the listing. `DELETE /api/v1/notifications/dismiss` is `DELETE /dismiss` (same path as `POST /api/v1/notifications/dismiss`). With `displayId: "2"` it undoes Example 4 and nothing else; omitting `displayId` clears every dismissal, global and on every display.
+**Goal:** undo Example 4, bring dismissed items back into the listing. `DELETE /api/v1/notifications/dismiss` is `DELETE /dismiss` (same path as `POST /api/v1/notifications/dismiss`). With `displayId: "2"` it clears every dismissal scoped to display 2, including dismissals made before Example 4; global dismissals and other displays' scoped dismissals remain. Omitting `displayId` clears every dismissal, global and on every display.
 
 ```bash
 KIT="https://${P}-${C}-n-1.${N}.containers.hoody.com"
@@ -9465,7 +9783,7 @@ curl -sf "$KIT/api/v1/notifications/2?limit=200&since=$SINCE&username=alex&sessi
 
 ### 10. Survive a 429 rate-limit burst on `POST /api/v1/notifications/notify`
 
-**Goal:** you're shipping a flood of toasts (CI, monitoring, …) and the kit pushes back with `429 Too Many Requests`. The kit per-IP rate-limits both `POST /api/v1/notifications/notify` and `GET /api/v1/notifications/icons/{iconId}`. Strategy: cap concurrency client-side, exponential-backoff on `429`, and never retry on `400` (validation — fix the body instead). A `503` with `code: "DISPLAY_NOT_READY"` means the display's notification session is not up yet: wait for its `Retry-After` and resend. A `503` with `code: "DISPLAY_NOT_AVAILABLE"` means no display can be started, so bring one up (→ `display`) instead of looping on the same call. A `500` (`code: "DISPATCH_FAILED"`) is a failed or timed-out send; its `details` says which.
+**Goal:** you're shipping a flood of toasts (CI, monitoring, …) and the kit pushes back with `429 Too Many Requests`. The kit per-IP rate-limits both `POST /api/v1/notifications/notify` and `GET /api/v1/notifications/icons/{iconId}`. Strategy: cap concurrency client-side, exponential-backoff on `429`, and never retry on `400` (validation — fix the body instead). A `503` with `code: "DISPLAY_NOT_READY"` means the display's notification session is not up yet: wait for its `Retry-After` and resend. A `503` with `code: "DISPLAY_NOT_AVAILABLE"` means the target display is not running and the container has no display server to start it: use a container image with display support, because retrying the same call does not help. A `500` (`code: "DISPATCH_FAILED"`) is a failed or timed-out send; its `details` says which.
 
 ```bash
 KIT="https://${P}-${C}-n-1.${N}.containers.hoody.com"
@@ -9710,7 +10028,7 @@ A live sender streams at once, with nobody watching; any number of viewers (256 
   - Cancel frees the name. The page stores nothing in the browser and sends a nonce CSP with `connect-src 'self'`.
   - Pre-fill: `name` (≤1024; absent → random), `n` (1–256, invalid → 1), `text` (≤100000, selects text mode), `mode=file|text`, `filename` (≤255), `autostart=1` (text mode with a text only; never for a file; a refused name shows the reason instead). Over-long values are cut without splitting a character.
 - To hand a person a ready send link, build `<kit>/api/v1/pipe/?name=<name>&text=<text>` (add `&autostart=1` to send it on open, `&filename=<name.ext>`, `&n=N`). For a file, give `?name=<name>`: they pick the file and click Send.
-- WebSocket relay: `GET /{name}?ws` with an upgrade pairs exactly two peers. Messages pass both ways with their type and boundaries kept, at most 1 MiB each. The first peer's messages are held (4096 / 2 MiB) until the second arrives (`?wait`, default 300 s, then close `4408`). A slow reader more than 2 MiB behind closes the pair with `1013`. Close codes 1000-1003, 1007-1014 and 3000-4999 are forwarded; a drop arrives as `1001`. The first peer's subprotocol binds the pair. A name holds either a transfer or a pair, never both (409 both ways); `?status` shows `kind: "ws"`, `peers`. SDK: `PipeStream.connect(name, { wait, protocols, signal })` → `{ readable, writable, closed, close }`, one chunk = one message; a refusal is a `PipeWsError` with `.status`; `forwardTcp({ transport: 'ws', path, listen|connect })`.
+- WebSocket relay: `GET /{name}?ws` with an upgrade pairs exactly two peers. Messages pass both ways with their type and boundaries kept, at most 1 MiB each. The first peer's messages are held (4096 / 2 MiB) until the second arrives (`?wait`, default 300 s, then close `4408`). A slow reader more than 2 MiB behind closes the pair with `1013`. Close codes 1000-1003, 1007-1014 and 3000-4999 are forwarded; a drop arrives as `1001`. The first peer's subprotocol binds the pair. A name holds either a transfer or a pair, never both (409 both ways); `?status` shows `kind: "ws"`, `peers`. 
 - To hand a person a ready receive link, build `<kit>/api/v1/pipe/<name>?receive&autostart=1&filename=<name.ext>` (add `&n=N` for N receivers); they open it and the file lands in their downloads when the sender sends. A share link is `<kit>/api/v1/pipe/<name>?share&source=screen|camera|audio` (capture still needs their click on Start); viewers open `<kit>/api/v1/pipe/<name>?video`.
 - `Service-Worker: script` → 400.
 - `Content-Range` on POST/PUT → 400.
@@ -9929,7 +10247,7 @@ cat /tmp/file.bin                             # → first-file-content
 
 **Result:**
 - 1100-char path POST: kit returned `414` with body `[ERROR] Path too long (max 1024 characters).`
-- A 1024-char path name is the longest the kit accepts, matching the SDK and CLI checks; 1025 characters gets `414`.
+- The kit accepts at most 1024 characters in the path name as it is sent (percent-encoded); 1025 gets `414`. The SDK and CLI check the unencoded name, so a name that passes can still exceed the limit once percent-encoded and receive `414`.
 
 ```bash
 KIT="https://${P}-${C}-pipe-1.${N}.containers.hoody.com"
@@ -10069,7 +10387,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `traceId` is per log source: edge entries carry the edge's hex request ID, backend request/response pairs share their own UUID. Entries from the edge and the backend, or from different kits, never share one.
 - `level` accepts ONE value at a time on the kit URL: `level=warn,error` returns `total: 0`, so query each level separately and union client-side.
 - `serviceName` is not honoured on the kit URL for `GET /_logs` (the list handler ignores it); filter client-side. It IS honoured on `GET /_logs/stream`, so tail with `serviceName=` and list without it.
-- Every `GET /_logs` read returns `{entries,total,limit,offset}`. `last=N` returns the newest N entries, oldest first, in one response (`total` is the number returned, `offset` does not apply, and `last` wins over `afterId`); on the kit URL without bodies or time filters those entries come from the in-memory recent buffer and carry `id: 0`, so never cursor from them. `afterId` always reads the log database: real row ids, oldest first, `total` counts every entry after the cursor and `offset` pages through them.
+- Every `GET /_logs` read returns `{entries,total,limit,offset}`. `last=N` returns the newest N entries, oldest first, in one response (`total` is the number returned, `offset` does not apply, and `last` wins over `afterId`); on the kit URL without bodies or time filters those entries come from the in-memory recent buffer, which holds the newest entries of every container on the server, so a busy neighbour can leave fewer than N there, and it starts empty after a server restart. Every entry carries its row `id`, so pass the last one as `afterId` to follow on. `afterId` always reads the log database: oldest first, `total` counts every entry after the cursor and `offset` pages through them.
 - `includeRequestBody`/`includeResponseBody` default `false`.
 - The resume buffer holds at most 2,000 frames and 8 MiB, shared by every stream on the server, so a busy neighbour shortens your window; past it you get `event: gap`.
 - A server restart ends the stream with no event; ids then resume at least 10,000 past the last value the server saved, which can trail the last id you saw, and the buffer starts empty, so a pre-restart `Last-Event-ID` gets `event: gap`. On `event: reset` drop your saved id and reconnect without it.
@@ -10099,7 +10417,7 @@ Each step has a copy-pasteable code block in the mode you're reading (curl for H
 
 ### 1. Tail the last N requests across every kit
 
-**Goal:** glance at the most recent ~50 requests handled by the container's edge proxy. Uses `last=N`, which returns the newest N entries in the usual `{entries,total,…}` envelope, ordered **oldest-first within the returned slice**. On the kit URL they come from the in-memory recent buffer and carry `id: 0` placeholders, so use §3 for a cursor. It is the cheapest call you can make.
+**Goal:** glance at the most recent ~50 requests handled by the container's edge proxy. Uses `last=N`, which returns the newest N entries in the usual `{entries,total,…}` envelope, ordered **oldest-first within the returned slice**. On the kit URL they come from the in-memory recent buffer. Each entry carries its row `id`: pass the last one as `afterId` (§3) to read what came after. It is the cheapest call you can make.
 
 ```bash
 KIT="https://${P}-${C}-logs-1.${N}.containers.hoody.com"
@@ -10118,7 +10436,7 @@ curl -s "$KIT/_logs?level=error&limit=200" \
 
 ### 3. Walk the full window with an `afterId` cursor (oldest → newest)
 
-**Goal:** sweep every entry without skipping or double-reading rows. Page by row id: `afterId` always reads the log database, returns entries **oldest first** with real row ids, and `total` counts every entry after the cursor. Start at `afterId=0`, then pass the last `id` of each page as the next `afterId`; new traffic lands after your cursor, so nothing shifts under you. Plain `limit`/`offset` without `afterId` counts from the **newest** entry, so arriving entries move every page during a walk. Do not cursor from a `last=N` read: its rows carry `id: 0`. Walk until `entries` is empty.
+**Goal:** sweep every entry without skipping or double-reading rows. Page by row id: `afterId` always reads the log database, returns entries **oldest first** with real row ids, and `total` counts every entry after the cursor. Start at `afterId=0`, then pass the last `id` of each page as the next `afterId`; new traffic lands after your cursor, so nothing shifts under you. Plain `limit`/`offset` without `afterId` counts from the **newest** entry, so arriving entries move every page during a walk. To start from the present instead of the oldest entry, take the cursor from the last entry of a `last=N` read. Walk until `entries` is empty.
 
 **Rate limit:** kit-URL reads are limited per scope: by default a burst of 10, then 30 per minute (one every 2 s), and some deployments differ (see Common errors). A walk longer than about 10 pages therefore gets `429 {"error":"rate_limited"}`. That reply has no `entries`, so a loop that reads it as an empty page stops early and looks finished. The loops below treat any failed call, or any reply without an `entries` array, as a failure. After each failure they wait (2 s, then 4, 8, 16 and 32 s) and retry. The walk stops with an error and exit status 1 on the 6th failed call in a row, after 5 retries and about 62 s of waiting.
 
@@ -10172,6 +10490,8 @@ curl -s "$KIT/_logs?limit=1000&includeRequestBody=true&includeResponseBody=true"
 
 **Goal:** stream new log entries as they happen, and resume after a network blip. Live frames carry an `id:` line holding an increasing integer cursor; the initial replay frame may be `data: [...]` with no `id:` line, so seed your cursor only after you see the first `id:` line. Resume by sending `Last-Event-ID: <last>` on reconnect. The resume is complete only while your cursor is still in the server's replay buffer: when it is not, the first frame is `event: gap` (no `id:`, data `{"after","resumedFrom"}`), and the entries in between are NOT replayed. Treat `gap` as a control event, not a log entry: backfill the missing window with `GET /_logs` (`sinceMs` = the `tsMs` of the last entry you processed), skip entries you already handled, then carry on with the stream. `event: purged` carries an `id:` and `data: {}`: advance the cursor past it, but it is not an entry. On `event: reset` clear your cursor and reconnect fresh; on `event: scope-destroyed` exit cleanly — the container is gone.
 
+A frame larger than 256 KiB is replaced by a stub that keeps the entry's row `id` and carries `truncated: true` and `originalFrameBytes`. To get the whole record, read that row with `GET /_logs?afterId=<afterId>&limit=1` and check that the returned entry's `id` matches; the SSE `id:` line is a different cursor from this row id. If the row cannot be read, report the missing entry instead of treating the stub as complete.
+
 ```bash
 KIT="https://${P}-${C}-logs-1.${N}.containers.hoody.com"
 # Send Last-Event-ID only once you hold a real cursor. Any non-empty value, "0"
@@ -10216,14 +10536,16 @@ curl -s "$KIT/_logs?level=warn&limit=20&includeRequestBody=true&includeResponseB
 - `offset` — Entries to skip: counted from the newest match, or with `afterId` from the oldest entry after the cursor. Ignored with `last`.
 - `serviceName` — Filter to one service. The per-container logs URL ignores it, so filter the returned entries client-side. GET /_logs/stream honours it. _(on `GET /_logs`)_
 - `level` — Log level: exactly ONE of debug, info, warn or error. A comma-separated value matches nothing.
-- `last` — Return only the newest N matching entries, oldest first, in one response: `total` is the number returned and `offset` does not apply. Takes precedence over `afterId`.
+- `includeRequestBody` — Include each entry's stored request body (redacted as described above).
+- `includeResponseBody` — Include each entry's stored response body (redacted as described above).
+- `last` — Return only the newest N matching entries, oldest first, in one response: `total` is the number returned and `offset` does not apply. Takes precedence over `afterId`. To follow on, pass the `id` of the last entry as `afterId`.
 - `afterId` — Return the entries whose row id (`id`) is greater than this, oldest first. `total` counts every such entry and `offset` pages through them. _(on `GET /_logs`)_
 - `sinceMs` — Only entries whose `tsMs` is at least this (Unix milliseconds).
 - `untilMs` — Only entries whose `tsMs` is at most this (Unix milliseconds).
 - `projectId` — Filter to a single project
 - `containerId` — Filter to a single container
 - `serviceName` — Filter the stream to one service, e.g. tunnel. Honoured here, unlike GET /_logs. _(on `GET /_logs/stream`)_
-- `afterId` — Limits the initial batch of a fresh connection to entries whose `id` is greater than this. Entries in that batch carry `id: 0`, so a value of 0 or more leaves it empty. Live frames are unaffected. _(on `GET /_logs/stream`)_
+- `afterId` — Limits the initial batch of a fresh connection to entries whose row id (`id`) is greater than this: the same `id` that GET /_logs returns and takes as `afterId`. Live frames are unaffected. _(on `GET /_logs/stream`)_
 - `Last-Event-ID` — The numeric `id` of the last event received. On reconnect the server skips buffered entries whose `id` is at most this value.
 
 
@@ -10267,8 +10589,8 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 1. Search then pick
 
-1. `POST /api/v1/run/search/paged` with `{ selector: { app, os?, kind?, arch?, tags?, source? }, page_size?, cursor? }` (this is the paged route: `page_size`, default 25, max 100, sets the page; `selector.limit` is ignored here) → `{ set_id, total_count, items[], next_cursor? }`.
-2. `POST /api/v1/run/resolve` with `{ ...selector, set_id, pick:"index", pick_index:N }` → `shell_command`.
+1. POST `/api/v1/run/search/paged` with `{ "selector": { "app": "<app>", "os?": …, "kind?": …, "arch?": …, "tags?": …, "source?": … }, "page_size": 25 }` (`page_size`, default 25, max 100, sets the page; `selector.limit` is ignored here; pass `cursor` for the next page) → `{ set_id, total_count, items[], next_cursor? }`.
+2. POST `/api/v1/run/resolve` with `{ "app": "<app>", "set_id": "<set_id>", "pick": "index", "pick_index": 0 }` (replace `0` with the chosen index; add the same selector fields as the search) → `shell_command`.
 
 ### 2. Preflight
 
@@ -10641,7 +10963,7 @@ curl -sf -X POST "$KIT/api/v1/run/recipes/team-js-runtime/search" \
 - `run_SourceUpdate` — `{ enabled: bool, priority: int, pin: run_SourcePin|null, config: object }`
   - Partial source update. Only the fields present in the body are applied; everything else keeps its stored value. The merged source is re-validated before it is committed, so a patch that would downgrade a signed remote index is refused.
 - `run_ProfileConfig` — `{ name*: string, description: string, defaults: run_ProfileDefaults, sources_mode: run_ProfileSourceMode, sources: run_ProfileSourceOverride[], policy: run_PolicyConfig }`
-- `run_ProfileUpdate` — `{ description: string|null, defaults: run_ProfileDefaultsUpdate, sources_mode: "inherit" | "allowlist" | null, sources: run_ProfileSourceOverride[]|null, policy: run_PolicyConfigUpdate }`
+- `run_ProfileUpdate` — `{ description: string|null, defaults: run_ProfileDefaultsUpdate, sources_mode: "inherit" | "allowlist"|null, sources: run_ProfileSourceOverride[]|null, policy: run_PolicyConfigUpdate }`
   - … The merged profile is validated before it is stored, and an invalid value or an unknown top-level field is a 400 with nothing stored (unknown keys inside a nested object are ignored, as on create). The profile's name is taken from the path and cannot be changed here.
 - `run_RecipeConfig` — `{ name*: string, description: string, selector_template: run_SelectorTemplate, allowed_overrides: string[] }`
 - `run_RecipeUpdate` — `{ description: string|null, selector_template: run_SelectorTemplateUpdate, allowed_overrides: string[]|null }`
@@ -10662,11 +10984,11 @@ curl -sf -X POST "$KIT/api/v1/run/recipes/team-js-runtime/search" \
 - `run_ProfileSourceMode` — `"inherit" | "allowlist"`
 - `run_ProfileSourceOverride` — `{ source_id*: string, enabled: bool, priority: int }`
 - `run_PolicyConfig` — `{ require_verified: bool, require_integrity: bool, deny_providers: run_SourceKind[], deny_source_ids: string[] }`
-- `run_ProfileDefaultsUpdate` — `{ os: "linux" | "windows" | "any" | null, kind: "gui" | "cli" | "any" | null, source: run_SourceKind[]|null, pick: "ask" | "first" | "index" | "id" | null, terminal_id: int|null, display: string|null, limit: int|null }|null`
+- `run_ProfileDefaultsUpdate` — `{ os: "linux" | "windows" | "any"|null, kind: "gui" | "cli" | "any"|null, source: run_SourceKind[]|null, pick: "ask" | "first" | "index" | "id"|null, terminal_id: int|null, display: string|null, limit: int|null }|null`
   - `pick` — Candidate selection mode: ask: return candidate list without selecting (default); first: automatically select the highest-ranked candidate; index: select by 0-based index (requires pick_index); id: select by candidate_id (requires candidate_id)
 - `run_PolicyConfigUpdate` — `{ require_verified: bool|null, require_integrity: bool|null, deny_providers: run_SourceKind[]|null, deny_source_ids: string[]|null }|null`
 - `run_SelectorTemplate` — `{ app: string, os: run_Os, kind: run_AppKind, source: run_SourceKind[], arch: run_Arch, tags: string[], profile: string, channel: string, version: string, variant: string, publisher: string, repo: string, release: string, asset: string, pick: run_PickMode, pick_index: int, candidate_id: string, set_id: string, terminal_id: int, display: string, origin: string, format: run_OutputFormat, dry_run: bool, print_curl: run_PrintCurlMode, limit: int }`
-- `run_SelectorTemplateUpdate` — `{ app: string|null, os: "linux" | "windows" | "any" | null, kind: "gui" | "cli" | "any" | null, source: run_SourceKind[]|null, arch: "amd64" | "arm64" | "any" | null, tags: string[]|null, profile: string|null, channel: string|null, version: string|null, variant: string|null, publisher: string|null, repo: string|null, release: string|null, asset: string|null, pick: "ask" | "first" | "index" | "id" | null, pick_index: int|null, candidate_id: string|null, set_id: string|null, terminal_id: int|null, display: string|null, origin: string|null, format: "json" | "html" | null, dry_run: bool|null, print_curl: "hoody-run" | null, limit: int|null }|null`
+- `run_SelectorTemplateUpdate` — `{ app: string|null, os: "linux" | "windows" | "any"|null, kind: "gui" | "cli" | "any"|null, source: run_SourceKind[]|null, arch: "amd64" | "arm64" | "any"|null, tags: string[]|null, profile: string|null, channel: string|null, version: string|null, variant: string|null, publisher: string|null, repo: string|null, release: string|null, asset: string|null, pick: "ask" | "first" | "index" | "id"|null, pick_index: int|null, candidate_id: string|null, set_id: string|null, terminal_id: int|null, display: string|null, origin: string|null, format: "json" | "html"|null, dry_run: bool|null, print_curl: "hoody-run"|null, limit: int|null }|null`
   - `pick` — Candidate selection mode: ask: return candidate list without selecting (default); first: automatically select the highest-ranked candidate; index: select by 0-based index (requires pick_index); id: select by candidate_id (requires candidate_id)
 - `run_BatchMode` — `"search" | "run"`
 
@@ -10713,7 +11035,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### KV CRUD + CAS + counters
 
-- `PUT /api/v1/sqlite/kv/{key}` — `ttl`, `if_match` (CAS), `path`, `history`.
+- `PUT /api/v1/sqlite/kv/{key}` — `ttl`, `if_match` (CAS on the value), `path`, `history`.
 - `GET /api/v1/sqlite/kv/{key}` — `path`, `at_timestamp`. `HEAD /api/v1/sqlite/kv/{key}` takes `db`, plus optional `table` and `timeout`; `DELETE /api/v1/sqlite/kv/{key}` takes `db`/`table`/`history` (`history`, default true, records the deleted value; `false` records only that a delete happened) plus `create_db_if_missing` (alias `auto_create`) and `timeout`.
 - `POST /api/v1/sqlite/kv/{key}/incr` / `POST /api/v1/sqlite/kv/{key}/decr` / `POST /api/v1/sqlite/kv/{key}/push` / `POST /api/v1/sqlite/kv/{key}/pop` / `POST /api/v1/sqlite/kv/{key}/remove` — atomic, `path`-aware (`path` is a JSON path inside the value, such as `.user.tags`). The push body is any JSON value, appended as one element; the remove body is `{"value": <any>}` (matches by value), or pass the `index` query parameter instead. 
 
@@ -10755,7 +11077,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `400 GET /query only accepts read-only SELECT/WITH queries; use POST /db for mutating SQL` (returned for non-SELECT input; a non-base64 `sql` value is not an error — it is interpreted as raw SQL).
 - `400 Invalid JSON body` on `POST /api/v1/sqlite/kv/batch/set` — wire shape requires each `value` to be a JSON-encoded string, not an object.
 - `409` with `"error": "TIME_TRAVEL_CHAIN_GAP"` (message `time-travel: chain gap straddles target timestamp`) when the history needed for the answer has an unrecorded (`history: false`) or pruned gap. Timestamp reads, `GET /api/v1/sqlite/kv/{key}/snapshot` at an `op_number`, and the rollbacks (`POST /api/v1/sqlite/kv/{key}/rollback`, `POST /api/v1/sqlite/kv/rollback`) all return it. Per-key rollback puts the detail in `error` after the code (`"TIME_TRAVEL_CHAIN_GAP: ..."`); table rollback returns `error: "TIME_TRAVEL_CHAIN_GAP"` and puts the detail in `message`.
-- A failing transaction item aborts and rolls back the whole transaction by default: the response is that item's HTTP status (4xx or 5xx) with `{ "reqIdx": <index>, "error": "...", "code": "..." }`. A failure of your own SQL is classified: `400 SQL_ERROR` (syntax, unknown table or column) or `400 SQL_BIND_ERROR` (parameters that do not fit the statement), `409 SQL_CONSTRAINT` or `409 DATABASE_READONLY`, which carry SQLite's message, and `503 DATABASE_BUSY` or `503 REQUEST_TIMEOUT`, which carry the generic `internal database error` (no 5xx body carries SQLite's text). Anything else is `500 DATABASE_ERROR` with the same generic message, so do not retry it blindly. Set `"noFail": true` on an item to keep going instead: the call returns `200`, and that item's result is `{ "success": false, "error": "...", "code": "..." }` (no `reqIdx`). A `valuesBatch` item under `noFail` can instead succeed in part: rows with bad parameters are skipped and listed in `rowErrors` while `success` is `true`, so inspect `rowErrors` too. = responseItem{"]
+- A failing transaction item aborts and rolls back the whole transaction by default: the response is that item's HTTP status (4xx or 5xx) with `{ "reqIdx": <index>, "error": "...", "code": "..." }`. A failure of your own SQL is classified: `400 SQL_ERROR` (syntax, unknown table or column) or `400 SQL_BIND_ERROR` (parameters that do not fit the statement), `409 SQL_CONSTRAINT` or `409 DATABASE_READONLY`, which carry SQLite's message, and `503 DATABASE_BUSY` or `503 REQUEST_TIMEOUT`, which carry the generic `internal database error` (no 5xx body carries SQLite's text). Anything else is `500 DATABASE_ERROR` with the same generic message, so do not retry it blindly. Set `"noFail": true` on an item to keep going after a failure that leaves the transaction active: the call returns `200`, and that item's result is `{ "success": false, "error": "...", "code": "..." }` (no `reqIdx`). A conflict that rolls back the transaction itself (`INSERT OR ROLLBACK`, or `RAISE(ROLLBACK)` in a trigger) still ends the request with `409 SQL_CONSTRAINT` even under `noFail`, and nothing is committed. A `valuesBatch` item under `noFail` can instead succeed in part: rows with bad parameters are skipped and listed in `rowErrors` while `success` is `true`, so inspect `rowErrors` too. = responseItem{"]
 
 ## Related namespaces
 
@@ -10763,7 +11085,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Examples
 
-Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first, then choose a `DB` path. Bare names (`./mydb`) auto-resolve under `/hoody/databases/`; absolute paths outside that tree are refused unless the deployment allows any absolute database path (`/tmp/...` works on dev kits).
+Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first, then choose a `DB` path. Bare names (`./mydb`) auto-resolve under `/hoody/databases/`; absolute paths outside that tree are refused unless the deployment allows any absolute database path.
 
 **Two SQL field names:** in a transaction item, use the `"query":"..."` key for SELECT (returns `resultSet`/`resultHeaders`) and the `"statement":"..."` key for DDL/DML (returns `rowsUpdated`, or rows when the SQL produces columns, such as a write with `RETURNING`). The `"sql"` alias maps to `"statement"`, not `"query"`.
 
@@ -11180,8 +11502,8 @@ curl -sf -X DELETE "$KIT/api/v1/sqlite/db?db=$(jq -rn --arg s "$DB" '$s|@uri')"
 
 **Body shapes:**
 
-- `POST /api/v1/sqlite/kv/{key}/push` body — `any|null` — The value to append: one JSON value of any type (object, array, string, number, boolean or null). An array is appended as a single element, not spread. A body that is not valid JSON is refused with 400.
-- `PUT /api/v1/sqlite/kv/{key}` body — `any|null` — … With Content-Type application/json (or any +json type) the body must be one complete JSON document, serialised exactly once: an object, array, number, boolean, null, or a string sent QUOTED ("hello", not hello). A string like "123" must be sent quoted too, or it is stored and read back as the number 123. A body that is not valid JSON is refused with 400 INVALID_JSON_VALUE. …
+- `POST /api/v1/sqlite/kv/{key}/push` body — `any` — The value to append: one JSON value of any type (object, array, string, number, boolean or null). An array is appended as a single element, not spread. A body that is not valid JSON is refused with 400.
+- `PUT /api/v1/sqlite/kv/{key}` body — `any` — … With Content-Type application/json (or any +json type) the body must be one complete JSON document, serialised exactly once: an object, array, number, boolean, null, or a string sent QUOTED ("hello", not hello). A string like "123" must be sent quoted too, or it is stored and read back as the number 123. A body that is not valid JSON is refused with 400 INVALID_JSON_VALUE. …
 
 ### `sql` (2) — Shareable read-only queries executed from a GET URL
 
@@ -11201,7 +11523,7 @@ curl -sf -X DELETE "$KIT/api/v1/sqlite/db?db=$(jq -rn --arg s "$DB" '$s|@uri')"
 
 ### Body schemas
 
-- `sqlite_main.kvRemoveRequest` — `{ value: any|null }`
+- `sqlite_main.kvRemoveRequest` — `{ value: any }`
   - `value` — Remove the first element equal to this value. Any JSON value; an explicit null removes the first null element, which is not the same as leaving value out. Ignored when the index parameter is set. Without index, value is required.
 - `sqlite_main.kvBatchDeleteRequest` — `{ items: sqlite_main.kvBatchDeleteItem[], keys: string[] }`
   - `items` — Keys to delete, each with an optional if_match condition. 1-100 entries. Send keys or items, not both.
@@ -11212,8 +11534,9 @@ curl -sf -X DELETE "$KIT/api/v1/sqlite/db?db=$(jq -rn --arg s "$DB" '$s|@uri')"
   - `exclude_keys` — Keys to leave untouched. Applied after keys. At most 10000 entries; more is rejected with 413.
   - `keys` — Keys to roll back. Omit or leave empty to roll back the whole table. At most 10000 entries; more is rejected with 413.
 - `sqlite_main.request` — `{ resultFormat: string, transaction: sqlite_main.requestItem[] }`
-- `sqlite_main.maintenanceRequest` — `{ dest_path: string, op*: "wal_checkpoint_truncate" | "vacuum_into" | "quick_check" | "reset_changes" }`
+- `sqlite_main.maintenanceRequest` — `{ dest_path: string, op*: "wal_checkpoint_truncate" | "vacuum_into" | "quick_check" | "reset_changes" | "restore", src_path: string }`
   - `dest_path` — Destination file for vacuum_into. Required for that operation and ignored by the others. Jailed like the db parameter, and it must not already exist.
+  - `src_path` — Source file for restore: an existing SQLite database, such as a vacuum_into copy. Required for that operation and ignored by the others. Jailed like the db parameter, and it must not be the database itself. It is only read.
 - `sqlite_main.kvBatchDeleteItem` — `{ if_match: string, key*: string }`
   - `if_match` — Delete this key only if its current ETag is one of these (a comma-separated list of strong entity-tags, as in the If-Match header), or "*" for "the key exists". Checked for every item before any key is deleted; one failure fails the whole batch with 412.
   - `key` — Key to delete. Must not be empty or whitespace-only.
@@ -11277,7 +11600,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 2. Ephemeral one-off execute
 
-`POST /api/v1/terminal/execute` `ephemeral=true`, `wait=true` — auto ID 40000–65535, runs `command`, cleans up. Through the proxy, send it to the `terminal-0` hostname: any other `terminal-N` host pins the request to terminal N. Later: `GET /api/v1/terminal/result/{command_id}` before the session goes: an ephemeral session holding results is removed after `ephemeral-result-timeout` (300 s default) of inactivity with no attached client.
+`POST /api/v1/terminal/execute` `ephemeral=true`, `wait=true` — auto ID 40000–65535, runs `command`, cleans up. Through the proxy, send it to the `terminal-0` hostname: any other `terminal-N` host pins the request to terminal N, so the command runs inside that terminal and every later execute on that host waits behind it for up to 600 s if it hangs. Later: `GET /api/v1/terminal/result/{command_id}` before the session goes: an ephemeral session holding results is removed after `ephemeral-result-timeout` (300 s default) of inactivity with no attached client.
 
 ### 3. Automate a TUI
 
@@ -11336,7 +11659,7 @@ A daemon program configured with `terminal_id: N` runs on terminal N's PTY, and 
 
 - **Sharing a terminal URL = handing out root.** A `terminal-N` kit URL (or any alias pointed at it) lets anyone who can render it run arbitrary commands as root: read env / tokens / vault, exfiltrate files, install backdoors, mutate state. Capability-token semantics treat the URL itself as the credential — there is no per-recipient gate beyond what's configured in `proxy.containerPermissions`. Share only with people you'd trust with `ssh root@…`. For wider audiences, gate (`setPasswordGroup` / `setTokenGroup` / `setIpGroup`), set an alias `expires_at`, watch `proxyLogs`, and prefer a constrained `exec` script over a live PTY (a `display` URL is no read-only alternative: its readonly setting is client-side only, and its holder can still send input).
 - `terminal_id` numeric **1–65535**. **40000–65535 reserved for ephemeral**; pin manual IDs in 1–39999.
-- `terminal_id=0` = sentinel "treat as absent".
+- `terminal_id=0` (the `terminal-0` host) only starts a new ephemeral session. A WebSocket connection naming zero without `ephemeral=true`, or in agent mode, is refused rather than attached to terminal 1, and `GET /api/v1/terminal/raw` on terminal zero answers `400 TERMINAL_ID_ZERO`: use the terminal id returned for the session and its `terminal-N` host.
 - **Display pairing.** `POST /api/v1/terminal/create` builds the session's `DISPLAY` from its `display` field and ignores any `display` in the request URL, so there is no automatic `terminal_id=N ⇒ DISPLAY=:N` mapping — pass `display` explicitly (either `"N"` or `":N"` — the kit normalises a bare number to `:N`). `POST /api/v1/terminal/execute` differs: a session it has to create is configured from the request URL, where `display=N` (or the `display_id=N` alias) sets `DISPLAY=:N` — and on a `terminal-N` host that parameter is supplied for you, so a session first created that way already renders on `:N`. `ephemeral=true` still strips it, and an already-running session keeps the `DISPLAY` it spawned with. The `display-N` kit URL surface is independent of session id.
 - `ephemeral=true` strips `DISPLAY`, skips display/dbus init — X11 won't render.
 - `defer_pid` returns `/execute` immediately even with `wait=true`; queues until named PID exits (TUI-safe), for at most `defer_timeout_ms` (60000 ms default) — on expiry the command never runs.
@@ -11354,6 +11677,8 @@ A daemon program configured with `terminal_id: N` runs on terminal N's PTY, and 
 
 - `400 Invalid terminal_id (must be numeric 1-65535)` on a non-numeric or out-of-range id.
 - `400` config-error on `POST /api/v1/terminal/create` — SSH/SOCKS5 partial validation (e.g. `ssh_user` without `ssh_host`, `socks5_port` out of range). The kit does NOT enforce mutual exclusion of `ssh_password` + `ssh_key`; both can coexist on a single session.
+- `409 EPHEMERAL_SESSION` on `POST /api/v1/terminal/create` — the `terminal_id` names a running ephemeral session, usually left by an `ephemeral=true` command sent to that id's own `terminal-N` host (the proxy pins it to N). That session has no `DISPLAY` and is reaped when idle, so it is not handed back as the session you asked for: `DELETE /api/v1/terminal/{terminal_id}` it and create it again, and send one-off ephemeral commands to the `terminal-0` host.
+- `409 PERSISTENT_SESSION` on `POST /api/v1/terminal/execute` with `ephemeral=true` — the `terminal_id` names a running session that has a display; turning it ephemeral would strip its display and reap it, so nothing runs. Drop `ephemeral`, or send the command to the `terminal-0` host.
 - `404` on `GET /api/v1/terminal/result/{command_id}` once the result is gone: its session was removed (an ephemeral session holding results goes after `ephemeral-result-timeout` of inactivity with no attached client), or the session's result buffer filled and evicted it.
 - `Unknown program name "<name>"` (400) on `POST /api/v1/proxy/aliases` → the `program` is not in the platform's program catalog. For a terminal alias use `program=terminal` (not `hoody-terminal` or `terminal-N`); pick the instance with `index`.
 
@@ -11365,13 +11690,13 @@ A daemon program configured with `terminal_id: N` runs on terminal N's PTY, and 
 
 Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first.
 
-⚠ Through the containers proxy, the **`terminal-N` hostname selects the terminal**: the proxy sets `terminal_id` from `N` and overwrites any value you send, so every example addresses the session's own host (`terminal-100` for session 100; `terminal-0` for ephemeral allocation). A DNS label holds at most 63 characters, so from id 10000 up the `<projectId>-<containerId>-terminal-<N>` label is too long: use the short alias `t-<N>` (`<projectId>-<containerId>-t-<N>.<server>.containers.hoody.com`), which selects the same terminal. The SDK and CLI switch to it automatically."] In the SDK, pass `{ serviceIndex: N }` as the last, template-vars argument (default 1); the CLI derives the host from `--terminal-id`. When calling the kit directly, the HTTP routes take **`terminal_id` as a query parameter on `/execute`**, not in the body — a `terminal_id` field in the JSON body is silently ignored (the body carries `command`, `wait`, `mode` (`pty` by default, or `raw` for a one-shot process with no terminal session), `stdin_b64` and `user` (raw mode only), `id`, `timeout`, `cwd` and `env`); missing the query param returns 400 `terminal_id parameter required` unless `?ephemeral=true`. Always pass `?terminal_id=N`. The `command` body field is **plain UTF-8**, not base64 (only the URL form `?cmd=<base64>` is base64-decoded); the kit wraps it with its own shell bookkeeping and completion-marker echo before PTY delivery. `wait=true` normally returns when the kit sees the completion marker; a non-ephemeral command with no `timeout` is also reported completed after 10 s without new output once stdout was captured or its start marker was seen (`completion: "output_quiet"`, `exit_code: null`; the program may still be running), and programs that swallow the marker or only background-fork can return `status:"completed"` with empty or partial stdout — re-check via `GET /api/v1/terminal/raw` if in doubt. 
+⚠ Through the containers proxy, the **`terminal-N` hostname selects the terminal**: the proxy sets `terminal_id` from `N` and overwrites any value you send, so every example addresses the session's own host (`terminal-100` for session 100; `terminal-0` for ephemeral allocation). A DNS label holds at most 63 characters, so from id 10000 up the `<projectId>-<containerId>-terminal-<N>` label is too long: use the short alias `t-<N>` (`<projectId>-<containerId>-t-<N>.<server>.containers.hoody.com`), which selects the same terminal. The SDK and CLI switch to it automatically."]  When calling the kit directly, the HTTP routes take **`terminal_id` as a query parameter on `/execute`**, not in the body — a `terminal_id` field in the JSON body is silently ignored (the body carries `command`, `wait`, `mode` (`pty` by default, or `raw` for a one-shot process with no terminal session), `stdin_b64` and `user` (raw mode only), `id`, `timeout`, `cwd` and `env`); missing the query param returns 400 `terminal_id parameter required` unless `?ephemeral=true`. Always pass `?terminal_id=N`. The `command` body field is **plain UTF-8**, not base64 (only the URL form `?cmd=<base64>` is base64-decoded); the kit wraps it with its own shell bookkeeping and completion-marker echo before PTY delivery. `wait=true` normally returns when the kit sees the completion marker; a non-ephemeral command with no `timeout` is also reported completed after 10 s without new output once stdout was captured or its start marker was seen (`completion: "output_quiet"`, `exit_code: null`; the program may still be running), and programs that swallow the marker or only background-fork can return `status:"completed"` with empty or partial stdout — re-check via `GET /api/v1/terminal/raw` if in doubt. 
 
 ### 1. Persistent interactive session — create, run, capture, tear down
 
 **Goal:** pin a stable PTY at `terminal_id=100`, run a command, fetch the result by `command_id`, then delete the session.
 
-**Step 1 — create the session.** `terminal_id` is required in the body; pin in `1–39999`.
+**Step 1 — create the session.** Pin in `1–39999`. On the session's `terminal-N` host the proxy supplies the query `terminal_id=N`, so an HTTP body may omit `terminal_id`; if it names one, it must match N or creation answers `400 TERMINAL_ID_MISMATCH`. The examples below send matching ids.
 
 ```bash
 KIT="https://${P}-${C}-terminal-100.${N}.containers.hoody.com"
@@ -11449,7 +11774,7 @@ curl -sf "$KIT/api/v1/terminal/find?terminal_id=101&pattern=PASTED" | jq .hits
 curl -sf "$KIT/api/v1/terminal/keys" | jq '.keys | length, .[0:8]'
 ```
 
-Cleanup: `DELETE /api/v1/terminal/101`.
+Cleanup: `DELETE /api/v1/terminal/101` on the session's `terminal-101` host.
 
 ### 4. WebSocket attach for live streaming
 
@@ -11508,7 +11833,7 @@ curl -sX POST "$KIT/api/v1/terminal/execute?terminal_id=10" \
 
 ```bash
 curl -sf "$KIT/api/v1/system/displays" \
-  | jq '.[] | select(.display==10) | {display, user, windows: (.windows|length)}'
+  | jq '.[] | select((.display | tostring) == "10") | {display, user, windows: (.windows|length)}'
 DISPLAY_KIT="https://${P}-${C}-display-10.${N}.containers.hoody.com"
 # ... then any display.* call against $DISPLAY_KIT
 ```
@@ -11526,7 +11851,7 @@ curl -sX POST "$KIT/api/v1/terminal/create" \
   -d '{
     "terminal_id":"11",
     "shell":"ssh",
-    "ssh_host":"10.0.0.42",
+    "ssh_host":"ssh.example.com",
     "ssh_user":"deploy",
     "ssh_port":"22",
     "ssh_password":"<ssh-password>"
@@ -11636,7 +11961,7 @@ Cleanup: `DELETE /api/v1/terminal/{terminal_id}`. ⚠ Never call `POST /api/v1/s
 **Param notes:**
 
 - `terminal_id` — Terminal session ID (numeric 1-65535). Required unless ephemeral=true, in which case it is auto-generated if not provided. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and OVERWRITES any value you send (a ?terminal_id=0 query sentinel never survives the proxy) — use the terminal-0 hostname as the "no terminal ID" sentinel so ephemeral=true can auto-generate; supply this parameter directly only when calling the terminal service without the proxy
-- `ephemeral` — When true, auto-generates a unique terminal_id (if not provided), skips display/dbus initialization, and applies aggressive cleanup. Designed for programmatic CLI command execution like a scripted command runner (default: false). WARNING: Do NOT use ephemeral=true for GUI applications that require a display. Ephemeral sessions strip the DISPLAY environment variable, which means X11/GUI applications will not work. Use a regular terminal session with an explicit terminal_id and display parameter instead for GUI workloads
+- `ephemeral` — When true, auto-generates a unique terminal_id (if not provided), skips display/dbus initialization, and applies aggressive cleanup. Designed for programmatic CLI command execution like a scripted command runner (default: false). WARNING: Do NOT use ephemeral=true for GUI applications that require a display. Ephemeral sessions strip the DISPLAY environment variable, which means X11/GUI applications will not work. Use a regular terminal session with an explicit terminal_id and display parameter instead for GUI workloads. A terminal_id that names a running terminal with a display is refused with 409 PERSISTENT_SESSION rather than turned ephemeral; on a terminal-N host the proxy sets terminal_id=N, so send ephemeral commands to the terminal-0 host
 - `defer_pid` — Defer command injection until this PID exits (TUI-safe). If set, the API returns immediately regardless of wait=true
 - `defer_start_time_ticks` — Optional /proc/<pid>/stat field 22 (starttime in clock ticks since boot) to avoid PID reuse bugs. If it mismatches, command executes immediately
 - `defer_timeout_ms` — Max time to wait for defer_pid exit before failing (default: 60000)
@@ -11777,7 +12102,7 @@ Cleanup: `DELETE /api/v1/terminal/{terminal_id}`. ⚠ Never call `POST /api/v1/s
 - `background` — Background color: same as foreground options (default: black)
 - `fontsize` — Font size in pixels (default: 20)
 - `save` — Save to storage directory (default: true)
-- `terminal_id` — Terminal session ID (numeric 1-65535). Omitted, the connection joins the shared terminal "1" that every client without a terminal_id uses; with ephemeral=true it instead gets a fresh ID in 40000-65535, reported in the SET_TERMINAL_ID frame. A value that is present but malformed is refused, never mapped to "1". Multiple clients can share by using the same ID. On connections routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send _(on `GET /api/v1/terminal/ws`)_
+- `terminal_id` — Terminal session ID (numeric 1-65535). Omitted, the connection joins the shared terminal "1" that every client without a terminal_id uses; with ephemeral=true it instead gets a fresh ID in 40000-65535, reported in the SET_TERMINAL_ID frame. A value that is present but malformed is refused, never mapped to "1". 0 (the terminal-0 host) only starts a fresh ephemeral session: without ephemeral=true (or in agent mode) the connection is refused, never mapped to "1". Multiple clients can share by using the same ID. On connections routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send _(on `GET /api/v1/terminal/ws`)_
 - `readonly` — Enable read-only mode for this client (blocks keyboard input) - Use 'true', '1', or no value
 - `cwd` — Working directory for new sessions
 - `cwd_auto_create` — Auto-create cwd when the requested working directory does not exist yet. Only applies when cwd is explicitly provided for a new local session. Enable with 'true', '1', or no value (default: false)
@@ -11814,7 +12139,7 @@ Cleanup: `DELETE /api/v1/terminal/{terminal_id}`. ⚠ Never call `POST /api/v1/s
 - `history_limit` — Max command_history entries to include per session (default: 50, max: 1000)
 - `history_lines` — Alias of history_limit
 - `terminal_id` — Terminal session ID. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy _(on `POST /api/v1/terminal/paste`, `POST /api/v1/terminal/press`, `GET /api/v1/terminal/find` +2 more)_
-- `terminal_id` — Terminal session ID (numeric 1-65535, defaults to "1" if not provided). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send _(on `GET /api/v1/terminal/raw`)_
+- `terminal_id` — Terminal session ID (numeric 1-65535, defaults to "1" if not provided). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send. 0 (the terminal-0 host) names no terminal to read and is refused with 400 TERMINAL_ID_ZERO _(on `GET /api/v1/terminal/raw`)_
 - `format` — Output format: download, text, or html (defaults to "download" if not provided) _(on `GET /api/v1/terminal/raw`)_
 - `tail` — Return only the last N lines of output
 - `pattern` — PCRE2 regex pattern to search for (max 1024 bytes)
@@ -11827,7 +12152,7 @@ Cleanup: `DELETE /api/v1/terminal/{terminal_id}`. ⚠ Never call `POST /api/v1/s
 **Body shapes:**
 
 - `POST /api/v1/terminal/create` body — `{ terminal_id: string, ephemeral: bool, display: string, shell: string, user: string, cwd: string, startup_script: string, welcome: bool, debug: bool, desktop: bool, desktop_env: string, cols: int, rows: int, wait_until_display: bool, wait_timeout: int, ssh_host: string, ssh_user: string, ssh_port: string, ssh_password: string, ssh_key: string, socks5_host: string, socks5_port: string, socks5_user: string, socks5_pass: string }`
-  - `terminal_id` — Terminal session ID (numeric 1-65535). Required unless ephemeral is true, in which case it is auto-generated (range 40000-65535).
+  - `terminal_id` — Terminal session ID (numeric 1-65535). Required unless ephemeral is true, in which case it is auto-generated (range 40000-65535), or unless the query carries terminal_id: on a terminal-N host it is N, and a body terminal_id that differs from it is refused with 400 TERMINAL_ID_MISMATCH. …
   - `ephemeral` — Auto-generate terminal ID and enable ephemeral session mode. Ephemeral sessions auto-clean after idle timeout and strip DISPLAY environment. (default: false)
   - `display` — X11 display number (e.g., "1" or ":1"). Sets the DISPLAY env var and enables Hoody Display readiness waiting. The display is started if it is not running and reused if it is; it keeps running after the session is deleted (stop it with POST /api/v1/system/displays/{display}/stop).
   - `shell` — Shell to use (bash/zsh/fish/sh). Ignored for SSH sessions.
@@ -11978,7 +12303,7 @@ Tunnel traffic flows through the same proxy as every other kit URL, so:
 - `BIND_OK.publicUrl` is `null` on deployments that do not mint public tunnel URLs — the bind still works, you just reach it another way.
 - `grace_ms` capped at 5000ms; over → `400`.
 - `containerPort: 0` requests an automatically allocated port; ports 1–79 are rejected; `80..=1023` are refused unless the deployment allows privileged ports (gated separately for expose and for pull).
-- PULL loopback-only. EXPOSE has atomic takeover (`takeover:true`); the displaced owner gets a `RESET` frame on each stream of the old binding carrying the **numeric** code `13`, then a takeover notice: frame type `0x40` (`TunnelFrameType.BindRevoked` in the SDK), whose JSON body is `{bindId, reason}` — `reason` is free text, so branch on the frame type, never on its wording. The `tunnelExpose` driver does not surface that notice; only code that decodes frames itself sees it. PULL takeover → `BIND_ERR` with `code:"INVALID_KIND"`.
+- PULL loopback-only. EXPOSE has atomic takeover (`takeover:true`); the displaced owner gets a `RESET` frame on each stream of the old binding carrying the **numeric** code `13`, then a takeover notice: frame type `0x40`, whose JSON body is `{bindId, reason}` — `reason` is free text, so branch on the frame type, never on its wording. The bundled tunnel driver does not surface that notice; only code that decodes frames itself sees it. PULL takeover → `BIND_ERR` with `code:"INVALID_KIND"`.
 - Idle reaping needs zero streams AND zero bindings. Orphans with parked bindings wait out the configured takeover grace (default 60 s; zero disables parking).
 - v1 vs v2 subprotocols share `/connect` (`hoody-tunnel.v1` for single-WS sessions, `hoody-tunnel.v2` for multi-WS shard pools); `isV2` on `GET /api/v1/tunnel/sessions` reports the shape. Both subprotocols support graceful resume via `resume.sessionId` in HELLO; `isV2:false` does NOT mean "no resume".
 - Multi-WS (v2) drop semantics: dropping the **primary** socket closes the whole session; dropping a **secondary** shard makes the driver close streams pinned to that shard while the kit detaches the shard and the session continues.
@@ -12201,29 +12526,29 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 1. Provision and verify
 
-1. `POST /watchers` — paths plus optional `recursive`, `include`, `exclude`, `kinds`, `ignore_dirs`, `skip_hidden`, `coalesce_ms`, `history_size`
-2. `GET /watchers/{id}` — read back `id`, `WatcherConfigView`, `WatcherStats`
+1. `POST /api/v1/watch/watchers` — paths plus optional `recursive`, `include`, `exclude`, `kinds`, `ignore_dirs`, `skip_hidden`, `coalesce_ms`, `history_size`
+2. `GET /api/v1/watch/watchers/{id}` — read back `id`, `WatcherConfigView`, `WatcherStats`
 
 ### 2. SSE live-tail with resume
 
 1. Create the watcher as in workflow 1
-2. `GET /watchers/{id}/events/sse` — each event carries monotonic `id`
+2. `GET /api/v1/watch/watchers/{id}/events/sse` — each event carries monotonic `id`
 3. Reconnect with `since_id` = last seen id
 4. On HTTP 409 `HISTORY_GAP` or inline `event: lag` — treat as data loss; rebuild from fresh listing
 
 ### 3. Bulk replay via pagination
 
-Bulk replay: `GET /watchers/{id}/events` with `since_id`, one page per call; persist the highest `id`.
+Bulk replay: `GET /api/v1/watch/watchers/{id}/events` with `since_id`, one page per call; persist the highest `id`.
 
 ### 4. WebSocket consumer
 
 1. Create the watcher as in workflow 1
-2. `GET /watchers/{id}/events/ws` — the server pings every 20 s and closes the socket when the pong is missing; most WebSocket clients answer pings on their own
+2. `GET /api/v1/watch/watchers/{id}/events/ws` — the server pings every 20 s and closes the socket when the pong is missing; most WebSocket clients answer pings on their own
 3. `{"type":"lag",...}` text frame = same handling as SSE lag
 
 ### 5. Inventory, reconfiguration and teardown
 
-List with `GET /watchers`, inspect with `GET /watchers/{id}`, reconfigure in place with `PATCH /watchers/{id}`, remove with `DELETE /watchers/{id}`.
+List with `GET /api/v1/watch/watchers`, inspect with `GET /api/v1/watch/watchers/{id}`, reconfigure in place with `PATCH /api/v1/watch/watchers/{id}`, remove with `DELETE /api/v1/watch/watchers/{id}`.
 
 ## Quirks & gotchas
 
@@ -12234,7 +12559,7 @@ List with `GET /watchers`, inspect with `GET /watchers/{id}`, reconfigure in pla
 - Default limits, which the kit's command-line flags can change: 128 watchers/kit, 32 paths/watcher, 64 stream clients/watcher, replay buffer of 100 000 events or 16 MiB per watcher (whichever is hit first). `history_size` on create overrides the event count per watcher; values under 32 are raised to 32 and there is no upper cap, so the 16 MiB memory limit is the effective bound
 - Watcher ids are UUIDs; a path segment that is not a UUID is rejected with `400` before the route runs
 - `since_id` and `since_timestamp` mutually exclusive — both = 400 `INVALID_CURSOR`
-- A cursor older than the retained history returns 409 `HISTORY_GAP`. For `since_id` that means `since_id > 0` and `since_id + 1` is below the oldest retained id, so `since_id=0` never gaps. For `since_timestamp` it means the timestamp is earlier than the oldest retained event, which is common on a young or quiet watcher ("the last 5 minutes" of a watcher created 2 minutes ago gaps as soon as it has one event). An empty history never gaps for `since_id` or `since_timestamp`; an `after_id` walk (next bullet) can still gap on an empty history, when an event after its cursor was evicted or was too large to keep.
+- 409 `HISTORY_GAP` means an event after your cursor is lost: it was evicted from the replay history, or it was too large to keep. The test is exact for every cursor (`since_id`, `since_timestamp`, `after_id`): a cursor older than the oldest retained event does not gap by itself, so "the last 5 minutes" of a watcher created 2 minutes ago returns everything it has. `since_id=0` means "everything retained" and never gaps.
 - Walking history page by page: pass `after_id` (the previous response's `next_after_id`; the response also carries `has_more`). If an event you have not read yet was evicted between two requests, the next one fails with 409 `HISTORY_GAP` instead of skipping it. A `page` walk counts from the oldest retained event, so an eviction between pages skips events silently. `since_id`, `since_timestamp` and `page` are ignored when `after_id` is set.
 - `since_timestamp` accepts RFC3339, unix seconds, or millis (switches to ms when `|n| >= 100_000_000_000`)
 - WS message cap 64 KiB by default; the server sends JSON text frames only, ignores text and binary frames from the client, pings every 20 s and disconnects on a missed pong
@@ -12247,10 +12572,10 @@ List with `GET /watchers`, inspect with `GET /watchers/{id}`, reconfigure in pla
 - `400 INVALID_CURSOR` — both cursor fields, or unparseable timestamp
 - `404 WATCHER_NOT_FOUND` — UUID syntactically valid but no watcher; also raised pre-upgrade on stream endpoints
 - `409 LIMIT_EXCEEDED` — more than 32 `paths` in one watcher, or 128 watchers already live on the container
-- `409 HISTORY_GAP` — cursor older than oldest retained; body `details` carries `oldest_available_id` / `newest_available_id`
+- `409 HISTORY_GAP` — an event after the cursor was evicted or too large to keep; body `details` carries `oldest_available_id` / `newest_available_id`
 - `429 MAX_CLIENTS_REACHED` — >64 concurrent SSE+WS on one watcher; capacity incremented after checks pass (no slot leak)
 - `500 WATCHER_START_FAILED` — the kit could not start the inotify watch for a new watcher
-- `503 SHUTTING_DOWN` — the kit is stopping: `GET /watchers/{id}/events/sse`/`GET /watchers/{id}/events/ws` and `POST /watchers` return it. Watchers are removed at shutdown, so reads of a watcher or its history return 404 `WATCHER_NOT_FOUND` instead
+- `503 SHUTTING_DOWN` — the kit is stopping: `GET /api/v1/watch/watchers/{id}/events/sse`/`GET /api/v1/watch/watchers/{id}/events/ws` and `POST /api/v1/watch/watchers` return it. Watchers are removed at shutdown, so reads of a watcher or its history return 404 `WATCHER_NOT_FOUND` instead
 - Mid-stream `event: lag` (SSE) / `{"type":"lag",...}` (WS) — broadcast lagged AND replay buffer cannot fill gap; connection closed after lag frame
 
 ## Related namespaces
@@ -12271,7 +12596,7 @@ Each step has a copy-pasteable code block in the mode you're reading (curl for H
 **Step 1 — create the watcher.** Capture `id`. `recursive` defaults to `true`; tighten `coalesce_ms` from the default 100 ms to 50 ms for snappier debounce.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 WID=$(curl -sX POST "$KIT/watchers" -H 'Content-Type: application/json' \
   -d '{"paths":["/tmp/wt"],"recursive":true,"coalesce_ms":50}' | jq -r .id)
 echo "WID=$WID"
@@ -12290,14 +12615,14 @@ curl -sf "$KIT/watchers/$WID" | jq '{id, config: .config | {paths, recursive, co
 **Step 1 — open the SSE stream.** Each frame is `id: <n>\nevent: file_event\ndata: {…json…}\n\n`. The `id` is monotonic; persist it as your resume cursor.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 curl -sN -H 'Accept: text/event-stream' "$KIT/watchers/$WID/events/sse"
 # id: 519
 # event: file_event
 # data: {"id":519,"watcher_id":"…","kind":"created","path":"/tmp/wt/app.log","new_size_bytes":0,"is_dir":false,"timestamp":"…"}
 ```
 
-**Step 2 — reconnect with `since_id`.** Server replays from the buffer; if the buffer rolled past your cursor you get **HTTP 409 `HISTORY_GAP`** with `details` (a JSON-encoded string) holding `oldest_available_id` / `newest_available_id` / `requested_cursor`. Treat that as data loss and rebuild from a fresh listing.
+**Step 2 — reconnect with `since_id`.** Server replays from the buffer; if an event after your cursor was evicted you get **HTTP 409 `HISTORY_GAP`** with `details` (a JSON-encoded string) holding `oldest_available_id` / `newest_available_id` / `requested_cursor`. Treat that as data loss and rebuild from a fresh listing.
 
 ```bash
 curl -sN -H 'Accept: text/event-stream' \
@@ -12310,7 +12635,7 @@ curl -sN -H 'Accept: text/event-stream' \
 
 ```bash
 # wscat or any WS client. URL is wss://, NOT https://, on the SAME host.
-wscat -c "wss://${P}-${C}-watch-1.${N}.containers.hoody.com/watchers/$WID/events/ws?since_id=37000"
+wscat -c "wss://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch/watchers/$WID/events/ws?since_id=37000"
 # < {"type":"file_event","id":37511,"watcher_id":"…","kind":"created","path":"/tmp/wt/ws-trigger.txt",…}
 # (server Ping arrives every ~20s; client lib auto-pongs)
 ```
@@ -12324,7 +12649,7 @@ A lag frame is `{"type":"lag", …}` (text); after it, the server closes the soc
 **Step 1 — page through.** Fetch the first page with your starting `since_id`, then follow `next_after_id` as `after_id` while `has_more` is true; a 409 `HISTORY_GAP` on an `after_id` page means events were evicted before you read them, so the replay is incomplete. Do not walk with `page`: with `since_id=0` an eviction between pages shifts the offsets and skips events without an error. `limit ∈ [1,200]`; out-of-range = **400 `INVALID_PAGINATION`**. Response carries `oldest_available_id` / `newest_available_id` / `oldest_available_timestamp` / `newest_available_timestamp` so you can detect buffer churn between pages.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 CURSOR=${CURSOR:-0}   # highest id already stored; 0 = everything retained
 Q="since_id=$CURSOR"
 while :; do
@@ -12343,7 +12668,7 @@ echo "resume cursor=${CURSOR:-0}"
 **Goal:** trigger a rebuild on content edits, not on file creation noise. `kinds` accepts a subset of `created | modified | removed | renamed | metadata | overflow | other`. `overflow` events still arrive when `kinds` leaves them out, so a consumer should handle them anyway.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 WID=$(curl -sX POST "$KIT/watchers" -H 'Content-Type: application/json' \
   -d '{"paths":["/tmp/wt"],"kinds":["modified"],"coalesce_ms":50}' | jq -r .id)
 # Sanity-check that only modified events arrive after a few writes:
@@ -12358,7 +12683,7 @@ curl -sf "$KIT/watchers/$WID/events?limit=20" \
 **Goal:** stream `*.log` events but exclude `secret-*.log` rotations a security agent doesn't need to see. `exclude` takes precedence over `include`.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 WID=$(curl -sX POST "$KIT/watchers" -H 'Content-Type: application/json' \
   -d '{
     "paths":["/tmp/wt"],
@@ -12375,7 +12700,7 @@ curl -sf "$KIT/watchers/$WID/events?limit=40" | jq '[.items[].path] | unique'
 **Goal:** an audit screen that shows every watcher in the kit, what it watches, and whether it has live consumers. `stats.events_seen` counts raw inotify events before coalescing, so it can be larger than the number of events in the history; `active_clients` counts live SSE+WS connections. One call returns at most 200 watchers; with the default cap of 128 watchers per kit that is all of them, but when the cap has been raised, walk further pages with `page` until the items seen reach `total`.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 curl -sf "$KIT/watchers?limit=200" \
   | jq '.items[] | {id, paths: .config.paths, kinds: (.config.kinds // []),
                     events_seen: .stats.events_seen,
@@ -12387,7 +12712,7 @@ curl -sf "$KIT/watchers?limit=200" \
 **Goal:** widen `kinds` from `["modified"]` to `["modified","removed"]`. Update the watcher in place: omitted fields keep their current value, a list you send replaces that whole list, and at least one field must be given. Changing only `kinds`, as below, keeps the watcher's id, its retained history and its connected SSE/WebSocket clients. Shrinking `history_size` evicts the oldest events beyond the new cap and can turn an existing replay cursor into a `HISTORY_GAP`; ordinary eviction as new events arrive still applies. Deleting and recreating the watcher instead would lose the history and disconnect every consumer.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 curl -sf -X PATCH "$KIT/watchers/$WID" -H 'Content-Type: application/json' \
   -d '{"kinds":["modified","removed"]}' | jq '.config.kinds'
 ```
@@ -12396,10 +12721,10 @@ If the new configuration cannot be started, the request fails with 500 and the w
 
 ### 9. Tear down on shutdown + verify events stop
 
-**Goal:** clean up. After delete, both `GET /watchers/{id}` and `/events` return **404 `WATCHER_NOT_FOUND`**, and any open SSE/WS sockets close. The DELETE response body is `{ id, deleted: true }`.
+**Goal:** clean up. After delete, both `GET /api/v1/watch/watchers/{id}` and `/api/v1/watch/watchers/{id}/events` return **404 `WATCHER_NOT_FOUND`**, and any open SSE/WS sockets close. The DELETE response body is `{ id, deleted: true }`.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 curl -sX DELETE "$KIT/watchers/$WID"   # → {"id":"…","deleted":true}
 # Verify gone:
 curl -sw '\n%{http_code}\n' "$KIT/watchers/$WID"          # → 404 WATCHER_NOT_FOUND
@@ -12408,20 +12733,17 @@ curl -sw '\n%{http_code}\n' "$KIT/watchers/$WID/events"   # → 404 WATCHER_NOT_
 
 ### 10. Recent history without a stream — `since_timestamp` for one-shot tail
 
-**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. If the oldest retained event is newer than the timestamp (a watcher younger than 5 minutes, or a buffer that has rolled over), the call returns **409 `HISTORY_GAP`**. That only means the history does not reach back that far: every retained event is newer than the timestamp, so read them all from `since_id=0`. One call returns at most 200 events; walk further pages with `after_id` set to the last id received, not `since_id`: `since_id` only checks the oldest retained id, so it misses an event evicted, or too large to keep, between two pages without an error. A 409 on one of those later `after_id` pages means such an event was lost while paging, so the result is incomplete. Treat it as a failure and run the recovery again from the start.
+**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. A watcher younger than 5 minutes is fine: the call returns every event it has. It answers **409 `HISTORY_GAP`** only when an event after the timestamp was lost (evicted, or too large to keep), so the result would be incomplete. One call returns at most 200 events; walk further pages with `after_id` set to the last id received, which answers 409 the same way when an event after it was lost while paging. Treat any 409 as a failure: the history for that window is incomplete.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 TS=$(date -u -d '5 minutes ago' +%FT%TZ)
 Q="since_timestamp=$TS"
 while :; do
   R=$(curl -s -w '\n%{http_code}' "$KIT/watchers/$WID/events?$Q&limit=200")
   CODE=$(tail -n 1 <<< "$R"); R=$(sed '$d' <<< "$R")
-  # 409 HISTORY_GAP on the timestamp query: every retained event is newer than $TS,
-  # so read them all (since_id=0 never gaps). No timestamp filter is needed.
-  if [ "$CODE" = 409 ] && [ "${Q%%=*}" = since_timestamp ]; then Q="since_id=0"; continue; fi
-  # Any other non-200, including a 409 on a later after_id page (an event after the
-  # cursor was lost while paging), leaves the history incomplete: fail, then rerun.
+  # Any non-200 fails. A 409 HISTORY_GAP (on the first page or a later after_id page)
+  # means an event after the cursor was lost: the history for this window is incomplete.
   [ "$CODE" = 200 ] || { echo "HTTP $CODE: $R (history incomplete, run the recovery again)" >&2; exit 1; }
   jq -c '.items[] | {id, kind, path, timestamp}' <<< "$R"
   [ "$(jq '.items | length' <<< "$R")" -lt 200 ] && break
@@ -12437,9 +12759,9 @@ When the filesystem reports a rename as a single event carrying both paths, the 
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /watchers/{id}/events/ws` | Stream Watcher Events Ws | `?since_id` `?since_timestamp` |
-| `GET /watchers/{id}/events` | List Watcher Events | `?since_id` `?since_timestamp` `?page` `?limit` `?after_id` |
-| `GET /watchers/{id}/events/sse` | Stream Watcher Events Sse | `?since_id` `?since_timestamp` |
+| `GET /api/v1/watch/watchers/{id}/events/ws` | Stream Watcher Events Ws | `?since_id` `?since_timestamp` |
+| `GET /api/v1/watch/watchers/{id}/events` | List Watcher Events | `?since_id` `?since_timestamp` `?page` `?limit` `?after_id` |
+| `GET /api/v1/watch/watchers/{id}/events/sse` | Stream Watcher Events Sse | `?since_id` `?since_timestamp` |
 
 **Param notes:**
 
@@ -12459,14 +12781,15 @@ When the filesystem reports a rename as a single event carrying both paths, the 
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /watchers` | Create Watcher | `body*:watch_CreateWatcherRequest` |
-| `DELETE /watchers/{id}` | Delete Watcher |  |
-| `GET /watchers/{id}` | Get Watcher |  |
-| `GET /watchers` | List Watchers | `?page` `?limit` |
-| `PATCH /watchers/{id}` | Reconfigure a live watcher in place. Omitted fields keep their current values. The watcher keeps its id, replay history (so since_id / since_timestamp cursors stay valid) and its connected SSE/WebSocket clients; only the file-system backend is replaced. The new backend starts before the old one stops, and events the old backend had already queued are processed before the handoff completes. So a change under a path watched by both configurations is not lost across the swap (one landing inside that window may be reported twice), and a change under a path only the old configuration watched is delivered if the old backend saw it before stopping. The drain is bounded: if the old backend has not finished within 5 seconds (a backstop against a wedged backend), the handoff completes anyway and events still queued in the old backend at that point are dropped, with a warning in the service log. A request that fails leaves the watcher unchanged. A body with no field is refused with 400 `INVALID_REQUEST`; a body whose fields all equal the current values returns the watcher as it is, without replacing the backend. | `body*:watch_UpdateWatcherRequest` |
+| `POST /api/v1/watch/watchers` | Create Watcher | `H:Idempotency-Key` `body*:watch_CreateWatcherRequest` |
+| `DELETE /api/v1/watch/watchers/{id}` | Delete Watcher |  |
+| `GET /api/v1/watch/watchers/{id}` | Get Watcher |  |
+| `GET /api/v1/watch/watchers` | List Watchers | `?page` `?limit` |
+| `PATCH /api/v1/watch/watchers/{id}` | Reconfigure a live watcher in place. Omitted fields keep their current values. The watcher keeps its id, replay history (so since_id / since_timestamp cursors stay valid) and its connected SSE/WebSocket clients; only the file-system backend is replaced. The new backend starts before the old one stops, and events the old backend had already queued are processed before the handoff completes. So a change under a path watched by both configurations is not lost across the swap (one landing inside that window may be reported twice), and a change under a path only the old configuration watched is delivered if the old backend saw it before stopping. The drain is bounded: if the old backend has not finished within 5 seconds (a backstop against a wedged backend), the handoff completes anyway and events still queued in the old backend at that point are dropped, with a warning in the service log. A request that fails leaves the watcher unchanged. A body with no field is refused with 400 `INVALID_REQUEST`; a body whose fields all equal the current values returns the watcher as it is, without replacing the backend. | `body*:watch_UpdateWatcherRequest` |
 
 **Param notes:**
 
+- `Idempotency-Key` — Makes the create safe to retry. A create with a key used in the last 10 minutes with the same body returns the watcher that first create made (200) instead of a second watcher; with another body it is refused (409 `IDEMPOTENCY_KEY_REUSED`). Use a new key for each watcher, such as a random UUID. At most 256 characters.
 - `page` — Page number (1-based).
 - `limit` — Items per page (1-200).
 

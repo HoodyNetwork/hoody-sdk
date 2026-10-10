@@ -1,4 +1,4 @@
-> _**HTTP skill · `watch` namespace** · ~5,939 tokens · hoody-sdk v1.0.0-beta.16_
+> _**HTTP skill · `watch` namespace** · ~5,967 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `watch` — Linux inotify file-change streams with replay history
 
@@ -36,29 +36,29 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 1. Provision and verify
 
-1. `POST /watchers` — paths plus optional `recursive`, `include`, `exclude`, `kinds`, `ignore_dirs`, `skip_hidden`, `coalesce_ms`, `history_size`
-2. `GET /watchers/{id}` — read back `id`, `WatcherConfigView`, `WatcherStats`
+1. `POST /api/v1/watch/watchers` — paths plus optional `recursive`, `include`, `exclude`, `kinds`, `ignore_dirs`, `skip_hidden`, `coalesce_ms`, `history_size`
+2. `GET /api/v1/watch/watchers/{id}` — read back `id`, `WatcherConfigView`, `WatcherStats`
 
 ### 2. SSE live-tail with resume
 
 1. Create the watcher as in workflow 1
-2. `GET /watchers/{id}/events/sse` — each event carries monotonic `id`
+2. `GET /api/v1/watch/watchers/{id}/events/sse` — each event carries monotonic `id`
 3. Reconnect with `since_id` = last seen id
 4. On HTTP 409 `HISTORY_GAP` or inline `event: lag` — treat as data loss; rebuild from fresh listing
 
 ### 3. Bulk replay via pagination
 
-Bulk replay: `GET /watchers/{id}/events` with `since_id`, one page per call; persist the highest `id`.
+Bulk replay: `GET /api/v1/watch/watchers/{id}/events` with `since_id`, one page per call; persist the highest `id`.
 
 ### 4. WebSocket consumer
 
 1. Create the watcher as in workflow 1
-2. `GET /watchers/{id}/events/ws` — the server pings every 20 s and closes the socket when the pong is missing; most WebSocket clients answer pings on their own
+2. `GET /api/v1/watch/watchers/{id}/events/ws` — the server pings every 20 s and closes the socket when the pong is missing; most WebSocket clients answer pings on their own
 3. `{"type":"lag",...}` text frame = same handling as SSE lag
 
 ### 5. Inventory, reconfiguration and teardown
 
-List with `GET /watchers`, inspect with `GET /watchers/{id}`, reconfigure in place with `PATCH /watchers/{id}`, remove with `DELETE /watchers/{id}`.
+List with `GET /api/v1/watch/watchers`, inspect with `GET /api/v1/watch/watchers/{id}`, reconfigure in place with `PATCH /api/v1/watch/watchers/{id}`, remove with `DELETE /api/v1/watch/watchers/{id}`.
 
 ## Quirks & gotchas
 
@@ -69,7 +69,7 @@ List with `GET /watchers`, inspect with `GET /watchers/{id}`, reconfigure in pla
 - Default limits, which the kit's command-line flags can change: 128 watchers/kit, 32 paths/watcher, 64 stream clients/watcher, replay buffer of 100 000 events or 16 MiB per watcher (whichever is hit first). `history_size` on create overrides the event count per watcher; values under 32 are raised to 32 and there is no upper cap, so the 16 MiB memory limit is the effective bound
 - Watcher ids are UUIDs; a path segment that is not a UUID is rejected with `400` before the route runs
 - `since_id` and `since_timestamp` mutually exclusive — both = 400 `INVALID_CURSOR`
-- A cursor older than the retained history returns 409 `HISTORY_GAP`. For `since_id` that means `since_id > 0` and `since_id + 1` is below the oldest retained id, so `since_id=0` never gaps. For `since_timestamp` it means the timestamp is earlier than the oldest retained event, which is common on a young or quiet watcher ("the last 5 minutes" of a watcher created 2 minutes ago gaps as soon as it has one event). An empty history never gaps for `since_id` or `since_timestamp`; an `after_id` walk (next bullet) can still gap on an empty history, when an event after its cursor was evicted or was too large to keep.
+- 409 `HISTORY_GAP` means an event after your cursor is lost: it was evicted from the replay history, or it was too large to keep. The test is exact for every cursor (`since_id`, `since_timestamp`, `after_id`): a cursor older than the oldest retained event does not gap by itself, so "the last 5 minutes" of a watcher created 2 minutes ago returns everything it has. `since_id=0` means "everything retained" and never gaps.
 - Walking history page by page: pass `after_id` (the previous response's `next_after_id`; the response also carries `has_more`). If an event you have not read yet was evicted between two requests, the next one fails with 409 `HISTORY_GAP` instead of skipping it. A `page` walk counts from the oldest retained event, so an eviction between pages skips events silently. `since_id`, `since_timestamp` and `page` are ignored when `after_id` is set.
 - `since_timestamp` accepts RFC3339, unix seconds, or millis (switches to ms when `|n| >= 100_000_000_000`)
 - WS message cap 64 KiB by default; the server sends JSON text frames only, ignores text and binary frames from the client, pings every 20 s and disconnects on a missed pong
@@ -82,10 +82,10 @@ List with `GET /watchers`, inspect with `GET /watchers/{id}`, reconfigure in pla
 - `400 INVALID_CURSOR` — both cursor fields, or unparseable timestamp
 - `404 WATCHER_NOT_FOUND` — UUID syntactically valid but no watcher; also raised pre-upgrade on stream endpoints
 - `409 LIMIT_EXCEEDED` — more than 32 `paths` in one watcher, or 128 watchers already live on the container
-- `409 HISTORY_GAP` — cursor older than oldest retained; body `details` carries `oldest_available_id` / `newest_available_id`
+- `409 HISTORY_GAP` — an event after the cursor was evicted or too large to keep; body `details` carries `oldest_available_id` / `newest_available_id`
 - `429 MAX_CLIENTS_REACHED` — >64 concurrent SSE+WS on one watcher; capacity incremented after checks pass (no slot leak)
 - `500 WATCHER_START_FAILED` — the kit could not start the inotify watch for a new watcher
-- `503 SHUTTING_DOWN` — the kit is stopping: `GET /watchers/{id}/events/sse`/`GET /watchers/{id}/events/ws` and `POST /watchers` return it. Watchers are removed at shutdown, so reads of a watcher or its history return 404 `WATCHER_NOT_FOUND` instead
+- `503 SHUTTING_DOWN` — the kit is stopping: `GET /api/v1/watch/watchers/{id}/events/sse`/`GET /api/v1/watch/watchers/{id}/events/ws` and `POST /api/v1/watch/watchers` return it. Watchers are removed at shutdown, so reads of a watcher or its history return 404 `WATCHER_NOT_FOUND` instead
 - Mid-stream `event: lag` (SSE) / `{"type":"lag",...}` (WS) — broadcast lagged AND replay buffer cannot fill gap; connection closed after lag frame
 
 ## Related namespaces
@@ -106,7 +106,7 @@ Each step has a copy-pasteable code block in the mode you're reading (curl for H
 **Step 1 — create the watcher.** Capture `id`. `recursive` defaults to `true`; tighten `coalesce_ms` from the default 100 ms to 50 ms for snappier debounce.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 WID=$(curl -sX POST "$KIT/watchers" -H 'Content-Type: application/json' \
   -d '{"paths":["/tmp/wt"],"recursive":true,"coalesce_ms":50}' | jq -r .id)
 echo "WID=$WID"
@@ -125,14 +125,14 @@ curl -sf "$KIT/watchers/$WID" | jq '{id, config: .config | {paths, recursive, co
 **Step 1 — open the SSE stream.** Each frame is `id: <n>\nevent: file_event\ndata: {…json…}\n\n`. The `id` is monotonic; persist it as your resume cursor.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 curl -sN -H 'Accept: text/event-stream' "$KIT/watchers/$WID/events/sse"
 # id: 519
 # event: file_event
 # data: {"id":519,"watcher_id":"…","kind":"created","path":"/tmp/wt/app.log","new_size_bytes":0,"is_dir":false,"timestamp":"…"}
 ```
 
-**Step 2 — reconnect with `since_id`.** Server replays from the buffer; if the buffer rolled past your cursor you get **HTTP 409 `HISTORY_GAP`** with `details` (a JSON-encoded string) holding `oldest_available_id` / `newest_available_id` / `requested_cursor`. Treat that as data loss and rebuild from a fresh listing.
+**Step 2 — reconnect with `since_id`.** Server replays from the buffer; if an event after your cursor was evicted you get **HTTP 409 `HISTORY_GAP`** with `details` (a JSON-encoded string) holding `oldest_available_id` / `newest_available_id` / `requested_cursor`. Treat that as data loss and rebuild from a fresh listing.
 
 ```bash
 curl -sN -H 'Accept: text/event-stream' \
@@ -145,7 +145,7 @@ curl -sN -H 'Accept: text/event-stream' \
 
 ```bash
 # wscat or any WS client. URL is wss://, NOT https://, on the SAME host.
-wscat -c "wss://${P}-${C}-watch-1.${N}.containers.hoody.com/watchers/$WID/events/ws?since_id=37000"
+wscat -c "wss://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch/watchers/$WID/events/ws?since_id=37000"
 # < {"type":"file_event","id":37511,"watcher_id":"…","kind":"created","path":"/tmp/wt/ws-trigger.txt",…}
 # (server Ping arrives every ~20s; client lib auto-pongs)
 ```
@@ -159,7 +159,7 @@ A lag frame is `{"type":"lag", …}` (text); after it, the server closes the soc
 **Step 1 — page through.** Fetch the first page with your starting `since_id`, then follow `next_after_id` as `after_id` while `has_more` is true; a 409 `HISTORY_GAP` on an `after_id` page means events were evicted before you read them, so the replay is incomplete. Do not walk with `page`: with `since_id=0` an eviction between pages shifts the offsets and skips events without an error. `limit ∈ [1,200]`; out-of-range = **400 `INVALID_PAGINATION`**. Response carries `oldest_available_id` / `newest_available_id` / `oldest_available_timestamp` / `newest_available_timestamp` so you can detect buffer churn between pages.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 CURSOR=${CURSOR:-0}   # highest id already stored; 0 = everything retained
 Q="since_id=$CURSOR"
 while :; do
@@ -178,7 +178,7 @@ echo "resume cursor=${CURSOR:-0}"
 **Goal:** trigger a rebuild on content edits, not on file creation noise. `kinds` accepts a subset of `created | modified | removed | renamed | metadata | overflow | other`. `overflow` events still arrive when `kinds` leaves them out, so a consumer should handle them anyway.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 WID=$(curl -sX POST "$KIT/watchers" -H 'Content-Type: application/json' \
   -d '{"paths":["/tmp/wt"],"kinds":["modified"],"coalesce_ms":50}' | jq -r .id)
 # Sanity-check that only modified events arrive after a few writes:
@@ -193,7 +193,7 @@ curl -sf "$KIT/watchers/$WID/events?limit=20" \
 **Goal:** stream `*.log` events but exclude `secret-*.log` rotations a security agent doesn't need to see. `exclude` takes precedence over `include`.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 WID=$(curl -sX POST "$KIT/watchers" -H 'Content-Type: application/json' \
   -d '{
     "paths":["/tmp/wt"],
@@ -210,7 +210,7 @@ curl -sf "$KIT/watchers/$WID/events?limit=40" | jq '[.items[].path] | unique'
 **Goal:** an audit screen that shows every watcher in the kit, what it watches, and whether it has live consumers. `stats.events_seen` counts raw inotify events before coalescing, so it can be larger than the number of events in the history; `active_clients` counts live SSE+WS connections. One call returns at most 200 watchers; with the default cap of 128 watchers per kit that is all of them, but when the cap has been raised, walk further pages with `page` until the items seen reach `total`.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 curl -sf "$KIT/watchers?limit=200" \
   | jq '.items[] | {id, paths: .config.paths, kinds: (.config.kinds // []),
                     events_seen: .stats.events_seen,
@@ -222,7 +222,7 @@ curl -sf "$KIT/watchers?limit=200" \
 **Goal:** widen `kinds` from `["modified"]` to `["modified","removed"]`. Update the watcher in place: omitted fields keep their current value, a list you send replaces that whole list, and at least one field must be given. Changing only `kinds`, as below, keeps the watcher's id, its retained history and its connected SSE/WebSocket clients. Shrinking `history_size` evicts the oldest events beyond the new cap and can turn an existing replay cursor into a `HISTORY_GAP`; ordinary eviction as new events arrive still applies. Deleting and recreating the watcher instead would lose the history and disconnect every consumer.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 curl -sf -X PATCH "$KIT/watchers/$WID" -H 'Content-Type: application/json' \
   -d '{"kinds":["modified","removed"]}' | jq '.config.kinds'
 ```
@@ -231,10 +231,10 @@ If the new configuration cannot be started, the request fails with 500 and the w
 
 ### 9. Tear down on shutdown + verify events stop
 
-**Goal:** clean up. After delete, both `GET /watchers/{id}` and `/events` return **404 `WATCHER_NOT_FOUND`**, and any open SSE/WS sockets close. The DELETE response body is `{ id, deleted: true }`.
+**Goal:** clean up. After delete, both `GET /api/v1/watch/watchers/{id}` and `/api/v1/watch/watchers/{id}/events` return **404 `WATCHER_NOT_FOUND`**, and any open SSE/WS sockets close. The DELETE response body is `{ id, deleted: true }`.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 curl -sX DELETE "$KIT/watchers/$WID"   # → {"id":"…","deleted":true}
 # Verify gone:
 curl -sw '\n%{http_code}\n' "$KIT/watchers/$WID"          # → 404 WATCHER_NOT_FOUND
@@ -243,20 +243,17 @@ curl -sw '\n%{http_code}\n' "$KIT/watchers/$WID/events"   # → 404 WATCHER_NOT_
 
 ### 10. Recent history without a stream — `since_timestamp` for one-shot tail
 
-**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. If the oldest retained event is newer than the timestamp (a watcher younger than 5 minutes, or a buffer that has rolled over), the call returns **409 `HISTORY_GAP`**. That only means the history does not reach back that far: every retained event is newer than the timestamp, so read them all from `since_id=0`. One call returns at most 200 events; walk further pages with `after_id` set to the last id received, not `since_id`: `since_id` only checks the oldest retained id, so it misses an event evicted, or too large to keep, between two pages without an error. A 409 on one of those later `after_id` pages means such an event was lost while paging, so the result is incomplete. Treat it as a failure and run the recovery again from the start.
+**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. A watcher younger than 5 minutes is fine: the call returns every event it has. It answers **409 `HISTORY_GAP`** only when an event after the timestamp was lost (evicted, or too large to keep), so the result would be incomplete. One call returns at most 200 events; walk further pages with `after_id` set to the last id received, which answers 409 the same way when an event after it was lost while paging. Treat any 409 as a failure: the history for that window is incomplete.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
+KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
 TS=$(date -u -d '5 minutes ago' +%FT%TZ)
 Q="since_timestamp=$TS"
 while :; do
   R=$(curl -s -w '\n%{http_code}' "$KIT/watchers/$WID/events?$Q&limit=200")
   CODE=$(tail -n 1 <<< "$R"); R=$(sed '$d' <<< "$R")
-  # 409 HISTORY_GAP on the timestamp query: every retained event is newer than $TS,
-  # so read them all (since_id=0 never gaps). No timestamp filter is needed.
-  if [ "$CODE" = 409 ] && [ "${Q%%=*}" = since_timestamp ]; then Q="since_id=0"; continue; fi
-  # Any other non-200, including a 409 on a later after_id page (an event after the
-  # cursor was lost while paging), leaves the history incomplete: fail, then rerun.
+  # Any non-200 fails. A 409 HISTORY_GAP (on the first page or a later after_id page)
+  # means an event after the cursor was lost: the history for this window is incomplete.
   [ "$CODE" = 200 ] || { echo "HTTP $CODE: $R (history incomplete, run the recovery again)" >&2; exit 1; }
   jq -c '.items[] | {id, kind, path, timestamp}' <<< "$R"
   [ "$(jq '.items | length' <<< "$R")" -lt 200 ] && break
@@ -272,9 +269,9 @@ When the filesystem reports a rename as a single event carrying both paths, the 
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /watchers/{id}/events/ws` | Stream Watcher Events Ws | `?since_id` `?since_timestamp` |
-| `GET /watchers/{id}/events` | List Watcher Events | `?since_id` `?since_timestamp` `?page` `?limit` `?after_id` |
-| `GET /watchers/{id}/events/sse` | Stream Watcher Events Sse | `?since_id` `?since_timestamp` |
+| `GET /api/v1/watch/watchers/{id}/events/ws` | Stream Watcher Events Ws | `?since_id` `?since_timestamp` |
+| `GET /api/v1/watch/watchers/{id}/events` | List Watcher Events | `?since_id` `?since_timestamp` `?page` `?limit` `?after_id` |
+| `GET /api/v1/watch/watchers/{id}/events/sse` | Stream Watcher Events Sse | `?since_id` `?since_timestamp` |
 
 **Param notes:**
 
@@ -294,14 +291,15 @@ When the filesystem reports a rename as a single event carrying both paths, the 
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /watchers` | Create Watcher | `body*:watch_CreateWatcherRequest` |
-| `DELETE /watchers/{id}` | Delete Watcher |  |
-| `GET /watchers/{id}` | Get Watcher |  |
-| `GET /watchers` | List Watchers | `?page` `?limit` |
-| `PATCH /watchers/{id}` | Reconfigure a live watcher in place. Omitted fields keep their current values. The watcher keeps its id, replay history (so since_id / since_timestamp cursors stay valid) and its connected SSE/WebSocket clients; only the file-system backend is replaced. The new backend starts before the old one stops, and events the old backend had already queued are processed before the handoff completes. So a change under a path watched by both configurations is not lost across the swap (one landing inside that window may be reported twice), and a change under a path only the old configuration watched is delivered if the old backend saw it before stopping. The drain is bounded: if the old backend has not finished within 5 seconds (a backstop against a wedged backend), the handoff completes anyway and events still queued in the old backend at that point are dropped, with a warning in the service log. A request that fails leaves the watcher unchanged. A body with no field is refused with 400 `INVALID_REQUEST`; a body whose fields all equal the current values returns the watcher as it is, without replacing the backend. | `body*:watch_UpdateWatcherRequest` |
+| `POST /api/v1/watch/watchers` | Create Watcher | `H:Idempotency-Key` `body*:watch_CreateWatcherRequest` |
+| `DELETE /api/v1/watch/watchers/{id}` | Delete Watcher |  |
+| `GET /api/v1/watch/watchers/{id}` | Get Watcher |  |
+| `GET /api/v1/watch/watchers` | List Watchers | `?page` `?limit` |
+| `PATCH /api/v1/watch/watchers/{id}` | Reconfigure a live watcher in place. Omitted fields keep their current values. The watcher keeps its id, replay history (so since_id / since_timestamp cursors stay valid) and its connected SSE/WebSocket clients; only the file-system backend is replaced. The new backend starts before the old one stops, and events the old backend had already queued are processed before the handoff completes. So a change under a path watched by both configurations is not lost across the swap (one landing inside that window may be reported twice), and a change under a path only the old configuration watched is delivered if the old backend saw it before stopping. The drain is bounded: if the old backend has not finished within 5 seconds (a backstop against a wedged backend), the handoff completes anyway and events still queued in the old backend at that point are dropped, with a warning in the service log. A request that fails leaves the watcher unchanged. A body with no field is refused with 400 `INVALID_REQUEST`; a body whose fields all equal the current values returns the watcher as it is, without replacing the backend. | `body*:watch_UpdateWatcherRequest` |
 
 **Param notes:**
 
+- `Idempotency-Key` — Makes the create safe to retry. A create with a key used in the last 10 minutes with the same body returns the watcher that first create made (200) instead of a second watcher; with another body it is refused (409 `IDEMPOTENCY_KEY_REUSED`). Use a new key for each watcher, such as a random UUID. At most 256 characters.
 - `page` — Page number (1-based).
 - `limit` — Items per page (1-200).
 

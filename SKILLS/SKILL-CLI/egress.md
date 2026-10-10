@@ -1,4 +1,4 @@
-> _**CLI skill · `egress` namespace** · ~7,023 tokens · hoody-sdk v1.0.0-beta.16_
+> _**CLI skill · `egress` namespace** · ~7,069 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `egress` — the container's outbound HTTP proxy
 
@@ -24,7 +24,7 @@ Do not use it as a general ingress path: any request whose target begins with `/
 
 A running container whose provision registered egress — the overwhelmingly common case, not something to arrange. Provisioning registers egress on a new container by default, and containers created before egress existed are backfilled over time, so the gaps to expect are a container whose host has it turned off and one that has not been backfilled yet. No kit program needs enabling first — where registered, hoody-egress is eager (`boot: true`, `lazy_load: false`, unlike lazily-loaded siblings such as `pipe` or `run`), so the endpoint answers as soon as the container is up. To confirm before relying on it, probe the unauthenticated health route: `hoody --container <id> egress health` printing the standard health blob confirms egress is live; an error does not establish that it is absent. A failed probe cannot separate an unregistered kit from an overloaded or unreachable one: the server checks its connection cap before reading the request, so it can answer 503 while alive, and an edge or transport failure looks the same from outside. Registration can also be read from the always-present daemon kit: look for a `hoody-egress` entry in `hoody daemon programs list`. Setting an upstream needs nothing beyond the container URL and whatever proxy permissions guard it.
 
-A local exit (`hoody egress local start`) needs more: the container's hoody-tunnel kit must be running, because the exit is wired as a tunnel PULL bind onto the container's loopback, and the CLI must be logged in (`hoody login`), because the tunnel WebSocket authenticates with your account token even though the plain upstream commands need none. If the tunnel kit is down, startup fails before the container is touched.
+A local exit (`hoody egress local start`) needs more: the container's hoody-tunnel kit must be running, because the exit is wired as a tunnel PULL bind onto the container's loopback, and the CLI must be logged in (`hoody login`), because the tunnel WebSocket authenticates with your account token. Every `hoody --container` command, the plain upstream commands included, also needs that login the first time it meets a container: the CLI looks up the container's routing with your account token and then caches it. If the tunnel kit is down, startup fails before the container is touched.
 
 ## Capability URL
 
@@ -120,7 +120,7 @@ The setting lands in the config file atomically and is picked up within about a 
 **Goal:** turn the container's egress URL into a proxy whose traffic leaves from the machine you are sitting at. Needs the container's tunnel kit running; nothing listens on your machine (see Quirks).
 
 ```bash
-hoody login                              # the tunnel WebSocket authenticates with your account token
+hoody login --web --no-browser           # browser sign-in; the tunnel WebSocket authenticates with your account token
 hoody --container "$C" egress local start
 #   Proxy URL:     https://P-C-egress.N.containers.hoody.com
 #   Exit IP:       203.0.113.42 (SG)  confirmed

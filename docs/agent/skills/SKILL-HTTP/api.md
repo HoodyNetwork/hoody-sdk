@@ -1,4 +1,4 @@
-> _**HTTP skill · `api` namespace** · ~27,460 tokens · hoody-sdk v1.0.0-beta.16_
+> _**HTTP skill · `api` namespace** · ~28,189 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `api` — Platform control plane: identity, projects, containers, billing, vault
 
@@ -8,7 +8,7 @@ Control plane outside container kits. Owns identity (signup, login, OAuth, 2FA, 
 
 ## When to use
 
-- Authenticate users; mint auth tokens for headless sessions.
+- Sign users in through their own browser; mint auth tokens only for unattended automation the user asked for.
 - Create/list/mutate/destroy projects, containers, snapshots, proxy-aliases.
 - Grant/revoke project/container access; set proxy auth (password/token/JWT/IP).
 - Wallet, billing, rental ops.
@@ -22,7 +22,7 @@ Control plane outside container kits. Owns identity (signup, login, OAuth, 2FA, 
 ## Prerequisites
 
 - Control plane at `https://api.hoody.com`.
-- Bearer token in `Authorization`. Mint via `POST /api/v1/users/auth/login` (1d JWT / 7d refresh) or `POST /api/v1/auth/tokens` (long-lived, scopable).
+- Bearer token in `Authorization`. Get it from browser sign-in (`POST /api/v1/auth/device/code` + `POST /api/v1/auth/device/token`, see `SKILL-HTTP.md` § Login; 1d JWT / 7d refresh), or from `POST /api/v1/users/auth/login` when the user chooses a password login. `POST /api/v1/auth/tokens` (long-lived, scopable) is for unattended automation only. Starting and polling a browser sign-in needs no bearer token.
 - 2FA management (`POST /api/v1/users/auth/2fa/setup`, `POST /api/v1/users/auth/2fa/verify-setup`, `DELETE /api/v1/users/auth/2fa`, `POST /api/v1/users/auth/2fa/backup-codes/regenerate` and the status read) takes a login session JWT, or account-password HTTP Basic auth (which is subject to its own password and 2FA checks); a long-lived `POST /api/v1/auth/tokens` token is refused with 403 there. On top of that, the bodies differ: `POST /api/v1/users/auth/2fa/setup` needs the password; `POST /api/v1/users/auth/2fa/verify-setup` needs the OTP code; `POST /api/v1/users/auth/2fa/verify` needs `temp_token` + code; `DELETE /api/v1/users/auth/2fa` needs password + OTP **or** backup code; `POST /api/v1/users/auth/2fa/backup-codes/regenerate` needs password + a **6-digit TOTP only** (`^\\d{6}$` — a backup code fails schema validation with 422). Login-time `POST /api/v1/users/auth/2fa/verify` needs no session.
 - Project/container writes: project owner or matching permission row.
 - Billing: prerequisites depend on the operation. A hosted crypto invoice (`POST /api/v1/wallet/payments/crypto/invoice`) needs no saved payment method, only a login session (auth tokens are refused 403); server rentals and extensions debit the general wallet balance, so fund it first.
@@ -40,15 +40,17 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Common workflows
 
-### 1. Auth bootstrap (signup → verify → login [+2FA])
+### 1. Auth bootstrap through the user's browser
 
-1. `POST /api/v1/auth/signup`
-2. `POST /api/v1/auth/verify-email`
-3. `POST /api/v1/users/auth/login`
-4. `POST /api/v1/users/auth/2fa/verify` (if 2FA enabled — uses `temp_token`)
+1. New user: they sign up and verify their email at `https://api.hoody.com/auth/signup` in their own browser.
+2. `POST /api/v1/auth/device/code` — give the user `verification_uri_complete` and `user_code`.
+3. `POST /api/v1/auth/device/token` every `interval` seconds until it returns the session (`data.token`, `data.refreshToken`); the waiting states are 400 with `data.error`. Steps and states: `SKILL-HTTP.md` § Login.
+4. Use the session: send `data.token` as `Authorization: Bearer`.
 5. `GET /api/v1/users/auth/me`
 
-### 2. Mint a long-lived auth token
+Never collect the user's password or ask for a pasted token. Fallback the user chooses and runs themselves: `POST /api/v1/auth/signup` → `POST /api/v1/auth/verify-email` → `POST /api/v1/users/auth/login` (+ `POST /api/v1/users/auth/2fa/verify` with the `temp_token` when 2FA is on).
+
+### 2. Mint a long-lived auth token (unattended automation only)
 
 1. `POST /api/v1/auth/tokens`
 2. `GET /api/v1/auth/tokens`
@@ -137,8 +139,9 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 
 ## Quirks & gotchas
 
+- Browser sign-in (`POST /api/v1/auth/device/token`) is not RFC 8628 on the wire: send only the JSON fields shown, with no OAuth client or grant fields; the waiting states are HTTP 400 `{"statusCode":400,"data":{"error":"authorization_pending"}}` with the state under `data`, and the success body is a login session (`data.token`, `data.refreshToken`), not `access_token`. `expired_token` also covers a code already redeemed; `access_denied` also covers a missing or wrong PKCE verifier.
 - Login accepts `username` OR `email` + `password` (`anyOf`); only the email lookup is lowercased, usernames are matched case-sensitive.
-- JWT lifecycle: `POST /api/v1/users/auth/logout` is a logout-ALL for JWTs — every access and refresh JWT issued before that moment stops working (all sessions, not just the current one); long-lived auth tokens are unaffected (revoke those with `DELETE /api/v1/auth/tokens/{id}`). `POST /api/v1/users/auth/refresh` requires the refresh token in **both** the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. Send the same refresh token in the `{"refreshToken":"…"}` body and as `Authorization: Bearer <refreshToken>`. For headless flows, mint a long-lived `POST /api/v1/auth/tokens` token instead.
+- JWT lifecycle: `POST /api/v1/users/auth/logout` is a logout-ALL for JWTs — every access and refresh JWT issued before that moment stops working (all sessions, not just the current one); long-lived auth tokens are unaffected (revoke those with `DELETE /api/v1/auth/tokens/{id}`). `POST /api/v1/users/auth/refresh` requires the refresh token in **both** the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. Refresh tokens are single-use: each successful refresh replaces both tokens. Never reuse the old refresh token; reuse returns 401 and, after 30 seconds, signs the account out everywhere. Send the same refresh token in the `{"refreshToken":"…"}` body and as `Authorization: Bearer <refreshToken>`. After success, replace your stored credentials with the returned `data.token` and `data.refreshToken` before making further requests. For unattended automation the user asked for, a long-lived `POST /api/v1/auth/tokens` token avoids refresh handling.
 - `GET /api/v1/auth/available-regions` returns `r.data.regions` (single-wrapped, like every other endpoint).
 - Duplicate signup returns `200` (anti-enumeration). For an unverified user the stored password is left unchanged (first writer wins) and a fresh verification email is sent; for a verified user it is a no-op. A second signup therefore cannot fix a mistyped password: logging in with the new one fails with 401. Change it through `POST /api/v1/auth/forgot-password` → `POST /api/v1/auth/reset-password`. Do NOT probe with signup.
 - The `agent` kit needs **no** `X-Hoody-Container-Claim` / `X-Hoody-Token` headers: it accepts the bare per-container kit URL, and access is decided by the container's proxy permission policy. No built-in kit asks for more, `bot` included: its management routes ignore an `Authorization` header and check no container ownership, so the proxy permission policy is their only access control. The `POST /api/v1/containers/{id}/authorize` call mints an *optional* portable container claim for offline verification by your own container programs; no built-in kit requires it. See § Auth model.
@@ -151,7 +154,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 - `POST /api/v1/projects/` names the project with `alias` (required, at most 100 characters); there is no `name` field. An alias that one of your projects already uses is refused with 409.
 - Kit URL `<projectId>-<containerId>-<kit>-<n>.<server>.containers.hoody.com` (a terminal id of 10000 or more makes that label longer than DNS allows, so it is `t-<n>` instead of `terminal-<n>`; the SDK and CLI do this for you): with the default proxy permissions, holding the URL is enough to use the kit, `bot` management routes included. Treat it as a secret, since it also exposes the project and container ids; restrict it with `* /api/v1/containers/{id}/proxy/permissions*` groups, or publish a `POST /api/v1/proxy/aliases` alias instead.
 - `GET /api/v1/containers/{id}/proxy/services` lists only the services named in the container's proxy permission rules or hooks, so a container with no custom rules returns `services: []`; it is not a list of running kits. `POST /api/v1/proxy/aliases` takes the kit or protocol as `program` (e.g. `'exec'`, `'terminal'`, or `'http'` with `port`).
-- `GET /api/v1/wallet/invoices/` returns `200 {invoices:[],pagination:{...}}` for never-billed accounts (current). `GET /api/v1/ip` returns IP, user-agent, headers, referer, timestamp, auth flag, protocol, and `ip_info` — not just IP.
+- `GET /api/v1/wallet/invoices/` returns HTTP 200 for never-billed accounts, with an empty `data.invoices` array and pagination metadata in `data.pagination`. `GET /api/v1/ip` returns IP, user-agent, headers, referer, timestamp, auth flag, protocol, and `ip_info` — not just IP.
 - `POST /api/v1/offers/{id}/reserve` charges at once, and every reservation whose total is above zero needs `max_charge_cents`, although the body schema marks it optional. Without it the call is refused with 409 `CHARGE_CONFIRMATION_REQUIRED` (409 `SETUP_FEE_CONFIRMATION_REQUIRED` when the offer has a one-time setup fee), and a total above it is refused with 409 `CHARGE_EXCEEDS_MAX`; the error data carries `total_cents`, and nothing is charged. It also needs a caller-generated `idempotency_key`: a retry with the same key returns the first reservation instead of charging again.
 - `POST /api/v1/rentals/{id}/extend` needs `expected_rental_end`: the rental's current `rental_end`, as `GET /api/v1/rentals/{id}` returns it. The extension is applied only while that still matches, so a retry after a lost response is refused with 409 `EXTENSION_ALREADY_APPLIED` instead of charging twice; read the rental again before retrying. `max_charge_cents` is optional only when the rental's frozen renewal tiers (`renewal_pricing_frozen`) price `additional_days`; otherwise the call is refused with 409 `CHARGE_CONFIRMATION_REQUIRED`, and the error data carries `total_cents`.
 - `GET /api/v1/containers/{id}/storage/incoming` is container-scoped: its `id` is the receiving container's id. For every incoming share across the account use `GET /api/v1/storage/incoming`.
@@ -275,7 +278,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
   - `password` — Account password
 - `POST /api/v1/auth/device/token` body — `{ device_code*: string, code_verifier: string }`
 - `POST /api/v1/auth/device/code` body — `{ client_name: string, client: string, code_challenge: string }`
-  - `client_name` — Shown on the verification page as "X is requesting access"
+  - `client_name` — Shown on the verification page as the name of the client requesting access, marked there as not verified by Hoody
   - `client` — Optional client-declared source channel for analytics: web | ssh | webssh | cli | sdk | agent. Unrecognised values are recorded as "unknown"; never affects authentication.
   - `code_challenge` — Optional PKCE on the device flow itself; if present the poll REQUIRES the verifier
 - `POST /api/v1/auth/device/verify_code` body — `{ user_code*: string }`
@@ -328,7 +331,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 - `POST /api/v1/auth/tokens/{id}/copy` body — `{ alias: string, expires_at: string|null | "today" | "tomorrow" | number, otp_code: string }`
   - `alias` — Optional alias for the copied token. If omitted, a deterministic alias like "<source> copy" is generated.
   - `expires_at` — Optional expiration override for the copied token. If omitted, source expiration is copied when still in the future.
-- `POST /api/v1/auth/tokens` body — `{ alias: string, public_key: string|null, public_storage: object|null, ip_whitelist: string[] | string, permission_template: "full_access" | "external_customer" | "dev_team" | "finance_team" | "read_only" | null, permissions: { containers: object, projects: object, financial: object, resources: object }, realm_ids: string[], allow_no_realm: bool, vault_access: bool, event_access: bool, deny_reauthorization: bool, expires_at: string | "today" | "tomorrow" | number, otp_code: string }`
+- `POST /api/v1/auth/tokens` body — `{ alias: string, public_key: string|null, public_storage: object|null, ip_whitelist: string[] | string, permission_template: "full_access" | "external_customer" | "dev_team" | "finance_team" | "read_only"|null, permissions: { containers: object, projects: object, financial: object, resources: object }, realm_ids: string[], allow_no_realm: bool, vault_access: bool, event_access: bool, deny_reauthorization: bool, expires_at: string | "today" | "tomorrow" | number, otp_code: string }`
   - `alias` — User-friendly alias for the token. If not provided, a random animal name will be generated (e.g., "clever-dolphin").
   - `public_key` — Optional ED25519 public key used for client identity derivation
   - `public_storage` — Public JSON profile storage attached to the token public_key (max 64KB)
@@ -345,7 +348,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
   - `realm_id` — Realm ID to remove from the token
 - `PUT /api/v1/auth/tokens/{id}` body — `{ alias: string, public_key: string|null, public_storage: object|null, ip_whitelist: string[] | string, permissions: { containers: object, projects: object, financial: object, resources: object }, realm_ids: string[], allow_no_realm: bool, vault_access: bool, event_access: bool, expires_at: string|null | "today" | "tomorrow" | number, is_enabled: bool, otp_code: string }`
   - `alias` — User-friendly alias for the token
-  - `realm_ids` — List of realm IDs this token is restricted to (at most 500)
+  - `realm_ids` — List of realm IDs this token is restricted to (at most 500). An empty list means every realm, so a token that has realms cannot be set to an empty list (409 LAST_REALM_REMOVAL).
   - `allow_no_realm` — Whether this token can be used without a realm scope
   - `vault_access` — Whether this token can access user vault endpoints
   - `event_access` — Whether this token can access real-time event streams and event history endpoints
@@ -759,16 +762,16 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 - `POST /api/v1/proxy/aliases` body — `{ container_id*: string, alias: string|null | false, program*: string, port: int, index: int, target_path: string|null, allow_path_override: bool=true, expires_at: string|null, enabled: bool=true }`
   - `container_id` — Container ID that this alias points to. You must own this container.
   - `alias` — … Two independent uniqueness rules apply, either of which answers 409 ALIAS_IN_USE: the name must be free on the container's physical server (across every tenant hosted there), AND your own account may hold a given name only once across all servers. … Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to a reserved service name (such as "egress") or starting with that name followed by "-" (such as "egress-"). …
-  - `program` — Which container service the alias targets — a built-in Hoody program ("terminal", "files", "code", "browser", "agent", "display", …) or a transport protocol ("http", "https", "ssh"). … Must be a known Hoody program name (or one of its aliases) or protocol.
+  - `program` — … A port is required for "http"/"https": without one the request is refused (400 PORT_REQUIRED). … Must be a known Hoody program name (or one of its aliases) or protocol.
   - `port` — Target port for the "http"/"https" protocol — the port your server listens on inside the container (e.g. program "http" + port 3000 → http://<container>:3000). … Ignored for built-in Hoody programs, which have fixed kit ports.
-  - `index` — Instance index, or target port for the "http"/"https" protocol. Defaults to 1. For a built-in Hoody program it selects which running instance to route to (e.g. terminal 2). …
+  - `index` — … For "http"/"https" it is the port your server listens on inside the container and has no default: give it here, in "port" or as "http-<port>", or the request is refused (400 PORT_REQUIRED) — but prefer the dedicated "port" field; if "port" or a port embedded in the program ("http-3000") is also supplied, that wins over this index (so an accidental index of 1 will not route you to port 1).
   - `target_path` — Landing path served when https://{alias}.../ is requested with no path (a root request); a query written in it is sent too. With allow_path_override true, a request that carries its own path is forwarded as-sent, resolved from the container root — this value is never used as a prefix. …
   - `allow_path_override` — When false, the alias serves only the root, or target_path itself: once the proxy permissions allow the request, a request to either lands on target_path and any other path is refused (404). …
   - `expires_at` — Optional ISO 8601 expiration date. Alias will be automatically disabled after this date.
   - `enabled` — Whether the alias is initially enabled (defaults to true)
 - `PATCH /api/v1/proxy/aliases/{id}` body — `{ alias: string, program: string, port: int, index: int, target_path: string|null, allow_path_override: bool, expires_at: string|null | number, enabled: bool }`
   - `alias` — … Two independent uniqueness rules apply, either of which answers 409 ALIAS_IN_USE: the name must be free on the container's physical server (across every tenant hosted there), AND your own account may hold a given name only once across all servers. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to a reserved service name (such as "egress") or starting with that name followed by "-" (such as "egress-"). …
-  - `program` — Program or protocol the alias targets — a built-in Hoody program ("terminal", "files", "code", …) or a transport protocol ("http", "https", "ssh"). … Must be a known Hoody program name (or one of its aliases) or protocol.
+  - `program` — … Switching an alias from a built-in program to "http"/"https" needs a port in the same request (400 PORT_REQUIRED). Must be a known Hoody program name (or one of its aliases) or protocol.
   - `port` — Target port for the "http"/"https" protocol — the port your server listens on inside the container (e.g. program "http" + port 3000). Preferred over "index"; takes precedence over "index" and over any port embedded in the program string. Ignored for built-in Hoody programs.
   - `index` — Instance index, or target port when program is "http"/"https". Prefer the dedicated "port" field; if "port" or a port embedded in the program ("http-3000") is also supplied, that wins over this index.
   - `target_path` — Landing path served for root requests, with its own query. With allow_path_override true, requests carrying their own path are forwarded as-sent (never a prefix); with false, it is the only path served. Set to null to remove it.
@@ -805,7 +808,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 
 - `PATCH /api/v1/containers/{id}/proxy/permissions/state` body — `{ enable_proxy*: bool }`
   - `enable_proxy` — Enable or disable the proxy entirely
-- `PUT /api/v1/containers/{id}/proxy/permissions` body — `{ project*: string, container*: string, groups*: { [key: string]: { type: "jwt" | "password" | "ip" | "token" | "hoody-identity", secret: string, algorithm: "HS256" | "RS256" | "ES256" | "sha256", sources: string[], claims: object, username: string, password: string, salt: string, range: string, header: string, cookie: string, param: string, value: string, audience: string, allow_types: "user"[], users: string[], max_age_seconds: int, expose_type: bool } }, permissions*: { [key: string]: { [key: string]: bool | number | number[] | string | "*" } }, default: "allow" | "deny", enable_proxy: bool, hooks: { [key: string]: { match*: object, script*: object, timeout: int }[] } }`
+- `PUT /api/v1/containers/{id}/proxy/permissions` body — `{ project*: string, container*: string, groups*: { [key: string]: { type: "jwt" | "password" | "ip" | "token" | "hoody-identity", secret: string, algorithm: "HS256" | "RS256" | "ES256" | "sha256", sources: string[], claims: object, username: string, password: string, salt: string, range: string, header: string, cookie: string, param: string, value: string, audience: string, allow_types: "user"[], users: string[], max_age_seconds: int, expose_type: bool, header_authoritative: bool } }, permissions*: { [key: string]: { [key: string]: bool | number | number[] | string | "*" } }, default: "allow" | "deny", enable_proxy: bool, hooks: { [key: string]: { match*: object, script*: object, timeout: int }[] } }`
   - `project` — Project ID owning this container
   - `container` — Container ID (must match path :id)
   - `groups` — Authentication groups. Key is group name, value is group config.
@@ -820,11 +823,12 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
   - `access` — Access control rule defining WHICH instances/ports are ALLOWED for this program. This is NOT a list of what exists, but a RULE for what is PERMITTED. For programs "files", "services", "notifications", "exec" only boolean is allowed. …
 - `PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/ip` body — `{ range*: string }`
   - `range` — IPv4 CIDR range specifying allowed IP addresses. Format: "IP/mask" where mask is 0-32. Examples: "192.168.1.0/24" (subnet), "10.0.0.0/8" (class A), "203.0.113.5/32" (single IP).
-- `PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/jwt` body — `{ secret*: string, algorithm*: "HS256" | "RS256" | "ES256", sources*: string[], claims: { [key: string]: string | number | bool } }`
+- `PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/jwt` body — `{ secret*: string, algorithm*: "HS256" | "RS256" | "ES256", sources*: string[], claims: { [key: string]: string | number | bool }, header_authoritative: bool }`
   - `secret` — JWT secret key used to verify token signatures. For HS256: any string. For RS256/ES256: PEM-encoded SPKI public key.
   - `algorithm` — JWT algorithm to use for signature verification. HS256 uses symmetric keys, RS256/ES256 use asymmetric keys.
-  - `sources` — Where to look for JWT tokens in incoming requests. Format: "header:Name" or "cookie:Name" ("param:Name" is no longer accepted)
+  - `sources` — Where to look for JWT tokens in incoming requests. Format: "header:Name" or "cookie:Name" ("param:Name" is no longer accepted). By default a valid token in any listed source counts (see header_authoritative). Name cookie sources with the __Host- prefix.
   - `claims` — Optional JWT claims that must be present and match exactly. Values must be string, number, or boolean.
+  - `header_authoritative` — When true and any configured header source is present in the request (any value, even empty), only header sources decide membership. When false or omitted, any configured source with a valid token counts.
 - `PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/password` body — `{ username*: string, password*: string, algorithm: "sha256", salt*: string }`
   - `username` — Username for authentication. Must match exactly what the client provides.
   - `password` — Password for authentication. Can be plaintext (will be hashed) or pre-hashed SHA256(salt+password) in lowercase hex format.
@@ -893,7 +897,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 
 - `PATCH /api/v1/projects/{id}/proxy/permissions/state` body — `{ enable_proxy*: bool }`
   - `enable_proxy` — Enable or disable the proxy entirely
-- `PUT /api/v1/projects/{id}/proxy/permissions` body — `{ project*: string, groups*: { [key: string]: { type: "jwt" | "password" | "ip" | "token" | "hoody-identity", secret: string, algorithm: "HS256" | "RS256" | "ES256" | "sha256", sources: string[], claims: object, username: string, password: string, salt: string, range: string, header: string, cookie: string, param: string, value: string, audience: string, allow_types: "user"[], users: string[], max_age_seconds: int, expose_type: bool } }, permissions*: { [key: string]: { [key: string]: bool | number | number[] | string | "*" } }, default: "allow" | "deny", enable_proxy: bool, hooks: object }`
+- `PUT /api/v1/projects/{id}/proxy/permissions` body — `{ project*: string, groups*: { [key: string]: { type: "jwt" | "password" | "ip" | "token" | "hoody-identity", secret: string, algorithm: "HS256" | "RS256" | "ES256" | "sha256", sources: string[], claims: object, username: string, password: string, salt: string, range: string, header: string, cookie: string, param: string, value: string, audience: string, allow_types: "user"[], users: string[], max_age_seconds: int, expose_type: bool, header_authoritative: bool } }, permissions*: { [key: string]: { [key: string]: bool | number | number[] | string | "*" } }, default: "allow" | "deny", enable_proxy: bool, hooks: object }`
   - `project` — Project ID (must match path :id)
   - `groups` — Authentication groups. Key is group name (^[A-Za-z0-9_-]{1,50}$), value is group config.
   - `permissions` — Per-group program permissions. Key is group name, value is map of program→access-rule. These are ACCESS CONTROL rules defining WHAT IS ALLOWED, not inventory of what exists.
@@ -907,11 +911,12 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
   - `access` — Access control rule defining WHICH instances/ports are ALLOWED for this program. This is NOT a list of what exists, but a RULE for what is PERMITTED. For programs "files", "services", "notifications", "exec" only boolean is allowed. …
 - `PUT /api/v1/projects/{id}/proxy/permissions/groups/{groupName}/ip` body — `{ range*: string }`
   - `range` — IPv4 CIDR range specifying allowed IP addresses. Format: "IP/mask" where mask is 0-32. Examples: "192.168.1.0/24" (subnet), "10.0.0.0/8" (class A), "203.0.113.5/32" (single IP).
-- `PUT /api/v1/projects/{id}/proxy/permissions/groups/{groupName}/jwt` body — `{ secret*: string, algorithm*: "HS256" | "RS256" | "ES256", sources*: string[], claims: { [key: string]: string | number | bool } }`
+- `PUT /api/v1/projects/{id}/proxy/permissions/groups/{groupName}/jwt` body — `{ secret*: string, algorithm*: "HS256" | "RS256" | "ES256", sources*: string[], claims: { [key: string]: string | number | bool }, header_authoritative: bool }`
   - `secret` — JWT secret key used to verify token signatures. For HS256: any string. For RS256/ES256: PEM-encoded SPKI public key.
   - `algorithm` — JWT algorithm to use for signature verification. HS256 uses symmetric keys, RS256/ES256 use asymmetric keys.
-  - `sources` — Where to look for JWT tokens in incoming requests. Format: "header:Name" or "cookie:Name" ("param:Name" is no longer accepted)
+  - `sources` — Where to look for JWT tokens in incoming requests. Format: "header:Name" or "cookie:Name" ("param:Name" is no longer accepted). By default a valid token in any listed source counts (see header_authoritative). Name cookie sources with the __Host- prefix.
   - `claims` — Optional JWT claims that must be present and match exactly. Values must be string, number, or boolean.
+  - `header_authoritative` — When true and any configured header source is present in the request (any value, even empty), only header sources decide membership. When false or omitted, any configured source with a valid token counts.
 - `PUT /api/v1/projects/{id}/proxy/permissions/groups/{groupName}/password` body — `{ username*: string, password*: string, algorithm: "sha256", salt*: string }`
   - `username` — Username for authentication. Must match exactly what the client provides.
   - `password` — Password for authentication. Can be plaintext (will be hashed) or pre-hashed SHA256(salt+password) in lowercase hex format.

@@ -1,4 +1,4 @@
-> _**HTTP skill · `curl` namespace** · ~8,256 tokens · hoody-sdk v1.0.0-beta.16_
+> _**HTTP skill · `curl` namespace** · ~8,660 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `curl` — full HTTP client gateway + REST-as-GET-URL bridge
 
@@ -61,7 +61,7 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 
 1. `POST /api/v1/curl/request` with `mode:"async"` → `job_id`.
 2. Poll `GET /api/v1/curl/jobs/{id}` or subscribe `GET /api/v1/curl/sse` (SSE) filtered by `job_id`.
-3. `GET /api/v1/curl/jobs/{id}/result`; `DELETE /api/v1/curl/jobs/{id}` aborts.
+3. `GET /api/v1/curl/jobs/{id}/result`; `DELETE /api/v1/curl/jobs/{id}` aborts. `GET /api/v1/curl/jobs/{id}` reports `retry_attempts`: 1 for a job that ran once, plus one per retry after a transfer error.
 
 ### 4. Cookie-jar session
 
@@ -76,7 +76,7 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 
 ### 6. Scheduled request
 
-1. `POST /api/v1/curl/schedule` with `{cron,request}` → `schedule_id`.
+1. `POST /api/v1/curl/schedule` with `{cron,request}` → `schedule_id`. Add `enabled: false` to create it paused: it never fires until `PATCH /api/v1/curl/schedule/{id}` sets `enabled: true`.
 2. `GET /api/v1/curl/schedule`/`GET /api/v1/curl/schedule/{id}`/`PATCH /api/v1/curl/schedule/{id}` (`{"enabled":bool}` pauses or resumes)/`DELETE /api/v1/curl/schedule/{id}`.
 3. Each admitted occurrence creates a job; inspect via `GET /api/v1/curl/jobs`. An occurrence is skipped, with no job, while the previous run is still in flight or when the job queue rejects it.
 
@@ -90,14 +90,17 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 - `*.list` returns ALL when `limit` omitted; always pass `limit`.
 - `* /api/v1/curl/schedule*` 404s if disabled.
 - `PATCH /api/v1/curl/schedule/{id}` changes any of `cron`, `request` and `enabled`; omitted fields keep their current value, so pause or resume by sending `enabled: false` or `enabled: true` alone. The `PATCH /api/v1/curl/schedule/{id}/toggle` route instead requires an explicit boolean `enabled`; else 400.
+- `POST /api/v1/curl/schedule` takes `enabled` (default `true`). A schedule created with `enabled: false` has no `next_run` and does not fire; its `cron` must still parse but need not have a future occurrence yet. Any field other than `cron`, `request` and `enabled` is refused with 400 `INVALID_PARAMETER`.
+- `bearer_token` sends `Authorization: Bearer <token>`, but an `Authorization` entry in `headers` (or `header=Authorization: …` on the GET bridge) wins: the token is then not sent, so the request carries one `Authorization` header.
+- `GET /api/v1/curl/jobs/{id}/result` always answers `200` with the target's body and headers, whatever the target answered; the target's status code is in the `X-Curl-Status` header (and in `response.status_code` from `GET /api/v1/curl/jobs/{id}`). A stored `429` or `503` is therefore not retried as a kit failure.
 - **`schedules.create.cron` is 6-field (with seconds), NOT the standard 5-field crontab.** `*/15 * * * *` is rejected as `Invalid cron expression`; use `0 */15 * * * *` (at second 0 every 15 min). The standard @-nicknames (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`) ARE accepted (expanded internally to 6-field), but Go-style `@every 15m` is NOT — for anything else use explicit 6-field expressions. Different syntax from the `cron` namespace, which uses Vixie 5-field.
 - `session_id` is caller-provided.
 - Job events stream over a WebSocket at `/api/v1/curl/ws`; filter by `job_id`.
 
 ## Common errors
 
-- `504` — the upstream request timed out (libcurl timeout); raise `timeout`. An async job does not wait on the caller's connection, but the same `timeout` still applies to the upstream request. The kit itself does not answer `408`; a transparent response passes the upstream's own status through, so an upstream `408` arrives as `408`.
-- `410 cancelled`.
+- `504` — the upstream request timed out (libcurl timeout); raise `timeout`. An async job does not wait on the caller's connection, but the same `timeout` still applies to the upstream request. The kit itself does not answer `408`; a transparent `run` response passes the upstream's own status through (`GET /api/v1/curl/jobs/{id}/result` does not: it answers 200 with `X-Curl-Status`), so an upstream `408` arrives as `408`.
+- Cancelling a job answers `200`; no REST call answers `410`. Read `GET /api/v1/curl/jobs/{id}` for `status: "cancelled"`, and stop waiting once a job is `failed` or `cancelled`. `GET /api/v1/curl/jobs/{id}/result` answers `404 JOB_RESULT_NOT_READY` when the job has no response body (still pending or running, or finished without an upstream response).
 - `503 queue full` (also SSE capacity exhausted) — back off.
 
 ## Related namespaces
@@ -219,7 +222,7 @@ while :; do
 done
 ```
 
-**Step 3 — collect bodies.** `GET /api/v1/curl/jobs/{id}/result` returns just the upstream body.
+**Step 3 — collect bodies.** `GET /api/v1/curl/jobs/{id}/result` returns just the upstream body, always with status 200; the upstream's status is in `X-Curl-Status`.
 
 ```bash
 for JID in "${JOBS[@]}"; do
@@ -514,7 +517,7 @@ done < /tmp/curl-purge.txt
 - `curl_CurlRequest` — `{ auth_method: string|null, auth_password: string|null, auth_user: string|null, bearer_token: string|null, compressed: bool|null, connect_timeout: int|null, cookie: string|null, data: string|null, follow_redirects: bool|null, form: { [key: string]: string }|null, headers: { [key: string]: string }|null, insecure: bool|null, job_name: string|null, json: any, keepalive: bool|null, keepalive_time: int|null, max_filesize: int|null, max_redirects: int|null, method: string|null, mode: null | curl_ExecutionMode, range: string|null, referer: string|null, response: null | curl_ResponseMode, retry_count: int|null, retry_delay: int|null, save: bool|null, save_path: string|null, session_id: string|null, speed_limit: int|null, speed_time: int|null, tcp_nodelay: bool|null, timeout: int|null, url*: string, user_agent: string|null }`
   - cURL request parameters A JSON body carrying any field not listed here is rejected with `400`. This protects against silently sending a removed or not-yet-released field that would otherwise slip past validation unnoticed.
   - `save_path` — Relative path under this job's download directory (downloads/by-job/{job_id}). Must not be absolute or contain `..`.
-- `curl_CreateScheduleRequest` — `{ cron*: string, request*: curl_CurlRequest }`
+- `curl_CreateScheduleRequest` — `{ cron*: string, enabled: bool|null, request*: curl_CurlRequest }`
 - `curl_UpdateScheduleRequest` — `{ cron: string|null, enabled: bool|null, request: null | curl_CurlRequest }`
   - Partial update of a schedule. Every field is optional, at least one is required; absent fields keep their current value.
 - `curl_ExecutionMode` — `"sync" | "async"`

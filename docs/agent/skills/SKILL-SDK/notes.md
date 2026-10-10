@@ -1,4 +1,4 @@
-> _**SDK skill · `notes` namespace** · ~23,173 tokens · hoody-sdk v1.0.0-beta.16_
+> _**SDK skill · `notes` namespace** · ~23,456 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `notes` — Collaborative notebooks, hierarchical nodes, documents, databases
 
@@ -18,7 +18,7 @@ SQL/KV → `sqlite`, container fs → `files`, desktop notifs → `notifications
 
 - **To add a note, create a page in a notebook you already have; do not create a notebook for it.** Your default notebook (the `notebookId` from `notes.whoami`) and every new notebook come with a `Home` section. A page is `nodes.create` with `type:"page"`, `parentId:<Home section id>` (from `nodes.list` with `type:"section"`) and `attributes:{name}`; then write its text with `document.append`.
 - `notebookId` on every notebook-scoped call (identity and notebook list/create take none). Without a Bearer token or export ticket, identity comes from the `?username=` / `?role=` query parameters on each request (default username `user`, default role `owner`). The first request for a username adds that user to the container's single shared default notebook (`Hoody Notes`); every query-identity user joins that same notebook, so it is not private. Use `notebooks.create` for a separate notebook.
-- The HTTP API honours `X-Idempotency-Key` on node create, record create, document append, collaborator add, reactions and interactions. Notebook create, comment create and version create ignore it, so retrying those can create duplicates. Node create and record create take the key as a per-call header in their last argument, `requestOptions.headers`: `nodes.create(nbId, body, undefined, { headers: { 'X-Idempotency-Key': key } })` and `records.create(nbId, dbId, body, undefined, { headers: { 'X-Idempotency-Key': key } })` (the `undefined` is the container-coordinates argument). `document.append` takes it as `options.XIdempotencyKey`, so the recommended document-writing path is retry-safe from the SDK. Export `ticket` is HTML-export-only.
+- The HTTP API honours `X-Idempotency-Key` on node create, record create, document append, collaborator add, reactions and interactions. Notebook create, comment create and version create ignore it, so retrying those can create duplicates. Node create takes the key in its third argument, `nodes.create(nbId, body, { XIdempotencyKey: key })`; without one the SDK sends a fresh key per call, so its own retries are safe but a rerun of your code is not. Record create takes it as a per-call header in its last argument, `requestOptions.headers`: `records.create(nbId, dbId, body, undefined, { headers: { 'X-Idempotency-Key': key } })` (the `undefined` is the container-coordinates argument). `document.append` takes it as `options.XIdempotencyKey`, so the recommended document-writing path is retry-safe from the SDK. Export `ticket` is HTML-export-only.
 - **Writing a document needs editor-or-admin role on the node** — `document.set`/`document.update`/`document.append` reject viewers and read-only collaborators with `403`. Documents attach only to `page` and `record` nodes; `message`/`channel`/`database` nodes do not support documents.
 
 ## Capability URL
@@ -38,8 +38,8 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 2. **Bootstrap identity + notebook** — `notes.whoami` → `{userId,username,role,notebookId}`. The `notebookId` is the container's shared default notebook (`Hoody Notes`, with a `Home` section and starter pages), which every query-identity username joins; create your own with `notebooks.create` when the content must not be shared. `notebooks.list`/`create`/`get` open to any non-`none` member; `update`/`delete` are owner-gated.
 3. **Build a structured document with `document.set`** — use this only when you need full control over layout/ordering (append cannot create lists, tables, or nested blocks). `document.set` OVERWRITES the whole document; `document.update` merges: top-level keys replace the stored ones, and `content.blocks` merges by block id (each sent block replaces the stored block with that id wholesale, omitted blocks are kept; removing a block takes `document.set`). The body is `{content:{type:"rich_text",blocks:{<id>:<block>}}}`. **Use the real block `type` strings and the `attrs` key, and remember container blocks (lists/tasks/blockquote/table cells) hold their text in a CHILD `paragraph` block** — see §Examples 0 (block-model cheat-sheet) and 2.
 4. **Database CRUD** — `nodes.create` `type:"database"`; then `records.create`/`records.list`/`records.search`/`records.update` (merges `fields`)/`records.delete`. Page with `page`/`count` on `records.list` (count max 100). `records.listIterator` and `records.listAll` walk those pages for you (they advance `page` and size pages with `count`).
-5. **Comments + versions** — `collaborators.add` (`admin`/`editor`/`collaborator`/`viewer`). `comments.create` (top-level, anchored, or reply); `comments.update` / `comments.delete` / `comments.resolve` accept optional `expectedVersion` for optimistic concurrency. `versions.create`/`list`/`get`/`restore`.
-6. **TUS upload + download** — the `fileId` is an input, not something the upload returns. First create the file node yourself: `nodes.create` with `id: <22 lowercase hex chars> + '18'` (the file-id suffix; a node created without an explicit `id` gets the generic `…08` suffix, which the upload routes reject), `type: 'file'`, `parentId` (a node where you have editor rights), and `attributes: { subtype: 'image'|'video'|'audio'|'pdf'|'other', name, originalName, mimeType, extension: '' or '.ext', size, version: <22 lowercase hex chars> + '03', status: 0 }`. Only that node's creator can upload to it. Then run the TUS calls on that id: create (`POST …/files/{fileId}/tus` with `Tus-Resumable: 1.0.0` and `Upload-Length`), send chunks (`PATCH` with `Upload-Offset` and `Content-Type: application/offset+octet-stream`), check the resume offset (`HEAD`), or cancel (`DELETE`). Download with `files.download`. `files.upload(notebookId, data, { parentId, name })` does the whole sequence: it creates the file node with a valid `…18` id, sends the bytes over TUS and resolves once the file is ready. If it rejects after the node exists, `files.resumeUpload(notebookId, fileId, data)` continues from the offset the server holds (the id comes from the `onFileId` option or `err.fileId`), and `files.uploads.cancel(notebookId, fileId, { TusResumable: '1.0.0' })` abandons the upload (the options argument is required). A result with `alreadyUploaded: true` means the file was already recorded: the final response was lost, or another caller finished it. The helpers reject with `code` `NOTES_UPLOAD_LENGTH_MISMATCH`, `NOTES_UPLOAD_SIZE_MISMATCH`, `NOTES_UPLOAD_NOT_READY` or `NOTES_UPLOAD_NOT_A_FILE`; server refusals surface as `ApiError` with the notes code. `files.download` takes `(notebookId, fileId)`, notebook id first.{22}18$/.test(fileId)"]
+5. **Collaborators, comments + versions** — before sharing a node with someone new to the notebook, call `members.invite(notebookId, { users: [{ username, role: 'guest' }] })`, check the returned `errors`, and use the created user's `id` as the `collaboratorId` for `collaborators.add` (`admin`/`editor`/`collaborator`/`viewer`; managing node collaborators needs admin permission): a collaborator who is not yet a member of that notebook is refused with `404 user_not_found`. `comments.create` (top-level, anchored, or reply); `comments.update` / `comments.delete` / `comments.resolve` accept optional `expectedVersion` for optimistic concurrency. `versions.create`/`list`/`get`/`restore`.
+6. **TUS upload + download** — the `fileId` is an input, not something the upload returns. First create the file node yourself: `nodes.create` with `type: 'file'` (without an `id`, the kit gives the node a file id, which ends in `18`, the only shape the upload routes accept; an `id` you pass yourself must be 22 lowercase hex chars + `'18'`), `parentId` (a node where you have editor rights), and `attributes: { subtype: 'image'|'video'|'audio'|'pdf'|'other', name, originalName, mimeType, extension: '' or '.ext', size, version: <22 lowercase hex chars> + '03', status: 0 }`. Only that node's creator can upload to it. Then run the TUS calls on that id. Send `Tus-Resumable: 1.0.0` on every one of them (POST, PATCH, HEAD and DELETE); any other value is refused with `412`. On `…/files/{fileId}/tus`: create the upload with `POST` and `Upload-Length`, send chunks with `PATCH` plus `Upload-Offset` and `Content-Type: application/offset+octet-stream`, check the resume offset with `HEAD`, or cancel with `DELETE`. Download with `files.download`. `files.upload(notebookId, data, { parentId, name })` does the whole sequence: it creates the file node with a valid `…18` id, sends the bytes over TUS and resolves once the file is ready. If it rejects after the node exists, `files.resumeUpload(notebookId, fileId, data)` continues from the offset the server holds (the id comes from the `onFileId` option or `err.fileId`), and `files.uploads.cancel(notebookId, fileId, { TusResumable: '1.0.0' })` abandons the upload (the options argument is required). A result with `alreadyUploaded: true` means the file was already recorded: the final response was lost, or another caller finished it. The helpers reject with `code` `NOTES_UPLOAD_LENGTH_MISMATCH`, `NOTES_UPLOAD_SIZE_MISMATCH`, `NOTES_UPLOAD_NOT_READY` or `NOTES_UPLOAD_NOT_A_FILE`; server refusals surface as `ApiError` with the notes code. `files.download` takes `(notebookId, fileId)`, notebook id first.{22}18$/.test(fileId)"]
 
 ## Quirks & gotchas
 
@@ -217,7 +217,8 @@ add plain blocks, `document.append` is simpler).
 ```typescript
 import { randomBytes } from 'crypto';
 const mk = () => randomBytes(12).toString('hex');
-const [b1, b2, b3, bl, li1, li1p, li2, li2p] = Array.from({ length: 8 }, mk);
+const b1 = mk(), b2 = mk(), b3 = mk(), bl = mk();
+const li1 = mk(), li1p = mk(), li2 = mk(), li2p = mk();
 await client.notes.document.set(nbId, pageId, {
   content: { type: 'rich_text', blocks: {
     [b1]: { id: b1, parentId: pageId, index: 'a0', type: 'heading1',
@@ -351,6 +352,9 @@ Wire CI,1,in-progress`;
 const rows = csv.trim().split('\n').slice(1);
 for (const row of rows) {
   const [name, pri, stat] = row.split(',');
+  if (name === undefined || pri === undefined || stat === undefined) {
+    throw new Error(`Expected name,priority,status: ${row}`);
+  }
   const key = createHash('sha256').update(`import-2026-05-07:${name}`).digest('hex');
   // A rerun replays the saved response for the same key instead of adding a duplicate.
   await client.notes.records.create(nbId, dbId, {
@@ -741,7 +745,7 @@ client.notes.document.append(notebookId: string, nodeId: string, data: NotesDocu
 | `XIdempotencyKey` | `string` | header `X-Idempotency-Key` | No | Optional idempotency key (max 256 chars). Reusing the same key with an identical request body and node replays the original response; reusing it with a different body or node returns 409. |
 | `data` | `NotesDocumentAppendRequest` | body | Yes |  |
 
-**Body:** `{ text*: string, type: "paragraph" | "heading1" | "heading2" | "heading3" | "codeBlock"="paragraph", attrs: object | null } | { blocks*: object[] }`
+**Body:** `{ text*: string, type: "paragraph" | "heading1" | "heading2" | "heading3" | "codeBlock"="paragraph", attrs: object|null } | { blocks*: object[] }`
 
 **Returns:** `Promise<NotesDocumentAppendResponse>`  |  **HTTP:** `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append`
 **CLI:** `hoody notes document append`
@@ -760,7 +764,7 @@ client.notes.document.createExportTicket(notebookId: string, nodeId: string, dat
 | `nodeId` | `string` | path | Yes |  |
 | `data` | `NotesDocumentCreateExportTicketRequest` | body | Yes |  |
 
-**Body:** `{ output: "html"="html", includeComments: "none" | "appendix"="none", includeBackground: bool=true, themeMode: "light" | "dark"="dark", themeId: string | null, themeVariables: { [key: string]: string }, fileName: string }`
+**Body:** `{ output: "html"="html", includeComments: "none" | "appendix"="none", includeBackground: bool=true, themeMode: "light" | "dark"="dark", themeId: string|null, themeVariables: { [key: string]: string }, fileName: string }`
 
 **Returns:** `Promise<NotesDocumentCreateExportTicketResponse>`  |  **HTTP:** `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/export-ticket`
 **CLI:** `hoody notes document tickets create`
@@ -1093,12 +1097,13 @@ client.notes.mutations.sync(notebookId: string, data: NotesMutationsSyncRequest)
 #### `create` — Create a node
 
 ```typescript
-client.notes.nodes.create(notebookId: string, data: NotesNodesCreateRequest)
+client.notes.nodes.create(notebookId: string, data: NotesNodesCreateRequest, options?: { XIdempotencyKey?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `notebookId` | `string` | path | Yes |  |
+| `XIdempotencyKey` | `string` | header `X-Idempotency-Key` | No | Optional idempotency key (max 256 chars), such as a random UUID per node. Reusing the same key with an identical request body replays the original response instead of creating a second node; reusing it with a different body returns 409. |
 | `data` | `NotesNodesCreateRequest` | body | Yes |  |
 
 **Body:** `{ id: string, type*: string, parentId: string, attributes*: { [key: string]: any } }`

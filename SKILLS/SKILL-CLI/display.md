@@ -1,4 +1,4 @@
-> _**CLI skill · `display` namespace** · ~6,478 tokens · hoody-sdk v1.0.0-beta.16_
+> _**CLI skill · `display` namespace** · ~7,082 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `display` — programmatic GUI desktops with screenshots, input, and windows
 
@@ -36,16 +36,18 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 ### 1. See-then-act loop
 
 1. `hoody display screenshots capture` with `base64` on (for vision). One response carries the image (`image.data`) and its metadata (`info.timestamp`, `info.full.width`/`height`).
-2. `hoody display input click` / `hoody display input type` at root-window coordinates (on a seamless session these differ from screenshot pixels; see Quirks).
+2. `hoody display input click` / `hoody display input type` at a point picked on that screenshot: a screenshot spans the whole screen, so its pixel (x, y) is the point (x, y) these act on.
 3. `hoody display screenshots capture` again to see the result. There is no cheap change check: `hoody display screenshots capture` takes a full new capture as well, and `timestamp` is the capture time in whole seconds, not a "screen changed" marker.
 
 ### 2. Find and focus a window
 
 1. `hoody display windows list` (`onlyVisible` on).
 2. `hoody display windows search` — a `pattern` plus which fields to match (`name`, `class`, `classname`). Add `-o json` to the list and search commands to get the full response, window ids included.
-3. `hoody display windows focus` with `sync` on (or `hoody display windows raise`). Read `details.inputFocus` in the focus response: `false` means the window was activated but is not viewable, so keyboard input cannot reach it.
+3. `hoody display windows focus` with `sync` on. Read `details.inputFocus` in the response: proceed with keyboard input only when it is `true`. `false` means the window was activated but is not viewable, so keyboard input cannot reach it. `hoody display windows raise` is not a substitute for focusing.
 4. `hoody display windows geometry get` — coords.
 5. `hoody display windows active get` — confirms activation only, not keyboard focus.
+
+`hoody display windows list`, `hoody display windows focus` and `hoody display windows active get` need a window manager on the display: `409 NO_WINDOW_MANAGER` means none is running, and retrying does not help. Start a window manager (for example a desktop session), or use `hoody display windows search`, window geometry and name queries, and mouse and keyboard actions, which work without one.
 
 ### 3. Drag / select
 
@@ -66,6 +68,12 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 2. `hoody display input wait` — interleave waits.
 3. `hoody display screenshots capture` — confirm.
 
+### 6. Press a key or a key combination
+
+1. `hoody display keyboard press` with `keys`, a list of up to 20 combinations pressed in turn: `["Return"]`, `["Escape"]`, `["ctrl+l"]`, `["ctrl+shift+t"]`, `["Tab", "Down", "Return"]`. Names are X keysym names (`Return`, `Escape`, `Tab`, `BackSpace`, `Delete`, `Up`/`Down`/`Left`/`Right`, `Home`, `End`, `Page_Up`, `F1`…) joined to modifiers (`ctrl`, `shift`, `alt`, `super`) with `+`. `hoody display keyboard press --display-id 1 --keys ctrl+l`.
+2. To submit typed text, end it with a line break instead: in `hoody display keyboard type` and `hoody display input type`, `\n` presses Return.
+3. `hoody display keyboard down` / `hoody display keyboard up` hold and release one key; `hoody display input reset` releases anything left held.
+
 ## Quirks & gotchas
 
 - `?displayId=N` overrides `*-display-N.*` host.
@@ -73,7 +81,10 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - All endpoints except `hoody display health` and the HTML client root (`GET /api/v1/display/`) need a displayId or return `400 NO_DISPLAY_CONTEXT`.
 - Screenshot GETs return binary PNG; turn `base64` on for JSON.
 - `hoody display screenshots get` needs numeric `timestamp`, not `timestamp_human`.
-- **A screenshot pixel is not always a click coordinate.** A seamless session captures only the windows it shows, so the capture's origin is the top-left of their bounding box, while `hoody display input click` and the other pointer calls take root-window coordinates. When the shown windows do not start at (0,0), add the capture origin (the smallest `x` and `y` among the shown windows' "geometry" objects in the `hoody display windows list` response) to a point picked on the screenshot, or use `hoody display windows geometry get` to target a window directly.
+- **A screenshot pixel is a click coordinate.** A screenshot spans the whole screen at its current size, read from the windows as they are when it is taken, so pixel (x, y) is the point `hoody display input click` and the other pointer calls act on at (x, y). Where no window is, the image is transparent. A `region` crop starts at its `x1,y1`: add them to a point picked on the crop. Take a new screenshot after a viewer attaches: the screen then takes the viewer's size and the windows move.
+- `hoody display input click` and `hoody display input type` refuse a point with no viewable window with `409 WINDOW_NOT_VIEWABLE` and click nothing. While no viewer is attached to the display that is every point; with one attached, it is the bare desktop between windows. Attach a viewer and pick a point on a window in a fresh screenshot.
+- A line break in `text` (`\n`, `\r\n` or `\r`) presses Return in `hoody display keyboard type` and `hoody display input type`, so `"https://example.com\n"` types the address and submits it; `\t` presses Tab. Every other key or combination (Escape, ctrl+l, arrows) goes through `hoody display keyboard press`.
+- `hoody display input click` refuses a point outside the display's current size with `400 VALIDATION_ERROR` instead of clicking the screen edge, and its `details.pointer` reports where the pointer was after the click and the window under it (`x`, `y`, `window`). A `200` means the click was delivered there, not that the program acted on it: take a new screenshot to see the effect.
 - Clipboard `selection`: `clipboard` (default), `primary`, `secondary`. PRIMARY ≠ Ctrl+V.
 - Clipboard reads and writes can fail with `CLIPBOARD_FAILED`, carrying a shortened tool error; read the clipboard back after a write to confirm it landed.
 - Window IDs are accepted as decimal or hex (`0x...`). `hoody display windows list`, `hoody display windows search` and `hoody display windows active get` return decimal numbers; the path-parameter routes (`hoody display windows get`, `hoody display windows geometry get`, `hoody display windows title get`) echo `windowId` exactly as sent, as a string. Compare ids as numbers, not strings.{1,8}$/"]
@@ -81,7 +92,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `hoody display get` returns display info, a window list (each with per-window `position`/`size`), and the screenshot list — but NOT the virtual screen dimensions (those live on `hoody display geometry get`). 
 - `hoody display input reset` clears stuck modifiers/buttons.
 - `hoody display windows wait` answers 200 even when it times out: the body is `success: false, timedOut: true`, so check `timedOut`, not the status. `timeoutMs` is 100-25000 (default 10000). Too many waits at once on one display give `429 QUEUE_FULL`.
-- `hoody display windows restore` waits by default (`sync`, up to 2 s) until the window manager reports the window as no longer minimized, unlike the other window actions; a window still minimized after that is `500 INPUT_ACTION_FAILED`. With `sync: false` the answer has `state: null`.
+- `hoody display windows restore` waits by default (`sync`, up to 2 s) until the window manager reports the window as no longer minimized, unlike the other window actions; a window still minimized after that is `500 INPUT_ACTION_FAILED`. With `sync: false` the answer's `details.state` is `null`, unless the window was already normal: that no-op answers `details.state: "normal"` with `details.synced: true`.
 
 ## Common errors
 
@@ -129,7 +140,8 @@ hoody --container "$C" display screenshots capture --display-id 1 --base64 -o js
 
 ```bash
 WID=$(hoody --container "$C" display windows search --display-id 1 \
-  --pattern xeyes --name --class --classname -o json | jq -r '.windows[0]')
+  --pattern xeyes --name --class --classname -o json \
+  | jq -er '.windows[0] // error("No window matched xeyes")') || exit 1
 ```
 
 **Step 2 — focus + confirm.** Focus with `sync` on, then read `details.inputFocus` in the focus response. The call answers `success: true` even when it could only activate the window: `inputFocus: false` (with a `warning`) means the window is not viewable (no viewer attached, or unmapped), so keyboard input cannot reach it. `hoody display windows active get` reports the active window, which confirms the activation only.
@@ -149,7 +161,7 @@ hoody --container "$C" display input click --display-id 1 --x 120 --y 80
 hoody --container "$C" display keyboard type --display-id 1 --text "hello world" --delay 20
 ```
 
-`hoody display input type` collapses click-then-type into one call when you only need plain ASCII at one point: `{ x, y, text, delay }`.
+`hoody display input type` collapses click-then-type into one call when you only need plain ASCII at one point: `{ x, y, text, delay }`. End `text` with `\n` to press Return after it (to submit a form or an address bar).
 
 ### 4. Drag from one position to another
 
@@ -230,7 +242,7 @@ hoody --container "$C" display get --display-id 1 -o json
 hoody --container "$C" display geometry get --display-id 1 -o json
 ```
 
-Note: the geometry returned is the display's virtual screen (often `8192x4096`), not a physical monitor size. Pointer coordinates (`hoody display input click` and the rest) are in this root-window space. A screenshot of a seamless session can start at a different origin, so a point picked on a screenshot may need an offset first (see Quirks).
+Note: the geometry returned is the display's virtual screen (often `8192x4096`), not a physical monitor size. Pointer coordinates (`hoody display input click` and the rest) are in this screen space, and a screenshot covers the same space, pixel for pixel.
 
 ### 10. Reset stuck modifiers / buttons after a misfired drag
 

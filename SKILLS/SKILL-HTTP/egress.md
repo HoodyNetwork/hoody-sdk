@@ -1,4 +1,4 @@
-> _**HTTP skill · `egress` namespace** · ~6,415 tokens · hoody-sdk v1.0.0-beta.16_
+> _**HTTP skill · `egress` namespace** · ~6,415 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `egress` — the container's outbound HTTP proxy
 

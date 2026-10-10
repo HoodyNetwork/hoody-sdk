@@ -1,8 +1,8 @@
-> _**compact tier-0 skill (always-loaded by agents)** · ~5,210 tokens · hoody-sdk v1.0.0-beta.16_
+> _**compact tier-0 skill (always-loaded by agents)** · ~5,286 tokens · hoody-sdk v1.0.0-beta.17_
 
 # Hoody — lightweight agent skill
 
-> **Onboarding a new user?** If someone asks you to onboard them or get started with Hoody ("onboard me", "help me get going", "set me up on Hoody"), fetch **`https://hoody.com/SKILLS/ONBOARDING.md`** and follow it — a guided, hands-on playbook that takes them from sign-up to their first live service, adapting to whether they're technical. Don't improvise the flow; that skill is the playbook.
+> **Onboarding a new user?** If someone asks you to onboard them or get started with Hoody ("onboard me", "help me get going", "set me up on Hoody"), fetch **`https://hoody.com/SKILLS/ONBOARDING.md`** and follow it — a guided, hands-on playbook that takes them from sign-up to their first live service, adapting to whether they're technical. Don't improvise the flow; that skill is the playbook. It also shows what every new computer comes with.
 
 ## What Hoody is (and isn't)
 
@@ -12,9 +12,8 @@ Use Hoody when the task involves: running code/processes/UI in the cloud, file s
 
 **Abstain when the question is**: pre-sales (pricing, refunds, white-label, discounts), compliance (SOC 2, GDPR, retention policy), support/status (incident pages, slowness complaints, training), or 3rd-party integration (SAML/SSO with Azure AD/Okta/Google, apex-DNS at another registrar, generic JS/programming, web search).
 
-In short: if it's an operation the user could perform with an API call
-against their *own* tenant, it's `api`. If it's a question they would
-file with sales / support / compliance, abstain.
+In short: an operation on the user's *own* tenant is `api`; a question for
+sales / support / compliance → abstain.
 
 ## Mental model: Hoody is fully remote
 
@@ -22,48 +21,28 @@ Every kit is reachable over plain HTTPS — no local install, no local FS, no ag
 
 ## Three surfaces, one token
 
-**SDK** (`hoody-sdk` for TS/JS) · **HTTP** (`https://api.hoody.com` for any language) · **CLI** (`hoody`, install via `curl -fsSL https://install.hoody.com | sh`). One token works in all three.
+**SDK** (`hoody-sdk` for TS/JS) · **HTTP** (`https://api.hoody.com` for any language) · **CLI** (`hoody`, preinstalled in every Hoody container). One token works in all three.
 
-Pick by runtime: **writing code/scripts → SDK** (TS/JS; other languages → HTTP); **in a terminal — agent shell tool or human prompt → CLI** (preinstalled in every container; zero-install `npx hoody-sdk`); **no CLI available, or pseudo-scripting one-off calls → raw HTTP** with `curl`. They interoperate — same token, same kit URLs. Full per-mode guides live in the same directory: `https://hoody.com/SKILLS/SKILL-SDK.md` / `SKILL-HTTP.md` / `SKILL-CLI.md` (SKILL-HTTP.md has every call as raw `curl`, login/token mint included).
+Pick by runtime: **online? use HTTP** (web chat such as ChatGPT or claude.ai, or a throwaway sandbox that is not a Hoody container or the user's computer: no `hoody` CLI there, a login made there does not last, not the user's machine). Otherwise **writing code/scripts → SDK** (TS/JS; other languages → HTTP); **in a terminal where `hoody` is installed (every Hoody container, the user's own computer; check `command -v hoody`) → CLI**; **no CLI available, or pseudo-scripting one-off calls → raw HTTP** with `curl`. They interoperate — same token, same kit URLs. Full per-mode guides live in the same directory: `https://hoody.com/SKILLS/SKILL-SDK.md` / `SKILL-HTTP.md` / `SKILL-CLI.md` (SKILL-HTTP.md has every call as raw `curl`, login/token mint included).
 
 ## Auth — one paragraph
 
-Bearer token → `https://api.hoody.com`. Per-container **kit URLs** are themselves the credential (URL IS bearer for `files`, `sqlite`, `exec`, `terminal`, `display`, `notifications`, `agent`, …) — **no** kit needs `X-Hoody-Container-Claim` / `X-Hoody-Token` headers. The `agent` kit is reached at its `-agent-1` kit URL like any other kit (no auth headers required). Realm tokens: prepend `{realmId}.` to the API host. Login JWTs expire (~1 day) — a control-plane `401` means refresh/re-login, not retry; headless agents should mint a long-lived auth token (`POST /api/v1/auth/tokens`).
+Bearer token → `https://api.hoody.com`. Per-container **kit URLs** are themselves the credential (URL IS bearer for `files`, `sqlite`, `exec`, `terminal`, `display`, `notifications`, `agent`, …) — **no** kit needs `X-Hoody-Container-Claim` / `X-Hoody-Token` headers. The `agent` kit is reached at its `-agent-1` kit URL like any other kit (no auth headers required). Realm tokens: prepend `{realmId}.` to the API host. Login JWTs expire (~1 day) — a control-plane `401` means refresh/re-login, not retry. Mint a long-lived auth token (`POST /api/v1/auth/tokens`) only for unattended automation the user asked for.
 
-**From an `exec` script.** Calls to the script's own container's kits need no token under the default allow policy: build the box from `metadata` (no lookup, no account call). Under `"default":"deny"`, or for account (`api.*`) work, put a token in the script's `.env` (`HOODY_TOKEN=…`) and pass it to the client: `new HoodyClient({ baseURL: 'https://api.hoody.com', token: process.env.HOODY_TOKEN })` for `api.*` (pass `baseURL` explicitly: on a server, older SDK releases have no default and fail every `api.*` call with "fetch() URL is invalid"; later ones default to `HOODY_BASE_URL`, `HOODY_API_URL`, then `https://api.hoody.com`), `withContainer(c, { kitAuth: { type: 'token', value: process.env.KIT_TOKEN } })` for a kit behind a token rule.
+**From an `exec` script.** Calls to the script's own container's kits need no token under the default allow policy: build the box from `metadata` (no lookup, no account call). Under `"default":"deny"`, or for account (`api.*`) work, put a token in the script's `.env` (`HOODY_TOKEN=…`) and pass it to the client: `new HoodyClient({ baseURL: 'https://api.hoody.com', token: process.env.HOODY_TOKEN! })` for `api.*` (pass `baseURL` explicitly: on a server, older SDK releases have no default and fail every `api.*` call with "fetch() URL is invalid"; later ones default to `HOODY_BASE_URL`, `HOODY_API_URL`, then `https://api.hoody.com`), `withContainer(c, { kitAuth: { type: 'token', value: process.env.KIT_TOKEN! } })` for a kit behind a token rule.
 
 **Built-in AI — no key.** From inside any container (AI enabled), `https://ai.hoody.com/api/v1` is an OpenAI-compatible LLM gateway with **no API key**: the key field is a usage-tracking tag, pass anything (e.g. `container-x`). Point any OpenAI-compatible app or library at it (OpenWebUI, `openai` SDK, `curl`). **Model `hoody-ai/hoody-free` is free and needs no wallet credit — use it by default; every model in the catalog (`GET https://api.hoody.com/api/v1/ai/models`) is paid and is refused outright on a new account, whose `ai_limit` starts at `0.00` (check `GET /api/v1/wallet/balances/ai`).** `exec` scripts get pre-wired `ai` globals defaulting to the free model — zero setup, zero cost.
 
 ## The 4 things you'll do most
 
-### 1. Sign up + log in
+### 1. Sign in through the user's browser
 
-```typescript
-// SDK
-import { HoodyClient } from 'hoody-sdk';
-const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
-await hoody.api.auth.signup({ email, password, region: 'eu-west' });
-// verify email, then:
-const r = await hoody.api.auth.login({ email, password });
-if (r.data && 'token' in r.data) {
-  hoody.setToken(r.data.token);
-} else if (r.data && 'temp_token' in r.data) {
-  // 2FA is on: the login returned requires_2fa + temp_token and no token.
-  // completeTwoFactorLogin verifies the code and adopts the session.
-  await hoody.completeTwoFactorLogin(r.data.temp_token, totpCode);
-}
-```
-
-```bash
-# CLI
-hoody signup --email you@example.com --password "$HOODY_PASSWORD"
-hoody login --username <user> --password <pass>   # bare `hoody login` is interactive; `--web` runs the device flow
-```
+Never ask for a password or a pasted token. New users sign up at `https://api.hoody.com/auth/signup` in their browser. To sign in, `POST https://api.hoody.com/api/v1/auth/device/code` with body `{}` (no token), give the user `data.verification_uri_complete` and `data.user_code`, then poll `POST /api/v1/auth/device/token` `{"device_code":"…"}` every `data.interval` seconds: HTTP 400 `data.error` `authorization_pending` → keep polling, `slow_down` → 5 s, `access_denied`/`expired_token` → stop; HTTP 200 → `data.token`. Keep the tokens for this session only, never in chat or in files you write. Full recipe: § Login in `SKILL-HTTP.md`. CLI: `hoody login --web --no-browser`. SDK: `hoody.api.auth.device.start({})`, then `.poll({ device_code })` with its `data.device_code`, then `hoody.adoptSession(result)`.
 
 A **free-tier server + default container** are normally auto-provisioned on
 signup (while free servers are invite-only, first `POST /api/v1/users/me/redeem-invite`).
-After login, `containers.list()` already returns one container — no separate
-"rent server / create container" step needed for the first one.
+After login it may still be provisioning: poll `containers.list()` until it is `running`.
+No separate "rent server / create container" step is needed for the first one.
 
 ### 2. List + create containers
 
@@ -84,8 +63,9 @@ all kits (`files`, `terminal`, `display`, `exec`, `browser`, …) attached:
 
 ```typescript
 // An id (one lookup, needs the account token), a list/get row, or { id, project_id, server_name } (no lookup).
-// In an exec script, its own box: await hoody.withContainer({ id: metadata.containerId, project_id: metadata.projectId, server_name: metadata.nodeId })
-const box = await hoody.withContainer(def!.id!);
+// In an exec script, its own box: await hoody.withContainer({ id: metadata.containerId, project_id: metadata.projectId, server_name: process.env.HOODY_CONTAINER_PROXY_DOMAIN.split('.')[0] })
+if (!def?.id || def.status !== 'running') throw new Error('not ready: poll again');
+const box = await hoody.withContainer(def.id);
 await box.files.upload('/home/user/hello.txt', Buffer.from('hello'));  // body = bytes
 const text = await box.files.readText('/home/user/hello.txt');      // plain string
 const { stdout, exitCode } = await box.terminal.run('uname -a');         // one-shot command
@@ -186,7 +166,7 @@ namespace**, four options:
    curl -s https://chatbot.hoody.com/mcp -H 'Content-Type: application/json' \
      -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"search_hoody_docs","arguments":{"question":"How do I expose a port?"}}}'
    ```
-   Pipeline failures are HTTP-200 with `isError: true` (a result *field*).
+   Pipeline failures are HTTP-200 with `isError: true`.
    MCP clients can wire it as a remote server:
    `{ "mcp": { "hoody-docs": { "type": "remote", "url": "https://chatbot.hoody.com/mcp" } } }`.
 3. **Static lookup** — fetch `https://hoody.com/SKILLS/INDEX.md`, read it,
@@ -214,7 +194,7 @@ curl "https://$P-$C-files-1.$N.containers.hoody.com/api/v1/files/home/user/hello
 curl "https://$P-$C-display-1.$N.containers.hoody.com/api/v1/display/screenshot?displayId=1" -o shot.png
 ```
 
-**No claim-required kits.** The `agent` kit (like every other kit) accepts the bare per-container kit URL — no `X-Hoody-Container-Claim` / `X-Hoody-Token` headers, no claim minting, no `401 CLAIM_REQUIRED`. Reaching the kit URL is sufficient.
+**No claim-required kits.** Every kit, `agent` included, accepts the bare kit URL: no `X-Hoody-Container-Claim` / `X-Hoody-Token` headers, no claim minting, no `401 CLAIM_REQUIRED`.
 
 **Auto-public** HTTP services (no auth, no registration) — bind on any port → reachable at `https://{P}-{C}-http-<port>.{N}.containers.hoody.com`.
 

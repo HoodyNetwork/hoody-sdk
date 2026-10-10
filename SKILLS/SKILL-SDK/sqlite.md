@@ -1,4 +1,4 @@
-> _**SDK skill · `sqlite` namespace** · ~26,250 tokens · hoody-sdk v1.0.0-beta.16_
+> _**SDK skill · `sqlite` namespace** · ~26,389 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `sqlite` — SQLite HTTP API
 
@@ -41,7 +41,7 @@ One statement: `sql.query({ db, sql, params? })` resolves to `{ rows, columns, t
 
 ### KV CRUD + CAS + counters
 
-- `kv.set` — `ttl`, `if_match` (CAS), `path`, `history`.
+- `kv.set` — `ttl`, `if_match` (CAS on the value), `path`, `history`.
 - `kv.get` — `path`, `at_timestamp`. `exists` takes `db`, plus optional `table` and `timeout`; `kv.delete` takes `db`/`table`/`history` (`history`, default true, records the deleted value; `false` records only that a delete happened) plus `create_db_if_missing` (alias `auto_create`) and `timeout`.
 - `kv.increment` / `kv.decrement` / `kv.push` / `kv.pop` / `kv.remove` — atomic, `path`-aware (`path` is a JSON path inside the value, such as `.user.tags`). The push body is any JSON value, appended as one element; the remove body is `{"value": <any>}` (matches by value), or pass the `index` query parameter instead. The generated push type accepts any JSON value; pass a string or number directly.
 
@@ -83,7 +83,7 @@ One statement: `sql.query({ db, sql, params? })` resolves to `{ rows, columns, t
 - `400 GET /query only accepts read-only SELECT/WITH queries; use POST /db for mutating SQL` (returned for non-SELECT input; a non-base64 `sql` value is not an error — it is interpreted as raw SQL).
 - `400 Invalid JSON body` on `kv.setMany` — wire shape requires each `value` to be a JSON-encoded string, not an object.
 - `409` with `"error": "TIME_TRAVEL_CHAIN_GAP"` (message `time-travel: chain gap straddles target timestamp`) when the history needed for the answer has an unrecorded (`history: false`) or pruned gap. Timestamp reads, `kv.getSnapshot` at an `op_number`, and the rollbacks (`kv.rollback`, `kv.rollbackTable`) all return it. Per-key rollback puts the detail in `error` after the code (`"TIME_TRAVEL_CHAIN_GAP: ..."`); table rollback returns `error: "TIME_TRAVEL_CHAIN_GAP"` and puts the detail in `message`.
-- A failing transaction item aborts and rolls back the whole transaction by default: the response is that item's HTTP status (4xx or 5xx) with `{ "reqIdx": <index>, "error": "...", "code": "..." }`. A failure of your own SQL is classified: `400 SQL_ERROR` (syntax, unknown table or column) or `400 SQL_BIND_ERROR` (parameters that do not fit the statement), `409 SQL_CONSTRAINT` or `409 DATABASE_READONLY`, which carry SQLite's message, and `503 DATABASE_BUSY` or `503 REQUEST_TIMEOUT`, which carry the generic `internal database error` (no 5xx body carries SQLite's text). Anything else is `500 DATABASE_ERROR` with the same generic message, so do not retry it blindly. Set `"noFail": true` on an item to keep going instead: the call returns `200`, and that item's result is `{ "success": false, "error": "...", "code": "..." }` (no `reqIdx`). A `valuesBatch` item under `noFail` can instead succeed in part: rows with bad parameters are skipped and listed in `rowErrors` while `success` is `true`, so inspect `rowErrors` too. = responseItem{"]
+- A failing transaction item aborts and rolls back the whole transaction by default: the response is that item's HTTP status (4xx or 5xx) with `{ "reqIdx": <index>, "error": "...", "code": "..." }`. A failure of your own SQL is classified: `400 SQL_ERROR` (syntax, unknown table or column) or `400 SQL_BIND_ERROR` (parameters that do not fit the statement), `409 SQL_CONSTRAINT` or `409 DATABASE_READONLY`, which carry SQLite's message, and `503 DATABASE_BUSY` or `503 REQUEST_TIMEOUT`, which carry the generic `internal database error` (no 5xx body carries SQLite's text). Anything else is `500 DATABASE_ERROR` with the same generic message, so do not retry it blindly. Set `"noFail": true` on an item to keep going after a failure that leaves the transaction active: the call returns `200`, and that item's result is `{ "success": false, "error": "...", "code": "..." }` (no `reqIdx`). A conflict that rolls back the transaction itself (`INSERT OR ROLLBACK`, or `RAISE(ROLLBACK)` in a trigger) still ends the request with `409 SQL_CONSTRAINT` even under `noFail`, and nothing is committed. A `valuesBatch` item under `noFail` can instead succeed in part: rows with bad parameters are skipped and listed in `rowErrors` while `success` is `true`, so inspect `rowErrors` too. = responseItem{"]
 
 ## Related namespaces
 
@@ -91,7 +91,7 @@ One statement: `sql.query({ db, sql, params? })` resolves to `{ rows, columns, t
 
 ## Examples
 
-Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `containers.get` first, then choose a `DB` path. Bare names (`./mydb`) auto-resolve under `/hoody/databases/`; absolute paths outside that tree are refused unless the deployment allows any absolute database path (`/tmp/...` works on dev kits).
+Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `containers.get` first, then choose a `DB` path. Bare names (`./mydb`) auto-resolve under `/hoody/databases/`; absolute paths outside that tree are refused unless the deployment allows any absolute database path.
 
 **Two SQL field names:** in a transaction item, use the `"query":"..."` key for SELECT (returns `resultSet`/`resultHeaders`) and the `"statement":"..."` key for DDL/DML (returns `rowsUpdated`, or rows when the SQL produces columns, such as a write with `RETURNING`). The `"sql"` alias maps to `"statement"`, not `"query"`.
 
@@ -1009,7 +1009,7 @@ client.sqlite.kv.push(key: string, data: SqliteKvPushRequest, options: { db: str
 | `timeout` | `number` | query | No | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
 | `data` | `SqliteKvPushRequest` | body | Yes |  |
 
-**Body:** `any|null`
+**Body:** `any`
 
 - The value to append: one JSON value of any type (object, array, string, number, boolean or null). An array is appended as a single element, not spread. A body that is not valid JSON is refused with 400.
 
@@ -1109,7 +1109,7 @@ client.sqlite.kv.set(key: string, data: SqliteKvSetRequest, options: { db: strin
 | `timeout` | `number` | query | No | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
 | `data` | `SqliteKvSetRequest` | body | Yes |  |
 
-**Body:** `any|null`
+**Body:** `any`
 
 - … With Content-Type application/json (or any +json type) the body must be one complete JSON document, serialised exactly once: an object, array, number, boolean, null, or a string sent QUOTED ("hello", not hello). A string like "123" must be sent quoted too, or it is stored and read back as the number 123. A body that is not valid JSON is refused with 400 INVALID_JSON_VALUE. …
 
@@ -1177,7 +1177,7 @@ client.sqlite.kv.streamChanges(options: { db: string; table?: string; since?: st
 | `include_values` | `boolean` | query | No | Attach small current values to set/ttl events (see GET /changes) |
 | `LastEventID` | `string` | header `Last-Event-ID` | No | Resumes the stream after this event id. |
 
-**Returns:** `Promise<IEventStream>`  |  **HTTP:** `GET /api/v1/sqlite/changes/stream`
+**Returns:** `Promise<IEventStream<Record<never, string>, ITypedStreamEvent<SqliteKvStreamChangesFrames>>>`  |  **HTTP:** `GET /api/v1/sqlite/changes/stream`
 **CLI:** `hoody kv changes stream`
 
 ---
@@ -1260,7 +1260,7 @@ client.sqlite.sql.run<Row = Record<string, unknown>>(request: SqliteSqlRequest, 
 
 ### Body schemas
 
-- `sqlite_main.kvRemoveRequest` — `{ value: any|null }`
+- `sqlite_main.kvRemoveRequest` — `{ value: any }`
   - `value` — Remove the first element equal to this value. Any JSON value; an explicit null removes the first null element, which is not the same as leaving value out. Ignored when the index parameter is set. Without index, value is required.
 - `sqlite_main.kvBatchDeleteRequest` — `{ items: sqlite_main.kvBatchDeleteItem[], keys: string[] }`
   - `items` — Keys to delete, each with an optional if_match condition. 1-100 entries. Send keys or items, not both.
@@ -1271,8 +1271,9 @@ client.sqlite.sql.run<Row = Record<string, unknown>>(request: SqliteSqlRequest, 
   - `exclude_keys` — Keys to leave untouched. Applied after keys. At most 10000 entries; more is rejected with 413.
   - `keys` — Keys to roll back. Omit or leave empty to roll back the whole table. At most 10000 entries; more is rejected with 413.
 - `sqlite_main.request` — `{ resultFormat: string, transaction: sqlite_main.requestItem[] }`
-- `sqlite_main.maintenanceRequest` — `{ dest_path: string, op*: "wal_checkpoint_truncate" | "vacuum_into" | "quick_check" | "reset_changes" }`
+- `sqlite_main.maintenanceRequest` — `{ dest_path: string, op*: "wal_checkpoint_truncate" | "vacuum_into" | "quick_check" | "reset_changes" | "restore", src_path: string }`
   - `dest_path` — Destination file for vacuum_into. Required for that operation and ignored by the others. Jailed like the db parameter, and it must not already exist.
+  - `src_path` — Source file for restore: an existing SQLite database, such as a vacuum_into copy. Required for that operation and ignored by the others. Jailed like the db parameter, and it must not be the database itself. It is only read.
 - `sqlite_main.kvBatchDeleteItem` — `{ if_match: string, key*: string }`
   - `if_match` — Delete this key only if its current ETag is one of these (a comma-separated list of strong entity-tags, as in the If-Match header), or "*" for "the key exists". Checked for every item before any key is deleted; one failure fails the whole batch with 412.
   - `key` — Key to delete. Must not be empty or whitespace-only.

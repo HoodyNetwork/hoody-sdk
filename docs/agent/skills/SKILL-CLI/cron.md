@@ -1,4 +1,4 @@
-> _**CLI skill · `cron` namespace** · ~5,420 tokens · hoody-sdk v1.0.0-beta.16_
+> _**CLI skill · `cron` namespace** · ~5,591 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `cron` — managed crontab entries per system user
 
@@ -48,7 +48,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 4. Bulk replace
 
-`hoody cron crontabs get` (sweep) then `hoody cron crontabs set` body — revalidates `# hoody-cron:` blocks; response has `removed_expired`.
+For a normal bulk replace, read with `hoody cron crontabs get` (sweep), edit the returned text, then call `hoody cron crontabs set` with the body — it revalidates `# hoody-cron:` blocks, and the response has `removed_expired`. If a read or entry call fails with `409 STORED_CRONTAB_INVALID` (the stored crontab cannot be used), read `details` and repair it by calling `hoody cron crontabs set` directly with a complete, valid replacement: PUT does not read the stored crontab, and anything you leave out of the replacement is removed.
 
 ### 5. Audit all users
 
@@ -63,7 +63,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - A managed entry's command is read back from the spool exactly as written, runs of whitespace included, so a later write for that user stores it unchanged: `echo "a  b"` stays `echo "a  b"`.
 - `expires_at` RFC 3339, strictly future.
 - Body cap 256 KiB by default, which the deployment can change, AND 10,000 lines; duplicate entry id rejected, and a duplicate `id=` within one metadata line is rejected.
-- **`hoody cron crontabs set` replaces the whole crontab.** `hoody cron crontabs get` returns each managed entry as its `# hoody-cron:` metadata line followed by its rule line, and PUT parses those pairs back into the same managed entries with the same ids. So a read, edit, write cycle keeps every managed entry whose two lines are still in the body; a managed entry left out of the body is deleted. Edit the text from `hoody cron crontabs get` instead of writing a fresh body, and do not re-create managed entries after a PUT: they are still there, and re-creating them makes every job run twice. Comment or blank lines placed between a metadata line and its rule line are dropped.
+- **`hoody cron crontabs set` replaces the whole crontab.** `hoody cron crontabs get` returns each managed entry as its `# hoody-cron:` metadata line followed by its rule line, and PUT parses those pairs back into the same managed entries with the same ids. So a read, edit, write cycle keeps every managed entry whose two lines are still in the body; a managed entry left out of the body is deleted. Edit the text from `hoody cron crontabs get` instead of writing a fresh body, and do not re-create managed entries after a PUT: they are still there. Re-creating an identical entry answers 200 with the existing one and writes nothing; the same schedule and command with a different name, comment, `expires_at` or `enabled` is `409 ENTRY_EXISTS` (details give its id), so change it with PATCH. Comment or blank lines placed between a metadata line and its rule line are dropped.
 - A PUT body may contain `# hoody-cron:` metadata lines written by the caller. The kit revalidates every managed entry it parses from them (schedule, command, name, comment) and rejects duplicate ids, but it does not check where the metadata came from: a well-formed pair written by hand is accepted as a managed entry, and a metadata line it cannot parse or pair is kept as a raw line. Every other non-comment line gets the syntax check of `crontab(1)`: a line it would refuse is `400 INVALID_CRONTAB` naming that line, and nothing is written.
 - `hoody cron entries list`/`hoody cron entries get` clean expired entries before serializing under a per-user mutex — a GET can mutate the spool.
 - `hoody cron entries list` items have `type: "managed"` or `"raw"`; only `managed` items carry `id`.
@@ -73,6 +73,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 Error bodies are `{ code, message, details }`, except where noted.
 
+- `409 STORED_CRONTAB_INVALID` — the crontab already stored for the user cannot be used (a Unicode line break, a `# hoody-cron:` line with two id fields, or over the line or byte cap); nothing in your request is wrong. Repair it with `hoody cron crontabs set` (workflow 4).
 - `400 INVALID_EXPIRES_AT` / `EXPIRES_IN_PAST`.
 - `400 INVALID_SCHEDULE / Invalid schedule` — Vixie 5-field plus `@`-macros only; Quartz / 6-field rejected.
 - `400 INVALID_USER` (bad user name), `INVALID_COMMAND`, `INVALID_NAME`, `INVALID_COMMENT`: a field failed validation (see Quirks for the rules).
@@ -125,19 +126,15 @@ hoody --container "$C" cron entries update root "$ID" \
 
 **Goal:** disable every managed entry so nothing fires during a 30-min DB migration; re-enable once clean.
 
-**Step 1 — capture every enabled managed id.** The listing is paginated (50 per page by default, at most 200), so read every page before filtering: a job left on a later page stays enabled through the migration. Run steps 1 and 2 as one script that exits on any listing or update failure, and start the migration only when it exits successfully; a partial list or a failed disable leaves jobs enabled.
+**Step 1 — capture every enabled managed id.** The listing is paginated (50 per page by default, at most 200), so over HTTP read every page before filtering: a job left on a later page stays enabled through the migration. The CLI fetches every page itself, up to 10,000 items or 1,000 requests, so check that it returned `total` rows. Run steps 1 and 2 as one script that exits on any listing or update failure, and start the migration only when it exits successfully; a partial list or a failed disable leaves jobs enabled.
 
 ```bash
-IDS=""; page=1
-while :; do
-  body=$(hoody --container "$C" cron entries list root --page "$page" --limit 200 -o json) \
-    || { echo "listing page $page failed" >&2; exit 1; }
-  ids=$(jq -r '.entries[] | select(.type=="managed" and .enabled) | .id' <<<"$body") \
-    || { echo "unreadable listing" >&2; exit 1; }
-  IDS="$IDS $ids"
-  [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
-  page=$((page + 1))
-done
+# One call fetches every page.
+body=$(hoody --container "$C" cron entries list root -o json) \
+  || { echo "listing failed" >&2; exit 1; }
+[ "$(jq '.entries | length' <<<"$body")" -eq "$(jq .total <<<"$body")" ] || { echo "listing incomplete" >&2; exit 1; }
+IDS=$(jq -r '.entries[] | select(.type=="managed" and .enabled) | .id' <<<"$body") \
+  || { echo "unreadable listing" >&2; exit 1; }
 ```
 
 **Step 2 — bulk disable.**
@@ -160,14 +157,9 @@ done
 
 ```bash
 # Raw items only; skip blanks, comments and environment lines (SHELL=, MAILTO = ..., "A B" = c).
-: > /tmp/cron-migrate.txt; page=1
-while :; do
-  body=$(hoody --container "$C" cron entries list root --page "$page" --limit 200 -o json) || exit 1
-  jq -r '.entries[] | select(.type=="raw") | .line' <<<"$body" \
-    | grep -Ev "^[[:space:]]*(\$|#|([A-Za-z_][A-Za-z0-9_]*|\"[^\"]*\"|'[^']*')[[:space:]]*=)" >> /tmp/cron-migrate.txt
-  [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
-  page=$((page + 1))
-done
+body=$(hoody --container "$C" cron entries list root -o json) || exit 1   # every page
+jq -r '.entries[] | select(.type=="raw") | .line' <<<"$body" \
+  | grep -Ev "^[[:space:]]*(\$|#|([A-Za-z_][A-Za-z0-9_]*|\"[^\"]*\"|'[^']*')[[:space:]]*=)" > /tmp/cron-migrate.txt
 cat /tmp/cron-migrate.txt
 ```
 
@@ -208,13 +200,9 @@ hoody --container "$C" cron crontabs set root --crontab "$NEW"
 **Step 1 — find the entry id by name.** Names are not unique and the listing is paginated, so read every page and stop unless exactly one managed entry carries the name.
 
 ```bash
-ID=""; page=1
-while :; do
-  body=$(hoody --container "$C" cron entries list root --page "$page" --limit 200 -o json) || exit 1
-  ID="$ID $(jq -r '.entries[] | select(.type=="managed" and .name=="health-poll") | .id' <<<"$body")"
-  [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
-  page=$((page + 1))
-done
+body=$(hoody --container "$C" cron entries list root -o json) || exit 1   # every page
+[ "$(jq '.entries | length' <<<"$body")" -eq "$(jq .total <<<"$body")" ] || { echo "listing incomplete" >&2; exit 1; }
+ID=$(jq -r '.entries[] | select(.type=="managed" and .name=="health-poll") | .id' <<<"$body")
 set -- $ID
 [ $# -eq 1 ] || { echo "expected one entry named health-poll, found $#: $ID" >&2; exit 1; }
 ID=$1
@@ -263,13 +251,9 @@ hoody --container "$C" cron entries update root "$ID" --clear-expiration
 **Step 1 — find its id by name.** Read every page and require exactly one match; if several entries share the name, pick the intended id explicitly.
 
 ```bash
-ENTRY_ID=""; page=1
-while :; do
-  body=$(hoody --container "$C" cron entries list root --page "$page" --limit 200 -o json) || exit 1
-  ENTRY_ID="$ENTRY_ID $(jq -r '.entries[] | select(.type=="managed" and .name=="noisy-job") | .id' <<<"$body")"
-  [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
-  page=$((page + 1))
-done
+body=$(hoody --container "$C" cron entries list root -o json) || exit 1   # every page
+[ "$(jq '.entries | length' <<<"$body")" -eq "$(jq .total <<<"$body")" ] || { echo "listing incomplete" >&2; exit 1; }
+ENTRY_ID=$(jq -r '.entries[] | select(.type=="managed" and .name=="noisy-job") | .id' <<<"$body")
 set -- $ENTRY_ID
 [ $# -eq 1 ] || { echo "expected one entry named noisy-job, found $#: $ENTRY_ID" >&2; exit 1; }
 ENTRY_ID=$1
@@ -291,13 +275,8 @@ hoody --container "$C" cron entries update root "$ENTRY_ID" \
 `hoody cron crontabs list` returns one record per account in `/etc/passwd` (`{ user, crontab }`), 50 per page by default and at most 200. Filter client-side for non-empty `crontab`.
 
 ```bash
-page=1
-while :; do
-  body=$(hoody --container "$C" cron crontabs list --page "$page" --limit 200 -o json) || break
-  jq '.items[] | select(.crontab | test("\\S")) | {user, crontab}' <<<"$body"
-  [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
-  page=$((page + 1))
-done
+body=$(hoody --container "$C" cron crontabs list -o json) || exit 1   # every page
+jq '.items[] | select(.crontab | test("\\S")) | {user, crontab}' <<<"$body"
 ```
 
 For each non-empty user, drill in via `hoody cron entries list` for that user for the managed view, or read the `crontab` text directly from the listing above.
@@ -334,7 +313,7 @@ hoody --container "$C" cron entries update root "$ID" \
 
 **Goal:** a teammate wants ONE hand-written line gone without disturbing the rest. You don't have an id (it's raw). Match the whole line exactly, and skip a matching line that follows a `# hoody-cron:` metadata line: that one is a managed entry's rule, and dropping it orphans the entry.
 
-**Step 1 — fetch** the multi-line string. **Step 2 — edit client-side** (split, drop, rejoin). **Step 3 — write back.** Managed entries survive: the fetched text holds each one as a `# hoody-cron:` metadata line plus its rule line, and the PUT parses them back with the same ids. Leave those lines untouched and do not re-create the entries afterwards, or every managed job runs twice.
+**Step 1 — fetch** the multi-line string. **Step 2 — edit client-side** (split, drop, rejoin). **Step 3 — write back.** Managed entries survive: the fetched text holds each one as a `# hoody-cron:` metadata line plus its rule line, and the PUT parses them back with the same ids. Leave those lines untouched; there is nothing to re-create afterwards (an identical create answers 200 with the existing entry, a changed one `409 ENTRY_EXISTS`).
 
 ```bash
 # Check the read and the parse separately: a failed read must never become an empty PUT.
@@ -352,12 +331,12 @@ hoody --container "$C" cron crontabs set root --crontab "$NEW"
 | Command | Aliases | Category | Summary | SDK Link | Example |
 |---------|---------|----------|---------|----------|---------|
 | `hoody cron crontabs get` |  | read | get crontab | `cron.crontabs.get` | `hoody cron crontabs get alice` |
-| `hoody cron crontabs list` |  | read | list all crontabs | `cron.crontabs.list` | `hoody cron crontabs list --page 10 --limit 50` |
+| `hoody cron crontabs list` |  | read | list all crontabs | `cron.crontabs.list` | `hoody cron crontabs list --page 10 --limit 10` |
 | `hoody cron crontabs set` |  | write | put crontab | `cron.crontabs.set` | `hoody cron crontabs set alice --crontab <crontab>` |
 | `hoody cron entries create` |  | write | create entry | `cron.entries.create` | `hoody cron entries create alice --command 'ls -la' --comment Hello --enabled --schedule '0 * * * *'` |
 | `hoody cron entries delete` |  | destructive | delete entry | `cron.entries.delete` | `hoody cron entries delete alice 3fa85f64-5717-4562-b3fc-2c963f66afa6 -y` |
 | `hoody cron entries get` |  | read | get entry | `cron.entries.get` | `hoody cron entries get alice 3fa85f64-5717-4562-b3fc-2c963f66afa6` |
-| `hoody cron entries list` |  | read | list entries | `cron.entries.list` | `hoody cron entries list alice --page 10 --limit 50` |
+| `hoody cron entries list` |  | read | list entries | `cron.entries.list` | `hoody cron entries list alice --page 10 --limit 10` |
 | `hoody cron entries update` |  | write | update entry | `cron.entries.update` | `hoody cron entries update alice 3fa85f64-5717-4562-b3fc-2c963f66afa6 --clear-expiration --command 'ls -la'` |
 | `hoody cron health` |  | read | health check | `cron.kit.getHealth` | `hoody cron health` |
 | `hoody cron open` |  | action | Open the Cron kit job manager in your browser |  | `hoody cron open` |

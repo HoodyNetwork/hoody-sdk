@@ -1,4 +1,4 @@
-> _**SDK skill · `curl` namespace** · ~11,509 tokens · hoody-sdk v1.0.0-beta.16_
+> _**SDK skill · `curl` namespace** · ~11,915 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `curl` — full HTTP client gateway + REST-as-GET-URL bridge
 
@@ -61,7 +61,7 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 
 1. `client.curl.run` with `mode:"async"` → `job_id`.
 2. Poll `jobs.get` or subscribe `jobs.connect` (WebSocket) or `jobs.stream` (SSE) filtered by `job_id`.
-3. `jobs.getResult`; `jobs.cancel` aborts.
+3. `jobs.getResult`; `jobs.cancel` aborts. `jobs.get` reports `retry_attempts`: 1 for a job that ran once, plus one per retry after a transfer error.
 
 ### 4. Cookie-jar session
 
@@ -76,7 +76,7 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 
 ### 6. Scheduled request
 
-1. `schedules.create` with `{cron,request}` → `schedule_id`.
+1. `schedules.create` with `{cron,request}` → `schedule_id`. Add `enabled: false` to create it paused: it never fires until `schedules.update` sets `enabled: true`.
 2. `schedules.list`/`schedules.get`/`schedules.update` (`{"enabled":bool}` pauses or resumes)/`schedules.delete`.
 3. Each admitted occurrence creates a job; inspect via `jobs.list`. An occurrence is skipped, with no job, while the previous run is still in flight or when the job queue rejects it.
 
@@ -91,14 +91,17 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 - `*.list` returns ALL when `limit` omitted; always pass `limit`.
 - `schedules.*` 404s if disabled.
 - `schedules.update` changes any of `cron`, `request` and `enabled`; omitted fields keep their current value, so pause or resume by sending `enabled: false` or `enabled: true` alone.
+- `schedules.create` takes `enabled` (default `true`). A schedule created with `enabled: false` has no `next_run` and does not fire; its `cron` must still parse but need not have a future occurrence yet. Any field other than `cron`, `request` and `enabled` is refused with 400 `INVALID_PARAMETER`.
+- `bearer_token` sends `Authorization: Bearer <token>`, but an `Authorization` entry in `headers` wins: the token is then not sent, so the request carries one `Authorization` header.
+- `jobs.getResult` always answers `200` with the target's body and headers, whatever the target answered; the target's status code is in the `X-Curl-Status` header (and in `response.status_code` from `jobs.get`). A stored `429` or `503` is therefore not retried as a kit failure.
 - **`schedules.create.cron` is 6-field (with seconds), NOT the standard 5-field crontab.** `*/15 * * * *` is rejected as `Invalid cron expression`; use `0 */15 * * * *` (at second 0 every 15 min). The standard @-nicknames (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`) ARE accepted (expanded internally to 6-field), but Go-style `@every 15m` is NOT — for anything else use explicit 6-field expressions. Different syntax from the `cron` namespace, which uses Vixie 5-field.
 - `session_id` is caller-provided.
 - Job events stream over a WebSocket at `/api/v1/curl/ws`; filter by `job_id`.
 
 ## Common errors
 
-- `504` — the upstream request timed out (libcurl timeout); raise `timeout`. An async job does not wait on the caller's connection, but the same `timeout` still applies to the upstream request. The kit itself does not answer `408`; a transparent response passes the upstream's own status through, so an upstream `408` arrives as `408`.
-- `410 cancelled`.
+- `504` — the upstream request timed out (libcurl timeout); raise `timeout`. An async job does not wait on the caller's connection, but the same `timeout` still applies to the upstream request. The kit itself does not answer `408`; a transparent `run` response passes the upstream's own status through (`jobs.getResult` does not: it answers 200 with `X-Curl-Status`), so an upstream `408` arrives as `408`.
+- Cancelling a job answers `200`; no REST call answers `410`. Read `jobs.get` for `status: "cancelled"`, and stop waiting once a job is `failed` or `cancelled`. `jobs.getResult` answers `404 JOB_RESULT_NOT_READY` when the job has no response body (still pending or running, or finished without an upstream response).
 - `503 queue full` (also SSE capacity exhausted) — back off.
 
 ## Related namespaces
@@ -206,7 +209,10 @@ const jobIds = submits.map(s => {
 async function waitAll(ids: string[], timeoutMs = 300_000) {
   const deadline = Date.now() + timeoutMs;
   while (true) {
-    const states = await Promise.all(ids.map(id => client.curl.jobs.get(id, undefined, { timeoutMs: 10_000 })));
+    const states = await Promise.all(ids.map(id =>
+  // timeoutMs alone is a header/idle budget: the abort signal is what caps the whole request
+  client.curl.jobs.get(id, undefined, { timeoutMs: 10_000, retries: 0, signal: AbortSignal.timeout(10_000) })
+));
     const ended = states.find(s => s.data.status === 'failed' || s.data.status === 'cancelled');
     if (ended) throw new Error(`job ${ended.data.id} ${ended.data.status}: ${ended.data.error ?? ''}`);
     if (states.every(s => s.data.status === 'completed')) return;
@@ -217,7 +223,7 @@ async function waitAll(ids: string[], timeoutMs = 300_000) {
 await waitAll(jobIds);
 ```
 
-**Step 3 — collect bodies.** `jobs.getResult` returns just the upstream body.
+**Step 3 — collect bodies.** `jobs.getResult` returns just the upstream body, always with status 200; the upstream's status is in `X-Curl-Status`.
 
 ```typescript
 const bodies = await Promise.all(jobIds.map(id => client.curl.jobs.getResult(id)));
@@ -295,7 +301,7 @@ if (!jid) throw new Error('async submit returned no job_id');
 ```typescript
 const deadline = Date.now() + 30 * 60_000;
 for (;;) {
-  const job = (await client.curl.jobs.get(jid, undefined, { timeoutMs: 10_000 })).data;
+  const job = (await client.curl.jobs.get(jid, undefined, { timeoutMs: 10_000, retries: 0, signal: AbortSignal.timeout(10_000) })).data;
   if (job.status === 'completed') break;
   if (job.status === 'failed' || job.status === 'cancelled') throw new Error(`job ${job.status}: ${job.error ?? ''}`);
   if (Date.now() > deadline) throw new Error('still downloading after 30 min');
@@ -883,7 +889,7 @@ client.curl.storage.listIterator(options?: { page?: number; limit?: number })
 - `curl_CurlRequest` — `{ auth_method: string|null, auth_password: string|null, auth_user: string|null, bearer_token: string|null, compressed: bool|null, connect_timeout: int|null, cookie: string|null, data: string|null, follow_redirects: bool|null, form: { [key: string]: string }|null, headers: { [key: string]: string }|null, insecure: bool|null, job_name: string|null, json: any, keepalive: bool|null, keepalive_time: int|null, max_filesize: int|null, max_redirects: int|null, method: string|null, mode: null | curl_ExecutionMode, range: string|null, referer: string|null, response: null | curl_ResponseMode, retry_count: int|null, retry_delay: int|null, save: bool|null, save_path: string|null, session_id: string|null, speed_limit: int|null, speed_time: int|null, tcp_nodelay: bool|null, timeout: int|null, url*: string, user_agent: string|null }`
   - cURL request parameters A JSON body carrying any field not listed here is rejected with `400`. This protects against silently sending a removed or not-yet-released field that would otherwise slip past validation unnoticed.
   - `save_path` — Relative path under this job's download directory (downloads/by-job/{job_id}). Must not be absolute or contain `..`.
-- `curl_CreateScheduleRequest` — `{ cron*: string, request*: curl_CurlRequest }`
+- `curl_CreateScheduleRequest` — `{ cron*: string, enabled: bool|null, request*: curl_CurlRequest }`
 - `curl_UpdateScheduleRequest` — `{ cron: string|null, enabled: bool|null, request: null | curl_CurlRequest }`
   - Partial update of a schedule. Every field is optional, at least one is required; absent fields keep their current value.
 - `curl_ExecutionMode` — `"sync" | "async"`

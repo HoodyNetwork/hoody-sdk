@@ -1,4 +1,4 @@
-> _**SDK skill · `exec` namespace** · ~26,461 tokens · hoody-sdk v1.0.0-beta.16_
+> _**SDK skill · `exec` namespace** · ~27,849 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `exec` — micro-services: any script or API as an instant HTTP endpoint
 
@@ -26,13 +26,13 @@ To give a script a **public** address: create an alias with `proxy.aliases.creat
 - **Untrusted-input code execution** — it's not sandboxed. Use a fresh container (or a stricter runtime) per untrusted caller.
 - Long-lived processes / supervisors → `daemon` (exec is request/response).
 - Schedules outliving the kit → `cron` (`exec.schedules.*` is in-process and dies with the kit).
-- File I/O outside the scripts dir → `files`. Interactive shells → `terminal`. Container lifecycle → `daemon`. Headless web → `browser`.
+- File I/O outside the scripts dir → `files`. Interactive shells → `terminal`. Container lifecycle → `api`. Headless web → `browser`.
 
 ## Prerequisites
 
 - Scripts dir `/hoody/storage/hoody-exec/scripts/{subdomain}/{instanceId}/` (subdomain defaults to `default`, e.g. `…/scripts/default/1/`) is service-managed; write only via `scripts.write`.
 - **`require('hoody-sdk')` works with no install step** — it loads the installed npm package from the scripts root's `node_modules`. Exec installs a missing SDK automatically (at startup, or on a script's first `require`), honors a version you declare in the scripts-root `package.json` (an exact version or a tag stops updates, a range keeps them inside it), and stages a newer registry release that the next kit startup swaps in; a running kit never replaces its live copy. (Other `require()`d npm packages are auto-installed on first execution.) Import from `'hoody-sdk'`. The constructor takes an explicit config; `withContainer` is async and returns a container-scoped client. Calls go through the edge proxy, so all the usual capability gates / request hooks / proxy logs apply (see § Source IP Guard in `SKILL-SDK.md`).
-- The `hoody` CLI is also on `$PATH` if you'd rather shell out: `Bun.$\`hoody projects list\`` from the same script works end-to-end.
+- The `hoody` CLI is also on `$PATH` if you'd rather shell out, but exec sets no account token and the CLI needs one (for a kit command too: it looks the container up). Put `HOODY_TOKEN=<token>` in the script's `.env` companion and pass the script's env on: `Bun.$\`hoody projects list\`.env({ ...process.env })`.
 
 ## Capability URL
 
@@ -65,13 +65,13 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 1. `logs.list` / `logs.search` / `logs.get` (one JSON response; `lines` and `tail` pick the slice). For a live tail use `logs.stream` (SSE).
 2. `kit.listRequests` / `kit.getStats`; per script, `scripts.listStats` first, then `scripts.getStats` with one `scriptPath` from that listing (an empty body returns an empty `metrics` stub).
-3. `openapi.listScripts`, then `openapi.generate` / `openapi.get` (a document built from the current scripts) or `openapi.merge`. Merge scans scripts only for the `directories` you name (`['scripts']` for the calling deployment's scripts directory — the `<subdomain|default>/<execId>` the kit URL names, unless you pass `subdomain` / `execId`) and otherwise merges just the `specs` you pass; it answers `{success, data, meta}` with the document in `data`. None of the three writes anything to disk, so store a merge result yourself if you need to keep it. `openapi.validateSchema` checks one script's `.openapi.json` sidecar.
+3. `openapi.listScripts`, then `openapi.generate` / `openapi.get` (a document built from the current scripts) or `openapi.merge`. Merge scans scripts only for the `directories` you name (`['scripts']` for the calling deployment's scripts directory — the `<subdomain|default>/<execId>` the kit URL names, unless you pass `subdomain` / `execId`) and otherwise merges just the `specs` you pass; it answers `{success, data}` with the document in `data`. None of the three writes anything to disk, so store a merge result yourself if you need to keep it. `openapi.validateSchema` checks one script's `.openapi.json` sidecar.
 
 ## Quirks & gotchas
 
-- **Direct execution / top-level `return` is the canonical script shape**; `req`, `res`, `metadata`, `shared`, `console`, and `require` are auto-injected. `module.exports = handler` and many `export default` forms are accepted as compatibility inputs. The pattern-normaliser never rewrites the stored file; it rewrites the code at load time on every request, independent of `validate`.
+- **Direct execution / top-level `return` is the canonical script shape**; `req`, `res`, `metadata`, `shared`, `console`, and `require` are auto-injected. `module.exports = handler` and many `export default` forms are accepted as compatibility inputs. A script may instead export one function per HTTP method (`export async function GET(request)`, `POST`, …; the first argument is a Web `Request`): `HEAD` falls back to `GET`, `OPTIONS` is answered automatically, and any other method without an export answers 405 with `Allow`. The pattern-normaliser never rewrites the stored file; it rewrites the code at load time on every request, independent of `validate`.
 - **Reads redact secrets.** `scripts.read` replaces the values of `// @token` and `// @ai-key` lines with `[REDACTED]`. Writing that content back keeps the stored secret for each placeholder; a placeholder with no stored secret to restore is refused.
-- **`req.rawBody` holds the request bytes as received** (a Buffer), next to the parsed `req.body`, whenever the kit parses the body for you. Verify webhook signatures against `req.rawBody`; re-serialising `req.body` does not reproduce the sender's bytes. A script that declares `// @rawBody` gets neither field: `req` stays the raw request stream, so read and hash that stream yourself. `GET` and `HEAD` bodies are never read.
+- **`req.rawBody` holds the request bytes as received** (a Buffer), next to the parsed `req.body`, whenever the kit parses the body for you. Verify webhook signatures against `req.rawBody`; re-serialising `req.body` does not reproduce the sender's bytes. A script that declares `// @rawBody` gets neither field: `req` stays the raw request stream, so read and hash that stream yourself. The line must be exactly `// @rawBody` (or `// @rawBody true` / `false`): with any other text after it the line is ignored and the body is parsed. `GET` and `HEAD` bodies are never read.
 - Prefer top-level code with auto-injected `req`/`res` (or just `return …` from the script body); use `module.exports = handler` only as a compatibility style.
 - `scripts.delete` needs literal `confirm=true`.
 - `scripts.write` defaults `createDirs:true`, `validate:true`. `.md`/`.yaml`/`.env`/any other non-`.ts`/`.js`/`.json` extension skip; `.json` JSON.parse; only `.ts`/`.js` full pipeline.
@@ -81,7 +81,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `scripts.write`/`delete` accept optional `execId` (alias `exec_id`) + `subdomain`; query wins.
 - `magicComments.update` and `magicComments.get` resolve `path` like `scripts.write`: through the `exec-1` kit URL, `tick.js` is looked up as `default/1/tick.js` first (the `execId` / `subdomain` parameters pick another deployment), then as given relative to the scripts root, so the root-relative `default/1/tick.js` (the write's `resolvedPath`, or its `path` in `scripts.list`) also works; the first that exists is used, and none answers 404 `Script not found`.
 - `magicComments.updateMany` with neither `directory` nor `execId` edits the calling deployment's own tree (`default/1` through `exec-1`); a `directory` resolves like a script path (under the calling deployment's tree first, then relative to the scripts root).
-- `magicComments.update` sets `// @schedule` (`comments.schedule`; an empty string removes it). The value is a 5-field cron expression (`minute hour day month weekday`) or a nickname (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`), always in UTC, one per file. `// @schedule-timeout <ms>` is the max run time of one scheduled run; HTTP requests keep `@timeout` (a scheduled run without it uses `@timeout`, else 30 s). It is registered at once, as by a write whose header has the line (no `schedules.reload`); `schedules.list` shows its `nextFire`.
+- `magicComments.update` sets `// @schedule` (`comments.schedule`; an empty string removes it). The value is a 5-field cron expression (`minute hour day month weekday`) or a nickname (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`), always in UTC, one per file. `// @schedule-timeout <ms>` is the time limit of one scheduled run (the run is released, not stopped), as `@timeout` is for HTTP, where an unstarted response gets 504 and the script keeps running; HTTP requests keep `@timeout` (a scheduled run without it uses `@timeout`, else 30 s). It is registered at once, as by a write whose header has the line (no `schedules.reload`); `schedules.list` shows its `nextFire`.
 - A `@schedule` fire bypasses the script's `@token`, and a script that also declares `@websocket` is not registered (`schedules.listHistory` records it as `incompatible`). The `curl` kit's schedules take 6 fields (seconds first); the `cron` namespace takes 5, in the container's own crontab.
 - **Built-in AI, zero setup — never wire up your own provider/key for AI in a script.** Every endpoint gets these script-scoped bindings, enabled by default (off with `// @ai false`; not on `globalThis`; `pre.js` / `post.js` get none): `ai` (`ai.generate(prompt)` / `ai.stream(prompt)` / `ai.object({ schema, prompt })`), plus `openai` (provider factory), `model` (the default model instance), and `generateText`/`streamText`/`generateObject`. They are already wired to **Hoody AI** (`https://ai.hoody.com/api/v1` unless the kit runs with another `--ai-url`; default model **`hoody-ai/hoody-free`** unless `--ai-default-model` changes it). **No `require()`, no base URL, and no API key**: the key defaults to `container-<hash>`, and `// @ai-key` replaces it. Exec does not price, meter or refuse models; what a model costs and what happens without wallet credit is decided by the AI service. Override per-script with magic comments (`// @ai-model <provider/model>`, `// @ai-temperature 0.7`, `// @ai-max-tokens 2048`, `// @ai-key <custom-tag>`); set a default system prompt via a sibling `<script>.system.md` (or directory-level `_system.md`).
 - **How the built-in AI is called.** `ai` is a name in the script's own scope, not a global: `globalThis.ai` is undefined, a module the script imports does not see it (pass `ai` in), and `pre.js` / `post.js` get no AI helpers. Every helper returns the SDK result object, never a bare string: `(await ai.generate(prompt)).text`, `return (await ai.stream(prompt)).textStream` (streamed as `text/plain`), `(await ai.object({ schema, prompt })).object`. `ai.generate` also takes `{ prompt, system, messages, model, temperature, maxTokens }`. `<script>.system.md` beside the script, else `_system.md` in the same directory, is the default `system` of `ai.generate` / `ai.stream` / `ai.object` (never read it yourself); an explicit `system` option replaces it, and the raw `generateText` / `streamText` / `generateObject` get none, so pass `system` to them yourself. `@ai-model`, `@ai-temperature` and `@ai-max-tokens` set the defaults of the `ai` helpers; `@ai-model` also picks the injected `model` that `generateText({ model, prompt })` takes.
@@ -89,8 +89,9 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - **Request body.** `req.body` is parsed JSON, a urlencoded form as an object (a repeated key keeps its last value), or for `multipart/form-data` the text fields only; any other content type is a Buffer. Uploaded files are in `req.files`, one entry per file (empty files and repeated field names included): `{ fieldName, filename, type, size, data }` with `data` a Buffer and `type` the MIME type the runtime reports, which may differ from the part's declared Content-Type and can come from the filename (observed on Bun 1.4.2: `a.pdf` sent as `text/plain` gave `application/pdf`, `a.txt` gave `text/plain;charset=utf-8`, an unknown extension gave `""`), so check the bytes when the type matters.
 - **`pre.js` / `post.js` are per directory.** They run around each HTTP request to a script in their own directory (its `index` included) and never for subdirectories or parent directories, so `admin/pre.js` does not guard `admin/deep/x.js`. `.ts` works too. A non-null return from `pre.js` (or a response it already ended) skips the script; to pass data on, set it on `req`. `post.js` receives the script's return value as `mainResult`, and a non-null return replaces the response. `post.js` still runs after a script that answered with `res.json()` / `res.send()`, but that answer stays as sent and `res.setHeader` then throws: check `res.headersSent` before touching the response. `post.js` also runs after a `pre.js` stop, with the `pre.js` value as `mainResult` (return nothing to keep it). A WebSocket connection runs `pre.js` once, before the handshake (never per message, never `post.js`): a non-null return or a started or ended `res` refuses the upgrade with that error status (else 403) and no socket opens (`req.body` is `null` on an upgrade, so body-reading checks must allow for it); what it sets on `req` reaches `ws.open(socket, req)`; `// @websocket-pre false` in the socket script skips it.
 - **WebSocket scripts register handlers; they do not handle upgrades.** Both `// @websocket` and `// @mode worker` are required, or the socket is closed with `4400`. Assign `ws.open = (socket, req) => …`, `ws.message = (socket, data) => …`, `ws.close = (socket, code, reason) => …` (or `ws.on('message', …)`); never start a `ws` server or call `handleUpgrade`. The script body runs when the first socket connects, with `metadata.method === 'WEBSOCKET_INIT'`: once per script, or for a dynamic route once per route value while it has sockets (after that room's last socket closes, the next connection runs the body again with fresh variables; a changed script file serves new sockets from a fresh run, while sockets already open keep the old handlers and connection pool, so a broadcast from one run does not reach the other). Its top-level variables are shared by all sockets of that run, and its `req` / `metadata` are the first socket's request (`metadata.query` its query string alone, `metadata.parameters` its route params), so read each socket's own query from `socket.data.query` (or the `req` that `ws.open(socket, req)` receives) and keep per-connection state on `socket.data` (which also holds `headers`, `ip`). `data` is a string for text frames and a Buffer for binary ones; `socket.send` / `ws.broadcast(data, exceptSocket?)` send a plain object or array as JSON text and a string, Buffer or other binary value as given. An HTTP request to the same script re-runs the body and sees the same `ws.connections` / `ws.broadcast`.
-- **Helper files and other directives.** Load a file of your own with `await import('./lib/x.js')` (resolved from the script's file). The helper exports with `export function x` or `module.exports = { x }`, then `const { x } = await import(…)`; a bare `module.exports = fn` arrives as `.default`. The helper can `require('./sibling.js')`; `require('./lib/x.js')` from the script body works too (resolved from the script's file). A helper file the script loads with `require` or an ES import statement sees the server's own `process.env`, not the script's `.env` values, so a key that only `quote.env` sets is `undefined` inside `./lib/rates.js`. Read the value in the script and pass it in (`const { rate } = await import('./lib/rates.js'); return { eur: await rate(process.env.RATES_KEY, 'USD', 'EUR') };`). The script's `process.env` is the kit's environment plus every `_default.env` from the scripts root down to the script's directory, then the script's own `<name>.env`, merged per variable (the nearest file wins). `__dirname` and `__filename` are not defined. `// @description …`, `// @tags a,b` and `// @label x` only describe the script for `scripts.list` (which filters on `label` / `tags`) and change nothing at runtime. `// @enabled false` answers 404 without running the script; repeat `// @token` to accept several tokens; `@token` takes one word (the rest of the line is ignored, with a warning). A returned object is always the JSON body: `return { status: 301, body }` answers 200 with that object, so set a status with `res.status()`.
-- **URL, query and CORS.** `req.url` is the path and query (`/x?a=1`), not a full URL. `metadata.query` is decoded like a form (`+` is a space) and keeps only the last value of a repeated key. On HTTP requests route params are merged into `metadata.query` and `metadata.parameters` (and a socket's `socket.data.query`) over query keys of the same name, so for the query string alone use `new URL(req.url, 'http://x').searchParams` (`.getAll('key')` for every value). By default each response reflects the caller's `Origin` and sends `Access-Control-Allow-Credentials: true`; `// @cors-credentials false` keeps the reflection without it. With any `@cors` line (`*` reflects any origin, `https://app.example` one origin, `none` blocks), credentials are sent only with `// @cors-credentials true`. These directives shape the script's own responses: an ordinary `OPTIONS` preflight is answered by the kit's global policy (reflected origin, credentials) and never reaches the script (platform hook dispatch is the exception).
+- **Helper files and other directives.** Load a file of your own with `await import('./lib/x.js')` (resolved from the script's file). The helper exports with `export function x` or `module.exports = { x }`, then `const { x } = await import(…)`; a bare `module.exports = fn` arrives as `.default`. The helper can `require('./sibling.js')`: a helper's relative paths count from the helper's own directory (a `./round.js` inside the helper `./lib/price.js` is the `round.js` next to that helper, not next to the script); `require('./lib/x.js')` from the script body works too (resolved from the script's file). A helper file runs in its deployment's context (the one `// @mode worker` scripts of that exec ID share): it sees the script's `fetch` and `process.env` (the script's `.env` values included), and its module-level state (`const items = []`, `globalThis.store ??= {}` in the helper) is kept between requests in both modes, separate per exec ID, in memory like `shared`. A relative helper path counted from the wrong directory (`require('../../lib/store.js')` one level too high) is looked up from each parent directory up to the deployment's own directory and loads the one file it matches, with a warning naming the path to write; several matches or none fail with the paths tried. The script's `process.env` is the kit's environment plus every `_default.env` from the scripts root down to the script's directory, then the script's own `<name>.env`, merged per variable (the nearest file wins). `__dirname` and `__filename` are not defined in the script itself (using one throws), and a relative path is not resolved from the script's directory: in the script and its helpers, `new Database('app.sqlite')`, `fs.writeFileSync('x.json', …)`, `Bun.write` and `process.cwd()` use the deployment's own data directory (persistent, separate per exec ID). Read a file that sits beside the script with `fs.readFileSync(require.resolve('./data.json'), 'utf8')`, or build its path from `import.meta.dirname`. `// @description …`, `// @tags a,b` and `// @label x` only describe the script for `scripts.list` (which filters on `label` / `tags`) and change nothing at runtime. `// @enabled false` answers 404 without running the script; repeat `// @token` to accept several tokens; a caller sends the token as `Authorization: Bearer`, as the password of `Authorization: Basic`, as `X-Token` or as `?token=`, and only the first token found in that order is compared (a wrong Bearer token fails even beside a good `X-Token`; an `Authorization` header with another scheme, or a Basic value without a password, is skipped); `@token` takes one word (the rest of the line is ignored, with a warning). A returned object is always the JSON body: `return { status: 301, body }` answers 200 with that object, so set a status with `res.status()`.
+- **`cookie` is v2.** `const { parseCookie, stringifySetCookie } = require('cookie')`: `parseCookie(req.headers.cookie ?? '')` reads cookies, `stringifySetCookie({ name: 'sid', value: 'abc', httpOnly: true, path: '/' })` writes one (`stringifySetCookie(name, value, options)` works too). The v1 `cookie.parse(header)` and `cookie.serialize(name, value, options)` also work in scripts (`require`, `import`, the preloaded `cookie`).
+- **URL, query and CORS.** `req.url` is the path and query (`/x?a=1`), not a full URL. `metadata.query` is decoded like a form (`+` is a space) and keeps only the last value of a repeated key. On HTTP requests route params are merged into `metadata.query` and `metadata.parameters` (and a socket's `socket.data.query`) over query keys of the same name, so for the query string alone use `new URL(req.url, 'http://x').searchParams` (`.getAll('key')` for every value). By default each response reflects the caller's `Origin` and sends `Access-Control-Allow-Credentials: true`; `// @cors-credentials false` keeps the reflection without it. With any `@cors` line (`*` reflects any origin, `https://app.example` one origin, `none` blocks), credentials are sent only with `// @cors-credentials true`. For a literal `Access-Control-Allow-Origin: *`, call `res.setHeader('Access-Control-Allow-Origin', '*')` and add `// @cors-credentials false`: the policy is applied before the script runs, so the script's header is sent as set, but without that line `Access-Control-Allow-Credentials: true` goes out beside it and browsers refuse the pair on a credentialed request. These directives shape the script's own responses: an ordinary `OPTIONS` preflight is answered by the kit's global policy (reflected origin, credentials) and never reaches the script (platform hook dispatch is the exception).
 - **`.md` URLs serve Markdown files, never scripts.** `/guide.md` serves the file `guide.md` as `text/markdown`, behind the `@token` of `guide.ts` / `guide.js` beside it; a script named `guide.md.ts` is never reached. (A proxy hook names its target script, so it can still run one for a `.md` URL.)
 
 ## Common errors
@@ -155,10 +156,10 @@ await client.exec.scripts.write({
   content: `module.exports = async (req, res) => {
   // Real version — the Hoody SDK is auto-loaded inside scripts:
   //   const { HoodyClient } = require('hoody-sdk');
-  //   The kit injects NO HOODY_* variables — script env is process.env plus a .env
-  //   companion file next to the script, so you must supply these yourself:
-  //   const hoody = new HoodyClient({ baseURL: process.env.HOODY_API_URL!, token: process.env.HOODY_TOKEN });
-  //   const c = await hoody.withContainer(process.env.HOODY_CONTAINER!);
+  //   This container's kits need no token; build the box without a lookup:
+  //   const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
+  //   const c = await hoody.withContainer({ id: metadata.containerId, project_id: metadata.projectId,
+  //     server_name: process.env.HOODY_CONTAINER_PROXY_DOMAIN.split('.')[0] });
   //   const a = await c.curl.run({ url: 'https://agent-a/score', method: 'POST', json: req.body });
   const callA = async () => ({ score: 0.91, label: 'spam' });
   const checkB = async (a) => ({ verdict: a.score > 0.8 ? 'block' : 'allow' });
@@ -250,7 +251,7 @@ const r = await client.exec.openapi.get({ format: 'json' });
 require('fs').writeFileSync('/tmp/user-scripts.openapi.json', JSON.stringify(r.data, null, 2));
 ```
 
-**Step 3 — merge a hand-written spec layer** (auth / examples / hosts) on top of the auto-generated one with `openapi.merge`. Merge generates from the scripts only for the `directories` you name (`scripts` means the calling deployment's scripts directory, not every deployment's); without them it merges just the `specs` you pass. It answers `{success, data, meta}` with the merged document in `data`.
+**Step 3 — merge a hand-written spec layer** (auth / examples / hosts) on top of the auto-generated one with `openapi.merge`. Merge generates from the scripts only for the `directories` you name (`scripts` means the calling deployment's scripts directory, not every deployment's); without them it merges just the `specs` you pass. It answers `{success, data}` with the merged document in `data`.
 
 ```typescript
 const layer = JSON.parse(require('fs').readFileSync('/tmp/layer.json', 'utf8'));
@@ -281,14 +282,16 @@ Per-request execution logging is ON by default (`@log-level` defaults to `standa
 
 ### 8. Monitor active requests + per-script stats
 
-**Goal:** "is anything stuck?" + "which script is the hot path?". `kit.getStats` is a single snapshot; `kit.listRequests` lists in-flight HTTP/WS; `scripts.listStats` lists every script with traffic, with its request and error counters (sort by `requests`, `errors`, `p95`, `ws_active` or the default `lastActivity`); `scripts.getStats` then reports on ONE script, named by the `scriptPath` from that listing. An empty body returns the stub `{"metrics":{}}`, which means "no script asked for", not "no traffic".
+**Goal:** "is anything stuck?" + "which script is the hot path?". `kit.getStats` is a single snapshot; `kit.listRequests` lists in-flight script HTTP requests (for WebSocket counts use `kit.getStats` `websocket.active`, or each script's `activeWs` from `scripts.listStats`); `scripts.listStats` lists every script with traffic, with its request and error counters (sort by `requests`, `errors`, `p95`, `ws_active` or the default `lastActivity`); `scripts.getStats` then reports on ONE script, named by the `scriptPath` from that listing. An empty body returns the stub `{"metrics":{}}`, which means "no script asked for", not "no traffic".
 
 ```typescript
 const stats = await client.exec.kit.getStats();
 const active = await client.exec.kit.listRequests();
 const hot = await client.exec.scripts.listStats({ sort: 'requests', limit: 10 });
-const first = hot.data!.scripts[0];  // scriptPath is root-relative, e.g. default/1/echo.js
-const perf = await client.exec.scripts.getStats({ scriptPath: first.scriptPath });
+const first = hot.data.scripts[0];  // scriptPath is root-relative, e.g. default/1/echo.js
+const perf = first
+  ? await client.exec.scripts.getStats({ scriptPath: first.scriptPath })
+  : undefined;  // no script has run yet
 ```
 
 For Prometheus scraping, `GET /api/v1/exec/monitor/metrics` returns text/plain in standard exposition format.
@@ -461,12 +464,7 @@ if (!doc) { res.status(400); return { error: 'document missing' }; }
 return { title: req.body.title, filename: doc.filename, type: doc.type, size: doc.size, text: doc.data.toString('utf8') };
 ```
 
-**Step 2 — post a form** (any HTTP client; here curl with a 5-byte `a.txt` holding `hello`):
-
-```
-curl -s "https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload" -F title=notes -F 'document=@a.txt;type=text/plain'
-# → {"title":"notes","filename":"a.txt","type":"text/plain;charset=utf-8","size":5,"text":"hello"}   (the type observed for a .txt file on Bun 1.4.2)
-```
+**Step 2 — post a form.** Submit a `multipart/form-data` request to the script's `/upload` URL (`https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload`) with the text field `title=notes` and a file field named `document`. Uploading `a.txt` containing the five bytes `hello` returns `title: "notes"`, `filename: "a.txt"`, `size: 5` and `text: "hello"`; `type` is the MIME type reported by the runtime (`text/plain;charset=utf-8` on Bun 1.4.2).
 
 ## Reference
 
@@ -616,13 +614,13 @@ client.exec.kit.restart(data?: ExecKitRestartRequest)
 #### `clear` — Clear Logs
 
 ```typescript
-client.exec.logs.clear(options: { confirm: "true"; file?: string; type?: string; olderThanDays?: string })
+client.exec.logs.clear(options: { confirm: "true"; file?: string; type?: "all" | "request" | "access" | "cron" | "other"; olderThanDays?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `file` | `string` | query | No | File query parameter |
-| `type` | `string` | query | No | Type query parameter |
+| `type` | `"all" \| "request" \| "access" \| "cron" \| "other"` | query | No | Which logs to clear. Any other value is refused with 400. |
 | `olderThanDays` | `string` | query | No | OlderThanDays query parameter |
 | `confirm` | `"true"` | query | Yes | Safety confirmation; must be the literal `true` or the request is rejected with 400. |
 
@@ -653,12 +651,12 @@ client.exec.logs.get(data: ExecLogsGetRequest)
 #### `list` — List Logs
 
 ```typescript
-client.exec.logs.list(options?: { type?: string; limit?: string })
+client.exec.logs.list(options?: { type?: "all" | "request" | "access" | "cron" | "other"; limit?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `type` | `string` | query | No | Type query parameter |
+| `type` | `"all" \| "request" \| "access" \| "cron" \| "other"` | query | No | Which logs to list. Any other value is refused with 400. |
 | `limit` | `string` | query | No | Limit query parameter |
 
 **Returns:** `Promise<ExecLogsListResponse>`  |  **HTTP:** `GET /api/v1/exec/logs/list`
@@ -677,6 +675,8 @@ client.exec.logs.search(data?: ExecLogsSearchRequest)
 | `data` | `ExecLogsSearchRequest` | body | No |  |
 
 **Body:** `{ query: string, regex: string, files: string[], limit: int=1000, caseSensitive: bool=false }`
+
+- `regex` — Regular expression to search for, at most 64 characters (a longer one is refused with 400 `Invalid regex: pattern exceeds 64 chars`). Takes the place of `query` when both are sent.
 
 **Returns:** `Promise<ExecLogsSearchResponse>`  |  **HTTP:** `POST /api/v1/exec/logs/search`
 **CLI:** `hoody exec logs search`
@@ -743,7 +743,7 @@ client.exec.magicComments.update(data: ExecMagicCommentsUpdateRequest, options?:
 | `subdomain` | `string` | query | No | Optional subdomain namespace used with execId for path resolution. |
 | `data` | `ExecMagicCommentsUpdateRequest` | body | Yes |  |
 
-**Body:** `{ path*: string, comments*: { enabled: bool|null, token: string|null | string[], mode: "worker" | "serverless" | null, timeout: int|null | string, log-level: "none" | "minimal" | "standard" | "full" | "debug" | null, debug: bool|null, log-request-body: bool|null | "full" | "redacted" | "off", log-response-body: bool|null | "full" | "redacted" | "off", log-max-body-size: int|null | string, log-exclude-headers: string[]|null, log-retention-days: int|null, debug-instrument: bool|null, await-promises: bool|null, concurrent: bool|null | int, cors: string|null, cors-credentials: bool|null, cors-methods: string|null, cors-headers: string|null, cors-max-age: int|null, websocket: bool|null, websocket-pre: bool|null, ai: bool|null, ai-model: string|null, ai-temperature: number|null, ai-max-tokens: int|null, ai-key: string|null, description: string|null, tags: string[]|null, label: string|null, schedule: string|null, schedule-timeout: int|null | string, remote-messages: bool|null, remote-call: bool|null, remote-eval: bool|null, remote-token: "[REDACTED]" | null | object | object[], tokens: string[]|null }, dry_run: bool|null=false, execId: string, exec_id: string, subdomain: string }`
+**Body:** `{ path*: string, comments*: { enabled: bool|null, token: string|null | string[], mode: "worker" | "serverless"|null, timeout: int|null | string, log-level: "none" | "minimal" | "standard" | "full" | "debug"|null, debug: bool|null, log-request-body: bool|null | "full" | "redacted" | "off", log-response-body: bool|null | "full" | "redacted" | "off", log-max-body-size: int|null | string, log-exclude-headers: string[]|null, log-retention-days: int|null, debug-instrument: bool|null, await-promises: bool|null, concurrent: bool|null | int, cors: string|null, cors-credentials: bool|null, cors-methods: string|null, cors-headers: string|null, cors-max-age: int|null, websocket: bool|null, websocket-pre: bool|null, ai: bool|null, ai-model: string|null, ai-temperature: number|null, ai-max-tokens: int|null, ai-key: string|null, description: string|null, tags: string[]|null, label: string|null, schedule: string|null, schedule-timeout: int|null | string, remote-messages: bool|null, remote-call: bool|null, remote-eval: bool|null, remote-token: "[REDACTED]"|null | object | object[], tokens: string[]|null }, dry_run: bool|null=false, execId: string, exec_id: string, subdomain: string }`
 
 - `comments` — Directives to set, keyed by directive name. … Keys that are not directives are ignored. A value that would not read back from the script as sent is refused with a 400, and so is a CORS sub-directive set in the same request as `cors: none`, which the script would ignore.
 - `execId` — Optional execution scope in request body. Query execId/exec_id takes precedence when both are provided. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
@@ -764,7 +764,7 @@ client.exec.magicComments.updateMany(data: ExecMagicCommentsUpdateManyRequest)
 |-----------|------|------|----------|-------------|
 | `data` | `ExecMagicCommentsUpdateManyRequest` | body | Yes |  |
 
-**Body:** `{ directory: string|null, execId: string|null, comments*: { enabled: bool|null, token: string|null | string[], mode: "worker" | "serverless" | null, timeout: int|null | string, log-level: "none" | "minimal" | "standard" | "full" | "debug" | null, debug: bool|null, log-request-body: bool|null | "full" | "redacted" | "off", log-response-body: bool|null | "full" | "redacted" | "off", log-max-body-size: int|null | string, log-exclude-headers: string[]|null, log-retention-days: int|null, debug-instrument: bool|null, await-promises: bool|null, concurrent: bool|null | int, cors: string|null, cors-credentials: bool|null, cors-methods: string|null, cors-headers: string|null, cors-max-age: int|null, websocket: bool|null, websocket-pre: bool|null, ai: bool|null, ai-model: string|null, ai-temperature: number|null, ai-max-tokens: int|null, ai-key: string|null, description: string|null, tags: string[]|null, label: string|null, schedule: string|null, schedule-timeout: int|null | string, remote-messages: bool|null, remote-call: bool|null, remote-eval: bool|null, remote-token: "[REDACTED]" | null | object | object[], tokens: string[]|null }, extension: string|null=".ts", recursive: bool|null=true, dry_run: bool|null=false }`
+**Body:** `{ directory: string|null, execId: string|null, comments*: { enabled: bool|null, token: string|null | string[], mode: "worker" | "serverless"|null, timeout: int|null | string, log-level: "none" | "minimal" | "standard" | "full" | "debug"|null, debug: bool|null, log-request-body: bool|null | "full" | "redacted" | "off", log-response-body: bool|null | "full" | "redacted" | "off", log-max-body-size: int|null | string, log-exclude-headers: string[]|null, log-retention-days: int|null, debug-instrument: bool|null, await-promises: bool|null, concurrent: bool|null | int, cors: string|null, cors-credentials: bool|null, cors-methods: string|null, cors-headers: string|null, cors-max-age: int|null, websocket: bool|null, websocket-pre: bool|null, ai: bool|null, ai-model: string|null, ai-temperature: number|null, ai-max-tokens: int|null, ai-key: string|null, description: string|null, tags: string[]|null, label: string|null, schedule: string|null, schedule-timeout: int|null | string, remote-messages: bool|null, remote-call: bool|null, remote-eval: bool|null, remote-token: "[REDACTED]"|null | object | object[], tokens: string[]|null }, extension: string|null=".ts", recursive: bool|null=true, dry_run: bool|null=false }`
 
 - `comments` — Directives to set, keyed by directive name. … Keys that are not directives are ignored. A value that would not read back from the script as sent is refused with a 400, and so is a CORS sub-directive set in the same request as `cors: none`, which the script would ignore.
 
@@ -1360,7 +1360,9 @@ client.exec.scripts.validate(data: ExecScriptsValidateRequest)
 |-----------|------|------|----------|-------------|
 | `data` | `ExecScriptsValidateRequest` | body | Yes |  |
 
-**Body:** `{ code*: string, language: string, extension: string }`
+**Body:** `{ code*: string, language: string, extension: string, typecheck: bool=false }`
+
+- `typecheck` — When true, also type-check the code with the TypeScript compiler against the hoody-sdk declarations in `<scripts>/node_modules` and the script globals (`hoody`, `req`, `res`, …). Imports TypeScript cannot resolve are not reported; types from relative helper files are not checked (`any`). …
 
 **Returns:** `Promise<ExecScriptsValidateResponse>`  |  **HTTP:** `POST /api/v1/exec/validate/script`
 **CLI:** `hoody exec scripts validate`
@@ -1428,7 +1430,9 @@ client.exec.scripts.validateTypes(data: ExecScriptsValidateTypesRequest)
 |-----------|------|------|----------|-------------|
 | `data` | `ExecScriptsValidateTypesRequest` | body | Yes |  |
 
-**Body:** `{ code*: string }`
+**Body:** `{ code*: string, typecheck: bool=false }`
+
+- `typecheck` — When true, also type-check the code with the TypeScript compiler against the hoody-sdk declarations in `<scripts>/node_modules` and the script globals (`hoody`, `req`, `res`, …). Imports TypeScript cannot resolve are not reported; types from relative helper files are not checked (`any`). …
 
 **Returns:** `Promise<ExecScriptsValidateTypesResponse>`  |  **HTTP:** `POST /api/v1/exec/validate/typescript`
 **CLI:** `hoody exec scripts types validate`
@@ -1448,10 +1452,11 @@ client.exec.scripts.write(data: ExecScriptsWriteRequest, options?: { execId?: st
 | `subdomain` | `string` | query | No | Optional subdomain namespace used with execId for path resolution. |
 | `data` | `ExecScriptsWriteRequest` | body | Yes |  |
 
-**Body:** `{ path*: string, content*: string, createDirs: bool=true, validate: bool=true, ifNotExists: bool=false, execId: string, exec_id: string, subdomain: string }`
+**Body:** `{ path*: string, content*: string, createDirs: bool=true, validate: bool=true, ifNotExists: bool=false, typecheck: bool=false, execId: string, exec_id: string, subdomain: string }`
 
 - `content` — Content. … In a `.js` / `.ts` script or a `.sdk.json` marker, a placeholder with no stored value (a new file, or no matching line) is refused with 400 and `details.code` `REDACTED_SECRET_UNRESOLVED`; the placeholder is never stored as a secret.
 - `ifNotExists` — … When true and the name already exists as anything (a file, a directory, a live or dangling symlink, which is never followed), nothing is written and the answer is 409; a symlinked ancestor directory is still 403. The existence check and the create are one atomic step, so of several concurrent creates (from any process) exactly one succeeds. …
+- `typecheck` — … Imports TypeScript cannot resolve are not reported; types from relative helper files are not checked (`any`). … Only with validation on, for a .js/.ts path: a type error refuses the write with 400 (`details.validation.typecheck.diagnostics`); a check that could not run does not.
 - `execId` — Optional execution scope in request body. Query execId/exec_id takes precedence when both are provided. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
 - `exec_id` — Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
 
@@ -1520,6 +1525,26 @@ client.exec.scripts.deleteFile(path: string, options?: ExecDeleteFileOptions, te
 
 ---
 
+### `client.exec.sdkTypes` (1) — Sdk-types
+
+#### `list` — Get Sdk Types
+
+```typescript
+client.exec.sdkTypes.list(options?: { kit?: string; q?: string; limit?: number; raw?: "true" | "false" | "1" | "0" })
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `kit` | `string` | query | No | Kit to list: a client property (`files`, `api`, `exec`, `sqlite`, …), or `client` for the client's own methods (`withContainer`, `login`, …). Any letter case. An unknown kit is a 404 with `details.kits`. |
+| `q` | `string` | query | No | Words, all of which must appear in the method's path, name or summary (any letter case). |
+| `limit` | `number` | query | No | Most methods to return, 1 to 100 (default 20). `total` counts every match. |
+| `raw` | `"true" \| "false" \| "1" \| "0"` | query | No | When true, also return the `.d.ts` text of the files declaring the returned methods (`dts`, at most 256 KB). Needs `kit` or `q`. |
+
+**Returns:** `Promise<ExecSdkTypesListResponse>`  |  **HTTP:** `GET /api/v1/exec/sdk-types`
+**CLI:** `hoody exec sdk types list`
+
+---
+
 ### `client.exec.sdks` (4) — Sdk
 
 #### `delete` — Delete S D K
@@ -1562,7 +1587,7 @@ client.exec.sdks.import(data: ExecSdksImportRequest)
 |-----------|------|------|----------|-------------|
 | `data` | `ExecSdksImportRequest` | body | Yes |  |
 
-**Body:** `{ execId: string|null, source_url*: string, source_auth: { type*: "bearer" | "basic", token: string, username: string, password: string } (at least one of: token | username+password required)|null, middleware: { pre: string|null, post: string|null }|null, magic_comments: { enabled: bool|null, token: string|null | string[], mode: "worker" | "serverless" | null, timeout: int|null | string, log-level: "none" | "minimal" | "standard" | "full" | "debug" | null, concurrent: bool|null | int, cors: string|null, websocket: bool|null }|null, force: bool|null=false }`
+**Body:** `{ execId: string|null, source_url*: string, source_auth: { type*: "bearer" | "basic", token: string, username: string, password: string } (at least one of: token | username+password required)|null, middleware: { pre: string|null, post: string|null }|null, magic_comments: { enabled: bool|null, token: string|null | string[], mode: "worker" | "serverless"|null, timeout: int|null | string, log-level: "none" | "minimal" | "standard" | "full" | "debug"|null, concurrent: bool|null | int, cors: string|null, websocket: bool|null }|null, force: bool|null=false }`
 
 - `source_url` — HTTPS URL of the OpenAPI document to import. It must name a domain (not an IP address), use port 443, and end in `.json`, `.yaml`, `/documentation/json` or `/documentation/yaml`.
 - `source_auth` — Credentials sent when fetching `source_url`: either `{"type": "bearer", "token": "…"}` or `{"type": "basic", "username": "…", "password": "…"}`. Credentials that could not be sent as given are refused with a 400, never dropped. Other members are ignored.

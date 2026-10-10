@@ -1,4 +1,4 @@
-> _**SDK skill (basic)** · ~23,683 tokens · hoody-sdk v1.0.0-beta.16_
+> _**SDK skill (basic)** · ~26,627 tokens · hoody-sdk v1.0.0-beta.17_
 
 # SDK mode — drive Hoody from TypeScript/JavaScript
 
@@ -30,7 +30,7 @@ Browser UMD (exposes `window.HoodySDK`): `https://cdn.jsdelivr.net/npm/hoody-sdk
 
 ## Init
 
-Pick one of these three ways to build the client:
+With a person present, build the client without a token and sign them in through their browser: `hoody.api.auth.device.start`, give them the link and code, poll `hoody.api.auth.device.poll`, then `hoody.adoptSession(result)` (§ Login). Never ask for their password in chat. For code that already holds a token, or a password login the user runs themselves, pick one of these:
 
 ```typescript
 // Token
@@ -50,7 +50,7 @@ import { HoodyClient } from 'hoody-sdk';
 const hoody = new HoodyClient({ baseURL, credentials: { username, password } });
 ```
 
-Retries are on by default. When neither the client nor the call sets `retries`, eligible requests get up to two retries, with a 2-second backoff base and at most 10 seconds of total waiting: a GET, HEAD, OPTIONS, PUT or DELETE on `408/425/429/500/502/503/504` or a lost connection; any other method only when the connection could not be opened (the request never reached a server). Set `retries: 0` to disable retries, or pass `retries` (and optionally `retryDelayMs` / `retryOnStatuses`) to the constructor or per call to set your own budget (250 ms backoff base, no total cap). Connection failures proven never dispatched can be retried for any method. With an explicit retry budget, POST/PATCH can also retry `429` and hoody-files' `409 FILE_PATH_BUSY` refusal (nothing was changed). A streamed body is never replayed; a request marked `responseIsFinal` is replayed only when it never reached a server, and only under an explicit budget.
+Retries are on by default. When neither the client nor the call sets `retries`, eligible requests normally get up to two retries, with a 2-second backoff base and at most 10 seconds of total waiting: a GET, HEAD, OPTIONS, PUT or DELETE, or a create whose kit honours an idempotency key (`watch.watchers.create`, `agent.sessions.create`, `notes.nodes.create`; the SDK sends a fresh key when you set none), on `408/425/429/500/502/503/504` or a lost connection; any other method only when the connection could not be opened (the request never reached a server). A kit that is still starting answers `502 BACKEND_GATEWAY_ERROR`; such a request gets up to five retries within the client's `kitStartingWaitMs` (default 20000 ms, `0` turns it off), and when that wait runs out it throws `ApiError` with status 502 and code `KIT_NOT_READY`. Set `retries: 0` to disable retries, or pass `retries` (and optionally `retryDelayMs` / `retryOnStatuses`) to the constructor or per call to set your own budget (250 ms backoff base, no total cap). Connection failures proven never dispatched can be retried for any method. With an explicit retry budget, POST/PATCH can also retry `429` and hoody-files' `409 FILE_PATH_BUSY` refusal (nothing was changed). A streamed body is never replayed; a request marked `responseIsFinal` is replayed only when it never reached a server, and only under an explicit budget.
 
 Recommended `baseURL`: `https://api.hoody.com` (when `baseURL` is omitted outside a browser page, `HoodyClient` uses `HOODY_BASE_URL`, then `HOODY_API_URL`, then `https://api.hoody.com`; a client with `target: 'kit'` gets no default host; in a browser page an omitted base stays relative to the page). Realm-scoped: `https://{realmId}.api.hoody.com`. Token scoping → § Auth model. Kit URLs → § Proxy URLs.
 
@@ -105,7 +105,7 @@ Recipes: § Core operations cheat-sheet. Per-namespace deep dives: `SKILL-SDK/<n
 |---|---|
 | `projectId` | 24-char hex. |
 | `containerId` | 24-char hex. Bearer credential. |
-| `kit_slug` | Kit id (see Kit slug table); some namespaces differ from their slug (e.g. `notifications` → `n-1`, `proxyLogs` → `logs-1`). |
+| `kit_slug` | Kit id (see Kit slug table); some namespaces differ from their slug (e.g. `notifications` → `n`, `proxyLogs` → `logs`). |
 | `n` | 1-based instance index; single-instance kits use `1`. |
 | `node` | Bare server hostname (use the `server_name` field from container responses). |
 | Suffix | `.containers.hoody.com` |
@@ -141,7 +141,7 @@ Most modern collaboration tools accept iframes (or unfurl URLs into rich preview
 | **Confluence / Jira** | "Smart Link" / iframe macro | Runbook page with the live tool baked in. |
 | **Plain HTML** | `<iframe src="…">` in any page | Internal portal, status page, customer demo. |
 
-The point: **don't make people leave their chat.** When someone hits a bug, drop the `terminal-N` URL with a Cline / Continue extension already focused into the thread — others can read, type, kibitz, take over, all without context-switching to a new tab. The container's filesystem is shared across every embed (same kit URL = same shell), so collaborators land on the *same* state.
+The point: **don't make people leave their chat.** When someone hits a bug, drop a `code-N` URL with `?extension=<publisher>.<name>` (focuses Cline / Continue) or a `terminal-N` URL into the thread — others can read, type, kibitz, take over, all without context-switching to a new tab. The container's filesystem is shared across every embed (same kit URL = same shell), so collaborators land on the *same* state.
 
 > ⚠ **Sharing a terminal / shell embed = giving root.** A `terminal`, `code`, `desktop`, `display`, or `agent` URL in a Slack channel, Notion page, or any other chat is effectively a root-shell credential. Anyone who can render the iframe can:
 > - read every file the container can read (env vars, tokens, vault entries, source code, customer data),
@@ -153,7 +153,7 @@ The point: **don't make people leave their chat.** When someone hits a bug, drop
 > - Gate the container (§ How to gate): an auth group, that group's access to the program, and `default: 'deny'` — so a recipient still has to authenticate.
 > - Use a **dedicated demo container with no secrets** — wallet credentials, vault data, source code only what they need to see.
 > - Set an **`expires_at`** on the alias for auto-expiry.
-> - Watch **`proxyLogs`** for unexpected callers; if a URL leaks, disable its alias instantly with `proxy.aliases.disable(aliasId)`.
+> - Watch **`proxyLogs`** for unexpected callers; if a URL leaks, disable its alias with `proxy.aliases.disable(aliasId)` (not instant: it usually stops serving within about 30 seconds and can take longer).
 > - For untrusted reviewers (customers, support tickets, public demos): do not hand out a `display` kit URL as a "read-only" view — its readonly setting is client-side only, and anyone holding the URL can still call the display's input API (clicks, typing). Build a constrained `exec` script that exposes only the operation they need, such as serving a captured screenshot.
 
 ### Tips for embedders
@@ -168,15 +168,15 @@ The point: **don't make people leave their chat.** When someone hits a bug, drop
 
 ## Source IP Guard — every call goes through the kit URL
 
-Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the program's URL gets 403, from inside the same container too. Call kits through the edge proxy on HTTPS, so the proxy's permissions, logging and hooks apply to every call.
+Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the program's URL gets 403. Call kits through the edge proxy on HTTPS, so the proxy's permissions, logging and hooks apply to every call.
 
 Why uniform proxy routing:
 
-- **Security uniformity** — requests from inside containers go through the same `proxy.containerPermissions.*` checks and `proxyLogs.*` capture as external requests, whether they came from across the internet or from a script in the next process. `proxy.hooks.*` MITM rules apply the same way, but only to services that accept hooks: `logs`, `egress` and `cdp` reject hook operations with `404`. There is no "trusted internal" loophole that leaks to attackers via SSRF.
+- **Security uniformity** — requests from inside containers go through the same `proxy.containerPermissions.*` checks and `proxyLogs.*` capture as external requests, whether they came from across the internet or from a script in the next process. `proxy.hooks.*` MITM rules apply the same way, but only to services that accept hooks: `logs`, `egress` and `cdp` reject hook operations with `404`.
 - **One mental model** — same URL works from your laptop, from another container, from inside the container itself. You write the same code; the proxy is transparent.
 - **Cost is negligible** — the proxy hop adds microseconds, not a network round-trip.
 
-Practical consequence: from inside a container, when calling its OWN kits, use the same kit URL form as anywhere else (`https://{P}-{C}-<kit>-1.{N}.containers.hoody.com/...`). The `hoody` CLI and the Hoody SDK both already do this. There is no other way in: the Source IP Guard refuses it.
+Practical consequence: from inside a container, when calling its OWN kits, use the same kit URL form as anywhere else (`https://{P}-{C}-<kit>-1.{N}.containers.hoody.com/...`). The `hoody` CLI and the Hoody SDK both already do this.
 
 ### Container ↔ container — anyone reaches anyone (with permissions)
 
@@ -189,7 +189,7 @@ Because routing is uniform, **a process in container X can call any kit on conta
 Cross-container access still goes through the gate stack — Y's `proxy.containerPermissions.*` rules apply to whoever's calling, no matter where they're calling from. So:
 
 - **By default** (no gates set), Y's URL is a capability — anyone with the URL has access. Within your account that's usually fine; for production / shared / multi-tenant fleets you SHOULD gate.
-- **With a gate set** (§ How to gate — an auth group alone is not a gate), X must satisfy it. A Token gate (`setTokenGroup`) is a static shared secret: you choose where it is read (one header, cookie or query parameter) and the exact value it must equal, and X sends that value on every call to Y. It does not check Hoody auth tokens or realms — an `hdy_…` token passes only if it is literally the configured value. A JWT gate (`setJwtGroup`) verifies a signed JWT instead.
+- **With a gate set** (§ How to gate — an auth group alone is not a gate), X must satisfy it. A Token gate (`client.api.proxy.containerPermissions.setTokenGroup`) is a static shared secret: you choose where it is read (one header, cookie or query parameter) and the exact value it must equal, and X sends that value on every call to Y. It does not check Hoody auth tokens or realms — an `hdy_…` token passes only if it is literally the configured value. A JWT gate (`client.api.proxy.containerPermissions.setJwtGroup`) verifies a signed JWT instead; by default a valid token in any of its configured sources counts. For a cookie, use a `__Host-` name set by the address it protects.
 
 This is why edge routing matters: if same-container calls were a backdoor, an attacker who pwned X could quietly read Y's data with no gate checked. Routing everything through the proxy means **every** container-to-container call sees the **same** auth + audit machinery as every external call.
 
@@ -209,14 +209,14 @@ This is why edge routing matters: if same-container calls were a backdoor, an at
 
 Configure under `proxy.containerPermissions` (per-container) or `proxy.projectPermissions` (whole project — applies to every container in the project) on the control plane. Groups are alternatives, not layers: each named group (password, token, JWT or IP — or an OR-array of those) is one way in, a request that satisfies a group gets that group's per-program `permissions`, and a request that matches no group falls to the document's `default` (`allow` or `deny`).
 
-A group on its own restricts nothing. It grants only the programs you give it access to, and a document the API creates for you starts at `default: 'allow'`, so everyone who matches no group still gets in. A working gate takes three calls: define the group (`set{Password,Token,Jwt,Ip}Group`), give it access to each program it should reach (`setGroupPermission` with `{ program, access: true }`), and set `setDefault` to `{ default: 'deny' }`. Every one of these writes is versioned: send the document's current `file_version` as `If-Match: file:v<N>` (`file:v0` while the document has none), which the SDK takes as the required options argument `{ ifMatch: 'file:v' + n }`. A missing header is refused with `428` and a stale one with `412`. Each call returns the updated document, so take the next call's version from it. The one partial exception: a password group with an access rule for a program answers a caller without credentials with a `401` challenge for that program even under `default: 'allow'`.
+A group on its own restricts nothing. It grants only the programs you give it access to, and a document the API creates for you starts at `default: 'allow'`, so everyone who matches no group still gets in. A working gate takes three calls: define the group (`client.api.proxy.containerPermissions.setPasswordGroup`, `client.api.proxy.containerPermissions.setTokenGroup`, `client.api.proxy.containerPermissions.setJwtGroup` or `client.api.proxy.containerPermissions.setIpGroup`), give it access to each program it should reach (`client.api.proxy.containerPermissions.setGroupPermission` with `{ program, access: true }`), and set `client.api.proxy.containerPermissions.setDefault` to `{ default: 'deny' }`. Every one of these writes is versioned: send the document's current `file_version` as `If-Match: file:v<N>` (`file:v0` while the document has none), which the SDK takes as the required options argument `{ ifMatch: 'file:v' + n }`. A missing header is refused with `428` and a stale one with `412`. Each call returns the updated document, so take the next call's version from it. The one partial exception: a password group with an access rule for a program answers a caller without credentials with a `401` challenge for that program even under `default: 'allow'`.
 
 | Gate | Accessor | Caller behavior |
 |---|---|---|
-| Password | `setPasswordGroup` | Browser / `curl -u user:pass` — HTTP Basic. |
-| Token | `setTokenGroup` | The header, cookie or query parameter you configured must carry exactly the value you configured (a static shared secret). |
-| JWT | `setJwtGroup` | Verifies issuer / audience signed JWT. |
-| IP | `setIpGroup` | Source IP must match a CIDR. |
+| Password | `client.api.proxy.containerPermissions.setPasswordGroup` | Browser / `curl -u user:pass` — HTTP Basic. |
+| Token | `client.api.proxy.containerPermissions.setTokenGroup` | The header, cookie or query parameter you configured must carry exactly the value you configured (a static shared secret). Name a cookie with the `__Host-` prefix. |
+| JWT | `client.api.proxy.containerPermissions.setJwtGroup` | Verifies issuer / audience signed JWT. |
+| IP | `client.api.proxy.containerPermissions.setIpGroup` | Source IP must match a CIDR. |
 
 `disable` sets `enable_proxy` to `false` (`enable` sets it back to `true`), which is a kill-switch for the whole proxy, not a gate toggle: while it is `false` every request that reaches the permission layer is refused with `403` before groups or `default` are evaluated, and the configured groups are kept. It never opens access. (A project-level `false` does not apply to a container whose own document sets `enable_proxy: true` — use the container-level call to cut one container reliably.)
 
@@ -226,7 +226,9 @@ Defense in depth: gate the kit URL AND scope any auth-token bearer (realms, IP a
 
 Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` = `server_name` (e.g. `node-example-1`). All URLs route through `*.containers.hoody.com`.
 
-| Namespace | Kit slug | Public URL (single-instance form) |
+The middle column includes the instance index. For `{kit_slug}` in the URL formula, use the bare slug, such as `n`, `logs` or `watch`.
+
+| Namespace | Host service segment (kit slug plus instance index) | Public URL (single-instance form) |
 |---|---|---|
 | `agent` | `agent-{index}` | `https://{P}-{C}-agent-1.{N}.containers.hoody.com` — the in-container AI agent HTTP gateway: sessions/prompt, models, skills, memory, todos, workflows, hooks, github, tools, logs |
 | `api` | — (control plane) | `https://api.hoody.com` (global, not per-container) |
@@ -267,7 +269,7 @@ For project `65f1...c8a`, container `65f2...41e`, server `node-example-1`:
 | Same, but MATE | `https://65f1...c8a-65f2...41e-desktop-1.node-example-1.containers.hoody.com/?desktop_env=mate` |
 | Terminal session 3 | `https://65f1...c8a-65f2...41e-terminal-3.node-example-1.containers.hoody.com/api/v1/terminal/...` |
 | Proxy logs | `https://65f1...c8a-65f2...41e-logs-1.node-example-1.containers.hoody.com/` |
-| Watch (file-events) | `https://65f1...c8a-65f2...41e-watch-1.node-example-1.containers.hoody.com/watchers/...` |
+| Watch (file-events) | `https://65f1...c8a-65f2...41e-watch-1.node-example-1.containers.hoody.com/api/v1/watch/watchers/...` |
 | Coding agent HTTP API | `https://65f1...c8a-65f2...41e-agent-1.node-example-1.containers.hoody.com/api/v1/agent/...` |
 | Hoody Agent GUI (for humans) | `https://65f1...c8a-65f2...41e-agent-1.node-example-1.containers.hoody.com/` |
 | User HTTP server on `:8080` | `https://65f1...c8a-65f2...41e-http-8080.node-example-1.containers.hoody.com/` |
@@ -275,10 +277,10 @@ For project `65f1...c8a`, container `65f2...41e`, server `node-example-1`:
 ### Conventions
 
 - `code` and `display` are multi-instance — append a numeric instance: `-code-1`, `-code-2`, `-display-1`, `-display-7`.
-- `terminal` packs the terminal **session** id into the slug (`terminal-3` = session 3). The proxy sets `?terminal_id=` from that hostname index and overwrites any value you send, so the hostname is authoritative: to act on session N (`/execute`, `/paste`, `/press`, `/raw`), call the `terminal-N` host. `terminal-0` is the "no session" host — use it with `?ephemeral=true` so the kit allocates a fresh session instead of reusing session 1.
+- `terminal` packs the terminal **session** id into the instance index (`terminal-3` = session 3). The proxy sets `?terminal_id=` from that hostname index and overwrites any value you send, so the hostname is authoritative: to act on session N (`/execute`, `/paste`, `/press`, `/raw`), call the `terminal-N` host. `terminal-0` is the "no session" host — use it with `?ephemeral=true` so the kit allocates a fresh session instead of reusing session 1.
 - `display`/`terminal` pairing depends on how the session is created. A session started through a `terminal-N` URL gets `DISPLAY=:N` automatically (the proxy injects `display=N` with `terminal_id=N`; an ephemeral session drops it). A session created with a JSON `/create` body gets `DISPLAY=:N` only when the body sends `display: ':N'`. Use the same number for both by convention — `terminal_id` N, `display` `:N`, then the `display-N` kit URL shows what that session draws.
 - `exec` serves each script at a **path** on the exec host: a file `hello.js` is reachable at `https://{P}-{C}-exec-1.{N}.containers.hoody.com/hello` (the `.js`/`.ts` extension is stripped; the path keeps the file name's case, so `MyTool.ts` is served at `/MyTool`, not `/mytool`). A script placed under a subdirectory `scripts/{sub}/` is ALSO reachable at the `{sub}.` **subdomain** (`{sub}.{P}-{C}-exec-1.{N}…`) — the subdomain maps to that directory, NOT to a flat top-level filename.
-- `notifications` ↔ `display-{n}`: the notification kit pairs with display N at slug `n-N`.
+- `notifications` ↔ `display-{n}`: the notification kit pairs with display N at host segment `n-N`.
 - `proxy.aliases.create` rejects `program: 'web'`; use `program: 'exec'` for `hoody_kit` runners. Full valid program set is enumerated in the §Proxy aliases table below — note `logs` for the proxy-logs kit (not `proxy` or `proxyLogs`) and `run` (not `app`).
 
 ## Desktop alias — `desktop-<N>` (full XFCE / MATE desktop in a browser tab)
@@ -395,7 +397,7 @@ A **proxy alias** is a custom hostname that points at one specific program insid
 
 - **Hide `containerId`**: shipping `https://my-api.{N}.containers.hoody.com` is fine; shipping `https://65f1...c8a-65f2...41e-http-8080.{node}.containers.hoody.com` leaks the container identifier (which IS the credential of last resort).
 - **Brandable**: short, memorable, copy-pasteable.
-- **Stable**: alias survives container rebuilds — repoint at a new container, public URL stays the same.
+- **Retargetable within its container**: an update can change the alias's program, port, instance index or landing path while the public URL stays the same. It cannot move the alias to another container (the update takes no `container_id`); for a new container, delete the alias and create it there.
 - **Same gate stack**: layer Password / Token / JWT / IP via `proxy.containerPermissions` exactly as on the canonical URL.
 - **No DNS, no TLS work**: the proxy issues the cert and resolves the hostname for you.
 
@@ -408,7 +410,7 @@ A **proxy alias** is a custom hostname that points at one specific program insid
 | `container_id` | 24-char hex id of the target container — required. |
 | `alias` | 3-61 chars, lowercase alphanumeric **plus hyphens** (`a-z0-9-`, no leading/trailing hyphen). Becomes `<alias>.{N}.containers.hoody.com`. Two independent uniqueness rules, either of which answers `409 ALIAS_IN_USE`: the name must be free on the container's physical server (across every tenant there), AND your own account may hold a given name only once across all servers. |
 | `program` | Which kit/protocol to route to. Valid names, protocols first and then programs, with accepted aliases in parentheses: `http`, `https`, `ssh`, `terminal` (`tty`, `ttyd`, `t`), `display` (`d`), `desktop`, `cron`, `watch` (`w`), `notifications` (`notification`, `n`), `files` (`f`), `daemon`, `code`, `agent`, `exec` (`e`), `browser` (`b`), `cdp`, `curl`, `run`, `sqlite`, `logs` (`log`, `l`), `egress`, `pipe`, `notes` (`note`), `tunnel`, `bot`. Use only these names; `cli`, `proxy` and `proxyLogs`, for example, are refused with `400 Unknown program name`. The proxy-logs kit is `logs` (NOT `proxy` or `proxyLogs`), and `run` is NOT `app`. **`'web'` is rejected — for `hoody_kit` runners use `program: 'exec'`**. |
-| `index` | Optional; defaults to `1`. Set explicitly for multi-instance programs: port for `http`/`https`, `terminal_id` for `terminal`, display number for `display`. |
+| `index` | For a built-in program, the instance to route to (`terminal_id` for `terminal`, display number for `display`); defaults to `1`. For `http`/`https` it is the target port and has **no default**: give the port in `port` (preferred; it wins over `index` and over a port in the program name), as `http-<port>` (e.g. `http-8080`), or in `index`; with none of the three the create is refused with `400 PORT_REQUIRED`. |
 | `target_path` | Optional landing path served when the alias is opened with no path (a root request), e.g. `/api/v1`; a query written in it is sent too. It is never used as a prefix: with `allow_path_override: true` a request that carries its own path is forwarded as sent, resolved from the container root, and with `false` it is the only path the alias serves (at the root and at its own path). |
 | `allow_path_override` | Defaults to `true`: a root request lands on `target_path` (its query plus the visitor's parameters), and a request that carries its own path is forwarded as sent. With `false` the alias serves only `target_path`: the root `/` and the `target_path` path itself (e.g. `/run-report` when `target_path` is `/run-report`) are both served as `target_path`, and any other path — sub-paths and assets included — is refused with `404 ALIAS_PATH_PINNED`. A query key written in `target_path` wins over the visitor's value for the same key, and the instance selectors the alias's `index` sets (such as `id`, `terminal_id`, `display`) stay forced; the visitor's method, request body, other query keys, WebSocket upgrade and `Range` header pass through. Either way anyone with the link can open the alias, so restrict who may with proxy permissions. |
 | `expires_at` | Auto-disable timestamp — an ISO 8601 date-time string, or `null` for never. Convert an epoch value to ISO 8601 before sending. Must be in the future. |
@@ -435,7 +437,7 @@ Aliases inherit the container's gate stack — gate the underlying container (§
 
 ### Operational notes
 
-- `proxy.aliases.disable(aliasId)` disables the alias instantly without releasing the slot — useful to revoke a leaked URL while you investigate.
+- `proxy.aliases.disable(aliasId)` disables the alias without releasing the slot — useful to revoke a leaked URL while you investigate. Disable, enable, update and delete are not instant: they usually reach the alias URL within about 30 seconds and can take longer, and until then the alias keeps its previous behavior.
 - Wildcards / multi-program aliases not supported — one alias = one `(program, index)` target.
 - Conflicts return `409 ALIAS_IN_USE` under either rule: the name is already taken on that physical server (by any tenant), or your account already holds the same name on any server.
 - Custom apex domain (e.g. `api.example.com`) requires DNS CNAME + cert provisioning — not part of this surface.
@@ -453,7 +455,7 @@ Aliases inherit the container's gate stack — gate the underlying container (§
 
 ## Three credential types
 
-1. **JWT** — `client.api.auth.login`. Access token lives `1d`, refresh token `7d`, by default; a deployment may shorten either, so treat both as values to read from the response rather than constants. The interactive, short-lived credential.
+1. **JWT** — browser sign-in (§ Login) or `client.api.auth.login`. Access token lives `1d`, refresh token `7d`, by default; a deployment may shorten either, so treat both as values to read from the response rather than constants. The interactive, short-lived credential.
 2. **Auth token** — `auth.tokens.create`. Prefix `hdy_`. Scopable (realms, `resources.*`), IP-restrictable, rotatable. Long-lived headless credential.
 3. **Kit URL** — `https://{projectId}-{containerId}-{kit_slug}-{serviceIndex}.{server}.containers.hoody.com` is the bearer for that kit while no proxy permissions are configured for the container. See § Proxy URLs.
 
@@ -473,6 +475,54 @@ Send `Bearer <token>` (one space, case-sensitive) for either credential. An `hdy
 
 ## Login
 
+**Sign the user in through their own browser.** This is the default whenever a person is present. They type their password, use GitHub or Google, and pass two-factor on Hoody's page; you never see a password, and nobody pastes a token into chat. No account yet? Send them to `https://api.hoody.com/auth/signup` to sign up and verify their email in the browser, then start here.
+
+1. **Start.** `POST https://api.hoody.com/api/v1/auth/device/code` with JSON `{"client_name":"<your name>","client":"agent"}`. No bearer token. `data` holds `device_code` (keep it private), `user_code`, `verification_uri`, `verification_uri_complete`, `interval` (seconds, 5) and `expires_in` (seconds, 900); use the returned values.
+2. **Hand over the link.** Give the user `data.verification_uri_complete` and the `data.user_code`: "Open this link, check that the page shows code `<user_code>`, sign in and approve. If you did not ask me to sign you in, choose *Don't authorize this device*." The page shows your `client_name` and marks it as unverified, so name yourself plainly.
+3. **Poll.** `POST https://api.hoody.com/api/v1/auth/device/token` with `{"device_code":"…"}`, one request every `interval` seconds, until `expires_in` runs out. The waiting states are answers, not failures: HTTP 400 with the state in **`data.error`**, not a top-level `error`:
+   - `authorization_pending`: keep polling.
+   - `slow_down`: polled too soon; add 5 seconds to the interval.
+   - `access_denied`: stop. The user refused (or a PKCE verifier was missing or wrong).
+   - `expired_token`: stop; the code expired or was already redeemed. Offer a fresh link.
+   - HTTP `429`: wait `Retry-After`, then continue. HTTP `404`: browser sign-in is not enabled on this deployment.
+4. **Signed in.** HTTP 200 returns the same session as a password login: `data.token` (send as `Authorization: Bearer`), `data.refreshToken`, `data.expires_in`. Keep both tokens for this session only: never repeat them in chat, log them or write them to a file yourself (the `hoody` CLI keeps its own session in `~/.hoody/config.json`, and `hoody logout` clears it). The code redeems once; if that response is lost, start a new sign-in.
+
+Optional PKCE: make a random `code_verifier` of 43–128 characters from `A-Z a-z 0-9 _ -`, send `code_challenge` = unpadded base64url of its SHA-256 when you start, and the `code_verifier` with every poll.
+
+```typescript
+import { HoodyClient, isApiError } from 'hoody-sdk';
+const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
+const start = (await hoody.api.auth.device.start({ client_name: '<your name>', client: 'agent' })).data;
+console.log(`Open ${start.verification_uri_complete} and check that the page shows ${start.user_code}`);
+let interval = start.interval!;
+let waitMs = interval * 1000;
+const deadline = Date.now() + start.expires_in! * 1000;
+for (;;) {
+  await new Promise((r) => setTimeout(r, waitMs));
+  if (Date.now() >= deadline) throw new Error('The sign-in code expired: start again');
+  waitMs = interval * 1000;
+  try {
+    hoody.adoptSession(await hoody.api.auth.device.poll({ device_code: start.device_code! }, { timeoutMs: 20_000 }));
+    break; // signed in: token and refresh token are held in memory
+  } catch (err) {
+    if (!isApiError(err)) throw err;
+    const state = (err.response as { data?: { error?: string } } | undefined)?.data?.error; // 400: data.error
+    if (state === 'authorization_pending') continue;
+    if (state === 'slow_down') { interval += 5; waitMs = interval * 1000; continue; }
+    if (err.status === 429) { waitMs = (err as { retryAfterMs?: number }).retryAfterMs ?? 300_000; continue; }
+    throw err; // access_denied, expired_token, 404: see step 3
+  }
+}
+```
+
+This suits a program whose output the user sees while it runs. If your tool shows a run's output only when it ends, split it: one run calls `start` and prints the values above; later runs call `poll` with that `device_code` (each for about a minute) until it returns the session, and later code builds its client with `new HoodyClient({ baseURL: 'https://api.hoody.com', token })`.
+
+Use a long-lived auth token (§ Storing auth tokens) only when the user asks for unattended automation; never mint one just to finish sign-in.
+
+### Password login (fallback)
+
+Only when the user chooses it, or browser sign-in answers `404`. The user runs it themselves; do not ask for their password in chat.
+
 - `username` OR `email` + `password`.
 - Response: `data.token` (not `accessToken`), `data.refreshToken`, `data.expires_in`.
 - 2FA: returns `requires_2fa`, `temp_token` (5-min); exchange at `POST /api/v1/users/auth/2fa/verify`.
@@ -480,7 +530,7 @@ Send `Bearer <token>` (one space, case-sensitive) for either credential. An `hdy
 
 ## Kit URLs as credentials
 
-Bearer by default. Add auth groups via `proxy.containerPermissions`/`proxy.projectPermissions` `.set{Password,Token,Jwt,Ip}Group` — groups are alternatives (a request satisfying any one gets that group's permissions; unmatched requests fall to the `default` policy), not stacked layers. A group alone restricts nothing: give it program access with `setGroupPermission` and set `setDefault` to `deny`, because a new permission document starts at `default: 'allow'`. `disable` / `enable` (`enable_proxy`) is a kill-switch that cuts the proxy entirely. See § Proxy URLs.
+Bearer by default. Add password, token, JWT or IP auth groups in the container's or project's proxy permissions. Groups are alternatives (a request satisfying any one gets that group's permissions; unmatched requests fall to the `default` policy), not stacked layers. A group alone restricts nothing: give it access to the intended programs and set the default policy to `deny`, because a new permission document starts at `default: 'allow'`. Disabling the proxy (`enable_proxy`) is a kill-switch that cuts it entirely. See § Proxy URLs for the operations and the required version headers.
 
 ### Container claim — optional portable credential
 
@@ -513,6 +563,8 @@ Mint a realm-scoped token via `auth.tokens.create({ realm_ids: ['<id>'] })`. The
 
 ### Best practice — one realm + one token per project
 
+This is for unattended automation the user asked for, or for handing a scoped credential to another program. For interactive work with the user present, keep the browser sign-in session and select the realm with its realm URL.
+
 Realms are **implicit**: there is no `realms.create` endpoint. A realm comes into existence the first time you reference it on a resource. Pick or generate a 24-hex string (e.g. via `crypto.randomBytes(12).toString('hex')` / `openssl rand -hex 12`) and use it everywhere for the project.
 
 1. **Pick a realm id** — any 24-char lowercase hex; or list existing ones with `client.api.realms.list`.
@@ -525,7 +577,7 @@ Result: that token can only see projects, containers, tokens, and vault entries 
 
 ## Storing auth tokens
 
-The `hdy_…` token from `auth.tokens.create` is shown ONCE; the server stores only a hash. Three storage options:
+Mint an `hdy_…` token only when the user asks for unattended automation; the session from browser sign-in is not one, so don't save it yourself. The token from `auth.tokens.create` is shown ONCE; the server stores only a hash. Three storage options:
 
 - **Write it down outside Hoody** (recommended) — password manager, secrets manager, env file outside the container. The token is a long-lived bearer; treat it like an SSH key.
 - **Vault, plaintext** — `vault.set('<key>', { value: 'hdy_…' })`. Stored server-side as sent — Hoody does not encrypt the value for you — and readable by anyone holding a JWT or vault-scoped auth-token for the account. Convenient for self-hosted automation.
@@ -536,12 +588,12 @@ Vault gate: any vault read needs BOTH `vault_access===true` on the token AND the
 ## Token revocation
 
 - `client.api.auth.logoutAll` — for a JWT this is a **logout-everywhere**: every access and refresh token minted before the call stops working, on every device, not just the one that called it. Auth tokens are unaffected.
-- `client.api.auth.refresh` — server requires the refresh token in BOTH the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. The SDK sends both for you: `client.api.auth.refresh({ refreshToken })` presents that refresh token as the bearer for that one request, whatever token the client holds. The client's automatic 401 recovery uses the same call with its stored refresh token first, and falls back to `credentials` only when that fails. For headless flows prefer minting a long-lived `auth.tokens.create`.
+- `client.api.auth.refresh` — server requires the refresh token in BOTH the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. The SDK sends both for you: `client.api.auth.refresh({ refreshToken })` presents that refresh token as the bearer for that one request, whatever token the client holds. The client's automatic 401 recovery uses the same call with its stored refresh token first, and falls back to `credentials` only when that fails. For unattended automation the user asked for, a long-lived `auth.tokens.create` token avoids refresh handling.
 - `client.api.auth.tokens.delete` / disable / IP-restrict — effective next request.
 
 ## 2FA
 
-`auth.twoFactor.startSetup` returns `{ qr_code, manual_entry_key, backup_codes }`; `auth.twoFactor.confirmSetup` enables. Backup codes rotatable, one-time, hashed. `auth.twoFactor.enableTokenGate` on → sensitive auth-token mutations need TOTP+JWT.
+`auth.twoFactor.startSetup` returns `data: { qr_code, manual_entry_key, backup_codes }` inside the usual `{ statusCode, message, data }` envelope; `auth.twoFactor.confirmSetup` enables. Backup codes rotatable, one-time, hashed. `auth.twoFactor.enableTokenGate` on → sensitive auth-token mutations need TOTP+JWT.
 
 ---
 
@@ -570,13 +622,15 @@ This is the same binary as `hoody` outside the container — every example in th
 
 Containers ship with a **non-root account named `user`** (uid 1000, gid 1000, member of `sudo`). Home is `/home/user`. **`/etc/sudoers.d/user` grants `user ALL=(ALL) NOPASSWD: ALL`** — passwordless `sudo` lets agents (and humans) escalate to root for any operation without prompting.
 
+The Hoody Agent runs as `user` and its shell follows this setting: with the drop-in in place the agent can sudo; once the drop-in is removed (or narrowed to some commands) the agent's shell gets exactly what `user` gets without a password.
+
 **Use `user` for everyday work, sudo when you actually need root.** Reasons:
 
 - Files created under `user` are owned by uid 1000 — friendlier when you copy/sync them out of the container or back-stop with rsync.
 - Many apps (npm, pip in venvs, Bun, Cargo, Go, Nix single-user, Docker rootless, browsers) write into `$HOME` and behave better when `$HOME` is a real user home, not `/root`.
 - `journalctl --user`, `systemctl --user`, dbus user buses all hang off a regular user.
 
-The kit's `terminal` / `daemon` / `cron` namespaces let you pass `user: 'user'` (default in many surfaces is `root` — be explicit). Examples: `daemon.programs.create({ name: 'my-app', command: '…', user: 'user' })`, `terminal.sessions.create({ terminal_id: '100', user: 'user', shell: 'bash', cwd: '/home/user' })` (`terminal_id` is required unless you pass `ephemeral: true`). The generated `client.exec.run(path, ...)` does NOT take a `user` param — the script runs under whatever uid the kit was started as.
+The kit's `terminal` / `daemon` / `cron` namespaces let you pass `user: 'user'` (default in many surfaces is `root` — be explicit). Examples: `daemon.programs.create({ name: 'my-app', command: '…', user: 'user' })`, `terminal.sessions.create({ terminal_id: '100', user: 'user', shell: 'bash', cwd: '/home/user' }, { serviceIndex: 100 })` (`terminal_id` may be omitted when the `terminal-N` host supplies it, or when `ephemeral: true` generates it. If you send a body id on a container-scoped client, set `serviceIndex` to that same id: a mismatch is refused with `400 TERMINAL_ID_MISMATCH`. The `terminal-0` host creates only ephemeral sessions). The generated `client.exec.run(path, ...)` does NOT take a `user` param — the script runs under whatever uid the kit was started as.
 
 **Production hardening — disable passwordless sudo.** For containers exposed to untrusted callers (open kit URLs without proxy gates, public alias hostnames, agents you don't fully trust), revoke the NOPASSWD line:
 
@@ -690,21 +744,32 @@ TS SDK recipes against `https://api.hoody.com`. `hoody` = account `HoodyClient`;
 
 ```typescript
 import { HoodyClient } from 'hoody-sdk';
-const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com', token: process.env.HOODY_TOKEN });
+const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com', token: process.env.HOODY_TOKEN! });
 // withContainer takes a container id (looked up with the token) or a container object: a row
 // from containers.list()/get(), or one you build with id, project_id and the server, given as
 // server_name, as a string `server`, or as `server: { name }`.
 const box = await hoody.withContainer(containerId);
 ```
 
-A hoody-exec script can load the SDK with `require` or a top-level `import`, and reaches the
-container it runs in through `metadata.containerId`:
+A hoody-exec script can load the SDK with `require` or a top-level `import`. The kits of the
+container it runs in need no token: build the box from the script's `metadata` and the server
+named in `HOODY_CONTAINER_PROXY_DOMAIN` (no lookup, no account call):
 
 ```typescript
 const { HoodyClient } = require('hoody-sdk');
-const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com', token: process.env.HOODY_TOKEN });
-const box = await hoody.withContainer(metadata.containerId);
+const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
+if (!process.env.HOODY_CONTAINER_PROXY_DOMAIN) throw new Error('HOODY_CONTAINER_PROXY_DOMAIN is not set');
+const box = await hoody.withContainer({
+  id: metadata.containerId,
+  project_id: metadata.projectId,
+  server_name: process.env.HOODY_CONTAINER_PROXY_DOMAIN.split('.')[0],
+});
 ```
+
+Exec sets no account token. For `hoody.api.*` calls (or `withContainer(id)`, which looks the
+container up), put `HOODY_TOKEN=<token>` in the script's `.env` companion (`<script>.env`, or a
+`_default.env` in its directory) and pass `token: process.env.HOODY_TOKEN!`. The container env
+API refuses `HOODY_*` keys, so it cannot supply one.
 
 ### Results: what each call resolves to
 
@@ -746,11 +811,13 @@ Row fields keep the API's snake_case names: `id`, `name`, `status`, `project_id`
 
 ```typescript
 const page = await hoody.api.containers.list();
-const running = page.data.containers.filter((c) => c.status === 'running');
+const running = (page.data.containers ?? []).filter((c) => c.status === 'running');
 const all = await hoody.api.containers.listAll();          // array: all.map(c => c.name)
 ```
 
 ### 1. Sign up
+
+Default for a person: they sign up at `https://api.hoody.com/auth/signup` in their own browser, and you sign them in through the browser (§3). Never collect their password in chat; `signup`, `verifyEmail` and `login` below are for a user who runs them from their own code.
 
 ```typescript
 // Password 12-128 chars, at most 72 UTF-8 bytes, at least 3 of 4 classes (upper/lower/digit/symbol).
@@ -770,7 +837,36 @@ await hoody.api.auth.verifyEmail({
 
 ### 3. Log in
 
-`username` is alphanumeric with underscores and hyphens (`^[a-zA-Z0-9_-]+$`); use the separate `email` field for email-based login. Login password min length is 8 (signup is 12).
+Browser sign-in first (all states: § Login):
+
+```typescript
+import { isApiError } from 'hoody-sdk';
+// `hoody` is the client from Setup. While the user signs in, poll throws ApiError 400 with
+// err.response.data.error === 'authorization_pending'.
+const start = (await hoody.api.auth.device.start({ client_name: '<your name>', client: 'agent' })).data;
+console.log(`Open ${start.verification_uri_complete} and check that the page shows ${start.user_code}`);
+let interval = start.interval!;
+let waitMs = interval * 1000;
+const deadline = Date.now() + start.expires_in! * 1000;
+for (;;) {
+  await new Promise((r) => setTimeout(r, waitMs));
+  if (Date.now() >= deadline) throw new Error('The sign-in code expired: start again');
+  waitMs = interval * 1000;
+  try {
+    hoody.adoptSession(await hoody.api.auth.device.poll({ device_code: start.device_code! }, { timeoutMs: 20_000 }));
+    break; // signed in: token and refresh token are held in memory
+  } catch (err) {
+    if (!isApiError(err)) throw err;
+    const state = (err.response as { data?: { error?: string } } | undefined)?.data?.error; // 400: data.error
+    if (state === 'authorization_pending') continue;
+    if (state === 'slow_down') { interval += 5; waitMs = interval * 1000; continue; }
+    if (err.status === 429) { waitMs = (err as { retryAfterMs?: number }).retryAfterMs ?? 300_000; continue; }
+    throw err; // access_denied, expired_token, 404: see step 3
+  }
+}
+```
+
+Password login, when the user chooses it: `username` is alphanumeric with underscores and hyphens (`^[a-zA-Z0-9_-]+$`); use the separate `email` field for email-based login. Login password min length is 8 (signup is 12).
 
 ```typescript
 // `hoody` is the client from Setup.
@@ -829,7 +925,7 @@ const projectId = project.data!.id;
 
 ```typescript
 const r = await hoody.api.containers.listByProject(projectId);
-const names = r.data.containers.map((c) => c.name);
+const names = (r.data.containers ?? []).map((c) => c.name);
 ```
 
 ### 9. Create a container
@@ -842,6 +938,15 @@ const c = await hoody.api.containers.create(projectId, {
   realm_ids: ['507f1f77bcf86cd799439011'],
 });
 const containerId = c.data!.id!;  // response fields are typed optional; assert the id once
+```
+
+Once the container is running, give the user the clickable URLs of its main kits (each opens its web UI at `/`). `getKitUrl` maps `notifications` to its `n` slug itself:
+
+```typescript
+const container = { ...c.data!, id: containerId };
+for (const kit of ['terminal', 'notifications', 'desktop', 'browser', 'files', 'agent']) {
+  console.log(`${kit}: ${hoody.getKitUrl(kit, container)}/`);
+}
 ```
 
 ### 10. Start / stop / restart
@@ -914,8 +1019,8 @@ const out = r.data.stdout;      // envelope: also r.data.stderr, r.data.exit_cod
 
 ```typescript
 // Session N lives on the terminal-N host; pass it as serviceIndex on every call.
-// create also needs the id in its body: the kit reads terminal_id only from the
-// body and answers 400 "Missing 'terminal_id' field" without it.
+// The terminal-N host supplies N, so the body terminal_id is optional at the kit; if
+// you send it, it must equal N or the kit answers 400 TERMINAL_ID_MISMATCH.
 const N = 100;  // pick 1-39999 (40000+ is the ephemeral range)
 await box.terminal.sessions.create(
   { terminal_id: String(N), shell: '/bin/bash', user: 'user', cwd: '/home/user' },
@@ -982,6 +1087,8 @@ const png = await box.browser.page.captureScreenshot({
 
 ### 18. Click + type on a virtual display
 
+Input reaches only a viewable window, and a window is viewable only while a viewer is attached: open the display kit URL in a browser first, then take a fresh screenshot and pick a point on a window (screenshot pixels are screen coordinates). With no viewer, or no window at the point, `click` and `type` answer `409 WINDOW_NOT_VIEWABLE` and send nothing; attach the viewer, re-shoot and retry.
+
 ```typescript
 // data first (x, y, button as 1=left/2=middle/3=right), displayId in options.
 await box.display.input.click({ x: 640, y: 360, button: 1 }, { displayId: 1 });
@@ -1023,7 +1130,10 @@ for await (const ev of await box.watch.events.stream(watcherId)) {
 // For catch-up and polling instead, use `box.watch.events.list` with a cursor:
 let lastId: number | undefined;
 for (;;) {
-  const page = await box.watch.events.list(watcherId, { since_id: lastId, limit: 200 });
+  const page = await box.watch.events.list(watcherId, {
+    limit: 200,
+    ...(lastId === undefined ? {} : { since_id: lastId }),
+  });
   const items = (page.data as any)?.items ?? [];
   for (const ev of items) lastId = ev.id;
   if (items.length === 0) break;
@@ -1097,8 +1207,9 @@ UPDATE, DELETE) and resolves to `{ rowsUpdated }`. A statement whose SQL produce
 (`rowsUpdated` is then the number of rows returned). `db` is required: a bare
 name (`'app'` → `/hoody/databases/app.db`) or a path. The database must exist: pass
 `create_db_if_missing: true` on the call that may be the first. `params` is an array for `?`
-placeholders or an object for `:name` placeholders; each value is a string, a finite number, a
-boolean or null (NaN, Infinity, undefined, bytes and nested values throw before sending).
+placeholders or an object for named placeholders (`:name`, `@name` or `$name`); each value is a string, a finite number,
+a bigint within the signed 64-bit INTEGER range, a boolean or null (NaN, Infinity, undefined, a wider bigint, bytes and
+nested values throw before sending).
 `truncated` is true when the kit's row cap cut the result.
 
 ```typescript
@@ -1130,8 +1241,8 @@ const w = await box.sqlite.sql.runTransaction(
   ] },
   { db: 'app' },
 );
-const inserted = w.data.results[0].rowsUpdated;      // 1
-const newId = w.data.results[1].resultSet[0].id;
+const inserted = w.data.results?.[0]?.rowsUpdated;      // 1
+const newId = w.data.results?.[1]?.resultSet?.[0]?.id;
 ```
 
 Read-only alternative (GET, SELECT/WITH only): `sql.queryReadOnly` takes the SQL as URL-safe
@@ -1140,7 +1251,7 @@ base64 and answers `{ columns, resultSet, rowCount }` in `.data`.
 ```typescript
 const sql = Buffer.from('SELECT count(*) AS n FROM items').toString('base64url');
 const q = await box.sqlite.sql.queryReadOnly({ db: 'app', sql });
-const n = q.data.resultSet[0].n;
+const n = q.data.resultSet?.[0]?.n;
 ```
 
 Without the SDK, the same transaction is `POST /api/v1/sqlite/db?db=<name>` on the container's
@@ -1172,19 +1283,19 @@ await box.cron.entries.update('user', id, { enabled: false });
 await box.cron.entries.delete('user', id);
 ```
 
-Without the SDK, the cron kit's routes sit at the root of its kit URL
-(`https://{P}-{C}-cron-1.{N}.containers.hoody.com`), with no `/api/v1` prefix:
+Without the SDK, the cron kit's routes sit under `/api/v1/cron` on its kit URL
+(`https://{P}-{C}-cron-1.{N}.containers.hoody.com/api/v1/cron`):
 
 | Route | Does |
 |---|---|
-| `GET /users/{user}/entries?page=&limit=` | list every crontab line in order: `{ user, entries, total, page, limit }` (limit max 200); managed entries have `type:"managed"` with `id`, `schedule`, `command`; other lines come back as `type:"raw"` with `line` |
-| `POST /users/{user}/entries` | create: JSON `{ schedule, command, name?, comment?, enabled?, expires_at? }` → 201, the entry with its `id` |
-| `GET /users/{user}/entries/{id}` | one entry |
-| `PATCH /users/{user}/entries/{id}` | update the fields you send (`schedule`, `command`, `enabled`, …) |
-| `DELETE /users/{user}/entries/{id}` | delete |
-| `GET /users/{user}/crontab` | the user's whole crontab: `{ user, crontab }` (`crontab` is the text) |
-| `PUT /users/{user}/crontab` | replace it: JSON `{ crontab: '<text>' }` |
-| `GET /crontab` | every user's crontab |
+| `GET /api/v1/cron/users/{user}/entries?page=&limit=` | list every crontab line in order: `{ user, entries, total, page, limit }` (limit max 200); managed entries have `type:"managed"` with `id`, `schedule`, `command`; other lines come back as `type:"raw"` with `line` |
+| `POST /api/v1/cron/users/{user}/entries` | create: JSON `{ schedule, command, name?, comment?, enabled?, expires_at? }` → 201, the entry with its `id` |
+| `GET /api/v1/cron/users/{user}/entries/{id}` | one entry |
+| `PATCH /api/v1/cron/users/{user}/entries/{id}` | update the fields you send (`schedule`, `command`, `enabled`, …) |
+| `DELETE /api/v1/cron/users/{user}/entries/{id}` | delete |
+| `GET /api/v1/cron/users/{user}/crontab` | the user's whole crontab: `{ user, crontab }` (`crontab` is the text) |
+| `PUT /api/v1/cron/users/{user}/crontab` | replace it: JSON `{ crontab: '<text>' }` |
+| `GET /api/v1/cron/crontab` | every user's crontab |
 
 ---
 
@@ -1193,8 +1304,8 @@ Without the SDK, the cron kit's routes sit at the root of its kit URL
 ## `HoodyClientConfig` key options
 
 - `baseURL` (recommended `https://api.hoody.com`; when omitted outside a browser page: `HOODY_BASE_URL`, then `HOODY_API_URL`, then `https://api.hoody.com`; none for `target: 'kit'`); `realmId` -> `{realmId}.api.hoody.com`.
-- Auth: `token` and/or `credentials` (`{username,password}` or `{email,password}`; both fields are independent on `HoodyClientConfig`); `autoRefresh`, `autoRetryAuth`; hooks `onTokenExpired`, `refreshToken`, `kitAuth`+`onKitAuthExpired`, `onError`.
-- Retry: `timeout`, `retries` (when omitted, eligible requests get up to two retries, with a 2-second backoff base and at most 10 seconds of total waiting; set `retries: 0` to disable retries; a value you set gets a 250 ms base and no total cap), `retryDelayMs`, `retryOnStatuses` (default 408/425/429/500/502/503/504); honours `Retry-After`, cap 30s per wait.
+- Auth: `token` and/or `credentials` (`{username,password}` or `{email,password}`; both fields are independent on `HoodyClientConfig`; with a person present, sign in through the browser instead and `adoptSession` the result, see § Login); `autoRefresh`, `autoRetryAuth`; hooks `onTokenExpired`, `refreshToken`, `kitAuth`+`onKitAuthExpired`, `onError`.
+- Retry: `timeout`, `retries` (when omitted, eligible requests normally get up to two retries, with a 2-second backoff base and at most 10 seconds of total waiting; a `502 BACKEND_GATEWAY_ERROR` from a kit still starting gets up to five retries within `kitStartingWaitMs` (default 20000 ms), then throws status 502 with code `KIT_NOT_READY`; set `retries: 0` to disable retries; a value you set gets a 250 ms base and no total cap), `retryDelayMs`, `retryOnStatuses` (default 408/425/429/500/502/503/504); honours `Retry-After`, cap 30s per wait.
 - Misc: `headers`, `cache{enabled,ttl}`, `transport.keepAlive`, `forceIPv4`, `forceIPv4Cache{enabled,ttlMs}`, `middlewares`, `clientId`/`clientName`, `urlTemplates`.
 - Per-call: `responseType` (`json|text|arrayBuffer|blob|auto`), `timeoutMs`, `signal`, `rawResponse` (skip envelope; cast `as unknown as RawShape`).
 
@@ -1203,13 +1314,14 @@ Without the SDK, the cron kit's routes sit at the root of its kit URL
 `status, code?, url?, method?, request{method,url,body?,query?,headers?}, response{statusCode?,message?,code?,details?}`.
 
 - `0` transport (`cause` set) · `422` control-plane request-schema validation (body `error: "Validation Error"` with the details; `err.code` is ordinarily `undefined`, so branch on the status) · `400` other bad requests, including many kit validation failures · `401` SDK tries one recovery (account: token refresh; kit: only when `onKitAuthExpired` is set) and replays the request once on success, else throws · `403` realm/permission · `404` missing in token's realm · `408/425/429/500/502/503/504` retryable.
-- `code` is read from the JSON error body in this order: a top-level `code` string; else an `error` string that is itself code-shaped (SCREAMING_SNAKE); else a nested `error.code` string. When the body yields none, the `X-Hoody-Error-Code` response header is read (a `HEAD` answer has no body, so that is the only place its code can be). Prose in `error` is never promoted to a code. What you get therefore depends on which service answered:
+- `code` is read from the JSON error body in this order: a non-empty top-level `code` string; else a non-empty top-level `errorCode` string (the container edge's `BACKEND_GATEWAY_ERROR`); else an `error` string that is itself code-shaped (SCREAMING_SNAKE); else a non-empty nested `error.code` string. When the body yields none, the `X-Hoody-Error-Code` response header is read (a `HEAD` answer has no body, so that is the only place its code can be). Prose in `error` is never promoted to a code. What you get therefore depends on which service answered:
   - **Account / control-plane** — body is `{statusCode, error, message, data?}` with no `code` key. When `error` carries an upper-case machine code (such as `SIGNING_NOT_CONFIGURED`) it reaches `err.code`; when it carries a status name (`Unauthorized`, `Bad Request`) `err.code` is `undefined`.
   - **Top-level `code`** — the body is `{code, message, details?}`, SCREAMING_SNAKE (`EXPIRES_IN_PAST`, `INVALID_EXPIRES_AT`, `ENTRY_NOT_FOUND`). These reach `err.code`.
-  - **Nested `{error:{code,message}}`** — the notes kit's routes and the bot kit's management routes (`not_found`, `invalid_token`, …). The nested value reaches `err.code`.
+  - **Top-level `{code, message, details?}` (notes)** — the notes kit's routes carry their machine code at the top level, and it reaches `err.code`.
+  - **Nested `{error:{code,message}}`** — the bot kit's management routes (`not_found`, `invalid_token`, …). The nested value reaches `err.code`.
   - **Header only** — the sqlite kit's KV `HEAD` 404 names `KEY_NOT_FOUND` / `KEY_EXPIRED` in `X-Hoody-Error-Code`.
 - A lower-case `error` value is not a code: the logs kit's `429 {error: "rate_limited"}` leaves `err.code` `undefined`; read the body.
-- Some values of `code` come from the CLIENT, not from any body. With `status` `0`: **`ABORTED`** when the request timed out, was aborted, or got no response headers in time (never retried), **`PARSE_ERROR`** when the response body would not parse, and **`ETIMEDOUT`** when the connection could not be opened in time or the body stalled after the headers arrived. Stream validation errors (`NOT_AN_EVENT_STREAM`, `STREAM_FRAME_TOO_LARGE`) keep the response status, and `REDIRECT_REFUSED` keeps the refused redirect's status. A timeout is the error a caller meets most often, so handle `ABORTED` explicitly.
+- Some values of `code` come from the CLIENT, not from any body. With `status` `0`: **`ABORTED`** when the caller's `signal` aborted the request (message "Request aborted by the caller", never retried), **`ETIMEDOUT`** when the request timed out: no response headers within `timeoutMs` (never retried), a connection that could not be opened in time, or a body that stalled after the headers arrived, and **`PARSE_ERROR`** when the response body would not parse. Stream validation errors (`NOT_AN_EVENT_STREAM`, `STREAM_FRAME_TOO_LARGE`) keep the response status, and `REDIRECT_REFUSED` keeps the refused redirect's status. A timeout is the error a caller meets most often, so handle `ETIMEDOUT` explicitly.
 - **So: branch on `status` first, always. Treat `code` as an optional, service-specific refinement, and never assume a documented value will appear there.**
 - `retryAfterMs` is attached to the thrown error when an HTTP **error** response carried a **parseable** `Retry-After` header — any error status, not just 429. It is not attached on the client-side failures above: a `200` whose body will not parse throws `PARSE_ERROR` with `status` `0` and no `retryAfterMs`, even when the response carried the header. Delta-seconds and an HTTP-date both parse; anything else is ignored and the property stays absent, and a date already in the past gives `0` rather than a negative wait. It is set at runtime but is NOT declared on `ApiError`, so TypeScript callers must read it through a cast: `(err as ApiError & { retryAfterMs?: number }).retryAfterMs`.
 
@@ -1228,7 +1340,7 @@ Without the SDK, the cron kit's routes sit at the root of its kit URL
 ## Quirks
 
 - **Login: raw API + `client.api.auth.login(...)` accept either `username` or `email`** + `password` on `POST /api/v1/users/auth/login`. The `HoodyClientConfig.credentials` shorthand and `HoodyClient.login(...)` accept the same choice: `{ username, password }` or `{ email, password }`. An email sent as `username` is rejected (422), so use the `email` field for email addresses.
-- **`auth.refresh` sends the refresh token twice for you** — the server requires it in BOTH the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. `client.api.auth.refresh({ refreshToken })` presents that value as the bearer for that one request, whatever token the client holds. The client's automatic 401 recovery uses its stored refresh token first and falls back to `api.auth.login(credentials)` only when that fails, so a client with a refresh token recovers without `credentials` until the refresh token itself expires. For headless flows prefer minting a long-lived `auth.tokens.create`.
+- **`auth.refresh` sends the refresh token twice for you** — the server requires it in BOTH the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. `client.api.auth.refresh({ refreshToken })` presents that value as the bearer for that one request, whatever token the client holds. The client's automatic 401 recovery uses its stored refresh token first and falls back to `api.auth.login(credentials)` only when that fails, so a client with a refresh token recovers without `credentials` until the refresh token itself expires. For unattended automation the user asked for, a long-lived `auth.tokens.create` token avoids refresh handling.
 
 ---
 

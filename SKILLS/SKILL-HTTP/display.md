@@ -1,4 +1,4 @@
-> _**HTTP skill · `display` namespace** · ~8,218 tokens · hoody-sdk v1.0.0-beta.16_
+> _**HTTP skill · `display` namespace** · ~8,812 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `display` — programmatic GUI desktops with screenshots, input, and windows
 
@@ -36,16 +36,18 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 ### 1. See-then-act loop
 
 1. `GET /api/v1/display/screenshot` with `base64` on (for vision). One response carries the image (`image.data`) and its metadata (`info.timestamp`, `info.full.width`/`height`).
-2. `POST /api/v1/display/input/click-at` / `POST /api/v1/display/input/type-at` at root-window coordinates (on a seamless session these differ from screenshot pixels; see Quirks).
+2. `POST /api/v1/display/input/click-at` / `POST /api/v1/display/input/type-at` at a point picked on that screenshot: a screenshot spans the whole screen, so its pixel (x, y) is the point (x, y) these act on.
 3. `GET /api/v1/display/screenshot` again to see the result. There is no cheap change check: `GET /api/v1/display/screenshot` takes a full new capture as well, and `timestamp` is the capture time in whole seconds, not a "screen changed" marker.
 
 ### 2. Find and focus a window
 
 1. `GET /api/v1/display/windows` (`onlyVisible` on).
 2. `POST /api/v1/display/window/search` — a `pattern` plus which fields to match (`name`, `class`, `classname`). 
-3. `POST /api/v1/display/window/focus` with `sync` on (or `POST /api/v1/display/window/raise`). Read `details.inputFocus` in the focus response: `false` means the window was activated but is not viewable, so keyboard input cannot reach it.
+3. `POST /api/v1/display/window/focus` with `sync` on. Read `details.inputFocus` in the response: proceed with keyboard input only when it is `true`. `false` means the window was activated but is not viewable, so keyboard input cannot reach it. `POST /api/v1/display/window/raise` is not a substitute for focusing.
 4. `GET /api/v1/display/window/{windowId}/geometry` — coords.
 5. `GET /api/v1/display/window/active` — confirms activation only, not keyboard focus.
+
+`GET /api/v1/display/windows`, `POST /api/v1/display/window/focus` and `GET /api/v1/display/window/active` need a window manager on the display: `409 NO_WINDOW_MANAGER` means none is running, and retrying does not help. Start a window manager (for example a desktop session), or use `POST /api/v1/display/window/search`, window geometry and name queries, and mouse and keyboard actions, which work without one.
 
 ### 3. Drag / select
 
@@ -66,6 +68,12 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 2. `POST /api/v1/display/input/wait` — interleave waits.
 3. `GET /api/v1/display/screenshot` — confirm.
 
+### 6. Press a key or a key combination
+
+1. `POST /api/v1/display/keyboard/key` with `keys`, a list of up to 20 combinations pressed in turn: `["Return"]`, `["Escape"]`, `["ctrl+l"]`, `["ctrl+shift+t"]`, `["Tab", "Down", "Return"]`. Names are X keysym names (`Return`, `Escape`, `Tab`, `BackSpace`, `Delete`, `Up`/`Down`/`Left`/`Right`, `Home`, `End`, `Page_Up`, `F1`…) joined to modifiers (`ctrl`, `shift`, `alt`, `super`) with `+`. 
+2. To submit typed text, end it with a line break instead: in `POST /api/v1/display/keyboard/type` and `POST /api/v1/display/input/type-at`, `\n` presses Return.
+3. `POST /api/v1/display/keyboard/key-down` / `POST /api/v1/display/keyboard/key-up` hold and release one key; `POST /api/v1/display/input/reset` releases anything left held.
+
 ## Quirks & gotchas
 
 - `?displayId=N` overrides `*-display-N.*` host.
@@ -73,7 +81,10 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - All endpoints except `GET /api/v1/display/health` and the HTML client root (`GET /api/v1/display/`) need a displayId or return `400 NO_DISPLAY_CONTEXT`.
 - Screenshot GETs return binary PNG; turn `base64` on for JSON.
 - `GET /api/v1/display/screenshot/{timestamp}` needs numeric `timestamp`, not `timestamp_human`.
-- **A screenshot pixel is not always a click coordinate.** A seamless session captures only the windows it shows, so the capture's origin is the top-left of their bounding box, while `POST /api/v1/display/input/click-at` and the other pointer calls take root-window coordinates. When the shown windows do not start at (0,0), add the capture origin (the smallest `x` and `y` among the shown windows' "geometry" objects in the `GET /api/v1/display/windows` response) to a point picked on the screenshot, or use `GET /api/v1/display/window/{windowId}/geometry` to target a window directly.
+- **A screenshot pixel is a click coordinate.** A screenshot spans the whole screen at its current size, read from the windows as they are when it is taken, so pixel (x, y) is the point `POST /api/v1/display/input/click-at` and the other pointer calls act on at (x, y). Where no window is, the image is transparent. A `region` crop starts at its `x1,y1`: add them to a point picked on the crop. Take a new screenshot after a viewer attaches: the screen then takes the viewer's size and the windows move.
+- `POST /api/v1/display/input/click-at` and `POST /api/v1/display/input/type-at` refuse a point with no viewable window with `409 WINDOW_NOT_VIEWABLE` and click nothing. While no viewer is attached to the display that is every point; with one attached, it is the bare desktop between windows. Attach a viewer and pick a point on a window in a fresh screenshot.
+- A line break in `text` (`\n`, `\r\n` or `\r`) presses Return in `POST /api/v1/display/keyboard/type` and `POST /api/v1/display/input/type-at`, so `"https://example.com\n"` types the address and submits it; `\t` presses Tab. Every other key or combination (Escape, ctrl+l, arrows) goes through `POST /api/v1/display/keyboard/key`.
+- `POST /api/v1/display/input/click-at` refuses a point outside the display's current size with `400 VALIDATION_ERROR` instead of clicking the screen edge, and its `details.pointer` reports where the pointer was after the click and the window under it (`x`, `y`, `window`). A `200` means the click was delivered there, not that the program acted on it: take a new screenshot to see the effect.
 - Clipboard `selection`: `clipboard` (default), `primary`, `secondary`. PRIMARY ≠ Ctrl+V.
 - Clipboard reads and writes can fail with `CLIPBOARD_FAILED`, carrying a shortened tool error; read the clipboard back after a write to confirm it landed.
 - Window IDs are accepted as decimal or hex (`0x...`). `GET /api/v1/display/windows`, `POST /api/v1/display/window/search` and `GET /api/v1/display/window/active` return decimal numbers; the path-parameter routes (`GET /api/v1/display/window/{windowId}/properties`, `GET /api/v1/display/window/{windowId}/geometry`, `GET /api/v1/display/window/{windowId}/name`) echo `windowId` exactly as sent, as a string. Compare ids as numbers, not strings.{1,8}$/"]
@@ -81,7 +92,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `GET /api/v1/display/info` returns display info, a window list (each with per-window `position`/`size`), and the screenshot list — but NOT the virtual screen dimensions (those live on `GET /api/v1/display/input/display-geometry`). 
 - `POST /api/v1/display/input/reset` clears stuck modifiers/buttons.
 - `POST /api/v1/display/input/wait-until` answers 200 even when it times out: the body is `success: false, timedOut: true`, so check `timedOut`, not the status. `timeoutMs` is 100-25000 (default 10000). Too many waits at once on one display give `429 QUEUE_FULL`.
-- `POST /api/v1/display/window/restore` waits by default (`sync`, up to 2 s) until the window manager reports the window as no longer minimized, unlike the other window actions; a window still minimized after that is `500 INPUT_ACTION_FAILED`. With `sync: false` the answer has `state: null`.
+- `POST /api/v1/display/window/restore` waits by default (`sync`, up to 2 s) until the window manager reports the window as no longer minimized, unlike the other window actions; a window still minimized after that is `500 INPUT_ACTION_FAILED`. With `sync: false` the answer's `details.state` is `null`, unless the window was already normal: that no-op answers `details.state: "normal"` with `details.synced: true`.
 
 ## Common errors
 
@@ -134,7 +145,7 @@ KIT="https://${P}-${C}-display-1.${N}.containers.hoody.com"
 WID=$(curl -sX POST "$KIT/api/v1/display/window/search?displayId=1" \
   -H 'Content-Type: application/json' \
   -d '{"pattern":"xeyes","name":true,"class":true,"classname":true}' \
-  | jq -r '.windows[0]')
+  | jq -er '.windows[0] // error("No window matched xeyes")') || exit 1
 echo "wid=$WID"
 ```
 
@@ -163,7 +174,7 @@ curl -sX POST "$KIT/api/v1/display/keyboard/type?displayId=1" \
   -d '{"text":"hello world","delay":20}'
 ```
 
-`POST /api/v1/display/input/type-at` collapses click-then-type into one call when you only need plain ASCII at one point: `{ x, y, text, delay }`.
+`POST /api/v1/display/input/type-at` collapses click-then-type into one call when you only need plain ASCII at one point: `{ x, y, text, delay }`. End `text` with `\n` to press Return after it (to submit a form or an address bar).
 
 ### 4. Drag from one position to another
 
@@ -258,7 +269,7 @@ curl -sf "$KIT/api/v1/display/input/display-geometry?displayId=1" | jq '{width,h
 # → e.g. { width: 8192, height: 4096, screen: 0 }  (the virtual screen, much larger than any monitor)
 ```
 
-Note: the geometry returned is the display's virtual screen (often `8192x4096`), not a physical monitor size. Pointer coordinates (`POST /api/v1/display/input/click-at` and the rest) are in this root-window space. A screenshot of a seamless session can start at a different origin, so a point picked on a screenshot may need an offset first (see Quirks).
+Note: the geometry returned is the display's virtual screen (often `8192x4096`), not a physical monitor size. Pointer coordinates (`POST /api/v1/display/input/click-at` and the rest) are in this screen space, and a screenshot covers the same space, pixel for pixel.
 
 ### 10. Reset stuck modifiers / buttons after a misfired drag
 
@@ -376,7 +387,7 @@ Safe to call any time, even when nothing is stuck. Pair it with the start of eve
 
 - `base64` — Return base64-encoded JSON response instead of binary image. Useful for AI agents and systems that can't handle binary data. Accepted values: `true`, `1`, `` (empty) - Return base64 JSON; `false`, `0` - Return binary (default)
 - `displayId` — Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999
-- `region` — Crop the returned image to `x1,y1,x2,y2`. Minimum 10x10 px, maximum 65535 on each axis, `x2 > x1` and `y2 > y1`; anything else is a 400. The coordinates are **capture coordinates**, not root-window coordinates. A seamless session composites only the windows it is showing, so the capture's origin is the bounding box of those windows. Crop against the width and height reported for the capture itself, not against the geometry from `GET /input/display-geometry`.
+- `region` — Crop the returned image to `x1,y1,x2,y2`. Minimum 10x10 px, maximum 65535 on each axis, `x2 > x1` and `y2 > y1`; anything else is a 400. A capture spans the whole screen, so these are screen coordinates: the same ones `POST /input/click-at` takes and `GET /input/display-geometry` describes. The cropped image starts at `x1,y1`: its pixel (x, y) is screen point (x1 + x, y1 + y).
 - `cursor` — Include the pointer position in the response. Only has an effect on the base64 JSON form, which gains a `cursor` object; a binary PNG response has nowhere to put it. Accepted values: `true`, `1`, `` (empty). Anything else is off.
 - `metadata` — Answer the screenshot metadata instead of the image. _(on `GET /api/v1/display/screenshot`)_
 - `timestamp` — Unix timestamp of the screenshot. Use the `timestamp` field returned by screenshot metadata/list endpoints. Do not use `timestamp_human` for path queries. Must be numeric only for security.

@@ -1,4 +1,4 @@
-> _**HTTP skill · `notifications` namespace** · ~8,080 tokens · hoody-sdk v1.0.0-beta.16_
+> _**HTTP skill · `notifications` namespace** · ~8,189 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `notifications` — Trigger and consume desktop notifications inside a container
 
@@ -45,7 +45,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 2. Read recent notifications
 
-`GET /api/v1/notifications/{display}` — `display`: `":0"`, `"0"`, `"0,:1,2"`, or `"all"`. Optional `limit` (1–1000, default 100), `since` (ms, inclusive), `after_id` (exclusive id), `cursor`, `username`, `session`. Without `since`/`after_id`/`cursor` one call returns the newest `limit` entries, listed newest-first. With `since` the page holds the OLDEST `limit` entries at or after that timestamp, with `after_id` the OLDEST `limit` ids above it, and with `cursor` the OLDEST `limit` entries after it; these forward pages are listed oldest-first, in the order they were selected, so consecutive pages join into one ascending list. Each response carries an opaque `next_cursor` and `has_more`: pass `next_cursor` back as `cursor` while `has_more` is `true` to page forward (`has_more` is always `false` on a plain newest page). `cursor` cannot be combined with `since` or `after_id` (`400`). `count` is the size of that page, not a total. There is no reverse cursor; to walk the whole retained history, start at `since=0` and page forward. See Example 8 for the forward-paging loop.
+`GET /api/v1/notifications/{display}` — `display`: `":0"`, `"0"`, `"0,:1,2"`, or `"all"`. Optional `limit` (per-request page size, 1–1000, default 100), `since` (ms, inclusive), `after_id` (exclusive id), `cursor`, `username`, `session`. Without `since`/`after_id`/`cursor` one call returns the newest `limit` entries, listed newest-first. With `since` the page holds the OLDEST `limit` entries at or after that timestamp, with `after_id` the OLDEST `limit` ids above it, and with `cursor` the OLDEST `limit` entries after it; these forward pages are listed oldest-first, in the order they were selected, so consecutive pages join into one ascending list. Each response carries an opaque `next_cursor` and `has_more`: pass `next_cursor` back as `cursor` while `has_more` is `true` to page forward (`has_more` is always `false` on a plain newest page). `cursor` cannot be combined with `since` or `after_id` (`400`). `count` is the size of that page, not a total. There is no reverse cursor; to walk the whole retained history, start at `since=0` and page forward. See Example 8 for the forward-paging loop.
 
 ### 3. Subscribe to events
 
@@ -69,7 +69,7 @@ Reach a human who isn't watching the session — on their phone, desktop, or sma
 - `dismiss.notificationIds` must be a non-empty array; non-integer elements are silently dropped, and only when no integer remains does it return `400 "notificationIds must contain valid integer IDs"` (so `[12,"13"]` dismisses only `12`). `displayId` strips leading `:`.
 - `POST /api/v1/notifications/notify` limits: `summary` ≤200 and `body` ≤1000 by default (a deployment can change them with `NOTIFY_SEND_MAX_SUMMARY_LENGTH` / `NOTIFY_SEND_MAX_BODY_LENGTH`), `category` ≤50, `expire_time` 0–300000; `urgency` ∈ `low|normal|critical`; `display` 1–40000 (display 0 and higher numbers are a `400`).
 - `list.display` numeric or `"all"`; `connect.displays` accepts `all`, `*`, or a comma list of 1–5-digit IDs, each optionally `:`-prefixed (`1000` and `20001` are valid; 6+ digits rejected).
-- `list.limit` `[1,1000]` def 100; forward start points `since`/`after_id`, continuation `cursor` (a `next_cursor` value; not combinable with `since`/`after_id`); `username`/`session` 1–100 ASCII alnum.
+- `list.limit` `[1,1000]` def 100 per request; forward start points `since`/`after_id`, continuation `cursor` (a `next_cursor` value; not combinable with `since`/`after_id`); `username`/`session` 1–100 ASCII alnum.
 - `username`/`session` are owner filters, with specific displays and with `all`: only history files named for that owner are read (`<username>-<session>-notifications.json`, `<username>-display-<N>-notifications.json`), so the generic `display-<N>`/`user-<N>` history is excluded. A `session` filter also excludes the `<username>-display-<N>` files, which carry no session. The display selection still filters the rows read.
 - Dismissal scope on `GET /api/v1/notifications/{display}`: every returned row is checked against the global dismissals and against its own display's scoped dismissals, for one display, a multi-display list (`2,3`) and `all` alike. A dismissal scoped to `:2` hides that id on `:2` everywhere it is listed; the same id on `:3` stays visible. `DELETE /api/v1/notifications/dismiss` without `displayId` clears every scope (global and all displays); with one it clears only that display.
 - `iconId` ext whitelist `jpg|jpeg|png|webp|avif|gif|bmp`; traversal rejected.
@@ -84,7 +84,7 @@ Reach a human who isn't watching the session — on their phone, desktop, or sma
 
 - Invalid input on `POST /api/v1/notifications/notify` (including text the dispatcher's sanitizer rejects) → `400` `error: "Validation Error"` with the reason in `details`. A failed dispatch carries a fixed `code` and one fixed `details` sentence: no display running and none can be started → `503` `error: "Display not available"`, `code: "DISPLAY_NOT_AVAILABLE"`; the display's notification session not up yet → `503` `error: "Display not ready"`, `code: "DISPLAY_NOT_READY"`, with `Retry-After` and `details: "The display's notification session is not available yet. Retry in a few seconds."`; a timeout ("Sending the notification timed out. Retry later.") or any other failure ("The notification service failed to send the notification.") → `500` `error: "Notification dispatch failed"`, `code: "DISPATCH_FAILED"`.
 - WS origin-deny → `403` `Origin not allowed` before the upgrade; close `1008` on message rate limit; `1001` heartbeat timeout. `429` on `send` / `GET /api/v1/notifications/icons/{iconId}`; both are enforced by the shared per-IP rate-limit middleware.
-- `/health` 200 ≠ authorised endpoints reachable.
+- `GET /api/v1/notifications/health` returning 200 does not establish that authorised endpoints are reachable.
 
 ## Related namespaces
 
@@ -160,15 +160,17 @@ curl -sX POST "$KIT/api/v1/notifications/notify" \
 KIT="https://${P}-${C}-n-1.${N}.containers.hoody.com"
 IDS=$(curl -sf "$KIT/api/v1/notifications/2?limit=50" \
   | jq -c '[.data.notifications[].id]')   # e.g. [2,3,4]
-curl -sX POST "$KIT/api/v1/notifications/dismiss" \
-  -H 'Content-Type: application/json' \
-  -d "{\"notificationIds\":$IDS,\"displayId\":\"2\"}"
-# → {"success":true,"message":"3 notification(s) dismissed"}
+# notificationIds must hold at least one id, so skip an empty listing
+if [ "$(printf '%s' "$IDS" | jq 'length')" -gt 0 ]; then
+  curl -sX POST "$KIT/api/v1/notifications/dismiss" \
+    -H 'Content-Type: application/json' \
+    -d "{\"notificationIds\":$IDS,\"displayId\":\"2\"}"   # → {"success":true,"message":"3 notification(s) dismissed"}
+fi
 ```
 
 ### 5. Restore everything you just dismissed
 
-**Goal:** undo Example 4, bring dismissed items back into the listing. `DELETE /api/v1/notifications/dismiss` is `DELETE /dismiss` (same path as `POST /api/v1/notifications/dismiss`). With `displayId: "2"` it undoes Example 4 and nothing else; omitting `displayId` clears every dismissal, global and on every display.
+**Goal:** undo Example 4, bring dismissed items back into the listing. `DELETE /api/v1/notifications/dismiss` is `DELETE /dismiss` (same path as `POST /api/v1/notifications/dismiss`). With `displayId: "2"` it clears every dismissal scoped to display 2, including dismissals made before Example 4; global dismissals and other displays' scoped dismissals remain. Omitting `displayId` clears every dismissal, global and on every display.
 
 ```bash
 KIT="https://${P}-${C}-n-1.${N}.containers.hoody.com"
@@ -235,7 +237,7 @@ curl -sf "$KIT/api/v1/notifications/2?limit=200&since=$SINCE&username=alex&sessi
 
 ### 10. Survive a 429 rate-limit burst on `POST /api/v1/notifications/notify`
 
-**Goal:** you're shipping a flood of toasts (CI, monitoring, …) and the kit pushes back with `429 Too Many Requests`. The kit per-IP rate-limits both `POST /api/v1/notifications/notify` and `GET /api/v1/notifications/icons/{iconId}`. Strategy: cap concurrency client-side, exponential-backoff on `429`, and never retry on `400` (validation — fix the body instead). A `503` with `code: "DISPLAY_NOT_READY"` means the display's notification session is not up yet: wait for its `Retry-After` and resend. A `503` with `code: "DISPLAY_NOT_AVAILABLE"` means no display can be started, so bring one up (→ `display`) instead of looping on the same call. A `500` (`code: "DISPATCH_FAILED"`) is a failed or timed-out send; its `details` says which.
+**Goal:** you're shipping a flood of toasts (CI, monitoring, …) and the kit pushes back with `429 Too Many Requests`. The kit per-IP rate-limits both `POST /api/v1/notifications/notify` and `GET /api/v1/notifications/icons/{iconId}`. Strategy: cap concurrency client-side, exponential-backoff on `429`, and never retry on `400` (validation — fix the body instead). A `503` with `code: "DISPLAY_NOT_READY"` means the display's notification session is not up yet: wait for its `Retry-After` and resend. A `503` with `code: "DISPLAY_NOT_AVAILABLE"` means the target display is not running and the container has no display server to start it: use a container image with display support, because retrying the same call does not help. A `500` (`code: "DISPATCH_FAILED"`) is a failed or timed-out send; its `details` says which.
 
 ```bash
 KIT="https://${P}-${C}-n-1.${N}.containers.hoody.com"

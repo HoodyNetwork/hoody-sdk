@@ -1,4 +1,4 @@
-> _**SDK skill · `files` namespace** · ~44,467 tokens · hoody-sdk v1.0.0-beta.16_
+> _**SDK skill · `files` namespace** · ~45,068 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `files` — container filesystem over HTTP, with automatic Git-like change history
 
@@ -57,7 +57,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 1. `files.readText` / `files.readJson` / `files.readBytes` resolve to the content itself (string, parsed value, `Uint8Array`); `files.get` resolves to the `{ statusCode, message, data }` envelope, with `{ stat: '' }` or `{ lines: '10-50' }`.
 2. `files.glob` with `{ pattern: '**/*.ts' }`; `files.grep` with `{ pattern: 'TODO', context: 2 }` (local only).
-3. `files.upload` with `{ append: '' }`; `files.delete`.
+3. `files.upload` with `{ append: '', retries: 0 }`; `files.delete`. (`retries: 0` on an append: see Example 3, step 3.)
 
 ### 2. Download, extract, FUSE-mount
 
@@ -69,7 +69,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 1. `files.get` with `{ history: '' }`, `{ revision: N }` or `{ at: '<unix-ms>' }`, `{ diff: '', from_seq: N }` (valueless flags take `''`).
 2. `journal.list({ path, after_id })` (global entry id, not `seq`; see Purpose for the last-page cursor rule); `journal.flush` first.
-3. Resumable: `files.upload` for the first chunk, then `files.append(path, bytes)` per chunk (Example 3); it takes raw bytes, no cast. `files.writeChunk(path, bytes)` also appends raw bytes, over the WebDAV route: it takes bytes directly and sets the append header itself, so do not pass `XUpdateRange` (the call throws if you do).
+3. Resumable: `files.upload` for the first chunk, then `files.append(path, bytes, { retries: 0 })` per chunk (Example 3); it takes raw bytes, no cast. `files.writeChunk(path, bytes)` also appends raw bytes, over the WebDAV route: it takes bytes directly and sets the append header itself, so do not pass `XUpdateRange` (the call throws if you do).
 
 ## Quirks & gotchas
 
@@ -88,11 +88,11 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - **Exclusions decide which paths are journalled.** Built-in dev-dir excludes (`node_modules`, `target`, `.next`, `.nuxt`, `.svelte-kit`, `.turbo`, `__pycache__`, `.venv`, `venv`, `env`, `__pypackages__`, `.tox`, `.nox`, `bower_components`, …) skip journaling unless the deployment turned the dev-dir exclusions off. `.git` is always excluded regardless of that setting (separate hardcoded check, not part of the toggleable list). The deployment can add further excludes of its own. This is why "I wrote to `node_modules/x` and saw no journal entry" is expected.
 - **Journal does NOT cover everything by default.** Live behaviour observed: a fresh `PUT` (create) and an overwriting `PUT` (write) on `/home/user/...` produce entries; URL downloads (`?download=`) and archive extraction are NOT journaled — those write through paths with no journal hook. `chmod`, `chown`, `touch`, `?append=true` and copy/move ARE recorded. Always call `journal.flush` then `journal.list` (or `?history=1`) to inspect what was actually recorded — don't assume coverage.
 - **Built-in dev-dir exclude list always skips journaling** for `node_modules`, `__pycache__`, `.venv`, `target`, `.next`, `.nuxt`, etc. — even on `/home/user/...` paths. Only the deployment can turn these off, at kit start. `.git` is hardcoded to ALWAYS be excluded and stays excluded even then.
-- **`HEAD` answers like `GET` with no body** on both routes: `HEAD /api/v1/files/{path}` returns the status and headers its `GET` would, and so does `HEAD /{path}`. It carries no metadata body; for a JSON metadata envelope use `files.stat`.
+- **`HEAD` returns no body** on both routes. `HEAD /api/v1/files/{path}` ignores `Range`, so its status and headers need not match a ranged `GET`. It carries no metadata body; for a JSON metadata envelope use `files.stat`.
 - **`chown` to root is rejected** with `400 Cannot change ownership to root (UID 0)` (owner) or `400 Cannot change group to root (GID 0)` (group) — even where the deployment enabled chown. Use a non-root user (`nobody`, `user`, …).
 - **FUSE mount paths live under a configured mount directory** (`/hoody/mounts/permanent` by default, fixed by the deployment at kit start). An absolute `mount_path` must be under it (`400 Mount path must be under the configured mount directory` otherwise); a relative `mount_path` is resolved under it; an omitted one becomes `<mount dir>/mount_<id>`. If the path already exists and is not a symlink, the create fails with `409 Mount path already exists and is not a symlink`.
 - **Listing-style query params (`?downloads`, `?download_history`, `?extractions`, `?extraction_history`) are honoured on the WebDAV root route, NOT on `/api/v1/files/...`** — calling `GET /api/v1/files/<dir>?downloads` returns a regular directory listing (the query is ignored). Use `GET /<dir>?downloads` (or `GET /?download_history` for the global feed).
-- **Mount the whole FS as a local drive on the USER's machine (client-side WebDAV).** Because the kit serves a WebDAV API at its URL root, the OS's built-in WebDAV client can mount the container's files as a drive/folder: on **Windows** *Map network drive* to `https://{P}-{C}-files-1.{N}.containers.hoody.com/`, on **macOS** Finder → *Connect to Server* to the same URL. This is the inverse of the server-side FUSE mounts (which mount remote backends INTO the container).
+- **Mount the whole FS as a local drive on the USER's machine (client-side WebDAV).** Because the kit serves a WebDAV API at its URL root, the OS's built-in WebDAV client can mount the container's files as a drive/folder: on **Windows** *Map network drive* to `https://{P}-{C}-files-1.{N}.containers.hoody.com/`, on **macOS** Finder → *Connect to Server* to the same URL. This is the inverse of the server-side FUSE mounts (which mount remote backends INTO the container); those have no safe save: the upload that reaches the backend last wins, so keep one writer per file there.
 
 ## Common errors
 
@@ -101,8 +101,8 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - 400 Cannot preview a directory as archive.
 - 400 Unknown operation -- POST needs one query op.
 - 400 Missing query parameter or request body -- PATCH needs op or body.
-- Refusals on the WebDAV path route (`/{path}`) answer JSON `{success: false, error, code}`: `ACCESS_FORBIDDEN` 403, `RESOURCE_NOT_FOUND` 404, `INVALID_PATH` 400, `PATH_CONFLICT` 409, `OVERWRITE_REFUSED` 412 (a WebDAV `COPY`/`MOVE` with `Overwrite: F` onto an existing target), `DIRECTORY_EXISTS` 405 (creating a directory that exists), `PAYLOAD_TOO_LARGE` 413, `UPLOAD_INCOMPLETE` 400 and `REMOTE_UPLOAD_FAILED` 502 (an upload to a remote backend), and `MOUNT_PATH_RESERVED` 409 for a change to a path a mount holds. `INVALID_PARAMETER` means the request itself is wrong; a failure that a changed request would not fix (an OS error, a backend failure, the concurrent-download limit's 429) carries no `code`, so branch on the status. On `/api/v1/files/{path}` many refusals carry no `code` — a REST copy or move onto an existing target without overwrite is 409 `{success: false, error}`. The REST codes are `INVALID_PATH` 400 (`{success: false, error: "Invalid path", code: "INVALID_PATH"}`), `ACCESS_FORBIDDEN` 403 (a path rule), `CONTAINS_SERVICE_STORAGE` 409, `FILE_MOVE_CROSSES_DEVICES` 409, `INVALID_PARAMETER` 400 on some parameter checks, and `FILE_PATH_BUSY`, `FILE_PATH_CHANGED` and `MOUNT_PATH_RESERVED` 409 for a change to a path that is in use or held for a mount. When `code` is absent, branch on the HTTP status.
-- A URL download streams into a hidden part file, `.hoody-download-<id>.part`, in the destination folder, and the file gets its final name only once it is complete. Cancelling the download (or a failure or timeout) removes that part file: where inode numbers identify a file (local filesystems such as ext4, xfs, btrfs, tmpfs) only if its inode is still the one the download created, and elsewhere (FUSE mounts, network filesystems) by its download-specific name while it is a regular file.
+- Refusals on the WebDAV path route (`/{path}`) answer JSON `{success: false, error, code}`: `ACCESS_FORBIDDEN` 403, `RESOURCE_NOT_FOUND` 404, `INVALID_PATH` 400, `PATH_CONFLICT` 409, `OVERWRITE_REFUSED` 412 (a WebDAV `COPY`/`MOVE` with `Overwrite: F` onto an existing target), `DIRECTORY_EXISTS` 405 (creating a directory that exists), `PAYLOAD_TOO_LARGE` 413, `UPLOAD_INCOMPLETE` 400 and `REMOTE_UPLOAD_FAILED` 502 (an upload to a remote backend), and `MOUNT_PATH_RESERVED` 409 for a change to a path a mount holds. `INVALID_PARAMETER` means the request itself is wrong; a failure that a changed request would not fix (an OS error, a backend failure, the concurrent-download limit's 429) carries no `code`, so branch on the status. On `/api/v1/files/{path}` many refusals carry no `code` — a REST copy or move onto an existing target without overwrite is 409 `{success: false, error}`. REST codes include `INVALID_PATH` 400 (`{success: false, error: "Invalid path", code: "INVALID_PATH"}`), `ACCESS_FORBIDDEN` 403 (a path rule), `CONTAINS_SERVICE_STORAGE` 409, `FILE_MOVE_CROSSES_DEVICES` 409, `INVALID_PARAMETER` 400 on some parameter checks, and `FILE_PATH_BUSY`, `FILE_PATH_CHANGED` and `MOUNT_PATH_RESERVED` 409 for a change to a path that is in use or held for a mount. `PERMISSIONS_NOT_APPLIED` and `OWNER_NOT_APPLIED` 409 mean the filesystem does not retain the requested permission bits or owner, as on a mount of remote storage: use storage that retains them when you need them. A chmod, or an upload whose requested permissions are narrower than the file's fixed ones, changes nothing; an upload requesting broader permissions writes its whole body under the fixed ones and still answers `PERMISSIONS_NOT_APPLIED`, so read the message before deciding whether to resend the body. When `code` is absent, branch on the HTTP status.
+- A URL download streams into a hidden part file, `.hoody-download-<id>.part`, in the destination folder, and the file gets its final name only once it is complete. Cancelling the download (or a failure or timeout) removes that part file on a local filesystem (ext4, xfs, btrfs, tmpfs) only if its inode is still the one the download created. On FUSE mounts and network filesystems the partial file is kept, so check the destination for leftovers.
 
 ## Related namespaces
 
@@ -173,11 +173,11 @@ await client.files.upload('/home/user/upload-test.bin', randomBytes(8 * 1024 * 1
 ```typescript
 import { randomBytes } from 'node:crypto';
 // files.append sends raw bytes to PUT /api/v1/files/append/{path}; no cast needed.
-await client.files.append('/home/user/upload-test.bin', randomBytes(8 * 1024 * 1024));
+await client.files.append('/home/user/upload-test.bin', randomBytes(8 * 1024 * 1024), { retries: 0 }); // retries: 0, see step 3
 const s = await client.files.stat('/home/user/upload-test.bin');
 ```
 
-**Step 3 — resume after a network drop.** A WebDAV append (`PATCH /{path}` with `X-Update-Range: append`) writes bytes as they arrive, so a request that broke off may already have added part of its chunk. A REST append (`PUT /api/v1/files/append/{path}`, or an upload with `append`) stages the whole body first, so a body that broke off leaves the file unchanged, although a failure during the write that follows can still leave part of the chunk appended. Either way, do not resend the whole chunk blindly: stat the remote file, compare its size with how many bytes of the payload you have sent, and append only the bytes after that size. An explicit `bytes=<start>-<end>` range (no `/<total>` suffix — that is rejected) must start inside the existing file and writes the whole body from that start, so it can rewrite a tail you know is wrong, but a start at EOF is refused; appending is the way to continue. The generated SDK sends only appends (`files.append`); explicit byte ranges need raw HTTP.
+**Step 3 — resume after a network drop.** A WebDAV append (`PATCH /{path}` with `X-Update-Range: append`) writes bytes as they arrive, so a request that broke off may already have added part of its chunk. A REST append (`PUT /api/v1/files/append/{path}`, or an upload with `append`) stages the whole body first, so a body that broke off leaves the file unchanged, although a failure during the write that follows can still leave part of the chunk appended. Either way, do not resend the whole chunk blindly: stat the remote file, compare its size with how many bytes of the payload you have sent, and append only the bytes after that size. An explicit `bytes=<start>-<end>` range (no `/<total>` suffix — that is rejected) must start inside the existing file and writes the whole body from that start, so it can rewrite a tail you know is wrong, but a start at EOF is refused; appending is the way to continue. The generated SDK sends only appends (`files.append`); explicit byte ranges need raw HTTP. Pass `{ retries: 0 }` to `files.append`, and to `files.upload` when using `append: ''`: the SDK sends these as `PUT`, and by default it sends a `PUT` again after a lost connection, so a chunk the kit already applied (whose response was lost) would be appended twice. After a failed call, stat the file before deciding which bytes to send next.
 
 ### 4. Time-travel a single file — history → revision N → diff
 
@@ -1681,7 +1681,7 @@ client.files.get(path: string, options?: { backend?: string; hash?: ""; sha256?:
 | `to_ts` | `string` | query | No | Target timestamp for ?diff (RFC3339 or Unix ms). Mutually exclusive with to_seq. |
 | `after_id` | `number` | query | No | Cursor for ?history pagination. Returns entries with id > after_id. |
 | `limit` | `number` | query | No | Max entries to return for ?history. |
-| `zip` | `""` | query | No | Download a directory as a streaming zip archive (bare flag, e.g. ?zip). Local directories only (a folder of a remote backend, named with backend, answers 501), and only where the deployment enabled archive downloads (403 otherwise). Same behavior as the WebDAV-style /{directory}?zip. |
+| `zip` | `""` | query | No | Download a directory as a streaming zip archive (bare flag, e.g. ?zip). Local directories only (a folder of a remote backend, named with backend, answers 501), and only where the deployment enabled archive downloads (403 otherwise). Same behavior as the WebDAV-style /{directory}?zip, including its limits: a folder one archive cannot hold whole (more than 100000 files, more than 1000000 files and folders in all, or folders nested deeper than 50 levels) is refused with 422 `ARCHIVE_TOO_LARGE`. |
 | `Range` | `string` | header | No | File download only: ask for part of the file, as 'bytes=first-last', 'bytes=first-' or 'bytes=-suffix_length'. A last position past the end is clamped to the last byte, and a suffix longer than the file selects all of it. One satisfiable range answers 206 with Content-Range; several answer 206 as multipart/byteranges for a local file, while a remote file (with backend) answers 200 with the whole file. Ranges that cannot be satisfied are dropped from a list, and 416 comes only when none is left. A malformed header, another unit or more than 100 ranges is ignored (200, whole file). HEAD ignores Range. |
 | `IfRange` | `string` | header `If-Range` | No | File download only: honour Range only if the file still has this ETag, exactly; otherwise answer 200 with the whole file. A date never matches, since two versions saved within the same second share it. A remote file's (with backend) ETag is weak, so with If-Range a remote file is always sent whole. |
 
@@ -1819,7 +1819,7 @@ client.files.search(directory: string, options: { q: string; json?: ""; theme?: 
 | `colorScheme` | `"light" \| "dark"` | query | No | HTML page only: light or dark colour scheme. Without it the page follows the system setting. |
 | `font` | `"ibm-plex-mono" \| "cascadia-code" \| "fira-code" \| "hack" \| "inconsolata" \| "intel-one-mono" \| "iosevka" \| "jetbrains-mono" \| "meslo-lgs" \| "roboto-mono" \| "source-code-pro" \| "ubuntu-mono"` | query | No | HTML page only: monospace font of the editor and listing. |
 | `fontSize` | `number` | query | No | HTML page only: editor font size in pixels. Default 14. |
-| `embedderOrigin` | `string` | query | No | HTML page only: origin of the page that embeds this one, such as https://app.example.com. The page then accepts theme and layout messages from that origin and tells it when it is ready. Only https origins, and http on localhost or 127.0.0.1, are accepted. |
+| `embedderOrigin` | `string` | query | No | HTML page only: origin of the page that embeds this one, such as https://app.example.com. The page then accepts theme and layout messages from that origin and tells it when it is ready. Only https origins are accepted. |
 | `chromeless` | `boolean` | query | No | HTML page only: hide the header, sidebar, preview, footer and borders at once. Each can be turned back on with its own parameter set to false. |
 | `borderless` | `boolean` | query | No | HTML page only: hide the page borders. |
 | `hideHeader` | `boolean` | query | No | HTML page only: hide the header bar. |
@@ -1836,12 +1836,13 @@ client.files.search(directory: string, options: { q: string; json?: ""; theme?: 
 #### `stat` — Get file metadata (stat)
 
 ```typescript
-client.files.stat(path: string)
+client.files.stat(path: string, options?: { backend?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes | File or directory path |
+| `backend` | `string` | query | No | Backend ID: the metadata of the path on that remote backend instead of a local path |
 
 **Returns:** `Promise<FilesStatResponse>`  |  **HTTP:** `GET /api/v1/files/stat/{path}`
 **CLI:** `hoody files stat`
@@ -1888,7 +1889,7 @@ client.files.update(path: string, data?: FilesUpdateRequest, options?: { owner?:
 #### `upload` — Upload or append file
 
 ```typescript
-client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { backend?: string; append?: ""; chmod?: string; owner?: string; IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string; contentType?: 'application/octet-stream' })
+client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { backend?: string; append?: ""; chmod?: string; owner?: string; XExpectedLength?: string; IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string; contentType?: 'application/octet-stream' })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1896,8 +1897,9 @@ client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | Readab
 | `path` | `string` | path | Yes |  |
 | `backend` | `string` | query | No | Backend ID for remote upload |
 | `append` | `""` | query | No | Append body to end of existing file (create if missing) instead of overwriting |
-| `chmod` | `string` | query | No | Permission bits the local file ends with, in octal (`644`, `0600`, `0o755`, `000`), whatever the server's umask; the response echoes them in `mode`. Requires both upload and chmod to be enabled (403 otherwise). setuid, setgid and sticky bits are refused, as are values above 777. Refused with 400 together with `backend` or `append`, and when the path names something other than a regular file (a directory, a pipe, a device, a socket). Every refusal comes before the body is read: nothing is created or changed. |
+| `chmod` | `string` | query | No | Permission bits the local file ends with, in octal (`644`, `0600`, `0o755`, `000`), whatever the server's umask; the response gives them in `mode`, read back from the file. Where the filesystem keeps no permission bits of its own (a mount of a remote storage without them), the upload is answered 409 PERMISSIONS_NOT_APPLIED instead: nothing is changed when the bits asked for are narrower than the file's, and otherwise the body is written whole under the file's bits. Requires both upload and chmod to be enabled (403 otherwise). setuid, setgid and sticky bits are refused, as are values above 777. Refused with 400 together with `backend` or `append`, and when the path names something other than a regular file (a directory, a pipe, a device, a socket). Each of these refusals comes before the body is read: nothing is created or changed. |
 | `owner` | `string` | query | No | Create-time owner (user[:group]/uid[:gid]) for a newly-created file. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. Overwrites/appends to an existing file preserve its owner. Absent → server default. |
+| `XExpectedLength` | `string` | header `X-Expected-Length` | No | The length of the whole body in bytes, for a body streamed without Content-Length. A body that ends before this many bytes, or runs past them, is refused with 400 and nothing is written or appended: the file stays as it was. Send it whenever the length is known: some HTTP/2 clients end a request's body normally when they are aborted, so without it a cut-off body can look complete. Over the upload size limit it is refused with 413 before the body is read. |
 | `IfMatch` | `string` | header `If-Match` | No | Local files only; with backend it is refused with 400. Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
 | `IfNoneMatch` | `string` | header `If-None-Match` | No | Local files only; with backend it is refused with 400. '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
 | `IfUnmodifiedSince` | `string` | header `If-Unmodified-Since` | No | Local files only; with backend it is refused with 400. Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
@@ -1996,7 +1998,7 @@ client.files.getZipUrl(directory: string, templateVars?: TemplateVars)
 client.files.list(path: string, options?: { simple?: ""; sort?: "name" | "mtime" | "size"; order?: "asc" | "desc"; hash?: ""; sha256?: ""; base64?: ""; edit?: ""; view?: ""; download?: "" | "1" | "true"; contentType?: string; history?: ""; at?: string; revision?: number; diff?: ""; from_seq?: number; from_ts?: string; to_seq?: number; to_ts?: string; after_id?: number; limit?: number; theme?: "oc-1" | "aura" | "ayu" | "carbonfox" | "catppuccin" | "dracula" | "gruvbox" | "monokai" | "nightowl" | "nord" | "onedarkpro" | "shadesofpurple" | "solarized" | "tokyonight" | "vesper"; colorScheme?: "light" | "dark"; font?: "ibm-plex-mono" | "cascadia-code" | "fira-code" | "hack" | "inconsolata" | "intel-one-mono" | "iosevka" | "jetbrains-mono" | "meslo-lgs" | "roboto-mono" | "source-code-pro" | "ubuntu-mono"; fontSize?: number; embedderOrigin?: string; chromeless?: boolean; borderless?: boolean; hideHeader?: boolean; hideSidebar?: boolean; hidePreview?: boolean; hideFooter?: boolean; embedBg?: "transparent" }, templateVars?: { projectId?: string; containerId?: string; serviceIndex?: string | number; serverName?: string; server?: string })
 ```
 
-**Returns:** `Promise<ApiResponse<ArrayBuffer> | FilesUiGetPageResponse>`  |  **SDK helper:** added by the SDK library, not generated from an HTTP operation.
+**Returns:** `Promise<FilesUiGetPageResponse>`  |  **SDK helper:** added by the SDK library, not generated from an HTTP operation.
 
 ---
 
@@ -2125,7 +2127,7 @@ client.files.journal.list(options?: { path?: string; op?: string; since?: string
 |-----------|------|------|----------|-------------|
 | `path` | `string` | query | No | Filter entries by path prefix |
 | `op` | `string` | query | No | Filter by operation type(s), comma-separated (e.g. 'write,delete') |
-| `since` | `string` | query | No | Filter entries since timestamp (RFC3339 or Unix ms) |
+| `since` | `string` | query | No | Return entries at or after this time: an RFC3339 timestamp (Z or an offset, any fractional precision), or a Unix timestamp in seconds or milliseconds. A number below 100000000000 is read as seconds. Omitted or empty, no time filter applies; any other value is refused with 400. |
 | `limit` | `number` | query | No | Max entries to return |
 | `after_id` | `number` | query | No | Cursor: return entries with id > after_id |
 
@@ -2347,7 +2349,7 @@ client.files.ui.getPage(path: string, options?: { json?: ""; simple?: ""; sort?:
 | `colorScheme` | `"light" \| "dark"` | query | No | HTML page only: light or dark colour scheme. Without it the page follows the system setting. |
 | `font` | `"ibm-plex-mono" \| "cascadia-code" \| "fira-code" \| "hack" \| "inconsolata" \| "intel-one-mono" \| "iosevka" \| "jetbrains-mono" \| "meslo-lgs" \| "roboto-mono" \| "source-code-pro" \| "ubuntu-mono"` | query | No | HTML page only: monospace font of the editor and listing. |
 | `fontSize` | `number` | query | No | HTML page only: editor font size in pixels. Default 14. |
-| `embedderOrigin` | `string` | query | No | HTML page only: origin of the page that embeds this one, such as https://app.example.com. The page then accepts theme and layout messages from that origin and tells it when it is ready. Only https origins, and http on localhost or 127.0.0.1, are accepted. |
+| `embedderOrigin` | `string` | query | No | HTML page only: origin of the page that embeds this one, such as https://app.example.com. The page then accepts theme and layout messages from that origin and tells it when it is ready. Only https origins are accepted. |
 | `chromeless` | `boolean` | query | No | HTML page only: hide the header, sidebar, preview, footer and borders at once. Each can be turned back on with its own parameter set to false. |
 | `borderless` | `boolean` | query | No | HTML page only: hide the page borders. |
 | `hideHeader` | `boolean` | query | No | HTML page only: hide the header bar. |

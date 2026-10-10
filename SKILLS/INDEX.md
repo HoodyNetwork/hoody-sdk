@@ -1,4 +1,4 @@
-> _**routing manifest (full INDEX with routing-hints appendix, on-demand)** · ~9,218 tokens · hoody-sdk v1.0.0-beta.16_
+> _**routing manifest (full INDEX with routing-hints appendix, on-demand)** · ~9,584 tokens · hoody-sdk v1.0.0-beta.17_
 
 # Hoody — surface index
 
@@ -13,7 +13,9 @@ fetch the docs URL when you need to understand *why*.
 
 **Onboarding a brand-new user?** Fetch **<https://hoody.com/SKILLS/ONBOARDING.md>** and
 follow it — a guided playbook (sign-up → first container/workspace → a live website + alias
-→ Hoody Exec → a GUI app) that adapts to whether the user is technical. **Stuck on a
+→ Hoody Exec → a GUI app) that adapts to whether the user is technical. **Signing a user
+in?** Use browser sign-in: the user approves on Hoody's own page and you never see a password
+or need a pasted token — § Login in <https://hoody.com/SKILLS/SKILL-HTTP.md>. **Stuck on a
 "how do I…"?** Ask the public docs assistant: `POST https://chatbot.hoody.com/mcp` (no auth;
 JSON-RPC tool `search_hoody_docs`, answers with cited URLs) or the `POST /api/chat` SSE fallback.
 
@@ -133,7 +135,7 @@ await box.sqlite.sql.runTransaction(
 ```
 
 **Ops**: `kv.{set, get, delete, increment, decrement, push, pop, rollback, getSnapshot}` · `sql.{query, run, runTransaction, queryReadOnly}` · `databases.{create, list, delete}` · `history.{list, getStats}` · TTL · JSON-path
-**Gotcha**: keyed by the `db` query param, which every call needs: a bare name (`app` resolves to `/hoody/databases/app.db`) or an absolute path under `/hoody/databases` (other absolute paths are refused unless the deployment allows them). KV `get` over HTTP returns the stored bytes raw (no envelope); the SDK's default response mode decodes a JSON value into `r.data` (pass `responseType: 'text'` to get the string).
+**Gotcha**: SQL and KV calls select their database with the `db` query param (database creation takes a required `path`, listing an optional `dir`, health checks no selector): a bare name (`app` resolves to `/hoody/databases/app.db`) or an absolute path under `/hoody/databases` (other absolute paths are refused unless the deployment allows them). KV `get` over HTTP returns the stored bytes raw (no envelope); the SDK's default response mode decodes a JSON value into `r.data` (pass `responseType: 'text'` to get the string).
 
 ## browser — Chromium/Firefox automation with a stealth (anti-fingerprint) mode
 
@@ -222,7 +224,8 @@ const r = await box.curl.run({
 const r = await box.daemon.ephemeralPrograms.start({
   command: 'python build.py', user: 'user', wait: true, timeout: 60,
 });
-const logs = await box.daemon.ephemeralPrograms.getLogs(r.data!.temporary_id);
+if (!r.data.temporary_id) throw new Error(r.data.error ?? 'no temporary_id');
+const logs = await box.daemon.ephemeralPrograms.getLogs(r.data.temporary_id);
 // Durable: registered program (persists across kit restarts)
 const prog = await box.daemon.programs.create({
   name: 'webhook-server', command: 'node server.js', user: 'user',
@@ -232,7 +235,7 @@ await box.daemon.programs.start(prog.data!.id!, { wait: true });  // start takes
 ```
 
 **Ops**: `ephemeralPrograms.{start, getLogs, stop}` · `programs.{create, list, get, update, delete}` · `programs.{start, stop, enable, disable}` · `programs.{getStatus, getLogs}` · port-range fan-out · lazy-load
-**Gotcha**: prefer `ephemeralPrograms` for one-offs (temporary configuration and tracking are written, then cleaned up), `programs` when the process should survive container restarts. Logs always persist even after the process exits.
+**Gotcha**: prefer `ephemeralPrograms` for one-offs (temporary configuration and tracking are written, then cleaned up), `programs` when the process should survive container restarts. Ephemeral program status and logs stay readable through the daemon API for 10 minutes after the program finishes, then answer 404; the log files stay on disk, so save the output before the window ends or read the files through `files`.
 
 ## pipe — zero-storage streaming HTTP rendezvous
 
@@ -266,7 +269,10 @@ for await (const ev of await box.proxyLogs.stream({ serviceName: 'files' })) {
 }
 // Or poll list() with a numeric cursor:
 let afterId: number | undefined;
-const page = await box.proxyLogs.list({ serviceName: 'files', afterId });
+const page = await box.proxyLogs.list({
+  serviceName: 'files',
+  ...(afterId === undefined ? {} : { afterId }),
+});
 ```
 
 **Ops**: `proxyLogs.{list, getStats, stream}` (SSE) · filter by `kind`/`level`/`method`/`serviceName`/`source`
@@ -341,7 +347,7 @@ await stream.connect();
 ```
 
 **Ops**: `notifications.send` (`notify-send`) · `list`/`dismiss`/`restore` (log) · `connect` (WebSocket only) · `icons.get`
-**Gotcha**: targets an X display (`DISPLAY=:N`); the kit starts the requested display itself when it is missing, unless display ensuring is turned off. Accepts the bare kit URL — no `X-Hoody-Container-Claim` header needed. Kit slug is `n-{serviceIndex}`.
+**Gotcha**: targets an X display (`DISPLAY=:N`); the kit starts the requested display itself when it is missing, unless display ensuring is turned off. Accepts the bare kit URL — no `X-Hoody-Container-Claim` header needed. Kit slug is `n` (host segment `n-{serviceIndex}`).
 
 ## notes — collaborative notebooks (nodes, docs, databases)
 
@@ -349,7 +355,7 @@ await stream.connect();
 - **Docs**: <https://docs.hoody.com/kit/notes/>
 
 ```ts
-// identity.get auto-provisions a notebook + a `Home` section + starter pages.
+// whoami() resolves the current identity and its default notebook (auto-provisioned with a `Home` section + starter pages).
 const me = (await box.notes.whoami()).data as any;         // { notebookId, userId, ... }
 const sections = await box.notes.nodes.list(me.notebookId, { type: 'section' });
 // listed nodes are flat: attributes such as `name` sit at the top level of each node
@@ -390,12 +396,12 @@ const cmd = await box.run.resolve({ app: 'firefox', kind: 'any', pick: 'first' }
 - **Concepts**: <https://docs.hoody.com/concepts/realms-projects/> · <https://docs.hoody.com/foundation/wallet/>
 
 ```ts
-// Auth
-await hoody.api.auth.login({ username: 'alex', password: '…' });
+// Auth: browser sign-in (§ Login) — give the user the link + code, poll, adopt the session
+const start = await hoody.api.auth.device.start({ client_name: 'my-agent', client: 'agent' });
 // Containers
 const cs = await hoody.api.containers.list();
 const c = await hoody.api.containers.create(projectId, { server_id, name: 'box-1', hoody_kit: true });
-// Auth tokens for headless agents (realm-scoped)
+// Auth tokens for unattended automation the user asked for (realm-scoped)
 const tok = await hoody.api.auth.tokens.create({ alias: 'agent-x', realm_ids: [realmId] });
 // Vault, wallet, rentals, pools, proxy permissions, …
 ```
@@ -442,7 +448,8 @@ await box.agent.sessions.turns.run(s.data!.session_id!, { text: 'Refactor src/pa
 |---|---|---|
 | TS/JS service or browser app | **SDK** | <https://hoody.com/SKILLS/SKILL-SDK.md> |
 | Calling from Python/Rust/Go/… | **HTTP** | <https://hoody.com/SKILLS/SKILL-HTTP.md> |
-| Shell / CI / SSH | **CLI** | <https://hoody.com/SKILLS/SKILL-CLI.md> |
+| Web chat, web agent or throwaway sandbox (not a Hoody container or the user's computer) | **HTTP**; never install or use the CLI here | <https://hoody.com/SKILLS/SKILL-HTTP.md> |
+| Shell in a Hoody container or on the user's own computer | **CLI**; if `command -v hoody` fails, use HTTP | <https://hoody.com/SKILLS/SKILL-CLI.md> |
 | Need a GET-able URL for YOUR OWN logic/handler | **`exec` kit auto-mount** | see `exec` above |
 | Drive ANY HTTP / Hoody call from a URL-only client (claude.ai fetch, webhook, `<img src>`) | **`curl` GET-bridge** | see `curl` above |
 
@@ -477,8 +484,8 @@ await box.agent.sessions.turns.run(s.data!.session_id!, { text: 'Refactor src/pa
   - One HTTP-callable script you GET to trigger → `exec`.
   - A long-running supervised process (web server, queue worker, restart on
     crash) → `daemon` (`programs.create` + `programs.start`).
-  - A one-off command, run once → `terminal.commands.run` with `ephemeral=true` when you
-    only need the output in the response; `daemon.ephemeralPrograms` when the logs
+  - A one-off command, run once → `terminal.commands.run` with `ephemeral=true` (over HTTP,
+    on the `terminal-0` host) when you only need the output in the response; `daemon.ephemeralPrograms` when the logs
     should be kept after the process exits.
   - An interactive REPL / TUI / multi-command session → `terminal.sessions`.
 
@@ -497,7 +504,10 @@ await box.agent.sessions.turns.run(s.data!.session_id!, { text: 'Refactor src/pa
   the in-container AI coding agent over HTTP (sessions, prompting,
   models/providers, MCP tool servers, skills, memory, workflows) routes to
   `agent`. (The Hoody Agent browser GUI on the same `-agent-1` host is the
-  human-facing surface over this namespace.)
+  human-facing surface over this namespace.) Agent Bots (long-lived assistants
+  you create, message and follow) are `agent.bots.*` too: see the agent
+  namespace notes, Bots section. Telegram and other chat-app registration is
+  the separate `bot` namespace.
 
 - **Code-embedded queries (`await box.X.method(...)` or `client.X.method(...)`)
   ALWAYS map to namespace X** — do NOT abstain just because the query has
@@ -514,8 +524,10 @@ await box.agent.sessions.turns.run(s.data!.session_id!, { text: 'Refactor src/pa
   container's reverse proxy. Pagination, history, SSE-tail exist in both
   surfaces; pick by what the user is watching: files → `watch`, HTTP → `proxyLogs`.
 
-- **`daemon` logs vs `cron`** — `daemon.programs.getLogs` and
-  `daemon.ephemeralPrograms.getLogs` retain stdout/stderr per program.
+- **`daemon` logs vs `cron`** — `daemon.programs.getLogs` reads a
+  registered program's stdout/stderr. `daemon.ephemeralPrograms.getLogs` reads an
+  ephemeral program's logs until 10 minutes after it finished; afterwards it
+  returns 404, although the log files stay on disk.
   `cron` only schedules — it does not capture logs, and its runs are not
   daemon programs. "Show me the log of my scheduled job" → read the file the
   job's command redirects its output to through `files`; `daemon` logs only

@@ -1,4 +1,4 @@
-> _**HTTP skill · `files` namespace** · ~39,461 tokens · hoody-sdk v1.0.0-beta.16_
+> _**HTTP skill · `files` namespace** · ~39,962 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `files` — container filesystem over HTTP, with automatic Git-like change history
 
@@ -88,11 +88,11 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - **Exclusions decide which paths are journalled.** Built-in dev-dir excludes (`node_modules`, `target`, `.next`, `.nuxt`, `.svelte-kit`, `.turbo`, `__pycache__`, `.venv`, `venv`, `env`, `__pypackages__`, `.tox`, `.nox`, `bower_components`, …) skip journaling unless the deployment turned the dev-dir exclusions off. `.git` is always excluded regardless of that setting (separate hardcoded check, not part of the toggleable list). The deployment can add further excludes of its own. This is why "I wrote to `node_modules/x` and saw no journal entry" is expected.
 - **Journal does NOT cover everything by default.** Live behaviour observed: a fresh `PUT` (create) and an overwriting `PUT` (write) on `/home/user/...` produce entries; URL downloads (`?download=`) and archive extraction are NOT journaled — those write through paths with no journal hook. `PATCH /api/v1/files/chmod/{path}`, `PATCH /api/v1/files/chown/{path}`, `PUT /{path}?touch`, `?append=true` and copy/move ARE recorded. Always call `POST /api/v1/journal/flush` then `GET /api/v1/journal` (or `?history=1`) to inspect what was actually recorded — don't assume coverage.
 - **Built-in dev-dir exclude list always skips journaling** for `node_modules`, `__pycache__`, `.venv`, `target`, `.next`, `.nuxt`, etc. — even on `/home/user/...` paths. Only the deployment can turn these off, at kit start. `.git` is hardcoded to ALWAYS be excluded and stays excluded even then.
-- **`HEAD` answers like `GET` with no body** on both routes: `HEAD /api/v1/files/{path}` returns the status and headers its `GET` would, and so does `HEAD /{path}`. It carries no metadata body; for a JSON metadata envelope use `GET /api/v1/files/stat/{path}`.
+- **`HEAD` returns no body** on both routes. `HEAD /api/v1/files/{path}` ignores `Range`, so its status and headers need not match a ranged `GET`. It carries no metadata body; for a JSON metadata envelope use `GET /api/v1/files/stat/{path}`.
 - **`PATCH /api/v1/files/chown/{path}` to root is rejected** with `400 Cannot change ownership to root (UID 0)` (owner) or `400 Cannot change group to root (GID 0)` (group) — even where the deployment enabled chown. Use a non-root user (`nobody`, `user`, …).
 - **FUSE mount paths live under a configured mount directory** (`/hoody/mounts/permanent` by default, fixed by the deployment at kit start). An absolute `mount_path` must be under it (`400 Mount path must be under the configured mount directory` otherwise); a relative `mount_path` is resolved under it; an omitted one becomes `<mount dir>/mount_<id>`. If the path already exists and is not a symlink, the create fails with `409 Mount path already exists and is not a symlink`.
 - **Listing-style query params (`?downloads`, `?download_history`, `?extractions`, `?extraction_history`) are honoured on the WebDAV root route, NOT on `/api/v1/files/...`** — calling `GET /api/v1/files/<dir>?downloads` returns a regular directory listing (the query is ignored). Use `GET /<dir>?downloads` (or `GET /?download_history` for the global feed).
-- **Mount the whole FS as a local drive on the USER's machine (client-side WebDAV).** Because the kit serves a WebDAV API at its URL root, the OS's built-in WebDAV client can mount the container's files as a drive/folder: on **Windows** *Map network drive* to `https://{P}-{C}-files-1.{N}.containers.hoody.com/`, on **macOS** Finder → *Connect to Server* to the same URL. This is the inverse of the server-side FUSE mounts (which mount remote backends INTO the container).
+- **Mount the whole FS as a local drive on the USER's machine (client-side WebDAV).** Because the kit serves a WebDAV API at its URL root, the OS's built-in WebDAV client can mount the container's files as a drive/folder: on **Windows** *Map network drive* to `https://{P}-{C}-files-1.{N}.containers.hoody.com/`, on **macOS** Finder → *Connect to Server* to the same URL. This is the inverse of the server-side FUSE mounts (which mount remote backends INTO the container); those have no safe save: the upload that reaches the backend last wins, so keep one writer per file there.
 
 ## Common errors
 
@@ -101,8 +101,8 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - 400 Cannot preview a directory as archive.
 - 400 Unknown operation -- POST needs one query op.
 - 400 Missing query parameter or request body -- PATCH needs op or body.
-- Refusals on the WebDAV path route (`/{path}`) answer JSON `{success: false, error, code}`: `ACCESS_FORBIDDEN` 403, `RESOURCE_NOT_FOUND` 404, `INVALID_PATH` 400, `PATH_CONFLICT` 409, `OVERWRITE_REFUSED` 412 (a WebDAV `COPY`/`MOVE` with `Overwrite: F` onto an existing target), `DIRECTORY_EXISTS` 405 (creating a directory that exists), `PAYLOAD_TOO_LARGE` 413, `UPLOAD_INCOMPLETE` 400 and `REMOTE_UPLOAD_FAILED` 502 (an upload to a remote backend), and `MOUNT_PATH_RESERVED` 409 for a change to a path a mount holds. `INVALID_PARAMETER` means the request itself is wrong; a failure that a changed request would not fix (an OS error, a backend failure, the concurrent-download limit's 429) carries no `code`, so branch on the status. On `/api/v1/files/{path}` many refusals carry no `code` — a REST copy or move onto an existing target without overwrite is 409 `{success: false, error}`. The REST codes are `INVALID_PATH` 400 (`{success: false, error: "Invalid path", code: "INVALID_PATH"}`), `ACCESS_FORBIDDEN` 403 (a path rule), `CONTAINS_SERVICE_STORAGE` 409, `FILE_MOVE_CROSSES_DEVICES` 409, `INVALID_PARAMETER` 400 on some parameter checks, and `FILE_PATH_BUSY`, `FILE_PATH_CHANGED` and `MOUNT_PATH_RESERVED` 409 for a change to a path that is in use or held for a mount. When `code` is absent, branch on the HTTP status.
-- A URL download streams into a hidden part file, `.hoody-download-<id>.part`, in the destination folder, and the file gets its final name only once it is complete. Cancelling the download (or a failure or timeout) removes that part file: where inode numbers identify a file (local filesystems such as ext4, xfs, btrfs, tmpfs) only if its inode is still the one the download created, and elsewhere (FUSE mounts, network filesystems) by its download-specific name while it is a regular file.
+- Refusals on the WebDAV path route (`/{path}`) answer JSON `{success: false, error, code}`: `ACCESS_FORBIDDEN` 403, `RESOURCE_NOT_FOUND` 404, `INVALID_PATH` 400, `PATH_CONFLICT` 409, `OVERWRITE_REFUSED` 412 (a WebDAV `COPY`/`MOVE` with `Overwrite: F` onto an existing target), `DIRECTORY_EXISTS` 405 (creating a directory that exists), `PAYLOAD_TOO_LARGE` 413, `UPLOAD_INCOMPLETE` 400 and `REMOTE_UPLOAD_FAILED` 502 (an upload to a remote backend), and `MOUNT_PATH_RESERVED` 409 for a change to a path a mount holds. `INVALID_PARAMETER` means the request itself is wrong; a failure that a changed request would not fix (an OS error, a backend failure, the concurrent-download limit's 429) carries no `code`, so branch on the status. On `/api/v1/files/{path}` many refusals carry no `code` — a REST copy or move onto an existing target without overwrite is 409 `{success: false, error}`. REST codes include `INVALID_PATH` 400 (`{success: false, error: "Invalid path", code: "INVALID_PATH"}`), `ACCESS_FORBIDDEN` 403 (a path rule), `CONTAINS_SERVICE_STORAGE` 409, `FILE_MOVE_CROSSES_DEVICES` 409, `INVALID_PARAMETER` 400 on some parameter checks, and `FILE_PATH_BUSY`, `FILE_PATH_CHANGED` and `MOUNT_PATH_RESERVED` 409 for a change to a path that is in use or held for a mount. `PERMISSIONS_NOT_APPLIED` and `OWNER_NOT_APPLIED` 409 mean the filesystem does not retain the requested permission bits or owner, as on a mount of remote storage: use storage that retains them when you need them. A chmod, or an upload whose requested permissions are narrower than the file's fixed ones, changes nothing; an upload requesting broader permissions writes its whole body under the fixed ones and still answers `PERMISSIONS_NOT_APPLIED`, so read the message before deciding whether to resend the body. When `code` is absent, branch on the HTTP status.
+- A URL download streams into a hidden part file, `.hoody-download-<id>.part`, in the destination folder, and the file gets its final name only once it is complete. Cancelling the download (or a failure or timeout) removes that part file on a local filesystem (ext4, xfs, btrfs, tmpfs) only if its inode is still the one the download created. On FUSE mounts and network filesystems the partial file is kept, so check the destination for leftovers.
 
 ## Related namespaces
 
@@ -237,7 +237,7 @@ The response carries `has_more`. `next_after_id` is set only while `has_more` is
 ```bash
 LAST=${LAST:-0}   # cursor; persist client-side
 R=$(curl -sf "$KIT/api/v1/journal?after_id=$LAST&limit=200")
-echo "$R" | jq '{count, has_more, ops: [.entries[] | {id, seq, op, path, ts, size_after, hash}]}'
+echo "$R" | jq '{count, has_more, ops: [.entries[] | {id, seq, op, path, ts, size_after, before, after, hash}]}'   # before/after: content SHA-256; hash: move/copy
 LAST=$(echo "$R" | jq --argjson last "$LAST" '.next_after_id // (.entries | last | .id) // $last')
 ```
 
@@ -371,7 +371,7 @@ curl -sf -X DELETE "$KIT/api/v1/backends/$BID"
 KIT="https://${P}-${C}-files-1.${N}.containers.hoody.com"
 DIR=/home/user/files-examples-cleanup
 curl -sf -X DELETE "$KIT/api/v1/files$DIR"
-# → {"success":true,"path":"…"}
+# → 204 No Content (no response body)
 ```
 
 **Step 2 — verify.** A `404` from `GET /api/v1/files/stat/{path}` is what you want.
@@ -489,7 +489,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
   - `client_secret` — OAuth Client Secret. Leave blank normally.
   - `commit_retries` — Max number of times to try committing a multipart file.
   - `description` — Description of the remote.
-  - `encoding` — The encoding for the backend. See the [encoding section in the overview](/overview/#encoding) for more info.
+  - `encoding` — The encoding for the backend.
   - `impersonate` — Impersonate this user ID when using a service account. Setting this flag allows Hoody, when using a JWT service account, to act on behalf of another user by setting the as-user header. The user ID is the Box identifier for a user. …
   - `list_chunk` — Size of listing chunk 1-1000.
   - `owned_by` — Only show items owned by the login (email address) passed in.
@@ -677,7 +677,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 - `POST /api/v1/backends/oracleobjectstorage` body — `{ attempt_resume_upload: bool=false, chunk_size: string="5242880", compartment: string="", copy_cutoff: string="4999610368", copy_timeout: int=60, decompress: bool=false, description: string="", disable_checksum: bool=false, encoding: string="50331650", endpoint: string="", leave_parts_on_error: bool=false, max_upload_parts: int=10000, namespace*: string="", no_check_bucket: bool=false, provider*: "no_auth"="no_auth", region*: string="", sse_customer_algorithm: "" | "AES256"="", sse_customer_key: ""="", sse_customer_key_sha256: ""="", sse_kms_key_id: ""="", storage_tier: "Standard" | "InfrequentAccess" | "Archive"="Standard", upload_concurrency: int=10, upload_cutoff: string="209715200" }` — oracleobjectstorage backend configuration
   - _(23 fields carry longer docs — see the spec shipped as `hoody-sdk/openapi.json` for full field semantics)_
 - `POST /api/v1/backends/pcloud` body — `{ auth_url: string="", client_credentials: bool=false, client_id: string="", client_secret: string="", description: string="", encoding: string="50438146", hostname: "api.pcloud.com" | "eapi.pcloud.com"="api.pcloud.com", password: string="", root_folder_id: string="d0", token: string="", token_url: string="", username: string="" }` — pcloud backend configuration
-  - `hostname` — Hostname to connect to. This is normally set when Hoody initially does the oauth connection, however you will need to set it by hand if you are using remote config with Hoody authorize.
+  - `hostname` — Hostname to connect to. This is normally set when Hoody initially does the oauth connection, however you will need to set it by hand if the token was obtained elsewhere.
   - `password` — Your pcloud password.
   - `username` — Your pcloud username. This is only required when you want to use the cleanup command. Due to a bug in the pcloud API the required API does not support OAuth authentication so we have to rely on user password authentication for it.
 - `POST /api/v1/backends/pikpak` body — `{ chunk_size: string="5242880", description: string="", device_id: string="", encoding: string="56829838", hash_memory_limit: string="10485760", no_media_link: bool=false, pass: string="", root_folder_id: string="", trashed_only: bool=false, upload_concurrency: int=4, upload_cutoff: string="209715200", use_trash: bool=true, user: string="", user_agent: string="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0" }` — pikpak backend configuration
@@ -783,7 +783,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 - `POST /api/v1/backends/webdav` body — `{ auth_redirect: bool=false, bearer_token: string="", description: string="", encoding: string="", headers: string="", nextcloud_chunk_size: string="10485760", owncloud_exclude_mounts: bool=false, owncloud_exclude_shares: bool=false, pacer_min_sleep: int=0, pass: string="", url*: string="", user: string="", vendor: "fastmail" | "nextcloud" | "owncloud" | "infinitescale" | "sharepoint" | "sharepoint-ntlm" | "hoody-vfs" | "other"="" }` — webdav backend configuration
   - `auth_redirect` — Preserve authentication on redirect. … Note that enabling this also permits sending your credentials over a plaintext HTTP connection if the server redirects from HTTPS to HTTP, which Hoody otherwise refuses to do.
   - `bearer_token` — Bearer token instead of user/pass (e.g. a Macaroon).
-  - `encoding` — The encoding for the backend. See the [encoding section in the overview](/overview/#encoding) for more info. …
+  - `encoding` — The encoding for the backend. Default encoding is Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Hash,Percent,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8 for sharepoint-ntlm or identity otherwise.
   - `headers` — Set HTTP headers for all transactions. Use this to set additional HTTP headers for all transactions The input format is comma separated list of key,value pairs. Standard [CSV encoding](https://godoc.org/encoding/csv) may be used. …
   - `nextcloud_chunk_size` — Nextcloud upload chunk size. We recommend configuring your NextCloud instance to increase the max chunk size to 1 GB for better upload performances. …
   - `owncloud_exclude_mounts` — Exclude ownCloud mounted storages
@@ -844,10 +844,10 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 | `POST /api/v1/files/move/{path}` | Move file or directory | `?move_to*` `?owner` |
 | `GET /api/v1/files/realpath/{path}` | Resolve canonical path (realpath) |  |
 | `GET /{directory}?q` | Search directory | `?q*` `?json` `?theme` `?colorScheme` `?font` `?fontSize` `?embedderOrigin` `?chromeless` `?borderless` `?hideHeader` `?hideSidebar` `?hidePreview` `?hideFooter` `?embedBg` |
-| `GET /api/v1/files/stat/{path}` | Get file metadata (stat) |  |
+| `GET /api/v1/files/stat/{path}` | Get file metadata (stat) | `?backend` |
 | `PUT /{path}?touch` | Touch file (create or update mtime) | `?touch*` |
 | `PATCH /api/v1/files/{path}` | Modify file properties or move/rename | `?owner` `?chmod` `?chown` `body` |
-| `PUT /api/v1/files/{path}` | Upload or append file | `?backend` `?append` `?chmod` `?owner` `H:If-Match` `H:If-None-Match` `H:If-Unmodified-Since` `body*:application/octet-stream` |
+| `PUT /api/v1/files/{path}` | Upload or append file | `?backend` `?append` `?chmod` `?owner` `H:X-Expected-Length` `H:If-Match` `H:If-None-Match` `H:If-Unmodified-Since` `body*:application/octet-stream` |
 | `CHECKAUTH /{path}` | Check authentication status |  |
 | `PATCH /{path}` | File operations | `H:If-Match` `H:If-None-Match` `H:If-Unmodified-Since` `body:application/json,application/octet-stream` |
 | `GET /{directory}?zip` | Download directory as ZIP | `?zip*` |
@@ -912,7 +912,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 - `sort` — Sort glob results by: mtime (default), name, or size _(on `GET /api/v1/files/{path}`)_
 - `order` — Sort order for glob results. Default: desc for mtime, asc for name/size _(on `GET /api/v1/files/{path}`)_
 - `lines` — Extract specific lines from a file. Formats: '10-50' (range, 1-indexed inclusive), '100' (single line), '-20' (last 20 lines / tail), '50-' (line 50 to end). Returns text/plain with X-Line-Range header. X-Total-Lines header included when naturally known (scan reached EOF). Max 100,000 lines or 64MB per request.
-- `zip` — Download a directory as a streaming zip archive (bare flag, e.g. ?zip). Local directories only (a folder of a remote backend, named with backend, answers 501), and only where the deployment enabled archive downloads (403 otherwise). Same behavior as the WebDAV-style /{directory}?zip.
+- `zip` — Download a directory as a streaming zip archive (bare flag, e.g. ?zip). Local directories only (a folder of a remote backend, named with backend, answers 501), and only where the deployment enabled archive downloads (403 otherwise). Same behavior as the WebDAV-style /{directory}?zip, including its limits: a folder one archive cannot hold whole (more than 100000 files, more than 1000000 files and folders in all, or folders nested deeper than 50 levels) is refused with 422 `ARCHIVE_TOO_LARGE`.
 - `Range` — File download only: ask for part of the file, as 'bytes=first-last', 'bytes=first-' or 'bytes=-suffix_length'. A last position past the end is clamped to the last byte, and a suffix longer than the file selects all of it. One satisfiable range answers 206 with Content-Range; several answer 206 as multipart/byteranges for a local file, while a remote file (with backend) answers 200 with the whole file. Ranges that cannot be satisfied are dropped from a list, and 416 comes only when none is left. A malformed header, another unit or more than 100 ranges is ignored (200, whole file). HEAD ignores Range.
 - `If-Range` — File download only: honour Range only if the file still has this ETag, exactly; otherwise answer 200 with the whole file. A date never matches, since two versions saved within the same second share it. A remote file's (with backend) ETag is weak, so with If-Range a remote file is always sent whole.
 - `path` — Directory path to search within _(on `GET /api/v1/files/glob/{path}`)_
@@ -943,7 +943,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 - `colorScheme` — HTML page only: light or dark colour scheme. Without it the page follows the system setting.
 - `font` — HTML page only: monospace font of the editor and listing.
 - `fontSize` — HTML page only: editor font size in pixels. Default 14.
-- `embedderOrigin` — HTML page only: origin of the page that embeds this one, such as https://app.example.com. The page then accepts theme and layout messages from that origin and tells it when it is ready. Only https origins, and http on localhost or 127.0.0.1, are accepted.
+- `embedderOrigin` — HTML page only: origin of the page that embeds this one, such as https://app.example.com. The page then accepts theme and layout messages from that origin and tells it when it is ready. Only https origins are accepted.
 - `chromeless` — HTML page only: hide the header, sidebar, preview, footer and borders at once. Each can be turned back on with its own parameter set to false.
 - `borderless` — HTML page only: hide the page borders.
 - `hideHeader` — HTML page only: hide the header bar.
@@ -951,6 +951,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 - `hidePreview` — HTML page only: hide the preview pane.
 - `hideFooter` — HTML page only: hide the footer.
 - `embedBg` — HTML page only: transparent lets the background of the embedding page show through.
+- `backend` — Backend ID: the metadata of the path on that remote backend instead of a local path _(on `GET /api/v1/files/stat/{path}`)_
 - `path` — File path to touch _(on `PUT /{path}?touch`)_
 - `touch` — Flag to indicate touch operation
 - `owner` — Create-time owner (user[:group]/uid[:gid]) for newly-created destination parent directories on a JSON-body move_to. Requires the deployment to have enabled chown and to permit the owner you name; cannot be root. The moved item keeps its own owner. Absent → server default. _(on `PATCH /api/v1/files/{path}`)_
@@ -958,8 +959,9 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 - `chown` — Set file ownership (e.g., ?chown=user:group or ?chown=user) _(on `PATCH /api/v1/files/{path}`)_
 - `backend` — Backend ID for remote upload _(on `PUT /api/v1/files/{path}`)_
 - `append` — Append body to end of existing file (create if missing) instead of overwriting
-- `chmod` — Permission bits the local file ends with, in octal (`644`, `0600`, `0o755`, `000`), whatever the server's umask; the response echoes them in `mode`. Requires both upload and chmod to be enabled (403 otherwise). setuid, setgid and sticky bits are refused, as are values above 777. Refused with 400 together with `backend` or `append`, and when the path names something other than a regular file (a directory, a pipe, a device, a socket). Every refusal comes before the body is read: nothing is created or changed. _(on `PUT /api/v1/files/{path}`)_
+- `chmod` — Permission bits the local file ends with, in octal (`644`, `0600`, `0o755`, `000`), whatever the server's umask; the response gives them in `mode`, read back from the file. Where the filesystem keeps no permission bits of its own (a mount of a remote storage without them), the upload is answered 409 PERMISSIONS_NOT_APPLIED instead: nothing is changed when the bits asked for are narrower than the file's, and otherwise the body is written whole under the file's bits. Requires both upload and chmod to be enabled (403 otherwise). setuid, setgid and sticky bits are refused, as are values above 777. Refused with 400 together with `backend` or `append`, and when the path names something other than a regular file (a directory, a pipe, a device, a socket). Each of these refusals comes before the body is read: nothing is created or changed. _(on `PUT /api/v1/files/{path}`)_
 - `owner` — Create-time owner (user[:group]/uid[:gid]) for a newly-created file. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. Overwrites/appends to an existing file preserve its owner. Absent → server default. _(on `PUT /api/v1/files/{path}`)_
+- `X-Expected-Length` — The length of the whole body in bytes, for a body streamed without Content-Length. A body that ends before this many bytes, or runs past them, is refused with 400 and nothing is written or appended: the file stays as it was. Send it whenever the length is known: some HTTP/2 clients end a request's body normally when they are aborted, so without it a cut-off body can look complete. Over the upload size limit it is refused with 413 before the body is read.
 - `If-Match` — Local files only; with backend it is refused with 400. Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. _(on `PUT /api/v1/files/{path}`)_
 - `If-None-Match` — Local files only; with backend it is refused with 400. '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. _(on `PUT /api/v1/files/{path}`)_
 - `If-Unmodified-Since` — Local files only; with backend it is refused with 400. Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. _(on `PUT /api/v1/files/{path}`)_
@@ -1016,7 +1018,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 
 - `path` — Filter entries by path prefix
 - `op` — Filter by operation type(s), comma-separated (e.g. 'write,delete')
-- `since` — Filter entries since timestamp (RFC3339 or Unix ms)
+- `since` — Return entries at or after this time: an RFC3339 timestamp (Z or an offset, any fractional precision), or a Unix timestamp in seconds or milliseconds. A number below 100000000000 is read as seconds. Omitted or empty, no time filter applies; any other value is refused with 400.
 - `limit` — Max entries to return
 - `after_id` — Cursor: return entries with id > after_id
 
@@ -1116,7 +1118,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 - `colorScheme` — HTML page only: light or dark colour scheme. Without it the page follows the system setting.
 - `font` — HTML page only: monospace font of the editor and listing.
 - `fontSize` — HTML page only: editor font size in pixels. Default 14.
-- `embedderOrigin` — HTML page only: origin of the page that embeds this one, such as https://app.example.com. The page then accepts theme and layout messages from that origin and tells it when it is ready. Only https origins, and http on localhost or 127.0.0.1, are accepted.
+- `embedderOrigin` — HTML page only: origin of the page that embeds this one, such as https://app.example.com. The page then accepts theme and layout messages from that origin and tells it when it is ready. Only https origins are accepted.
 - `chromeless` — HTML page only: hide the header, sidebar, preview, footer and borders at once. Each can be turned back on with its own parameter set to false.
 - `borderless` — HTML page only: hide the page borders.
 - `hideHeader` — HTML page only: hide the header bar.

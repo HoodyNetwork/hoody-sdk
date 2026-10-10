@@ -1,10 +1,12 @@
-> _**guided onboarding skill (agent-directed)** · ~6,852 tokens · hoody-sdk v1.0.0-beta.16_
+> _**guided onboarding skill (agent-directed)** · ~8,521 tokens · hoody-sdk v1.0.0-beta.17_
 
 # Hoody — Onboarding (a brief for the agent running this)
 
 **You are an agent. A person just asked you to onboard them onto Hoody.** This is not a document to read aloud — it's your director's brief. Your job is to *walk them through actually using Hoody*, doing the work for them via the API and explaining as you go. You have wide latitude in *how* you do it; what follows is the destination and the accurate steps to get there. Be warm, concrete, and brief. **Show, don't lecture — do the work, then hand them a link to click.**
 
 > **Can you make HTTP POST requests?** You'll need them at almost every step. If your only tool is GET-only fetch, stop and tell the user: *"To set this up for real I need a shell with `curl` or the Hoody SDK — want me to give you copy-paste commands instead?"* Don't fake your way through with GET-only calls; offer the copy-paste path and keep going from there.
+
+> **Online? Use HTTP.** In a web chat (ChatGPT, claude.ai, …) or a throwaway code sandbox that is not a Hoody container or the user's own computer, use the HTTP calls in every step below, never the `hoody` CLI: it isn't installed there, a login made there does not last, and it isn't the user's machine. Don't install it with npx or the install script either. The CLI is for Hoody containers (preinstalled) and the user's own computer; if unsure, run `command -v hoody`, and if it is missing, stay on HTTP.
 
 > **Golden rule for not getting stuck:** every step below has an expected slow moment or a known fallback. When something is slow, *say so warmly and wait* — don't retry blindly. When something genuinely fails, take the named fallback and keep moving. Never leave the user staring at silence, and never loop a rate-limited call.
 
@@ -57,39 +59,64 @@ Throughout: **keep asking in small batches, and prefer pick-one options over ope
 - **Per-container kit URLs** — `https://{P}-{C}-{kit}-{n}.{N}.containers.hoody.com` — the **URL itself is the credential**; just call it. (`{P}`=project id, `{C}`=container id, `{N}`=server name, from the container's details.)
 - The `agent` kit (host `…-agent-1.…`) works the same way — the kit URL is the credential; it needs **no** container claim or extra auth headers. (The **Hoody Agent browser GUI** on the same `-agent-1` host opens in a browser and signs the user in for the interactive UI; the HTTP API needs nothing beyond the kit URL.) The `bot` kit's management routes need no account token either, so gate its URL with proxy permissions.
 
-Keep the user's token in memory for the session; don't paste it into chat or anywhere public. **If any control-plane call returns 401, your token is missing or stale — re-run the login (Step 1) rather than retrying the failing call.**
+Keep the user's token in memory for the session; don't paste it into chat or anywhere public. **If any control-plane call returns 401, your token is missing or stale — sign them in again through the browser (Step 1) rather than retrying the failing call.**
 
 ---
 
-## Step 1 — Sign them up (right here, no website trip)
+## Step 1 — Sign them in through their own browser
 
-Collect, in one friendly batch: **email** and a **password** (at least 12 characters and at most 72 UTF-8 bytes, using at least 3 of: uppercase, lowercase, digit, symbol). A **region** is optional and is *validated against a live pool* — so either omit it (Hoody auto-picks by location) or first call `GET https://api.hoody.com/api/v1/auth/available-regions` and pass one returned as available. Then create the account:
+**Never ask for their password, a two-factor code or a token in chat.** They sign up and sign in on Hoody's own pages; you receive the session straight from the API.
 
-```bash
-curl -sX POST "https://api.hoody.com/api/v1/auth/signup" \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"them@example.com","password":"<your-password>"}'
-# add "region":"<one from available-regions>" only if they want to choose — a bad region 400s
-```
+**New to Hoody?** Ask them to open `https://api.hoody.com/auth/signup`, create the account there and click the verification link in their email, then tell you when they're done (mention the spam folder if a minute passes). **This is a hard pause: an account can't sign in until the link is clicked.** If the page says registration is closed, tell them plainly; people who already have an account can still sign in. (`https://hoody.com/signup` only joins a waitlist; it does not create an account.)
 
-Now the important part — **the account isn't active until they click the verification link in their email. This is a hard pause: you cannot log in until they've clicked it, so don't try.** So:
+**Then sign them in** (the full reference is § Login in `https://hoody.com/SKILLS/SKILL-HTTP.md`; if the `hoody` CLI is installed (a Hoody container or your own computer, never a web chat or throwaway sandbox), `hoody login --web --no-browser` does all of this and prints the link and code for you):
 
-1. Tell them plainly: *"I've created your account — check your inbox and click the verification link, then tell me when you're done."* **Then wait for them to confirm before doing anything else.** (Mention the spam folder if a minute passes.)
-2. If it never arrives, resend: `POST https://api.hoody.com/api/v1/auth/resend-verification` with `{"email":"…"}`. (Signup/resend are rate-limited — on a `429`, tell them you'll wait a moment, then retry once; **don't loop**. If it still doesn't show after a resend, don't get stuck: ask them to check spam and the address they typed, and resume at login once they have clicked the link. The marketing site's signup page only joins a waitlist; it does not create or verify an account.)
-3. Once they confirm, log them in and keep the token (login accepts **email or username**):
+Run these as two separate commands, so the user gets the link before you start polling. Each command stands alone: carry the values over by hand.
 
 ```bash
-curl -sX POST "https://api.hoody.com/api/v1/users/auth/login" \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"them@example.com","password":"<your-password>"}'
-# → grab .data.token  (a brand-new account has no 2FA, so there's no extra step)
+# Start: prints device_code, user_code, verification_uri_complete, interval and deadline (epoch seconds).
+curl -sS --max-time 20 -X POST https://api.hoody.com/api/v1/auth/device/code \
+  -H 'Content-Type: application/json' -d '{"client_name":"<your name>","client":"agent"}' \
+  | jq '.data + {deadline: ((now | floor) + .data.expires_in)}'
 ```
 
-Three branches to know here:
+Now give them the link and the code together: *"Open this link, check that the page shows code `<user_code>`, then sign in and approve. If you didn't ask me to sign you in, choose Don't authorize."* The page shows the `client_name` you sent and marks it as unverified, so name yourself plainly. Then poll; one run lasts at most a minute and prints one line. While it prints `pending INTERVAL=… NEXT=…`, run it again with those two values (on the first run `NEXT` is `0`). `NEXT` carries a wait across runs: an HTTP 429 (which waits the `Retry-After` the API sends) can push the next poll past the end of a run.
 
-- **Verification can return the token directly** — the verify step itself returns `data.token`, so if you orchestrated it you may already have the token and can skip this login.
-- **Login fails with "email not verified"** — they simply haven't clicked the link yet; this is the single most common first-run snag, and it's not an error on your end. Say so gently, wait, and retry.
-- **Signup returns `403` (administratively disabled)** — login is unaffected; already-verified users can still sign in. Don't retry the API. Tell them registration is currently closed; `https://hoody.com/signup` only joins the waitlist and does not create an account. Resume at login once they have an activated account.
+```bash
+( DEVICE='<device_code>'; INTERVAL='<interval>'; DEADLINE='<deadline>'; NEXT='<next, 0 on the first run>'
+  STOP=$(( $(date +%s) + 50 )); RESULT=
+  while :; do
+    NOW=$(date +%s); [ "$NEXT" -gt 0 ] || NEXT=$((NOW + INTERVAL))
+    [ "$NEXT" -lt "$DEADLINE" ] || { RESULT=expired; break; }
+    [ "$NEXT" -le "$STOP" ] || break
+    [ "$NEXT" -le "$NOW" ] || sleep $((NEXT - NOW))
+    NOW=$(date +%s); [ "$NOW" -lt "$DEADLINE" ] || { RESULT=expired; break; }
+    [ "$NOW" -le "$STOP" ] || break
+    NEXT=0
+    R=$(curl -sS --max-time 10 -w '\n%{http_code} %header{retry-after}' -X POST https://api.hoody.com/api/v1/auth/device/token \
+      -H 'Content-Type: application/json' -d "{\"device_code\":\"$DEVICE\"}") || continue
+    TAIL=${R##*$'\n'}; CODE=${TAIL%% *}; WAIT=${TAIL#* }; BODY=${R%$'\n'*}
+    STATE=$(jq -r '.data.error? // empty' <<<"$BODY" 2>/dev/null)
+    case "$CODE:$STATE" in
+      400:authorization_pending) ;;
+      400:slow_down) INTERVAL=5 ;;
+      429:*) case "$WAIT" in ''|*[!0-9]*) WAIT=300 ;; esac; NEXT=$(( $(date +%s) + WAIT )) ;;
+      200:*) RESULT="signed in $(jq -c '{token: .data.token, refreshToken: .data.refreshToken}' <<<"$BODY")"; break ;;
+      *) RESULT="stopped: HTTP $CODE ${STATE:-$(head -c 200 <<<"$BODY")}"; break ;;
+    esac
+  done
+  echo "${RESULT:-pending INTERVAL=$INTERVAL NEXT=$NEXT}" )
+```
+
+On success the result holds `token` (use it as `$TOKEN` below) and `refreshToken`. Keep them for this session only: never repeat them in chat, never write them to a file yourself (the `hoody` CLI keeps its own session), never mint a long-lived token just for onboarding. The code lasts 15 minutes; After `slow_down` the poll interval is a fixed 5 seconds; it does not grow.
+
+Branches to know:
+
+- **`stopped: HTTP 400 access_denied`** — they chose Don't authorize. Respect it; ask before starting again.
+- **`expired`, or `stopped: HTTP 400 expired_token`** — the 15 minutes ran out (or the code was already used). Start again and give them the new link.
+- **The page says the email isn't verified** — they still need to click the link in their inbox, then sign in on the same page again. Start a fresh sign-in only if the page says the code expired.
+- **Too many requests (`429`)** — the poll already waits and carries on; never run two polls or sign-ins at once.
+- **`404` from the start call, or `stopped: HTTP 404`** — browser sign-in is off on this deployment. Only then, and only if they choose it, fall back to a password login they run themselves: in their own terminal, `hoody login --password` prompts for their email or username and then their password without echoing it, and keeps the session in that machine's CLI config. If you can't use their terminal, tell them sign-in can't finish from chat. Never collect the password in chat or ask them to paste a token.
 
 **Tell them what just happened:** they now own a Hoody account, and Hoody is normally provisioning a free server + first container for them in the background, at no cost — no "rent a server" step. On a deployment that requires an invite code for the free server, that step waits for the code (Step 2 covers it). We'll confirm it's ready in the next step. That's the no-friction promise in action.
 
@@ -126,31 +153,62 @@ If the redeem answers `200` with `data.claim_blocked_reason: "pool_empty"`, the 
 
 No invite code? Stop here and tell them plainly that the free server is invite-only right now; don't keep polling.
 
-**If the container shows up but its status is `stopped` (or `paused`)** — waiting won't fix that; start it yourself, then resume polling until `running`:
+**If `retry-setup` answers `200` with `data.blocked_reason: "support_required"`**, stop polling: Hoody support has to restore their default container before setup can continue, and calling `retry-setup` again will not change that. Tell them so plainly.
+
+**If the container shows up but its status is `stopped` or `paused`** — waiting won't fix that; do it yourself, then resume polling until `running`. A `stopped` container is started; a `paused` one is resumed (a container must be stopped to be started):
 
 ```bash
+# status "stopped":
 curl -sX POST "https://api.hoody.com/api/v1/containers/$C/start" \
+  -H "Authorization: Bearer $TOKEN"
+# status "paused" — use this instead:
+curl -sX POST "https://api.hoody.com/api/v1/containers/$C/resume" \
   -H "Authorization: Bearer $TOKEN"
 # fresh boots can take 10–60s to reach "running" — keep polling, reassure them
 ```
 
 **Do not start the kit-URL steps below until you have `C`, `P`, `N` and `status:"running"`.** Every later URL is built from these three values, so a missing one here means broken links later — it's worth the wait.
 
+**Hand over the links, as a showcase of what their new computer comes with.** Whenever a container is new to the user (this first one, and every one you create for them later), send them one friendly chat message that shows what is already on it. Make it easy to scan: one line per program, each with an emoji icon, a short plain name, one line on what they can do with it, and its link where it has a page to open. Build each link from `P`, `C`, `N`; a link opens its web page at `/`. Keep it short and free of jargon: say "computer", not "container" or "kit", and leave out slugs, ports and API words. Reword the lines to the person you read in Step 0, but keep the icons and the order.
+
+Open with the programs that have a page of their own:
+
+- 🖥️ **Desktop**: a full graphical computer in a browser tab, like sitting at a real screen. `https://{P}-{C}-desktop-1.{N}.containers.hoody.com/` (`display-1` is the plain viewer of one display)
+- ⌨️ **Terminal**: type commands on your computer, right in the browser. `https://{P}-{C}-terminal-1.{N}.containers.hoody.com/`
+- 🌐 **Browser**: a real web browser that runs in the cloud; its page links to its screen and developer tools. `https://{P}-{C}-browser-1.{N}.containers.hoody.com/`
+- 📁 **Files**: see, upload and download everything stored on your computer. `https://{P}-{C}-files-1.{N}.containers.hoody.com/`
+- 🤖 **Agent**: an AI helper that works inside your computer (Step 3). `https://{P}-{C}-agent-1.{N}.containers.hoody.com/`
+- 💻 **Code editor**: VS Code in a tab, for writing and running code. `https://{P}-{C}-code-1.{N}.containers.hoody.com/api/v1/code`
+- 📝 **Notes**: notebooks and pages for your thoughts and plans. `https://{P}-{C}-notes-1.{N}.containers.hoody.com/`
+- ⏰ **Scheduled jobs**: have your computer do something every hour, every day or every Monday on its own, set up from a simple page. `https://{P}-{C}-cron-1.{N}.containers.hoody.com/`
+- 🗄️ **Databases**: SQLite databases ready for your apps and data, with a page to look at tables and run queries. `https://{P}-{C}-sqlite-1.{N}.containers.hoody.com/`
+- 🔔 **Notifications**: recent and live alerts from your computer. `https://{P}-{C}-n-1.{N}.containers.hoody.com/` (the slug is `n`, not `notifications`)
+
+Then the ones that work in the background, without a page to open (no link; say you or the Agent can set them up on request):
+
+- ⚡ **Scripts as web endpoints**: save a script and it becomes a web address that anyone you share it with can call.
+- 🔗 **Public links**: put a website or app you run on it online at its own web address.
+- ✨ **Built-in AI**: a free AI model that the apps on your computer can use, with no key and no sign-up.
+
+Close with one line that invites them to open the Desktop or the Agent first.
+
+Remind them each link is also their access, so they should keep the links private. If the `hoody` CLI is installed (a Hoody container or your own computer), `hoody open <terminal|notifications|desktop|browser|files|agent> --url` prints one for the selected container; with the SDK, `hoody.getKitUrl('<kit>', container)` builds it.
+
 **Explain it simply:** *"This is your machine. It's a full Linux computer — it has a file system, can run programs and websites, and it stays on. Everything we do next happens inside it, and you reach each part by a link."*
 
-**Optional, and a lovely "aha" — put their files right on their own computer.** Don't wait to be asked — *proactively propose it*: e.g. *"Want me to make your container's files show up as a regular drive on your own computer, like a USB stick?"* The files kit speaks **WebDAV** at `https://{P}-{C}-files-1.{N}.containers.hoody.com/` — **Windows:** Map network drive (built-in WebClient service; ~50 MB per-file limit); **macOS:** Finder → Go → Connect to Server; **Linux:** `davfs2`; **any OS / scripted:** `hoody mount <containerId> <localDir>` (needs the `hoody` CLI — `curl -fsSL https://install.hoody.com | sh` — plus `rclone` on PATH; flags `--read-only`, `--background`). On most setups the URL alone works; **if the mount prompts for credentials or 401s**, the proxy is gating it — use `hoody mount … --auth-token-file <file>` or just use the Hoody Agent file browser (Step 3). Offer it, keep it optional, and move on rather than troubleshooting at length. (Full prerequisites/auth live in the `files` skill.)
+**Optional, and a lovely "aha" — put their files right on their own computer.** Don't wait to be asked — *proactively propose it*: e.g. *"Want me to make your container's files show up as a regular drive on your own computer, like a USB stick?"* The files kit speaks **WebDAV** at `https://{P}-{C}-files-1.{N}.containers.hoody.com/` — **Windows:** Map network drive (built-in WebClient service; ~50 MB per-file limit); **macOS:** Finder → Go → Connect to Server; **Linux:** `davfs2`; **any OS / scripted, on their own computer:** `hoody mount "https://{P}-{C}-files-1.{N}.containers.hoody.com/" "<localDir>"` (needs the `hoody` CLI — `curl -fsSL https://install.hoody.com | sh` — plus `rclone` on PATH; passing the Files URL needs no account lookup and no extra CLI login; optional flags: `--read-only`, and on Linux/macOS `--background`; on Windows keep the mount running in a foreground terminal, and the CLI prints what to install if the filesystem driver is missing). On most setups the URL alone works; **if the mount prompts for credentials or 401s**, the proxy is gating it — use `hoody mount … --auth-token-file <file>` or just use the Files page from Step 2. Offer it, keep it optional, and move on rather than troubleshooting at length. (Full prerequisites/auth live in the `files` skill.)
 
 ---
 
 ## Step 3 — Hoody Agent (browser GUI): the best place to begin
 
-This is the single best on-ramp, so make it prominent. **The Hoody Agent browser GUI is Hoody's full GUI for operating everything** — files, a code editor, AI coding agents, sessions — and it's the friendliest way for a human to *see* their Hoody. Hand them the URL (fill in `P`/`C`/`N`):
+This is the single best on-ramp, so make it prominent. **The Hoody Agent page is the AI agent's interactive interface in a browser terminal** (opening it starts the agent if needed), and it's the friendliest way for a human to hand work to their Hoody. Hand them the URL (fill in `P`/`C`/`N`):
 
 ```
 https://{P}-{C}-agent-1.{N}.containers.hoody.com
 ```
 
-Tell them: *"Open this in your browser and log in with the account you just made. This is your Hoody desktop — from here you can browse files, edit code, and even hand tasks to an AI agent that works right inside your machine. It'll ask you to log in — keep this link private (don't post it publicly)."* They don't deal with tokens or setup — logging in wires everything up automatically. **If it asks them to log in and seems to "do nothing" after, have them wait a beat or refresh the page once.**
+Tell them: *"Open this in your browser and log in with the account you just made. This is your AI agent — from here you can hand tasks to an agent that works right inside your machine. To browse files, use the Files link; to edit code, use the Code editor link from the list above. It'll ask you to log in — keep this link private (don't post it publicly)."* They don't deal with tokens or setup — logging in wires everything up automatically. **If it asks them to log in and seems to "do nothing" after, have them wait a beat or refresh the page once.**
 
 (For a developer, add: the container's primitives — terminal, files, exec, browser, etc. — are all fully programmatic via the SDK/HTTP kits; the GUI is just one client of those same APIs.)
 

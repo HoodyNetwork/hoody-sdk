@@ -1,4 +1,4 @@
-> _**SDK skill · `watch` namespace** · ~8,709 tokens · hoody-sdk v1.0.0-beta.16_
+> _**SDK skill · `watch` namespace** · ~8,739 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `watch` — Linux inotify file-change streams with replay history
 
@@ -69,7 +69,7 @@ List with `client.watch.watchers.list`, inspect with `client.watch.watchers.get`
 - Default limits, which the kit's command-line flags can change: 128 watchers/kit, 32 paths/watcher, 64 stream clients/watcher, replay buffer of 100 000 events or 16 MiB per watcher (whichever is hit first). `history_size` on create overrides the event count per watcher; values under 32 are raised to 32 and there is no upper cap, so the 16 MiB memory limit is the effective bound
 - Watcher ids are UUIDs; a path segment that is not a UUID is rejected with `400` before the route runs
 - `since_id` and `since_timestamp` mutually exclusive — both = 400 `INVALID_CURSOR`
-- A cursor older than the retained history returns 409 `HISTORY_GAP`. For `since_id` that means `since_id > 0` and `since_id + 1` is below the oldest retained id, so `since_id=0` never gaps. For `since_timestamp` it means the timestamp is earlier than the oldest retained event, which is common on a young or quiet watcher ("the last 5 minutes" of a watcher created 2 minutes ago gaps as soon as it has one event). An empty history never gaps for `since_id` or `since_timestamp`; an `after_id` walk (next bullet) can still gap on an empty history, when an event after its cursor was evicted or was too large to keep.
+- 409 `HISTORY_GAP` means an event after your cursor is lost: it was evicted from the replay history, or it was too large to keep. The test is exact for every cursor (`since_id`, `since_timestamp`, `after_id`): a cursor older than the oldest retained event does not gap by itself, so "the last 5 minutes" of a watcher created 2 minutes ago returns everything it has. `since_id=0` means "everything retained" and never gaps.
 - Walking history page by page: pass `after_id` (the previous response's `next_after_id`; the response also carries `has_more`). If an event you have not read yet was evicted between two requests, the next one fails with 409 `HISTORY_GAP` instead of skipping it. A `page` walk counts from the oldest retained event, so an eviction between pages skips events silently. `since_id`, `since_timestamp` and `page` are ignored when `after_id` is set. `events.listAll` and `events.listIterator` walk by `after_id`, starting from the numeric `after_id` you pass, if any.
 - `since_timestamp` accepts RFC3339, unix seconds, or millis (switches to ms when `|n| >= 100_000_000_000`)
 - WS message cap 64 KiB by default; the server sends JSON text frames only, ignores text and binary frames from the client, pings every 20 s and disconnects on a missed pong
@@ -82,7 +82,7 @@ List with `client.watch.watchers.list`, inspect with `client.watch.watchers.get`
 - `400 INVALID_CURSOR` — both cursor fields, or unparseable timestamp
 - `404 WATCHER_NOT_FOUND` — UUID syntactically valid but no watcher; also raised pre-upgrade on stream endpoints
 - `409 LIMIT_EXCEEDED` — more than 32 `paths` in one watcher, or 128 watchers already live on the container
-- `409 HISTORY_GAP` — cursor older than oldest retained; body `details` carries `oldest_available_id` / `newest_available_id`
+- `409 HISTORY_GAP` — an event after the cursor was evicted or too large to keep; body `details` carries `oldest_available_id` / `newest_available_id`
 - `429 MAX_CLIENTS_REACHED` — >64 concurrent SSE+WS on one watcher; capacity incremented after checks pass (no slot leak)
 - `500 WATCHER_START_FAILED` — the kit could not start the inotify watch for a new watcher
 - `503 SHUTTING_DOWN` — the kit is stopping: `events.stream`/`events.connect` and `watchers.create` return it. Watchers are removed at shutdown, so reads of a watcher or its history return 404 `WATCHER_NOT_FOUND` instead
@@ -125,7 +125,7 @@ console.log(view.data!.stats.events_seen);
 
 **Goal:** subscribe to live events; on disconnect, replay everything missed.
 
-**Step 1 — open the SSE stream.** Each frame the SDK yields carries `event` (`file_event` or `lag`), `seq` (the event id) and `raw` (the JSON payload as text). The `id` is monotonic; persist it as your resume cursor.
+**Step 1 — open the SSE stream.** Each frame the SDK yields carries `event` (`file_event`, `lag` or `end`) and `raw` (the JSON payload as text); `seq` is set when the frame's `id:` is numeric, as it is on `file_event`. An `end` frame (reason `watcher_deleted` or `shutdown`) means the watcher no longer exists: stop, do not reconnect. The `id` is monotonic; persist it as your resume cursor.
 
 ```typescript
 // streamSse resolves to an async iterable of SSE frames; iterate it to live-tail.
@@ -140,13 +140,13 @@ for await (const frame of stream) {
 }
 ```
 
-**Step 2 — reconnect with `since_id`.** Server replays from the buffer; if the buffer rolled past your cursor you get **HTTP 409 `HISTORY_GAP`** with `details` (a JSON-encoded string) holding `oldest_available_id` / `newest_available_id` / `requested_cursor`. Treat that as data loss and rebuild from a fresh listing.
+**Step 2 — reconnect with `since_id`.** Server replays from the buffer; if an event after your cursor was evicted you get **HTTP 409 `HISTORY_GAP`** with `details` (a JSON-encoded string) holding `oldest_available_id` / `newest_available_id` / `requested_cursor`. Treat that as data loss and rebuild from a fresh listing.
 
 ```typescript
 // Resume from the last id processed, page by page, with after_id: it answers 409
 // HISTORY_GAP when any event after the cursor was lost (evicted, or too large to
-// keep), where since_id would skip it silently. On a 409, restart once from
-// since_id=0 (which never gaps) to re-read everything still retained.
+// keep). On a 409, restart once from since_id=0 (which never gaps) to re-read
+// everything still retained.
 let cursor: { since_id?: number; after_id?: number } = { after_id: lastId };
 let recovered = false;
 for (;;) {
@@ -247,7 +247,7 @@ If the new configuration cannot be started, the request fails with 500 and the w
 
 ### 9. Tear down on shutdown + verify events stop
 
-**Goal:** clean up. After delete, both `GET /watchers/{id}` and `/events` return **404 `WATCHER_NOT_FOUND`**, and any open SSE/WS sockets close. The DELETE response body is `{ id, deleted: true }`.
+**Goal:** clean up. After delete, both `GET /api/v1/watch/watchers/{id}` and `/api/v1/watch/watchers/{id}/events` return **404 `WATCHER_NOT_FOUND`**, and any open SSE/WS sockets close. The DELETE response body is `{ id, deleted: true }`.
 
 ```typescript
 await client.watch.watchers.delete(wid);
@@ -257,23 +257,17 @@ catch (e: any) { /* e.status === 404, e.code === 'WATCHER_NOT_FOUND' */ }
 
 ### 10. Recent history without a stream — `since_timestamp` for one-shot tail
 
-**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. If the oldest retained event is newer than the timestamp (a watcher younger than 5 minutes, or a buffer that has rolled over), the call returns **409 `HISTORY_GAP`**. That only means the history does not reach back that far: every retained event is newer than the timestamp, so read them all from `since_id=0`. One call returns at most 200 events; walk further pages with `after_id` set to the last id received, not `since_id`: `since_id` only checks the oldest retained id, so it misses an event evicted, or too large to keep, between two pages without an error. A 409 on one of those later `after_id` pages means such an event was lost while paging, so the result is incomplete. Treat it as a failure and run the recovery again from the start.
+**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. A watcher younger than 5 minutes is fine: the call returns every event it has. It answers **409 `HISTORY_GAP`** only when an event after the timestamp was lost (evicted, or too large to keep), so the result would be incomplete. One call returns at most 200 events; walk further pages with `after_id` set to the last id received, which answers 409 the same way when an event after it was lost while paging. Treat any 409 as a failure: the history for that window is incomplete.
 
 ```typescript
 const events: any[] = [];
-let cursor: { since_timestamp?: string; since_id?: number; after_id?: number } = {
+let cursor: { since_timestamp?: string; after_id?: number } = {
   since_timestamp: new Date(Date.now() - 5 * 60_000).toISOString(),
 };
 for (;;) {
-  let items: any[];
-  try {
-    items = ((await client.watch.events.list(wid, { ...cursor, limit: 200 })).data as any)?.items ?? [];
-  } catch (e: any) {
-    // 409 HISTORY_GAP on the timestamp query: every retained event is newer than
-    // the timestamp, so read them all (since_id=0 never gaps).
-    if (e.status === 409 && cursor.since_timestamp) { cursor = { since_id: 0 }; continue; }
-    throw e; // includes a 409 on a later after_id page: history incomplete, run again
-  }
+  // A 409 HISTORY_GAP throws: an event after the cursor was lost, so the history
+  // for this window is incomplete.
+  const items: any[] = ((await client.watch.events.list(wid, { ...cursor, limit: 200 })).data as any)?.items ?? [];
   events.push(...items);
   if (items.length < 200) break;
   cursor = { after_id: items[items.length - 1].id }; // next page: after_id detects unread evictions
@@ -302,7 +296,7 @@ client.watch.events.connect(id: string, options?: { since_id?: number | null; si
 | `since_id` | `number \| null` | query | No | Replay events strictly after this event id. |
 | `since_timestamp` | `string \| null` | query | No | Replay events strictly after this timestamp. Accepted formats: RFC3339 (e.g. 2026-02-11T15:30:00Z); Unix seconds (e.g. 1739287800); Unix milliseconds (e.g. 1739287800123) |
 
-**Returns:** `Promise<WatchStreamWatcherEventsWsWebSocket>` — an unconnected wrapper: register handlers, then `await ws.connect()`  |  **HTTP:** `GET /watchers/{id}/events/ws`
+**Returns:** `Promise<WatchStreamWatcherEventsWsWebSocket>` — an unconnected wrapper: register handlers, then `await ws.connect()`  |  **HTTP:** `GET /api/v1/watch/watchers/{id}/events/ws`
 
 ---
 
@@ -321,7 +315,7 @@ client.watch.events.list(id: string, options?: { since_id?: number | null; since
 | `limit` | `number \| null` | query | No | Items per page (1-200). |
 | `after_id` | `number \| null` | query | No | Continue a walk: return the `limit` events after this event id (the previous response's `next_after_id`). `since_id`, `since_timestamp` and `page` are ignored when it is set. If any event after it has been evicted from history since, the request fails with `409 HISTORY_GAP` rather than skipping it. |
 
-**Returns:** `Promise<WatchEventsListResponse>`  |  **HTTP:** `GET /watchers/{id}/events`
+**Returns:** `Promise<WatchEventsListResponse>`  |  **HTTP:** `GET /api/v1/watch/watchers/{id}/events`
 **CLI:** `hoody watch events list`
 
 ---
@@ -341,7 +335,7 @@ client.watch.events.listAll(id: string, options?: { since_id?: number | null; si
 | `limit` | `number \| null` | query | No | Items per page (1-200). |
 | `after_id` | `number \| null` | query | No | Continue a walk: return the `limit` events after this event id (the previous response's `next_after_id`). `since_id`, `since_timestamp` and `page` are ignored when it is set. If any event after it has been evicted from history since, the request fails with `409 HISTORY_GAP` rather than skipping it. |
 
-**Returns:** `Promise<(NonNullable<WatchEventsListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.items`, all pages collected (`list()` fetches one page). Each item is `watch_FileEvent`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /watchers/{id}/events`
+**Returns:** `Promise<(NonNullable<WatchEventsListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.items`, all pages collected (`list()` fetches one page). Each item is `watch_FileEvent`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/watch/watchers/{id}/events`
 **CLI:** `hoody watch events list`
 
 ---
@@ -361,7 +355,7 @@ client.watch.events.listIterator(id: string, options?: { since_id?: number | nul
 | `limit` | `number \| null` | query | No | Items per page (1-200). |
 | `after_id` | `number \| null` | query | No | Continue a walk: return the `limit` events after this event id (the previous response's `next_after_id`). `since_id`, `since_timestamp` and `page` are ignored when it is set. If any event after it has been evicted from history since, the request fails with `409 HISTORY_GAP` rather than skipping it. |
 
-**Returns:** `AsyncGenerator<(NonNullable<WatchEventsListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.items` per step, next page fetched on demand (`list()` fetches one page). Each item is `watch_FileEvent`.  |  **HTTP:** `GET /watchers/{id}/events`
+**Returns:** `AsyncGenerator<(NonNullable<WatchEventsListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.items` per step, next page fetched on demand (`list()` fetches one page). Each item is `watch_FileEvent`.  |  **HTTP:** `GET /api/v1/watch/watchers/{id}/events`
 **CLI:** `hoody watch events list`
 
 ---
@@ -378,7 +372,7 @@ client.watch.events.stream(id: string, options?: { since_id?: number | null; sin
 | `since_id` | `number \| null` | query | No | Replay events strictly after this event id. |
 | `since_timestamp` | `string \| null` | query | No | Replay events strictly after this timestamp. Accepted formats: RFC3339 (e.g. 2026-02-11T15:30:00Z); Unix seconds (e.g. 1739287800); Unix milliseconds (e.g. 1739287800123) |
 
-**Returns:** `Promise<IEventStream>`  |  **HTTP:** `GET /watchers/{id}/events/sse`
+**Returns:** `Promise<IEventStream<Record<never, string>, ITypedStreamEvent<WatchEventsStreamFrames>>>`  |  **HTTP:** `GET /api/v1/watch/watchers/{id}/events/sse`
 **CLI:** `hoody watch events stream`
 
 ---
@@ -401,14 +395,15 @@ client.watch.kit.getHealth()
 #### `create` — Create Watcher
 
 ```typescript
-client.watch.watchers.create(data: WatchWatchersCreateRequest)
+client.watch.watchers.create(data: WatchWatchersCreateRequest, options?: { IdempotencyKey?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
+| `IdempotencyKey` | `string` | header `Idempotency-Key` | No | Makes the create safe to retry. A create with a key used in the last 10 minutes with the same body returns the watcher that first create made (200) instead of a second watcher; with another body it is refused (409 `IDEMPOTENCY_KEY_REUSED`). Use a new key for each watcher, such as a random UUID. At most 256 characters. |
 | `data` | `WatchWatchersCreateRequest` | body | Yes | Shape: `watch_CreateWatcherRequest` under Body schemas. |
 
-**Returns:** `Promise<WatchWatchersCreateResponse>`  |  **HTTP:** `POST /watchers`
+**Returns:** `Promise<WatchWatchersCreateResponse>`  |  **HTTP:** `POST /api/v1/watch/watchers`
 **CLI:** `hoody watch create`
 
 ---
@@ -423,7 +418,7 @@ client.watch.watchers.delete(id: string)
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Watcher id |
 
-**Returns:** `Promise<WatchWatchersDeleteResponse>`  |  **HTTP:** `DELETE /watchers/{id}`
+**Returns:** `Promise<WatchWatchersDeleteResponse>`  |  **HTTP:** `DELETE /api/v1/watch/watchers/{id}`
 **CLI:** `hoody watch delete`
 
 ---
@@ -438,7 +433,7 @@ client.watch.watchers.get(id: string)
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Watcher id |
 
-**Returns:** `Promise<WatchWatchersGetResponse>`  |  **HTTP:** `GET /watchers/{id}`
+**Returns:** `Promise<WatchWatchersGetResponse>`  |  **HTTP:** `GET /api/v1/watch/watchers/{id}`
 **CLI:** `hoody watch get`
 
 ---
@@ -454,7 +449,7 @@ client.watch.watchers.list(options?: { page?: number | null; limit?: number | nu
 | `page` | `number \| null` | query | No | Page number (1-based). |
 | `limit` | `number \| null` | query | No | Items per page (1-200). |
 
-**Returns:** `Promise<WatchWatchersListResponse>`  |  **HTTP:** `GET /watchers`
+**Returns:** `Promise<WatchWatchersListResponse>`  |  **HTTP:** `GET /api/v1/watch/watchers`
 **CLI:** `hoody watch list`
 
 ---
@@ -470,7 +465,7 @@ client.watch.watchers.listAll(options?: { page?: number | null; limit?: number |
 | `page` | `number \| null` | query | No | Page number (1-based). |
 | `limit` | `number \| null` | query | No | Items per page (1-200). |
 
-**Returns:** `Promise<(NonNullable<WatchWatchersListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.items`, all pages collected (`list()` fetches one page). Each item is `watch_WatcherResponse`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /watchers`
+**Returns:** `Promise<(NonNullable<WatchWatchersListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.items`, all pages collected (`list()` fetches one page). Each item is `watch_WatcherResponse`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/watch/watchers`
 **CLI:** `hoody watch list`
 
 ---
@@ -486,7 +481,7 @@ client.watch.watchers.listIterator(options?: { page?: number | null; limit?: num
 | `page` | `number \| null` | query | No | Page number (1-based). |
 | `limit` | `number \| null` | query | No | Items per page (1-200). |
 
-**Returns:** `AsyncGenerator<(NonNullable<WatchWatchersListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.items` per step, next page fetched on demand (`list()` fetches one page). Each item is `watch_WatcherResponse`.  |  **HTTP:** `GET /watchers`
+**Returns:** `AsyncGenerator<(NonNullable<WatchWatchersListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.items` per step, next page fetched on demand (`list()` fetches one page). Each item is `watch_WatcherResponse`.  |  **HTTP:** `GET /api/v1/watch/watchers`
 **CLI:** `hoody watch list`
 
 ---
@@ -502,7 +497,7 @@ client.watch.watchers.update(id: string, data: WatchWatchersUpdateRequest)
 | `id` | `string` | path | Yes | Watcher id |
 | `data` | `WatchWatchersUpdateRequest` | body | Yes | Shape: `watch_UpdateWatcherRequest` under Body schemas. |
 
-**Returns:** `Promise<WatchWatchersUpdateResponse>`  |  **HTTP:** `PATCH /watchers/{id}`
+**Returns:** `Promise<WatchWatchersUpdateResponse>`  |  **HTTP:** `PATCH /api/v1/watch/watchers/{id}`
 **CLI:** `hoody watch update`
 
 

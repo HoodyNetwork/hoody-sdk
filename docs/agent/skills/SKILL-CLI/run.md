@@ -1,4 +1,4 @@
-> _**CLI skill · `run` namespace** · ~6,997 tokens · hoody-sdk v1.0.0-beta.16_
+> _**CLI skill · `run` namespace** · ~7,002 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `run` — resolve apps to shell commands
 
@@ -36,8 +36,8 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 1. Search then pick
 
-1. `hoody run search [--page-size <page_size>] [--cursor <cursor>]` (this is the paged route: `page_size`, default 25, max 100, sets the page; `selector.limit` is ignored here) → `{ set_id, total_count, items[], next_cursor? }`.
-2. `hoody run resolve ...` → `shell_command`.
+1. `hoody run search --app <app> --page-size 25 -o json` (`page_size`, default 25, max 100, sets the page; `--cursor` for the next page) → `set_id`, `total_count`, `items`, `next_cursor`.
+2. `hoody run resolve --app <app> --set-id <set_id> --pick index --pick-index <N> -o json` → `shell_command`.
 
 ### 2. Preflight
 

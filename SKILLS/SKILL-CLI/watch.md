@@ -1,4 +1,4 @@
-> _**CLI skill · `watch` namespace** · ~4,892 tokens · hoody-sdk v1.0.0-beta.16_
+> _**CLI skill · `watch` namespace** · ~4,755 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `watch` — Linux inotify file-change streams with replay history
 
@@ -54,7 +54,7 @@ Bulk replay: `hoody watch events list` with `since_id`, one page per call; persi
 ### 4. WebSocket consumer
 
 1. Create the watcher as in workflow 1
-2. `GET /watchers/{id}/events/ws` (HTTP only; no CLI command) — the server pings every 20 s and closes the socket when the pong is missing; most WebSocket clients answer pings on their own
+2. `GET /api/v1/watch/watchers/{id}/events/ws` (HTTP only; no CLI command) — the server pings every 20 s and closes the socket when the pong is missing; most WebSocket clients answer pings on their own
 3. `{"type":"lag",...}` text frame = same handling as SSE lag
 
 ### 5. Inventory, reconfiguration and teardown
@@ -71,7 +71,7 @@ List with `hoody watch list`, inspect with `hoody watch get`, reconfigure in pla
 - Watcher ids are UUIDs; a path segment that is not a UUID is rejected with `400` before the route runs
 - `hoody watch get`, `hoody watch update`, `hoody watch delete`, `hoody watch events list` and `hoody watch events stream` name the watcher with `--id <watcherId>` (the UUID that `watch list -o json` shows), never with a positional argument.
 - `since_id` and `since_timestamp` mutually exclusive — both = 400 `INVALID_CURSOR`
-- A cursor older than the retained history returns 409 `HISTORY_GAP`. For `since_id` that means `since_id > 0` and `since_id + 1` is below the oldest retained id, so `since_id=0` never gaps. For `since_timestamp` it means the timestamp is earlier than the oldest retained event, which is common on a young or quiet watcher ("the last 5 minutes" of a watcher created 2 minutes ago gaps as soon as it has one event). An empty history never gaps for `since_id` or `since_timestamp`; an `after_id` walk (next bullet) can still gap on an empty history, when an event after its cursor was evicted or was too large to keep.
+- 409 `HISTORY_GAP` means an event after your cursor is lost: it was evicted from the replay history, or it was too large to keep. The test is exact for every cursor (`since_id`, `since_timestamp`, `after_id`): a cursor older than the oldest retained event does not gap by itself, so "the last 5 minutes" of a watcher created 2 minutes ago returns everything it has. `since_id=0` means "everything retained" and never gaps.
 - Walking history page by page: pass `after_id` (the previous response's `next_after_id`; the response also carries `has_more`). If an event you have not read yet was evicted between two requests, the next one fails with 409 `HISTORY_GAP` instead of skipping it. A `page` walk counts from the oldest retained event, so an eviction between pages skips events silently. `since_id`, `since_timestamp` and `page` are ignored when `after_id` is set.
 - `since_timestamp` accepts RFC3339, unix seconds, or millis (switches to ms when `|n| >= 100_000_000_000`)
 - WS message cap 64 KiB by default; the server sends JSON text frames only, ignores text and binary frames from the client, pings every 20 s and disconnects on a missed pong
@@ -84,10 +84,10 @@ List with `hoody watch list`, inspect with `hoody watch get`, reconfigure in pla
 - `400 INVALID_CURSOR` — both cursor fields, or unparseable timestamp
 - `404 WATCHER_NOT_FOUND` — UUID syntactically valid but no watcher; also raised pre-upgrade on stream endpoints
 - `409 LIMIT_EXCEEDED` — more than 32 `paths` in one watcher, or 128 watchers already live on the container
-- `409 HISTORY_GAP` — cursor older than oldest retained; body `details` carries `oldest_available_id` / `newest_available_id`
+- `409 HISTORY_GAP` — an event after the cursor was evicted or too large to keep; body `details` carries `oldest_available_id` / `newest_available_id`
 - `429 MAX_CLIENTS_REACHED` — >64 concurrent SSE+WS on one watcher; capacity incremented after checks pass (no slot leak)
 - `500 WATCHER_START_FAILED` — the kit could not start the inotify watch for a new watcher
-- `503 SHUTTING_DOWN` — the kit is stopping: `hoody watch events stream`/`GET /watchers/{id}/events/ws` (HTTP only; no CLI command) and `hoody watch create` return it. Watchers are removed at shutdown, so reads of a watcher or its history return 404 `WATCHER_NOT_FOUND` instead
+- `503 SHUTTING_DOWN` — the kit is stopping: `hoody watch events stream`/`GET /api/v1/watch/watchers/{id}/events/ws` (HTTP only; no CLI command) and `hoody watch create` return it. Watchers are removed at shutdown, so reads of a watcher or its history return 404 `WATCHER_NOT_FOUND` instead
 - Mid-stream `event: lag` (SSE) / `{"type":"lag",...}` (WS) — broadcast lagged AND replay buffer cannot fill gap; connection closed after lag frame
 
 ## Related namespaces
@@ -129,7 +129,7 @@ hoody --container "$C" watch get --id "$WID" -o json | jq '.stats'
 hoody --container "$C" watch events stream --id "$WID"
 ```
 
-**Step 2 — reconnect with `since_id`.** Server replays from the buffer; if the buffer rolled past your cursor you get **HTTP 409 `HISTORY_GAP`** with `details` (a JSON-encoded string) holding `oldest_available_id` / `newest_available_id` / `requested_cursor`. Treat that as data loss and rebuild from a fresh listing.
+**Step 2 — reconnect with `since_id`.** Server replays from the buffer; if an event after your cursor was evicted you get **HTTP 409 `HISTORY_GAP`** with `details` (a JSON-encoded string) holding `oldest_available_id` / `newest_available_id` / `requested_cursor`. Treat that as data loss and rebuild from a fresh listing.
 
 ```bash
 hoody --container "$C" watch events stream --id "$WID" --since-id "$LAST_ID"
@@ -154,14 +154,11 @@ A lag frame is `{"type":"lag", …}` (text); after it, the server closes the soc
 
 ```bash
 CURSOR=${CURSOR:-0}   # highest id already stored; 0 = everything retained
-# One call returns one page (at most 200 events). Follow next_after_id until has_more is false.
-R=$(hoody --container "$C" watch events list --id "$WID" --since-id "$CURSOR" --limit 200 -o json) || exit 1
-jq -c '.items[]' <<< "$R" >> /tmp/events.ndjson
-while [ "$(jq -r .has_more <<< "$R")" = true ]; do
-  R=$(hoody --container "$C" watch events list --id "$WID" \
-        --after-id "$(jq -r .next_after_id <<< "$R")" --limit 200 -o json) || exit 1   # 409 = replay incomplete
-  jq -c '.items[]' <<< "$R" >> /tmp/events.ndjson
-done
+# One call walks every page by after_id (up to 10,000 events); it fails on a 409 (replay incomplete).
+R=$(hoody --container "$C" watch events list --id "$WID" --since-id "$CURSOR" -o json) || exit 1
+jq -c '.items[]' <<< "$R" >> /tmp/events.ndjson || exit 1
+# has_more true = the walk hit its bound: run again from the last id stored.
+[ "$(jq -r .has_more <<< "$R")" = false ] || echo "more events: rerun from the last stored id" >&2
 ```
 
 ### 5. Filter by event kind — only writes, ignore creates / removes / metadata
@@ -207,7 +204,7 @@ If the new configuration cannot be started, the request fails with 500 and the w
 
 ### 9. Tear down on shutdown + verify events stop
 
-**Goal:** clean up. After delete, both `GET /watchers/{id}` and `/events` return **404 `WATCHER_NOT_FOUND`**, and any open SSE/WS sockets close. The DELETE response body is `{ id, deleted: true }`.
+**Goal:** clean up. After delete, both `GET /api/v1/watch/watchers/{id}` and `/api/v1/watch/watchers/{id}/events` return **404 `WATCHER_NOT_FOUND`**, and any open SSE/WS sockets close. The DELETE response body is `{ id, deleted: true }`.
 
 ```bash
 hoody --container "$C" watch delete --id "$WID"
@@ -216,13 +213,12 @@ hoody --container "$C" watch get    --id "$WID"   # exits non-zero
 
 ### 10. Recent history without a stream — `since_timestamp` for one-shot tail
 
-**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. If the oldest retained event is newer than the timestamp (a watcher younger than 5 minutes, or a buffer that has rolled over), the call returns **409 `HISTORY_GAP`**. That only means the history does not reach back that far: every retained event is newer than the timestamp, so read them all from `since_id=0`. One call returns at most 200 events; walk further pages with `after_id` set to the last id received, not `since_id`: `since_id` only checks the oldest retained id, so it misses an event evicted, or too large to keep, between two pages without an error. A 409 on one of those later `after_id` pages means such an event was lost while paging, so the result is incomplete. Treat it as a failure and run the recovery again from the start.
+**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. A watcher younger than 5 minutes is fine: the call returns every event it has. It answers **409 `HISTORY_GAP`** only when an event after the timestamp was lost (evicted, or too large to keep), so the result would be incomplete. One call returns at most 200 events; walk further pages with `after_id` set to the last id received, which answers 409 the same way when an event after it was lost while paging. Treat any 409 as a failure: the history for that window is incomplete.
 
 ```bash
-# One page only (at most 200 events). For more, repeat with --after-id set to the
-# previous response's next_after_id while has_more is true (see example 4).
+# One call walks every page (up to 10,000 events) and fails on a 409: history incomplete.
 hoody --container "$C" watch events list --id "$WID" \
-  --since-timestamp "$(date -u -d '5 minutes ago' +%FT%TZ)" --limit 200
+  --since-timestamp "$(date -u -d '5 minutes ago' +%FT%TZ)"
 ```
 
 When the filesystem reports a rename as a single event carrying both paths, the kit emits **one** `renamed` event with `(path=new, old_path=old)`. Renames the backend reports as separate from/to halves (e.g. across mount boundaries) fall through to one event per side without an `old_path` field (it is omitted, not null). Keep only events that have `old_path` to get the paired form.

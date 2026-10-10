@@ -1,4 +1,4 @@
-> _**HTTP skill · `pipe` namespace** · ~9,219 tokens · hoody-sdk v1.0.0-beta.16_
+> _**HTTP skill · `pipe` namespace** · ~9,193 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `pipe` — Zero-storage streaming HTTP transfers
 
@@ -139,7 +139,7 @@ A live sender streams at once, with nobody watching; any number of viewers (256 
   - Cancel frees the name. The page stores nothing in the browser and sends a nonce CSP with `connect-src 'self'`.
   - Pre-fill: `name` (≤1024; absent → random), `n` (1–256, invalid → 1), `text` (≤100000, selects text mode), `mode=file|text`, `filename` (≤255), `autostart=1` (text mode with a text only; never for a file; a refused name shows the reason instead). Over-long values are cut without splitting a character.
 - To hand a person a ready send link, build `<kit>/api/v1/pipe/?name=<name>&text=<text>` (add `&autostart=1` to send it on open, `&filename=<name.ext>`, `&n=N`). For a file, give `?name=<name>`: they pick the file and click Send.
-- WebSocket relay: `GET /{name}?ws` with an upgrade pairs exactly two peers. Messages pass both ways with their type and boundaries kept, at most 1 MiB each. The first peer's messages are held (4096 / 2 MiB) until the second arrives (`?wait`, default 300 s, then close `4408`). A slow reader more than 2 MiB behind closes the pair with `1013`. Close codes 1000-1003, 1007-1014 and 3000-4999 are forwarded; a drop arrives as `1001`. The first peer's subprotocol binds the pair. A name holds either a transfer or a pair, never both (409 both ways); `?status` shows `kind: "ws"`, `peers`. SDK: `PipeStream.connect(name, { wait, protocols, signal })` → `{ readable, writable, closed, close }`, one chunk = one message; a refusal is a `PipeWsError` with `.status`; `forwardTcp({ transport: 'ws', path, listen|connect })`.
+- WebSocket relay: `GET /{name}?ws` with an upgrade pairs exactly two peers. Messages pass both ways with their type and boundaries kept, at most 1 MiB each. The first peer's messages are held (4096 / 2 MiB) until the second arrives (`?wait`, default 300 s, then close `4408`). A slow reader more than 2 MiB behind closes the pair with `1013`. Close codes 1000-1003, 1007-1014 and 3000-4999 are forwarded; a drop arrives as `1001`. The first peer's subprotocol binds the pair. A name holds either a transfer or a pair, never both (409 both ways); `?status` shows `kind: "ws"`, `peers`. 
 - To hand a person a ready receive link, build `<kit>/api/v1/pipe/<name>?receive&autostart=1&filename=<name.ext>` (add `&n=N` for N receivers); they open it and the file lands in their downloads when the sender sends. A share link is `<kit>/api/v1/pipe/<name>?share&source=screen|camera|audio` (capture still needs their click on Start); viewers open `<kit>/api/v1/pipe/<name>?video`.
 - `Service-Worker: script` → 400.
 - `Content-Range` on POST/PUT → 400.
@@ -358,7 +358,7 @@ cat /tmp/file.bin                             # → first-file-content
 
 **Result:**
 - 1100-char path POST: kit returned `414` with body `[ERROR] Path too long (max 1024 characters).`
-- A 1024-char path name is the longest the kit accepts, matching the SDK and CLI checks; 1025 characters gets `414`.
+- The kit accepts at most 1024 characters in the path name as it is sent (percent-encoded); 1025 gets `414`. The SDK and CLI check the unencoded name, so a name that passes can still exceed the limit once percent-encoded and receive `414`.
 
 ```bash
 KIT="https://${P}-${C}-pipe-1.${N}.containers.hoody.com"

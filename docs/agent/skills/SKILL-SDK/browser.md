@@ -1,4 +1,4 @@
-> _**SDK skill · `browser` namespace** · ~24,178 tokens · hoody-sdk v1.0.0-beta.16_
+> _**SDK skill · `browser` namespace** · ~24,486 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `browser` — Per-container Chromium or Firefox instances, one per slot
 
@@ -49,7 +49,7 @@ After browse: `getHtml`/`getText`/`page.captureScreenshot`/`exportPdf` — param
 5. `cookies.clear`.
 
 ### 4. JS eval + logs
-1. `instances.start` → `page.navigate`.
+1. `instances.start` with `stealth=false` for full console capture (stop a slot that already runs with `stealth=true` first) → `page.navigate`.
 2. `page.evaluate` (`{script}` JSON body). On the default stealth engine the script cannot see page JS globals (see Quirks).
 3. `logs.listConsole` (`since`,`type`,`clear=true`).
 4. `logs.listNetwork`.
@@ -62,7 +62,7 @@ When the work is a website project or business research, **offer** the user a de
 1. Pick a slot number X (e.g. 2) and start headful on that slot: `instances.start` addressed to the `browser-X` hostname (`{ serviceIndex: X }` as the last, template-vars argument) with `showBrowser=true`. The proxy derives `browser_port` 30000+X and `display` 500+X from the hostname and overrides any values you send. Add any per-project identity: own egress proxy (`proxyServer`/`proxyUsername`/`proxyPassword`/`proxyBypass`), `stealth`, `userAgent`, `viewport`, `locale`, `geolocation`, extensions.
 2. Give the user the direct live-view URL — the standard kit URL with the `browser-` slug and `?view=display`: `https://{P}-{C}-browser-X.{N}.containers.hoody.com/?view=display`. That page embeds display 500+X live (the bare root URL shows an instance status page with a View Display link instead), so an instance started on display 500+X gets its own stable viewing URL — changing the X in the URL is how you address each browser's live window. `instances.getDevtoolsUrls` adds a live DevTools inspector as a second link; that link gives full control of the browser, so hand it only to someone you would give the browser to.
 3. Everything browsed there — by the user clicking around in the live view or by the agent via the API — lands in persistent per-slot history (`history.list` with `browser_id=X`): live debugging and business research accumulate into one durable project trail. The instance itself is reaped once it has been idle past the deployment's max age (see Quirks) — history survives; re-run `instances.start` with the same options to revive the window.
-4. Then offer log capture as a follow-up: console/network buffers hold only the last 500 entries and die with the instance, so a recurring `cron` job (or agent loop) draining `logs.listConsole`/`logs.listNetwork` with `clear=true` into `sqlite`/`files`/agent memory preserves full context for later sessions.
+4. Then offer log capture as a follow-up: console/network buffers hold only the last 500 entries and die with the instance, so a recurring `cron` job (or agent loop) draining `logs.listConsole`/`logs.listNetwork` with `clear=true` into `sqlite`/`files`/agent memory preserves the captured entries for later sessions. For full console capture start the slot with `stealth=false`: the default stealth engine omits the page's console calls and errors.
 
 ### 7. Drive a page: snapshot, act, wait
 These three operations never start an instance (404 `NOT_FOUND` on an empty slot), so run `instances.start` and `page.navigate` first.
@@ -81,7 +81,7 @@ These three operations never start an instance (404 `NOT_FOUND` on an empty slot
 - `stealth=true` is ignored on Firefox: the stealth engine is Chromium-only.
 - Extensions need `showBrowser=true` and run on a persistent profile.
 - `chromiumVersion`: full / major / channel (`stable|beta|dev|canary`); first new version blocks on download.
-- Console/network logs: 500-entry ring buffers — drain or filter `since`.
+- Console/network logs: 500-entry ring buffers — drain or filter `since`. On the default `stealth=true` engine, console capture leaves out the page's `console.*` calls, uncaught errors and unhandled rejections; the response reports `capture: "partial"` with a `reason`. Start with `stealth=false` for full console capture.
 - **A sweep runs every 5 min and SIGTERMs any instance idle for 1 h (deployment defaults), healthy or not.** The idle clock is restarted by real use: every API request routed to the instance (counted from the END of the request), a top-level page navigation (including a person clicking around in the live view), attaching over CDP, and starting an instance that already exists. An instance with a request in flight or an open CDP connection is never reaped. The instance's own heartbeat is liveness only and does NOT keep it alive, so an instance you want to keep (logged-in cookies, session state) needs a request at least once per idle window. A reaped instance's next call starts a fresh one, with none of the cookies or session state the old one held; recorded history survives.
 - Instances do NOT survive kit-process restarts: graceful shutdown (SIGTERM/SIGINT) terminates every child.
 - History records ALL navs (incl. headful clicks) at `/hoody/storage/hoody-browser/history`, retained 30 d by default. Where a deployment turns history off, the history endpoints answer `404 HISTORY_DISABLED`.
@@ -89,7 +89,7 @@ These three operations never start an instance (404 `NOT_FOUND` on an empty slot
 - `browser_id` history filter sanitised as path component.
 - **On the default stealth engine (`stealth=true`, `engine: patchright`), `eval` runs the script in an isolated JavaScript world.** It sees the DOM, but not the globals the page's own scripts define (`window.__NEXT_DATA__`, SPA stores, config objects): those read as `undefined` and the call still returns 200. On `stealth=false` (`engine: playwright`) the script runs in the page's main world. To read page JS state, start the slot with `stealth=false`, or read what the page wrote into the DOM (for example the text of `<script id="__NEXT_DATA__">`).
 - `eval` POST accepts JSON `{"script":"..."}` (what the SDK and CLI send) or a `Content-Type: text/plain` body holding the raw script. The response is `{ "result": ... }`.
-- **A ref-addressed `page.act` that navigates the page itself (a link click, a submit, a `pushState`) can answer `409 STALE_SNAPSHOT` with `details.outcome: "unknown"` after the action already ran.** `outcome` is `not-started` (never dispatched, safe to repeat), `unknown` (dispatched, result not observed) or `completed`. On `unknown`, check the page (`page.wait`, a new snapshot, the URL) before repeating a click or submit. Selector, role, label, text, placeholder and testId targets are not affected.
+- **A ref-addressed `page.act` that navigates the page itself (a link click, a submit, a `pushState`) answers 200; the NEXT use of that snapshot's refs is stale.** A 200 means the browser operation completed, not that the site's transaction succeeded: observe the result with `page.wait` and a new snapshot. A main-frame navigation that lands BEFORE the input is dispatched answers `409 STALE_SNAPSHOT` (`details.reason: "navigated"`, `details.outcome: "not-started"`: nothing was dispatched, safe to repeat). If the tab navigates after the input went out and the action then fails, the 409 carries `outcome: "unknown"` (dispatched, result not observed): check the page (`page.wait`, a new snapshot, the URL) before repeating a click or submit. Selector, role, label, text, placeholder and testId targets are not affected.
 - Chromium CDP defaults to `useRemoteDebuggingPort=true`; pass `useRemoteDebuggingPort=false` at start to turn it off. `instances.getDevtoolsUrls` answers 404 only when the instance is missing; with CDP off it returns 200 with null URLs. Use the URLs `instances.getDevtoolsUrls` returns rather than building one. By default the returned URLs are on the `cdp-X` relay host paired 1:1 with `browser-X` (`https://{P}-{C}-cdp-X.{N}.containers.hoody.com/`); a deployment that turns the relay URLs off returns the legacy `http-<port>` host instead, where `<port>` is the debugging port. Point a CDP client at the returned URL (for example `connectOverCDP("https://{P}-{C}-cdp-X.{N}.containers.hoody.com/")`). The rest of this bullet describes the `cdp-X` relay. A discovery request (`/`, `/json`, `/json/list`, `/json/version`) may cold-start Chromium instance X when it is not running: only when cold start is enabled (the default; a deployment can turn it off) and the request does not come from a web page, which gets `403 CDP_CSRF_COLD_START` instead. A DevTools WebSocket only attaches to a running instance. Only read-only endpoints (the discovery paths, `/json/protocol`, the `/devtools/` front end) and DevTools WebSocket sessions are relayed; `/json/new`, `/json/activate` and `/json/close` return 404. Treat the `cdp-X` URL like a credential: anyone who can reach it controls the browser (navigate, run script, read cookies and page content), so start with `useRemoteDebuggingPort=false` when the container is shared.
 - Launch options: the `viewport` and `geolocation` query parameters are **JSON strings**, not free-form `"WxH"` / `"lat,lng"`; the kit `JSON.parse`s a string value and rejects one that does not parse. In a JSON request body the same fields may also be plain objects. Examples: `viewport='{"width":1280,"height":800}'`, `geolocation='{"latitude":48.8,"longitude":2.3,"accuracy":50}'`. A launch `viewport` of `null` or `none` turns off fixed-viewport emulation. The runtime `viewport.set` is different: its body is an object, `{"viewport":{"width":1280,"height":800}}` or `{"viewport":null}` (integers 1–8192); a string there is a 400 `VALIDATION_ERROR`.
 - `viewport.set` takes `{viewport:{width, height}}` (1-8192 px) or `{viewport:null}` for responsive. Responsive works only on Chromium (`501 NOT_SUPPORTED`) and only on an instance started responsive (`409 REQUIRES_RESTART`: stop it and start it again with `viewport=null`). `502 VIEWPORT_APPLY_INCOMPLETE` means the policy was kept but some tabs did not apply it (`details.failedTabs`). `viewport.get` never starts an instance.
@@ -175,7 +175,7 @@ console.log(String(html.data).slice(0, 200), '\n---\n', String(text.data).slice(
 
 ### 4. Execute JavaScript in the page and capture the return value
 
-**Goal:** run a script in the page context. Over HTTP, `GET /eval?script=` puts the script in the query (size-bound by URL). `page.evaluate` accepts `{ script }` JSON via the SDK / CLI / `Content-Type: application/json`; raw `Content-Type: text/plain` HTTP also works (body = script source). Either shape returns `{ result }`. The script reads the DOM on every engine; page JS globals (`window.__NEXT_DATA__`, app stores) are visible only on a `stealth=false` instance, and read as `undefined` on the default stealth engine (see Quirks).
+**Goal:** run a script in the page context. Over HTTP, `GET /api/v1/browser/eval?script=` puts the script in the query (size-bound by URL). `page.evaluate` accepts `{ script }` JSON via the SDK / CLI / `Content-Type: application/json`; raw `Content-Type: text/plain` HTTP also works (body = script source). Either shape returns `{ result }`. The script reads the DOM on every engine; page JS globals (`window.__NEXT_DATA__`, app stores) are visible only on a `stealth=false` instance, and read as `undefined` on the default stealth engine (see Quirks).
 
 ```typescript
 const t = await client.browser.page.evaluate({ script: 'document.title' });
@@ -296,7 +296,7 @@ client.browser.cookies.clear(options?: { browser_id?: string; start?: boolean })
 | `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 
-**Returns:** `Promise<BrowserCookiesClearResponse>`  |  **HTTP:** `DELETE /cookies`
+**Returns:** `Promise<BrowserCookiesClearResponse>`  |  **HTTP:** `DELETE /api/v1/browser/cookies`
 **CLI:** `hoody browser cookies clear`
 
 ---
@@ -313,7 +313,7 @@ client.browser.cookies.list(options?: { browser_id?: string; start?: boolean; ur
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 | `url` | `string` | query | No | Filter cookies by URL Repeating this key in the query string is a `400 VALIDATION_ERROR` (`url must not be repeated`): the parent's rule is on the key, not on the operation, so it applies here too even though this parameter is declared inline rather than shared. |
 
-**Returns:** `Promise<BrowserCookiesListResponse>`  |  **HTTP:** `GET /cookies`
+**Returns:** `Promise<BrowserCookiesListResponse>`  |  **HTTP:** `GET /api/v1/browser/cookies`
 **CLI:** `hoody browser cookies list`
 
 ---
@@ -332,7 +332,7 @@ client.browser.cookies.setMany(data: BrowserCookiesSetManyRequest, options?: { b
 
 **Body:** `{ cookies*: { name*: string, value*: string, url: string, domain: string, path: string, expires: number, httpOnly: bool, secure: bool, sameSite: "Strict" | "Lax" | "None" }[] }`
 
-**Returns:** `Promise<BrowserCookiesSetManyResponse>`  |  **HTTP:** `POST /cookies`
+**Returns:** `Promise<BrowserCookiesSetManyResponse>`  |  **HTTP:** `POST /api/v1/browser/cookies`
 **CLI:** `hoody browser cookies batch set`
 
 ---
@@ -350,7 +350,7 @@ client.browser.history.clear(options?: { before?: string; browser_id?: string })
 | `before` | `string` | query | No | Delete entries before this ISO 8601 timestamp |
 | `browser_id` | `string` | query | No | Delete entries for specific browser ID only. Through a `browser-{N}` service hostname it may only be `N` (the default there). |
 
-**Returns:** `Promise<BrowserHistoryClearResponse>`  |  **HTTP:** `DELETE /history`
+**Returns:** `Promise<BrowserHistoryClearResponse>`  |  **HTTP:** `DELETE /api/v1/browser/history`
 **CLI:** `hoody browser history clear`
 
 ---
@@ -369,7 +369,7 @@ client.browser.history.list(options?: { since?: string; domain?: string; browser
 | `limit` | `number` | query | No | Maximum entries to return (1-500) |
 | `offset` | `number` | query | No | Number of entries to skip for pagination |
 
-**Returns:** `Promise<BrowserHistoryListResponse>`  |  **HTTP:** `GET /history`
+**Returns:** `Promise<BrowserHistoryListResponse>`  |  **HTTP:** `GET /api/v1/browser/history`
 **CLI:** `hoody browser history list`
 
 ---
@@ -387,7 +387,7 @@ client.browser.instances.get(options?: { browser_id?: string; start?: boolean })
 | `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 
-**Returns:** `Promise<BrowserInstancesGetResponse>`  |  **HTTP:** `GET /metadata`
+**Returns:** `Promise<BrowserInstancesGetResponse>`  |  **HTTP:** `GET /api/v1/browser/metadata`
 **CLI:** `hoody browser get`
 
 ---
@@ -403,7 +403,7 @@ client.browser.instances.getDevtoolsUrls(options?: { browser_id?: string; start?
 | `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 
-**Returns:** `Promise<BrowserInstancesGetDevtoolsUrlsResponse>`  |  **HTTP:** `GET /devtools-url`
+**Returns:** `Promise<BrowserInstancesGetDevtoolsUrlsResponse>`  |  **HTTP:** `GET /api/v1/browser/devtools-url`
 **CLI:** `hoody browser devtools urls get`
 
 ---
@@ -453,7 +453,7 @@ client.browser.instances.restart(options?: { browser_id?: string; start?: boolea
 | `iframe_url` | `string` | query | No | Explicit URL for the display iframe. |
 | `maximize_new_windows` | `boolean` | query | No | Control the `maximize_new_windows` flag stamped onto the generated display URL (always explicit `true`/`false`); when true the hoody-display client opens new top-level app windows maximized. Enabled by default; set to `false` to opt out. |
 
-**Returns:** `Promise<BrowserInstancesRestartResponse>`  |  **HTTP:** `GET /restart`
+**Returns:** `Promise<BrowserInstancesRestartResponse>`  |  **HTTP:** `GET /api/v1/browser/restart`
 **CLI:** `hoody browser restart`
 
 ---
@@ -468,7 +468,7 @@ client.browser.instances.shutdown(options?: { browser_id?: string })
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 
-**Returns:** `Promise<BrowserInstancesShutdownResponse>`  |  **HTTP:** `GET /shutdown`
+**Returns:** `Promise<BrowserInstancesShutdownResponse>`  |  **HTTP:** `GET /api/v1/browser/shutdown`
 **CLI:** `hoody browser shutdown`
 
 ---
@@ -517,7 +517,7 @@ client.browser.instances.start(options?: { browser_id?: string; chromiumVersion?
 | `iframe_url` | `string` | query | No | Explicit URL for the display iframe. If not provided, the URL is auto-detected from the Host header subdomain pattern. |
 | `maximize_new_windows` | `boolean` | query | No | Control the `maximize_new_windows` flag stamped onto generated display URLs (iframe pages, status pages, `iframe_url` metadata). The flag is always explicit (`true` or `false`); when true the hoody-display client opens new top-level app windows maximized. Enabled by default; set to `false` to keep the display client's centered default-size placement (the explicit `false` also overrides a display-side `default-settings.txt` enable). Explicit `iframe_url` values are never modified. |
 
-**Returns:** `Promise<BrowserInstancesStartResponse>`  |  **HTTP:** `GET /start`
+**Returns:** `Promise<BrowserInstancesStartResponse>`  |  **HTTP:** `GET /api/v1/browser/start`
 **CLI:** `hoody browser start`
 
 ---
@@ -532,7 +532,7 @@ client.browser.instances.stop(options?: { browser_id?: string })
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 
-**Returns:** `Promise<BrowserInstancesStopResponse>`  |  **HTTP:** `GET /stop`
+**Returns:** `Promise<BrowserInstancesStopResponse>`  |  **HTTP:** `GET /api/v1/browser/stop`
 **CLI:** `hoody browser stop`
 
 ---
@@ -556,7 +556,7 @@ client.browser.kit.getHealth()
 client.browser.kit.getStats()
 ```
 
-**Returns:** `Promise<BrowserKitGetStatsResponse>`  |  **HTTP:** `GET /metrics`
+**Returns:** `Promise<BrowserKitGetStatsResponse>`  |  **HTTP:** `GET /api/v1/browser/metrics`
 **CLI:** `hoody browser stats`
 
 ---
@@ -578,7 +578,7 @@ client.browser.logs.listConsole(options?: { browser_id?: string; tabId?: number;
 | `since` | `string` | query | No | Only return entries at or after this time: an ISO 8601 date or date-time, like `2026-10-05T12:00:00Z`. Any other value (an epoch number, a word like `yesterday`) is a `400 VALIDATION_ERROR` naming `since`, never an unfiltered list. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`since must not be repeated`). |
 | `clear` | `boolean` | query | No | Clear the buffer after reading. `true` or `false`; any other value is a `400 VALIDATION_ERROR` naming `clear`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`clear must not be repeated`). |
 
-**Returns:** `Promise<BrowserLogsListConsoleResponse>`  |  **HTTP:** `GET /console`
+**Returns:** `Promise<BrowserLogsListConsoleResponse>`  |  **HTTP:** `GET /api/v1/browser/console`
 **CLI:** `hoody browser logs console list`
 
 ---
@@ -597,7 +597,7 @@ client.browser.logs.listNetwork(options?: { browser_id?: string; tabId?: number;
 | `since` | `string` | query | No | Only return entries at or after this time: an ISO 8601 date or date-time, like `2026-10-05T12:00:00Z`. Any other value (an epoch number, a word like `yesterday`) is a `400 VALIDATION_ERROR` naming `since`, never an unfiltered list. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`since must not be repeated`). |
 | `clear` | `boolean` | query | No | Clear the buffer after reading. `true` or `false`; any other value is a `400 VALIDATION_ERROR` naming `clear`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`clear must not be repeated`). |
 
-**Returns:** `Promise<BrowserLogsListNetworkResponse>`  |  **HTTP:** `GET /network`
+**Returns:** `Promise<BrowserLogsListNetworkResponse>`  |  **HTTP:** `GET /api/v1/browser/network`
 **CLI:** `hoody browser logs network list`
 
 ---
@@ -621,7 +621,7 @@ client.browser.page.act(data: BrowserPageActRequest, options?: { browser_id?: st
 - `delayMs` — type: delay between keys. Code points × delayMs must be smaller than timeoutMs (400).
 - `key` — press: Playwright key syntax (e.g. "Enter", "Control+a"). Unknown → 400.
 
-**Returns:** `Promise<BrowserPageActResponse>`  |  **HTTP:** `POST /action`
+**Returns:** `Promise<BrowserPageActResponse>`  |  **HTTP:** `POST /api/v1/browser/action`
 **CLI:** `hoody browser act`
 
 ---
@@ -642,7 +642,7 @@ client.browser.page.captureScreenshot(options?: { browser_id?: string; start?: b
 | `quality` | `number` | query | No | Image quality for JPEG format (0-100); not used for `png` or `base64`. A value that is not an integer from 0 to 100 is a `400 VALIDATION_ERROR` naming `quality`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`quality must not be repeated`). |
 | `fullPage` | `boolean` | query | No | Capture the entire scrollable page. `true` or `false`; any other value is a `400 VALIDATION_ERROR` naming `fullPage`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`fullPage must not be repeated`). |
 
-**Returns:** `Promise<ApiResponse<ArrayBuffer> | BrowserPageCaptureScreenshotResponse>` — the response Content-Type picks the branch: JSON gives the payload in `.data`, a binary type gives the bytes  |  **HTTP:** `GET /screenshot`
+**Returns:** `Promise<ApiResponse<ArrayBuffer> | BrowserPageCaptureScreenshotResponse>` — the response Content-Type picks the branch: JSON gives the payload in `.data`, a binary type gives the bytes  |  **HTTP:** `GET /api/v1/browser/screenshot`
 **CLI:** `hoody browser screenshots capture`
 
 ---
@@ -664,7 +664,7 @@ client.browser.page.evaluate(data: BrowserPageEvaluateRequest, options?: { brows
 - `tabId` — Tab to evaluate in (from `/tabs`). Omitted: the active tab. Unknown → `404 TAB_NOT_FOUND`, malformed → `400`.
 - `timeoutMs` — Time limit for the script, in milliseconds (1 to 30000, default 30000). A script still running when it is spent is stopped and the answer is `504 TIMEOUT` (`details.phase` `evaluate`). Repeating this key in the query string is a `400 VALIDATION_ERROR` (`timeoutMs must not be repeated`).
 
-**Returns:** `Promise<BrowserPageEvaluateResponse>`  |  **HTTP:** `POST /eval`
+**Returns:** `Promise<BrowserPageEvaluateResponse>`  |  **HTTP:** `POST /api/v1/browser/eval`
 **CLI:** `hoody browser evaluate`
 
 ---
@@ -686,7 +686,7 @@ client.browser.page.exportPdf(options?: { browser_id?: string; tabId?: number; s
 | `printBackground` | `boolean` | query | No | Include background graphics. `true` or `false`; any other value is a `400 VALIDATION_ERROR` naming `printBackground`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`printBackground must not be repeated`). |
 | `margin` | `string` | query | No | Uniform margin: a non-negative number of pixels, or a number followed by `px`, `in`, `cm` or `mm` (e.g. '1cm', '0.5in'). Any other value is a `400 VALIDATION_ERROR` naming `margin`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`margin must not be repeated`). |
 
-**Returns:** `Promise<ApiResponse<ArrayBuffer>>`  |  **HTTP:** `GET /pdf`
+**Returns:** `Promise<ApiResponse<ArrayBuffer>>`  |  **HTTP:** `GET /api/v1/browser/pdf`
 **CLI:** `hoody browser pdf export`
 
 ---
@@ -703,7 +703,7 @@ client.browser.page.getHtml(options?: { browser_id?: string; tabId?: number; sta
 | `tabId` | `number` | query | No | The ID of the tab to interact with (from `/tabs`). Omitted: the active tab. Supplied: exactly that tab — an unknown id returns `404 TAB_NOT_FOUND` (with `details.openTabs`) and a malformed id `400 VALIDATION_ERROR`; the request never falls back to another tab. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`tabId must not be repeated`); a body property of the same name is governed by the body schema. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 
-**Returns:** `Promise<ApiResponse<string>>`  |  **HTTP:** `GET /html`
+**Returns:** `Promise<ApiResponse<string>>`  |  **HTTP:** `GET /api/v1/browser/html`
 **CLI:** `hoody browser html get`
 
 ---
@@ -723,7 +723,7 @@ client.browser.page.getSnapshot(options?: { browser_id?: string; instanceGenerat
 | `maxChars` | `number` | query | No | Hard cut on a line boundary; `truncated` reports it. A truncated excerpt may not parse as standalone YAML. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`maxChars must not be repeated`). |
 | `includeValues` | `boolean` | query | No | Include the CONTENTS of form controls in the snapshot. Off by default: the accessibility tree serialises `input.value`, so a snapshot taken after the agent typed a password, card number or token would hand those back on every subsequent loop iteration. With the default, the value of a non-empty textbox, searchbox, spinbutton, slider or editable combobox (an input with a `<datalist>`, or `role=combobox`) renders as `<value hidden>`, whatever its label contains; only a native `<select>` keeps its option names, when it holds nothing but `<option>`, `<optgroup>` and `<hr>` elements and none of them uses `aria-owns` or `aria-labelledby` or is editable (every other node in it keeps its role and ref but not its name or text), and the content of every other combobox, ARIA autocomplete popups and customizable selects with rich option content included, is hidden whole (an empty one renders with no value at all, so the caller can still tell them apart). A `<select>`'s options are page content, not entered text, and are always included. Content inside an editable region (a `contenteditable` element, or a whole page in `designMode`) is hidden too: the region keeps its role and ref, its contents become `<value hidden>`, and its name is shown only when it is authored (`aria-label`, or `aria-labelledby` pointing at non-editable content); text the snapshot folds from an editor into an enclosing element is hidden there too. If the page cannot be asked in time, the text and computed names on such a page are hidden and the refs are kept. Set to `true` only when the values are known not to be sensitive. Anything but `true`/`false` → 400, and repeating this key in the query string is a `400 VALIDATION_ERROR` (`includeValues must not be repeated`). |
 
-**Returns:** `Promise<BrowserPageGetSnapshotResponse>`  |  **HTTP:** `GET /snapshot`
+**Returns:** `Promise<BrowserPageGetSnapshotResponse>`  |  **HTTP:** `GET /api/v1/browser/snapshot`
 **CLI:** `hoody browser snapshot get`
 
 ---
@@ -740,7 +740,7 @@ client.browser.page.getText(options?: { browser_id?: string; tabId?: number; sta
 | `tabId` | `number` | query | No | The ID of the tab to interact with (from `/tabs`). Omitted: the active tab. Supplied: exactly that tab — an unknown id returns `404 TAB_NOT_FOUND` (with `details.openTabs`) and a malformed id `400 VALIDATION_ERROR`; the request never falls back to another tab. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`tabId must not be repeated`); a body property of the same name is governed by the body schema. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 
-**Returns:** `Promise<ApiResponse<string>>`  |  **HTTP:** `GET /text`
+**Returns:** `Promise<ApiResponse<string>>`  |  **HTTP:** `GET /api/v1/browser/text`
 **CLI:** `hoody browser text get`
 
 ---
@@ -765,7 +765,7 @@ client.browser.page.navigate(data: BrowserPageNavigateRequest, options?: { brows
 - `onlyIfNotExists` — Reuse an existing tab already on this URL instead of opening a new one. Same value rule as `active`: send a JSON boolean (the strings `"true"`/`"false"` are tolerated because one parser reads both the query and the body spelling); anything else is `400 VALIDATION_ERROR`, never coerced.
 - `ignoreGetParameters` — Compare URLs for `onlyIfNotExists` with the query string stripped. Same value rule as `active`: send a JSON boolean (the strings `"true"`/`"false"` are tolerated because one parser reads both the query and the body spelling); anything else is `400 VALIDATION_ERROR`, never coerced.
 
-**Returns:** `Promise<BrowserPageNavigateResponse>`  |  **HTTP:** `POST /browse`
+**Returns:** `Promise<BrowserPageNavigateResponse>`  |  **HTTP:** `POST /api/v1/browser/browse`
 **CLI:** `hoody browser navigate`
 
 ---
@@ -785,7 +785,7 @@ client.browser.page.wait(data: BrowserPageWaitRequest, options?: { browser_id?: 
 
 - `instanceGeneration` — From /metadata; mismatch → 409 INSTANCE_CHANGED.
 
-**Returns:** `Promise<BrowserPageWaitResponse>`  |  **HTTP:** `POST /wait`
+**Returns:** `Promise<BrowserPageWaitResponse>`  |  **HTTP:** `POST /api/v1/browser/wait`
 **CLI:** `hoody browser wait`
 
 ---
@@ -816,7 +816,7 @@ client.browser.tabs.close(data?: BrowserTabsCloseRequest, options?: { browser_id
 
 **Body:** `{ tabId: int }`
 
-**Returns:** `Promise<BrowserTabsCloseResponse>`  |  **HTTP:** `POST /tab/close`
+**Returns:** `Promise<BrowserTabsCloseResponse>`  |  **HTTP:** `POST /api/v1/browser/tab/close`
 **CLI:** `hoody browser tabs close`
 
 ---
@@ -832,7 +832,7 @@ client.browser.tabs.list(options?: { browser_id?: string; start?: boolean })
 | `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 
-**Returns:** `Promise<BrowserTabsListResponse>`  |  **HTTP:** `GET /tabs`
+**Returns:** `Promise<BrowserTabsListResponse>`  |  **HTTP:** `GET /api/v1/browser/tabs`
 **CLI:** `hoody browser tabs list`
 
 ---
@@ -850,7 +850,7 @@ client.browser.viewport.get(options?: { browser_host?: string; browser_port?: nu
 | `browser_host` | `string` | query | No | Instance host. Optional — must be paired with browser_port; when both are omitted the single running instance is selected (400 AMBIGUOUS_INSTANCE with more than one). |
 | `browser_port` | `number` | query | No | Instance port. Optional — must be paired with browser_host. |
 
-**Returns:** `Promise<BrowserViewportGetResponse>`  |  **HTTP:** `GET /viewport`
+**Returns:** `Promise<BrowserViewportGetResponse>`  |  **HTTP:** `GET /api/v1/browser/viewport`
 **CLI:** `hoody browser viewport get`
 
 ---
@@ -869,7 +869,7 @@ client.browser.viewport.set(data: BrowserViewportSetRequest, options?: { browser
 
 **Body:** `{ viewport*: { width*: int, height*: int }|null }`
 
-**Returns:** `Promise<BrowserViewportSetResponse>`  |  **HTTP:** `POST /viewport`
+**Returns:** `Promise<BrowserViewportSetResponse>`  |  **HTTP:** `POST /api/v1/browser/viewport`
 **CLI:** `hoody browser viewport set`
 
 

@@ -1,4 +1,4 @@
-> _**SDK skill · `egress` namespace** · ~7,729 tokens · hoody-sdk v1.0.0-beta.16_
+> _**SDK skill · `egress` namespace** · ~7,717 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `egress` — the container's outbound HTTP proxy
 
@@ -52,7 +52,7 @@ The endpoint is `https://{projectId}-{containerId}-egress-{serviceIndex}.{server
 - **Health answers almost any method.** The health route matches on path alone, so every method except `OPTIONS` reaches it; `OPTIONS` is answered 204 with CORS headers before routing, which is what makes browser preflight work against the management API.
 - **A local exit makes your machine the exit** (`startLocalExit`, imported from the package root: `import { startLocalExit } from 'hoody-sdk'`, not from `hoody-sdk/egress`). It binds a loopback port inside the container over hoody-tunnel, points the upstream at it, and terminates SOCKS5 in your process, so requests leave from the machine the SDK process runs on and the exit lives only as long as that process. Nothing listens on that machine; every socket it opens is outbound. Destinations are gated to public IPv4 by default, every resolved A record is authorised, and the pinned address is what gets dialled, so DNS rebinding cannot redirect a connection after approval. **Only destination ports 80 and 443 are allowed by default**, so SSH, database or `:8080` traffic through the exit is refused; widen it with `policy: { allowPorts: [22, 443, 5432] }` (or `allowPorts: '*'`) in the `startLocalExit` options. The same `policy` object takes `blockPrivate` and `denyCidrs`.
 - **A local exit refuses to clobber an existing upstream.** If the container already has one configured, which includes one currently reported as `state: "unavailable"`, `startLocalExit` throws `local exit: this container already has an upstream (<scheme>://<host>:<port>)` instead of replacing it (when the kit reports no address for the upstream, the message says so in place of the address), because teardown clears the upstream and the kit never returns credentials, so an authenticated upstream it replaced could not be put back automatically. Clear a stale one first, or pass `replaceExistingUpstream: true` to take the container over knowingly; when that exit stops, the container goes back to its own IP, not to the proxy it displaced.
-- **A dead loopback port breaks every request.** If a local exit dies without clearing the upstream, the container keeps pointing at a port that no longer answers and every request through its egress fails until the upstream is cleared. `stop()` clears it on shutdown, and when the tunnel drops on its own the handle clears it and reports the outcome through `onSessionLost`; after a hard crash, recover with `client.egress.upstream.disable` or `hoody --container <id> egress upstream disable`.
+- **A dead loopback port breaks every request.** If a local exit dies without clearing the upstream, the container keeps pointing at a port that no longer answers and every request through its egress fails until the upstream is cleared. `stop()` clears it on shutdown, and when the tunnel drops on its own the handle clears it and reports the outcome through `onSessionLost`; after a hard crash, recover with `await client.egress.upstream.disable()`.
 - **Browsers need a PAC file, not the manual proxy fields.** The connection to the proxy is itself TLS, so the manual host-and-port fields open a plaintext connection that the edge refuses with 400. A PAC file returning `HTTPS host:443` works in both Chrome and Firefox.
 
 ## Common errors
@@ -128,7 +128,7 @@ const { data } = await client.api.containers.get(C);  // carries project id + se
 // The helper needs the container id, project id and server name.
 const exit = await startLocalExit({
   client,
-  container: { id: C, project_id: data!.project_id, server_name: data!.server_name ?? undefined },
+  container: { id: C, project_id: data!.project_id, server_name: data!.server_name ?? null },
 });
 console.log(exit.proxyUrl);              // https://P-C-egress.N.containers.hoody.com
 console.log(exit.verification?.exitIp);  // this machine's public IP, confirmed via ip.hoody.com

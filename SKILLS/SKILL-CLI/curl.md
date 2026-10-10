@@ -1,4 +1,4 @@
-> _**CLI skill · `curl` namespace** · ~7,214 tokens · hoody-sdk v1.0.0-beta.16_
+> _**CLI skill · `curl` namespace** · ~7,565 tokens · hoody-sdk v1.0.0-beta.17_
 
 # `curl` — full HTTP client gateway + REST-as-GET-URL bridge
 
@@ -61,7 +61,7 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 
 1. `hoody curl run` with `mode:"async"` → `job_id`.
 2. Poll `hoody curl jobs get` or subscribe `hoody curl jobs stream` (SSE) filtered by `job_id` (`hoody curl jobs stream --job-id <id>`; the CLI has no WebSocket form).
-3. `hoody curl jobs result get`; `hoody curl jobs cancel` aborts.
+3. `hoody curl jobs result get`; `hoody curl jobs cancel` aborts. `hoody curl jobs get` reports `retry_attempts`: 1 for a job that ran once, plus one per retry after a transfer error.
 
 ### 4. Cookie-jar session
 
@@ -76,7 +76,7 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 
 ### 6. Scheduled request
 
-1. `hoody curl schedules create` with `{cron,request}` → `schedule_id`.
+1. `hoody curl schedules create` with `{cron,request}` → `schedule_id`. Add `enabled: false` to create it paused: it never fires until `hoody curl schedules update` sets `enabled: true`.
 2. `hoody curl schedules list`/`hoody curl schedules get`/`hoody curl schedules update` (`{"enabled":bool}` pauses or resumes)/`hoody curl schedules delete`.
 3. Each admitted occurrence creates a job; inspect via `hoody curl jobs list`. An occurrence is skipped, with no job, while the previous run is still in flight or when the job queue rejects it.
 
@@ -91,14 +91,17 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 - `*.list` returns ALL when `limit` omitted; always pass `limit`.
 - `hoody curl schedules *` 404s if disabled.
 - `hoody curl schedules update` changes any of `cron`, `request` and `enabled`; omitted fields keep their current value, so pause or resume by sending `enabled: false` or `enabled: true` alone.
+- `hoody curl schedules create` takes `enabled` (default `true`). A schedule created with `enabled: false` has no `next_run` and does not fire; its `cron` must still parse but need not have a future occurrence yet. Any field other than `cron`, `request` and `enabled` is refused with 400 `INVALID_PARAMETER`.
+- `bearer_token` sends `Authorization: Bearer <token>`, but an `Authorization` entry in `headers` wins: the token is then not sent, so the request carries one `Authorization` header.
+- `hoody curl jobs result get` always answers `200` with the target's body and headers, whatever the target answered; the target's status code is in the `X-Curl-Status` header (and in `response.status_code` from `hoody curl jobs get`). A stored `429` or `503` is therefore not retried as a kit failure.
 - **`schedules.create.cron` is 6-field (with seconds), NOT the standard 5-field crontab.** `*/15 * * * *` is rejected as `Invalid cron expression`; use `0 */15 * * * *` (at second 0 every 15 min). The standard @-nicknames (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`) ARE accepted (expanded internally to 6-field), but Go-style `@every 15m` is NOT — for anything else use explicit 6-field expressions. Different syntax from the `cron` namespace, which uses Vixie 5-field.
 - `session_id` is caller-provided.
 - Job events stream over a WebSocket at `/api/v1/curl/ws`; filter by `job_id`.
 
 ## Common errors
 
-- `504` — the upstream request timed out (libcurl timeout); raise `timeout`. An async job does not wait on the caller's connection, but the same `timeout` still applies to the upstream request. The kit itself does not answer `408`; a transparent response passes the upstream's own status through, so an upstream `408` arrives as `408`.
-- `410 cancelled`.
+- `504` — the upstream request timed out (libcurl timeout); raise `timeout`. An async job does not wait on the caller's connection, but the same `timeout` still applies to the upstream request. The kit itself does not answer `408`; a transparent `run` response passes the upstream's own status through (`hoody curl jobs result get` does not: it answers 200 with `X-Curl-Status`), so an upstream `408` arrives as `408`.
+- Cancelling a job answers `200`; no REST call answers `410`. Read `hoody curl jobs get` for `status: "cancelled"`, and stop waiting once a job is `failed` or `cancelled`. `hoody curl jobs result get` answers `404 JOB_RESULT_NOT_READY` when the job has no response body (still pending or running, or finished without an upstream response).
 - `503 queue full` (also SSE capacity exhausted) — back off.
 
 ## Related namespaces
@@ -210,7 +213,7 @@ while :; do
 done
 ```
 
-**Step 3 — collect bodies.** `hoody curl jobs result get` returns just the upstream body.
+**Step 3 — collect bodies.** `hoody curl jobs result get` returns just the upstream body, always with status 200; the upstream's status is in `X-Curl-Status`.
 
 ```bash
 # --out-file saves each body as received: JSON, text or binary.
@@ -339,15 +342,12 @@ hoody proxy aliases create --container-id "$C" --alias rebuild-main --no-allow-p
 **Step 1 — find the right job** (the schedule was created with `request.job_name: 'prod-health'`). The listing is ordered by creation time, newest first, and runs do not necessarily complete in that order; a schedule firing every 15 minutes also leaves many runs with the same name. So read every page and select by completion time: here, the completed run with the latest `completed_at` at or before 18 hours ago. `completed_at` carries fractional seconds, which jq's `fromdate` rejects; strip them first.
 
 ```bash
-CUTOFF=$(( $(date +%s) - 18 * 3600 )); : > /tmp/curl-runs.txt; page=1
-while :; do
-  body=$(hoody --container "$C" curl jobs list --page "$page" --limit 200 -o json) || exit 1
-  # One "<completed epoch> <id>" line per completed prod-health run on this page.
-  jq -r '.items[] | select(.status=="completed" and .name=="prod-health" and .completed_at != null)
-      | "\(.completed_at | sub("\\.[0-9]+Z$"; "Z") | fromdate) \(.id)"' <<<"$body" >> /tmp/curl-runs.txt || exit 1
-  [ $((page * 200)) -lt "$(jq -r .meta.total <<<"$body")" ] || break
-  page=$((page + 1))
-done
+CUTOFF=$(( $(date +%s) - 18 * 3600 ))
+body=$(hoody --container "$C" curl jobs list -o json) || exit 1   # every page
+[ "$(jq '.items | length' <<<"$body")" -eq "$(jq .meta.total <<<"$body")" ] || { echo "listing incomplete" >&2; exit 1; }
+# One "<completed epoch> <id>" line per completed prod-health run.
+jq -r '.items[] | select(.status=="completed" and .name=="prod-health" and .completed_at != null)
+    | "\(.completed_at | sub("\\.[0-9]+Z$"; "Z") | fromdate) \(.id)"' <<<"$body" > /tmp/curl-runs.txt || exit 1
 JID=$(awk -v c="$CUTOFF" '$1 <= c' /tmp/curl-runs.txt | sort -n | tail -1 | cut -d' ' -f2)
 [ -n "$JID" ] || { echo "no completed prod-health run 18 h ago" >&2; exit 1; }
 ```
@@ -365,14 +365,10 @@ hoody --container "$C" curl jobs get "$JID"
 
 ```bash
 CUTOFF=$(date -u -d '30 days ago' +%Y-%m-%d)
-: > /tmp/curl-purge.txt; page=1
-while :; do
-  body=$(hoody --container "$C" curl storage list --page "$page" --limit 200 -o json) || exit 1
-  jq -r --arg c "$CUTOFF" '.items[] | select(.path | startswith("by-date/")) | select((.path | split("/")[1]) < $c) | .path' \
-    <<<"$body" >> /tmp/curl-purge.txt
-  [ $((page * 200)) -lt "$(jq -r .meta.total <<<"$body")" ] || break
-  page=$((page + 1))
-done
+body=$(hoody --container "$C" curl storage list -o json) || exit 1   # every page
+[ "$(jq '.items | length' <<<"$body")" -eq "$(jq .meta.total <<<"$body")" ] || { echo "listing incomplete" >&2; exit 1; }
+jq -r --arg c "$CUTOFF" '.items[] | select(.path | startswith("by-date/")) | select((.path | split("/")[1]) < $c) | .path' \
+  <<<"$body" > /tmp/curl-purge.txt || exit 1
 while IFS= read -r P; do
   hoody --container "$C" curl storage delete "$P" -y
 done < /tmp/curl-purge.txt
@@ -393,7 +389,7 @@ done < /tmp/curl-purge.txt
 | `hoody curl jobs stream` |  | read | Stream job lifecycle events live | `curl.jobs.stream` | `hoody curl jobs stream --job-id 550e8400-e29b-41d4-a716-446655440000 --since 0` |
 | `hoody curl metrics` |  | read | Prometheus metrics | `curl.kit.getMetrics` | `hoody curl metrics` |
 | `hoody curl run` |  | action | Execute HTTP request with full cURL capabilities | `curl.run` | `hoody curl run --compressed --connect-timeout 10 --url https://example.com` |
-| `hoody curl schedules create` |  | write | Create a recurring scheduled job | `curl.schedules.create` | `hoody curl schedules create --cron '0 0 * * * *' --request-compressed --request-connect-timeout 10 --request-url https://example.com` |
+| `hoody curl schedules create` |  | write | Create a recurring scheduled job | `curl.schedules.create` | `hoody curl schedules create --cron '0 0 * * * *' --enabled --request-compressed --request-url https://example.com` |
 | `hoody curl schedules delete` |  | destructive | Delete a schedule | `curl.schedules.delete` | `hoody curl schedules delete 770e8400-e29b-41d4-a716-446655440000 -y` |
 | `hoody curl schedules get` |  | read | Get schedule details | `curl.schedules.get` | `hoody curl schedules get 770e8400-e29b-41d4-a716-446655440000` |
 | `hoody curl schedules list` |  | read | List all scheduled jobs | `curl.schedules.list` | `hoody curl schedules list --page 1 --limit 50` |
