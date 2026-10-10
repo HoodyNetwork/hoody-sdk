@@ -1,1 +1,0 @@
-import{Fe,hr,U,jt,qt,yt,Ot,Lt,Ft}from"./index.js";export{yt as collectCompletionTree,Ot as generateBashCompletion,Ft as generateFishCompletion,Lt as generateZshCompletion,U as helpColumns,qt as installHelpLayout,jt as resetDescendantHelpErrors,Fe as stockHelpMode,hr as suggestCommand};

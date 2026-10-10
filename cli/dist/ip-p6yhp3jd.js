@@ -1,0 +1,1 @@
+import{o,t}from"./index.js";function r(e,m){e.command("get").description("Get IP Information").action(async(a)=>{await new t(m()).execute({operationId:"getIpInfo",method:"get",path:"/api/v1/ip",namespace:"api",options:{...a},parameters:[]})}),o(e)}export{r as registerCommands};
