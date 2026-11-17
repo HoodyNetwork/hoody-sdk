@@ -5,9 +5,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        This tracker covers everything a Hoody user touches: the CLI, the SDK, the HTTP API, the Kit services, Hoody OS, and the documentation. Report it here even if you are not using the SDK.
+        This tracker covers everything a Hoody user touches: the CLI, the SDK, the HTTP API, the Kit services, the Hub, and the documentation. Report it here even if you are not using the SDK.
 
-        Two things it cannot cover, because nobody reading this can see your account: billing questions, and one specific container misbehaving. Those go to https://hoody.com/support.
+        Two things it cannot cover, because nobody reading this can see your account: billing questions, and one specific computer misbehaving. Those go to https://hoody.com/contact.
 
   - type: dropdown
     id: surface
@@ -18,8 +18,8 @@ body:
         - CLI (the `hoody` command)
         - SDK (hoody-sdk in TypeScript or JavaScript)
         - HTTP API (calling endpoints yourself)
-        - Hoody OS (Home, Console, Workspaces)
-        - Agent (hoody-agent, or `hoody agent`)
+        - Hub (web, the hoody-hub.html file, or `hoody hub`)
+        - Agent (the agent in a computer, `hoody agent` commands, or `box.agent`)
         - Documentation
         - Not sure
     validations:
@@ -31,7 +31,7 @@ body:
       label: Service
       description: Which part of the platform. Account operations are `api`; leave blank if none apply.
       options:
-        - api (account, projects, containers, servers, billing)
+        - api (account, projects, computers, servers, billing)
         - terminal
         - files
         - browser
@@ -50,6 +50,8 @@ body:
         - tunnel
         - proxyLogs
         - agent
+        - egress
+        - vm
 
   - type: textarea
     id: what
@@ -57,7 +59,7 @@ body:
       label: What happened
       description: What you expected, and what you got instead. If there was an error, paste it whole rather than describing it.
       placeholder: |
-        Expected: files.list returns entries under /home/hoody
+        Expected: files.get returns the entries of /home/user
         Got: 404 with {"statusCode":404,"message":"not found"}
     validations:
       required: true
@@ -66,10 +68,10 @@ body:
     id: repro
     attributes:
       label: How to reproduce it
-      description: The exact command or call. Replace container and project IDs with placeholders; treat a full container URL as a password, since anyone holding it can reach the service.
+      description: The exact command or call. Replace computer and project IDs with placeholders; treat a full computer URL as a password, since anyone holding it can reach the service.
       render: shell
       placeholder: |
-        hoody files list --path /home/hoody -c <container-id>
+        hoody files get /home/user -c <computer-id>
     validations:
       required: true
 
@@ -77,8 +79,8 @@ body:
     id: version
     attributes:
       label: Version
-      description: "`hoody --version`, or the hoody-sdk version from your package.json. Skip for the HTTP API and Hoody OS."
-      placeholder: 1.0.0-beta.12
+      description: "`hoody --version`, or the hoody-sdk version from your package.json. Skip for the HTTP API and the web Hub."
+      placeholder: 1.0.1
 
   - type: input
     id: environment
@@ -91,5 +93,5 @@ body:
     id: logs
     attributes:
       label: Output
-      description: "Add `-o json` to a CLI command for the full response. Remove tokens, passwords, and container URLs before pasting."
+      description: "Add `-o json` to a CLI command for the full response. Remove tokens, passwords, and computer URLs before pasting."
       render: shell

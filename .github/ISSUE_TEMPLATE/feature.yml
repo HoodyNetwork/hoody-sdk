@@ -15,8 +15,8 @@ body:
         - CLI (the `hoody` command)
         - SDK (hoody-sdk in TypeScript or JavaScript)
         - HTTP API (calling endpoints yourself)
-        - Hoody OS (Home, Console, Workspaces)
-        - Agent (hoody-agent, or `hoody agent`)
+        - Hub (web, the hoody-hub.html file, or `hoody hub`)
+        - Agent (the agent in a computer, `hoody agent` commands, or `box.agent`)
         - Documentation
     validations:
       required: true

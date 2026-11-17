@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+# Hub build output and the build lock
+/hub/dist/
+/hub/.build-lock
+# Hub check caches
+/hub/hub/.check/
+/hub/hub/.term-cache/
+# Local credentials
+.env
+.env.local
+.npmrc

@@ -4,11 +4,17 @@ Read this before opening a pull request. This repository does not accept code ch
 
 ## This repository is a published mirror
 
-`hoody-sdk` is generated. The client in `generated/` is built from the OpenAPI documents of every Hoody service, `docs/` (including the agent skills corpus at `docs/agent/skills/`) is emitted by generators, and `dist/`, `dist-ts/` and `cli/dist/` are build output. Each release replaces the entire tree here with a freshly built, audited one and force-updates `main`.
+Most of `hoody-sdk` is generated. The client in `generated/` is built from the OpenAPI documents of every Hoody service, the reference in `docs/reference/` and the agent skills corpus at `docs/agent/skills/` are emitted by generators, and `dist/`, `dist-ts/` and `cli/dist/` are build output. Each release replaces the entire tree here with a freshly built, audited one, committed on top of `main`.
 
-A merged pull request would therefore survive until the next release and then disappear. That is true of every path in the repository, including hand-written files, because the release publishes one sealed tree rather than a diff. Pull requests are closed with a pointer to this page, not because the change was unwelcome.
+A change merged here would therefore be overwritten by the next release. That is true of every path in the repository, including hand-written files, because the release publishes one sealed tree rather than a diff. Pull requests are closed with a pointer to this page, not because the change was unwelcome.
 
 Issues are read and acted on. That is the channel that works.
+
+## Forking the Hub
+
+The SDK and the CLI are built output here: their source and tests are not in this repository. The Hub is the one part that ships as source, with its tests, in `hub/`, and you are welcome to fork it. Change it, then build your own `hoody-hub.html`: [`hub/README.md`](./hub/README.md) has the commands.
+
+Each release is one commit on `main`. To follow releases, merge `main` into your fork.
 
 ## What to open instead
 
@@ -24,7 +30,7 @@ Issues are read and acted on. That is the channel that works.
 
 Check the version. `hoody --version` for the CLI, or `hoody-sdk` in your `package.json`. Fixes ship often, and the current version is on [npm](https://www.npmjs.com/package/hoody-sdk).
 
-Check the reference for the call you are making. Every SDK method, CLI command, and endpoint is listed under [`docs/reference/`](./docs/reference/), generated from the same specification the client is built from, so it cannot drift from the implementation.
+Check the reference for the call you are making. Every SDK method and endpoint is listed under [`docs/reference/`](./docs/reference/), generated from the same specification the client is built from, so it cannot drift from the implementation. The CLI commands are listed there too.
 
 Ask the documentation assistant. `hoody chat "how do I mount an S3 bucket"` answers from the documentation and links the pages it used. It needs no API key.
 
@@ -32,7 +38,7 @@ Ask the documentation assistant. `hoody chat "how do I mount an S3 bucket"` answ
 
 Two of the three things worth redacting are not obvious.
 
-A container URL is a credential. The project and container IDs in the hostname are what authorize the request, so anyone holding the URL can reach that service. Replace both with placeholders.
+A computer URL is a credential. The project and computer IDs in the hostname are what authorize the request, so anyone holding the URL can reach that service. Replace both with placeholders.
 
 Tokens appear in more places than the obvious one. `-o json` output can carry them, as can a `--print-token` login and anything read out of `~/.hoody/config.json`.
 

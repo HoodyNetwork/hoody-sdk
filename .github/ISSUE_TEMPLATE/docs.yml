@@ -12,7 +12,7 @@ body:
     attributes:
       label: Page
       description: The URL, or the file path if you found it in the repository.
-      placeholder: https://docs.hoody.com/kits/files/
+      placeholder: https://docs.hoody.com/kit/files/
     validations:
       required: true
 

@@ -59,8 +59,8 @@ representative at an online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement at
-conduct@hoody.com.
+reported to the community leaders responsible for enforcement through
+[hoody.com/contact](https://hoody.com/contact).
 
 All complaints will be reviewed and investigated promptly and fairly.
 

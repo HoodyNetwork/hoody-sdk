@@ -1,4 +1,4 @@
-Before filling this in: this repository is a published mirror, and every release replaces the whole tree and force-updates `main`. A merged pull request survives until the next release and then disappears. See [CONTRIBUTING.md](../CONTRIBUTING.md).
+Before filling this in: this repository is a published mirror, and every release replaces the whole tree with a new commit on `main`. The next release overwrites any change merged here. See [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 If you found a real problem, [open an issue](https://github.com/HoodyNetwork/hoody-sdk/issues/new/choose). It gets read and acted on upstream, which a pull request here cannot.
 

@@ -10,17 +10,17 @@ You will get a first response within three working days, an assessment with a se
 
 ## What is in scope
 
-The published `hoody-sdk` package, the `hoody` CLI including its released binaries, and the client-side handling of credentials, tokens, and container URLs.
+The published `hoody-sdk` package, the `hoody` CLI including its released binaries, and the client-side handling of credentials, tokens, and computer URLs.
 
-The Hoody platform behind the API is also in scope through the same channel, so report it here rather than hunting for another address. That includes the HTTP API, the Kit services, and Hoody OS.
+The Hoody platform behind the API is also in scope through the same channel, so report it here rather than hunting for another address. That includes the HTTP API, the Kit services, and the Hub.
 
-Findings worth reporting even when they look small: a token or key reaching disk, a log, or a process argument list where it should not; a container URL or credential appearing in output that is meant to be shareable; a call reaching data belonging to another account; TLS or certificate verification that can be turned off without the caller asking; and a released binary whose signature or checksum does not verify.
+Findings worth reporting even when they look small: a token or key reaching disk, a log, or a process argument list where it should not; a computer URL or credential appearing in output that is meant to be shareable; a call reaching data belonging to another account; TLS or certificate verification that can be turned off without the caller asking; and a released binary whose signature or checksum does not verify.
 
 ## What is not in scope
 
 Anything requiring an already-compromised machine, since the CLI stores credentials for the user who runs it and cannot defend against that user's own account being taken over.
 
-A container being reachable by anyone holding its URL. That is the documented design: the two 24-character IDs in the hostname are the credential, which is what makes sharing a URL work. Set proxy permissions before sharing anything sensitive. A URL leaking somewhere it should not is in scope; the model itself is not.
+A computer being reachable by anyone holding its URL. That is the documented design: the two 24-character IDs in the hostname are the credential, which is what makes sharing a URL work. Set proxy permissions before sharing anything sensitive. A URL leaking somewhere it should not is in scope; the model itself is not.
 
 Reports produced by a scanner with no demonstrated impact, missing hardening headers on documentation pages, and denial of service by volume.
 
