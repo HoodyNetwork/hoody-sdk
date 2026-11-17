@@ -1,25 +1,25 @@
-> _**SDK skill · `code` namespace** · ~6,748 tokens · hoody-sdk v1.0.0-beta.17_
+> _**SDK skill · `code` namespace** · ~7,522 tokens · hoody-sdk v1.0.1_
 
-# `code` — VS Code in the browser, per container
+# `code` — VS Code in the browser, per computer
 
 ## Purpose
 
-**This is the VS Code IDE running in a browser tab — not a programmatic API.** Open `https://{P}-{C}-code-1.{N}.containers.hoody.com/` and you get the full editor: file tree, diff view, debugger, terminals, extensions marketplace, all backed by the container's filesystem. The `code-N` URL is served by an **orchestrator** that starts one isolated editor instance per index and returns a page that embeds it. The index is the hostname: `code-1` is instance 1, `code-2` is instance 2, each with its own settings, state and running process.
+**This is the VS Code IDE running in a browser tab — not a programmatic API.** Open `https://{P}-{C}-code-1.{N}.computers.hoody.com/` and you get the full editor: file tree, diff view, debugger, terminals, extensions marketplace, all backed by the computer's filesystem. The `code-N` URL is served by an **orchestrator** that starts one isolated editor instance per index and returns a page that embeds it. The index is the hostname: `code-1` is instance 1, `code-2` is instance 2, each with its own settings, state and running process.
 
-On a `code-N` host the platform's edge fills in the two parameters the entry page needs. It sets the instance selector `id` from the hostname, overwriting anything the caller sent, and it sets `folder` to the container's default workspace when the request names none. Add `?folder=<abs-path>` to open a different folder. Talking to a bare kit server with no edge in front of it, a client must send both `folder` and `id` itself: with neither the entry path returns the kit specification, with only one it returns `400`.
+On a `code-N` host the platform's edge fills in the two parameters the entry page needs. It sets the instance selector `id` from the hostname, overwriting anything the caller sent, and it sets `folder` to the computer's default workspace when the request names none. Add `?folder=<abs-path>` to open a different folder. Talking to a bare kit server with no edge in front of it, a client must send both `folder` and `id` itself: with neither the entry path returns the kit specification, with only one it returns `400`.
 
 The methods in this namespace read the service's state (health, running instances, versions), stop editor instances, stage extensions and confirm what an instance has installed, and build embed URLs. Day-to-day use is "open the URL".
 
-Like every Hoody kit URL, `code` is **iframable**: drop the `code-N` URL into an `<iframe>` and you've embedded VS Code in your own page. Same for every other kit (`files`, `terminal`, `display`, `desktop`, `browser`, `notes`, `agent`, …) — you can compose a full HTML "operating system" out of Hoody kit iframes with no native code, just URLs and standard CSP / cookie wiring.
+Like every Hoody kit URL, `code` is **iframable**: drop the `code-N` URL into an `<iframe>` and you've embedded VS Code in your own page. Same for every other kit UI (`files`, `terminal`, `display`, `desktop`, `browser`, `notes`, `agent`, …), except that an `exec` script's response keeps the framing policy it sends — you can compose a full HTML "operating system" out of Hoody kit iframes with no native code, just URLs and standard CSP / cookie wiring.
 
 **Headline mode: extension-only embed.** Add `?extension=<publisher>.<name>` and the editor hides its chrome and opens that extension's **sidebar view** filling the viewport. It works for an installed extension that contributes a sidebar view (an Activity Bar panel); when no sidebar view of that extension can be found, even after activating it, the editor falls back to the file explorer. Pair such an extension with the iframable kit URL and you have:
 
 - A coding agent (e.g. **Cline** — `saoudrizwan.claude-dev`) accessible from any browser, including mobile phones with no IDE installed.
 - The same agent embedded into your own dashboard, a docs site, a Notion page, a Slack canvas (URL preview), a CRM, or any other HTML surface.
 - A focused tool surface from any other extension with its own sidebar view (Continue, Roo Cline, GitLens, …) without exposing the full editor. An extension that only adds editors, commands or previews has no sidebar view to open.
-- A branded deployment: point a proxy alias at the `code` service and hand out the alias URL instead of one that carries the `containerId` (Example 7).
+- A branded deployment: point a proxy alias at the `code` service and hand out the alias URL instead of one that carries the `computerId` (Example 7). The embedded editor can still reveal the computer identifiers in the page's HTML; the alias brands the link, it does not hide the computer.
 
-The container's filesystem still backs the extension (it can edit files, run terminals, hit the network, etc.) — same persistent state as the full IDE. To run two single-extension surfaces side by side, give each its own instance through its own hostname: Cline on `code-1`, Continue on `code-2`.
+The computer's filesystem still backs the extension (it can edit files, run terminals, hit the network, etc.) — same persistent state as the full IDE. To run two single-extension surfaces side by side, give each its own instance through its own hostname: Cline on `code-1`, Continue on `code-2`.
 
 ## When to use
 
@@ -31,36 +31,43 @@ The container's filesystem still backs the extension (it can edit files, run ter
 
 ## When NOT to use
 
-Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → `files`, long-lived processes → `daemon`, headless web → `browser`, exposing a dev server that runs in the container → a proxy alias with program `http` and its port (see the `api` namespace). Not a coding-agent control plane → `agent` (the typed in-container AI-agent HTTP namespace, slug `agent`; the Hoody Agent browser GUI on the same `-agent-1` host is the human surface).
+Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → `files`, long-lived processes → `daemon`, headless web → `browser`, exposing a dev server that runs in the computer → a proxy alias with program `http` and its port (see the `api` namespace). Not a coding-agent control plane → `agent` (the typed in-computer AI-agent HTTP namespace, slug `agent`; the Hoody Agent browser GUI on the same `-agent-1` host is the human surface).
 
 ## Prerequisites
 
-- A running container. Set `P`, `C`, `N` (project id, container id, server name) from `containers.get`.
+- A running computer. Set `P`, `C`, `N` (project id, computer id, server name) from `computers.get` (`client.api.computers.get(computerId)`).
 - Address the service through its `code-N` URL. That hostname selects the instance. The generated SDK sends no `id` unless you pass one.  An SDK client pointed at a bare kit server passes `id` itself.
-- VSIX staging needs a downloadable `.vsix` URL that the service may fetch: `http` or `https`, no credentials in the URL, and not an address inside the container or on a private network.
+- VSIX staging needs a downloadable `.vsix` URL that the service may fetch: `http` or `https`, no credentials in the URL, and not an address inside the computer or on a private network.
 
 ## Capability URL
 
 → See `SKILL-SDK.md § Proxy URLs`.
 
+**Reaching a service you host on a computer port** (any port, any namespace):
+
+- `https://{projectId}-{computerId}-http-<port>.{node}.computers.hoody.com` — proxy speaks HTTP to `<port>` on the computer's network address. Bind `0.0.0.0:<port>`, which always works; a loopback-only listener is also reached on default computers.
+- `https://{projectId}-{computerId}-https-<port>.{node}.computers.hoody.com` — proxy speaks HTTPS to `<port>` on the computer's network address (target needs TLS, bound to `0.0.0.0:<port>` too).
+
+Edge is always `https://`. No alias, firewall edit, or proxy registration needed; capability-token gates still apply.
+
 ## Common workflows
 
 ### 1. Open the editor on a folder
 
-1. Open `https://{P}-{C}-code-1.{N}.containers.hoody.com/?folder=<abs-path>`. Leave `folder` out to open the container's default workspace.
+1. Open `https://{P}-{C}-code-1.{N}.computers.hoody.com/?folder=<abs-path>`. Leave `folder` out to open the computer's default workspace.
 2. To switch folders, open the same URL with another `folder`. A running instance is reused, and the page loads the editor on the folder the request names. `kit.getStatus` keeps reporting the folder the instance was started with. Add `restart=true` only when you mean to restart the instance's process.
 
 ### 2. Embed a single extension (single-tool browser surface)
 
 1. Make sure the extension is installed in that instance: stage it (workflow 3) or install it in the editor.
-2. Open or iframe `https://{P}-{C}-code-1.{N}.containers.hoody.com/?extension=<publisher>.<name>&folder=<abs-path>`. `client.embeds.code.extension` builds the same URL without sending a request.
-3. Brand it with `proxy.aliases.create` (program `code`, the landing query in `target_path`) and gate it with `proxy.containerPermissions.*` before sharing.
+2. Open or iframe `https://{P}-{C}-code-1.{N}.computers.hoody.com/?extension=<publisher>.<name>&folder=<abs-path>`. `client.embeds.code.extension` builds the equivalent URL on the canonical entry path (`…/api/v1/code?extension=…&folder=…`, which serves the same page as `/`) without sending a request.
+3. Brand it with `proxy.aliases.create` (`client.api.proxy.aliases.create`) (program `code`, the landing query in `target_path`) and gate it with `computers.proxy.*` (`client.api.computers.proxy`) before sharing.
 
 ### 3. Stage a VSIX, apply it, confirm it installed
 
 1. `extensions.install` with the `.vsix` URL. A success means the file is staged, not installed: the response reports `requiresRestartToApply: true` and `appliesAt: "next-instance-start"`. 
-2. Start or restart the instance that should have it (open its URL with `restart=true`). Staging is shared across instances, so every instance installs it at its next start.
-3. `extensions.list` and read `observed`: `status: "running"` means the instance is running and the version it has installed is the staged one. It compares version numbers only; it does not show that the extension activated.
+2. Start or restart the instance that should have it (open its URL with `restart=true`). Staging is shared across instances, so every instance attempts to install it at its next start.
+3. `extensions.list` and read `observed`: to confirm installation at the staged version, require `status: "running"`, a non-null `stagedVersion` and `installedVersion === stagedVersion` (an installed extension with nothing staged also reports `running`). This compares version numbers only; it does not show that the extension activated.
 
 ### 4. Inspect instances and versions
 
@@ -71,18 +78,18 @@ Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → 
 
 Stop an instance you no longer need: it ends its editors, integrated terminals, tasks and extension host, and keeps its settings, installed extensions and workspace state for its next start.
 
-Call `client.code.stop({ id: N })` on the container client.
+Call `client.code.stop({ id: 1 })` on the computer client; `id` is the instance index (the `1` of `code-1`), not the server name.
 
-A `200` means the instance's process has exited; `404` with `unknown-instance` means it was not running.
+A `200` means the instance was stopped, or its start was cancelled before a process existed; any process it had has exited. `404` with `unknown-instance` means there was nothing to stop.
 
 ## Quirks & gotchas
 
 - On a `code-N` host the edge sets `id` from the hostname and overwrites a caller's value, so a query-string `id` cannot pick another instance. `code-0` is treated as `code-1`.
-- The edge fills `folder` with the container's default workspace only when the request carries no `folder`; an explicit `folder` wins.
+- The edge fills `folder` with the computer's default workspace only when the request carries no `folder`; an explicit `folder` wins.
 - A request with a different `folder` for a running instance reuses that instance and its page loads the editor on the requested folder; no restart is needed. The instance keeps the folder it was started with as its own, which is the one `kit.getStatus` reports. `restart=true` kills and respawns the instance.
 - The entry path forwards only the query parameters it declares (`?folder`, `?id`, `?extension`, `?restart`, `?page-loader`, `?disable-walkthroughs`, `?hoody-code`, `?welcome-iframe-url`, `?page-loader-path`, `?proxy-domain`, `?locale`, `?app-name`) and drops any other name without reporting it.
 - The query string on the entry path is capped at 8192 bytes; a longer one is answered `400` and starts nothing.
-- The page embeds the instance from the container's `http-<port>` host, where the port is `basePort + id`. `basePort` is deployment configuration: read `orchestrator.basePort`, or the instance's own `port`, from `kit.getStatus` instead of assuming a number. That host is editor transport, not part of the kit API.
+- The page embeds the editor from a separate host of the computer. That host is editor transport, not part of the kit API: use the `code-N` URL.
 - Staging is not installation. The editor installs staged extensions only while an instance starts, and the stage directory is shared, so one stage reaches every instance at its next start.
 - A stage that lands while an instance is starting can be installed with one version's details and another's contents. `extensions.list` reads only the installed version number, so it may not reveal that pairing; restarting the instance installs whatever is staged then. Stage before starting an instance.
 - `extensions.list` keeps `desired` (what is staged) and `observed` (what this instance appears to have) apart. A section that could not be read reports `status: "unavailable"` and has no `extensions` key at all, and `partial` is then true.
@@ -97,13 +104,13 @@ A `200` means the instance's process has exited; `404` with `unknown-instance` m
 
 - `429` HTML page from the entry path — starting another instance would pass the instance limit this deployment is configured with (none by default). Nothing was started; stop an instance you do not need (workflow 5), then retry. An already running instance is still served at the limit.
 - `403` — Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. The body is the plain text `Forbidden`, not JSON. Use the `code-N` URL.
-- `400` HTML page from the entry path: exactly one of `folder` and `id` carried a value, `id` is not an unsigned decimal integer or was sent twice, `id` exceeds `65535 - basePort`, or the query is over 8192 bytes. Only a bare kit server hits the first case; behind the edge both are filled.
+- `400` HTML page from the entry path: exactly one of `folder` and `id` carried a value, `id` is not an unsigned decimal integer or was sent twice, `id` exceeds `65535 - basePort`, or the query is over 8192 bytes. On a `code-N` host the edge fills `id`, and fills the default `folder` only when the `folder` key is absent, so an explicit empty `?folder=` still gets this `400`.
 - `409` from the entry path: the instance's port is held by a process the orchestrator did not start. Retrying does not help until it is released.
-- `503` from the entry path: the instance did not finish starting in time. Worth retrying.
-- `extensions.install` errors carry a stable `error` code: `destination-refused` (`403`, the URL is outside the fetch policy), `downgrade-refused` (`409`), `not-a-vsix` (`422`), `upstream-error` (`502`, may be retried), `upstream-timeout` (`504`), `installs-at-capacity` (`503`, honour `Retry-After`), `insufficient-storage` (`507`), `extension-too-large` (`413`, the archive is over the size limit). Branch on `error`, not on the message.
+- `503` from the entry path: the instance failed to start, was cancelled or did not become ready in time, exited or stopped before it was ready, or the orchestrator is shutting down. Worth retrying once the condition clears.
+- `extensions.install` errors carry a stable `error` code: `destination-refused` (`403`, the URL is outside the fetch policy), `downgrade-refused` (`409`), `not-a-vsix` (`422`), `upstream-error` (`502`, may be retried), `upstream-timeout` (`504`), `installs-at-capacity` (`503`, honour `Retry-After`), `insufficient-storage` (`507`), `extension-too-large` (`413`, the archive is over the size limit). Branch on `error`, not on the message. In the SDK these arrive as a thrown `ApiError`: read the code from `error.response.error` (`ApiError.code` stays unset for these lowercase codes).
 - Either extensions operation can return `invalid-selector` (`400`, an `id` the service cannot parse) or `internal-error` (`500`). Only `extensions.install` reads a request body, so only it returns `invalid-request` (`400`, malformed body or `url`), `unsupported-media-type` (`415`, body not sent as `application/json`) and `request-too-large` (`413`, body over the limit).
 - `404` with `error: "unknown-instance"` from either extensions operation means the service has no extensions directory configured, despite the code's name; retrying with another instance id does not help. An instance that was never started lists as `stopped`, not 404.
-- `503` from `extensions.list` carries the normal result body with `desired.status: "unavailable"`: the staged set could not be read, and `observed` is still reported.
+- `503` from `extensions.list` carries the normal result body with `desired.status: "unavailable"`: the staged set could not be read, and `observed` is still reported. The SDK throws it as an `ApiError` (and retries a `503` first); read `desired` and `observed` from `error.response`.
 
 ## Related namespaces
 
@@ -111,14 +118,14 @@ A `200` means the instance's process has exited; `404` with `unknown-instance` m
 
 ## Examples
 
-`code` is a **URL-first** namespace — for most workflows the kit URL itself (with the right query string and / or iframe wrapper) IS the deliverable. The methods here read state, stage extensions and build URLs; they do not drive the editor. Each example below is a copy-pasteable recipe in the mode you're reading. URL-composition steps are pure string templates and need no kit call. Set `P`, `C`, `N` (project id, container id, server name) from `containers.get` first.
+`code` is a **URL-first** namespace — for most workflows the kit URL itself (with the right query string and / or iframe wrapper) IS the deliverable. The methods here read state, stage extensions and build URLs; they do not drive the editor. Each example below is a copy-pasteable recipe in the mode you're reading. URL-composition steps are pure string templates and need no kit call. Set `P`, `C`, `N` (project id, computer id, server name) from `computers.get` (`client.api.computers.get(computerId)`) first.
 
 ### 1. Open the editor with a folder pre-loaded — bookmarkable URL
 
 **Goal:** ship a teammate a single URL that opens VS Code already pointing at the right repo.
 
 ```typescript
-const url = `https://${P}-${C}-code-1.${N}.containers.hoody.com/?folder=${encodeURIComponent('/home/user/myrepo')}`;
+const url = `https://${P}-${C}-code-1.${N}.computers.hoody.com/?folder=${encodeURIComponent('/home/user/myrepo')}`;
 console.log(url);
 ```
 
@@ -129,12 +136,12 @@ console.log(url);
 URL pattern (no kit call):
 
 ```
-https://${P}-${C}-code-1.${N}.containers.hoody.com/?extension=<publisher>.<name>&folder=<absolute-path>
+https://${P}-${C}-code-1.${N}.computers.hoody.com/?extension=<publisher>.<name>&folder=<absolute-path>
 ```
 
 ```typescript
-// Pure URL builder — no request is made. The target is the scoped container
-// (omitted on a withContainer() client); the edge picks the instance from the
+// Pure URL builder — no request is made. The target is the scoped computer
+// (omitted on a withComputer() client); the edge picks the instance from the
 // code-N hostname.
 const url = client.embeds.code.extension(undefined, {
   params: { extension: 'saoudrizwan.claude-dev', folder: '/home/user/myrepo' },
@@ -148,7 +155,7 @@ Name the extension as `publisher.name`, no version. `client.embeds.code.extensio
 **Goal:** instance 1 is open on `/home/user/myrepo` and you want the editor on `/home/user/other`. Open the same instance URL with the new `folder`: the running instance is reused and the page loads the editor on that folder. `kit.getStatus` keeps reporting the folder the instance was started with.
 
 ```typescript
-const url = `https://${P}-${C}-code-1.${N}.containers.hoody.com/?folder=${encodeURIComponent('/home/user/other')}`;
+const url = `https://${P}-${C}-code-1.${N}.computers.hoody.com/?folder=${encodeURIComponent('/home/user/other')}`;
 ```
 
 Add `restart=true` only when the process itself must restart, for example to apply a staged extension (Example 4). Restarting ends that instance's running editor session, including its terminals. Other instances are untouched.
@@ -168,17 +175,18 @@ console.log(staged.outcome, staged.appliesAt, staged.extension.logicalKey);
 
 **Step 2 — apply it** by starting or restarting the instance: open its URL with `restart=true`. Every other instance picks it up at its own next start.
 
-**Step 3 — confirm.** The observed entry reports `status: "running"` when the running instance has the staged version installed. This compares version numbers; it does not show that the extension activated.
+**Step 3 — confirm.** To confirm installation at the staged version, require `status: "running"`, a non-null `stagedVersion` and an equal `installedVersion`: an extension installed on the instance with nothing staged also reports `running`. This compares version numbers; it does not show that the extension activated.
 
 ```typescript
 const list = (await client.code.extensions.list()).data;
 const entry = list.observed.extensions?.find(e => e.logicalKey === 'acme.internal-tools');
-console.log(list.observed.status, entry?.status, entry?.installedVersion);
+console.log(list.observed.status, entry?.status, entry?.stagedVersion, entry?.installedVersion,
+  entry?.status === 'running' && entry.stagedVersion != null && entry.installedVersion === entry.stagedVersion);
 ```
 
 `stale` right after a stage is normal; `failed` means the instance started after the stage, had time to install it, and still does not have it. If `observed.status` is `unavailable` there is no `extensions` array and nothing can be concluded from it.
 
-To install without the API: drop the VSIX on the container filesystem through the `files` namespace and use the editor's Extensions view → `…` menu → "Install from VSIX…".
+To install without the API: drop the VSIX on the computer filesystem through the `files` namespace and use the editor's Extensions view → `…` menu → "Install from VSIX…".
 
 ### 5. Which instances are running, and which builds
 
@@ -195,45 +203,48 @@ An instance that has not been opened since the service started is simply absent 
 
 ### 6. Health check + extension verify — post-deploy smoke test
 
-**Goal:** after a container rebuild, confirm the `code` service is up AND instance 1 has the extension you ship installed at the staged version. This is a service-health and installed-version check; it does not prove the extension activated.
+**Goal:** after a computer rebuild, confirm the `code` service is up AND instance 1 has the extension you ship installed at the staged version. This is a service-health and installed-version check; it does not prove the extension activated.
 
 ```typescript
 const health = (await client.code.kit.getHealth()).data;
 if (health.status !== 'ok') throw new Error('service unhealthy');
 const ext = (await client.code.extensions.list()).data;
 const live = ext.observed.extensions?.some(
-  e => e.logicalKey === 'saoudrizwan.claude-dev' && e.status === 'running',
+  e => e.logicalKey === 'saoudrizwan.claude-dev' && e.status === 'running'
+    && e.stagedVersion != null && e.installedVersion === e.stagedVersion,
 );
 if (!live) throw new Error('extension not installed on instance 1');
 ```
 
-An instance that has not started since the rebuild reports every entry as `stopped`, including a staged version it has not installed yet; a running instance that has not installed the stage reports `stale` (`failed` if it started after the stage and its install grace has passed). Open the instance's URL once before the check.
+An instance that has not started since the rebuild is stopped. If its extensions directory exists and can be read, every entry reports `stopped`, including a staged version it has not installed yet. An instance that has never started has no such directory, so `observed.status` is `unavailable` and there is no `extensions` array. A running instance that has not installed the stage reports `stale` (`failed` if it started after the stage and its install grace has passed). Open the instance's URL once before the check.
 
 ### 7. Embed the editor in your own page, behind a branded URL
 
 **Goal:** ship a dashboard / docs site / Notion-style canvas with VS Code (or a single extension) embedded as a panel.
 
+HTML does not expand shell variables: in the `src` URLs below, replace `PROJECT_ID`, `COMPUTER_ID` and `SERVER` with the project id, the computer id and the server name of the computer (the same values as `${P}`, `${C}` and `${N}` in the shell examples), or set each iframe's `src` from script.
+
 ```html
 <!-- Full editor, with a folder pre-loaded -->
 <iframe
-  src="https://${P}-${C}-code-1.${N}.containers.hoody.com/?folder=/home/user/myrepo"
+  src="https://PROJECT_ID-COMPUTER_ID-code-1.SERVER.computers.hoody.com/?folder=/home/user/myrepo"
   style="width:100%;height:100vh;border:0"
   allow="clipboard-read; clipboard-write; cross-origin-isolated"
 ></iframe>
 
 <!-- Single extension only (no IDE chrome) — Cline as a service -->
 <iframe
-  src="https://${P}-${C}-code-1.${N}.containers.hoody.com/?extension=saoudrizwan.claude-dev&folder=/home/user/myrepo"
+  src="https://PROJECT_ID-COMPUTER_ID-code-1.SERVER.computers.hoody.com/?extension=saoudrizwan.claude-dev&folder=/home/user/myrepo"
   style="width:100%;height:100vh;border:0"
   allow="clipboard-read; clipboard-write"
 ></iframe>
 ```
 
-To keep the `containerId` out of the iframe `src`, create a proxy alias on the `code` service with the landing query as its `target_path`, and use the URL the call returns. Leave `id` out of the target: the alias's `index` picks the instance, and a target query naming `id` is refused with `404 ALIAS_TARGET_QUERY_FORCED_KEY`. The `folder` (and `extension`) in the target is a landing preference only: the editor opens there, but it does not confine the session, and anyone using the editor can open any other folder the container user can read.
+To keep the `computerId` out of the URL you hand out (the embedded editor can still reveal the computer identifiers in the page source), create a proxy alias on the `code` service with the landing query as its `target_path`, and use the URL the call returns. Leave `id` out of the target: the alias's `index` picks the instance, and a target query naming `id` is refused with `404 ALIAS_TARGET_QUERY_FORCED_KEY`. The `folder` (and `extension`) in the target is a landing preference only: the editor opens there, but it does not confine the session, and anyone using the editor can open any other folder the computer user can read.
 
 ```typescript
 const alias = await client.api.proxy.aliases.create({
-  container_id: C,
+  computer_id: C,
   program: 'code',
   index: 1,
   alias: 'agent',
@@ -241,30 +252,15 @@ const alias = await client.api.proxy.aliases.create({
 });
 ```
 
-Gate the alias with `proxy.containerPermissions.*` before sharing it (see the `api` namespace). The same iframe pattern works for **every** Hoody kit (`files`, `terminal`, `display`, `desktop`, `browser`, `notes`, `agent`, …).
+Gate the alias with `computers.proxy.*` (`client.api.computers.proxy`) before sharing it (see the `api` namespace). The same iframe pattern works for every Hoody kit UI (`files`, `terminal`, `display`, `desktop`, `browser`, `notes`, `agent`, …); an `exec` script's response keeps the framing policy it sends.
 
 ## Reference
 
 **Accessor:** `client.code`  |  **Import:** `import * as code from 'hoody-sdk/code'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, computerId?, serviceIndex?, serverName? }` (`server` is the older spelling of `serverName`, which wins when both are set), which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are set by the client and are refused with a `TypeError` before the call is sent: configure the token on the client, a kit credential as `kitAuth` on `withComputer()` or the client config (`middlewareContext.kitAuth` replaces the client's `kitAuth` for one call), and use another client for another identity), `cache` (ignored here: only an `api` GET is cached, never a GET to a kit host), `responseIsFinal` (`true`: never sent again once it may have reached the server), `keyedInProgressWait` (`false`: a 409 IDEMPOTENCY_REQUEST_IN_PROGRESS is the answer, not asked again), `redactBodyKeys` (body keys whose values an ApiError shows as [REDACTED]) and `maxResponseBytes` (a response body over this many bytes is refused with code RESPONSE_TOO_LARGE, and reading stops) (no `_realm`: that one is control-plane only). When the signature shows an options object (`options?: object` is one that takes the transport options only), the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself keeps the argument order it displays. A `wsOptions` argument (WebSocket methods only) accepts just `reconnect`, `connectTimeoutMs` and `transport`; the other transport options (`timeoutMs`, `signal`, …) stay in the request options the signature shows, never in `wsOptions`.
 
-### `client.code` (1) — VS Code web interface
-
-#### `stop` — Stop an editor instance
-
-```typescript
-client.code.stop(options?: { id?: number })
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `id` | `number` | query | No | Which instance to stop. On a `code-{N}` service URL the edge proxy sets it from the hostname and overrides any value sent, so a caller there neither needs to send it nor can change it. It is required: there is no default instance to stop, so a request without it is answered `400`. Read exactly as strictly as the selector on `GET /api/v1/code`: an unsigned decimal integer, under the literal name `id` only, never given more than once, and at most `65535 - basePort`. |
-
-**Returns:** `Promise<CodeStopResponse>`  |  **HTTP:** `DELETE /api/v1/code`
-**CLI:** `hoody code stop`
-
----
+**Reading a method.** A method that shows no **Returns:** returns the response type named after it, the words after `client.` joined in PascalCase plus `Response`: `client.code.stop()` returns `Promise<CodeStopResponse>`.
 
 ### `client.code.extensions` (2) — Extension staging and inspection
 
@@ -276,15 +272,15 @@ client.code.extensions.install(data: CodeExtensionsInstallRequest, options?: { i
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `id` | `number` | query | No | Which instance this request is about. Required here, unlike on `GET /api/v1/code`. That operation has a discovery branch to fall back to when no selector is given; this one does not, so a request without an `id` has named no instance and is rejected rather than defaulted to a first one. The value is read exactly as strictly as the selector on `GET /api/v1/code`: an unsigned decimal integer, under the literal name `id` only, never given more than once, and at most `65535 - basePort`. See that operation for the full rules. Where it comes from: On a `code-N` service URL the platform's edge proxy sets it from the hostname, so a caller behind the edge neither sends it nor can override it, and the generated clients leave it out of the query for exactly that reason. It is required because there is no discovery branch here to fall back to: a request without an `id` has named no instance and is answered `400`. |
+| `id` | `number` | query | No | Which instance this request is about. Required: a request without an `id` has named no instance and is rejected rather than defaulted to a first one. The value is an unsigned decimal integer, under the literal name `id` only, never given more than once, and at most `65535 - basePort`. Where it comes from: On a `code-N` service URL the platform's edge proxy sets it from the hostname, so a caller behind the edge neither sends it nor can override it, and the generated clients leave it out of the query for exactly that reason. It is required because there is no discovery branch here to fall back to: a request without an `id` has named no instance and is answered `400`. |
 | `data` | `CodeExtensionsInstallRequest` | body | Yes |  |
 
 **Body:** `{ url*: string, allowDowngrade: bool=false }`
 
 - `allowDowngrade` — Permit replacing a staged version with an older one. Refused by default so a routine restage cannot silently roll an extension back.
 
-**Returns:** `Promise<CodeExtensionsInstallResponse>`  |  **HTTP:** `POST /api/v1/code/extensions/install`
-**CLI:** `hoody code extensions install`
+**HTTP:** `POST /api/v1/code/extensions/install`
+**CLI:** `hoody code extensions install --id <id> --url <url>`
 
 ---
 
@@ -296,10 +292,10 @@ client.code.extensions.list(options?: { id?: number })
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `id` | `number` | query | No | Which instance this request is about. Required here, unlike on `GET /api/v1/code`. That operation has a discovery branch to fall back to when no selector is given; this one does not, so a request without an `id` has named no instance and is rejected rather than defaulted to a first one. The value is read exactly as strictly as the selector on `GET /api/v1/code`: an unsigned decimal integer, under the literal name `id` only, never given more than once, and at most `65535 - basePort`. See that operation for the full rules. Where it comes from: On a `code-N` service URL the platform's edge proxy sets it from the hostname, so a caller behind the edge neither sends it nor can override it, and the generated clients leave it out of the query for exactly that reason. It is required because there is no discovery branch here to fall back to: a request without an `id` has named no instance and is answered `400`. |
+| `id` | `number` | query | No | Which instance this request is about. Required: a request without an `id` has named no instance and is rejected rather than defaulted to a first one. The value is an unsigned decimal integer, under the literal name `id` only, never given more than once, and at most `65535 - basePort`. Where it comes from: On a `code-N` service URL the platform's edge proxy sets it from the hostname, so a caller behind the edge neither sends it nor can override it, and the generated clients leave it out of the query for exactly that reason. It is required because there is no discovery branch here to fall back to: a request without an `id` has named no instance and is answered `400`. |
 
-**Returns:** `Promise<CodeExtensionsListResponse>`  |  **HTTP:** `GET /api/v1/code/extensions/list`
-**CLI:** `hoody code extensions list`
+**HTTP:** `GET /api/v1/code/extensions/list`
+**CLI:** `hoody code extensions list --id <id>`
 
 ---
 
@@ -311,7 +307,7 @@ client.code.extensions.list(options?: { id?: number })
 client.code.kit.getHealth()
 ```
 
-**Returns:** `Promise<CodeKitGetHealthResponse>`  |  **HTTP:** `GET /api/v1/code/health`
+**HTTP:** `GET /api/v1/code/health`
 **CLI:** `hoody code health`
 
 ---
@@ -322,7 +318,7 @@ client.code.kit.getHealth()
 client.code.kit.getStatus()
 ```
 
-**Returns:** `Promise<CodeKitGetStatusResponse>`  |  **HTTP:** `GET /status`
+**HTTP:** `GET /status`
 **CLI:** `hoody code status`
 
 ---
@@ -333,8 +329,25 @@ client.code.kit.getStatus()
 client.code.kit.getVersion()
 ```
 
-**Returns:** `Promise<CodeKitGetVersionResponse>`  |  **HTTP:** `GET /api/v1/code/version`
+**HTTP:** `GET /api/v1/code/version`
 **CLI:** `hoody code version`
+
+---
+
+### `client.code` (1) — VS Code server
+
+#### `stop` — Stop an editor instance
+
+```typescript
+client.code.stop(options?: { id?: number })
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `id` | `number` | query | No | Which instance to stop. On a `code-{N}` service URL the edge proxy sets it from the hostname and overrides any value sent, so a caller there neither needs to send it nor can change it. It is required: there is no default instance to stop, so a request without it is answered `400`. Read exactly as strictly as the selector on `GET /api/v1/code`: an unsigned decimal integer, under the literal name `id` only, never given more than once, and at most `65535 - basePort`. |
+
+**HTTP:** `DELETE /api/v1/code`
+**CLI:** `hoody code stop <id>`
 
 ---
 
@@ -346,7 +359,7 @@ client.code.kit.getVersion()
 client.code.ui.getFavicon()
 ```
 
-**Returns:** `Promise<ApiResponse<ArrayBuffer>>`  |  **HTTP:** `GET /favicon.ico`
+**Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `GET /favicon.ico`
 
 ---
 
@@ -356,7 +369,7 @@ client.code.ui.getFavicon()
 client.code.ui.getManifest()
 ```
 
-**Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `GET /api/v1/code/manifest.json`
+**HTTP:** `GET /api/v1/code/manifest.json`
 
 ---
 

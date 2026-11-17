@@ -1,34 +1,34 @@
-> _**HTTP skill · `watch` namespace** · ~5,967 tokens · hoody-sdk v1.0.0-beta.17_
+> _**HTTP skill · `watch` namespace** · ~6,717 tokens · hoody-sdk v1.0.1_
 
 # `watch` — Linux inotify file-change streams with replay history
 
 ## Purpose
 
-Per-container filesystem-event service. Configure watchers (paths, globs, ignore-dirs, coalesce window); consume events via paginated history, SSE, or WebSocket. Bounded in-memory replay buffer supports `since_id` resume.
+Per-computer filesystem-event service. Configure watchers (paths, globs, ignore-dirs, coalesce window); consume events via paginated history, SSE, or WebSocket. Bounded in-memory replay buffer supports `since_id` resume.
 
 ## When to use
 
-- Live-tail FS changes inside a container (build, hot-reload, log tail)
+- Live-tail FS changes inside a computer (build, hot-reload, log tail)
 - Detect `created | modified | removed | renamed | metadata` events on paths/trees
 - Audit writes by filtering `kinds`
 - Resume after disconnect via `since_id` / `since_timestamp`
 
 ## When NOT to use
 
-- One-shot listing/stat, file-content tail, shell-process lifecycle, cross-container aggregation (see §Related namespaces).
+- One-shot listing/stat, file-content tail, shell-process lifecycle, cross-computer aggregation (see §Related namespaces).
 
 ## Prerequisites
 
-- Container with `hoody-watch` kit (Linux only); see `SKILL-HTTP.md` for auth + URL routing.
+- Computer with `hoody-watch` kit (Linux only); see `SKILL-HTTP.md` for auth + URL routing.
 
 ## Capability URL
 
 → See `SKILL-HTTP.md § Proxy URLs`.
 
-**Reaching a service you host on a container port** (any port, any namespace):
+**Reaching a service you host on a computer port** (any port, any namespace):
 
-- `https://{projectId}-{containerId}-http-<port>.{node}.containers.hoody.com` — proxy speaks HTTP to `localhost:<port>`.
-- `https://{projectId}-{containerId}-https-<port>.{node}.containers.hoody.com` — proxy speaks HTTPS to `localhost:<port>` (target needs TLS).
+- `https://{projectId}-{computerId}-http-<port>.{node}.computers.hoody.com` — proxy speaks HTTP to `<port>` on the computer's network address. Bind `0.0.0.0:<port>`, which always works; a loopback-only listener is also reached on default computers.
+- `https://{projectId}-{computerId}-https-<port>.{node}.computers.hoody.com` — proxy speaks HTTPS to `<port>` on the computer's network address (target needs TLS, bound to `0.0.0.0:<port>` too).
 
 Edge is always `https://`. No alias, firewall edit, or proxy registration needed; capability-token gates still apply.
 
@@ -48,7 +48,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 3. Bulk replay via pagination
 
-Bulk replay: `GET /api/v1/watch/watchers/{id}/events` with `since_id`, one page per call; persist the highest `id`.
+Bulk replay: `GET /api/v1/watch/watchers/{id}/events` with `since_id`, one page per request; persist the highest `id`.
 
 ### 4. WebSocket consumer
 
@@ -62,30 +62,30 @@ List with `GET /api/v1/watch/watchers`, inspect with `GET /api/v1/watch/watchers
 
 ## Quirks & gotchas
 
-- Linux only; on non-Linux hosts the binary exits before opening the listener (no HTTP served) — typically with code 0 via the container-path check, or code 1 if those paths exist. A 501 `UNSUPPORTED_PLATFORM` response is defined but unreachable from a normal startup: the process exits before it can serve one.
-- No kit-level auth header; do not add `Authorization` on direct kit calls
+- Linux only; on non-Linux hosts the binary exits before opening the listener (no HTTP served) — typically with code 0 via the computer-path check, or code 1 if those paths exist. A 501 `UNSUPPORTED_PLATFORM` response is defined but unreachable from a normal startup: the process exits before it can serve one.
+- The kit checks no credential of its own. Under the default allow policy, the kit URL is sufficient. When proxy permissions protect a kit, supply the credential required by its authentication group; in the SDK, configure `kitAuth` on `withComputer()`.
 - `recursive` defaults `true`; `coalesce_ms` defaults `100`
-- `ignore_dirs` default: `node_modules, .git, target, __pycache__, .hg, .svn, .cache, dist, .next, .nuxt, vendor, bower_components`. Pass `[]` to disable; `null` falls back to default
+- `ignore_dirs` default: `node_modules, .git, target, __pycache__, .hg, .svn, .cache, dist, .next, .nuxt, vendor, bower_components`. Pass `[]` to disable. Left out on create, the default list applies; left out on update, the watcher keeps its current list
 - Default limits, which the kit's command-line flags can change: 128 watchers/kit, 32 paths/watcher, 64 stream clients/watcher, replay buffer of 100 000 events or 16 MiB per watcher (whichever is hit first). `history_size` on create overrides the event count per watcher; values under 32 are raised to 32 and there is no upper cap, so the 16 MiB memory limit is the effective bound
 - Watcher ids are UUIDs; a path segment that is not a UUID is rejected with `400` before the route runs
-- `since_id` and `since_timestamp` mutually exclusive — both = 400 `INVALID_CURSOR`
+- `since_id` and `since_timestamp` mutually exclusive — both = 400 `INVALID_CURSOR` (on the history list, `after_id` overrides both)
 - 409 `HISTORY_GAP` means an event after your cursor is lost: it was evicted from the replay history, or it was too large to keep. The test is exact for every cursor (`since_id`, `since_timestamp`, `after_id`): a cursor older than the oldest retained event does not gap by itself, so "the last 5 minutes" of a watcher created 2 minutes ago returns everything it has. `since_id=0` means "everything retained" and never gaps.
 - Walking history page by page: pass `after_id` (the previous response's `next_after_id`; the response also carries `has_more`). If an event you have not read yet was evicted between two requests, the next one fails with 409 `HISTORY_GAP` instead of skipping it. A `page` walk counts from the oldest retained event, so an eviction between pages skips events silently. `since_id`, `since_timestamp` and `page` are ignored when `after_id` is set.
 - `since_timestamp` accepts RFC3339, unix seconds, or millis (switches to ms when `|n| >= 100_000_000_000`)
-- WS message cap 64 KiB by default; the server sends JSON text frames only, ignores text and binary frames from the client, pings every 20 s and disconnects on a missed pong
-- `kind` (wire field name): `created | modified | removed | renamed | metadata | overflow | other` (snake_case enum); `overflow` = events were lost, either because the kernel event queue overflowed or because the kit's own internal event channel was saturated; `overflow` events are delivered even when `kinds` does not list them
+- WS message cap 64 KiB by default; every data frame the server sends is JSON text (control frames aside: it pings every 20 s and disconnects on a missed pong); it ignores text and binary frames from the client
+- `kind` (wire field name): `created | modified | removed | renamed | metadata | overflow | other` (snake_case enum); `overflow` = events were lost, because the kernel event queue overflowed, because the kit's own internal event channel was saturated, or because work for a newly created directory was refused when the kit's deferred queue was full (it is also sent when the watcher's backend reports an error, which does not mean events were lost); `overflow` events are delivered even when `kinds` does not list them
 
 ## Common errors
 
-- `400 INVALID_PAGINATION` — `page=0`, `limit=0` or `limit` above 200; defaults `page=1, limit=50`. A negative or non-numeric `page`/`limit` also answers HTTP 400 `INVALID_PAGINATION`; the message names the parameter
-- `400 INVALID_REQUEST` — empty `paths`, an invalid or missing path, a glob that does not compile, or an invalid `ignore_dirs` entry. All of these answer the same code, so read the message, not the code, to tell them apart
-- `400 INVALID_CURSOR` — both cursor fields, or unparseable timestamp
+- `400 INVALID_PAGINATION` — `page=0` (unless `after_id` is set), `limit=0` or `limit` above 200; defaults `page=1, limit=50`. A negative or non-numeric `page`/`limit` also answers HTTP 400 `INVALID_PAGINATION`; the message names the parameter
+- `400 INVALID_REQUEST` — empty `paths`, an invalid or missing path, a glob that does not compile, an invalid `ignore_dirs` entry, an update that gives no field, or an invalid request body (for example, not JSON, no JSON content type, an unknown field, or a value of the wrong type). On create, an invalid `Idempotency-Key` header (a character outside visible ASCII, space and tab, or a trimmed value that is empty or longer than 256 bytes) also returns this code. All of these answer the same code, so read the message, not the code, to tell them apart
+- `400 INVALID_CURSOR` — both cursor fields (without `after_id`), or unparseable timestamp
 - `404 WATCHER_NOT_FOUND` — UUID syntactically valid but no watcher; also raised pre-upgrade on stream endpoints
-- `409 LIMIT_EXCEEDED` — more than 32 `paths` in one watcher, or 128 watchers already live on the container
+- `409 LIMIT_EXCEEDED` — more than 32 `paths` in one watcher, or 128 watchers already live on the computer
 - `409 HISTORY_GAP` — an event after the cursor was evicted or too large to keep; body `details` carries `oldest_available_id` / `newest_available_id`
 - `429 MAX_CLIENTS_REACHED` — >64 concurrent SSE+WS on one watcher; capacity incremented after checks pass (no slot leak)
 - `500 WATCHER_START_FAILED` — the kit could not start the inotify watch for a new watcher
-- `503 SHUTTING_DOWN` — the kit is stopping: `GET /api/v1/watch/watchers/{id}/events/sse`/`GET /api/v1/watch/watchers/{id}/events/ws` and `POST /api/v1/watch/watchers` return it. Watchers are removed at shutdown, so reads of a watcher or its history return 404 `WATCHER_NOT_FOUND` instead
+- `503 SHUTTING_DOWN` — once the kit begins stopping, `GET /api/v1/watch/watchers/{id}/events/sse`/`GET /api/v1/watch/watchers/{id}/events/ws`, `POST /api/v1/watch/watchers` and `PATCH /api/v1/watch/watchers/{id}` can return it. Shutdown removes the watchers; after removal, reads of a watcher or its history return 404 `WATCHER_NOT_FOUND`
 - Mid-stream `event: lag` (SSE) / `{"type":"lag",...}` (WS) — broadcast lagged AND replay buffer cannot fill gap; connection closed after lag frame
 
 ## Related namespaces
@@ -93,20 +93,20 @@ List with `GET /api/v1/watch/watchers`, inspect with `GET /api/v1/watch/watchers
 - `files` — read/write watched paths
 - `exec` — run command on event (rebuild on save)
 - `daemon` — supervise the consumer process
-- `pipe` — fan SSE stream into another container/process
+- `pipe` — fan SSE stream into another computer/process
 
 ## Examples
 
-Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first. To change a watcher's config, update it in place (example 8); deleting and recreating it loses its history and disconnects its consumers.
+Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, computer id, server name) from `GET /api/v1/computers/{id}` first. To change a watcher's config, update it in place (example 8); deleting and recreating it loses its history and disconnects its consumers.
 
 ### 1. Provision a recursive watcher and verify it sees events
 
-**Goal:** watch `/tmp/wt` for any change; confirm the inotify subscriptions are wired by mutating a file and reading the history. Create `/tmp/wt` inside the container first (or use a path that already exists): creating a watcher does not create its paths, and a missing path is refused with `400 INVALID_REQUEST`.
+**Goal:** watch `/tmp/wt` for any change; confirm the inotify subscriptions are wired by mutating a file and reading the history. Create `/tmp/wt` inside the computer first (or use a path that already exists): creating a watcher does not create its paths, and a missing path is refused with `400 INVALID_REQUEST`.
 
 **Step 1 — create the watcher.** Capture `id`. `recursive` defaults to `true`; tighten `coalesce_ms` from the default 100 ms to 50 ms for snappier debounce.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
+KIT="https://${P}-${C}-watch-1.${N}.computers.hoody.com/api/v1/watch"
 WID=$(curl -sX POST "$KIT/watchers" -H 'Content-Type: application/json' \
   -d '{"paths":["/tmp/wt"],"recursive":true,"coalesce_ms":50}' | jq -r .id)
 echo "WID=$WID"
@@ -118,6 +118,12 @@ echo "WID=$WID"
 curl -sf "$KIT/watchers/$WID" | jq '{id, config: .config | {paths, recursive, coalesce_ms}, stats}'
 ```
 
+**Step 3 — touch a file and read the history.** Create or change a file under `/tmp/wt` on the computer (with `exec` or a terminal), then list the events: `events_seen` rises and the list holds a `created` or `modified` event for it.
+
+```bash
+curl -sf "$KIT/watchers/$WID/events?limit=20" | jq '.items[] | {id, kind, path}'
+```
+
 ### 2. SSE live-tail with `since_id` resume after disconnect
 
 **Goal:** subscribe to live events; on disconnect, replay everything missed.
@@ -125,7 +131,7 @@ curl -sf "$KIT/watchers/$WID" | jq '{id, config: .config | {paths, recursive, co
 **Step 1 — open the SSE stream.** Each frame is `id: <n>\nevent: file_event\ndata: {…json…}\n\n`. The `id` is monotonic; persist it as your resume cursor.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
+KIT="https://${P}-${C}-watch-1.${N}.computers.hoody.com/api/v1/watch"
 curl -sN -H 'Accept: text/event-stream' "$KIT/watchers/$WID/events/sse"
 # id: 519
 # event: file_event
@@ -145,7 +151,7 @@ curl -sN -H 'Accept: text/event-stream' \
 
 ```bash
 # wscat or any WS client. URL is wss://, NOT https://, on the SAME host.
-wscat -c "wss://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch/watchers/$WID/events/ws?since_id=37000"
+wscat -c "wss://${P}-${C}-watch-1.${N}.computers.hoody.com/api/v1/watch/watchers/$WID/events/ws?since_id=37000"
 # < {"type":"file_event","id":37511,"watcher_id":"…","kind":"created","path":"/tmp/wt/ws-trigger.txt",…}
 # (server Ping arrives every ~20s; client lib auto-pongs)
 ```
@@ -156,21 +162,21 @@ A lag frame is `{"type":"lag", …}` (text); after it, the server closes the soc
 
 **Goal:** cursor-walk every event since a known id, persist offline, then resume from the highest event id you actually persisted (not the response's `newest_available_id`, which describes the whole buffer). Useful for batch consumers (cron, periodic syncers) that don't want to hold a stream.
 
-**Step 1 — page through.** Fetch the first page with your starting `since_id`, then follow `next_after_id` as `after_id` while `has_more` is true; a 409 `HISTORY_GAP` on an `after_id` page means events were evicted before you read them, so the replay is incomplete. Do not walk with `page`: with `since_id=0` an eviction between pages shifts the offsets and skips events without an error. `limit ∈ [1,200]`; out-of-range = **400 `INVALID_PAGINATION`**. Response carries `oldest_available_id` / `newest_available_id` / `oldest_available_timestamp` / `newest_available_timestamp` so you can detect buffer churn between pages.
+**Step 1 — page through.** Fetch the first page with your starting `since_id`, then follow `next_after_id` as `after_id` while `has_more` is true; a 409 `HISTORY_GAP` on an `after_id` page means events were evicted before you read them, so the replay is incomplete. Do not walk with `page`: with `since_id=0` an eviction between pages shifts the offsets and skips events without an error. `limit ∈ [1,200]` per request; out-of-range = **400 `INVALID_PAGINATION`**. Response carries `oldest_available_id` / `newest_available_id` / `oldest_available_timestamp` / `newest_available_timestamp` (omitted while the buffer holds no event) so you can detect buffer churn between pages.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
+KIT="https://${P}-${C}-watch-1.${N}.computers.hoody.com/api/v1/watch"
 CURSOR=${CURSOR:-0}   # highest id already stored; 0 = everything retained
 Q="since_id=$CURSOR"
 while :; do
   R=$(curl -sf "$KIT/watchers/$WID/events?$Q&limit=200") \
     || { echo "request failed (409 = history gap: replay incomplete)" >&2; exit 1; }
-  jq -c '.items[]' <<< "$R" >> /tmp/events.ndjson
+  jq -c '.items[]' <<< "$R" >> /tmp/events.ndjson || exit 1
+  LAST=$(jq -r '.items[-1].id // empty' <<< "$R"); if [ -n "$LAST" ]; then CURSOR=$LAST; fi
   [ "$(jq -r .has_more <<< "$R")" = true ] || break
   Q="after_id=$(jq -r .next_after_id <<< "$R")"
 done
-CURSOR=$(tail -n 1 /tmp/events.ndjson | jq -r '.id // empty')
-echo "resume cursor=${CURSOR:-0}"
+echo "resume cursor=$CURSOR"
 ```
 
 ### 5. Filter by event kind — only writes, ignore creates / removes / metadata
@@ -178,7 +184,7 @@ echo "resume cursor=${CURSOR:-0}"
 **Goal:** trigger a rebuild on content edits, not on file creation noise. `kinds` accepts a subset of `created | modified | removed | renamed | metadata | overflow | other`. `overflow` events still arrive when `kinds` leaves them out, so a consumer should handle them anyway.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
+KIT="https://${P}-${C}-watch-1.${N}.computers.hoody.com/api/v1/watch"
 WID=$(curl -sX POST "$KIT/watchers" -H 'Content-Type: application/json' \
   -d '{"paths":["/tmp/wt"],"kinds":["modified"],"coalesce_ms":50}' | jq -r .id)
 # Sanity-check that only modified events arrive after a few writes:
@@ -186,21 +192,21 @@ curl -sf "$KIT/watchers/$WID/events?limit=20" \
   | jq '[.items[].kind] | unique'   # → ["modified"] (plus "overflow" if inotify dropped events)
 ```
 
-⚠ Creating and writing a file usually produces a `created` and a `modified`, but the number of events and the size recorded on the `created` event are not fixed: sizes are sampled when the kit processes the event, and events inside the `coalesce_ms` window are merged. `kinds: ["modified"]` drops the `created` events, but `modified` is also reported when a file opened for writing is closed unchanged, so it does not prove the content changed.
+Warning: Creating and writing a file usually produces a `created` and a `modified`, but the number of events and the size recorded on the `created` event are not fixed: sizes are sampled when the kit processes the event, and events inside the `coalesce_ms` window are merged. `kinds: ["modified"]` drops the `created` events, but `modified` is also reported when a file opened for writing is closed unchanged, so it does not prove the content changed.
 
 ### 6. Glob include/exclude — watch logs but ignore secret rotations
 
-**Goal:** stream `*.log` events but exclude `secret-*.log` rotations a security agent doesn't need to see. `exclude` takes precedence over `include`.
+**Goal:** stream `*.log` events but exclude `secret-*.log` rotations a security agent doesn't need to see. `exclude` takes precedence over `include`. Both match an ordinary event's new `path` only; `overflow` events (empty `path`) bypass both filters, so handle them too: renaming `secret-1.log` to `app.log` still emits a `renamed` event whose `old_path` names the excluded file, so filter `old_path` yourself when that name must not reach the consumer.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
+KIT="https://${P}-${C}-watch-1.${N}.computers.hoody.com/api/v1/watch"
 WID=$(curl -sX POST "$KIT/watchers" -H 'Content-Type: application/json' \
   -d '{
     "paths":["/tmp/wt"],
     "include":["**/*.log"],
     "exclude":["**/secret-*.log"]
   }' | jq -r .id)
-# After a few writes, only non-secret .log paths show up:
+# After a few writes, only non-secret .log paths show up (plus "" if an overflow occurred):
 curl -sf "$KIT/watchers/$WID/events?limit=40" | jq '[.items[].path] | unique'
 # → ["/tmp/wt/app.log"]   (secret-1.log and data.json are filtered out)
 ```
@@ -210,7 +216,7 @@ curl -sf "$KIT/watchers/$WID/events?limit=40" | jq '[.items[].path] | unique'
 **Goal:** an audit screen that shows every watcher in the kit, what it watches, and whether it has live consumers. `stats.events_seen` counts raw inotify events before coalescing, so it can be larger than the number of events in the history; `active_clients` counts live SSE+WS connections. One call returns at most 200 watchers; with the default cap of 128 watchers per kit that is all of them, but when the cap has been raised, walk further pages with `page` until the items seen reach `total`.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
+KIT="https://${P}-${C}-watch-1.${N}.computers.hoody.com/api/v1/watch"
 curl -sf "$KIT/watchers?limit=200" \
   | jq '.items[] | {id, paths: .config.paths, kinds: (.config.kinds // []),
                     events_seen: .stats.events_seen,
@@ -222,7 +228,7 @@ curl -sf "$KIT/watchers?limit=200" \
 **Goal:** widen `kinds` from `["modified"]` to `["modified","removed"]`. Update the watcher in place: omitted fields keep their current value, a list you send replaces that whole list, and at least one field must be given. Changing only `kinds`, as below, keeps the watcher's id, its retained history and its connected SSE/WebSocket clients. Shrinking `history_size` evicts the oldest events beyond the new cap and can turn an existing replay cursor into a `HISTORY_GAP`; ordinary eviction as new events arrive still applies. Deleting and recreating the watcher instead would lose the history and disconnect every consumer.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
+KIT="https://${P}-${C}-watch-1.${N}.computers.hoody.com/api/v1/watch"
 curl -sf -X PATCH "$KIT/watchers/$WID" -H 'Content-Type: application/json' \
   -d '{"kinds":["modified","removed"]}' | jq '.config.kinds'
 ```
@@ -234,7 +240,7 @@ If the new configuration cannot be started, the request fails with 500 and the w
 **Goal:** clean up. After delete, both `GET /api/v1/watch/watchers/{id}` and `/api/v1/watch/watchers/{id}/events` return **404 `WATCHER_NOT_FOUND`**, and any open SSE/WS sockets close. The DELETE response body is `{ id, deleted: true }`.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
+KIT="https://${P}-${C}-watch-1.${N}.computers.hoody.com/api/v1/watch"
 curl -sX DELETE "$KIT/watchers/$WID"   # → {"id":"…","deleted":true}
 # Verify gone:
 curl -sw '\n%{http_code}\n' "$KIT/watchers/$WID"          # → 404 WATCHER_NOT_FOUND
@@ -243,10 +249,10 @@ curl -sw '\n%{http_code}\n' "$KIT/watchers/$WID/events"   # → 404 WATCHER_NOT_
 
 ### 10. Recent history without a stream — `since_timestamp` for one-shot tail
 
-**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. A watcher younger than 5 minutes is fine: the call returns every event it has. It answers **409 `HISTORY_GAP`** only when an event after the timestamp was lost (evicted, or too large to keep), so the result would be incomplete. One call returns at most 200 events; walk further pages with `after_id` set to the last id received, which answers 409 the same way when an event after it was lost while paging. Treat any 409 as a failure: the history for that window is incomplete.
+**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. A watcher younger than 5 minutes is fine on its own: the cursor reaching back before the watcher existed does not count as a gap, so the call returns every event the watcher still holds. It answers **409 `HISTORY_GAP`** only when an event after the timestamp was lost (evicted, or too large to keep), so the result would be incomplete. One call returns at most 200 events; walk further pages with `after_id` set to the last id received, which answers 409 the same way when an event after it was lost while paging. Treat any 409 as a failure: the history for that window is incomplete.
 
 ```bash
-KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com/api/v1/watch"
+KIT="https://${P}-${C}-watch-1.${N}.computers.hoody.com/api/v1/watch"
 TS=$(date -u -d '5 minutes ago' +%FT%TZ)
 Q="since_timestamp=$TS"
 while :; do
@@ -265,7 +271,7 @@ When the filesystem reports a rename as a single event carrying both paths, the 
 
 ## Reference
 
-### `events` (3) — Real-time event streams
+### `events` (3) — Watcher event history and live SSE feed
 
 | Method | Summary | Params |
 |--------|---------|--------|
@@ -277,9 +283,9 @@ When the filesystem reports a rename as a single event carrying both paths, the 
 
 - `since_id` — Replay events strictly after this event id.
 - `since_timestamp` — Replay events strictly after this timestamp. Accepted formats: RFC3339 (e.g. 2026-02-11T15:30:00Z); Unix seconds (e.g. 1739287800); Unix milliseconds (e.g. 1739287800123)
-- `page` — Page number (1-based), counted from the oldest event still retained. History is a ring buffer: if events are evicted between two page requests the offsets shift and a page walk can skip events without an error. Walk with `after_id` instead to have that reported. Ignored when `after_id` is set.
+- `page` — Page number (1-based), counted from the oldest event still retained. History is a ring buffer: if events are evicted between two page requests the offsets shift and a page walk can skip events without an error. Walk with `after_id` instead to have that reported. Without `after_id` the page must be at least 1. With `after_id` it is ignored, so 0 is accepted, but it must still be a non-negative whole number: any other value is refused with 400 `INVALID_PAGINATION`.
 - `limit` — Items per page (1-200).
-- `after_id` — Continue a walk: return the `limit` events after this event id (the previous response's `next_after_id`). `since_id`, `since_timestamp` and `page` are ignored when it is set. If any event after it has been evicted from history since, the request fails with `409 HISTORY_GAP` rather than skipping it.
+- `after_id` — Continue a walk: return the `limit` events after this event id (the previous response's `next_after_id`, a decimal event id; a typed client passes it as a number). `since_id`, `since_timestamp` and `page` are ignored when it is set. `since_timestamp` is then not checked, but `since_id` and `page` must still be non-negative whole numbers: any other value is refused with 400 (`INVALID_CURSOR` for `since_id`, `INVALID_PAGINATION` for `page`). If any event after it has been evicted from history since, the request fails with `409 HISTORY_GAP` rather than skipping it.
 
 ### `kit` (1) — System endpoints
 
@@ -295,11 +301,11 @@ When the filesystem reports a rename as a single event carrying both paths, the 
 | `DELETE /api/v1/watch/watchers/{id}` | Delete Watcher |  |
 | `GET /api/v1/watch/watchers/{id}` | Get Watcher |  |
 | `GET /api/v1/watch/watchers` | List Watchers | `?page` `?limit` |
-| `PATCH /api/v1/watch/watchers/{id}` | Reconfigure a live watcher in place. Omitted fields keep their current values. The watcher keeps its id, replay history (so since_id / since_timestamp cursors stay valid) and its connected SSE/WebSocket clients; only the file-system backend is replaced. The new backend starts before the old one stops, and events the old backend had already queued are processed before the handoff completes. So a change under a path watched by both configurations is not lost across the swap (one landing inside that window may be reported twice), and a change under a path only the old configuration watched is delivered if the old backend saw it before stopping. The drain is bounded: if the old backend has not finished within 5 seconds (a backstop against a wedged backend), the handoff completes anyway and events still queued in the old backend at that point are dropped, with a warning in the service log. A request that fails leaves the watcher unchanged. A body with no field is refused with 400 `INVALID_REQUEST`; a body whose fields all equal the current values returns the watcher as it is, without replacing the backend. | `body*:watch_UpdateWatcherRequest` |
+| `PATCH /api/v1/watch/watchers/{id}` | Reconfigure a live watcher in place. Omitted fields keep their current values. The watcher keeps its id, its replay history and its connected SSE/WebSocket clients; only the file-system backend is replaced. Reconfiguration preserves replay history, except that lowering `history_size` evicts retained events beyond the new capacity (minimum 32). Later replay returns 409 `HISTORY_GAP` if an event strictly after the requested cursor was evicted or could not be retained; `since_id=0` always returns retained history without a gap. The new backend starts before the old one stops, and events the old backend had already queued are processed before the handoff completes. So a change under a path watched by both configurations is not lost across the swap (one landing inside that window may be reported twice), and a change under a path only the old configuration watched is delivered if the old backend saw it before stopping. The drain is bounded: if the old backend has not finished within 5 seconds (a backstop against a wedged backend), the handoff completes anyway and events still queued in the old backend at that point are dropped, with a warning in the service log. A request that fails leaves the watcher unchanged. A body with no field is refused with 400 `INVALID_REQUEST`; a body whose fields all equal the current values returns the watcher as it is, without replacing the backend. | `body*:watch_UpdateWatcherRequest` |
 
 **Param notes:**
 
-- `Idempotency-Key` — Makes the create safe to retry. A create with a key used in the last 10 minutes with the same body returns the watcher that first create made (200) instead of a second watcher; with another body it is refused (409 `IDEMPOTENCY_KEY_REUSED`). Use a new key for each watcher, such as a random UUID. At most 256 characters.
+- `Idempotency-Key` — Makes the create safe to retry. A create with a key that is still kept (for 10 minutes, in memory, up to 10,000 keys: past that the oldest is dropped first, and a restart forgets all of them) and the same body returns the watcher that first create made (200) instead of a second watcher; with another body it is refused (409 `IDEMPOTENCY_KEY_REUSED`). Use a new key for each watcher, such as a random UUID. The key takes printable ASCII characters and tabs only; leading and trailing spaces and tabs are trimmed, and what remains must be 1 to 256 characters. Any other key is refused with 400 `INVALID_REQUEST`.
 - `page` — Page number (1-based).
 - `limit` — Items per page (1-200).
 
@@ -308,10 +314,8 @@ When the filesystem reports a rename as a single event carrying both paths, the 
 
 - `watch_CreateWatcherRequest` — `{ coalesce_ms: int|null, exclude: string[]|null, history_size: int|null, ignore_dirs: string[]|null, include: string[]|null, kinds: watch_WatchEventKind[]|null, paths*: string[], recursive: bool|null, skip_hidden: bool|null }`
   - Create a watcher. Only `paths` is required. A field the service does not know (a misspelt option such as `recursiv`) is refused with 400 `INVALID_REQUEST` naming it, as on update, rather than ignored.
-  - `include` — Optional include glob patterns. If present, path must match one include.
+  - `include` — Optional include glob patterns. If non-empty, a path must match one include; omitted or `[]` means no include filter.
 - `watch_UpdateWatcherRequest` — `{ coalesce_ms: int|null, exclude: string[]|null, history_size: int|null, ignore_dirs: string[]|null, include: string[]|null, kinds: watch_WatchEventKind[]|null, paths: string[]|null, recursive: bool|null, skip_hidden: bool|null }`
-  - Reconfigure a live watcher. Every field is optional; an omitted field keeps the watcher's current value, but at least one field must be given. The watcher keeps its id, its replay history (so `since_id` / `since_timestamp` cursors stay valid) and its connected SSE/WebSocket clients.
-  - `coalesce_ms` — Coalescing window in milliseconds (minimum 10).
-  - `history_size` — Replay history capacity (minimum 32). Growing keeps every retained event; shrinking drops only the oldest events beyond the new cap.
+  - … Every field is optional; an omitted field keeps the watcher's current value, but at least one field must be given. … Reconfiguration preserves replay history, except that lowering `history_size` evicts retained events beyond the new capacity (minimum 32). Later replay returns 409 `HISTORY_GAP` if an event strictly after the requested cursor was evicted or could not be retained; `since_id=0` always returns retained history without a gap.
 - `watch_WatchEventKind` — `"created" | "modified" | "removed" | "renamed" | "metadata" | "overflow" | "other"`
   - What changed. … `modified` and `metadata` are reported only for a path that exists when the event is processed, so a write or close through a descriptor that outlives the file's name is not reported. …

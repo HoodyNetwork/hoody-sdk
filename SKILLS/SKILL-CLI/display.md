@@ -1,10 +1,10 @@
-> _**CLI skill · `display` namespace** · ~7,082 tokens · hoody-sdk v1.0.0-beta.17_
+> _**CLI skill · `display` namespace** · ~7,641 tokens · hoody-sdk v1.0.1_
 
 # `display` — programmatic GUI desktops with screenshots, input, and windows
 
 ## Purpose
 
-Per-container HTML5 desktop (X11 via proxy): screenshots, input, windows, clipboard.
+Per-computer HTML5 desktop (X11 via proxy): screenshots, input, windows, clipboard.
 
 ## When to use
 
@@ -18,16 +18,16 @@ Not for: shell → `terminal`/`exec`, files → `files`, headless web → `brows
 ## Prerequisites
 
 - Active X11 display (`DISPLAY=:N`). To render X apps from a terminal into display `:N`, create the terminal session with an explicit string `display: "N"`: the create call takes `display` from the request body only, and no `terminal_id` value ever implies a `DISPLAY`. (A session the terminal kit has to create on demand for a command is configured from the request URL instead, where a `terminal-N` host already supplies `display=N`.) On `hoody terminal sessions create` the flag is `--display N`.
-- Display ID resolution: `*-display-N.*` host (e.g. `https://{projectId}-{containerId}-display-1.{node}.containers.hoody.com` for display `1`) or query override `?displayId=N`.
+- Display ID resolution: `*-display-N.*` host (e.g. `https://{projectId}-{computerId}-display-1.{node}.computers.hoody.com` for display `1`) or query override `?displayId=N`.
 
 ## Capability URL
 
 → See `SKILL-CLI.md § Proxy URLs`.
 
-**Reaching a service you host on a container port** (any port, any namespace):
+**Reaching a service you host on a computer port** (any port, any namespace):
 
-- `https://{projectId}-{containerId}-http-<port>.{node}.containers.hoody.com` — proxy speaks HTTP to `localhost:<port>`.
-- `https://{projectId}-{containerId}-https-<port>.{node}.containers.hoody.com` — proxy speaks HTTPS to `localhost:<port>` (target needs TLS).
+- `https://{projectId}-{computerId}-http-<port>.{node}.computers.hoody.com` — proxy speaks HTTP to `<port>` on the computer's network address. Bind `0.0.0.0:<port>`, which always works; a loopback-only listener is also reached on default computers.
+- `https://{projectId}-{computerId}-https-<port>.{node}.computers.hoody.com` — proxy speaks HTTPS to `<port>` on the computer's network address (target needs TLS, bound to `0.0.0.0:<port>` too).
 
 Edge is always `https://`. No alias, firewall edit, or proxy registration needed; capability-token gates still apply.
 
@@ -47,7 +47,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 4. `hoody display windows geometry get` — coords.
 5. `hoody display windows active get` — confirms activation only, not keyboard focus.
 
-`hoody display windows list`, `hoody display windows focus` and `hoody display windows active get` need a window manager on the display: `409 NO_WINDOW_MANAGER` means none is running, and retrying does not help. Start a window manager (for example a desktop session), or use `hoody display windows search`, window geometry and name queries, and mouse and keyboard actions, which work without one.
+`hoody display windows list` and `hoody display windows active get` need a window manager on a running display: `409 NO_WINDOW_MANAGER` means none is running, and retrying does not help. (A parked display answers `hoody display windows list` with an empty list and is not started.) Without one, `hoody display windows focus` can still give a viewable window keyboard focus: check `details.inputFocus`, and `details.warning` then says the window was not activated or raised (and `hoody display windows active get` cannot report it); it answers `409 NO_WINDOW_MANAGER` only when the window cannot take focus either. Start a window manager (for example a desktop session), or use `hoody display windows search`, window geometry and name queries, and mouse and keyboard actions, which work without one.
 
 ### 3. Drag / select
 
@@ -59,7 +59,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 ### 4. Clipboard hand-off
 
 1. `hoody display clipboard set` — `text`, optional `selection`.
-2. `hoody display keyboard press` — `["ctrl+v"]` (`["shift+Insert"]` for primary).
+2. `hoody display keyboard press` — `["ctrl+v"]` (`["shift+Insert"]` if step 1 set `selection: "primary"`).
 3. `hoody display clipboard get` — read back after GUI copy.
 
 ### 5. Batch input replay
@@ -72,27 +72,27 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 1. `hoody display keyboard press` with `keys`, a list of up to 20 combinations pressed in turn: `["Return"]`, `["Escape"]`, `["ctrl+l"]`, `["ctrl+shift+t"]`, `["Tab", "Down", "Return"]`. Names are X keysym names (`Return`, `Escape`, `Tab`, `BackSpace`, `Delete`, `Up`/`Down`/`Left`/`Right`, `Home`, `End`, `Page_Up`, `F1`…) joined to modifiers (`ctrl`, `shift`, `alt`, `super`) with `+`. `hoody display keyboard press --display-id 1 --keys ctrl+l`.
 2. To submit typed text, end it with a line break instead: in `hoody display keyboard type` and `hoody display input type`, `\n` presses Return.
-3. `hoody display keyboard down` / `hoody display keyboard up` hold and release one key; `hoody display input reset` releases anything left held.
+3. `hoody display keyboard down` / `hoody display keyboard up` hold and release one key. To release a hold made with a `window` through `hoody display keyboard up`, pass the same `window`. `hoody display input reset` releases every hold, those made with a `window` included.
 
 ## Quirks & gotchas
 
 - `?displayId=N` overrides `*-display-N.*` host.
-- `displayId` `1..999999`, digits only (must match `^\d+$`); an out-of-range or non-numeric value is silently ignored and the id is taken from the host instead.
-- All endpoints except `hoody display health` and the HTML client root (`GET /api/v1/display/`) need a displayId or return `400 NO_DISPLAY_CONTEXT`.
-- Screenshot GETs return binary PNG; turn `base64` on for JSON.
-- `hoody display screenshots get` needs numeric `timestamp`, not `timestamp_human`.
+- `displayId` `1..999999`, digits only (must match `^\d+$`); over raw HTTP an out-of-range or non-numeric value is silently ignored and the id is taken from the host instead.
+- All endpoints except `hoody display health` and the HTML client page at the service root need a displayId or return `400 NO_DISPLAY_CONTEXT`.
+- Requests for a screenshot image return binary PNG; turn `base64` on for JSON. Metadata-only requests and the screenshot list return JSON and take no `base64`.
+- `hoody display screenshots get` takes a string containing the capture's `timestamp` (Unix seconds, or milliseconds, microseconds or nanoseconds), a date such as its `timestamp_human`, its file name or stem, or `latest`/`newest`. A file name or stem identifies one capture even when captures share a second. An unparseable value returns `400 VALIDATION_ERROR`.
 - **A screenshot pixel is a click coordinate.** A screenshot spans the whole screen at its current size, read from the windows as they are when it is taken, so pixel (x, y) is the point `hoody display input click` and the other pointer calls act on at (x, y). Where no window is, the image is transparent. A `region` crop starts at its `x1,y1`: add them to a point picked on the crop. Take a new screenshot after a viewer attaches: the screen then takes the viewer's size and the windows move.
-- `hoody display input click` and `hoody display input type` refuse a point with no viewable window with `409 WINDOW_NOT_VIEWABLE` and click nothing. While no viewer is attached to the display that is every point; with one attached, it is the bare desktop between windows. Attach a viewer and pick a point on a window in a fresh screenshot.
+- `hoody display input click` and `hoody display input type` refuse a point with no viewable window with `409 WINDOW_NOT_VIEWABLE` and click nothing. That is a point on the bare desktop between windows, or on a hidden window (for example one minimized in a viewer) (unless an open menu takes the click). Pick a point on a window in a fresh screenshot (restore a hidden window with `hoody display windows restore` first).
 - A line break in `text` (`\n`, `\r\n` or `\r`) presses Return in `hoody display keyboard type` and `hoody display input type`, so `"https://example.com\n"` types the address and submits it; `\t` presses Tab. Every other key or combination (Escape, ctrl+l, arrows) goes through `hoody display keyboard press`.
 - `hoody display input click` refuses a point outside the display's current size with `400 VALIDATION_ERROR` instead of clicking the screen edge, and its `details.pointer` reports where the pointer was after the click and the window under it (`x`, `y`, `window`). A `200` means the click was delivered there, not that the program acted on it: take a new screenshot to see the effect.
 - Clipboard `selection`: `clipboard` (default), `primary`, `secondary`. PRIMARY ≠ Ctrl+V.
-- Clipboard reads and writes can fail with `CLIPBOARD_FAILED`, carrying a shortened tool error; read the clipboard back after a write to confirm it landed.
-- Window IDs are accepted as decimal or hex (`0x...`). `hoody display windows list`, `hoody display windows search` and `hoody display windows active get` return decimal numbers; the path-parameter routes (`hoody display windows get`, `hoody display windows geometry get`, `hoody display windows title get`) echo `windowId` exactly as sent, as a string. Compare ids as numbers, not strings.{1,8}$/"]
-- `hoody display windows focus` activates the window and then tries to give it X input focus. The second step fails on a window that is not viewable, and the call still answers `success: true` with `details.inputFocus: false` and a `warning`; untargeted keyboard input then does not reach that window. `hoody display windows active get` confirms the activation only.
-- `hoody display get` returns display info, a window list (each with per-window `position`/`size`), and the screenshot list — but NOT the virtual screen dimensions (those live on `hoody display geometry get`). 
+- Clipboard reads and writes can fail with `CLIPBOARD_FAILED` (`details.message`: "The clipboard could not be read or written"); read the clipboard back after a write to confirm it landed.
+- Window IDs are accepted as decimal or hex (`0x...`). `hoody display windows list`, `hoody display windows search` and `hoody display windows active get` return decimal numbers, as does `details.windowId` of `hoody display windows restore`; the path-parameter routes (`hoody display windows get`, `hoody display windows geometry get`, `hoody display windows title get`) echo `windowId` exactly as sent, as a string. Compare ids as numbers, not strings.
+- `hoody display windows focus` tries to activate the window and then to give it keyboard focus; without a window manager it can give a viewable window keyboard focus without activating it (`details.inputFocus: true` with a `warning`). With a window manager, the keyboard-focus step fails on a window that is not viewable, and the call still answers `success: true` with `details.inputFocus: false` and a `warning`; untargeted keyboard input then does not reach that window. Without a window manager, a non-viewable window's focus refusal answers `409 NO_WINDOW_MANAGER`. `hoody display windows active get` confirms the activation only.
+- `hoody display get` returns display info, a window list (each with per-window `position`/`size`), and the screenshot list — but NOT the virtual screen dimensions (those live on `hoody display geometry get`).
 - `hoody display input reset` clears stuck modifiers/buttons.
 - `hoody display windows wait` answers 200 even when it times out: the body is `success: false, timedOut: true`, so check `timedOut`, not the status. `timeoutMs` is 100-25000 (default 10000). Too many waits at once on one display give `429 QUEUE_FULL`.
-- `hoody display windows restore` waits by default (`sync`, up to 2 s) until the window manager reports the window as no longer minimized, unlike the other window actions; a window still minimized after that is `500 INPUT_ACTION_FAILED`. With `sync: false` the answer's `details.state` is `null`, unless the window was already normal: that no-op answers `details.state: "normal"` with `details.synced: true`.
+- `hoody display windows restore` waits by default (`sync`, up to 2 s) until the window manager reports the window as no longer minimized, unlike the other window actions; a window still minimized after that is `409 SYNC_TIMEOUT`. With `sync: false` the answer's `details.state` is `null`, unless the window was already normal: that no-op answers `details.state: "normal"` with `details.synced: true`.
 
 ## Common errors
 
@@ -106,7 +106,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Examples
 
-Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first. The `N` in the `display-N` kit hostname is the display id, so `display-1` addresses display 1; `--display-id N` overrides it. The examples pass `displayId=1` explicitly, matching the host.
+Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, computer id, server name) from `hoody computers get` first. The number in the `display-D` kit hostname is the display id `D`, so `display-1` addresses display 1; `--display-id D` overrides it. The examples pass `displayId=1` explicitly, matching the host.
 
 ### 1. See-then-act loop — capture, click, re-capture
 
@@ -115,7 +115,7 @@ Each step has a copy-pasteable code block in the mode you're reading (curl for H
 **Step 1 — capture a baseline with `base64` so the bytes round-trip in JSON.**
 
 ```bash
-hoody --container "$C" display screenshots capture --display-id 1 --base64 -o json > /tmp/before.json
+hoody --computer "$C" display screenshots capture --display-id 1 --base64 -o json > /tmp/before.json
 jq -r .info.timestamp /tmp/before.json
 jq -r .image.data /tmp/before.json > /tmp/before.b64
 ```
@@ -123,13 +123,13 @@ jq -r .image.data /tmp/before.json > /tmp/before.b64
 **Step 2 — click at `(75, 50)`.** `hoody display input click` moves AND clicks in one call; default `button=1` (left).
 
 ```bash
-hoody --container "$C" display input click --display-id 1 --x 75 --y 50 --button 1
+hoody --computer "$C" display input click --display-id 1 --x 75 --y 50 --button 1
 ```
 
 **Step 3 — capture again and give the new image to the vision model.** With `base64` on, `hoody display screenshots capture` returns the fresh image and its metadata. There is no cheaper probe: the metadata-only form (`--metadata`) still takes a full screenshot and only leaves the image bytes out.
 
 ```bash
-hoody --container "$C" display screenshots capture --display-id 1 --base64 -o json | jq -r .image.data > /tmp/after.b64
+hoody --computer "$C" display screenshots capture --display-id 1 --base64 -o json | jq -r .image.data > /tmp/after.b64
 ```
 
 ### 2. Find a window by name + focus it
@@ -139,17 +139,17 @@ hoody --container "$C" display screenshots capture --display-id 1 --base64 -o js
 **Step 1 — `hoody display windows search` with a regex `pattern`.** The booleans control which X11 fields to match against (`name` = WM_NAME / `_NET_WM_NAME`, `class` / `classname` = WM_CLASS pair). Returns an object whose `windows` field is an array of numeric window ids.
 
 ```bash
-WID=$(hoody --container "$C" display windows search --display-id 1 \
+WID=$(hoody --computer "$C" display windows search --display-id 1 \
   --pattern xeyes --name --class --classname -o json \
   | jq -er '.windows[0] // error("No window matched xeyes")') || exit 1
 ```
 
-**Step 2 — focus + confirm.** Focus with `sync` on, then read `details.inputFocus` in the focus response. The call answers `success: true` even when it could only activate the window: `inputFocus: false` (with a `warning`) means the window is not viewable (no viewer attached, or unmapped), so keyboard input cannot reach it. `hoody display windows active get` reports the active window, which confirms the activation only.
+**Step 2 — focus + confirm.** Focus with `sync` on, then read `details.inputFocus` in the focus response. The call answers `success: true` even when it could only activate the window: `inputFocus: false` (with a `warning`) means the window is not viewable (hidden, for example minimized in a viewer), so keyboard input cannot reach it. `hoody display windows active get` reports the active window, which confirms the activation only.
 
 ```bash
-hoody --container "$C" display windows focus --display-id 1 --window-id "$WID" --sync -o json \
+hoody --computer "$C" display windows focus "$WID" --display-id 1 --sync -o json \
   | jq -r .details.inputFocus        # true = keyboard input will reach the window
-hoody --container "$C" display windows active get --display-id 1 -o json | jq -r .windowId
+hoody --computer "$C" display windows active get --display-id 1 -o json | jq -r .windowId
 ```
 
 ### 3. Click sequence, then type into the focused window
@@ -157,8 +157,8 @@ hoody --container "$C" display windows active get --display-id 1 -o json | jq -r
 **Goal:** focus an editable field (e.g. a text input at `(120, 80)`), type a string, with a small per-keystroke delay so the target app doesn't drop characters.
 
 ```bash
-hoody --container "$C" display input click --display-id 1 --x 120 --y 80
-hoody --container "$C" display keyboard type --display-id 1 --text "hello world" --delay 20
+hoody --computer "$C" display input click --display-id 1 --x 120 --y 80
+hoody --computer "$C" display keyboard type --display-id 1 --text "hello world" --delay 20
 ```
 
 `hoody display input type` collapses click-then-type into one call when you only need plain ASCII at one point: `{ x, y, text, delay }`. End `text` with `\n` to press Return after it (to submit a form or an address bar).
@@ -168,7 +168,7 @@ hoody --container "$C" display keyboard type --display-id 1 --text "hello world"
 **Goal:** smooth-drag from `(50, 50)` to `(200, 150)` over `steps=20` interpolated mouse positions (raise `steps` if the target app's drag-recogniser misses fast moves; cap is 1000).
 
 ```bash
-hoody --container "$C" display input drag --display-id 1 \
+hoody --computer "$C" display input drag --display-id 1 \
   --start-x 50 --start-y 50 --end-x 200 --end-y 150 --button 1 --steps 20
 ```
 
@@ -181,14 +181,14 @@ If a drag aborts mid-way and the button stays "pressed" (next click misbehaves),
 **Step 1 — `hoody display clipboard set` to the standard CLIPBOARD buffer.** PRIMARY (middle-click paste) is a different selection — Ctrl+V reads CLIPBOARD only.
 
 ```bash
-hoody --container "$C" display clipboard set --display-id 1 --text "pasted via hoody" --selection clipboard
-hoody --container "$C" display clipboard get --display-id 1 --selection clipboard
+hoody --computer "$C" display clipboard set --display-id 1 --text "pasted via hoody" --selection clipboard
+hoody --computer "$C" display clipboard get --display-id 1 --selection clipboard
 ```
 
-**Step 2 — Ctrl+V into the focused window.** `keys` is an array — pass `["shift+Insert"]` instead if the target app paste-binds to PRIMARY.
+**Step 2 — Ctrl+V into the focused window.** `keys` is an array. For an application that pastes from PRIMARY, write and verify the text with `selection: "primary"` in step 1, then pass `["shift+Insert"]`.
 
 ```bash
-hoody --container "$C" display keyboard press --display-id 1 --keys ctrl+v
+hoody --computer "$C" display keyboard press --display-id 1 --keys ctrl+v
 ```
 
 ### 6. Read window properties (geometry + WM_CLASS + WM_NAME)
@@ -196,18 +196,18 @@ hoody --container "$C" display keyboard press --display-id 1 --keys ctrl+v
 **Goal:** for an unknown window id `WID`, read its title, class hints, and pixel rectangle to decide where to click.
 
 ```bash
-hoody --container "$C" display windows get "$WID" --display-id 1 -o json | jq '.properties'
-hoody --container "$C" display windows geometry get "$WID" --display-id 1 -o json | jq '{x,y,width,height}'
+hoody --computer "$C" display windows get "$WID" --display-id 1 -o json | jq '.properties'
+hoody --computer "$C" display windows geometry get "$WID" --display-id 1 -o json | jq '{x,y,width,height}'
 ```
 
-`windowId` accepts decimal or hex (`0x...`). These two path-parameter calls echo `windowId` back exactly as sent, as a string; only the list, search and active-window calls return decimal numbers.
+`windowId` accepts decimal or hex (`0x...`). These two path-parameter calls echo `windowId` back exactly as sent, as a string; the list, search and active-window calls return decimal numbers, and `hoody display windows restore` returns `details.windowId` as a number.
 
 ### 7. List visible windows with `onlyVisible` filter
 
 **Goal:** list the window manager's windows minus the minimized ones, then pick the one named `xeyes`, no regex. `onlyVisible` only drops windows marked `_NET_WM_STATE_HIDDEN`; it does not test whether a window is actually mapped or viewable (the list is also capped at 200 windows).
 
 ```bash
-hoody --container "$C" display windows list --display-id 1 --only-visible -o json \
+hoody --computer "$C" display windows list --display-id 1 --only-visible -o json \
   | jq '.windows[] | select(.name=="xeyes") | {windowId, name, class, geometry}'
 ```
 
@@ -224,10 +224,11 @@ cat > /tmp/actions.json <<'JSON'
   {"action":"mouse/move",   "params":{"x":120,"y":80}},
   {"action":"input/wait",   "params":{"ms":150}},
   {"action":"mouse/click",  "params":{"button":1}},
+  {"action":"input/wait",   "params":{"ms":150}},
   {"action":"keyboard/type","params":{"text":"replayed","delay":15}}
 ]
 JSON
-hoody --container "$C" display input batch act --display-id 1 --actions @/tmp/actions.json -o json \
+hoody --computer "$C" display input batch act --display-id 1 --actions @/tmp/actions.json -o json \
   | jq '{success, failed, skipped}'
 ```
 
@@ -238,18 +239,18 @@ hoody --container "$C" display input batch act --display-id 1 --actions @/tmp/ac
 **Goal:** one call that returns the running PID/session-name, connected clients, the window list, and the recent screenshot list — then pair it with `hoody display geometry get` for the X server's pixel size. Useful as a one-shot diagnostic before driving input.
 
 ```bash
-hoody --container "$C" display get --display-id 1 -o json
-hoody --container "$C" display geometry get --display-id 1 -o json
+hoody --computer "$C" display get --display-id 1 -o json
+hoody --computer "$C" display geometry get --display-id 1 -o json
 ```
 
-Note: the geometry returned is the display's virtual screen (often `8192x4096`), not a physical monitor size. Pointer coordinates (`hoody display input click` and the rest) are in this screen space, and a screenshot covers the same space, pixel for pixel.
+Note: the geometry is the display's current virtual screen size. It may start at `8192x4096`; a viewer can resize it, and the resized size can persist after the viewer detaches. Read it again after a viewer attaches or resizes. Pointer coordinates (`hoody display input click` and the rest) are in this screen space. An uncropped full-screen screenshot uses the same coordinates; for a screenshot captured with `region`, add the region's `x1` and `y1` to image coordinates before using them as pointer coordinates.
 
 ### 10. Reset stuck modifiers / buttons after a misfired drag
 
-**Goal:** after an aborted drag or a `hoody display keyboard down` you forgot to release, the X server still thinks Shift / Ctrl / Button-1 is held. Symptom: every subsequent click acts as Shift-click; typed letters arrive uppercase. `hoody display input reset` releases everything in one call.
+**Goal:** after an aborted drag or a `hoody display keyboard down` you forgot to release, the X server still thinks Shift / Ctrl / Button-1 is held. Symptom: every subsequent click acts as Shift-click; typed letters arrive uppercase. `hoody display input reset` releases, in one call, every key and button held through this API (a hold made with a `window` is released to that window as well), the Shift / Ctrl / Alt / Super / Meta keys, and mouse buttons 1-5. A button 6 or 7 that something else left pressed is not among them: release it with a mouse up on that button.
 
 ```bash
-hoody --container "$C" display input reset --display-id 1
+hoody --computer "$C" display input reset --display-id 1
 ```
 
 Safe to call any time, even when nothing is stuck. Pair it with the start of every new automation run as a defensive default.
@@ -265,47 +266,47 @@ Safe to call any time, even when nothing is stuck. Pair it with the start of eve
 | `hoody display geometry get` |  | read | Get display dimensions | `display.getGeometry` | `hoody display geometry get --display-id 10` |
 | `hoody display get` |  | read | Get display information and screenshots | `display.get` | `hoody display get --display-id 10` |
 | `hoody display health` |  | read | Service health check | `display.kit.getHealth` | `hoody display health` |
-| `hoody display input act` |  | write | Execute one action with optional screenshot | `display.input.act` | `hoody display input act --display-id 10 --action mouse/click --screenshot` |
-| `hoody display input batch act` |  | write | Execute a sequence of actions | `display.input.actMany` | `hoody display input batch act --display-id 10 --actions @path.json` |
+| `hoody display input act` |  | write | Execute one action with optional screenshot | `display.input.act` | `hoody display input act --display-id 10 --action mouse/click --screenshot-delay 100` |
+| `hoody display input batch act` |  | write | Execute a sequence of actions | `display.input.actMany` | `hoody display input batch act --display-id 10 --actions @actions.json` |
 | `hoody display input click` |  | write | Move cursor and click | `display.input.click` | `hoody display input click --display-id 10 --x 10 --y 10 --button 1` |
 | `hoody display input drag` |  | write | Drag from one position to another | `display.input.drag` | `hoody display input drag --display-id 10 --start-x 10 --start-y 10 --end-x 10 --end-y 10 --button 1` |
 | `hoody display input reset` |  | write | Emergency release all inputs | `display.input.reset` | `hoody display input reset --display-id 10` |
 | `hoody display input select` |  | write | Select a range via click + shift-click | `display.input.select` | `hoody display input select --display-id 10 --x 10 --y 10 --end-x 10 --end-y 10` |
-| `hoody display input type` |  | write | Move, click, and type in one operation | `display.input.type` | `hoody display input type --display-id 10 --x 10 --y 10 --text Hello --delay 10` |
+| `hoody display input type` |  | write | Move, click, and type in one operation | `display.input.type` | `hoody display input type --display-id 10 --x 10 --y 10 --text Hello` |
 | `hoody display input wait` |  | write | Wait for a duration with optional screenshot | `display.input.wait` | `hoody display input wait --display-id 10 --ms 100 --screenshot` |
-| `hoody display keyboard down` |  | write | Hold a key down | `display.keyboard.down` | `hoody display keyboard down --display-id 10 --key Shift_L --window 100` |
-| `hoody display keyboard press` |  | write | Press key combinations | `display.keyboard.press` | `hoody display keyboard press --display-id 10 --keys <keys> --window 100` |
-| `hoody display keyboard type` |  | write | Type a string of text | `display.keyboard.type` | `hoody display keyboard type --display-id 10 --text Hello --window 100` |
-| `hoody display keyboard up` |  | write | Release a held key | `display.keyboard.up` | `hoody display keyboard up --display-id 10 --key <key> --window 100` |
-| `hoody display mouse click` |  | write | Click a mouse button | `display.mouse.click` | `hoody display mouse click --double --display-id 10` |
-| `hoody display mouse click` |  | write | Double-click a mouse button | `display.mouse.doubleClick` | `hoody display mouse click --double --display-id 10` |
+| `hoody display keyboard down` |  | write | Hold a key down | `display.keyboard.down` | `hoody display keyboard down --display-id 10 --key Shift_L --window-id 100` |
+| `hoody display keyboard press` |  | write | Press key combinations | `display.keyboard.press` | `hoody display keyboard press --display-id 10 --keys ctrl+l --window-id 100` |
+| `hoody display keyboard type` |  | write | Type a string of text | `display.keyboard.type` | `hoody display keyboard type --display-id 10 --text Hello --window-id 100` |
+| `hoody display keyboard up` |  | write | Release a held key | `display.keyboard.up` | `hoody display keyboard up --display-id 10 --key Shift_L --window-id 100` |
+| `hoody display mouse click` |  | write | Click a mouse button | `display.mouse.click` | `hoody display mouse click --display-id 10 --button 1` |
+| `hoody display mouse click` |  | write | Double-click a mouse button | `display.mouse.doubleClick` | `hoody display mouse click --double --display-id 10 --button 1` |
 | `hoody display mouse down` |  | write | Press and hold a mouse button | `display.mouse.down` | `hoody display mouse down --display-id 10 --button 1` |
-| `hoody display mouse move` |  | write | Move the cursor to an absolute position | `display.mouse.move` | `hoody display mouse move --relative --display-id 10 --x 10 --y 10` |
+| `hoody display mouse move` |  | write | Move the cursor to an absolute position | `display.mouse.move` | `hoody display mouse move --display-id 10 --x 10 --y 10 --window-id 100` |
 | `hoody display mouse move` |  | write | Move the cursor by an offset from its current position | `display.mouse.moveBy` | `hoody display mouse move --relative --display-id 10 --x 10 --y 10` |
 | `hoody display mouse position get` |  | read | Get cursor position | `display.mouse.getPosition` | `hoody display mouse position get --display-id 10` |
 | `hoody display mouse scroll` |  | write | Scroll in a direction | `display.mouse.scroll` | `hoody display mouse scroll --display-id 10 --direction up --clicks 5` |
 | `hoody display mouse up` |  | write | Release a mouse button | `display.mouse.up` | `hoody display mouse up --display-id 10 --button 1` |
 | `hoody display open` |  | action | Open the Display kit service in your browser |  | `hoody display open` |
-| `hoody display screenshots capture` |  | read | Capture a new screenshot | `display.screenshots.capture` | `hoody display screenshots capture --metadata --base64` |
-| `hoody display screenshots capture` |  | read | Capture a screenshot and return only its metadata | `display.screenshots.capture` | `hoody display screenshots capture --metadata --base64` |
+| `hoody display screenshots capture` |  | read | Capture a new screenshot | `display.screenshots.capture` | `hoody display screenshots capture --base64 --display-id 10` |
+| `hoody display screenshots capture` |  | read | Capture a screenshot and return only its metadata | `display.screenshots.capture` | `hoody display screenshots capture --metadata --display-id 10` |
 | `hoody display screenshots get` |  | read | Retrieve a specific screenshot by timestamp | `display.screenshots.get` | `hoody display screenshots get 1749541160 --base64 --display-id 10` |
-| `hoody display screenshots latest get` |  | read | Retrieve the most recent screenshot | `display.screenshots.getLatest` | `hoody display screenshots latest get --metadata --base64` |
-| `hoody display screenshots latest get` |  | read | Get only the metadata of the most recent screenshot | `display.screenshots.getLatest` | `hoody display screenshots latest get --metadata --base64` |
-| `hoody display screenshots list` |  | read | List all available screenshots | `display.screenshots.list` | `hoody display screenshots list --display-id 10` |
+| `hoody display screenshots latest get` |  | read | Retrieve the most recent screenshot | `display.screenshots.getLatest` | `hoody display screenshots latest get --base64 --display-id 10` |
+| `hoody display screenshots latest get` |  | read | Get only the metadata of the most recent screenshot | `display.screenshots.getLatest` | `hoody display screenshots latest get --metadata --display-id 10` |
+| `hoody display screenshots list` |  | read | List all available screenshots | `display.screenshots.list` | `hoody display screenshots list --display-id 10 --watch 2s` |
 | `hoody display thumbnails capture` |  | read | Capture a new screenshot thumbnail | `display.thumbnails.capture` | `hoody display thumbnails capture --base64 --display-id 10` |
 | `hoody display thumbnails get` |  | read | Retrieve a specific thumbnail by timestamp | `display.thumbnails.get` | `hoody display thumbnails get 1749541160 --base64 --display-id 10` |
 | `hoody display thumbnails latest get` |  | read | Retrieve the most recent thumbnail | `display.thumbnails.getLatest` | `hoody display thumbnails latest get --base64 --display-id 10` |
 | `hoody display windows active get` |  | read | Get the active window ID | `display.windows.getActive` | `hoody display windows active get --display-id 10` |
-| `hoody display windows close` |  | write | Close a window | `display.windows.close` | `hoody display windows close --display-id 10 --window-id 100` |
-| `hoody display windows focus` |  | write | Focus/activate a window | `display.windows.focus` | `hoody display windows focus --display-id 10 --window-id 100 --sync` |
+| `hoody display windows close` |  | write | Close a window | `display.windows.close` | `hoody display windows close 100 --display-id 10` |
+| `hoody display windows focus` |  | write | Focus/activate a window | `display.windows.focus` | `hoody display windows focus 100 --display-id 10 --sync` |
 | `hoody display windows geometry get` |  | read | Get window position and size | `display.windows.getGeometry` | `hoody display windows geometry get 1 --display-id 10` |
 | `hoody display windows get` |  | read | Get extended properties for a window | `display.windows.get` | `hoody display windows get 1 --display-id 10` |
 | `hoody display windows list` |  | read | List windows on the current display | `display.windows.list` | `hoody display windows list --display-id 10 --only-visible` |
-| `hoody display windows minimize` |  | write | Minimize a window | `display.windows.minimize` | `hoody display windows minimize --display-id 10 --window-id 100 --sync` |
-| `hoody display windows move` |  | write | Move a window | `display.windows.move` | `hoody display windows move --display-id 10 --window-id 100 --x 10 --y 10 --sync` |
-| `hoody display windows raise` |  | write | Raise a window to the top | `display.windows.raise` | `hoody display windows raise --display-id 10 --window-id 100` |
-| `hoody display windows resize` |  | write | Resize a window | `display.windows.resize` | `hoody display windows resize --display-id 10 --window-id 100 --width 10 --height 10 --sync` |
-| `hoody display windows restore` |  | write | Restore (un-minimize) a window | `display.windows.restore` | `hoody display windows restore --display-id 10 --window-id 100 --sync` |
+| `hoody display windows minimize` |  | write | Minimize a window | `display.windows.minimize` | `hoody display windows minimize 100 --display-id 10 --sync` |
+| `hoody display windows move` |  | write | Move a window | `display.windows.move` | `hoody display windows move 100 --display-id 10 --x 10 --y 10 --sync` |
+| `hoody display windows raise` |  | write | Raise a window to the top | `display.windows.raise` | `hoody display windows raise 100 --display-id 10` |
+| `hoody display windows resize` |  | write | Resize a window | `display.windows.resize` | `hoody display windows resize 100 --display-id 10 --width 10 --height 10 --sync` |
+| `hoody display windows restore` |  | write | Restore (un-minimize) a window | `display.windows.restore` | `hoody display windows restore 100 --display-id 10 --sync` |
 | `hoody display windows search` |  | read | Search for windows by pattern | `display.windows.search` | `hoody display windows search --display-id 10 --pattern TODO --name` |
 | `hoody display windows title get` |  | read | Get window title | `display.windows.getTitle` | `hoody display windows title get 1 --display-id 10` |
 | `hoody display windows wait` |  | read | Wait for a window to appear or disappear | `display.windows.wait` | `hoody display windows wait --display-id 10 --condition window-present --pattern Firefox` |

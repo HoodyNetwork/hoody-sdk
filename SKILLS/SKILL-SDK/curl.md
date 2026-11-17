@@ -1,4 +1,4 @@
-> _**SDK skill · `curl` namespace** · ~11,915 tokens · hoody-sdk v1.0.0-beta.17_
+> _**SDK skill · `curl` namespace** · ~13,032 tokens · hoody-sdk v1.0.1_
 
 # `curl` — full HTTP client gateway + REST-as-GET-URL bridge
 
@@ -20,17 +20,17 @@ Not for: browser → `browser`, shell → `exec`/`terminal`, KV/SQL → `sqlite`
 
 ## Prerequisites
 
-- Instance `1`; no workspace ID.
+- The default instance is `1` (`curl-1`).
 - `schedules.*` 404s if disabled.
 
 ## Capability URL
 
 → See `SKILL-SDK.md § Proxy URLs`.
 
-**Reaching a service you host on a container port** (any port, any namespace):
+**Reaching a service you host on a computer port** (any port, any namespace):
 
-- `https://{projectId}-{containerId}-http-<port>.{node}.containers.hoody.com` — proxy speaks HTTP to `localhost:<port>`.
-- `https://{projectId}-{containerId}-https-<port>.{node}.containers.hoody.com` — proxy speaks HTTPS to `localhost:<port>` (target needs TLS).
+- `https://{projectId}-{computerId}-http-<port>.{node}.computers.hoody.com` — proxy speaks HTTP to `<port>` on the computer's network address. Bind `0.0.0.0:<port>`, which always works; a loopback-only listener is also reached on default computers.
+- `https://{projectId}-{computerId}-https-<port>.{node}.computers.hoody.com` — proxy speaks HTTPS to `<port>` on the computer's network address (target needs TLS, bound to `0.0.0.0:<port>` too).
 
 Edge is always `https://`. No alias, firewall edit, or proxy registration needed; capability-token gates still apply.
 
@@ -38,24 +38,24 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 1. Convert any REST call into a single GET-able URL (HTTP only)
 
-`GET /api/v1/curl/request?url=<TARGET>&method=<VERB>` on the curl kit URL. The kit executes the upstream request and returns a JSON envelope `{ success, job_id, status_code, headers, body, is_binary, timing, metadata }`. Useful when the caller can only emit a GET (browser, webhook, sandboxed agent, RSS-ish puller, link in an email).
+`GET /api/v1/curl/request?url=<TARGET>&method=<VERB>` on the curl kit URL. The kit executes the upstream request and by default returns a JSON envelope `{ success, job_id, status_code, headers, body, is_binary, timing, metadata }` for a buffered response (`response=transparent` returns the upstream response as is; `mode=async` returns a `202` job acceptance) (an eligible `text/event-stream` response is streamed instead, see section 2). Useful when the caller can only emit a GET (browser, webhook, sandboxed agent, RSS-ish puller, link in an email).
 
-Note: the GET bridge accepts `url` + `method` + the 13 timing/follow/session/response/save flags (`response`, `mode`, `session_id`, `follow_redirects`, `timeout`, `user_agent`, `referer`, `bearer_token`, `save`, `save_path`, `insecure`, `compressed`, `job_name`) **AND a full request body + headers right in the query string**: `data` (raw body, curl `--data`), `json` (parsed JSON; sets `Content-Type: application/json`), `data_base64` (binary-safe; standard OR URL-safe base64, padding optional; takes precedence over `data`/`json`), the aliases `body` and `body_base64` (for `data` and `data_base64`; the canonical name wins when both are given), and repeatable `header=Name: Value`. **Supplying a body auto-upgrades the default method GET→POST** — so a body-bearing POST/PUT/PATCH (with headers) is expressible as a single GET URL. Every other request field is POST-only: a headers map, `form` (URL-encoded fields), `cookie`, `auth_user` / `auth_password` / `auth_method`, `connect_timeout`, `max_redirects`, `max_filesize`, `tcp_nodelay`, `keepalive`, `keepalive_time`, `range`, `speed_limit`, `speed_time`, `retry_count` and `retry_delay`. The GET bridge ignores any of them in the query string without an error, so the request is sent without it. Neither form sends a multipart upload or reads a file from disk (`--data-binary @file`). To send arbitrary binary bytes, use `data_base64` on the GET bridge; the POST JSON form rejects a `data_base64` field with 400 (it refuses any unknown field).
+Note: the GET bridge accepts `url` + `method` + the 13 timing/follow/session/response/save flags (`response`, `mode`, `session_id`, `follow_redirects`, `timeout`, `user_agent`, `referer`, `bearer_token`, `save`, `save_path`, `insecure`, `compressed`, `job_name`) **AND a full request body + headers right in the query string**: `data` (raw body, curl `--data`), `json` (parsed JSON; sets `Content-Type: application/json`), `data_base64` (binary-safe; URL-safe base64 (standard base64 also decodes, but percent-encode each `+` as `%2B`, or the query turns it into a space and the kit answers 400), padding optional; takes precedence over `data`/`json`), the aliases `body` and `body_base64` (for `data` and `data_base64`; the canonical name wins when both are given), and repeatable `header=Name: Value`. **Supplying a body auto-upgrades the default method GET→POST** — so a body-bearing POST/PUT/PATCH (with headers) is expressible as a single GET URL. Every other request field is POST-only: a headers map, `form` (URL-encoded fields), `cookie`, `auth_user` / `auth_password` / `auth_method`, `connect_timeout`, `max_redirects`, `max_filesize`, `tcp_nodelay`, `keepalive`, `keepalive_time`, `range`, `speed_limit`, `speed_time`, `retry_count` and `retry_delay`. The GET bridge ignores any of them in the query string without an error, so the request is sent without it. Neither form sends a multipart upload or reads a file from disk (`--data-binary @file`). To send arbitrary binary bytes, use `data_base64` on the GET bridge; the POST JSON form rejects a `data_base64` field with 400 (it refuses any unknown field).
 
-Live examples (verified — replace the kit URL with your container's):
+Live examples (verified — replace the kit URL with your computer's):
 
-- Plain GET upstream: `https://{P}-{C}-curl-1.{N}.containers.hoody.com/api/v1/curl/request?url=https://httpbin.org/get`
-- HEAD upstream: `https://{P}-{C}-curl-1.{N}.containers.hoody.com/api/v1/curl/request?url=https://httpbin.org/get&method=HEAD`
+- Plain GET upstream: `https://{P}-{C}-curl-1.{N}.computers.hoody.com/api/v1/curl/request?url=https://httpbin.org/get`
+- HEAD upstream: `https://{P}-{C}-curl-1.{N}.computers.hoody.com/api/v1/curl/request?url=https://httpbin.org/get&method=HEAD`
 
-Combine with `proxy.aliases.create({ program: 'curl' })` to give the bridge a brandable hostname like `https://api-bridge.{server_name}.containers.hoody.com/api/v1/curl/request?...` and hide the `containerId`.
+Combine with `proxy.aliases.create({ computer_id: C, program: 'curl', alias: 'api-bridge' })`, where `C` is the target computer's id, to give the bridge a brandable hostname like `https://api-bridge.{server_name}.computers.hoody.com/api/v1/curl/request?...` and hide the `computerId`. Without `alias` the hostname is a generated 48-character hex name.
 
-`client.curl.run` **executes** the request and returns the envelope; it does NOT just compose a URL string. The SDK has no GET method for this route: `run` always sends the POST form. When the deployment enables the kit's response cache (it is off by default), an eligible request can be answered from the cache instead. To compose a URL without firing it, build it client-side or create a proxy alias with `program: 'curl'`: a request to the alias host that carries its own path, such as `/api/v1/curl/request?...`, is forwarded as sent, and `target_path` only sets what the bare root URL serves.
+`client.curl.run` **executes** the request and returns the upstream response (the `{status_code, headers, body}` envelope with `response: 'json'` for a buffered response); it does NOT just compose a URL string. The SDK has no GET method for this route: `run` always sends the POST form. When the deployment enables the kit's response cache (it is off by default), an eligible request can be answered from the cache instead. To compose a URL without firing it, build it client-side or create a proxy alias with `program: 'curl'`: an alias created with `allow_path_override: true` forwards a request that carries its own path, such as `/api/v1/curl/request?...`, as sent, while `target_path` only sets what the bare root URL serves. On a pinned alias (`allow_path_override: false`) any path other than its root and target path is refused with `404 ALIAS_PATH_PINNED`.
 
 For the imperative full-cURL surface (a headers map, `form` fields sent URL-encoded, cookies, auth, follow-redirects, `insecure`, etc.) use the POST form below — though note the kit refuses client-certificate files and an upstream proxy (an SSRF guard; the request schema no longer lists them), and accepts every other body, auth and connection field.
 
 ### 2. Sync request
 
-`client.curl.run` with `mode:"sync"` (default), `response:"json"` (envelope) or `"transparent"` (raw).
+`client.curl.run` with `mode:"sync"` (default), `response:"json"` (envelope) or `"transparent"` (raw). The envelope applies to buffered responses. While SSE support is on (the default), a body-bearing 2xx `text/event-stream` response is streamed through as SSE even with `response:"json"`; non-2xx responses, HEAD/204/205 responses and SSE whose content stays encoded remain buffered. `client.curl.run` reads the whole response and exposes no response headers, so use it for finite responses and read an event stream with a streaming HTTP client against the kit URL.
 
 ### 3. Async job
 
@@ -71,8 +71,10 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 
 ### 5. Save download
 
-1. `client.curl.run` with `save:true` and optional relative `save_path` under `downloads/by-job/{job_id}/`.
-2. `storage.list`/`storage.get`/`storage.delete` with relative path (e.g. `by-job/<uuid>/x.pdf`).
+1. `client.curl.run` with `save:true`, `mode:"async"` and an optional relative `save_path` returns a `job_id`. Wait for the job to complete successfully before retrieving the file. It is stored at `downloads/by-job/{job_id}/<save_path>`; if `save_path` is omitted, the filename is the URL's last path segment or `download`.
+2. Use `storage.list`/`storage.get`/`storage.delete` with a relative path such as `by-job/<job_id>/x.pdf`.
+
+A synchronous save, the default mode, uses a storage-only UUID that is not returned in the response (a buffered JSON envelope has `job_id: null`); use `storage.list` to find the saved path.
 
 ### 6. Scheduled request
 
@@ -85,7 +87,7 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 - Default `response`: POST→`transparent`, GET→`json`.
 - Default `mode:"sync"`; pass `"async"` for `job_id`.
 - `save_path` rejected if empty, absolute, rooted, or has `..`.
-- Saved files at `downloads/by-job/{job_id}/...`; pass relative path.
+- Saved files are at `downloads/by-job/{id}/...`, where `id` is the async job ID or, for a synchronous save, a storage-only UUID discoverable through `storage.list`; pass a relative path.
 - `storage.get` resolves with `ApiResponse<ArrayBuffer>` — binary-safe, no text decoding. Write `response.data` straight to disk.
 - **A saved download is stored under `by-job/{job_id}/<save_path>`, with best-effort index links** `by-date/<YYYY-MM-DD>/<job_id>` and `by-domain/<host>/<job_id>`. A URL whose host is an IP literal gets no `by-domain` link, and a symlink that cannot be created is skipped silently (failing to create an index directory fails the save), so expect one to three entries. `storage.list` returns one item per path; the bytes are the same file.
 - `*.list` returns ALL when `limit` omitted; always pass `limit`.
@@ -94,14 +96,14 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 - `schedules.create` takes `enabled` (default `true`). A schedule created with `enabled: false` has no `next_run` and does not fire; its `cron` must still parse but need not have a future occurrence yet. Any field other than `cron`, `request` and `enabled` is refused with 400 `INVALID_PARAMETER`.
 - `bearer_token` sends `Authorization: Bearer <token>`, but an `Authorization` entry in `headers` wins: the token is then not sent, so the request carries one `Authorization` header.
 - `jobs.getResult` always answers `200` with the target's body and headers, whatever the target answered; the target's status code is in the `X-Curl-Status` header (and in `response.status_code` from `jobs.get`). A stored `429` or `503` is therefore not retried as a kit failure.
-- **`schedules.create.cron` is 6-field (with seconds), NOT the standard 5-field crontab.** `*/15 * * * *` is rejected as `Invalid cron expression`; use `0 */15 * * * *` (at second 0 every 15 min). The standard @-nicknames (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`) ARE accepted (expanded internally to 6-field), but Go-style `@every 15m` is NOT — for anything else use explicit 6-field expressions. Different syntax from the `cron` namespace, which uses Vixie 5-field.
+- **`schedules.create.cron` is 6-field (with seconds; an optional seventh `year` field is also accepted), NOT the standard 5-field crontab.** `*/15 * * * *` is rejected as `Invalid cron expression`; use `0 */15 * * * *` (at second 0 every 15 min). The standard @-nicknames (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`) ARE accepted (expanded internally to 6-field), but Go-style `@every 15m` is NOT — for anything else use explicit 6-field expressions. Different syntax from the `cron` namespace, which uses Vixie 5-field.
 - `session_id` is caller-provided.
-- Job events stream over a WebSocket at `/api/v1/curl/ws`; filter by `job_id`.
+- Job events stream over a WebSocket at `/api/v1/curl/ws`; filter by `job_id`. SDK `client.curl.jobs.connect`.
 
 ## Common errors
 
 - `504` — the upstream request timed out (libcurl timeout); raise `timeout`. An async job does not wait on the caller's connection, but the same `timeout` still applies to the upstream request. The kit itself does not answer `408`; a transparent `run` response passes the upstream's own status through (`jobs.getResult` does not: it answers 200 with `X-Curl-Status`), so an upstream `408` arrives as `408`.
-- Cancelling a job answers `200`; no REST call answers `410`. Read `jobs.get` for `status: "cancelled"`, and stop waiting once a job is `failed` or `cancelled`. `jobs.getResult` answers `404 JOB_RESULT_NOT_READY` when the job has no response body (still pending or running, or finished without an upstream response).
+- Cancelling a job answers `200`; the kit itself never answers `410` (a transparent `run` passes an upstream `410` through, like any upstream status). Read `jobs.get` for `status: "cancelled"`, and stop waiting once a job is `failed` or `cancelled`. `jobs.getResult` answers `404 JOB_RESULT_NOT_READY` when the job has no response body (still pending or running, or finished without an upstream response).
 - `503 queue full` (also SSE capacity exhausted) — back off.
 
 ## Related namespaces
@@ -110,19 +112,19 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 
 ## Examples
 
-Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `containers.get` first.
+Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, computer id, server name) from `computers.get` (`client.api.computers.get(computerId)`) first.
 
 ### 1. Webhook receiver bridge — outbound system can only fire GETs
 
 **Goal:** your CRM can fire URLs but not POST. Translate a click → real upstream POST with JSON body + bearer.
 
-**Step 1 — compose the bridge URL — body and headers go right in the query string.** The GET bridge takes `url`, `method`, the timing/session/response flags (`response`, `mode`, `session_id`, `timeout`, `bearer_token`, …), **plus the request body + headers**: `data` (raw body), `json` (JSON body; sets `Content-Type: application/json`), `data_base64` (binary-safe base64, standard or URL-safe, precedence over `data`/`json`), and repeatable `header=Name: Value`. **Supplying a body auto-upgrades the method GET→POST.** So a real `POST … {json} + headers` becomes one GET-able link a CRM/webhook can fire:
+**Step 1 — compose the bridge URL — body and headers go right in the query string.** The GET bridge takes `url`, `method`, the timing/session/response flags (`response`, `mode`, `session_id`, `timeout`, `bearer_token`, …), **plus the request body + headers**: `data` (raw body), `json` (JSON body; sets `Content-Type: application/json`), `data_base64` (binary-safe; URL-safe base64 (standard base64 also decodes, but percent-encode each `+` as `%2B`, or the query turns it into a space and the kit answers 400), precedence over `data`/`json`), and repeatable `header=Name: Value`. **When `method` is omitted, supplying a body changes the default method from GET to POST. An explicit method is preserved.** So a real `POST … {json} + headers` becomes one GET-able link a CRM/webhook can fire:
 
 ```
 # Full POST as ONE GET URL (json body + header; method auto-upgrades to POST):
-https://${P}-${C}-curl-1.${N}.containers.hoody.com/api/v1/curl/request?url=<urlencoded-target>&json=%7B%22event%22%3A%22X%22%7D&header=Authorization:%20Bearer%20XYZ
+https://${P}-${C}-curl-1.${N}.computers.hoody.com/api/v1/curl/request?url=<urlencoded-target>&json=%7B%22event%22%3A%22X%22%7D&header=Authorization:%20Bearer%20XYZ
 # For payloads with &, quotes, newlines, or binary, prefer data_base64 (URL-safe base64) to dodge escaping:
-https://${P}-${C}-curl-1.${N}.containers.hoody.com/api/v1/curl/request?url=<target>&data_base64=eyJldmVudCI6IlgifQ&header=Content-Type:%20application/json
+https://${P}-${C}-curl-1.${N}.computers.hoody.com/api/v1/curl/request?url=<target>&data_base64=eyJldmVudCI6IlgifQ&header=Content-Type:%20application/json&bearer_token=<token>
 ```
 
 (`form` fields, sent URL-encoded, cookies, Basic auth, retries, ranges and the connection limits are POST-only, and the GET bridge drops them without an error — use the POST form below for those. Neither form sends multipart uploads.)
@@ -133,16 +135,16 @@ const r = await client.curl.run({
   method: 'POST',
   data: JSON.stringify({ event: 'X' }),
   headers: { 'Content-Type': 'application/json' },
-  response: 'json',   // POST defaults to TRANSPARENT — without this, r.data is the raw
-});                   // upstream body and status_code is undefined
+  response: 'json',   // POST defaults to TRANSPARENT — without this, r.data is the upstream body
+});                   // itself (parsed by its Content-Type), not the envelope with status_code
 console.log(r.data!.status_code);
 ```
 
-**Step 2 — hide the `containerId` behind a proxy alias.** Now `https://webhook-bridge.{server_name}.containers.hoody.com/api/v1/curl/request?...` becomes the public URL.
+**Step 2 — hide the `computerId` behind a proxy alias.** Now `https://webhook-bridge.{server_name}.computers.hoody.com/api/v1/curl/request?...` becomes the public URL.
 
 ```typescript
 await client.api.proxy.aliases.create({
-  container_id: C,
+  computer_id: C,
   alias: 'webhook-bridge',
   program: 'curl',
   target_path: '/api/v1/curl/request',
@@ -223,15 +225,16 @@ async function waitAll(ids: string[], timeoutMs = 300_000) {
 await waitAll(jobIds);
 ```
 
-**Step 3 — collect bodies.** `jobs.getResult` returns just the upstream body, always with status 200; the upstream's status is in `X-Curl-Status`.
+**Step 3 — collect bodies.** `jobs.getResult` returns just the upstream body, always with status 200; the upstream's status is in `X-Curl-Status`. In the SDK the body is the call's `.data` (typed `unknown`).
 
 ```typescript
-const bodies = await Promise.all(jobIds.map(id => client.curl.jobs.getResult(id)));
+const results = await Promise.all(jobIds.map(id => client.curl.jobs.getResult(id)));
+const bodies = results.map((r) => r.data);  // the upstream body is under .data
 ```
 
 ### 4. Cancel a runaway long-poll mid-flight
 
-**Goal:** kill a hung async request, free the queue slot. Status flips from `running` to `cancelled`, and the cancelled job's `error` field is set to `Cancelled`.
+**Goal:** kill a hung async request, free the queue slot. Cancel only requests it: the worker notices the request and finalises the job later, and a job that already finished is left as it is. Poll until the job reaches a terminal state, with a deadline. When the cancel wins, `status` becomes `cancelled` and `error` is `Cancelled`; `completed` and `failed` are the other possible ends.
 
 ```typescript
 const sub = await client.curl.run({
@@ -239,15 +242,22 @@ const sub = await client.curl.run({
 });
 const jid = sub.data!.job_id!;   // set in async mode
 await new Promise(r => setTimeout(r, 1000));
-await client.curl.jobs.cancel(jid);
-await new Promise(r => setTimeout(r, 1000));
-const status = await client.curl.jobs.get(jid);
-// status.data.status === 'cancelled', status.data.error === 'Cancelled'
+await client.curl.jobs.cancel(jid);       // requests the cancel; the worker finalises later
+const deadline = Date.now() + 60_000;
+let job;
+for (;;) {
+  job = (await client.curl.jobs.get(jid, undefined, { timeoutMs: 10_000, retries: 0, signal: AbortSignal.timeout(10_000) })).data;
+  if (job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled') break;
+  if (Date.now() > deadline) throw new Error('job not finished after 60 s');
+  await new Promise(r => setTimeout(r, 1000));
+}
+// job.status === 'cancelled' and job.error === 'Cancelled' when the cancel won;
+// 'completed' or 'failed' means the job ended before the cancel took effect.
 ```
 
 ### 5. Schedule + drift detection — fire every 15 min, audit history
 
-**Goal:** ping a health endpoint every 15 min, fast-find failures. ⚠ Scheduler uses **6-field** cron syntax (with seconds) — `*/15 * * * *` (5-field) is rejected as `Invalid cron expression`.
+**Goal:** ping a health endpoint every 15 min, fast-find failures. Warning: Scheduler uses **6-field** cron syntax (with seconds; an optional seventh `year` field is accepted) — `*/15 * * * *` (5-field) is rejected as `Invalid cron expression`.
 
 **Step 1 — create.**
 
@@ -256,7 +266,7 @@ const created = await client.curl.schedules.create({
   cron: '0 */15 * * * *',
   request: { url: 'https://prod.example.com/health', method: 'GET', job_name: 'prod-health' },
 });
-const scheduleId = (created.data as { schedule_id: string }).schedule_id;   // the SDK declares this response as unknown
+const scheduleId = created.data.schedule_id;
 ```
 
 **Step 2 — audit failures.** A job is `failed` when the request could not be completed (DNS, connect, timeout) or when processing after the response failed, such as saving a download. An upstream HTTP error status alone does not fail the job: an upstream that answers `500` still yields a `completed` job, so also read the `response.status_code` of completed runs (from `jobs.get`; the listing does not carry it).
@@ -329,32 +339,32 @@ const r = await client.curl.run({
 const remaining = r.data!.headers['x-ratelimit-remaining'];
 ```
 
-**HTTP Basic alternative** — swap the auth fields. Body `{ url, method, auth_user, auth_password, auth_method: 'basic' }`. Against `httpbin.org/basic-auth/alex/secret` it returns `{"authenticated":true,"user":"alex"}`.
+**HTTP Basic alternative** — swap the auth fields. Pass `{ url, method, auth_user, auth_password, auth_method: 'basic' }`. Against `httpbin.org/basic-auth/alex/secret` it returns `{"authenticated":true,"user":"alex"}`.
 
 ### 8. REST→GET bridge for chat-channel embedding
 
 **Goal:** drop a one-liner URL into Slack so a teammate can re-trigger a build by clicking. URL pattern + alias + IP gate.
 
-**Step 1 — compose** (no kit call — URL pattern). The GET bridge carries the full request in the query string — `url`, `method`, body via `data`/`json`/`data_base64`, and repeatable `header=Name: Value` (a body auto-upgrades the method to POST). So a build-trigger that needs a JSON body + auth header is still one clickable link.
+**Step 1 — compose** (no kit call — URL pattern). The GET bridge carries the full request in the query string — `url`, `method`, body via `data`/`json`/`data_base64`, and repeatable `header=Name: Value` (when `method` is omitted, supplying a body changes the default method from GET to POST; an explicit method is preserved). So a build-trigger that needs a JSON body + auth header is still one clickable link.
 
 ```
 # GET-bridge URL — a real POST (json body + bearer header) as a single clickable link:
-https://${P}-${C}-curl-1.${N}.containers.hoody.com/api/v1/curl/request?url=<url-encoded-build-trigger>&json=%7B%22ref%22%3A%22main%22%7D&header=Authorization:%20Bearer%20XYZ
+https://${P}-${C}-curl-1.${N}.computers.hoody.com/api/v1/curl/request?url=<url-encoded-build-trigger>&json=%7B%22ref%22%3A%22main%22%7D&header=Authorization:%20Bearer%20XYZ
 ```
 
-**Step 2 — wrap with an alias** so the public URL hides `containerId`. The alias target must carry the whole request, body and auth included: the bridge reads the body and headers only from the query string, so an alias carrying just `url` and `method` sends an empty, unauthenticated POST. `target_path` refuses percent escapes (and spaces, quotes and braces), so the step 1 query cannot be pasted as is: write the target URL unescaped, send the JSON body (here `{"ref":"main"}`) as URL-safe base64 in `data_base64` (`<base64-body>` below) with a `Content-Type:application/json` header, and pass the token as `bearer_token`. The token then lives in the alias configuration, so gate the alias (step 3). Keep `allow_path_override: false`: the alias then serves only this `target_path`, at its root and at `/api/v1/curl/request` (both with the target's query), and any other path is refused with `404 ALIAS_PATH_PINNED`. A query key written in `target_path` wins over the visitor's, so a visitor cannot override the target `url`, `method`, body, headers or `bearer_token`. Keys the target does not set (for example `timeout` or `save`) still pass from the visitor, so write into `target_path` every key you want fixed. Step 3's gate is what limits who can fire it.
+**Step 2 — wrap with an alias** so the public URL hides `computerId`. The alias target must carry the whole request, body and auth included: the bridge reads the body and headers only from the query string, so an alias carrying just `url` and `method` sends an empty, unauthenticated POST. `target_path` refuses percent escapes (and spaces, double quotes, braces and `#`), so the step 1 query cannot be pasted as is: write the target URL unescaped (a pinned target URL can contain a simple query, but the bridge splits the query on `&` and reads `+` as a space, so an unescaped `&` starts another bridge parameter: `https://ci.example.com/build?a=1&b=2` reaches the kit as `url=https://ci.example.com/build?a=1`, with `b=2` as a separate bridge key; because `target_path` rejects percent escapes, use a query-free target or another approach when its query needs `&` or `+`), send the JSON body (here `{"ref":"main"}`) as URL-safe base64 in `data_base64` (`eyJyZWYiOiJtYWluIn0` below, the encoding of that body) with a `Content-Type:application/json` header, and pass the token as `bearer_token`. The token then lives in the alias configuration, so gate the alias (step 3). Keep `allow_path_override: false`: the alias then serves only this `target_path`, at its root and at `/api/v1/curl/request` (both with the target's query), and any other path is refused with `404 ALIAS_PATH_PINNED`. For a GET, a query key written in `target_path` wins over the visitor's value for that key, so a visitor's value for a key the target pins (`url`, `method`, `data_base64`, `bearer_token`, `header`) cannot replace the pinned one. The protection is per key, and several keys feed one request field: the body can come from `data_base64` (alias `body_base64`), `data` (alias `body`) or `json`, and `data_base64` beats `data`, which beats `json`; the bearer token is dropped when a `header=Authorization: ...` is present. Keys the target does not set (for example `timeout`, `save`, `json`, `data`, `body_base64`) still pass from the visitor. Pin every key that can change what you want fixed: pinning `data` or `json` alone does not fix the body (a visitor's `data_base64` wins), and pinning `bearer_token` alone does not fix authorization (a visitor's `header=Authorization: ...` wins), so pin the highest-precedence body key (`data_base64`) and a `header` key too, as the recipe below does. The pin does NOT constrain a POST: the alias forwards the visitor's HTTP method and body as on an open alias, and the kit's POST handler executes the JSON body it receives instead of the pinned query, so an admitted visitor can send a request of their own through the alias. Grant alias access (step 3) only to callers you would trust with arbitrary curl requests.
 
 ```typescript
 await client.api.proxy.aliases.create({
-  container_id: C,
+  computer_id: C,
   alias: 'rebuild-main',
   program: 'curl',
-  target_path: '/api/v1/curl/request?url=https://ci.example.com/build&method=POST&data_base64=<base64-body>&header=Content-Type:application/json&bearer_token=XYZ',
+  target_path: '/api/v1/curl/request?url=https://ci.example.com/build&method=POST&data_base64=eyJyZWYiOiJtYWluIn0&header=Content-Type:application/json&bearer_token=XYZ',
   allow_path_override: false,
 });
 ```
 
-**Step 3 — gate it** — only your office IPs can fire it (uses `proxy.containerPermissions.setIpGroup`; see the `api` namespace).
+**Step 3 — gate it** so only your office IPs can fire it: the link carries the upstream token. An IP group alone admits and refuses nothing (a new group has no permissions, and a call no group cell decides goes to the default, which may be allow). Define the office ranges with `computers.proxy.setIpGroup` (`client.api.computers.proxy.setIpGroup`), grant that group `curl` with `computers.proxy.setGroupPermission`, set the default to `deny` with `computers.proxy.setDefault`, and check that a call from outside the office is refused before you share the link (see the `api` namespace). The default applies computer-wide, so setting it to `deny` also blocks access to other programs when no group grants access. Before changing it, grant the programs you still use to appropriate groups, or run the bridge on a computer that serves nothing else. Review existing group permissions, including wildcard grants: another group may still grant access to curl outside the office. Office-group callers can reach the whole curl kit, not only this alias.
 
 ### 9. Recover a result from yesterday's scheduled job
 
@@ -374,16 +384,16 @@ if (!best) throw new Error('no completed prod-health run 18 h ago');
 const jid = best.id;
 ```
 
-**Step 2 — fetch.** `jobs.getResult` returns just the upstream body; `jobs.get` returns the full record (timing, headers, original request).
+**Step 2 — fetch.** `jobs.getResult` returns just the upstream body (under `.data` of the SDK result); `jobs.get` returns the full record (timing, headers, and the request as run, with credentials shown as `[REDACTED]`).
 
 ```typescript
-const body = await client.curl.jobs.getResult(jid);
+const { data: body } = await client.curl.jobs.getResult(jid);
 const full = await client.curl.jobs.get(jid);
 ```
 
 ### 10. Storage triage — purge files older than N days
 
-**Goal:** keep storage tidy by deleting old downloads. Use the `by-date/` index because the date is in the path. The listing is newest first, so the old entries are on the last pages: collect every page before deleting anything, because each delete shifts the pages after it.
+**Goal:** keep storage tidy by deleting old downloads. These examples purge date-indexed downloads older than the cutoff, read from the `by-date/` index because the date is in the path, and can leave downloads without a date link (the link is best-effort). Also review `by-job/` entries before deletion. Their `created_at` values come from filesystem creation time and fall back to the current listing time when unavailable, so those values alone cannot guarantee a complete age-based purge. The listing is newest first, so the old entries are on the last pages: collect every page before deleting anything, because each delete shifts the pages after it.
 
 ```typescript
 const cutoff = new Date(Date.now() - 30 * 86400_000).toISOString().slice(0, 10);
@@ -399,58 +409,69 @@ await Promise.all(old.map(i => client.curl.storage.delete(i.path)));
 
 **Accessor:** `client.curl`  |  **Import:** `import * as curl from 'hoody-sdk/curl'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, computerId?, serviceIndex?, serverName? }` (`server` is the older spelling of `serverName`, which wins when both are set), which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are set by the client and are refused with a `TypeError` before the call is sent: configure the token on the client, a kit credential as `kitAuth` on `withComputer()` or the client config (`middlewareContext.kitAuth` replaces the client's `kitAuth` for one call), and use another client for another identity), `cache` (ignored here: only an `api` GET is cached, never a GET to a kit host), `responseIsFinal` (`true`: never sent again once it may have reached the server), `keyedInProgressWait` (`false`: a 409 IDEMPOTENCY_REQUEST_IN_PROGRESS is the answer, not asked again), `redactBodyKeys` (body keys whose values an ApiError shows as [REDACTED]) and `maxResponseBytes` (a response body over this many bytes is refused with code RESPONSE_TOO_LARGE, and reading stops) (no `_realm`: that one is control-plane only). When the signature shows an options object (`options?: object` is one that takes the transport options only), the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself keeps the argument order it displays. A `wsOptions` argument (WebSocket methods only) accepts just `reconnect`, `connectTimeoutMs` and `transport`; the other transport options (`timeoutMs`, `signal`, …) stay in the request options the signature shows, never in `wsOptions`.
 
-### `client.curl.channel` (1) — WebSocket event endpoints
+**Reading a method.** A method that shows no **Returns:** returns the response type named after it, the words after `client.` joined in PascalCase plus `Response`: `client.curl.jobs.cancel()` returns `Promise<CurlJobsCancelResponse>`. `Item<R>` in a pagination helper's Returns is shorthand on this page, not an exported type: the element type of the item array the helper reads from response `R`, at the path the same line names. A pagination helper written `xAll(/* the arguments of x */)` takes exactly the arguments of `x`, described under `x`.
 
-#### `connect` — Open a {@link CurlChannel} against this client's container kit.
+**Services** (the ones the notes and examples above call most come first):
 
-```typescript
-client.curl.channel.connect(opts?: CurlChannelHelperOptions)
-```
+- `client.curl`: run
+- `client.curl.jobs`: cancel, connect, delete, get, getResult, list, listAll, listIterator, stream
+- `client.curl.storage`: delete, get, list, listAll, listIterator
+- `client.curl.schedules`: create, delete, get, list, listAll, listIterator, update
+- `client.curl.sessions`: delete, get, list, listAll, listCookies, listIterator
+- `client.curl.channel`: connect
+- `client.curl.kit`: getHealth, getMetrics
 
-**Returns:** `Promise<CurlChannel>`  |  **SDK helper:** added by the SDK library, not generated from an HTTP operation.
+**Shared parameters.** A parameter row that repeats is printed once. When a signature shows a parameter that the method's own table does not list, its row is in the "Shared parameters" table of the method's service section when the name is there, else in the table below: same type, wire location, required mark and description. A row in a method's own table always describes that method. An SDK helper (marked as one) has no table and takes nothing from these lists.
 
----
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `page` | `number` | query | No | 1-based page number (optional) |
+| `limit` | `number` | query | No | Items per page (optional; current handler returns all items when omitted) |
 
 ### `client.curl` (1) — cURL execution endpoints
 
-#### `run` — Execute HTTP request with full cURL capabilities
+#### `run` — Run one HTTP request through the curl service. `mode: 'async'` answers 202 with the job; `response: 'json'` answers the response wrapped in JSON with timing; otherwise `data` is the upstream body, parsed by its Content-Type (JSON to a value, text to a string, binary to an ArrayBuffer).
 
 ```typescript
-client.curl.run(data: CurlRunRequest)
+client.curl.run(data: Omit<NonNullable<CurlRunRequest> & Required<Pick<NonNullable<CurlRunRequest>, "mode">>, "mode"> & { mode: "async" }, options?: object)  // → Promise<ApiResponse<AsyncJobAccepted>>
+client.curl.run(data: Omit<NonNullable<CurlRunRequest> & Required<Pick<NonNullable<CurlRunRequest>, "response">>, "response"> & { response: "json" }, options?: object)  // → Promise<ApiResponse<JsonResponse>>
+client.curl.run(data: NonNullable<CurlRunRequest>, options?: object)  // → Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `data` | `CurlRunRequest` | body | Yes | Shape: `curl_CurlRequest` under Body schemas. |
+| `data` | `Omit<NonNullable<CurlRunRequest> & Required<Pick<NonNullable<CurlRunRequest>, "mode">>, "mode"> & { mode: "async" }` | body | Yes | Shape: `CurlRequest` under Body schemas. |
 
-**Returns:** `Promise<CurlRunResponse>`  |  **HTTP:** `POST /api/v1/curl/request`
-**CLI:** `hoody curl run`
+**Returns:** see each form above  |  **HTTP:** `POST /api/v1/curl/request`
+**CLI:** `hoody curl run --url <url>`
 
 ---
 
 ### `client.curl.jobs` (9) — Job management endpoints
 
-#### `cancel` — Cancel a pending or running job, or delete a finished one
-
-```typescript
-client.curl.jobs.cancel(id: string)
-```
+**Shared parameters of `client.curl.jobs`:**
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique job identifier (UUID format) |
 
-**Returns:** `Promise<CancelJobResponse>`  |  **HTTP:** `DELETE /api/v1/curl/jobs/{id}`
-**CLI:** `hoody curl jobs cancel`
+#### `cancel` — Cancel a pending or running job; the record stays. A job that has already finished is left unchanged.
+
+```typescript
+client.curl.jobs.cancel(id: string, options?: object)
+```
+
+**HTTP:** `DELETE /api/v1/curl/jobs/{id}`
+**CLI:** `hoody curl jobs cancel <id>`
 
 ---
 
 #### `connect` — Subscribe to job events over WebSocket
 
 ```typescript
-client.curl.jobs.connect(options?: { job_id?: string; since?: number; incarnation?: string })
+client.curl.jobs.connect(options?: { job_id?: string; since?: number; incarnation?: string }, _templateVars?: { projectId?: string; computerId?: string; serviceIndex?: string | number; serverName?: string; server?: string }, wsOptions?: { reconnect?: boolean; connectTimeoutMs?: number; transport?: 'auto' | 'ws' })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -459,22 +480,18 @@ client.curl.jobs.connect(options?: { job_id?: string; since?: number; incarnatio
 | `since` | `number` | query | No | Resume cursor: the last `seq` (or `replay_boundary.max_seq`) received; `0` for everything still kept. The lifecycle events after it are replayed first, then a `replay_boundary` frame |
 | `incarnation` | `string` | query | No | The `incarnation` of the last control frame received; a different one means the server restarted since |
 
-**Returns:** `Promise<CurlWsJobEventsWebSocket>` — an unconnected wrapper: register handlers, then `await ws.connect()`  |  **HTTP:** `GET /api/v1/curl/ws`
+**Returns:** `Promise<CurlJobsConnectWebSocket>` — an unconnected wrapper: register handlers, then `await ws.connect()`  |  **HTTP:** `GET /api/v1/curl/ws`
 
 ---
 
-#### `delete` — Cancel a pending or running job, or delete a finished one
+#### `delete` — Permanently delete a finished job's record and its saved downloads. A pending or running job is refused with 409 JOB_NOT_FINISHED: cancel it first.
 
 ```typescript
-client.curl.jobs.delete(id: string)
+client.curl.jobs.delete(id: string, options?: object)
 ```
 
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `id` | `string` | path | Yes | Unique job identifier (UUID format) |
-
-**Returns:** `Promise<CancelJobResponse>`  |  **HTTP:** `DELETE /api/v1/curl/jobs/{id}`
-**CLI:** `hoody curl jobs delete`
+**HTTP:** `DELETE /api/v1/curl/jobs/{id}?purge=true`
+**CLI:** `hoody curl jobs delete <id>`
 
 ---
 
@@ -484,12 +501,8 @@ client.curl.jobs.delete(id: string)
 client.curl.jobs.get(id: string)
 ```
 
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `id` | `string` | path | Yes | Unique job identifier (UUID format) |
-
-**Returns:** `Promise<CurlJobsGetResponse>`  |  **HTTP:** `GET /api/v1/curl/jobs/{id}`
-**CLI:** `hoody curl jobs get`
+**HTTP:** `GET /api/v1/curl/jobs/{id}`
+**CLI:** `hoody curl jobs get <id>`
 
 ---
 
@@ -499,12 +512,8 @@ client.curl.jobs.get(id: string)
 client.curl.jobs.getResult(id: string)
 ```
 
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `id` | `string` | path | Yes | Unique job identifier (UUID format) |
-
 **Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `GET /api/v1/curl/jobs/{id}/result`
-**CLI:** `hoody curl jobs result get`
+**CLI:** `hoody curl jobs result get <id>`
 
 ---
 
@@ -514,12 +523,7 @@ client.curl.jobs.getResult(id: string)
 client.curl.jobs.list(options?: { page?: number; limit?: number })
 ```
 
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | 1-based page number (optional) |
-| `limit` | `number` | query | No | Items per page (optional; current handler returns all items when omitted) |
-
-**Returns:** `Promise<CurlJobsListResponse>`  |  **HTTP:** `GET /api/v1/curl/jobs`
+**HTTP:** `GET /api/v1/curl/jobs`
 **CLI:** `hoody curl jobs list`
 
 ---
@@ -527,15 +531,10 @@ client.curl.jobs.list(options?: { page?: number; limit?: number })
 #### `listAll` — List all async jobs (collect all pages)
 
 ```typescript
-client.curl.jobs.listAll(options?: { page?: number; limit?: number })
+client.curl.jobs.listAll(/* the arguments of list */)
 ```
 
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | 1-based page number (optional) |
-| `limit` | `number` | query | No | Items per page (optional; current handler returns all items when omitted) |
-
-**Returns:** `Promise<(NonNullable<CurlJobsListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.items`, all pages collected (`list()` fetches one page). Each item is `curl_JobSummary`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/curl/jobs`
+**Returns:** `Promise<Item<CurlJobsListResponse>[]>` — every item of `data.items`, pages collected from the page you pass, the first by default (`list()` fetches one page). Each item is `JobSummary`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/curl/jobs`
 **CLI:** `hoody curl jobs list`
 
 ---
@@ -543,15 +542,10 @@ client.curl.jobs.listAll(options?: { page?: number; limit?: number })
 #### `listIterator` — List all async jobs (async iterator)
 
 ```typescript
-client.curl.jobs.listIterator(options?: { page?: number; limit?: number })
+client.curl.jobs.listIterator(/* the arguments of list */)
 ```
 
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | 1-based page number (optional) |
-| `limit` | `number` | query | No | Items per page (optional; current handler returns all items when omitted) |
-
-**Returns:** `AsyncGenerator<(NonNullable<CurlJobsListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.items` per step, next page fetched on demand (`list()` fetches one page). Each item is `curl_JobSummary`.  |  **HTTP:** `GET /api/v1/curl/jobs`
+**Returns:** `AsyncGenerator<Item<CurlJobsListResponse>, void, unknown>` — one item of `data.items` per step, the next page fetched on demand from the page you pass, the first by default (`list()` fetches one page). Each item is `JobSummary`.  |  **HTTP:** `GET /api/v1/curl/jobs`
 **CLI:** `hoody curl jobs list`
 
 ---
@@ -559,7 +553,7 @@ client.curl.jobs.listIterator(options?: { page?: number; limit?: number })
 #### `stream` — Subscribe to job events over Server-Sent Events
 
 ```typescript
-client.curl.jobs.stream(options?: { job_id?: string; since?: number; incarnation?: string; LastEventID?: string | null })
+client.curl.jobs.stream(options?: { job_id?: string; since?: number; incarnation?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -567,240 +561,9 @@ client.curl.jobs.stream(options?: { job_id?: string; since?: number; incarnation
 | `job_id` | `string` | query | No | Optional job ID filter |
 | `since` | `number` | query | No | Resume cursor: the last `seq` (SSE `id:`) received; `0` for everything still kept. Wins over `Last-Event-ID` |
 | `incarnation` | `string` | query | No | The `incarnation` of the last `lagged` event received; a different one means the server restarted since |
-| `LastEventID` | `string \| null` | header `Last-Event-ID` | No | Resume cursor as sent by an EventSource reconnect: the last `id:` received. Ignored when it is not a number or when `since` is given |
 
 **Returns:** `Promise<IEventStream>`  |  **HTTP:** `GET /api/v1/curl/sse`
 **CLI:** `hoody curl jobs stream`
-
----
-
-### `client.curl.kit` (2) — Operational endpoints (health and metrics)
-
-#### `getHealth` — Service health check
-
-```typescript
-client.curl.kit.getHealth()
-```
-
-**Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `GET /api/v1/curl/health`
-**CLI:** `hoody curl health`
-
----
-
-#### `getMetrics` — Prometheus metrics
-
-```typescript
-client.curl.kit.getMetrics()
-```
-
-**Returns:** `Promise<ApiResponse<string>>`  |  **HTTP:** `GET /metrics`
-**CLI:** `hoody curl metrics`
-
----
-
-### `client.curl.schedules` (7) — Schedule management endpoints
-
-#### `create` — Create a recurring scheduled job
-
-```typescript
-client.curl.schedules.create(data: CurlSchedulesCreateRequest)
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `data` | `CurlSchedulesCreateRequest` | body | Yes | Shape: `curl_CreateScheduleRequest` under Body schemas. |
-
-**Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `POST /api/v1/curl/schedule`
-**CLI:** `hoody curl schedules create`
-
----
-
-#### `delete` — Delete a schedule
-
-```typescript
-client.curl.schedules.delete(id: string)
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `id` | `string` | path | Yes | Unique schedule identifier |
-
-**Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `DELETE /api/v1/curl/schedule/{id}`
-**CLI:** `hoody curl schedules delete`
-
----
-
-#### `get` — Get schedule details
-
-```typescript
-client.curl.schedules.get(id: string)
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `id` | `string` | path | Yes | Unique schedule identifier (UUID format) |
-
-**Returns:** `Promise<CurlSchedulesGetResponse>`  |  **HTTP:** `GET /api/v1/curl/schedule/{id}`
-**CLI:** `hoody curl schedules get`
-
----
-
-#### `list` — List all scheduled jobs
-
-```typescript
-client.curl.schedules.list(options?: { page?: number; limit?: number })
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | 1-based page number (optional) |
-| `limit` | `number` | query | No | Items per page (optional; current handler returns all items when omitted) |
-
-**Returns:** `Promise<CurlSchedulesListResponse>`  |  **HTTP:** `GET /api/v1/curl/schedule`
-**CLI:** `hoody curl schedules list`
-
----
-
-#### `listAll` — List all scheduled jobs (collect all pages)
-
-```typescript
-client.curl.schedules.listAll(options?: { page?: number; limit?: number })
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | 1-based page number (optional) |
-| `limit` | `number` | query | No | Items per page (optional; current handler returns all items when omitted) |
-
-**Returns:** `Promise<(NonNullable<CurlSchedulesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.items`, all pages collected (`list()` fetches one page). Each item is `curl_ScheduledJob`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/curl/schedule`
-**CLI:** `hoody curl schedules list`
-
----
-
-#### `listIterator` — List all scheduled jobs (async iterator)
-
-```typescript
-client.curl.schedules.listIterator(options?: { page?: number; limit?: number })
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | 1-based page number (optional) |
-| `limit` | `number` | query | No | Items per page (optional; current handler returns all items when omitted) |
-
-**Returns:** `AsyncGenerator<(NonNullable<CurlSchedulesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.items` per step, next page fetched on demand (`list()` fetches one page). Each item is `curl_ScheduledJob`.  |  **HTTP:** `GET /api/v1/curl/schedule`
-**CLI:** `hoody curl schedules list`
-
----
-
-#### `update` — Update a schedule's cron expression, request or enabled state
-
-```typescript
-client.curl.schedules.update(id: string, data: CurlSchedulesUpdateRequest)
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `id` | `string` | path | Yes | Unique schedule identifier |
-| `data` | `CurlSchedulesUpdateRequest` | body | Yes | Shape: `curl_UpdateScheduleRequest` under Body schemas. |
-
-**Returns:** `Promise<CurlSchedulesUpdateResponse>`  |  **HTTP:** `PATCH /api/v1/curl/schedule/{id}`
-**CLI:** `hoody curl schedules update`
-
----
-
-### `client.curl.sessions` (6) — Session management endpoints
-
-#### `delete` — Delete a session
-
-```typescript
-client.curl.sessions.delete(id: string)
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `id` | `string` | path | Yes | Session identifier to delete |
-
-**Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `DELETE /api/v1/curl/sessions/{id}`
-**CLI:** `hoody curl sessions delete`
-
----
-
-#### `get` — Get session details
-
-```typescript
-client.curl.sessions.get(id: string)
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `id` | `string` | path | Yes | Session identifier (caller-provided string) |
-
-**Returns:** `Promise<CurlSessionsGetResponse>`  |  **HTTP:** `GET /api/v1/curl/sessions/{id}`
-**CLI:** `hoody curl sessions get`
-
----
-
-#### `list` — List all cookie sessions
-
-```typescript
-client.curl.sessions.list(options?: { page?: number; limit?: number })
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | 1-based page number (optional) |
-| `limit` | `number` | query | No | Items per page (optional; current handler returns all items when omitted) |
-
-**Returns:** `Promise<CurlSessionsListResponse>`  |  **HTTP:** `GET /api/v1/curl/sessions`
-**CLI:** `hoody curl sessions list`
-
----
-
-#### `listAll` — List all cookie sessions (collect all pages)
-
-```typescript
-client.curl.sessions.listAll(options?: { page?: number; limit?: number })
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | 1-based page number (optional) |
-| `limit` | `number` | query | No | Items per page (optional; current handler returns all items when omitted) |
-
-**Returns:** `Promise<(NonNullable<CurlSessionsListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.items`, all pages collected (`list()` fetches one page). Each item is `curl_Session`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/curl/sessions`
-**CLI:** `hoody curl sessions list`
-
----
-
-#### `listCookies` — Get session cookies only
-
-```typescript
-client.curl.sessions.listCookies(id: string)
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `id` | `string` | path | Yes | Session identifier |
-
-**Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `GET /api/v1/curl/sessions/{id}/cookies`
-**CLI:** `hoody curl sessions cookies list`
-
----
-
-#### `listIterator` — List all cookie sessions (async iterator)
-
-```typescript
-client.curl.sessions.listIterator(options?: { page?: number; limit?: number })
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | 1-based page number (optional) |
-| `limit` | `number` | query | No | Items per page (optional; current handler returns all items when omitted) |
-
-**Returns:** `AsyncGenerator<(NonNullable<CurlSessionsListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.items` per step, next page fetched on demand (`list()` fetches one page). Each item is `curl_Session`.  |  **HTTP:** `GET /api/v1/curl/sessions`
-**CLI:** `hoody curl sessions list`
 
 ---
 
@@ -817,8 +580,8 @@ client.curl.storage.delete(path: string, options?: { recursive?: boolean })
 | `path` | `string` | path | Yes | Relative path to a file or directory in storage |
 | `recursive` | `boolean` | query | No | `true` deletes a directory and everything in it (default false) |
 
-**Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `DELETE /api/v1/curl/storage/{path}`
-**CLI:** `hoody curl storage delete`
+**HTTP:** `DELETE /api/v1/curl/storage/{path}`
+**CLI:** `hoody curl storage delete <path>`
 
 ---
 
@@ -833,7 +596,7 @@ client.curl.storage.get(path: string)
 | `path` | `string` | path | Yes | Relative path to file in storage (supports nested paths) |
 
 **Returns:** `Promise<ApiResponse<ArrayBuffer>>`  |  **HTTP:** `GET /api/v1/curl/storage/{path}`
-**CLI:** `hoody curl storage get`
+**CLI:** `hoody curl storage get <path>`
 
 ---
 
@@ -843,12 +606,7 @@ client.curl.storage.get(path: string)
 client.curl.storage.list(options?: { page?: number; limit?: number })
 ```
 
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | 1-based page number (optional) |
-| `limit` | `number` | query | No | Items per page (optional; current handler returns all items when omitted) |
-
-**Returns:** `Promise<CurlStorageListResponse>`  |  **HTTP:** `GET /api/v1/curl/storage`
+**HTTP:** `GET /api/v1/curl/storage`
 **CLI:** `hoody curl storage list`
 
 ---
@@ -856,15 +614,10 @@ client.curl.storage.list(options?: { page?: number; limit?: number })
 #### `listAll` — List all saved downloads (collect all pages)
 
 ```typescript
-client.curl.storage.listAll(options?: { page?: number; limit?: number })
+client.curl.storage.listAll(/* the arguments of list */)
 ```
 
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | 1-based page number (optional) |
-| `limit` | `number` | query | No | Items per page (optional; current handler returns all items when omitted) |
-
-**Returns:** `Promise<(NonNullable<CurlStorageListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.items`, all pages collected (`list()` fetches one page). Each item is `curl_StorageEntry`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/curl/storage`
+**Returns:** `Promise<Item<CurlStorageListResponse>[]>` — every item of `data.items`, pages collected from the page you pass, the first by default (`list()` fetches one page). Each item is `StorageEntry`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/curl/storage`
 **CLI:** `hoody curl storage list`
 
 ---
@@ -872,26 +625,236 @@ client.curl.storage.listAll(options?: { page?: number; limit?: number })
 #### `listIterator` — List all saved downloads (async iterator)
 
 ```typescript
-client.curl.storage.listIterator(options?: { page?: number; limit?: number })
+client.curl.storage.listIterator(/* the arguments of list */)
+```
+
+**Returns:** `AsyncGenerator<Item<CurlStorageListResponse>, void, unknown>` — one item of `data.items` per step, the next page fetched on demand from the page you pass, the first by default (`list()` fetches one page). Each item is `StorageEntry`.  |  **HTTP:** `GET /api/v1/curl/storage`
+**CLI:** `hoody curl storage list`
+
+---
+
+### `client.curl.schedules` (7) — Schedule management endpoints
+
+#### `create` — Create a recurring scheduled job
+
+```typescript
+client.curl.schedules.create(data: CurlSchedulesCreateRequest)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | 1-based page number (optional) |
-| `limit` | `number` | query | No | Items per page (optional; current handler returns all items when omitted) |
+| `data` | `CurlSchedulesCreateRequest` | body | Yes | Shape: `CurlCreateScheduleRequest` under Body schemas. |
 
-**Returns:** `AsyncGenerator<(NonNullable<CurlStorageListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.items` per step, next page fetched on demand (`list()` fetches one page). Each item is `curl_StorageEntry`.  |  **HTTP:** `GET /api/v1/curl/storage`
-**CLI:** `hoody curl storage list`
+**HTTP:** `POST /api/v1/curl/schedule`
+**CLI:** `hoody curl schedules create --cron <cron> --request-url <request-url>`
+
+---
+
+#### `delete` — Delete a schedule
+
+```typescript
+client.curl.schedules.delete(id: string)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `id` | `string` | path | Yes | Unique schedule identifier |
+
+**HTTP:** `DELETE /api/v1/curl/schedule/{id}`
+**CLI:** `hoody curl schedules delete <id>`
+
+---
+
+#### `get` — Get schedule details
+
+```typescript
+client.curl.schedules.get(id: string)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `id` | `string` | path | Yes | Unique schedule identifier (UUID format) |
+
+**HTTP:** `GET /api/v1/curl/schedule/{id}`
+**CLI:** `hoody curl schedules get <id>`
+
+---
+
+#### `list` — List all scheduled jobs
+
+```typescript
+client.curl.schedules.list(options?: { page?: number; limit?: number })
+```
+
+**HTTP:** `GET /api/v1/curl/schedule`
+**CLI:** `hoody curl schedules list`
+
+---
+
+#### `listAll` — List all scheduled jobs (collect all pages)
+
+```typescript
+client.curl.schedules.listAll(/* the arguments of list */)
+```
+
+**Returns:** `Promise<Item<CurlSchedulesListResponse>[]>` — every item of `data.items`, pages collected from the page you pass, the first by default (`list()` fetches one page). Each item is `ScheduledJob`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/curl/schedule`
+**CLI:** `hoody curl schedules list`
+
+---
+
+#### `listIterator` — List all scheduled jobs (async iterator)
+
+```typescript
+client.curl.schedules.listIterator(/* the arguments of list */)
+```
+
+**Returns:** `AsyncGenerator<Item<CurlSchedulesListResponse>, void, unknown>` — one item of `data.items` per step, the next page fetched on demand from the page you pass, the first by default (`list()` fetches one page). Each item is `ScheduledJob`.  |  **HTTP:** `GET /api/v1/curl/schedule`
+**CLI:** `hoody curl schedules list`
+
+---
+
+#### `update` — Update a schedule's cron expression, request or enabled state
+
+```typescript
+client.curl.schedules.update(id: string, data: CurlSchedulesUpdateRequest)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `id` | `string` | path | Yes | Unique schedule identifier |
+| `data` | `CurlSchedulesUpdateRequest` | body | Yes | Shape: `CurlUpdateScheduleRequest` under Body schemas. |
+
+**HTTP:** `PATCH /api/v1/curl/schedule/{id}`
+**CLI:** `hoody curl schedules update <id>`
+
+---
+
+### `client.curl.sessions` (6) — Session management endpoints
+
+#### `delete` — Delete a session
+
+```typescript
+client.curl.sessions.delete(id: string)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `id` | `string` | path | Yes | Session identifier to delete |
+
+**HTTP:** `DELETE /api/v1/curl/sessions/{id}`
+**CLI:** `hoody curl sessions delete <id>`
+
+---
+
+#### `get` — Get session details
+
+```typescript
+client.curl.sessions.get(id: string)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `id` | `string` | path | Yes | Session identifier (caller-provided string) |
+
+**HTTP:** `GET /api/v1/curl/sessions/{id}`
+**CLI:** `hoody curl sessions get <id>`
+
+---
+
+#### `list` — List all cookie sessions
+
+```typescript
+client.curl.sessions.list(options?: { page?: number; limit?: number })
+```
+
+**HTTP:** `GET /api/v1/curl/sessions`
+**CLI:** `hoody curl sessions list`
+
+---
+
+#### `listAll` — List all cookie sessions (collect all pages)
+
+```typescript
+client.curl.sessions.listAll(/* the arguments of list */)
+```
+
+**Returns:** `Promise<Item<CurlSessionsListResponse>[]>` — every item of `data.items`, pages collected from the page you pass, the first by default (`list()` fetches one page). Each item is `Session`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/curl/sessions`
+**CLI:** `hoody curl sessions list`
+
+---
+
+#### `listCookies` — Get session cookies only
+
+```typescript
+client.curl.sessions.listCookies(id: string)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `id` | `string` | path | Yes | Session identifier |
+
+**HTTP:** `GET /api/v1/curl/sessions/{id}/cookies`
+**CLI:** `hoody curl sessions cookies list <id>`
+
+---
+
+#### `listIterator` — List all cookie sessions (async iterator)
+
+```typescript
+client.curl.sessions.listIterator(/* the arguments of list */)
+```
+
+**Returns:** `AsyncGenerator<Item<CurlSessionsListResponse>, void, unknown>` — one item of `data.items` per step, the next page fetched on demand from the page you pass, the first by default (`list()` fetches one page). Each item is `Session`.  |  **HTTP:** `GET /api/v1/curl/sessions`
+**CLI:** `hoody curl sessions list`
+
+---
+
+### `client.curl.channel` (1) — WebSocket event endpoints
+
+#### `connect` — Open a {@link CurlChannel} against this client's computer kit.
+
+```typescript
+client.curl.channel.connect(opts?: CurlChannelHelperOptions)
+```
+
+**Returns:** `Promise<CurlChannel>`  |  **SDK helper:** added by the SDK library, not generated from an HTTP operation.
+
+---
+
+### `client.curl.kit` (2) — Operational endpoints (health and metrics)
+
+#### `getHealth` — Service health check
+
+```typescript
+client.curl.kit.getHealth()
+```
+
+**HTTP:** `GET /api/v1/curl/health`
+**CLI:** `hoody curl health`
+
+---
+
+#### `getMetrics` — Prometheus metrics
+
+```typescript
+client.curl.kit.getMetrics()
+```
+
+**Returns:** `Promise<ApiResponse<string>>`  |  **HTTP:** `GET /metrics`
+**CLI:** `hoody curl metrics`
 
 
 ### Body schemas
 
-- `curl_CurlRequest` — `{ auth_method: string|null, auth_password: string|null, auth_user: string|null, bearer_token: string|null, compressed: bool|null, connect_timeout: int|null, cookie: string|null, data: string|null, follow_redirects: bool|null, form: { [key: string]: string }|null, headers: { [key: string]: string }|null, insecure: bool|null, job_name: string|null, json: any, keepalive: bool|null, keepalive_time: int|null, max_filesize: int|null, max_redirects: int|null, method: string|null, mode: null | curl_ExecutionMode, range: string|null, referer: string|null, response: null | curl_ResponseMode, retry_count: int|null, retry_delay: int|null, save: bool|null, save_path: string|null, session_id: string|null, speed_limit: int|null, speed_time: int|null, tcp_nodelay: bool|null, timeout: int|null, url*: string, user_agent: string|null }`
-  - cURL request parameters A JSON body carrying any field not listed here is rejected with `400`. This protects against silently sending a removed or not-yet-released field that would otherwise slip past validation unnoticed.
-  - `save_path` — Relative path under this job's download directory (downloads/by-job/{job_id}). Must not be absolute or contain `..`.
-- `curl_CreateScheduleRequest` — `{ cron*: string, enabled: bool|null, request*: curl_CurlRequest }`
-- `curl_UpdateScheduleRequest` — `{ cron: string|null, enabled: bool|null, request: null | curl_CurlRequest }`
+- `CurlCreateScheduleRequest` — `{ cron*: string, enabled: bool|null, request*: CurlRequest }`
+- `CurlUpdateScheduleRequest` — `{ cron: string|null, enabled: bool|null, request: CurlRequest|null }`
   - Partial update of a schedule. Every field is optional, at least one is required; absent fields keep their current value.
-- `curl_ExecutionMode` — `"sync" | "async"`
-- `curl_ResponseMode` — `"transparent" | "json"`
+- `CurlRequest` — `{ auth_method: string|null, auth_password: string|null, auth_user: string|null, bearer_token: string|null, compressed: bool|null, connect_timeout: int|null, cookie: string|null, data: string|null, follow_redirects: bool|null, form: { [key: string]: string }|null, headers: { [key: string]: string }|null, insecure: bool|null, job_name: string|null, json: any, keepalive: bool|null, keepalive_time: int|null, max_filesize: int|null, max_redirects: int|null, method: string|null, mode: CurlExecutionMode|null, range: string|null, referer: string|null, response: ResponseMode|null, retry_count: int|null, retry_delay: int|null, save: bool|null, save_path: string|null, session_id: string|null, speed_limit: int|null, speed_time: int|null, tcp_nodelay: bool|null, timeout: int|null, url*: string, user_agent: string|null }`
+  - cURL request parameters A JSON body carrying any field not listed here is rejected with `400`. This protects against silently sending a removed or not-yet-released field that would otherwise slip past validation unnoticed.
+  - `max_redirects` — Maximum number of redirects to follow (at most 50).
+  - `retry_count` — Number of retries after a failed attempt (at most 5).
+  - `retry_delay` — Retry delay, in seconds (at most 60; default 1). The nth retry waits n times this value. Requires `retry_count` greater than 0. The total backoff must not exceed the server's cap, 300 seconds by default.
+  - `save_path` — Relative path under this job's download directory (downloads/by-job/{job_id}). Must not be absolute or contain `..`.
+- `CurlExecutionMode` — `"sync" | "async"`
+- `ResponseMode` — `"transparent" | "json"`
 

@@ -18,18 +18,18 @@ curl -O https://hoody.com/SKILLS/HOODY_SKILLS.zip
 
 ## Start here
 
-- [`SKILL.md`](SKILL.md) — mode-blend skill (chooser + SDK/HTTP/CLI side-by-side) · ~13,825 tokens
-- [`SKILL.lite.md`](SKILL.lite.md) — compact tier-0 skill (always-loaded by agents) · ~5,286 tokens
-- [`ONBOARDING.md`](ONBOARDING.md) — guided onboarding skill (agent-directed) · ~8,521 tokens
+- [`SKILL.md`](SKILL.md) — mode-blend skill (chooser + SDK/HTTP/CLI side-by-side) · ~16,419 tokens
+- [`SKILL.lite.md`](SKILL.lite.md) — compact tier-0 skill (always-loaded by agents) · ~5,450 tokens
+- [`ONBOARDING.md`](ONBOARDING.md) — guided onboarding skill (agent-directed) · ~10,218 tokens
 
 ## One surface, in depth
 
-- [`SKILL-HTTP.md`](SKILL-HTTP.md) — HTTP skill (basic) · ~22,121 tokens
-- [`SKILL-HTTP-FULL.md`](SKILL-HTTP-FULL.md) — HTTP skill (FULL: basic + all 21 namespaces) · ~318,825 tokens
-- [`SKILL-SDK.md`](SKILL-SDK.md) — SDK skill (basic) · ~26,627 tokens
-- [`SKILL-SDK-FULL.md`](SKILL-SDK-FULL.md) — SDK skill (FULL: basic + all 21 namespaces) · ~552,235 tokens
-- [`SKILL-CLI.md`](SKILL-CLI.md) — CLI skill (basic) · ~21,762 tokens
-- [`SKILL-CLI-FULL.md`](SKILL-CLI-FULL.md) — CLI skill (FULL: basic + all 21 namespaces) · ~214,206 tokens
+- [`SKILL-HTTP.md`](SKILL-HTTP.md) — HTTP skill (basic) · ~27,478 tokens
+- [`SKILL-HTTP-FULL.md`](SKILL-HTTP-FULL.md) — HTTP skill (FULL: basic + all 21 namespaces) · ~407,944 tokens
+- [`SKILL-SDK.md`](SKILL-SDK.md) — SDK skill (basic) · ~33,123 tokens
+- [`SKILL-SDK-FULL.md`](SKILL-SDK-FULL.md) — SDK skill (FULL: basic + all 21 namespaces) · ~513,946 tokens
+- [`SKILL-CLI.md`](SKILL-CLI.md) — CLI skill (basic) · ~28,509 tokens
+- [`SKILL-CLI-FULL.md`](SKILL-CLI-FULL.md) — CLI skill (FULL: basic + all 21 namespaces) · ~267,423 tokens
 
 ## Per-namespace reference
 
@@ -39,7 +39,7 @@ curl -O https://hoody.com/SKILLS/HOODY_SKILLS.zip
 
 ## Routing manifest
 
-- [`INDEX.md`](INDEX.md) — routing manifest (full INDEX with routing-hints appendix, on-demand) · ~9,584 tokens
+- [`INDEX.md`](INDEX.md) — routing manifest (full INDEX with routing-hints appendix, on-demand) · ~10,631 tokens
 
 ## Whole bundle
 
