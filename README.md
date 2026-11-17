@@ -58,6 +58,7 @@
 <a name="what-hoody-is"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-what-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-what-light.svg">
   <img alt="What Hoody is" src="https://cdn.hoody.com/assets/readme/title-what-light.svg" width="100%" height="104">
 </picture>
 
@@ -65,6 +66,7 @@
   <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-narrow-dark.gif">
   <source media="(max-width: 600px)" srcset="https://cdn.hoody.com/assets/readme/kit-narrow-light.gif">
   <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-dark.gif">
+  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-light.gif">
   <img align="right" width="220" alt="The Hoody Kit: 20 services built by Hoody, each one a link: agent-1, terminal-1, display-1, browser-1, files-1, code-1 (VS Code), sqlite-1, notes-1, exec-1, curl-1, run-1, daemon-1, cron-1, n-1 (notifications), watch-1, pipe-1, tunnel-1, logs-1 (proxy logs), egress and vm-1. The services light up, then requests reach them one by one and answer 200 OK." src="https://cdn.hoody.com/assets/readme/kit-light.gif">
 </picture>
 
@@ -82,6 +84,7 @@ Hoody is 100% HTTP. Accounts, computers, Kit services and Bots answer over HTTPS
   <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/bots-lane-narrow-dark.gif">
   <source media="(max-width: 600px)" srcset="https://cdn.hoody.com/assets/readme/bots-lane-narrow-light.gif">
   <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/bots-lane-dark.gif">
+  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/bots-lane-light.gif">
   <img alt="Hoody Bots at work: a Bot runs along your computers and handles what comes in. A failing test on the shop gets an agent session with subagents, a Discord request ships a menu, a nightly backup is scheduled, another AI app asks it, Telegram, Slack and voice get replies, and it reports back." src="https://cdn.hoody.com/assets/readme/bots-lane-light.gif" width="70%">
 </picture>
 
@@ -227,6 +230,7 @@ By default a computer runs full Debian 13 Linux with systemd and `apt`.
 <a name="quick-start"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-quick-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-quick-light.svg">
   <img alt="Quick start" src="https://cdn.hoody.com/assets/readme/title-quick-light.svg" width="100%" height="104">
 </picture>
 
@@ -327,6 +331,7 @@ See [Links](https://docs.hoody.com/concepts/everything-is-a-url/) for computer s
 <a name="examples"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-examples-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-examples-light.svg">
   <img alt="Examples" src="https://cdn.hoody.com/assets/readme/title-examples-light.svg" width="100%" height="104">
 </picture>
 
@@ -484,6 +489,7 @@ Use a terminal number that is not open yet: a new terminal draws on the display 
 <a name="bots"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-bots-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-bots-light.svg">
   <img alt="Bots" src="https://cdn.hoody.com/assets/readme/title-bots-light.svg" width="100%" height="104">
 </picture>
 
@@ -585,6 +591,7 @@ AI apps use the Bot as a model or MCP server, with the Bot URL key as their API 
 <a name="hoody-for-ai-agents"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-ai-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-ai-light.svg">
   <img alt="Hoody for AI agents" src="https://cdn.hoody.com/assets/readme/title-ai-light.svg" width="100%" height="104">
 </picture>
 
@@ -759,6 +766,7 @@ Names stand for 24-character hex realm IDs:
 <a name="hub"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-hub-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-hub-light.svg">
   <img alt="Hub" src="https://cdn.hoody.com/assets/readme/title-hub-light.svg" width="100%" height="104">
 </picture>
 
@@ -777,6 +785,7 @@ On Linux x86-64 and arm64, from the npm package with an older Node.js or with Bu
 <a name="sdk-and-cli"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-sdk-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-sdk-light.svg">
   <img alt="SDK and CLI" src="https://cdn.hoody.com/assets/readme/title-sdk-light.svg" width="100%" height="104">
 </picture>
 
@@ -788,12 +797,12 @@ The SDK has <!-- ref:sdk-namespaces -->21<!-- /ref:sdk-namespaces --> namespaces
 
 | Group | Namespaces |
 |---|---|
-| **Account** | <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-api.svg"><img alt="api" src="https://cdn.hoody.com/assets/readme/kit-api-light.svg" width="71" height="28"></picture> |
-| **System and compute** | <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-terminal.svg"><img alt="terminal" src="https://cdn.hoody.com/assets/readme/kit-terminal-light.svg" width="110" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-files.svg"><img alt="files" src="https://cdn.hoody.com/assets/readme/kit-files-light.svg" width="87" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-code.svg"><img alt="code" src="https://cdn.hoody.com/assets/readme/kit-code-light.svg" width="79" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-exec.svg"><img alt="exec" src="https://cdn.hoody.com/assets/readme/kit-exec-light.svg" width="79" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-daemon.svg"><img alt="daemon" src="https://cdn.hoody.com/assets/readme/kit-daemon-light.svg" width="95" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-cron.svg"><img alt="cron" src="https://cdn.hoody.com/assets/readme/kit-cron-light.svg" width="79" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-run.svg"><img alt="run" src="https://cdn.hoody.com/assets/readme/kit-run-light.svg" width="71" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-vm.svg"><img alt="vm" src="https://cdn.hoody.com/assets/readme/kit-vm-light.svg" width="64" height="28"></picture> |
-| **Screens and browser** | <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-display.svg"><img alt="display" src="https://cdn.hoody.com/assets/readme/kit-display-light.svg" width="103" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-browser.svg"><img alt="browser" src="https://cdn.hoody.com/assets/readme/kit-browser-light.svg" width="103" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-notifications.svg"><img alt="notifications" src="https://cdn.hoody.com/assets/readme/kit-notifications-light.svg" width="149" height="28"></picture> |
-| **Data** | <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-sqlite.svg"><img alt="sqlite" src="https://cdn.hoody.com/assets/readme/kit-sqlite-light.svg" width="95" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-notes.svg"><img alt="notes" src="https://cdn.hoody.com/assets/readme/kit-notes-light.svg" width="87" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-watch.svg"><img alt="watch" src="https://cdn.hoody.com/assets/readme/kit-watch-light.svg" width="87" height="28"></picture> |
-| **Networking** | <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-curl.svg"><img alt="curl" src="https://cdn.hoody.com/assets/readme/kit-curl-light.svg" width="79" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-pipe.svg"><img alt="pipe" src="https://cdn.hoody.com/assets/readme/kit-pipe-light.svg" width="79" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-tunnel.svg"><img alt="tunnel" src="https://cdn.hoody.com/assets/readme/kit-tunnel-light.svg" width="95" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-egress.svg"><img alt="egress" src="https://cdn.hoody.com/assets/readme/kit-egress-light.svg" width="95" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-proxylogs.svg"><img alt="proxyLogs" src="https://cdn.hoody.com/assets/readme/kit-proxylogs-light.svg" width="118" height="28"></picture> |
-| **AI** | <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-agent.svg"><img alt="agent" src="https://cdn.hoody.com/assets/readme/kit-agent-light.svg" width="87" height="28"></picture> |
+| **Account** | <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-api.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-api-light.svg"><img alt="api" src="https://cdn.hoody.com/assets/readme/kit-api-light.svg" width="71" height="28"></picture> |
+| **System and compute** | <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-terminal.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-terminal-light.svg"><img alt="terminal" src="https://cdn.hoody.com/assets/readme/kit-terminal-light.svg" width="110" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-files.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-files-light.svg"><img alt="files" src="https://cdn.hoody.com/assets/readme/kit-files-light.svg" width="87" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-code.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-code-light.svg"><img alt="code" src="https://cdn.hoody.com/assets/readme/kit-code-light.svg" width="79" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-exec.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-exec-light.svg"><img alt="exec" src="https://cdn.hoody.com/assets/readme/kit-exec-light.svg" width="79" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-daemon.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-daemon-light.svg"><img alt="daemon" src="https://cdn.hoody.com/assets/readme/kit-daemon-light.svg" width="95" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-cron.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-cron-light.svg"><img alt="cron" src="https://cdn.hoody.com/assets/readme/kit-cron-light.svg" width="79" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-run.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-run-light.svg"><img alt="run" src="https://cdn.hoody.com/assets/readme/kit-run-light.svg" width="71" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-vm.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-vm-light.svg"><img alt="vm" src="https://cdn.hoody.com/assets/readme/kit-vm-light.svg" width="64" height="28"></picture> |
+| **Screens and browser** | <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-display.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-display-light.svg"><img alt="display" src="https://cdn.hoody.com/assets/readme/kit-display-light.svg" width="103" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-browser.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-browser-light.svg"><img alt="browser" src="https://cdn.hoody.com/assets/readme/kit-browser-light.svg" width="103" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-notifications.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-notifications-light.svg"><img alt="notifications" src="https://cdn.hoody.com/assets/readme/kit-notifications-light.svg" width="149" height="28"></picture> |
+| **Data** | <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-sqlite.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-sqlite-light.svg"><img alt="sqlite" src="https://cdn.hoody.com/assets/readme/kit-sqlite-light.svg" width="95" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-notes.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-notes-light.svg"><img alt="notes" src="https://cdn.hoody.com/assets/readme/kit-notes-light.svg" width="87" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-watch.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-watch-light.svg"><img alt="watch" src="https://cdn.hoody.com/assets/readme/kit-watch-light.svg" width="87" height="28"></picture> |
+| **Networking** | <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-curl.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-curl-light.svg"><img alt="curl" src="https://cdn.hoody.com/assets/readme/kit-curl-light.svg" width="79" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-pipe.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-pipe-light.svg"><img alt="pipe" src="https://cdn.hoody.com/assets/readme/kit-pipe-light.svg" width="79" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-tunnel.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-tunnel-light.svg"><img alt="tunnel" src="https://cdn.hoody.com/assets/readme/kit-tunnel-light.svg" width="95" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-egress.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-egress-light.svg"><img alt="egress" src="https://cdn.hoody.com/assets/readme/kit-egress-light.svg" width="95" height="28"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-proxylogs.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-proxylogs-light.svg"><img alt="proxyLogs" src="https://cdn.hoody.com/assets/readme/kit-proxylogs-light.svg" width="118" height="28"></picture> |
+| **AI** | <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-agent.svg"><source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/kit-agent-light.svg"><img alt="agent" src="https://cdn.hoody.com/assets/readme/kit-agent-light.svg" width="87" height="28"></picture> |
 
 <details>
 <summary><b>21 namespaces and examples</b></summary>
@@ -917,6 +926,7 @@ Event-stream commands with `--output json` print one JSON object per line; byte-
 <a name="docs-and-support"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-docs-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-docs-light.svg">
   <img alt="Docs and support" src="https://cdn.hoody.com/assets/readme/title-docs-light.svg" width="100%" height="104">
 </picture>
 
