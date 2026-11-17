@@ -1,0 +1,2 @@
+import{t,o}from"./index-dnb5ngec.js";var l={"browser-id":["instance","instance-id","instanceId","instanceid","instance_id","browserId","browserid","browser_id"]};function h(e){for(let n of e.commands)f(n),h(n)}function f(e){let n=new Set(e.options.map((i)=>i.long).filter(Boolean)),r=!1;for(let[i,d]of Object.entries(l)){let a=`--${i}`;if(!n.has(a))continue;for(let c of d){let s=`--${c}`;if(n.has(s))continue;e.addOption(t(s,`it was renamed to ${a}.`)),n.add(s),r=!0}}if(r)e.hook("preAction",o)}
+export{h};
