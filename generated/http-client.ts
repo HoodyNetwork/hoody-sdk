@@ -7,7 +7,10 @@
 import {
   ApiError,
   isApiError,
+  refuseRetiredOptions,
   RETRY_SAFE_CODES,
+  ValidationError,
+  type ApiErrorOutcome,
   type ApiErrorRequestContext,
   type ApiErrorResponseDetails,
 } from './errors.js';
@@ -119,7 +122,7 @@ export interface IHttpClientConfig {
   retryDelayMs?: number;
   /**
    * How long, under the default policy, a request waits for a kit that is still starting (a
-   * container that has just come up answers 502 BACKEND_GATEWAY_ERROR until its kits listen):
+   * computer that has just come up answers 502 BACKEND_GATEWAY_ERROR until its kits listen):
    * the retries are at most 5 s apart and wait this many milliseconds in all. Default 20000;
    * 0 turns the wait off. When it runs out the request fails with code KIT_NOT_READY. Only the
    * requests the default policy may send again wait (no POST without its declared idempotency
@@ -133,7 +136,9 @@ export interface IHttpClientConfig {
    * the server, and kit GETs that change state or report it (a browser
    * start, a command's status, a screenshot) returned the first answer for
    * five seconds. A request's own `cache` option (true, false, or
-   * a TTL in milliseconds) overrides this per call.
+   * a TTL in milliseconds) overrides this per call. A GET to another origin
+   * than the API (a kit host) is never cached, also when a request middleware
+   * moved the request there.
    */
   cache?: {
     enabled?: boolean;
@@ -145,8 +150,8 @@ export interface IHttpClientConfig {
    */
   captureRawBody?: boolean;
   transport?: IHttpClientTransportConfig;
-  forceIPv4?: boolean;
-  forceIPv4Cache?: IForceIPv4CacheConfig;
+  forceIpv4?: boolean;
+  forceIpv4Cache?: IForceIpv4CacheConfig;
   middlewares?: IHttpClientMiddleware[];
   /**
    * Request steps that run after every middleware, including middleware
@@ -166,11 +171,15 @@ export interface IHttpClientConfig {
     routeTag: object | undefined
   ) => IHttpClientMiddlewareRequestContext | Promise<IHttpClientMiddlewareRequestContext>>;
   /**
-   * Global error hook — called on every request error before the retry loop
+   * Global error hook — called on a request error before the retry loop
    * decides whether to continue. Return `true` to force one more retry (beyond
    * status-based retry policy); return `false` to let shouldRetry decide.
    *
-   * Invoked once per failing attempt. For 401-specific refresh, prefer
+   * It does not see every failure: a failure the retry policy, the keyed
+   * in-progress poll or a 401 replay sends again goes back without it, and a
+   * call that ends during that wait (the session changed, an abort, the keyed
+   * deadline) rejects with an error the hook may not have seen. Read a call's
+   * outcome where it is awaited. For 401-specific refresh, prefer
    * `onTokenExpired`/`onKitAuthExpired`, which trigger a one-shot replay outside
    * the retry budget. Middleware `onError` hooks are a finer-grained
    * alternative for cross-cutting transforms.
@@ -185,6 +194,19 @@ export interface IHttpClientConfig {
    */
   onKitAuthExpired?: (namespace: string, error: ApiError) => Promise<unknown>;
   /**
+   * Two-factor step-up. Called when a request answers 400 OTP_REQUIRED and its operation takes
+   * the one-time code in its body (otp_code): the account API's token, token-copy and
+   * token-update, add-realm and remove-realm routes, an email change request, and the Bot URL
+   * routes that guard a key. Return the code and the request is sent once more with it in
+   * otp_code; return undefined, null or an empty string to give up and let the error
+   * through. Opt-in, and bounded: one resend per call, so a wrong code is the call's error
+   * (INVALID_OTP_CODE). The server refuses before it changes anything, so the resend never
+   * repeats a change. Nothing is resent for a body that is not a plain object. A hook that
+   * throws is logged and the original error goes to the caller. The caller keeps asking for the
+   * code, the SDK never does.
+   */
+  onStepUp?: (error: ApiError) => string | null | undefined | Promise<string | null | undefined>;
+  /**
    * The largest event-stream frame a stream from this client holds, in UTF-8
    * bytes. Default DEFAULT_MAX_STREAM_FRAME_BYTES (16 MiB); a call's
    * `maxFrameBytes` overrides it. Only a whole number above 0 is used;
@@ -192,6 +214,38 @@ export interface IHttpClientConfig {
    * ApiError of code STREAM_FRAME_TOO_LARGE.
    */
   maxStreamFrameBytes?: number;
+  /**
+   * The fetch credentials mode: whether cookies and HTTP authentication go with a request. Absent: none
+   * is set, and fetch uses same-origin. A mode ('include', 'same-origin', 'omit') applies to every
+   * request; a map gives one mode per namespace (the kit's name, agent, terminal, ...; api for the
+   * account API and for a raw request on the transport) with '*' for the rest:
+   * { agent: 'include', '*': 'omit' }. A call's own fetchCredentials overrides it. Only a browser
+   * runtime acts on it: Node's fetch has no cookie jar. A request sent with 'include' is treated as
+   * one that carries a credential: it follows no redirect to another place. Unlike the top-level
+   * credentials of HoodyClient (a username and password), this is the fetch option.
+   */
+  fetchCredentials?: FetchCredentialsPolicy;
+  /**
+   * The fetch cache mode: how a request uses an HTTP cache ('no-store', 'reload', 'no-cache',
+   * 'force-cache', 'default'). Named apart from cache, the SDK's own GET response cache. Absent:
+   * none is set. A call's own fetchCache overrides it. Node's fetch acts on it too. A mode other
+   * than 'default' makes fetch add Cache-Control and Pragma request headers.
+   */
+  fetchCache?: FetchCacheMode;
+  /**
+   * The most bytes a buffered response body may have. A successful body over it is refused with an ApiError of
+   * code RESPONSE_TOO_LARGE as soon as a declared Content-Length shows it, or as soon as the bytes
+   * read pass it, and reading stops (the rest is cancelled). Absent: no limit. A set value that is not a whole number above 0 throws a ValidationError. A call's own maxResponseBytes overrides it. Not applied to stream() (the caller reads
+   * that body) or to an event stream (see maxStreamBytes).
+   */
+  maxResponseBytes?: number;
+  /**
+   * The most bytes an event stream (streamEvents and the generated stream methods) may read in all,
+   * frames and separators included. Past it the stream ends with an ApiError of code
+   * STREAM_TOO_LARGE. Absent: no budget. A set value that is not a whole number above 0 throws a ValidationError (each frame is still bounded
+   * by maxStreamFrameBytes). A call's own maxStreamBytes overrides it.
+   */
+  maxStreamBytes?: number;
   /**
    * Receives the original of every error an event stream from this client
    * replaces with fixed text, when the call passes no
@@ -215,9 +269,44 @@ export interface IHttpClientConfig {
    */
   acceptRefreshedToken?: (token: string) => boolean;
   /**
+   * The session a call is made in, read once when the call starts. While it returns the same value
+   * (Object.is) the call runs as before. Once it returns another one, no further attempt of the
+   * call starts: a retry, a keyed in-progress poll, a step-up or kit-auth resend and a 401 replay
+   * fail with the error they would have retried, the 401 is not refreshed, and a token a refresh
+   * brings back for the old session is not installed. HoodyClient returns its session generation,
+   * so a request made under one session (before setToken, adoptSession, setSessionToken, login or
+   * logout) never runs with the token of the next one, which may belong to another account.
+   * Absent: nothing is held back.
+   */
+  sessionMark?: () => unknown;
+  /**
    * Enables one-time auth retry on 401 responses.
    */
   autoRetryAuth?: boolean;
+  /**
+   * A keyed request (one that sends the idempotency key its operation declares) that the server
+   * answers 409 IDEMPOTENCY_REQUEST_IN_PROGRESS is asked again, with the same key and body, after
+   * the answer's Retry-After, until the first request's answer comes back or the call's timeout
+   * would pass. These repeats spend no retry, so `retries: 0` does not stop them. Default true;
+   * `false` makes the 409 the answer. A request's own `keyedInProgressWait` overrides this.
+   */
+  keyedInProgressWait?: boolean;
+  /**
+   * Request body keys whose values never appear in an ApiError, at any depth: their values read
+   * "[REDACTED]" in `error.request.body`, `error.request.query` and the query of
+   * `error.url`. Matched ignoring case, on
+   * top of the names the SDK always redacts (password, token, secret, ...). A request's own
+   * `redactBodyKeys` adds to these.
+   */
+  redactBodyKeys?: string[];
+  /**
+   * Header names that carry a credential, beyond those the SDK recognises by name (Authorization,
+   * Cookie, X-*-Token, ...). A request that sends one is treated as one that sends Authorization:
+   * it never follows a redirect to another origin with the header, a request middleware that
+   * moves it to another origin drops the header, and an ApiError shows the value as
+   * "[REDACTED]". Use it for a secret in `headers` or one a middleware adds.
+   */
+  credentialHeaders?: string[];
   /**
    * Unique client instance identifier. Sent as X-Hoody-Client-ID header on every request.
    */
@@ -226,6 +315,12 @@ export interface IHttpClientConfig {
    * Human-readable client name. Sent as X-Hoody-Client-Name header on every request.
    */
   clientName?: string;
+  /**
+   * What baseURL points at: 'account' (the default), the Hoody account API; 'kit', a kit or daemon
+   * reached directly (HoodyClient passes its own target). Only an 'account' client names the SDK
+   * version in X-Hoody-Client-Version: kit CORS allow-lists do not list it.
+   */
+  target?: 'account' | 'kit';
 }
 
 export interface IHttpClientTransportConfig {
@@ -246,9 +341,9 @@ export interface IHttpClientTransportConfig {
   useGlobalDispatcher?: boolean;
 }
 
-export interface IForceIPv4CacheConfig {
+export interface IForceIpv4CacheConfig {
   /**
-   * Cache DNS lookups used by forceIPv4.
+   * Cache DNS lookups used by forceIpv4.
    */
   enabled?: boolean;
   /**
@@ -257,6 +352,9 @@ export interface IForceIPv4CacheConfig {
   ttlMs?: number;
 }
 
+/** Client config keys an earlier release took, each with the key that replaced it (refused by the constructor). */
+const RETIRED_CLIENT_CONFIG_KEYS: ReadonlyArray<readonly [string, string]> = [['forceIPv4', 'forceIpv4'], ['forceIPv4Cache', 'forceIpv4Cache']];
+
 export interface IRequestData {
   query?: Record<string, unknown>;
   headers?: Record<string, string>;
@@ -264,6 +362,7 @@ export interface IRequestData {
   /**
    * This GET's cache: `true` caches (client TTL), a number caches for that many
    * milliseconds, `false` bypasses. Absent → the client's `cache.enabled`.
+   * A GET to a kit host is never cached, whatever this says.
    */
   cache?: boolean | number;
   /** Hand response middleware the exact response bytes as `rawBody`. */
@@ -275,11 +374,41 @@ export interface IRequestData {
   jsonStringBody?: boolean;
   signal?: AbortSignal;
   timeoutMs?: number;
+  /**
+   * The least deadline this call gets: a deadline below it (the client's, or the operation's
+   * x-request-timeout) is raised to it, and 0 (none) stays none. A generated method sets it 5 s
+   * past the body's own deadline for the server (timeout_ms), only when the caller passes no
+   * timeoutMs, so the client waits for the server's answer.
+   */
+  timeoutFloorMs?: number;
   retries?: number;
   retryDelayMs?: number;
   retryOnStatuses?: number[];
   middlewareContext?: Record<string, unknown>;
   authRetry?: boolean;
+  /**
+   * The body field that takes the one-time code of a two-factor step-up (otp_code), set by a
+   * generated method whose spec declares both an OTP_REQUIRED answer and that body field. With
+   * onStepUp on the client, a 400 OTP_REQUIRED is answered by one resend carrying the code.
+   */
+  stepUpField?: string;
+  /**
+   * The fetch credentials mode of this call (cookies and HTTP authentication): overrides the client's
+   * fetchCredentials. A call that sends 'include' is treated as one that carries a credential (see
+   * IHttpClientConfig.fetchCredentials).
+   */
+  fetchCredentials?: FetchCredentialsMode;
+  /**
+   * The fetch cache mode of this call: overrides the client's fetchCache. Not the cache option
+   * above, which is the SDK's own GET response cache.
+   */
+  fetchCache?: FetchCacheMode;
+  /**
+   * The most bytes this call's buffered response body may have, over the client's maxResponseBytes.
+   * A longer body is refused with an ApiError of code RESPONSE_TOO_LARGE (status 0, outcome
+   * answered, never sent again), and reading stops. A whole number above 0.
+   */
+  maxResponseBytes?: number;
   /**
    * When true, skip ApiResponse envelope normalization and return the raw
    * parsed body directly.
@@ -292,6 +421,12 @@ export interface IRequestData {
    * TypeScript declaration cannot discriminate on a runtime boolean.
    */
   rawResponse?: boolean;
+  /**
+   * Put the parsed body in `data` as it is: a body shaped like an envelope
+   * (`{ statusCode, data }`) is not unwrapped. Set by generated methods that
+   * return another party's body (curl.run's transparent response).
+   */
+  bodyAsData?: boolean;
   responseType?: 'auto' | 'json' | 'text' | 'arrayBuffer' | 'blob';
   /**
    * Opaque tag a HoodyClient generated service attaches to its own request.
@@ -314,13 +449,38 @@ export interface IRequestData {
    */
   declaredIdempotencyKeyHeader?: string;
   /**
+   * The X-Expected-Length header the operation declares, set by the generated method. Each attempt
+   * whose body is bytes or a Blob, and carries no header of that name, declares the body's length
+   * under it, read after request middleware (see _withExpectedLength).
+   */
+  expectedLengthHeader?: string;
+  /**
    * Any HTTP answer to this request is final, whatever its status. For a call whose handler is
    * arbitrary code (an exec script): a 500, 502 or 429 it returned cannot be told from a
    * platform failure, and sending the request again runs the code again. With this set,
    * `retries` covers only a request that never reached a server (the connection could not be
-   * opened).
+   * opened). A generated method sets it for an operation its spec marks x-non-idempotent; a
+   * caller can set it on any call, never unset it on those.
    */
   responseIsFinal?: boolean;
+  /**
+   * Whether a keyed request answered 409 IDEMPOTENCY_REQUEST_IN_PROGRESS is asked again after
+   * the answer's Retry-After (see IHttpClientConfig.keyedInProgressWait). Absent: the client's
+   * setting, default true.
+   */
+  keyedInProgressWait?: boolean;
+  /**
+   * Body keys whose values never appear in an ApiError from this call, added to the client's
+   * `redactBodyKeys`.
+   */
+  redactBodyKeys?: string[];
+  /**
+   * The query parameters that make this call one a repeat would apply again (the operation's
+   * x-non-idempotent `when`, set by the generated method). When the URL an attempt goes out to
+   * carries one of them, read after request middleware, the request is responseIsFinal from that
+   * attempt on.
+   */
+  nonIdempotentQuery?: string[];
   /**
    * The header of the idempotency key its server honours (the generated method of a POST that
    * declares `Idempotency-Key` sets this). The request carries one key per call (see
@@ -343,7 +503,7 @@ export interface IRequestData {
    * fetch redirect mode. 'error' refuses every redirect, same-origin ones
    * included (the request fails instead): HoodyClient sends credential-bearing
    * auth calls this way, so a redirect cannot replay their body to another
-   * origin. hoody-api does not redirect those routes. Absent: follow.
+   * origin. The API does not redirect those routes. Absent: follow.
    * request(), stream() and streamEvents() all honour it.
    */
   redirect?: 'follow' | 'error';
@@ -363,7 +523,7 @@ interface IResolvedHttpClientTransportConfig {
   keepAlive: boolean;
 }
 
-interface IResolvedForceIPv4CacheConfig {
+interface IResolvedForceIpv4CacheConfig {
   enabled: boolean;
   ttlMs: number;
 }
@@ -549,6 +709,25 @@ function _undiciTimeoutOf(error: unknown): 'headers' | 'body' | 'connect' | unde
 const _IDEMPOTENT_METHODS = ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE'];
 
 /**
+ * Methods that change nothing: the only ones shouldRetry() sends again after the server
+ * answered with success and the client then failed (rule 2).
+ */
+const _READ_METHODS = ['GET', 'HEAD', 'OPTIONS'];
+
+/**
+ * A change the server answered with success (`answeredOk`: a 2xx status), that then failed in
+ * the client (its body could not be read or parsed, a response middleware threw, whatever the
+ * status of the error it threw): it is never sent again, by the retry rule or by an onError hook
+ * that asks for a replay. The server did the work. An answer with an error status whose body
+ * then failed to read is not one of these: the server said the change failed. GET, HEAD and
+ * OPTIONS change nothing, and a `keyed` request (it sends the idempotency key its server
+ * honours) is answered from the server's record of the first, so those may go again.
+ */
+function _answeredWriteIsFinal(method: string, answeredOk: boolean, keyed: boolean): boolean {
+  return answeredOk && !keyed && !_READ_METHODS.includes(method.toUpperCase());
+}
+
+/**
  * True when the request carries a non-empty value under the idempotency-key header its
  * operation declares (IRequestData.declaredIdempotencyKeyHeader). Header names are compared ignoring
  * case. A header the operation does not declare counts for nothing: the server would not
@@ -560,11 +739,97 @@ function _sendsIdempotencyKey(headers: Record<string, string> | undefined, decla
   return Object.entries(headers).some(([name, value]) => name.toLowerCase() === wanted && typeof value === 'string' && value.trim().length > 0);
 }
 
+/**
+ * A keyed request whose key the server is still working on (its first request has not finished)
+ * is answered 409 IDEMPOTENCY_REQUEST_IN_PROGRESS with a Retry-After. The client asks again with
+ * the same key and body after that wait (_KEYED_IN_PROGRESS_DEFAULT_WAIT_MS when absent, at most
+ * _KEYED_IN_PROGRESS_MAX_WAIT_MS), and the answer it gets is the first request's. These waits spend
+ * no retry; they stop once the call's own deadline (its timeoutMs; _KEYED_IN_PROGRESS_MAX_TOTAL_MS
+ * when it has none) would pass, and the 409 is then the call's answer. That deadline runs from the
+ * first attempt: once the call has waited, each later attempt gets only what is left of it
+ * (_keyedAttemptTimeoutMs), and no attempt or retry wait of any kind runs past it (_keyedDeadlinePassed). A request that must not go twice (responseIsFinal) never waits, and an
+ * abort ends a wait at once (_sleepUnlessAborted). Same rule as lib/http-wire.ts.
+ */
+const _KEYED_IN_PROGRESS = 'IDEMPOTENCY_REQUEST_IN_PROGRESS';
+const _KEYED_IN_PROGRESS_DEFAULT_WAIT_MS = 5_000;
+const _KEYED_IN_PROGRESS_MAX_WAIT_MS = 30_000;
+const _KEYED_IN_PROGRESS_MAX_TOTAL_MS = 420_000;
+
+/** The deadline _keyedInProgressWaitMs measures against: the call's timeout, or the 7 min cap without one. */
+function _keyedInProgressLimitMs(timeoutMs: number): number {
+  return Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : _KEYED_IN_PROGRESS_MAX_TOTAL_MS;
+}
+
+/** How long to wait before asking again, or undefined: not that answer, or the deadline would pass. */
+function _keyedInProgressWaitMs(
+  error: { status?: number | undefined; code?: string | undefined },
+  retryAfterMs: number | undefined,
+  elapsedMs: number,
+  deadlineMs: number,
+): number | undefined {
+  if (error.status !== 409 || error.code !== _KEYED_IN_PROGRESS) return undefined;
+  const asked = typeof retryAfterMs === 'number' && Number.isFinite(retryAfterMs) && retryAfterMs >= 0 ? retryAfterMs : _KEYED_IN_PROGRESS_DEFAULT_WAIT_MS;
+  const waitMs = Math.min(asked, _KEYED_IN_PROGRESS_MAX_WAIT_MS);
+  return elapsedMs + waitMs <= _keyedInProgressLimitMs(deadlineMs) ? waitMs : undefined;
+}
+
+/** The timeout of an attempt: `timeoutMs`, or, once the call has waited, what is left until `deadlineAt`. */
+function _keyedAttemptTimeoutMs(timeoutMs: number, deadlineAt: number | undefined, now: number): number {
+  if (deadlineAt === undefined) return timeoutMs;
+  const leftMs = Math.max(1, deadlineAt - now);
+  return Number.isFinite(timeoutMs) && timeoutMs > 0 ? Math.min(timeoutMs, leftMs) : leftMs;
+}
+
+/** Whether a call whose deadline is fixed (it has waited on IN_PROGRESS) would be past it after `delayMs`. */
+function _keyedDeadlinePassed(deadlineAt: number | undefined, now: number, delayMs = 0): boolean {
+  return deadlineAt !== undefined && now + delayMs >= deadlineAt;
+}
+
+/** Wait `ms`, or less when `signal` aborts first (the next attempt then fails as an aborted request). */
+function _sleepUnlessAborted(ms: number, signal?: AbortSignal): Promise<void> {
+  if (signal?.aborted) return Promise.resolve();
+  return new Promise((resolve) => {
+    const done = () => { clearTimeout(timer); signal?.removeEventListener('abort', done); resolve(); };
+    const timer = setTimeout(done, ms);
+    signal?.addEventListener('abort', done, { once: true });
+  });
+}
+
+/**
+ * x-non-idempotent `when`: judged on the URL the attempt goes out to, after middleware. A request
+ * that carries one of the names is final from that attempt on (_carriesQuery).
+ */
+function _finalWhenSent<T extends { responseIsFinal?: boolean; nonIdempotentQuery?: string[] }>(data: T, url: string): T {
+  return data.responseIsFinal !== true && _carriesQuery(url, data.nonIdempotentQuery) ? { ...data, responseIsFinal: true } : data;
+}
+
+/**
+ * The request one attempt sends, after middleware (which may itself have taken time) and the keyed
+ * replay: `expectedLengthHeader` set to the length of `wire` (_withExpectedLength), and, once the
+ * in-progress waits fixed the call's deadline, only what is left of it as the timeout. Past that
+ * deadline nothing more is sent: `lastError` is thrown, inside the attempt's try.
+ */
+function _attemptRequest<T extends { headers: Record<string, string>; timeoutMs: number }>(
+  request: T,
+  wire: unknown,
+  expectedLengthHeader: string | undefined,
+  deadlineAt: number | undefined,
+  lastError: ApiError | undefined,
+): T {
+  let out = request;
+  if (expectedLengthHeader !== undefined) out = { ...out, headers: _withExpectedLength(out.headers, expectedLengthHeader, wire) };
+  if (_keyedDeadlinePassed(deadlineAt, Date.now()) && lastError !== undefined) throw lastError;
+  if (deadlineAt !== undefined) out = { ...out, timeoutMs: _keyedAttemptTimeoutMs(out.timeoutMs, deadlineAt, Date.now()) };
+  return out;
+}
+
 /** A keyed request as attempt 1 dispatched it; see _keyedReplayOf. */
 interface _IKeyedReplay {
   name: string;
   value: string;
   body: unknown;
+  /** The multipart Content-Type, boundary included, of a form encoded once (_encodedFormOf). */
+  contentType?: string;
 }
 
 /**
@@ -576,11 +841,13 @@ interface _IKeyedReplay {
  * attempt. Same rule as keyedReplayOf in lib/http-wire.ts.
  *
  * The body is fixed here: bytes are copied (the caller may reuse its buffer), a Blob is
- * immutable, a string is itself, and a value the transport would JSON-encode is encoded once with
+ * immutable, a string is itself, a FormData was encoded once by _encodedFormOf (its bytes and
+ * contentType, the boundary in it, go out on every attempt), and a value the transport would
+ * JSON-encode is encoded once with
  * the transport's own encoder, so every attempt carries the same text. Returns undefined when the
- * body cannot be sent twice byte for byte: a stream or an async iterable (read once), FormData
- * (fetch writes a new multipart boundary each time), or a value the encoder refuses. Such a
- * request is not retried. Also undefined when the request sends no key.
+ * body cannot be sent twice byte for byte: a stream or an async iterable (read once), a FormData
+ * not encoded first (fetch writes a new multipart boundary each time), or a value the encoder
+ * refuses. Such a request is not retried. Also undefined when the request sends no key.
  *
  * The headers are the ones applyRequestMiddleware returned, folded by case (one spelling per
  * name, the last value set), so the key found here is the only key fetch sends.
@@ -590,23 +857,25 @@ function _keyedReplayOf(
   declared: string | undefined,
   wire: unknown,
   encode: (value: unknown) => string,
+  contentType?: string,
 ): _IKeyedReplay | undefined {
   if (typeof declared !== 'string' || declared.length === 0) return undefined;
   const wanted = declared.toLowerCase();
   const name = Object.keys(headers).find((key) => key.toLowerCase() === wanted && typeof headers[key] === 'string' && headers[key]!.trim().length > 0);
   if (name === undefined) return undefined;
   const value = headers[name]!;
-  if (wire === undefined || wire === null || typeof wire === 'string') return { name, value, body: wire };
+  const replay = (body: unknown): _IKeyedReplay => (contentType === undefined ? { name, value, body } : { name, value, body, contentType });
+  if (wire === undefined || wire === null || typeof wire === 'string') return replay(wire);
   const g: any = globalThis as any;
   if (typeof g.FormData !== 'undefined' && wire instanceof g.FormData) return undefined;
   if (typeof g.ReadableStream !== 'undefined' && wire instanceof g.ReadableStream) return undefined;
   if (typeof (wire as { [Symbol.asyncIterator]?: unknown })[Symbol.asyncIterator] === 'function') return undefined;
-  if (typeof g.Blob !== 'undefined' && wire instanceof g.Blob) return { name, value, body: wire };
-  if (wire instanceof Uint8Array) return { name, value, body: new Uint8Array(wire) };
-  if (wire instanceof ArrayBuffer) return { name, value, body: wire.slice(0) };
+  if (typeof g.Blob !== 'undefined' && wire instanceof g.Blob) return replay(wire);
+  if (wire instanceof Uint8Array) return replay(new Uint8Array(wire));
+  if (wire instanceof ArrayBuffer) return replay(wire.slice(0));
   try {
     const text = encode(wire);
-    return typeof text === 'string' ? { name, value, body: text } : undefined;
+    return typeof text === 'string' ? replay(text) : undefined;
   } catch {
     return undefined;
   }
@@ -614,14 +883,42 @@ function _keyedReplayOf(
 
 /**
  * The headers of a later attempt of a keyed request: every spelling of the declared header is
- * removed and the first keyed attempt's name and value put back (_keyedReplayOf).
+ * removed and the first keyed attempt's name and value put back (_keyedReplayOf). A form
+ * encoded once goes out under its own multipart Content-Type (every other spelling removed),
+ * the boundary its bytes were written with.
  */
 function _withKeyedReplayHeader(headers: Record<string, string>, declared: string, replay: _IKeyedReplay): Record<string, string> {
   const wanted = declared.toLowerCase();
   const out: Record<string, string> = {};
-  for (const [name, value] of Object.entries(headers)) if (name.toLowerCase() !== wanted) out[name] = value;
+  for (const [name, value] of Object.entries(headers)) {
+    const lower = name.toLowerCase();
+    if (lower !== wanted && !(replay.contentType !== undefined && lower === 'content-type')) out[name] = value;
+  }
   out[replay.name] = replay.value;
+  if (replay.contentType !== undefined) out['Content-Type'] = replay.contentType;
   return out;
+}
+
+/**
+ * A keyed FormData body, encoded once: its bytes (a Blob) and the multipart Content-Type with the
+ * boundary they were written with. fetch writes a new boundary for every send of a FormData, so
+ * a retry of the form itself is other bytes under the same key; these bytes, sent again under
+ * this Content-Type, are the same request. Every entry of a FormData is a string or a Blob (a
+ * File), and the platform's own Response encodes it, in Node and in a browser. undefined for any
+ * other body, or when encoding fails: the request then keeps its old rule (a keyed form is not
+ * retried).
+ */
+async function _encodedFormOf(wire: unknown): Promise<{ body: Blob; contentType: string } | undefined> {
+  const g: any = globalThis as any;
+  if (typeof g.FormData === 'undefined' || !(wire instanceof g.FormData) || typeof g.Response !== 'function') return undefined;
+  try {
+    const encoded = new g.Response(wire);
+    const contentType = encoded.headers.get('content-type');
+    if (typeof contentType !== 'string' || !/^multipart\/form-data;/i.test(contentType)) return undefined;
+    return { body: await encoded.blob(), contentType };
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -672,8 +969,8 @@ const _DEFAULT_RETRY_DELAY_MS = 2000;
 const _DEFAULT_RETRY_WAIT_CAP_MS = 10_000;
 
 /**
- * A kit of a container that has just come up answers 502 BACKEND_GATEWAY_ERROR until it is
- * listening, about 10 s after the container reports `running`. Under the default policy such a
+ * A kit of a computer that has just come up answers 502 BACKEND_GATEWAY_ERROR until it is
+ * listening, about 10 s after the computer reports `running`. Under the default policy such a
  * failure may go again, at most _KIT_STARTING_MAX_DELAY_MS apart (a Retry-After is honoured as
  * sent), within the client's kitStartingWaitMs of waiting in all (_KIT_STARTING_WAIT_MS unless
  * set; 0 turns the wait off); shouldRetry() still decides which requests may go again. When the
@@ -682,6 +979,96 @@ const _DEFAULT_RETRY_WAIT_CAP_MS = 10_000;
 const _KIT_STARTING_MAX_DELAY_MS = 5000;
 const _KIT_STARTING_WAIT_MS = 20_000;
 const _KIT_NOT_READY = 'KIT_NOT_READY';
+
+/**
+ * The code of a request a request middleware (or a finalizer) refused by throwing: status 0,
+ * `outcome` `not_sent`, the thrown value as `cause`. It is final: the request is not sent again
+ * and the middleware is not asked a second time. An ApiError the middleware throws is the answer
+ * as it is (also final). Same value as lib/http-wire.ts.
+ */
+const _REQUEST_REFUSED = 'REQUEST_REFUSED';
+
+/** The request contexts a request middleware (or finalizer) refused by throwing (applyRequestMiddleware marks, request() reads). */
+const _requestRefusals = new WeakSet<object>();
+
+/**
+ * fetch options the client forwards when the caller asks for them (IHttpClientConfig.fetchCredentials,
+ * fetchCache). Only these values are passed on; anything else is ignored, so a typo cannot reach
+ * fetch (which throws a TypeError on an unknown mode). only-if-cached is left out: fetch accepts
+ * it only for same-origin requests. Same values and rules as lib/http-wire.ts.
+ */
+export type FetchCredentialsMode = 'omit' | 'same-origin' | 'include';
+export type FetchCacheMode = 'default' | 'no-store' | 'reload' | 'no-cache' | 'force-cache';
+export type FetchCredentialsPolicy = FetchCredentialsMode | Readonly<Record<string, FetchCredentialsMode | undefined>>;
+const _FETCH_CREDENTIALS_MODES: readonly string[] = ['omit', 'same-origin', 'include'];
+const _FETCH_CACHE_MODES: readonly string[] = ['default', 'no-store', 'reload', 'no-cache', 'force-cache'];
+
+/** The fetch options fetchExtrasFor adds to a request. */
+interface IFetchExtras {
+  credentials?: FetchCredentialsMode;
+  cache?: FetchCacheMode;
+}
+
+function _fetchCredentialsMode(value: unknown): FetchCredentialsMode | undefined {
+  return typeof value === 'string' && _FETCH_CREDENTIALS_MODES.includes(value) ? value as FetchCredentialsMode : undefined;
+}
+
+function _fetchCacheMode(value: unknown): FetchCacheMode | undefined {
+  return typeof value === 'string' && _FETCH_CACHE_MODES.includes(value) ? value as FetchCacheMode : undefined;
+}
+
+/**
+ * The credentials a request goes out with. A call's own value wins; else the client's policy: a mode
+ * applies to every request, a map applies its entry for the request's namespace (api for the
+ * account API and for a request made on the transport directly), else its '*' entry.
+ */
+function _resolveFetchCredentials(own: unknown, policy: FetchCredentialsPolicy | undefined, namespace: unknown): FetchCredentialsMode | undefined {
+  const call = _fetchCredentialsMode(own);
+  if (call !== undefined) return call;
+  if (policy === undefined || policy === null) return undefined;
+  if (typeof policy === 'string') return _fetchCredentialsMode(policy);
+  const name = typeof namespace === 'string' && namespace.length > 0 ? namespace : 'api';
+  const table = policy as Readonly<Record<string, unknown>>;
+  return _fetchCredentialsMode(Object.prototype.hasOwnProperty.call(table, name) ? table[name] : undefined)
+    ?? _fetchCredentialsMode(Object.prototype.hasOwnProperty.call(table, '*') ? table['*'] : undefined);
+}
+
+/**
+ * A byte limit: the first of values that is set (not undefined), which must be a whole number
+ * above 0, else a ValidationError names the option. No set value gives undefined (no limit). A bad
+ * value is an error, never a cap that quietly turns itself off.
+ */
+function _byteLimit(name: string, ...values: unknown[]): number | undefined {
+  for (const value of values) {
+    if (value === undefined) continue;
+    if (typeof value === 'number' && Number.isFinite(value) && Number.isInteger(value) && value > 0) return value;
+    throw new ValidationError(name + ' must be a whole number of bytes above 0', name);
+  }
+  return undefined;
+}
+
+/**
+ * The code of a response whose body outgrew the call's maxResponseBytes, and of an event stream
+ * that outgrew maxStreamBytes. Status 0 with outcome answered: the server answered, the client
+ * stopped reading. Neither is sent again (shouldRetry). Same values as lib/http-wire.ts.
+ */
+const _RESPONSE_TOO_LARGE = 'RESPONSE_TOO_LARGE';
+const _STREAM_TOO_LARGE = 'STREAM_TOO_LARGE';
+
+/**
+ * The error readBufferedBody throws for a body over maxResponseBytes (toApiError makes it the
+ * ApiError of code RESPONSE_TOO_LARGE). Fixed text and numbers only.
+ */
+function _responseTooLargeError(limit: number, read: number | undefined, declared?: number): Error {
+  return Object.assign(
+    new Error(
+      declared !== undefined
+        ? 'The response body declares ' + declared + ' bytes, over the limit of ' + limit + ' bytes (maxResponseBytes); none of it was read'
+        : 'The response body is over the limit of ' + limit + ' bytes (maxResponseBytes); reading stopped after ' + read + ' bytes',
+    ),
+    { name: 'ResponseTooLargeError' },
+  );
+}
 
 export function isKitStarting(error: { status: number; code?: string | undefined }): boolean {
   return error.status === 502 && error.code === 'BACKEND_GATEWAY_ERROR';
@@ -1094,14 +1481,19 @@ function resolveDefaultFetch(useGlobalDispatcher = false): HoodyFetch {
   };
 }
 
-type RequiredHttpClientConfig = Required<Omit<IHttpClientConfig, 'middlewares' | 'finalizers' | 'transport' | 'forceIPv4Cache' | 'onKitAuthExpired' | 'onStreamDiagnostic' | 'retries' | 'retryDelayMs'>> & {
+type RequiredHttpClientConfig = Required<Omit<IHttpClientConfig, 'middlewares' | 'finalizers' | 'transport' | 'forceIpv4Cache' | 'onKitAuthExpired' | 'onStepUp' | 'onStreamDiagnostic' | 'retries' | 'retryDelayMs' | 'fetchCredentials' | 'fetchCache' | 'maxResponseBytes' | 'maxStreamBytes'>> & {
   /** Absent: the default policy (IHttpClientConfig.retries). */
   retries?: number;
   retryDelayMs?: number;
+  onStepUp?: (error: ApiError) => string | null | undefined | Promise<string | null | undefined>;
+  fetchCredentials?: FetchCredentialsPolicy;
+  fetchCache?: FetchCacheMode;
+  maxResponseBytes?: number;
+  maxStreamBytes?: number;
   onStreamDiagnostic?: (error: unknown) => void;
   middlewares: IHttpClientMiddleware[];
   transport: IResolvedHttpClientTransportConfig;
-  forceIPv4Cache: IResolvedForceIPv4CacheConfig;
+  forceIpv4Cache: IResolvedForceIpv4CacheConfig;
   onKitAuthExpired?: (namespace: string, error: ApiError) => Promise<unknown>;
 };
 
@@ -1127,18 +1519,20 @@ function hashIdentity(token: string): string {
 function hashAuthHeaders(
   configHeaders: Record<string, string> | undefined,
   requestHeaders: Record<string, string> | undefined,
+  credentialHeaders: readonly string[] | undefined,
 ): string {
+  // Headers the caller declared as credentials count whatever their name.
+  const declared = new Set((credentialHeaders ?? []).map((n) => n.toLowerCase()));
   const merged: Record<string, string> = {};
   for (const src of [configHeaders, requestHeaders]) {
     if (!src) continue;
     for (const [k, v] of Object.entries(src)) merged[k.toLowerCase()] = v;
   }
-  // Mirrors lib/redact.ts SECRET_HEADER_RE so every credential-bearing
-  // header contributes to the cache partition.
-  const AUTH_KEY_RE = /^(authorization|cookie|proxy-authorization|x-.*-token|x-.*-key|x-.*-secret|x-.*-credential(?:s)?|x-.*-lease|x-auth(?:-.*)?|api[-_]?key|apikey|bearer|access[-_]?token|refresh[-_]?token|id[-_]?token|session[-_]?token|bearer[-_]?token|secret[-_]?key|client[-_]?secret|private[-_]?key|proxy[-_]?authorization|set[-_]?cookie)$/;
+  // Every credential-bearing header contributes to the cache partition: the one
+  // secret-header rule (_SECRET_HEADER_RE, lib/redact.ts SECRET_HEADER_RE), not a list of its own.
   const parts: string[] = [];
   for (const k of Object.keys(merged).sort()) {
-    if (AUTH_KEY_RE.test(k)) parts.push(k + '=' + merged[k]);
+    if (_SECRET_HEADER_RE.test(k) || declared.has(k)) parts.push(k + '=' + merged[k]);
   }
   return parts.length ? parts.join('\n') : '';
 }
@@ -1157,17 +1551,44 @@ function _isNonReplayableBody(body: unknown): boolean {
 }
 
 /**
+ * The header that names the SDK version on control-plane requests (see buildHeaders), and the version it
+ * names: the package.json version of the run that generated this file (the same value as generated/version.ts,
+ * which the browser client reads). A literal here, not an import, so this file stays self-contained.
+ */
+const _CLIENT_VERSION_HEADER = 'X-Hoody-Client-Version';
+const SDK_VERSION = "1.0.1";
+
+/**
  * Redaction helpers — keep in sync with lib/redact.ts.
  * Inlined here because generated/http-client.ts is self-contained.
+ * The header rule is lib/redact.ts SECRET_HEADER_RE itself, written out by the generator.
  */
-const _SECRET_HEADER_RE = /^(authorization|cookie|proxy-authorization|x-.*-token|x-.*-key|x-.*-secret|x-.*-credential(?:s)?|x-.*-lease|x-auth(?:-.*)?|api[-_]?key|apikey|bearer|access[-_]?token|refresh[-_]?token|id[-_]?token|session[-_]?token|bearer[-_]?token|secret[-_]?key|client[-_]?secret|private[-_]?key|proxy[-_]?authorization|set[-_]?cookie)$/i;
+const _SECRET_HEADER_RE = /^(x-hoody-(?:computer|container)-claim|authorization|cookie|proxy-authorization|x-(?:.*-)?tokens?|x-(?:.*-)?keys?|x-(?:.*-)?secrets?|x-(?:.*-)?credential(?:s)?|x-.*-lease|x-auth(?:-.*)?|api[-_]?key|apikey|bearer|access[-_]?token|refresh[-_]?token|id[-_]?token|session[-_]?token|bearer[-_]?token|secret[-_]?key|client[-_]?secret|private[-_]?key|proxy[-_]?authorization|set[-_]?cookie)$/i;
 /**
  * Headers that carry a credential, for the credential-scope check in
- * applyRequestMiddleware(): the redaction set plus the kit container claim.
+ * applyRequestMiddleware(): the redaction set plus the kit computer claim under
+ * both of its header spellings (X-Hoody-Computer-Claim, and the earlier X-Hoody-Container-Claim).
  * The browser client defines the same predicate over lib/redact.ts.
  */
 function _isCredentialHeader(name: string): boolean {
-  return _SECRET_HEADER_RE.test(name) || name.toLowerCase() === 'x-hoody-container-claim';
+  const lower = name.toLowerCase();
+  return _SECRET_HEADER_RE.test(name) || lower === 'x-hoody-computer-claim' || lower === 'x-hoody-container-claim';
+}
+
+/**
+ * The body sendConfined sends on every hop of a redirect chain. A value executeRequest would
+ * encode as JSON becomes that text once, so every hop that keeps the body carries the same text
+ * (a toJSON() or a getter runs once). Any other body (text, bytes, a Blob, a FormData, a stream)
+ * is returned as given and handed to fetch as before. Same rule as the browser client's
+ * _bodyForHops.
+ */
+function _bodyForHops(body: unknown): unknown {
+  if (body === undefined || body === null || typeof body === 'string' || body instanceof Blob
+    || body instanceof FormData || body instanceof ArrayBuffer || body instanceof Uint8Array
+    || (typeof ReadableStream !== 'undefined' && body instanceof ReadableStream)) {
+    return body;
+  }
+  return _stringifyBody(body);
 }
 
 /**
@@ -1187,8 +1608,8 @@ function _queryString(value: unknown): string {
 
 /**
  * The machine code of an error body: an explicit string code wins, then the
- * containers edge's errorCode (BACKEND_GATEWAY_ERROR), then a code-shaped error
- * field (hoody-api puts its code there: TOKEN_CEILING_EXCEEDED,
+ * computers edge's errorCode (BACKEND_GATEWAY_ERROR), then a code-shaped error
+ * field (the API puts its code there: TOKEN_CEILING_EXCEEDED,
  * SIGNING_NOT_CONFIGURED), then a nested error object's code. Prose in error
  * ("Bad Request", "key not found") is never promoted to a code.
  */
@@ -1362,6 +1783,42 @@ function _wireBody(body: unknown, headers: Record<string, string>, jsonString: b
 }
 
 /**
+ * The headers with the body's length declared under name (the operation's
+ * X-Expected-Length), read from the bytes that actually go out. Only a body
+ * of bytes or a Blob has a known length here; a stream, a form or text adds
+ * nothing and goes out as before. A header of that name already set, in any
+ * case, is left as it is: the caller, the client's config or a middleware
+ * chose it. hoody-files refuses a body that is not this long, so an upload
+ * cut off on the way (some HTTP/2 clients end the body normally when aborted)
+ * leaves the file as it was instead of replacing it with the part that came.
+ */
+function _withExpectedLength(headers: Record<string, string>, name: string | undefined, body: unknown): Record<string, string> {
+  if (name === undefined) return headers;
+  const lower = name.toLowerCase();
+  if (Object.keys(headers).some((key) => key.toLowerCase() === lower)) return headers;
+  const length = body instanceof Uint8Array || body instanceof ArrayBuffer ? body.byteLength
+    : typeof Blob !== 'undefined' && body instanceof Blob ? body.size
+    : undefined;
+  return length === undefined ? headers : { ...headers, [name]: String(length) };
+}
+
+/**
+ * Whether the URL a request goes out to carries any of `names` as a query parameter, with any
+ * value (`?append` with none included): the x-non-idempotent `when` test, read after request
+ * middleware, which may add or drop one. An unreadable URL counts as carrying them.
+ */
+function _carriesQuery(url: string, names: readonly string[] | undefined): boolean {
+  if (names === undefined || names.length === 0) return false;
+  let params: URLSearchParams;
+  try {
+    params = new URL(url, 'http://relative.invalid').searchParams;
+  } catch {
+    return true;
+  }
+  return names.some((name) => params.has(name));
+}
+
+/**
  * Whether a Content-Type names JSON: application/json or a structured-syntax
  * +json type (application/problem+json, application/manifest+json), parameters
  * and case aside. application/json-seq, application/jsonx, text/json and two
@@ -1374,7 +1831,7 @@ export function isJsonContentType(contentType: string | null | undefined): boole
 }
 
 // Extended credential key set; keep in sync with lib/redact.ts.
-const _SECRET_FIELD_RE = /^(token|hdy[-_]?token|api[-_]?key|apikey|password|passwd|pwd|secret|auth|access[-_]?token|refresh[-_]?token|id[-_]?token|bearer[-_]?token|session[-_]?token|temp[-_]?token|kit[-_]?token|otp|device[-_]?code|code[-_]?verifier|code[-_]?challenge|authorization|cookie|private[-_]?key|client[-_]?secret|secret[-_]?access[-_]?key|aws[-_]?secret|ssh[-_]?pass(?:word)?|socks5[-_]?pass(?:word)?|proxy[-_]?pass(?:word)?|db[-_]?pass(?:word)?|kit[-_]?pass(?:word)?|local[-_]?pass(?:word)?|auth[-_]?pass(?:word)?|cur[-_]?pass(?:word)?|credential|credentials|key|jwt)$/i;
+const _SECRET_FIELD_RE = /^((?:computer|container)[-_]?claim(?:[-_]?signed[-_]?data)?|token|hdy[-_]?token|api[-_]?key|apikey|password|passwd|pwd|secret|auth|access[-_]?token|refresh[-_]?token|id[-_]?token|bearer[-_]?token|session[-_]?token|temp[-_]?token|kit[-_]?token|otp|device[-_]?code|code[-_]?verifier|code[-_]?challenge|authorization|cookie|private[-_]?key|client[-_]?secret|secret[-_]?access[-_]?key|aws[-_]?secret|ssh[-_]?pass(?:word)?|socks5[-_]?pass(?:word)?|proxy[-_]?pass(?:word)?|db[-_]?pass(?:word)?|kit[-_]?pass(?:word)?|local[-_]?pass(?:word)?|auth[-_]?pass(?:word)?|cur[-_]?pass(?:word)?|credential|credentials|key|jwt)$/i;
 // (Keep in sync with lib/redact.ts isSecretFieldName.) _SECRET_FIELD_RE is a list of whole names, so it knows only the names someone
 // wrote down. The specs name credentials in many more ways (current_password,
 // key_file_pass, client_credentials, sse_customer_key, confirm_token, …), all
@@ -1389,6 +1846,8 @@ const _CURSOR_QUALIFIERS: readonly string[] = ['page', 'next', 'prev', 'previous
 const _PLAIN_KEY_QUALIFIERS: readonly string[] = ['public', 'idempotency', 'cache', 'logical', 'action', 'sort', 'partition', 'primary', 'foreign', 'host'];
 // "..._code" that is a one-time credential (a bare `code` is an error code; see _isOauthCodeContext).
 const _SECRET_CODE_QUALIFIERS: readonly string[] = ['otp', 'totp', 'mfa', 'auth', 'authorization', 'device', 'verification', 'recovery', 'backup'];
+// "..._seed" that is key material (private_key_seed, privateKeySeedBase64); a bare or random seed is not.
+const _KEY_SEED_QUALIFIERS: readonly string[] = ['private', 'key'];
 // A trailing encoding says how the value is written, not what it is (sse_customer_key_base64, key_pem).
 const _ENCODING_SUFFIXES: readonly string[] = ['base64', 'b64', 'b64url', 'hex', 'pem'];
 // Keys that sit beside an OAuth authorization `code`.
@@ -1403,7 +1862,7 @@ function _nameWords(name: string): string[] {
  * True for a body field or query parameter name that carries a credential:
  * a name in _SECRET_FIELD_RE, or one whose last word is a secret noun
  * (`current_password`, `key_file_pass`, `client_credentials`, `confirm_token`,
- * `sse_customer_key`, `otp_code`, `approver_lease`). Names that only mention a
+ * `sse_customer_key`, `otp_code`, `approver_lease`, `private_key_seed`). Names that only mention a
  * secret are not (`has_password`, `token_url`, `max_tokens`, `public_key`,
  * `idempotency_key`, `next_page_token`).
  */
@@ -1421,6 +1880,7 @@ function _isSecretFieldName(name: string): boolean {
   if (noun === 'key') return !qualifiers.some((word) => _PLAIN_KEY_QUALIFIERS.includes(word));
   if (noun === 'code') return qualifiers.some((word) => _SECRET_CODE_QUALIFIERS.includes(word));
   if (noun === 'lease') return qualifiers.includes('approver');
+  if (noun === 'seed') return qualifiers.some((word) => _KEY_SEED_QUALIFIERS.includes(word));
   return false;
 }
 
@@ -1467,6 +1927,27 @@ function _scrubUrlValue(text: string, extra: readonly string[] | undefined): str
 // Scrubs an hdy_ token wherever it appears (path segment, non-secret param, or a
 // secret param the field-name pass missed) so a launch token is never logged whole.
 const _HDY_TOKEN_VALUE_RE = /hdy_[A-Za-z0-9_-]{20,}/g;
+// Bot URL key secret (`hbk_` + 43 alphanumerics); group 1 is the 12-character prefix,
+// which stays. Keep in sync with lib/redact.ts BOT_KEY_VALUE_RE.
+const _BOT_KEY_VALUE_RE = /(hbk_[A-Za-z0-9]{8})[A-Za-z0-9]{35}/g;
+/** Both value shapes, hdy_ tokens and Bot keys (12-character prefix kept). */
+function _scrubValueShapes(text: string): string {
+  return text.replace(_HDY_TOKEN_VALUE_RE, _REDACT_PLACEHOLDER).replace(_BOT_KEY_VALUE_RE, '$1' + _REDACT_PLACEHOLDER);
+}
+/**
+ * The one console sink of this client. Every diagnostic is formatted to text here and
+ * scrubbed by value shape (hdy_ tokens, Bot keys) before it is written, so text a server,
+ * middleware or callback chose never reaches the console whole. Objects are serialised
+ * first, so their property names are scrubbed with their values.
+ */
+function _diag(...parts: unknown[]): void {
+  const text = parts.map((p) => {
+    if (typeof p === 'string') return p;
+    if (p instanceof Error) return p.message;
+    try { return JSON.stringify(p) ?? String(p); } catch { return String(p); }
+  }).join(' ');
+  console.error(_scrubValueShapes(text));
+}
 const _REDACT_PLACEHOLDER = '[REDACTED]';
 const _REDACT_MAX_DEPTH = 6;
 
@@ -1492,6 +1973,75 @@ function _credentialQueryParamsOf(middlewareContext: unknown): string[] {
 function _credentialHeadersOf(middlewareContext: unknown): string[] {
   const v = (middlewareContext as Record<string, unknown> | null | undefined)?.['_credentialHeaders'];
   return Array.isArray(v) ? v.filter((n): n is string => typeof n === 'string' && n.length > 0) : [];
+}
+
+/** A request body the step-up resend can add a field to: a plain object, not a form, a stream or an array. */
+function _isPlainBody(body: unknown): body is Record<string, unknown> {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) return false;
+  const proto = Object.getPrototypeOf(body);
+  return proto === Object.prototype || proto === null;
+}
+
+/** A non-empty string. */
+function _hasText(value: unknown): boolean {
+  return typeof value === 'string' && value.length > 0;
+}
+
+/** A caller's list of names (redactBodyKeys, credentialHeaders): its non-empty strings, copied. */
+function _nameList(names: readonly unknown[] | undefined): string[] {
+  return Array.isArray(names) ? names.filter((n): n is string => typeof n === 'string' && n.length > 0) : [];
+}
+
+/**
+ * middlewareContext with the client's credentialHeaders recorded under _credentialHeaders, beside
+ * the names already there, so confinement and redaction treat them as kitAuth's own headers.
+ * Unchanged (the same object, or undefined) when the client names none.
+ */
+function _withCredentialHeaders(
+  middlewareContext: Record<string, unknown> | undefined,
+  names: readonly string[]
+): Record<string, unknown> | undefined {
+  if (names.length === 0) return middlewareContext;
+  const recorded = _credentialHeadersOf(middlewareContext);
+  const missing = names.filter((name) => !recorded.some((r) => r.toLowerCase() === name.toLowerCase()));
+  if (missing.length === 0) return middlewareContext;
+  return { ...(middlewareContext ?? {}), _credentialHeaders: [...recorded, ...missing] };
+}
+
+/**
+ * The attempt facts of an ApiError (retryAfterMs, outcome, attempts), for an error that
+ * re-wraps it (KIT_NOT_READY, a renewed kit auth, an event stream's fixed text).
+ */
+function _attemptFactsOf(error: ApiError): { retryAfterMs?: number; outcome?: ApiErrorOutcome; attempts?: number } {
+  return {
+    ...(typeof error.retryAfterMs === 'number' ? { retryAfterMs: error.retryAfterMs } : {}),
+    ...(error.outcome !== undefined ? { outcome: error.outcome } : {}),
+    ...(typeof error.attempts === 'number' ? { attempts: error.attempts } : {}),
+  };
+}
+
+/**
+ * The ApiErrors this client makes inside an attempt (a refused redirect). toApiError adds the
+ * attempt facts and the call's redaction names to these; an ApiError a middleware threw passes
+ * through untouched.
+ */
+const _SDK_MADE_ERRORS = new WeakSet<object>();
+
+/** What toApiError and buildApiErrorFromResponse know about the attempt that failed. */
+interface _IAttemptFacts {
+  /** The server answered this attempt; the failure came after (see shouldRetry's answered). */
+  answered?: boolean;
+  /**
+   * The outcome of the call's last earlier attempt that may have reached a server: an attempt
+   * that never went out after it does not make the call `not_sent` (ApiError.outcome).
+   */
+  mayHaveRun?: 'answered' | 'unknown' | undefined;
+  /** The attempt was handed to fetch with a live signal. */
+  dispatched?: boolean;
+  /** How many times the call has sent the request (ApiError.attempts). */
+  attempts?: number;
+  /** Body keys to redact beyond the default names (redactBodyKeys). */
+  bodyKeys?: readonly string[];
 }
 
 /** Case-insensitive membership in the extra secret names (lib/redact.ts isExtraName). */
@@ -1560,13 +2110,13 @@ function _scrubLongUrl(text: string): string {
   const queryAt = text.indexOf('?', authorityEnd);
   const hashAt = text.indexOf('#', authorityEnd);
   const hasQuery = queryAt >= 0 && (hashAt < 0 || queryAt < hashAt);
-  if (!userinfo && !hasQuery) return text.replace(_HDY_TOKEN_VALUE_RE, _REDACT_PLACEHOLDER);
+  if (!userinfo && !hasQuery) return text.replace(_HDY_TOKEN_VALUE_RE, _REDACT_PLACEHOLDER).replace(_BOT_KEY_VALUE_RE, '$1' + _REDACT_PLACEHOLDER);
   const head = text.slice(0, authorityStart) + (userinfo ? _REDACT_PLACEHOLDER + '@' + text.slice(at + 1, authorityEnd) : text.slice(authorityStart, authorityEnd));
   const pathEnd = hasQuery ? queryAt : hashAt >= 0 ? hashAt : text.length;
   const path = text.slice(authorityEnd, pathEnd);
   const query = hasQuery ? '?' + encodeURIComponent(_REDACT_PLACEHOLDER) : '';
   const fragment = hashAt >= 0 ? text.slice(hashAt) : '';
-  return (head + path + query + fragment).replace(_HDY_TOKEN_VALUE_RE, _REDACT_PLACEHOLDER);
+  return (head + path + query + fragment).replace(_HDY_TOKEN_VALUE_RE, _REDACT_PLACEHOLDER).replace(_BOT_KEY_VALUE_RE, '$1' + _REDACT_PLACEHOLDER);
 }
 
 function _redactUrl(url: string, extraParamNames?: readonly string[]): string {
@@ -1582,19 +2132,21 @@ function _redactUrl(url: string, extraParamNames?: readonly string[]): string {
     }
     // Belt-and-suspenders: scrub any hdy_-shaped value by shape (path segments,
     // renamed params) that the field-name pass above would miss.
-    return u.toString().replace(_HDY_TOKEN_VALUE_RE, _REDACT_PLACEHOLDER);
+    return u.toString().replace(_HDY_TOKEN_VALUE_RE, _REDACT_PLACEHOLDER).replace(_BOT_KEY_VALUE_RE, '$1' + _REDACT_PLACEHOLDER);
   } catch {
     // Relative URLs throw from the URL constructor; fall back to textual
     // query scrub so verbose logs with an empty baseURL still redact
     // secret query params.
+    // Every return scrubs the value shapes: a key pasted where an id goes
+    // (`/bot-urls/<key>`, `…/<key>?`, `/p?#key=<key>`) has no query value to catch it.
     const qIdx = url.indexOf('?');
-    if (qIdx < 0) return url;
+    if (qIdx < 0) return _scrubValueShapes(url);
     const hashIdx = url.indexOf('#', qIdx);
     const queryEnd = hashIdx >= 0 ? hashIdx : url.length;
     const base = url.slice(0, qIdx + 1);
     const queryRaw = url.slice(qIdx + 1, queryEnd);
     const tail = hashIdx >= 0 ? url.slice(hashIdx) : '';
-    if (queryRaw.length === 0) return url;
+    if (queryRaw.length === 0) return _scrubValueShapes(url);
     const pairs = queryRaw.split('&');
     // The same OAuth-context rule as the absolute branch: a code beside state, redirect_uri, ...
     // is a one-time credential.
@@ -1614,7 +2166,7 @@ function _redactUrl(url: string, extraParamNames?: readonly string[]): string {
       } catch { /* leave as-is on decode failure */ }
       return pair;
     });
-    return (base + parts.join('&') + tail).replace(_HDY_TOKEN_VALUE_RE, _REDACT_PLACEHOLDER);
+    return (base + parts.join('&') + tail).replace(_HDY_TOKEN_VALUE_RE, _REDACT_PLACEHOLDER).replace(_BOT_KEY_VALUE_RE, '$1' + _REDACT_PLACEHOLDER);
   }
 }
 
@@ -1667,7 +2219,7 @@ function _redactSensitiveValue(v: unknown, _depth = 0, _seen: WeakSet<object> = 
   // Value-shape scrub for hdy_ launch tokens embedded in string values, and the
   // recorded credential parameters in any URL-like string (keep in sync with
   // lib/redact.ts redactSensitiveValue).
-  if (typeof v === 'string') return _scrubNamedParams(_scrubUrlValue(v.replace(_HDY_TOKEN_VALUE_RE, _REDACT_PLACEHOLDER), extraFieldNames), extraFieldNames);
+  if (typeof v === 'string') return _scrubNamedParams(_scrubUrlValue(v.replace(_HDY_TOKEN_VALUE_RE, _REDACT_PLACEHOLDER).replace(_BOT_KEY_VALUE_RE, '$1' + _REDACT_PLACEHOLDER), extraFieldNames), extraFieldNames);
   if (typeof v !== 'object') return v;
   // An object that throws while it is read becomes [unreadable]: this runs
   // while an error is being built, and must not replace that error.
@@ -1680,7 +2232,8 @@ function _redactSensitiveValue(v: unknown, _depth = 0, _seen: WeakSet<object> = 
     const out: Record<string, unknown> = {};
     const oauth = _isOauthCodeContext(Object.keys(v as Record<string, unknown>));
     for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
-      out[k] = _isSecretFieldName(k) || _isExtraName(k, extraFieldNames) || (oauth && k.toLowerCase() === 'code')
+      // A key used as a property name is printed too: the name is scrubbed like a value.
+      out[typeof k === 'string' ? k.replace(_BOT_KEY_VALUE_RE, '$1' + _REDACT_PLACEHOLDER) : k] = _isSecretFieldName(k) || _isExtraName(k, extraFieldNames) || (oauth && k.toLowerCase() === 'code')
         ? _REDACT_PLACEHOLDER
         : _redactSensitiveValue(val, _depth + 1, _seen, extraFieldNames);
     }
@@ -1764,7 +2317,7 @@ export interface IStreamEventsOptions {
   signal?: AbortSignal;
   /**
    * Replay cursor. Sent as the `Last-Event-ID` request header (the header the
-   * WHATWG EventSource reconnect uses, and the one hoody-proxy's log stream
+   * WHATWG EventSource reconnect uses, and the one the proxy log stream
    * documents) unless `sinceParam` names a query parameter instead.
    */
   since?: string | number;
@@ -1781,13 +2334,9 @@ export interface IStreamEventsOptions {
   documentedHeaders?: Record<string, string>;
   /**
    * The error codes the operation's spec documents (x-error-codes), as
-   * `{ CODE: 'its title in the spec' }`. An HTTP error that carries one of
-   * them keeps that code, with the spec's title as its message, instead of
-   * becoming STREAM_HTTP_ERROR: a resuming client has to tell "your cursor is
-   * too old, re-read the state" (HISTORY_GAP, CHANGE_CURSOR_INVALID) from any
-   * other refusal. Both are fixed text from the spec; the server's own message
-   * and body still go only to `onDiagnostic`. Generated stream methods fill
-   * this in.
+   * `{ CODE: 'its title in the spec' }`. Generated stream methods fill this
+   * in. It no longer changes what is raised: an HTTP error keeps the server's
+   * own code and message (see _toStreamError).
    */
   documentedErrorCodes?: Record<string, string>;
   /**
@@ -1800,10 +2349,17 @@ export interface IStreamEventsOptions {
    */
   maxFrameBytes?: number;
   /**
-   * Receives the original of every error the stream replaces. A stream
-   * raises only fixed-text errors (a code, a fixed sentence, the status):
-   * never a transport exception's message, a server's error text or body, a
-   * content type or an abort reason, any of which can hold a credential.
+   * The most bytes this stream reads in all, over the client's `maxStreamBytes`. Past it the stream
+   * ends with an `ApiError` of code `STREAM_TOO_LARGE`. A whole number above 0.
+   */
+  maxStreamBytes?: number;
+  /**
+   * Receives the original of every error the stream replaces. Apart from an
+   * HTTP error answer (raised with the server's code, message and body, as
+   * the request path raises it), a stream raises only fixed-text errors (a
+   * code, a fixed sentence, the status): never a transport exception's
+   * message, a 2xx body that is not an event stream, a content type or an
+   * abort reason, any of which can hold a credential.
    * Route what this receives to a diagnostic sink, redacted; never to a
    * user, a View or a model. A sink that throws is ignored. Without it the
    * client's `onStreamDiagnostic` receives them.
@@ -1826,6 +2382,102 @@ export interface IStreamEventsOptions {
    * handling a frame. Unset, 0 or not a finite number: no bound.
    */
   idleTimeoutMs?: number;
+  /**
+   * Ends the stream when the turn its request dispatched ends, and closes the
+   * body then: the frame that ends it is the last one yielded. Generated
+   * methods fill this in for an operation whose event stream documents the
+   * turn id header and declares the turn-end frame (hoody-agent's
+   * prompt:stream, which keeps delivering the session after the turn), unless
+   * the caller passes `followSession: true`. Unset, the stream runs until the
+   * server closes it, sends an `end` frame, or the caller closes it. See
+   * IStreamTurnEnd.
+   */
+  turnEnd?: IStreamTurnEnd;
+}
+
+/**
+ * Which frames end a stream's own turn (IStreamEventsOptions.turnEnd).
+ *
+ * The turn is the one `header` names on the response. Without that header
+ * (a browser the server did not expose it to), it is the `turn_id` of the
+ * `boundary` frame. The `done` frame whose turn id is that turn ends the
+ * stream; one that names another turn (another client's, on the same session)
+ * does not. So does a `discarded` frame that names it: the dispatch was
+ * dropped unrun and gets no done frame. A done or discarded frame's turn id is
+ * its payload's `event.data.turn_id`, else its envelope's `turn_id`.
+ *
+ * Without the header, the frames before the boundary are the replay, which can
+ * hold another turn's done frame (this dispatch queued behind it): none of
+ * them ends the stream. When the boundary names a turn the replay already
+ * ended or discarded, the stream ends at the boundary. When nothing names a
+ * turn (no header, and a boundary without one, or no boundary declared), the
+ * first done frame after the boundary ends it. A `sessionEnd` frame ends it
+ * whatever turn is running, as an `end` frame always does.
+ */
+export interface IStreamTurnEnd {
+  /** The response header that names the dispatched turn (`X-Hoody-Turn-Id`). */
+  header: string;
+  /** The frame that ends a turn and names it (`agent_done`). */
+  done: string;
+  /** The frame that ends the replay and names the watched turn as `turn_id` (`replay_boundary`). */
+  boundary?: string;
+  /** The frame that closes a dispatch dropped unrun, naming it (`turn_discarded`). */
+  discarded?: string;
+  /** Frames that end the session, and with it every turn (`quit`, `session_closed`). */
+  sessionEnd?: readonly string[];
+}
+
+/** A frame's payload as a JSON object, or undefined. */
+function _streamPayloadObject(raw: string): Record<string, unknown> | undefined {
+  try {
+    const value: unknown = JSON.parse(raw);
+    return value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** The turn a done or discarded frame closes: `event.data.turn_id`, else the envelope's `turn_id`. */
+function _streamDoneTurn(payload: Record<string, unknown> | undefined): string | undefined {
+  const inner = payload?.['event'] as { data?: { turn_id?: unknown } } | undefined;
+  const named = inner !== null && typeof inner === 'object' && inner.data !== null && typeof inner.data === 'object'
+    ? inner.data.turn_id
+    : undefined;
+  if (typeof named === 'string' && named !== '') return named;
+  const envelope = payload?.['turn_id'];
+  return typeof envelope === 'string' && envelope !== '' ? envelope : undefined;
+}
+
+/**
+ * The rule of IStreamTurnEnd, applied one frame at a time: returns true for
+ * the frame after which the stream ends. `headerTurn` is the response's
+ * header value, null when it has none.
+ */
+function _streamTurnTracker(rule: IStreamTurnEnd, headerTurn: string | null): (event: IStreamEvent) => boolean {
+  let turn = headerTurn !== null && headerTurn !== '' ? headerTurn : undefined;
+  // Without the header, frames before the boundary are the replay: the turns it closed wait here.
+  let replay = turn === undefined && rule.boundary !== undefined;
+  const closedInReplay = new Set<string>();
+  const sessionEnd = new Set(rule.sessionEnd ?? []);
+  return (event: IStreamEvent): boolean => {
+    if (sessionEnd.has(event.event)) return true;
+    if (replay && event.event === rule.boundary) {
+      replay = false;
+      const named = _streamPayloadObject(event.raw)?.['turn_id'];
+      if (typeof named !== 'string' || named === '') return false;
+      turn = named;
+      return closedInReplay.has(named);
+    }
+    const isDone = event.event === rule.done;
+    if (!isDone && (rule.discarded === undefined || event.event !== rule.discarded)) return false;
+    const closed = _streamDoneTurn(_streamPayloadObject(event.raw));
+    if (replay) {
+      if (closed !== undefined) closedInReplay.add(closed);
+      return false;
+    }
+    // With no turn named, only a done frame ends it: a discarded one may be another dispatch's.
+    return turn === undefined ? isDone : closed === turn;
+  };
 }
 
 /**
@@ -1852,11 +2504,20 @@ function resolveMaxFrameBytes(perCall: unknown, client?: unknown): number {
 }
 
 /**
- * The errors an event stream raises that hold only fixed text: built here,
- * from constants and numbers. Everything else is replaced by one of them
- * before it leaves the stream (_toStreamError).
+ * The errors an event stream raises: built here, from constants and numbers,
+ * or from the server's answer to the request (an HTTP error, as the request
+ * path raises it). Everything else is replaced by one of them before it
+ * leaves the stream (_toStreamError).
  */
 const _cleanStreamErrors = new WeakSet<object>();
+
+/**
+ * The ApiErrors stream() built for an HTTP error answer (status 400 and up,
+ * not an event stream) with buildApiErrorFromResponse: the request path's own
+ * builder, redaction and body read (bounded by boundedErrorResponse).
+ * _toStreamError raises these as they are.
+ */
+const _httpErrorAnswers = new WeakSet<object>();
 
 /** A fixed-text error with a fixed name (StreamClosedError, AbortError). */
 function _streamError(name: string, message: string): Error {
@@ -1865,6 +2526,13 @@ function _streamError(name: string, message: string): Error {
   _cleanStreamErrors.add(error);
   return error;
 }
+
+/**
+ * What an event-stream error built after the response arrived says about the call
+ * (ApiError.outcome, attempts): the server answered, and stream() sends one request per
+ * opening (it never retries), so the call was sent once.
+ */
+const _STREAM_ANSWERED = { outcome: 'answered', attempts: 1 } as const;
 
 /** An ApiError built here from fixed text and numbers only (STREAM_FRAME_TOO_LARGE). */
 function _cleanApiError(params: ConstructorParameters<typeof ApiError>[0]): ApiError {
@@ -1876,6 +2544,7 @@ function _cleanApiError(params: ConstructorParameters<typeof ApiError>[0]): ApiE
 /** The fixed sentence for each code an event-stream ApiError may carry. */
 const _STREAM_ERROR_SENTENCES: Record<string, string> = {
   ABORTED: 'The event stream request was aborted by the caller',
+  REQUEST_REFUSED: 'The event stream request was refused by a request middleware',
   ETIMEDOUT: 'The event stream request timed out',
   REDIRECT_REFUSED: 'The event stream request was redirected, and redirects are refused',
   NOT_AN_EVENT_STREAM: 'Expected an event stream, got a response of another content type',
@@ -1887,46 +2556,57 @@ const _STREAM_ERROR_SENTENCES: Record<string, string> = {
 /**
  * What an event stream raises in place of `error`.
  *
- * A thrown value's text is never passed on: a transport exception, a body
- * error, a server's error message, code or body, a content type, an abort
- * reason's message and name can each hold a credential or a user's data,
+ * An HTTP error answer (status 400 and up, not an event stream) is raised as
+ * the request path raises it: the ApiError stream() built for it with the
+ * request path's builder (_httpErrorAnswers), so the server's code and
+ * message, its parsed body on `response`, the redacted URL, method and
+ * request, and Retry-After. A code-less answer gets code STREAM_HTTP_ERROR. A voice or
+ * completions caller has to tell "this model does not stream" or
+ * "unsupported_setting" (fix the request) from a 503 stream cap (wait), and
+ * a resuming client "your cursor is too old" (HISTORY_GAP) from any other
+ * refusal.
+ *
+ * Every other failure is replaced by fixed text: a transport exception, a
+ * body error, a 2xx that is not an event stream (its body may be a job ack),
+ * a refused redirect, an abort reason's message and name. Those can hold a
+ * credential or a user's data the server never meant as an error message,
  * and a stream's errors reach logs, Views and models. The replacement keeps
  * what is safe to act on (a fixed code from _STREAM_ERROR_SENTENCES, the
  * status, the client-redacted URL and the method, Retry-After) with a fixed
  * sentence. The original goes only to `options.onDiagnostic`.
- *
- * One more code is kept: on an HTTP error, a code the operation's spec
- * documents (`documentedCodes`, from x-error-codes), with the spec's title for
- * it as the message. The code is matched against that list and the text comes
- * from the spec, so nothing the server wrote is passed on.
  */
-function _toStreamError(error: unknown, acceptedStatus: number | undefined, documentedCodes?: Record<string, string>): unknown {
+function _toStreamError(error: unknown, acceptedStatus: number | undefined): unknown {
   if (typeof error === 'object' && error !== null && _cleanStreamErrors.has(error)) return error;
   if (isApiError(error)) {
     const status = Number.isInteger(error.status) && error.status > 0 ? error.status : 0;
-    const documented = status > 0 && typeof error.code === 'string' && documentedCodes !== undefined
-      && Object.prototype.hasOwnProperty.call(documentedCodes, error.code) && typeof documentedCodes[error.code] === 'string';
-    const code = documented
-      ? error.code as string
-      : typeof error.code === 'string' && Object.prototype.hasOwnProperty.call(_STREAM_ERROR_SENTENCES, error.code)
+    const retryAfterMs = (error as { retryAfterMs?: unknown }).retryAfterMs;
+    if (_httpErrorAnswers.has(error)) {
+      if (typeof error.code !== 'string') (error as { code: string | undefined }).code = 'STREAM_HTTP_ERROR';
+      return error;
+    }
+    const code = typeof error.code === 'string' && Object.prototype.hasOwnProperty.call(_STREAM_ERROR_SENTENCES, error.code)
       ? error.code
       : status > 0 ? 'STREAM_HTTP_ERROR' : 'STREAM_REQUEST_FAILED';
     const clean = new ApiError({
-      message: documented ? (documentedCodes![code] || _STREAM_ERROR_SENTENCES.STREAM_HTTP_ERROR!) : _STREAM_ERROR_SENTENCES[code]!,
+      message: _STREAM_ERROR_SENTENCES[code]!,
       status,
       code,
       ...(typeof error.url === 'string' ? { url: error.url } : {}),
       ...(typeof error.method === 'string' ? { method: error.method } : {}),
+      ..._attemptFactsOf(error),
+      ...(typeof retryAfterMs === 'number' && Number.isFinite(retryAfterMs) ? { retryAfterMs } : {}),
     });
-    const retryAfterMs = (error as { retryAfterMs?: unknown }).retryAfterMs;
-    if (typeof retryAfterMs === 'number' && Number.isFinite(retryAfterMs)) {
-      (clean as ApiError & { retryAfterMs?: number }).retryAfterMs = retryAfterMs;
-    }
     _cleanStreamErrors.add(clean);
     return clean;
   }
   const code = acceptedStatus === undefined ? 'STREAM_REQUEST_FAILED' : 'STREAM_READ_FAILED';
-  const clean = new ApiError({ message: _STREAM_ERROR_SENTENCES[code]!, status: acceptedStatus ?? 0, code });
+  const clean = new ApiError({
+    message: _STREAM_ERROR_SENTENCES[code]!,
+    status: acceptedStatus ?? 0,
+    code,
+    // After accept() the server had answered; before it nothing here says whether it did.
+    ...(acceptedStatus !== undefined ? _STREAM_ANSWERED : {}),
+  });
   _cleanStreamErrors.add(clean);
   return clean;
 }
@@ -2293,8 +2973,10 @@ export class HttpClient {
   private readonly configuredTransport: IHttpClientTransportConfig | null;
 
   constructor(config: IHttpClientConfig = {}) {
+    // The keys an earlier release took (spelled with an all-caps acronym): refused by name, never dropped.
+    refuseRetiredOptions(config, 'HttpClient', RETIRED_CLIENT_CONFIG_KEYS);
     const transport = config.transport || {};
-    const forceIPv4Cache = config.forceIPv4Cache || {};
+    const forceIpv4Cache = config.forceIpv4Cache || {};
     this.injectedFetch = config.fetch ?? null;
     this.configuredTransport = config.transport ? { ...config.transport } : null;
 
@@ -2318,10 +3000,10 @@ export class HttpClient {
       captureRawBody: config.captureRawBody === true,
       maxStreamFrameBytes: resolveMaxFrameBytes(config.maxStreamFrameBytes),
       ...(typeof config.onStreamDiagnostic === 'function' ? { onStreamDiagnostic: config.onStreamDiagnostic } : {}),
-      forceIPv4: config.forceIPv4 || false,
-      forceIPv4Cache: {
-        enabled: forceIPv4Cache.enabled !== false,
-        ttlMs: forceIPv4Cache.ttlMs ?? 60000,
+      forceIpv4: config.forceIpv4 || false,
+      forceIpv4Cache: {
+        enabled: forceIpv4Cache.enabled !== false,
+        ttlMs: forceIpv4Cache.ttlMs ?? 60000,
       },
       transport: {
         keepAlive: transport.keepAlive !== false,
@@ -2330,11 +3012,24 @@ export class HttpClient {
       onError: config.onError || (async () => false),
       onTokenExpired: config.onTokenExpired || (async () => undefined),
       ...(config.onKitAuthExpired ? { onKitAuthExpired: config.onKitAuthExpired } : {}),
+      ...(typeof config.onStepUp === 'function' ? { onStepUp: config.onStepUp } : {}),
+      // fetch options, validated here so a typo is ignored rather than thrown by fetch on every request.
+      ...(typeof config.fetchCredentials === 'string' || (typeof config.fetchCredentials === 'object' && config.fetchCredentials !== null)
+        ? { fetchCredentials: typeof config.fetchCredentials === 'string' ? config.fetchCredentials : { ...config.fetchCredentials } }
+        : {}),
+      ...(_fetchCacheMode(config.fetchCache) !== undefined ? { fetchCache: _fetchCacheMode(config.fetchCache)! } : {}),
+      ...(_byteLimit('maxResponseBytes', config.maxResponseBytes) !== undefined ? { maxResponseBytes: _byteLimit('maxResponseBytes', config.maxResponseBytes)! } : {}),
+      ...(_byteLimit('maxStreamBytes', config.maxStreamBytes) !== undefined ? { maxStreamBytes: _byteLimit('maxStreamBytes', config.maxStreamBytes)! } : {}),
       refreshToken: config.refreshToken || (async () => undefined),
       acceptRefreshedToken: config.acceptRefreshedToken || (() => true),
+      sessionMark: config.sessionMark || (() => undefined),
       autoRetryAuth: config.autoRetryAuth !== false,
+      keyedInProgressWait: config.keyedInProgressWait !== false,
+      redactBodyKeys: _nameList(config.redactBodyKeys),
+      credentialHeaders: _nameList(config.credentialHeaders),
       clientId: config.clientId || '',
       clientName: config.clientName || '',
+      target: config.target === 'kit' ? 'kit' : 'account',
     };
 
   }
@@ -2368,7 +3063,7 @@ export class HttpClient {
   /**
    * The transport the CALLER injected, or `undefined` when none was.
    *
-   * The one accessor every derivation uses (`withRealm`, `withContainer`, the realm-error
+   * The one accessor every derivation uses (`withRealm`, `withComputer`, the realm-error
    * introspection client). It exists because the two HTTP implementations store the injection
    * differently — this one resolves it into `config.fetch`, the browser build keeps it out of
    * `config` on purpose — so a derivation that reads `config.fetch` silently drops the injection
@@ -2381,7 +3076,7 @@ export class HttpClient {
   /**
    * The transport options the CALLER passed, or `undefined` when none were.
    *
-   * What every derivation (`withRealm`, `withContainer`, the realm-error introspection client)
+   * What every derivation (`withRealm`, `withComputer`, the realm-error introspection client)
    * copies, never the normalised `config.transport`: the browser build warns about every
    * Node-only knob it is handed, and a normalised copy hands it all of them.
    */
@@ -2405,6 +3100,8 @@ export class HttpClient {
     if (data.idempotencyKeyHeader !== undefined) {
       data = { ...data, headers: withIdempotencyKey(data.headers, this.config.headers, data.idempotencyKeyHeader) };
     }
+    // An invalid byte limit is an error whether or not a cached answer would have been returned.
+    _byteLimit('maxResponseBytes', data.maxResponseBytes, this.config.maxResponseBytes);
     const upperMethod = method.toUpperCase();
     const isFullUrl = _isFullUrl(path);
     const url = isFullUrl
@@ -2421,29 +3118,24 @@ export class HttpClient {
     // a path spelled //elsewhere is elsewhere.
     const isExternalUrl = this.isExternalDestination(isFullUrl, url);
 
-    // Cache identity partitioning: the cache key includes a hash of the
-    // Authorization header the request would have used, so token rotation /
-    // cross-identity reuse of a single HttpClient instance cannot serve a
-    // response baked to a different identity. Kit-auth uses a different header
-    // path and does not participate in this GET cache.
+    // Cache identity partitioning: the cache key (made after request middleware, in the attempt
+    // loop) includes a hash of the token and every credential header the request goes out with,
+    // so token rotation / cross-identity reuse of a single HttpClient instance cannot serve a
+    // response baked to a different identity.
     const isGet = upperMethod === 'GET';
-    // Mix in Authorization / X-Api-Key / etc. from config.headers +
-    // data.headers so per-request auth overrides partition the cache.
-    const headerIdentity = isGet ? hashAuthHeaders(this.config.headers, data.headers) : '';
-    const cacheIdentity = isGet ? hashIdentity((this.config.token ?? '') + '|' + headerIdentity) : '';
     // Cache key must disambiguate envelope vs. raw body AND response parser
     // (json/text/arrayBuffer/blob). Without this a GET with rawResponse:true
     // followed by the same GET without it can serve the wrong shape to the
     // second caller (cache-shape poisoning).
     const cacheShape = isGet
       // ...and the integer reading: a lossless answer holds bigints, a plain one rounded numbers.
-      ? (data.rawResponse === true ? 'R' : 'E') + ':' + (data.responseType || 'auto') + (data.losslessIntegers === true ? ':L' : '')
+      ? (data.rawResponse === true ? 'R' : 'E') + ':' + (data.responseType || 'auto') + (data.losslessIntegers === true ? ':L' : '') + (data.bodyAsData === true ? ':B' : '')
       : '';
-    const cacheKey = `${upperMethod}:${cacheIdentity}:${cacheShape}:${url}`;
     // Opt-in. A default-on cache answered repeated state reads and state-
     // changing kit GETs from memory for five seconds.
     const cacheEnabled = this.config.cache.enabled === true;
-    const requestCache = data.cache !== undefined ? data.cache : cacheEnabled;
+    // Never for a GET to another origin than the API (a kit host); checked again after middleware.
+    const requestCache = isExternalUrl ? false : data.cache !== undefined ? data.cache : cacheEnabled;
     // ?? preserves explicit ttl:0.
     const ttl = typeof requestCache === 'number'
       ? requestCache
@@ -2457,14 +3149,6 @@ export class HttpClient {
       this.clearCache();
     }
 
-    if (isGet && requestCache && this.cache.has(cacheKey)) {
-      const entry = this.cache.get(cacheKey)!;
-      if (Date.now() - entry.timestamp < ttl) {
-        return entry.data as T;
-      }
-      this.cache.delete(cacheKey);
-    }
-
     // Nobody set retries: the default policy (_DEFAULT_RETRIES, see IHttpClientConfig.retries).
     const explicitRetries = data.retries ?? this.config.retries;
     const retryByDefault = explicitRetries === undefined;
@@ -2472,8 +3156,17 @@ export class HttpClient {
     // A kit still starting may take more attempts than `retries` (decided per failure below).
     const kitStartingWaitMs = this.config.kitStartingWaitMs;
     const attemptBudget = retryByDefault ? Math.max(retries, kitStartingRetries(kitStartingWaitMs)) : retries;
-    const timeoutMs = data.timeoutMs ?? this.config.timeout;
+    const requestedTimeoutMs = data.timeoutMs ?? this.config.timeout;
+    // A deadline below the call's floor (timeoutFloorMs) is raised to it; 0 (none) stays none.
+    const timeoutMs = typeof data.timeoutFloorMs === 'number' && Number.isFinite(data.timeoutFloorMs) && requestedTimeoutMs > 0
+      ? Math.max(requestedTimeoutMs, data.timeoutFloorMs)
+      : requestedTimeoutMs;
     const retryDelayMs = data.retryDelayMs ?? this.config.retryDelayMs ?? (retryByDefault ? _DEFAULT_RETRY_DELAY_MS : 250);
+    // The keyed in-progress waits (_keyedInProgressWaitMs): counted from here, against timeoutMs.
+    const callStartedAt = Date.now();
+    let keyedInProgressWaitedMs = 0;
+    // Set by the first in-progress wait: the call's deadline, which every later attempt shares.
+    let keyedDeadlineAt: number | undefined;
     let retryWaitedMs = 0;
     const retryOnStatuses = data.retryOnStatuses ?? this.config.retryOnStatuses;
     const authRetryEnabled = data.authRetry ?? this.config.autoRetryAuth;
@@ -2482,6 +3175,10 @@ export class HttpClient {
 
     let authRetried = false;
     let kitAuthRetried = false;
+    // The step-up resend (onStepUp) is spent at most once per call.
+    let stepUpTried = false;
+    // Set once a step-up code has been added to the request: that resend's answer is the call's answer (below).
+    let stepUpSent = false;
     let lastError: ApiError | undefined;
     // Stash the new Kit auth returned by onKitAuthExpired so the NEXT retry
     // actually uses it. Without this the callback's return value would be
@@ -2497,12 +3194,29 @@ export class HttpClient {
     let keyedReplay: _IKeyedReplay | undefined;
     let keyedUnreplayable = false;
     const keyHeader = data.declaredIdempotencyKeyHeader ?? data.idempotencyKeyHeader;
+    // How many times this call has sent the request (ApiError.attempts), and the body keys its
+    // errors redact beyond the default names (redactBodyKeys).
+    let sends = 0;
+    // The outcome of the last failed attempt that may have reached a server (ApiError.outcome).
+    let mayHaveRun: 'answered' | 'unknown' | undefined;
+    const bodyKeys = this.bodyRedactionKeys(data);
+    // The keyed in-progress poll (below): the call's choice, else the client's.
+    const keyedInProgressWait = data.keyedInProgressWait ?? this.config.keyedInProgressWait;
+    // The most bytes the response body may have (maxResponseBytes): the call's, else the client's.
+    const maxResponseBytes = _byteLimit('maxResponseBytes', data.maxResponseBytes, this.config.maxResponseBytes);
 
+    // The session the call is made in (sessionMark).
+    const callMark = this.config.sessionMark();
     for (let attempt = 1; attempt <= attemptBudget + 1; attempt++) {
+      // No attempt after the first starts once the session moved on: its token would be the next
+      // session's, possibly another account's. The error in hand is the answer.
+      if (lastError !== undefined && !Object.is(this.config.sessionMark(), callMark)) throw lastError;
       // The token this attempt goes out with: a 401 is about THIS token, which may no longer be
       // the client's by the time the answer arrives.
       const tokenSent = this.config.token;
-      const headers = this.buildHeaders(data.headers);
+      const headers = this.buildHeaders(data.headers, isExternalUrl);
+      // Whose header it is is decided here, before any middleware can change the header maps it is read from.
+      const sdkAddedVersion = this.addsClientVersion(data.headers, isExternalUrl);
       if (isExternalUrl) {
         // Every spelling: a lower-case authorization survived the exact-case
         // delete.
@@ -2520,9 +3234,10 @@ export class HttpClient {
       // Inject pendingKitAuthOverride into middlewareContext on retry so
       // proxy-auth middleware picks up the fresh creds instead of
       // reinjecting the stale ones.
-      const mergedMiddlewareContext = (data.middlewareContext || pendingKitAuthOverride !== undefined)
+      // The client's credentialHeaders are recorded in it as kitAuth records its own.
+      const mergedMiddlewareContext = _withCredentialHeaders((data.middlewareContext || pendingKitAuthOverride !== undefined)
         ? { ...(data.middlewareContext ?? {}), ...(pendingKitAuthOverride !== undefined ? { kitAuth: pendingKitAuthOverride } : {}) }
-        : undefined;
+        : undefined, this.config.credentialHeaders);
 
       const requestContext: IHttpClientMiddlewareRequestContext = {
         requestId: this.nextRequestId(),
@@ -2531,7 +3246,7 @@ export class HttpClient {
         path,
         url,
         headers,
-        timeoutMs,
+        timeoutMs: _keyedAttemptTimeoutMs(timeoutMs, keyedDeadlineAt, Date.now()),
         retries,
         ...(data.query !== undefined ? { query: data.query } : {}),
         ...(data.body !== undefined ? { body: data.body } : {}),
@@ -2544,24 +3259,79 @@ export class HttpClient {
       // not bypass them — without this, observability hooks never see
       // request-side middleware failures.
       let middlewareRequest: IHttpClientMiddlewareRequestContext = requestContext;
+      // Set once this attempt has an answer: a failure after it (reading the body, a response
+      // middleware) is never "the request did not go out", whatever its cause says.
+      let answered = false;
+      // Set once that answer has a 2xx status: a failure after it, whatever its status, is final
+      // for an unkeyed change (_answeredWriteIsFinal). An error status says the change failed.
+      let answeredOk = false;
+      // Set once this attempt is handed to fetch with a live signal: a failure before it (a
+      // request middleware, an abort) provably sent nothing (ApiError.outcome).
+      let dispatched = false;
+      // Set when a request middleware (or a finalizer) threw: that is its refusal, final (REQUEST_REFUSED).
+      let refused = false;
 
       try {
+        // A later attempt of a call the caller aborted (its retry wait ended on the abort) is not
+        // sent: the abort is the answer, ABORTED, not the earlier error. Checked again
+        // after the request middleware, before the keyed deadline would answer with that error.
+        if (lastError !== undefined && data.signal?.aborted === true) throw data.signal.reason;
         middlewareRequest = await this.applyRequestMiddleware(requestContext, data.routeTag);
+        // A middleware that moved a control-plane request to a kit host: the version header stays behind.
+        middlewareRequest = this.withoutMovedClientVersion(middlewareRequest, url, sdkAddedVersion);
+        // The GET cache is read and written under the request as middleware left it: a middleware
+        // may move it to a kit host (never cached) or set its credentials, which key the entry.
+        // The method the middleware left is the one sent: a GET it turned into another method is
+        // neither read from nor written to the GET cache, and empties it as any change does.
+        const sentMethod = middlewareRequest.method.toUpperCase();
+        if (isNonMutating && sentMethod !== 'GET' && sentMethod !== 'HEAD' && sentMethod !== 'OPTIONS') this.clearCache();
+        // One reading of the fetch options, from the context the middleware left: the entry is keyed
+        // with the credentials mode this attempt is sent with.
+        const fetchExtras = this.fetchExtrasFor(data, middlewareRequest.method, middlewareRequest.middlewareContext);
+        const cacheKey = isGet && sentMethod === 'GET' && requestCache && this.credentialScope(middlewareRequest.url) === 'api'
+          // The fetch credentials mode too: an answer fetched with the browser's cookies is not one
+          // fetched without them.
+          ? `${sentMethod}:${hashIdentity((tokenSent ?? '') + '|' + hashAuthHeaders(middlewareRequest.headers, undefined, this.config.credentialHeaders))}:${fetchExtras?.credentials ?? ''}:${cacheShape}:${middlewareRequest.url}`
+          : undefined;
+        if (cacheKey !== undefined && this.cache.has(cacheKey)) {
+          const entry = this.cache.get(cacheKey)!;
+          if (Date.now() - entry.timestamp < ttl) {
+            return entry.data as T;
+          }
+          this.cache.delete(cacheKey);
+        }
+        data = _finalWhenSent(data, middlewareRequest.url);
         if (isVerbose) {
           // Route through _redactUrl so HTTP_VERBOSE never dumps
           // tokens/apikeys/ssh_passwords in query strings or userinfo.
-          console.error(`[HttpClient] ${middlewareRequest.method} ${_redactUrl(middlewareRequest.url, _credentialQueryParamsOf(middlewareRequest.middlewareContext))} (attempt ${attempt}/${retries + 1})`);
+          _diag(`[HttpClient] ${middlewareRequest.method} ${_redactUrl(middlewareRequest.url, this.redactedFieldNames(_credentialQueryParamsOf(middlewareRequest.middlewareContext), bodyKeys))} (attempt ${attempt}/${retries + 1})`);
         }
         let wire = _wireBody(middlewareRequest.body, middlewareRequest.headers, data.jsonStringBody);
         if (keyedReplay !== undefined) {
           middlewareRequest = { ...middlewareRequest, headers: _withKeyedReplayHeader(middlewareRequest.headers, keyHeader!, keyedReplay) };
           wire = keyedReplay.body;
         } else if (!keyedUnreplayable && _sendsIdempotencyKey(middlewareRequest.headers, keyHeader)) {
-          keyedReplay = _keyedReplayOf(middlewareRequest.headers, keyHeader, wire, _stringifyBody);
+          // A form goes out as bytes encoded once, under their boundary (_encodedFormOf).
+          const form = await _encodedFormOf(wire);
+          keyedReplay = _keyedReplayOf(middlewareRequest.headers, keyHeader, form?.body ?? wire, _stringifyBody, form?.contentType);
           if (keyedReplay === undefined) keyedUnreplayable = true;
-          else wire = keyedReplay.body;
+          else {
+            wire = keyedReplay.body;
+            if (keyedReplay.contentType !== undefined) {
+              middlewareRequest = { ...middlewareRequest, headers: _withKeyedReplayHeader(middlewareRequest.headers, keyHeader!, keyedReplay) };
+            }
+          }
         }
+        // This body's expected length (none for a form, encoded or not), and the keyed deadline
+        // (_attemptRequest).
+        if (lastError !== undefined && data.signal?.aborted === true) throw data.signal.reason;
+        middlewareRequest = _attemptRequest(middlewareRequest, keyedReplay?.contentType !== undefined ? undefined : wire, data.expectedLengthHeader, keyedDeadlineAt, lastError);
         const startedAt = Date.now();
+        // fetch rejects an already-aborted signal before it sends anything.
+        if (data.signal?.aborted !== true) {
+          dispatched = true;
+          sends += 1;
+        }
         const received = await this.sendConfined(
           middlewareRequest.method,
           middlewareRequest.url,
@@ -2573,15 +3343,18 @@ export class HttpClient {
           middlewareRequest.middlewareContext,
           // Follow redirects here, where a failure after an answered hop is marked, whenever
           // "never dispatched" would send the request again where shouldRetry otherwise would not.
-          data.responseIsFinal === true || !_IDEMPOTENT_METHODS.includes(middlewareRequest.method.toUpperCase())
+          data.responseIsFinal === true || !_IDEMPOTENT_METHODS.includes(middlewareRequest.method.toUpperCase()),
+          fetchExtras
         );
+        answered = true;
+        answeredOk = received.ok;
         // The body is read inside the caller's signal and the timeout; the
         // transport lets go of both once the headers are in.
-        const chunks = await this.readBufferedBody(received, data.signal, middlewareRequest.timeoutMs, startedAt);
+        const chunks = await this.readBufferedBody(received, data.signal, middlewareRequest.timeoutMs, startedAt, maxResponseBytes);
         const response = this.replayResponse(received, chunks);
 
         if (!response.ok) {
-          throw await this.buildApiErrorFromResponse(response, middlewareRequest);
+          throw await this.buildApiErrorFromResponse(response, middlewareRequest, { attempts: sends, bodyKeys });
         }
 
         // A HEAD answer is its headers (size, modification time, ETag); the
@@ -2594,7 +3367,8 @@ export class HttpClient {
           : this.normalizeResponseEnvelope(
               parsedResult,
               response.status,
-              response.statusText
+              response.statusText,
+              data.bodyAsData === true
             ) as T;
 
         const middlewareResponse = await this.applyResponseMiddleware<T>({
@@ -2606,7 +3380,7 @@ export class HttpClient {
 
         const result = middlewareResponse.data;
 
-        if (isGet && requestCache) {
+        if (cacheKey !== undefined) {
           // LRU eviction: Map iteration preserves insertion order, so the
           // first key is the oldest entry we haven't re-inserted.
           if (this.cache.size >= _NODE_CACHE_MAX_ENTRIES) {
@@ -2621,8 +3395,18 @@ export class HttpClient {
 
         return result;
       } catch (error) {
-        let apiError = this.toApiError(error, middlewareRequest, data.signal);
+        // A refusal by request middleware is the call's answer, never a failure to retry: running
+        // the middleware again would only ask it the same question (unless the caller aborted).
+        // applyRequestMiddleware marks the request it refused (_requestRefusals); it is read here, not in a try of its own
+        // around the call, so a request middleware failure stays inside this block with the send.
+        refused = _requestRefusals.has(requestContext) && data.signal?.aborted !== true;
+        // No replay of any kind follows a refusal, or the answer to a step-up resend (it carries the one-time code).
+        const noReplay = refused || stepUpSent;
+        let apiError = refused
+          ? this.requestRefusedError(error, middlewareRequest, { attempts: sends, bodyKeys, mayHaveRun })
+          : this.toApiError(error, middlewareRequest, data.signal, { answered, dispatched, attempts: sends, bodyKeys, mayHaveRun });
         lastError = apiError;
+        if (apiError.outcome === 'answered' || apiError.outcome === 'unknown') mayHaveRun = apiError.outcome;
 
         // An error-middleware throw must NOT replace the normalized
         // apiError. Swallow its failure so consumers always see the real
@@ -2634,7 +3418,7 @@ export class HttpClient {
           });
         } catch (mwErr) {
           const msg = mwErr instanceof Error ? mwErr.message : String(mwErr);
-          console.error('[HttpClient] error-middleware threw (suppressed to preserve original error):', msg);
+          _diag('[HttpClient] error-middleware threw (suppressed to preserve original error):', msg);
         }
 
         // Every decision below reads the request as it was dispatched: a request middleware may
@@ -2649,17 +3433,27 @@ export class HttpClient {
         const sentKeyed = _sendsIdempotencyKey(middlewareRequest.headers, keyHeader);
 
         // The ways back into this loop, and what each does with responseIsFinal:
-        //   a. 401, API scope, token already replaced  -> replay once (below)
+        //   a. 401, API scope, token already replaced  -> replay once, same session only (below)
         //   b. 401, API scope, token refreshed         -> replay once (below)
         //   c. 401, kit host, onKitAuthExpired         -> replay once; NOT for responseIsFinal
         //   d. shouldRetry(): status, network, RETRY_SAFE_CODES -> honours responseIsFinal itself
         //   e. onError returned true                   -> refused when responseIsFinal
-        // a and b replay a responseIsFinal request on purpose: hoody-api's auth layer answers
+        // a and b replay a responseIsFinal request on purpose: the API's auth layer answers
         // the 401 before any handler runs. Each happens at most once per call, and only with a
         // NEW token in hand. c does not: on a kit host the 401 may be the script's own answer,
         // given after it did its work, so the renewed auth is stored (onKitAuthExpired ran) and
         // the 401 goes back to the caller, who decides whether to send the request again.
-        if (authRetryEnabled && !authRetried && apiError.status === 401 && !sentExternal && !sentNonReplayable) {
+        // A 401 a response middleware threw after a 2xx answer is not the server refusing the
+        // token: the change was made, so neither auth branch sends it again (_answeredWriteIsFinal).
+        const answeredFinal = _answeredWriteIsFinal(sentMethod, answeredOk, sentKeyed);
+        // A call whose session has since been replaced or ended (sessionMark) is neither replayed
+        // nor refreshed: the token now in hand is the other session's, possibly another account's.
+        // Its 401 is the answer.
+        const sameSession = Object.is(this.config.sessionMark(), callMark);
+        // On a kit client every request goes to a kit: like c, its 401 may come after the work was
+        // done, so a responseIsFinal request is not replayed there either.
+        const kitAnswerIsFinal = this.config.target === 'kit' && data.responseIsFinal === true;
+        if (authRetryEnabled && !authRetried && !noReplay && apiError.status === 401 && !sentExternal && !kitAnswerIsFinal && !sentNonReplayable && !answeredFinal && sameSession) {
           // The token that was refused has already been replaced: a sibling request's refresh
           // landed while this one was in flight. Replay with the current token; refreshing again
           // would spend a second refresh call (and, on a server that rotates the refresh token,
@@ -2674,7 +3468,8 @@ export class HttpClient {
             continue;
           }
           const refreshedToken = await this.tryRefreshToken(apiError);
-          if (refreshedToken && this.config.acceptRefreshedToken(refreshedToken)) {
+          // A refresh that ended after the session changed brought back the old session's token.
+          if (refreshedToken && Object.is(this.config.sessionMark(), callMark) && this.config.acceptRefreshedToken(refreshedToken)) {
             this.setToken(refreshedToken);
             authRetried = true;
             // Do not consume retry budget for auth recovery replay.
@@ -2684,10 +3479,10 @@ export class HttpClient {
         }
 
         let renewedNotReplayed: ApiError | undefined;
-        if (!kitAuthRetried && apiError.status === 401 && sentExternal
+        if (!kitAuthRetried && !noReplay && apiError.status === 401 && sentExternal
             && middlewareRequest.middlewareContext?._kitNamespace
             && this.config.onKitAuthExpired
-            && !sentNonReplayable) {
+            && !sentNonReplayable && !answeredFinal) {
           try {
             const ns = middlewareRequest.middlewareContext._kitNamespace as string;
             const newAuth = await this.config.onKitAuthExpired(ns, apiError);
@@ -2701,6 +3496,7 @@ export class HttpClient {
                 ...(apiError.request !== undefined ? { request: apiError.request } : {}),
                 response: apiError.response,
                 cause: apiError,
+                ..._attemptFactsOf(apiError),
               });
             } else if (newAuth) {
               // Actually apply the returned auth for the next attempt.
@@ -2717,32 +3513,74 @@ export class HttpClient {
             // Callback failure: the caller-facing error stays as the
             // original apiError (we don't want the callback's error to
             // clobber the 401), but surface the callback failure via
-            // console.error so observability isn't black-boxed.
+            // _diag so observability isn't black-boxed.
             const msg = cbErr instanceof Error ? cbErr.message : String(cbErr);
-            console.error('[HttpClient] onKitAuthExpired callback failed:', msg);
+            _diag('[HttpClient] onKitAuthExpired callback failed:', msg);
           }
           if (renewedNotReplayed) throw renewedNotReplayed;
+        }
+
+        // Two-factor step-up (onStepUp): the server refused before it changed anything, so the same
+        // request goes once more with the code the hook returns, merged into the body. No retry spent.
+        // A 400 a response middleware threw after a 2xx is not that refusal: the change was made.
+        if (!stepUpTried && !noReplay && this.config.onStepUp && data.stepUpField !== undefined
+            && apiError.status === 400 && apiError.code === 'OTP_REQUIRED'
+            && !sentExternal && !sentNonReplayable && !sentKeyed && !answeredFinal
+            && _isPlainBody(data.body) && !_hasText((data.body as Record<string, unknown>)[data.stepUpField])) {
+          stepUpTried = true;
+          let otp: string | null | undefined;
+          try {
+            otp = await this.config.onStepUp(apiError);
+          } catch (cbErr) {
+            // The hook handles the one-time code: its error text could hold it, so only the error name is logged.
+            _diag('[HttpClient] onStepUp callback failed:', cbErr instanceof Error ? cbErr.name : 'non-Error');
+          }
+          if (typeof otp === 'string' && otp.length > 0) {
+            data = { ...data, body: { ...(data.body as Record<string, unknown>), [data.stepUpField]: otp } };
+            stepUpSent = true;
+            attempt -= 1;
+            continue;
+          }
+        }
+
+        // The server is still running this key's first request: ask again after its Retry-After
+        // with the same key and body (keyedReplay); the answer is the first request's. No retry spent.
+        // Never for a request that must not go twice. An abort ends the wait (at once if it came
+        // first), and the next attempt fails as an aborted request does.
+        if (keyedInProgressWait && keyedReplay !== undefined && sentKeyed && !sentNonReplayable && !noReplay && data.responseIsFinal !== true) {
+          const pollMs = _keyedInProgressWaitMs(apiError, apiError.retryAfterMs,
+            Math.max(Date.now() - callStartedAt, keyedInProgressWaitedMs), timeoutMs);
+          if (pollMs !== undefined) {
+            keyedInProgressWaitedMs += pollMs;
+            if (keyedDeadlineAt === undefined) keyedDeadlineAt = callStartedAt + _keyedInProgressLimitMs(timeoutMs);
+            await this.sleep(pollMs, data.signal);
+            attempt -= 1;
+            continue;
+          }
         }
 
         // Match browser http-client: both status-retry and onError-retry
         // skip replay when the body is a single-consumption stream.
         // A kit still starting gets the longer default budget (kitStartingWaitMs).
-        const kitStarting = retryByDefault && kitStartingWaitMs > 0 && data.responseIsFinal !== true && isKitStarting(apiError);
-        if (attempt <= (kitStarting ? attemptBudget : retries) && !sentNonReplayable && this.shouldRetry(apiError, sentMethod, retryOnStatuses, data.responseIsFinal === true, retryByDefault, sentKeyed)) {
-          const retryAfterMs = (apiError as ApiError & { retryAfterMs?: number }).retryAfterMs;
+        const kitStarting = retryByDefault && kitStartingWaitMs > 0 && data.responseIsFinal !== true && !noReplay && isKitStarting(apiError);
+        if (!noReplay && attempt <= (kitStarting ? attemptBudget : retries) && !sentNonReplayable && this.shouldRetry(apiError, sentMethod, retryOnStatuses, data.responseIsFinal === true, retryByDefault, sentKeyed, answered, answeredOk)) {
+          const retryAfterMs = apiError.retryAfterMs;
           let delayMs = this.getRetryDelayMs(retryDelayMs, attempt, retryAfterMs);
           if (kitStarting && retryAfterMs === undefined) delayMs = Math.min(delayMs, _KIT_STARTING_MAX_DELAY_MS);
           // The default policy waits at most _DEFAULT_RETRY_WAIT_CAP_MS in all. A wait past it
           // (a long Retry-After) ends the retries: sending sooner than the server asked is not
           // honouring it.
-          if (!retryByDefault || retryWaitedMs + delayMs <= (kitStarting ? kitStartingWaitMs : _DEFAULT_RETRY_WAIT_CAP_MS)) {
+          // An abort ends this wait, and the hook's below, at once: the next attempt then fails as
+          // an aborted request does, before anything is sent.
+          if ((!retryByDefault || retryWaitedMs + delayMs <= (kitStarting ? kitStartingWaitMs : _DEFAULT_RETRY_WAIT_CAP_MS))
+            && !_keyedDeadlinePassed(keyedDeadlineAt, Date.now(), delayMs)) {
             retryWaitedMs += delayMs;
-            await this.sleep(delayMs);
+            await this.sleep(delayMs, data.signal);
             continue;
           }
         }
         // The kit-starting wait ran out on a request it covered: say so, with a code to match.
-        if (kitStarting && !sentNonReplayable && this.shouldRetry(apiError, sentMethod, retryOnStatuses, false, true, sentKeyed)) {
+        if (kitStarting && !sentNonReplayable && this.shouldRetry(apiError, sentMethod, retryOnStatuses, false, true, sentKeyed, answered, answeredOk)) {
           apiError = new ApiError({
             message: kitNotReadyMessage(retryWaitedMs),
             status: apiError.status,
@@ -2752,11 +3590,13 @@ export class HttpClient {
             ...(apiError.request !== undefined ? { request: apiError.request } : {}),
             response: apiError.response,
             cause: apiError,
+            ..._attemptFactsOf(apiError),
           });
         }
 
-        // Invoke onError on EVERY failure (including terminal ones) so
-        // observability hooks see the final outcome. shouldRetry result
+        // Invoke onError on every failure that gets here (terminal ones included)
+        // so observability hooks see the final outcome; a failure resent above,
+        // and a call that ends during its wait, do not (see the onError doc). shouldRetry result
         // still controls whether we actually replay; onError is
         // informational unless it returns true AND we still have retry
         // budget AND the body can be replayed.
@@ -2770,14 +3610,18 @@ export class HttpClient {
             // Nor does it spend the default budget: before the default policy there was none.
             // A caller's abort is never replayed: its signal stays aborted.
             const callerAborted = apiError.status === 0 && apiError.code === 'ABORTED';
-            if (shouldRetry && attempt <= retries && !sentNonReplayable && data.responseIsFinal !== true && !retryByDefault && !callerAborted) {
-              await this.sleep(this.getRetryDelayMs(retryDelayMs, attempt));
+            const hookDelayMs = this.getRetryDelayMs(retryDelayMs, attempt);
+            // Nor does it replay a change the server answered with success (_answeredWriteIsFinal).
+            if (shouldRetry && attempt <= retries && !sentNonReplayable && !noReplay && apiError.code !== _RESPONSE_TOO_LARGE && data.responseIsFinal !== true && !retryByDefault && !callerAborted
+              && !_answeredWriteIsFinal(sentMethod, answeredOk, sentKeyed)
+              && !_keyedDeadlinePassed(keyedDeadlineAt, Date.now(), hookDelayMs)) {
+              await this.sleep(hookDelayMs, data.signal);
               continue;
             }
           } catch (cbErr) {
             // Log suppressed middleware error for observability.
             const msg = cbErr instanceof Error ? cbErr.message : String(cbErr);
-            console.error('[HttpClient] onError callback threw:', msg);
+            _diag('[HttpClient] onError callback threw:', msg);
           }
         }
 
@@ -2867,7 +3711,7 @@ export class HttpClient {
    * budget entirely.
    *
    * Request middleware runs exactly as it does for request(): kit credentials
-   * (kitAuth on withContainer()) are injected by middleware, so a stream that
+   * (kitAuth on withComputer()) are injected by middleware, so a stream that
    * skipped it reached a permission-guarded kit with no credentials. Error
    * middleware sees a non-2xx. Response middleware does not run: it receives
    * a parsed body, and a stream has none to give it.
@@ -2884,7 +3728,9 @@ export class HttpClient {
       : this.buildUrl(path, data.query);
     const isExternalUrl = this.isExternalDestination(isFullUrl, url);
 
-    const headers = this.buildHeaders(data.headers);
+    const headers = this.buildHeaders(data.headers, isExternalUrl);
+    // Whose header it is is decided here, before any middleware can change the header maps it is read from.
+    const sdkAddedVersion = this.addsClientVersion(data.headers, isExternalUrl);
     if (isExternalUrl) {
       this.deleteAuthorization(headers, data.headers);
     }
@@ -2894,7 +3740,12 @@ export class HttpClient {
       _deleteContentType(headers);
     }
 
-    const timeoutMs = data.timeoutMs ?? this.config.timeout;
+    const requestedTimeoutMs = data.timeoutMs ?? this.config.timeout;
+    // A deadline below the call's floor (timeoutFloorMs) is raised to it; 0 (none) stays none.
+    const timeoutMs = typeof data.timeoutFloorMs === 'number' && Number.isFinite(data.timeoutFloorMs) && requestedTimeoutMs > 0
+      ? Math.max(requestedTimeoutMs, data.timeoutFloorMs)
+      : requestedTimeoutMs;
+    const streamContext = _withCredentialHeaders(data.middlewareContext, this.config.credentialHeaders);
     const initialContext: IHttpClientMiddlewareRequestContext = {
       requestId: this.nextRequestId(),
       attempt: 1,
@@ -2906,7 +3757,7 @@ export class HttpClient {
       retries: 0,
       ...(data.query !== undefined ? { query: data.query } : {}),
       ...(data.body !== undefined ? { body: data.body } : {}),
-      ...(data.middlewareContext !== undefined ? { middlewareContext: data.middlewareContext } : {}),
+      ...(streamContext !== undefined ? { middlewareContext: streamContext } : {}),
     };
     // Opening the stream fails the way request() fails: a throwing request
     // middleware, a transport error, a refused connection or the header
@@ -2916,20 +3767,39 @@ export class HttpClient {
     // the same failure on a plain GET missed it on a stream.
     let requestContext = initialContext;
     let response: Response;
+    // As in request(): whether the stream's one attempt was handed to fetch, and the body keys
+    // its errors redact.
+    let dispatched = false;
+    const bodyKeys = this.bodyRedactionKeys(data);
     try {
-      requestContext = await this.applyRequestMiddleware(initialContext, data.routeTag);
+      requestContext = this.withoutMovedClientVersion(
+        await this.applyRequestMiddleware(initialContext, data.routeTag), url, sdkAddedVersion
+      );
+      const wire = _wireBody(requestContext.body, requestContext.headers, data.jsonStringBody);
+      // The length of the body that goes out, after middleware (see _withExpectedLength).
+      if (data.expectedLengthHeader !== undefined) {
+        requestContext = { ...requestContext, headers: _withExpectedLength(requestContext.headers, data.expectedLengthHeader, wire) };
+      }
+      if (data.signal?.aborted !== true) dispatched = true;
       response = await this.sendConfined(
         requestContext.method,
         requestContext.url,
         requestContext.headers,
-        _wireBody(requestContext.body, requestContext.headers, data.jsonStringBody),
+        wire,
         requestContext.timeoutMs,
         data.signal,
         data.redirect,
-        requestContext.middlewareContext
+        requestContext.middlewareContext,
+        false,
+        this.fetchExtrasFor(data, requestContext.method)
       );
     } catch (error) {
-      const openError = this.toApiError(error, requestContext, data.signal);
+      // A request middleware that threw refused the stream (REQUEST_REFUSED), as it refuses request(); the
+      // caller's abort keeps its own error.
+      const streamRefused = _requestRefusals.has(initialContext) && data.signal?.aborted !== true;
+      const openError = streamRefused
+        ? this.requestRefusedError(error, requestContext, { attempts: 0, bodyKeys })
+        : this.toApiError(error, requestContext, data.signal, { dispatched, attempts: dispatched ? 1 : 0, bodyKeys });
       try {
         await this.applyErrorMiddleware({ ...requestContext, error: openError });
       } catch {
@@ -2942,7 +3812,11 @@ export class HttpClient {
       // Bounded: an error body that never ends used to hang here past both
       // the abort and the timeout, and error middleware never ran.
       const errorResponse = await this.boundedErrorResponse(response, data.signal, requestContext.timeoutMs);
-      const error = await this.buildApiErrorFromResponse(errorResponse, requestContext);
+      const error = await this.buildApiErrorFromResponse(errorResponse, requestContext, { attempts: 1, bodyKeys });
+      // An HTTP error answer that is not an event stream: streamEvents raises it as built here,
+      // as the request path does (_httpErrorAnswers).
+      const answerType = (response.headers.get('content-type') ?? '').split(';')[0]!.trim().toLowerCase();
+      if (response.status >= 400 && answerType !== 'text/event-stream') _httpErrorAnswers.add(error);
       try {
         await this.applyErrorMiddleware({ ...requestContext, error });
       } catch {
@@ -3153,10 +4027,16 @@ export class HttpClient {
    * that only watched for the socket to drop would otherwise hang until the
    * read timed out.
    *
-   * A non-2xx never yields: `stream()` drains it and raises `ApiError`.
-   * Neither does a 2xx whose content-type is not `text/event-stream`: it
+   * Turn end: with `options.turnEnd` the stream also ends after the frame
+   * that ends its own turn or the session; see IStreamTurnEnd. A body still
+   * open when such a frame or an `end` frame arrives is closed before that
+   * frame is yielded.
+   *
+   * A non-2xx never yields: `stream()` drains it and raises `ApiError`, a
+   * 4xx or 5xx with the server's code, message and body, as the request path
+   * does. Neither does a 2xx whose content-type is not `text/event-stream`: it
    * raises `ApiError` with code `NOT_AN_EVENT_STREAM` and the HTTP status.
-   * The raised error holds only a fixed code, a fixed sentence and the status;
+   * That error holds only a fixed code, a fixed sentence and the status;
    * the server's body (for example a 202 job ack) goes to
    * `options.onDiagnostic` (or the client's `onStreamDiagnostic`), with the
    * original error.
@@ -3175,6 +4055,8 @@ export class HttpClient {
     data: IRequestData = {},
     options: IStreamEventsOptions = {}
   ): IEventStream<TDocumented, TEvent> {
+    // A bad budget is refused before anything is opened (a stream cut short by it would otherwise leave the response unread).
+    _byteLimit('maxStreamBytes', options.maxStreamBytes);
     let settled = false;
     // The accepted response's status, once accept() has resolved response.
     let acceptedStatus: number | undefined;
@@ -3212,7 +4094,7 @@ export class HttpClient {
     // original goes only to onDiagnostic, which must not break the stream.
     const diagnostic = options.onDiagnostic ?? this.config.onStreamDiagnostic;
     const toStreamError = (error: unknown): unknown => {
-      const clean = _toStreamError(error, acceptedStatus, options.documentedErrorCodes);
+      const clean = _toStreamError(error, acceptedStatus);
       if (clean !== error && diagnostic) {
         try {
           diagnostic(error);
@@ -3486,9 +4368,10 @@ export class HttpClient {
         message: 'Expected an event stream, got ' + contentType + ' (HTTP ' + response.status + '); the' + (truncated ? ' first 64 KiB of the' : ' parsed') + ' body is on error.response',
         status: response.status,
         code: 'NOT_AN_EVENT_STREAM',
-        url: _redactUrl(response.url || path, _credentialQueryParamsOf(requestData.middlewareContext)),
+        url: _redactUrl(response.url || path, this.redactedFieldNames(_credentialQueryParamsOf(requestData.middlewareContext), this.bodyRedactionKeys(requestData))),
         method: method.toUpperCase(),
         response: payload,
+        ..._STREAM_ANSWERED,
       });
     }
 
@@ -3498,6 +4381,15 @@ export class HttpClient {
       void body.cancel().catch(() => undefined);
       throw error;
     }
+    let turnHeader: string | null = null;
+    if (options.turnEnd) {
+      try {
+        turnHeader = response.headers.get(options.turnEnd.header);
+      } catch {
+        // A header name Headers refuses names no header: the turn comes from the boundary.
+      }
+    }
+    const endsTurn = options.turnEnd ? _streamTurnTracker(options.turnEnd, turnHeader) : undefined;
     const reader = body.getReader();
     const decoder = new TextDecoder('utf-8');
     const maxFrameBytes = resolveMaxFrameBytes(options.maxFrameBytes, this.config.maxStreamFrameBytes);
@@ -3506,9 +4398,21 @@ export class HttpClient {
       message: 'An event stream frame exceeded ' + maxFrameBytes + ' bytes (maxFrameBytes); the stream was closed',
       status: response.status,
       code: 'STREAM_FRAME_TOO_LARGE',
-      url: _redactUrl(response.url || path, _credentialQueryParamsOf(requestData.middlewareContext)),
+      url: _redactUrl(response.url || path, this.redactedFieldNames(_credentialQueryParamsOf(requestData.middlewareContext), this.bodyRedactionKeys(requestData))),
       method: method.toUpperCase(),
       response: { maxFrameBytes, frameBytes: buffer.overflowBytes },
+      ..._STREAM_ANSWERED,
+    });
+    const maxStreamBytes = _byteLimit('maxStreamBytes', options.maxStreamBytes, this.config.maxStreamBytes);
+    let streamedBytes = 0;
+    const streamTooLarge = (): ApiError => _cleanApiError({
+      message: 'The event stream read more than ' + maxStreamBytes + ' bytes (maxStreamBytes); the stream was closed',
+      status: response.status,
+      code: _STREAM_TOO_LARGE,
+      url: _redactUrl(response.url || path, this.redactedFieldNames(_credentialQueryParamsOf(requestData.middlewareContext), this.bodyRedactionKeys(requestData))),
+      method: method.toUpperCase(),
+      response: { maxStreamBytes, streamedBytes },
+      ..._STREAM_ANSWERED,
     });
     const idleMs = typeof options.idleTimeoutMs === 'number' && Number.isFinite(options.idleTimeoutMs) && options.idleTimeoutMs > 0
       ? options.idleTimeoutMs
@@ -3519,8 +4423,9 @@ export class HttpClient {
       message: 'The event stream sent nothing for ' + idleMs + ' ms (idleTimeoutMs); the stream was closed',
       status: response.status,
       code: 'ETIMEDOUT',
-      url: _redactUrl(response.url || path, _credentialQueryParamsOf(requestData.middlewareContext)),
+      url: _redactUrl(response.url || path, this.redactedFieldNames(_credentialQueryParamsOf(requestData.middlewareContext), this.bodyRedactionKeys(requestData))),
       method: method.toUpperCase(),
+      ..._STREAM_ANSWERED,
     });
     const onAbort = (): void => {
       void reader.cancel().catch(() => undefined);
@@ -3581,6 +4486,10 @@ export class HttpClient {
           const events = parseSseChunk(buffer, decoder.decode());
           if (buffer.overflowBytes === undefined) events.push(...finishSseStream(buffer));
           for (const event of events) {
+            if (endsTurn && endsTurn(event)) {
+              yield event;
+              return;
+            }
             yield event;
             if (event.event === 'end') {
               return;
@@ -3591,15 +4500,23 @@ export class HttpClient {
           }
           return;
         }
+        if (maxStreamBytes !== undefined) {
+          streamedBytes += value.byteLength;
+          if (streamedBytes > maxStreamBytes) throw streamTooLarge();
+        }
         const chunk = decoder.decode(value, { stream: true });
         if (chunk.length === 0) {
           continue;
         }
         for (const event of parseSseChunk(buffer, chunk)) {
-          yield event;
-          if (event.event === 'end') {
+          if (event.event === 'end' || (endsTurn && endsTurn(event))) {
+            // The stream is over: close the body now, so a caller that stops
+            // reading at this frame holds no connection open.
+            void reader.cancel().catch(() => undefined);
+            yield event;
             return;
           }
+          yield event;
         }
         if (buffer.overflowBytes !== undefined) {
           throw frameTooLarge();
@@ -3628,7 +4545,7 @@ export class HttpClient {
    * chunk. A slow but flowing download of any length completes; one that goes
    * quiet for timeoutMs fails with a body-stalled error (code ETIMEDOUT, as the
    * CLI reports it). It used to be a total deadline, so a large file, a zip or a
-   * pipe receive failed after timeoutMs while data was still arriving (L2 round 3).
+   * pipe receive failed after timeoutMs while data was still arriving.
    *
    * The transport stops forwarding the caller's signal and clears its timer as
    * soon as the headers arrive, so a body that never ended (an event stream
@@ -3647,11 +4564,24 @@ export class HttpClient {
     response: Response,
     signal: AbortSignal | undefined,
     timeoutMs: number,
-    _startedAt: number
+    _startedAt: number,
+    maxBytes?: number
   ): Promise<Uint8Array[] | null> {
     const body = response.body;
     if (!body || response.status === 204 || response.status === 205 || response.status === 304) {
       return null;
+    }
+    // maxResponseBytes: a body that declares more than the limit (and is not compressed, so the
+    // length is the body's own) is refused before any of it is read. An error answer (not 2xx) is
+    // never refused for its size: its status and code decide the retry, the 401 refresh and the
+    // error the caller sees, so its body is read up to the limit and cut there (below).
+    if (maxBytes !== undefined && response.ok) {
+      const declared = Number(response.headers.get('content-length'));
+      const encoded = (response.headers.get('content-encoding') ?? '').trim().toLowerCase();
+      if (Number.isFinite(declared) && declared > maxBytes && (encoded === '' || encoded === 'identity')) {
+        void body.cancel().catch(() => undefined);
+        throw _responseTooLargeError(maxBytes, undefined, declared);
+      }
     }
     const reader = body.getReader();
     let stopped: 'stall' | 'abort' | undefined;
@@ -3676,14 +4606,27 @@ export class HttpClient {
     }
     const chunks: Uint8Array[] = [];
     let received = 0;
+    let overLimit = false;
     try {
       arm();
       for (;;) {
         if (stopped !== undefined) break;
         const chunk = await reader.read();
         if (chunk.done) break;
-        chunks.push(chunk.value);
         received += chunk.value.length;
+        if (maxBytes !== undefined && received > maxBytes) {
+          // Stop reading and let the rest go: the rest of the body is not kept.
+          void reader.cancel().catch(() => undefined);
+          if (response.ok) {
+            overLimit = true;
+          } else {
+            // An error answer keeps its status; its body is cut at the limit.
+            const room = maxBytes - (received - chunk.value.length);
+            if (room > 0) chunks.push(chunk.value.slice(0, room));
+          }
+          break;
+        }
+        chunks.push(chunk.value);
         arm();
       }
     } catch (error) {
@@ -3697,6 +4640,7 @@ export class HttpClient {
         // A read still settling holds the lock; nothing to do.
       }
     }
+    if (overLimit && stopped !== 'abort') throw _responseTooLargeError(maxBytes!, received);
     if (stopped === 'abort') {
       const aborted = new Error('The request was aborted while its response body was being read');
       aborted.name = 'AbortError';
@@ -3769,13 +4713,16 @@ export class HttpClient {
       ? this.buildUrlFromFull(url, data.query)
       : this.buildUrl(url, data.query);
     const isExternalUrl = this.isExternalDestination(isFullUrl, target);
-    const headers = this.buildHeaders(data.headers);
+    const headers = this.buildHeaders(data.headers, isExternalUrl);
+    // Whose header it is is decided here, before any middleware can change the header maps it is read from.
+    const sdkAddedVersion = this.addsClientVersion(data.headers, isExternalUrl);
     if (isExternalUrl) {
       this.deleteAuthorization(headers, data.headers);
     }
     // An upgrade has no body to describe.
     _deleteContentType(headers);
-    const context = await this.applyRequestMiddleware({
+    const upgradeContext = _withCredentialHeaders(data.middlewareContext, this.config.credentialHeaders);
+    const upgradeRequest = {
       requestId: this.nextRequestId(),
       attempt: 1,
       method: 'GET',
@@ -3785,8 +4732,17 @@ export class HttpClient {
       timeoutMs: data.timeoutMs ?? this.config.timeout,
       retries: 0,
       ...(data.query !== undefined ? { query: data.query } : {}),
-      ...(data.middlewareContext !== undefined ? { middlewareContext: data.middlewareContext } : {}),
-    }, data.routeTag);
+      ...(upgradeContext !== undefined ? { middlewareContext: upgradeContext } : {}),
+    };
+    let context: IHttpClientMiddlewareRequestContext;
+    try {
+      context = this.withoutMovedClientVersion(await this.applyRequestMiddleware(upgradeRequest, data.routeTag), target, sdkAddedVersion);
+    } catch (error) {
+      // A request middleware that threw refused the upgrade: the same REQUEST_REFUSED as request(). A caller
+      // abort keeps its own error (the raw reason, as before).
+      if (_requestRefusals.has(upgradeRequest) && data.signal?.aborted !== true) throw this.requestRefusedError(error, upgradeRequest, { attempts: 0, bodyKeys: this.bodyRedactionKeys(data) });
+      throw error;
+    }
     return { url: context.url, headers: { ...context.headers } };
   }
 
@@ -3982,12 +4938,22 @@ export class HttpClient {
       .slice(0, maxLength);
   }
 
-  private buildHeaders(customHeaders?: Record<string, string>): Record<string, string> {
+  /**
+   * `external`: the request goes outside the API's credential scope (a kit, a proxy or a browser-kit
+   * host). Only a control-plane request (the API base URL and its realm hosts, on a client whose target is
+   * 'account') names the SDK version in X-Hoody-Client-Version: kit CORS allow-lists do not list it, so a
+   * kit request never carries it, a direct-kit client's included. A value the caller or the client's
+   * configured headers set for that header is kept.
+   */
+  private buildHeaders(customHeaders?: Record<string, string>, external = true): Record<string, string> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...this.config.headers,
       ...customHeaders,
     };
+    if (this.addsClientVersion(customHeaders, external)) {
+      headers[_CLIENT_VERSION_HEADER] = SDK_VERSION;
+    }
 
     if (this.config.token) {
       headers['Authorization'] = `Bearer ${this.config.token}`;
@@ -4005,6 +4971,18 @@ export class HttpClient {
     return headers;
   }
 
+  /**
+   * The fetch options a request adds beyond the method, headers, signal and body: its credentials
+   * mode (the call's, else the client's policy for the request's namespace) and its cache mode (the
+   * call's, else the client's). None is set by default: Node's fetch has no cookie jar or HTTP cache.
+   */
+  private fetchExtrasFor(data: IRequestData, _method: string, context = data.middlewareContext): IFetchExtras | undefined {
+    const credentials = _resolveFetchCredentials(data.fetchCredentials, this.config.fetchCredentials, context?._kitNamespace);
+    const cache = _fetchCacheMode(data.fetchCache) ?? this.config.fetchCache;
+    if (credentials === undefined && cache === undefined) return undefined;
+    return { ...(credentials !== undefined ? { credentials } : {}), ...(cache !== undefined ? { cache } : {}) };
+  }
+
   private async executeRequest(
     method: string,
     url: string,
@@ -4012,7 +4990,8 @@ export class HttpClient {
     body: unknown,
     timeoutMs: number,
     externalSignal?: AbortSignal,
-    redirect?: 'follow' | 'error' | 'manual'
+    redirect?: 'follow' | 'error' | 'manual',
+    extras?: IFetchExtras
   ): Promise<Response> {
     const controller = new AbortController();
     // 0-ms setTimeout aborts immediately on the next tick (before fetch
@@ -4029,7 +5008,7 @@ export class HttpClient {
     let resolvedIP: string | undefined;
 
     try {
-      if (this.config.forceIPv4) {
+      if (this.config.forceIpv4) {
         try {
           const urlObj = new URL(url);
           const hostname = urlObj.hostname;
@@ -4077,15 +5056,19 @@ export class HttpClient {
       // back another spelling (a Headers round-trip lower-cases every name)
       // survived the exact-case delete, and a FormData upload went out as
       // application/json with no multipart boundary.
-      if (body instanceof Blob || body instanceof FormData) {
+      if (body instanceof FormData) {
         _deleteContentType(headers);
       } else if (
         (typeof ReadableStream !== 'undefined' && body instanceof ReadableStream)
+        || body instanceof Blob
         || body instanceof ArrayBuffer
         || body instanceof Uint8Array
       ) {
-        // Only strip the DEFAULT application/json for a raw byte body;
-        // caller-explicit Content-Type is preserved.
+        // Only strip the DEFAULT application/json for a raw byte body (an
+        // application/json in any spelling counts as that default); any other
+        // Content-Type is preserved. A Blob was stripped of every type, the
+        // generated method's declared one included, so an untyped Blob went
+        // out with none (with no header, fetch sends the Blob's own type).
         //
         // ArrayBuffer and Uint8Array were not in this list, so bytes went out
         // labelled application/json — invisible while the only way to reach the
@@ -4106,6 +5089,8 @@ export class HttpClient {
         signal: controller.signal,
       };
       if (redirect) fetchOptions.redirect = redirect;
+      if (extras?.credentials !== undefined) fetchOptions.credentials = extras.credentials;
+      if (extras?.cache !== undefined) fetchOptions.cache = extras.cache;
 
       if (bodyValue !== undefined) {
         fetchOptions.body = bodyValue;
@@ -4137,7 +5122,7 @@ export class HttpClient {
   }
 
   private async resolveIPv4Hostname(hostname: string): Promise<string> {
-    const shouldUseCache = this.config.forceIPv4Cache.enabled && this.config.forceIPv4Cache.ttlMs > 0;
+    const shouldUseCache = this.config.forceIpv4Cache.enabled && this.config.forceIpv4Cache.ttlMs > 0;
     const now = Date.now();
 
     if (shouldUseCache) {
@@ -4153,7 +5138,7 @@ export class HttpClient {
     if (shouldUseCache) {
       this.ipv4DnsCache.set(hostname, {
         address,
-        expiresAt: now + this.config.forceIPv4Cache.ttlMs,
+        expiresAt: now + this.config.forceIpv4Cache.ttlMs,
       });
 
       if (this.ipv4DnsCache.size > 1024) {
@@ -4185,7 +5170,8 @@ export class HttpClient {
 
   private async buildApiErrorFromResponse(
     response: Response,
-    request: IHttpClientMiddlewareRequestContext
+    request: IHttpClientMiddlewareRequestContext,
+    facts: _IAttemptFacts = {}
   ): Promise<ApiError> {
     let responseDetails: ApiErrorResponseDetails | unknown = undefined;
     let message = `HTTP ${response.status}: ${response.statusText}`;
@@ -4227,16 +5213,20 @@ export class HttpClient {
     // The recorded credential query parameters are redacted too, whatever
     // name the operator gave them (kitAuth token rule with a param).
     const credentialParams = _credentialQueryParamsOf(request.middlewareContext);
-    const redactedUrl = _redactUrl(request.url, credentialParams);
+    const fieldNames = this.redactedFieldNames(credentialParams, facts.bodyKeys);
+    const redactedUrl = _redactUrl(request.url, fieldNames);
     const apiRequest: ApiErrorRequestContext = {
       method: request.method,
       url: redactedUrl,
-      ...(request.body !== undefined ? { body: _redactSensitiveValue(request.body, 0, undefined, credentialParams) } : {}),
-      ...(request.query !== undefined ? { query: _redactSensitiveValue(request.query, 0, undefined, credentialParams) as Record<string, unknown> } : {}),
+      ...(request.body !== undefined ? { body: _redactSensitiveValue(request.body, 0, undefined, fieldNames) } : {}),
+      ...(request.query !== undefined ? { query: _redactSensitiveValue(request.query, 0, undefined, fieldNames) as Record<string, unknown> } : {}),
       ...(request.headers !== undefined ? { headers: _redactHeaders(request.headers, _credentialHeadersOf(request.middlewareContext)) } : {}),
     };
 
-    const err = new ApiError({
+    // Retry-After on the error, so the retry loop honours server-directed backoff instead of
+    // hammering with local exponential delay, and the caller can read it.
+    const retryAfterMs = this.parseRetryAfter(response.headers);
+    return new ApiError({
       message,
       status: response.status,
       ...(code !== undefined ? { code } : {}),
@@ -4244,24 +5234,74 @@ export class HttpClient {
       method: request.method,
       request: apiRequest,
       response: responseDetails,
+      ...(retryAfterMs !== undefined ? { retryAfterMs } : {}),
+      outcome: 'answered',
+      ...(facts.attempts !== undefined ? { attempts: facts.attempts } : {}),
     });
-    // Parse Retry-After and attach to the error so the retry loop honors
-    // server-directed backoff instead of hammering with local exponential
-    // delay.
-    const retryAfterMs = this.parseRetryAfter(response.headers);
-    if (retryAfterMs !== undefined) {
-      (err as ApiError & { retryAfterMs?: number }).retryAfterMs = retryAfterMs;
-    }
-    return err;
+  }
+
+  /**
+   * The extra names an ApiError's URL query, body and query are redacted by, beside the default
+   * secret names: the recorded credential parameters and the call's redactBodyKeys.
+   */
+  private redactedFieldNames(credentialParams: string[], bodyKeys: readonly string[] = []): string[] {
+    return bodyKeys.length > 0 ? [...credentialParams, ...bodyKeys] : credentialParams;
+  }
+
+  /** The body keys a call's errors redact beyond the default names: the client's, then the call's. */
+  private bodyRedactionKeys(data: IRequestData): string[] {
+    const own = _nameList(data.redactBodyKeys);
+    return own.length === 0 ? this.config.redactBodyKeys : [...this.config.redactBodyKeys, ...own];
+  }
+
+  /**
+   * ApiError.outcome from what a request loop knows (facts): answered, then failed here;
+   * never handed to fetch, or the connection could not be opened (`not_sent`, unless an
+   * earlier attempt may have reached the server: then that attempt's outcome); otherwise it may
+   * have reached the server. An error built without facts says nothing.
+   */
+  private outcomeOf(error: unknown, facts: _IAttemptFacts): ApiErrorOutcome | undefined {
+    const last: ApiErrorOutcome | undefined = facts.answered === true ? 'answered'
+      : facts.dispatched === false || (facts.dispatched === true && _neverDispatched({ cause: error })) ? 'not_sent'
+      : facts.dispatched === true ? 'unknown'
+      : undefined;
+    return last === 'not_sent' && facts.mayHaveRun !== undefined ? facts.mayHaveRun : last;
+  }
+
+  /**
+   * An ApiError this client made inside an attempt (_SDK_MADE_ERRORS: a refused redirect), with
+   * the call's attempt facts (an HTTP status is an answer) and its URLs redacted by the call's
+   * redactBodyKeys too.
+   */
+  private withAttemptFacts(error: ApiError, request: IHttpClientMiddlewareRequestContext, facts: _IAttemptFacts): ApiError {
+    if (error.outcome !== undefined) return error;
+    const fieldNames = this.redactedFieldNames(_credentialQueryParamsOf(request.middlewareContext), facts.bodyKeys);
+    const outcome = error.status > 0 ? 'answered' : this.outcomeOf(error.cause, facts);
+    const made = new ApiError({
+      message: error.message,
+      status: error.status,
+      ...(error.code !== undefined ? { code: error.code } : {}),
+      ...(error.url !== undefined ? { url: _redactUrl(error.url, fieldNames) } : {}),
+      ...(error.method !== undefined ? { method: error.method } : {}),
+      ...(error.request !== undefined ? { request: { ...error.request, url: _redactUrl(error.request.url, fieldNames) } } : {}),
+      ...(error.response !== undefined ? { response: error.response } : {}),
+      ...(error.cause !== undefined ? { cause: error.cause } : {}),
+      ...(error.retryAfterMs !== undefined ? { retryAfterMs: error.retryAfterMs } : {}),
+      ...(outcome !== undefined ? { outcome } : {}),
+      ...(facts.attempts !== undefined ? { attempts: facts.attempts } : {}),
+    });
+    _SDK_MADE_ERRORS.add(made);
+    return made;
   }
 
   private toApiError(
     error: unknown,
     request: IHttpClientMiddlewareRequestContext,
-    callerSignal?: AbortSignal
+    callerSignal?: AbortSignal,
+    facts: _IAttemptFacts = {}
   ): ApiError {
     if (isApiError(error)) {
-      return error;
+      return _SDK_MADE_ERRORS.has(error) ? this.withAttemptFacts(error, request, facts) : error;
     }
 
     const isAbortError =
@@ -4289,31 +5329,62 @@ export class HttpClient {
     // Redact URL/body/query; attach PARSE_ERROR code for SyntaxError
     // (parity with the browser http-client).
     const isParseError = error instanceof SyntaxError;
+    const isTooLarge = error instanceof Error && error.name === 'ResponseTooLargeError';
     // The recorded credential query parameters are redacted too, whatever
     // name the operator gave them (kitAuth token rule with a param).
     const credentialParams = _credentialQueryParamsOf(request.middlewareContext);
-    const redactedUrl = _redactUrl(request.url, credentialParams);
+    const fieldNames = this.redactedFieldNames(credentialParams, facts.bodyKeys);
+    const redactedUrl = _redactUrl(request.url, fieldNames);
     const apiRequest: ApiErrorRequestContext = {
       method: request.method,
       url: redactedUrl,
-      ...(request.body !== undefined ? { body: _redactSensitiveValue(request.body, 0, undefined, credentialParams) } : {}),
-      ...(request.query !== undefined ? { query: _redactSensitiveValue(request.query, 0, undefined, credentialParams) as Record<string, unknown> } : {}),
+      ...(request.body !== undefined ? { body: _redactSensitiveValue(request.body, 0, undefined, fieldNames) } : {}),
+      ...(request.query !== undefined ? { query: _redactSensitiveValue(request.query, 0, undefined, fieldNames) as Record<string, unknown> } : {}),
       ...(request.headers !== undefined ? { headers: _redactHeaders(request.headers, _credentialHeadersOf(request.middlewareContext)) } : {}),
     };
 
     // A body that stalled after the headers (readBufferedBody): the CLI's code for it.
     const isBodyStall = error instanceof Error && error.name === 'BodyStallError';
+    // Answered, then failed here; never handed to fetch, or the connection could not be opened;
+    // otherwise it may have reached the server. Only a request loop knows (facts): an error
+    // built without them says nothing.
+    const outcome = this.outcomeOf(error, facts);
     return new ApiError({
       message,
       status: 0,
       ...(callerAbort ? { code: 'ABORTED' }
         : isParseError ? { code: 'PARSE_ERROR' }
+        : isTooLarge ? { code: _RESPONSE_TOO_LARGE }
         : deadline || isBodyStall || transportTimeout !== undefined ? { code: 'ETIMEDOUT' }
         : {}),
       url: redactedUrl,
       method: request.method,
       request: apiRequest,
       cause: error,
+      ...(outcome !== undefined ? { outcome } : {}),
+      ...(facts.attempts !== undefined ? { attempts: facts.attempts } : {}),
+    });
+  }
+
+  /**
+   * The ApiError for a request middleware (or finalizer) that threw: its refusal. An ApiError it
+   * threw is the answer as it is. Anything else becomes status 0, code REQUEST_REFUSED, with the
+   * thrown value as `cause`, and `outcome` `not_sent` (nothing went out). The request loop
+   * does not send a refused request again.
+   */
+  private requestRefusedError(error: unknown, request: IHttpClientMiddlewareRequestContext, facts: _IAttemptFacts): ApiError {
+    if (isApiError(error)) return this.toApiError(error, request, undefined, facts);
+    const base = this.toApiError(error, request, undefined, { ...facts, dispatched: false });
+    return new ApiError({
+      message: error instanceof Error && error.message ? error.message : 'Refused by a request middleware',
+      status: 0,
+      code: _REQUEST_REFUSED,
+      ...(base.url !== undefined ? { url: base.url } : {}),
+      ...(base.method !== undefined ? { method: base.method } : {}),
+      ...(base.request !== undefined ? { request: base.request } : {}),
+      cause: error,
+      ...(base.outcome !== undefined ? { outcome: base.outcome } : {}),
+      ...(base.attempts !== undefined ? { attempts: base.attempts } : {}),
     });
   }
 
@@ -4321,7 +5392,12 @@ export class HttpClient {
    * Whether a failed attempt may be sent again. One rule, in this order:
    *   1. The caller's abort, this client's own timeout, a refused redirect and a missing fetch are final.
    *   2. A request that never reached a server (the connection could not be opened) ran
-   *      nothing: any method goes again.
+   *      nothing: any method goes again. A request the server answered with a 2xx, that then
+   *      failed in the client (its body could not be read or parsed, a response middleware threw,
+   *      whatever status that error has), is final for every method but GET, HEAD and OPTIONS
+   *      (_answeredWriteIsFinal): the server did the work, and a repeat would do it again or answer
+   *      differently (a DELETE that worked answers 404). A `keyed` request is the exception: the
+   *      server answers its repeat from the record of the first, so it goes by the rules below.
    *   3. A refusal whose code says nothing was done (RETRY_SAFE_CODES): any method goes again.
    *   4. A request marked responseIsFinal stops here: its handler is arbitrary code, so a status
    *      it returned is an answer, and a lost connection may have followed a run.
@@ -4332,6 +5408,8 @@ export class HttpClient {
    * `keyed`: the request sends the idempotency key its server honours (the header its operation declares),
    * so any method counts as idempotent in rule 5 and under `byDefault`: a repeat is answered from the
    * server's record.
+   * `answered`: the attempt had an answer, so a status-0 failure after it is never "not sent" (rule 2).
+   * `answeredOk`: that answer had a 2xx status, so a failure after it is final for a change (rule 2).
    */
   private shouldRetry(
     error: ApiError,
@@ -4339,7 +5417,9 @@ export class HttpClient {
     retryOnStatuses: number[],
     responseIsFinal = false,
     byDefault = false,
-    keyed = false
+    keyed = false,
+    answered = false,
+    answeredOk = false
   ): boolean {
     // ABORTED at status 0 is the caller's abort, and an ETIMEDOUT from this client's
     // deadline (or the transport's headers timer) is its own timeout: both final. A
@@ -4355,13 +5435,21 @@ export class HttpClient {
     if (error.code === 'REDIRECT_REFUSED') {
       return false;
     }
+    // The body outgrew the limit the caller set: a second download would outgrow it again. A request
+    // middleware's refusal is the call's answer, not a failure to retry.
+    if (error.code === _RESPONSE_TOO_LARGE || error.code === _REQUEST_REFUSED) {
+      return false;
+    }
     // So is a runtime with no fetch.
     if (error.status === 0 && (error.cause as { code?: unknown } | undefined)?.code === 'FETCH_UNAVAILABLE') {
       return false;
     }
 
-    if (error.status === 0 && _neverDispatched(error)) {
+    if (error.status === 0 && !answered && _neverDispatched(error)) {
       return true;
+    }
+    if (_answeredWriteIsFinal(method, answeredOk, keyed)) {
+      return false;
     }
     const idempotentMethod = keyed || _IDEMPOTENT_METHODS.includes(method);
     if (byDefault && !idempotentMethod) {
@@ -4472,8 +5560,8 @@ export class HttpClient {
    * match, so the API bearer went to /v10 and to realm:8443.
    *
    * A realm host is exactly one label, a 24-hex realm id, in front of the
-   * base host. Any subdomain used to count, and the kit hosts withContainer()
-   * derives from a base with no api. label (containers.<base host>) are
+   * base host. Any subdomain used to count, and the kit hosts withComputer()
+   * derives from a base with no api. label (computers.<base host>) are
    * subdomains of it, so every kit request carried the account bearer.
    *
    * Both URLs are resolved as the transport resolves them (resolveDestination),
@@ -4562,6 +5650,41 @@ export class HttpClient {
         }
       }
     }
+  }
+
+  /**
+   * Whether buildHeaders adds the SDK's own X-Hoody-Client-Version to a request: only on one built for the API
+   * (`external` false) of a client whose target is 'account' (on a 'kit' client the base URL is a kit or
+   * daemon), and only when neither the client's configured headers nor the call's own headers name the
+   * header in any case. A value the caller set is the caller's, whatever it is, the SDK version included.
+   */
+  private addsClientVersion(customHeaders: Record<string, string> | undefined, external: boolean): boolean {
+    if (external || this.config.target === 'kit') return false;
+    const name = _CLIENT_VERSION_HEADER.toLowerCase();
+    const named = (h: Record<string, string> | undefined) => Object.keys(h ?? {}).some((n) => n.toLowerCase() === name);
+    return !named(this.config.headers) && !named(customHeaders);
+  }
+
+  /**
+   * The request a middleware sent, without the X-Hoody-Client-Version the SDK itself added (`sdkAdded`, from
+   * addsClientVersion) when the middleware moved it from `url` to a destination outside the API's scope.
+   * request(), stream() and prepareUpgrade() all apply it, so no route lets the SDK's header reach a kit host.
+   * A header the caller set is never removed; neither is one a middleware put in place of the SDK's.
+   */
+  private withoutMovedClientVersion(
+    sent: IHttpClientMiddlewareRequestContext,
+    url: string,
+    sdkAdded: boolean
+  ): IHttpClientMiddlewareRequestContext {
+    if (!sdkAdded || sent.url === url || !this.isExternalDestination(_isFullUrl(sent.url), sent.url)) {
+      return sent;
+    }
+    const headers: Record<string, string> = {};
+    for (const [name, value] of Object.entries(sent.headers)) {
+      if (name.toLowerCase() === _CLIENT_VERSION_HEADER.toLowerCase() && value === SDK_VERSION) continue;
+      headers[name] = value;
+    }
+    return { ...sent, headers };
   }
 
   /**
@@ -4669,6 +5792,21 @@ export class HttpClient {
     initialContext: IHttpClientMiddlewareRequestContext,
     routeTag?: object
   ): Promise<IHttpClientMiddlewareRequestContext> {
+    // A request middleware (or finalizer) that throws has refused the request: request() reads the mark to answer
+    // REQUEST_REFUSED and not to retry. Cleared on entry, because the context is reused by the next attempt.
+    _requestRefusals.delete(initialContext);
+    try {
+      return await this.runRequestMiddlewares(initialContext, routeTag);
+    } catch (error) {
+      _requestRefusals.add(initialContext);
+      throw error;
+    }
+  }
+
+  private async runRequestMiddlewares(
+    initialContext: IHttpClientMiddlewareRequestContext,
+    routeTag?: object
+  ): Promise<IHttpClientMiddlewareRequestContext> {
     // Header names are case-insensitive: a middleware that sets content-type next to
     // the default Content-Type replaces it, it does not add a second one (which fetch
     // would join into application/json, text/plain).
@@ -4710,7 +5848,7 @@ export class HttpClient {
 
   /**
    * True when a request carries a credential: a header the redaction set names
-   * (Authorization, Cookie, X-*-Token, the container claim, ...), a header
+   * (Authorization, Cookie, X-*-Token, the computer claim, ...), a header
    * recorded as a kit credential under a name the operator chose, or a
    * recorded credential query parameter on its URL.
    */
@@ -4742,7 +5880,7 @@ export class HttpClient {
    *
    * fetch follows a redirect by default and strips only Authorization, Cookie
    * and Proxy-Authorization on a cross-origin hop, so a kit credential under
-   * any other header name (X-Hoody-Token, X-Hoody-Container-Claim, a kitAuth
+   * any other header name (X-Hoody-Token, X-Hoody-Computer-Claim, a kitAuth
    * header the operator named) and a credential query parameter reached
    * whatever origin a server's Location named. A credentialed request is sent
    * with redirect: 'manual' and its hops are followed here, at most
@@ -4753,10 +5891,27 @@ export class HttpClient {
    * does not reveal where a manual redirect leads (an opaqueredirect
    * response), so there every redirect of a credentialed request is refused.
    *
+   * A redirect that would send a request body to another origin (a 307 or
+   * 308, or a 301 or 302 of anything but a POST) is refused the same way,
+   * whatever the body holds and whether or not the request carries a
+   * credential: a sign-in POST sends its password in the body with no
+   * credential header. A request with a body is therefore always followed
+   * here hop by hop. A redirect that turns the request into a body-less GET
+   * (303, or 301 and 302 of a POST) is followed as before, and so is one that
+   * stays on the same origin. In a web browser's page or worker, which does
+   * not reveal where a manual redirect leads, a request with a body is
+   * refused on every redirect, as a credentialed one is: there is no way to
+   * tell a harmless one from one that would forward the body.
+   *
+   * A value sent as JSON is encoded once, before the first hop
+   * (_bodyForHops), and every hop that keeps the body sends that same text: a
+   * toJSON() or a getter runs once. Any other body (text, bytes, a Blob, a
+   * FormData, a stream) is handed to fetch as given on every hop.
+   *
    * Methods follow fetch: 303 turns anything but HEAD into a body-less GET,
    * 301 and 302 turn a POST into one, and 307 and 308 resend the method and
    * body (a streamed body, which cannot be sent twice, is refused).
-   * One sent with redirect: 'error' goes out unchanged.
+   * One sent with redirect: 'error' goes out with 'manual', and any redirect it gets is refused.
    *
    * `trackHops` (request() sets it for a method that is not idempotent and
    * for a responseIsFinal request): a request without credentials follows its
@@ -4775,11 +5930,36 @@ export class HttpClient {
     signal: AbortSignal | undefined,
     redirect: 'follow' | 'error' | undefined,
     middlewareContext: unknown,
-    trackHops = false
+    trackHops = false,
+    extras?: IFetchExtras
   ): Promise<Response> {
-    const confined = redirect !== 'error' && this.carriesCredential(url, headers, middlewareContext);
-    if (redirect === 'error' || (!confined && !trackHops)) {
-      return this.executeRequest(method, url, headers, body, timeoutMs, signal, redirect);
+    // A request that sends the browser's cookies (credentials 'include') carries a credential too.
+    const confined = redirect !== 'error'
+      && (this.carriesCredential(url, headers, middlewareContext) || extras?.credentials === 'include');
+    // A body is never resent to another origin: such a request follows its redirects here
+    // (in a web browser's page or worker, an opaque redirect is refused).
+    const bodyHops = body !== undefined && body !== null;
+    if (redirect === 'error') {
+      // Sent with 'manual' and refused here: fetch's own redirect error reads as a network
+      // failure (status 0, "fetch failed"), and a caller could retry it as one.
+      const response = await this.executeRequest(method, url, headers, body, timeoutMs, signal, 'manual', extras);
+      const status = response.status;
+      const isRedirect = status === 301 || status === 302 || status === 303 || status === 307 || status === 308;
+      if (response.type === 'opaqueredirect'
+        || (isRedirect && (response.headers?.get('location') ?? null) !== null)) {
+        try {
+          await response.body?.cancel();
+        } catch {
+          // Discarded either way.
+        }
+        throw this.redirectRefusal(
+          'this request never follows a redirect', status, method.toUpperCase(), url, middlewareContext
+        );
+      }
+      return response;
+    }
+    if (!confined && !trackHops && !bodyHops) {
+      return this.executeRequest(method, url, headers, body, timeoutMs, signal, redirect, extras);
     }
     const MAX_CREDENTIALED_HOPS = confined ? 5 : 20;
     // One budget for the whole chain, not one per hop: each hop gets what is
@@ -4789,7 +5969,8 @@ export class HttpClient {
     let hopMethod = method.toUpperCase();
     let hopUrl = url;
     let hopHeaders: Record<string, string> = { ...headers };
-    let hopBody = body;
+    // A JSON value is encoded once: every hop that keeps the body sends the same text.
+    let hopBody = _bodyForHops(body);
     for (let hops = 0; ; hops++) {
       const hopTimeoutMs = hasBudget ? deadline - Date.now() : timeoutMs;
       if (hasBudget && hopTimeoutMs <= 0) {
@@ -4800,7 +5981,7 @@ export class HttpClient {
       let response: Response;
       try {
         response = await this.executeRequest(
-          hopMethod, hopUrl, { ...hopHeaders }, hopBody, hopTimeoutMs, signal, 'manual'
+          hopMethod, hopUrl, { ...hopHeaders }, hopBody, hopTimeoutMs, signal, 'manual', extras
         );
       } catch (error) {
         // A server already answered this request (the redirect): a failure on a later hop,
@@ -4851,6 +6032,12 @@ export class HttpClient {
       const toGet = status === 303
         ? hopMethod !== 'HEAD'
         : (status === 301 || status === 302) && hopMethod === 'POST';
+      if (!toGet && hopBody !== undefined && hopBody !== null && next.origin !== current?.origin) {
+        throw this.redirectRefusal(
+          'HTTP ' + status + ' would send the request body to another origin',
+          status, hopMethod, hopUrl, middlewareContext
+        );
+      }
       if (toGet) {
         hopMethod = 'GET';
         hopBody = undefined;
@@ -4873,7 +6060,10 @@ export class HttpClient {
     }
   }
 
-  /** The ApiError sendConfined throws; the URL is redacted, the credentials never leave. */
+  /**
+   * The ApiError sendConfined throws; the URL is redacted, the credentials never leave. It is one
+   * of _SDK_MADE_ERRORS: toApiError adds the attempt facts and the call's redactBodyKeys.
+   */
   private redirectRefusal(
     reason: string,
     status: number,
@@ -4882,7 +6072,7 @@ export class HttpClient {
     middlewareContext: unknown
   ): ApiError {
     const redactedUrl = _redactUrl(url, _credentialQueryParamsOf(middlewareContext));
-    return new ApiError({
+    const refusal = new ApiError({
       message: 'Refused to follow a redirect: ' + reason + '. The request carries credentials, '
         + 'which are sent only to the destination it was addressed to.',
       status,
@@ -4891,6 +6081,8 @@ export class HttpClient {
       method,
       request: { method, url: redactedUrl },
     });
+    _SDK_MADE_ERRORS.add(refusal);
+    return refusal;
   }
 
   private async applyResponseMiddleware<T>(
@@ -4918,7 +6110,9 @@ export class HttpClient {
     }
   }
 
-  private async sleep(ms: number): Promise<void> {
+  /** With a signal, an abort ends the wait early (_sleepUnlessAborted). */
+  private async sleep(ms: number, signal?: AbortSignal): Promise<void> {
+    if (signal !== undefined) return _sleepUnlessAborted(ms, signal);
     await new Promise((resolve) => setTimeout(resolve, ms));
   }
 
@@ -4933,17 +6127,18 @@ export class HttpClient {
    * A body that already is the envelope keeps every other top-level field it carries
    * (`propagation`, `pagination`, `total`/`limit`/`offset`, `metadata`): those are documented
    * parts of the answer, and dropping them left the caller no way to read them. Its `message`
-   * may be absent (`{statusCode, data}`, hoody-api's `/auth/available-regions`); it is filled in
+   * may be absent (`{statusCode, data}`, the API's `/auth/available-regions`); it is filled in
    * from the status text. The generated types (RESPONSE_ENVELOPE_FIELDS) follow the same rule.
    */
   private normalizeResponseEnvelope(
     payload: unknown,
     statusCode: number,
-    statusText: string
+    statusText: string,
+    bodyAsData = false
   ): { statusCode: number; message: string; data: unknown; [field: string]: unknown } {
     const fallbackMessage = statusText || (statusCode >= 200 && statusCode < 300 ? 'OK' : 'Request completed');
 
-    if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+    if (!bodyAsData && payload && typeof payload === 'object' && !Array.isArray(payload)) {
       const record = payload as Record<string, unknown>;
       // Parity with the browser http-client. A numeric `statusCode`, an own `data` key, and a
       // `message` that is a string when present: a looser gate (`message` OR `data`) would

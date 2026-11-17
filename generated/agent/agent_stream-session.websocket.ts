@@ -6,6 +6,8 @@
  * @see hoody-agent session events v1.0.0
  */
 
+import type { WebSocketUpgradeRefusedError, WebSocketUpgradeFailedError } from "../../lib/websocket-errors.js";
+export type { WebSocketUpgradeRefusedError } from "../../lib/websocket-errors.js";
 
 /** Minimal structural contract a WebSocket implementation must satisfy. */
 export type IRawWebSocketMessageEvent = { data: string | ArrayBuffer | ArrayBufferView | Blob };
@@ -142,6 +144,16 @@ export interface IWebSocketConnectionOptions {
   randomizationFactor?: number;
   auth?: Record<string, unknown>;
   headers?: Record<string, string>;
+  /**
+   * The header names a credential given for THIS socket would travel in (a
+   * per-call kitAuth's header, whatever its name, or a credential header on
+   * the call). A browser WebSocket cannot send headers, so connect() rejects
+   * with a WebSocketCredentialNotSentError when one of these names is among
+   * the headers, instead of opening a socket that looks unauthenticated.
+   * Unset, the dropped credential header names are reported once with a
+   * warning and the socket opens. It has no effect outside a browser.
+   */
+  requireHeaderCredentials?: string[];
   query?: Record<string, string>;
   transports?: Array<'websocket' | 'polling'>;
   path?: string;
@@ -154,10 +166,23 @@ export interface IWebSocketConnectionOptions {
    */
   webSocketFactory?: WebSocketFactory;
   /**
+   * Steers the client's own choice of transport. "ws" opens the socket with
+   * the `ws` package (in a Bun binary, Bun's built-in `ws`), never with the
+   * global WebSocket, and fails the connect when `ws` cannot be loaded. Only
+   * that transport shows the status and body of a refused upgrade (see
+   * WebSocketUpgradeFailedError). A webSocketFactory or a static
+   * webSocketImpl the caller injected still wins: this option only steers
+   * the automatic choice. Refused in a browser and on Socket.IO channels.
+   * "auto" (the default) keeps the client's own choice.
+   */
+  socketTransport?: "auto" | "ws";
+  /**
    * Reconnect after the SERVER closed the socket normally (code 1000).
    * Off by default: a normal close means the server ended the stream on
    * purpose (a deleted terminal session closes this way), and reconnecting
    * to it can silently re-create what was just deleted.
+   * A close because another connection took over (reason "taken over")
+   * is never reconnected, even with this on: see onTakenOver.
    */
   reconnectOnNormalClose?: boolean;
   /**
@@ -250,7 +275,7 @@ export interface IWebSocketConnectionOptions {
 // Client → Server Messages
 // ============================================================================
 
-/** Inbound WS frame: answer a parked confirm gate. Carries {type:"confirm", gate_id?, generation?, approved, persist_dirs?, trust_container?, reason?, remember?, superseded?}. trust_container (with approved) accepts the event.confirm_request exec_trust offer, as on /confirm. reason, remember and superseded are as on /confirm: reason (with approved false, at most 500 characters) reaches the agent in the refused call's result; remember false approves this call only; superseded (with approved false, no reason, no session_scope) declines because the user sent a new message instead, and the agent does not read it as a refusal. gate_id is the stream frame ENVELOPE's gate.id (a sibling of `event`, NOT a field inside the event payload — the payload's own gate_id is the daemon's number), and is published as pending_gate.id on GET /sessions/{id} and /replay and as pending_gate_ref.id on GET /sessions/{id}/state. It is a STRING: sending the payload's number is refused bad_frame, naming the field; without it the answer applies to whatever gate is parked when it arrives. request_id? is the client's own id for the decision (at most 64 characters from A-Z, a-z, 0-9, '.', '_', '-'). Every outcome is ANSWERED, never silently dropped: a consumed decision by the broadcast event.gate_resolved, anything else by a `refused` frame naming the code — a stale or absent gate, a gate that already ended (gate_already_resolved, with what was decided; never a second forward), or a decision in flight (gate_decision_pending). approved is required in every mode: a frame without a boolean approved is refused approved_required and never resolves a gate. On an always session the frame must also carry the exact gate_id and its generation, or it is refused decision_incomplete. | Inbound WS frame: answer a parked question gate. Carries {type:"answer", gate_id?, generation?, answer?, text?, answers?}; gate_id is as for confirm. A stale, duplicate or absent gate is a `refused` frame, and a retry that names the question this client already resolved replays the original `gate_resolved_ack`. | Inbound WS frame: cancel the active turn (Esc). Carries {type:"cancel", turn_id?}. With turn_id it cancels only that turn (as POST /sessions/{id}/cancel with turn_id); without, whatever is running. | Inbound WS frame: feed input to a running workflow. Carries {type:"workflow_message", text}. */
+/** Inbound WS frame: answer a parked confirm gate. Carries {type:"confirm", gate_id?, generation?, approved, persist_dirs?, trust_computer?, reason?, remember?, superseded?}. trust_computer (with approved) accepts the event.confirm_request exec_trust offer, as on /api/v1/agent/sessions/{id}/confirm. reason, remember and superseded are as on /api/v1/agent/sessions/{id}/confirm: reason (with approved false, at most 500 characters) reaches the agent in the refused call's result; remember false approves this call only; superseded (with approved false, no reason, no session_scope) declines because the user sent a new message instead, and the agent does not read it as a refusal. gate_id is the stream frame ENVELOPE's gate.id (a sibling of `event`, NOT a field inside the event payload; the payload's own gate_id is the agent's own number, a different id), and is published as pending_gate.id on GET /api/v1/agent/sessions/{id} and /api/v1/agent/sessions/{id}/replay and as pending_gate_ref.id on GET /api/v1/agent/sessions/{id}/state. It is a STRING: sending the payload's number is refused bad_frame, naming the field; without it the answer applies to whatever gate is parked when it arrives. request_id? is the client's own id for the decision (at most 64 characters from A-Z, a-z, 0-9, '.', '_', '-'). Every outcome is ANSWERED, never silently dropped: a consumed decision by the broadcast event.gate_resolved, anything else by a `refused` frame naming the code. That covers a stale or absent gate, a gate that already ended (gate_already_resolved, with what was decided; never a second forward) and a decision in flight (gate_decision_pending). approved is required in every mode: a frame without a boolean approved is refused approved_required and never resolves a gate. On an always session the frame must also carry the exact gate_id and its generation, or it is refused decision_incomplete. | Inbound WS frame: answer a parked question gate. Carries {type:"answer", gate_id?, generation?, answer?, text?, answers?}; gate_id is as for confirm. A stale, duplicate or absent gate is a `refused` frame, and a retry that names the question this client already resolved replays the original `gate_resolved_ack` when it carries the same answer (another answer is a `refused` frame, gate_already_answered). | Inbound WS frame: cancel the active turn (Esc). Carries {type:"cancel", turn_id?}. With turn_id it cancels only that turn (as POST /api/v1/agent/sessions/{id}/cancel with turn_id); without, whatever is running. | Inbound WS frame: feed input to a running workflow. Carries {type:"workflow_message", text}. */
 export interface UnknownClientMessage {
 }
 
@@ -258,132 +283,172 @@ export interface UnknownClientMessage {
 // Server → Client Messages
 // ============================================================================
 
-/** Provider account rotated mid-turn. | Turn complete — terminates a prompt turn. Carries the turn's typed outcome / error_code and notices [{code, message?, detail?}] — advisory, never an error: hook_skipped_by_policy when a configured user hook was skipped under the always policy (open set). | The session's approval policy (mode / lock / rules) changed; carries the new revision. | Hoody platform auth state changed — login, token adopt, or logout (global broadcast; mirrors GET /hoody/auth/status). | Auto-user composed the next user turn. | Auto-user composition progress. | Background bash job list snapshot. | Background bash job output tail chunk. | Conversation cleared. | The daemon admitted and forwarded a command that carried a request_id — the sender-only positive counterpart of event.command_refused {type, request_id}; the command's effect still arrives as its ordinary broadcast event. CONSUMED BY THE GATEWAY: it answers the HTTP request / WS frame that sent the command and is never fanned out to stream subscribers. | Commands sent with POST /sessions/{id}/commands reached the session: messages added to the conversation (how next_step inside the running turn, new_turn in a turn of their own, with turn_id), or a stop carried out (how stop, with what it stopped). Carries command_ids. | A session command was refused (unregistered type, a setter frozen by a locked approval policy, an incomplete decision, a decision dropped at consumption) — a sender-only frame carrying type, code, reason, protocol_version, request_id; never fails a turn. CONSUMED BY THE GATEWAY: it answers the HTTP request / WS frame that sent the command and is never fanned out to stream subscribers. | Commands sent with POST /sessions/{id}/commands ended without reaching the session: superseded by a stop, refused (a hook blocked them, the session closed, or the session cannot take them) or failed (the session could not record them). Carries command_ids, state and reason. | Context window compacted. | A delegated agent discarded its conversation and started a new one: the context meter no longer describes anything (clear it). | Context compaction started. | Tool/plan confirmation requested (parks a gate). On a helper_gates session a helper's request carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. | The decision requirements of the PARKED gate changed (the approver lease was acquired, taken over, renewed past expiry or released while a gate is parked): {gate_id, generation, lease_required, helper_id?} — a client that captured the gate at park time refreshes what its decision must carry. On a helper_gates session each parked helper confirm is re-announced too, with its helper_id. | Directory-access scope changed/locked. | A peer client detached from this shared live session (multi-attach presence). | A delegated turn went quiet past the stall window but is still running (NON-FATAL — not an error). | Session error (e.g. join_not_ready). | A parked confirm/question gate was resolved (possibly by another attached client). | Files-tab import progress. | Fusion configuration changed. | A Jev decision made for this session finished (success, error or invalid answer): {cost_usd (null when any attempt's spend is unknown), known_cost_usd, cost_unknown_attempts, attempts, latency_ms, model, request_id, input_tokens, output_tokens, error_code}. Produced by POST /sessions/{id}/jev/decide; the standalone /jev routes report usage only in their reply and in GET /jev/settings. | Fusion member trajectory progress. Not sent while the fusion runs inside a silent workflow step. | Hoody concept mode toggled. | A hook executed. | Hook execution summary. | Initial session state snapshot. | Available loops list updated. | A master TODO was filed. | Memory subsystem notice. | Orchestrator delegation finished. | Orchestrator delegated a task to a subagent. | Orchestrator run complete. | Orchestrator narration. | Orchestrator run started. | Orchestrator step progress. | On an outcome_claims session, the report the turn closes with, sent just before event.agent_done: the model's claims and, for each tool call it cited, whether it is this turn's own call and what it returned. The claims are the model's words; nothing here says they are true. | global pause-freeze state changed. | A session permission rule auto-applied (first time). | Session permission rules snapshot. | Plan-mode planning complete. | Question-assist suggestion. | Daemon quitting. | A delegated agent's subscription usage limits (session/weekly windows) changed. | Active realm changed (global broadcast). | Resolved default working dir of the bound container (filetree/chip scope hint). | Full viewport snapshot after session_started. | Mid-turn join with an overflowed turn journal — the active turn's earlier output is elided (connection-local frame). | LLM call retried. | The session was archived for every attached client. | The set of listable sessions (or a session's attach state) changed — clients re-list. | Session title set or cleared. | Session attached. Built by the gateway from the attach acknowledgement; its data is the same `started` object POST /sessions returns. It is the first frame (seq 1) of a fresh attach while the stream still retains seq 1. A resume with `since` does not repeat it, except when the cursor cannot be resumed: an invalid `since` (or Last-Event-ID), an `incarnation` that does not match the session's current one, or a cursor ahead of the stream is each answered with a `lagged` frame (code replay_gap) and the whole retained stream, which includes it if seq 1 is still retained. A late attach after the oldest frames were evicted starts with a `lagged` frame (code replay_gap) instead and does not carry it. In either case read the same object as `started` from GET /sessions/{id}, which carries it while the session is attached. | Available skills list updated. | Skill enable/trust state changed. | Assistant text stream chunk. | Assistant text stream complete. | Profile sync status. | Background task activity. | Background task finished. | Background task started. | Background task transcript entry (upsert-poll). | Snapshot of background tasks. | Reasoning/thinking stream chunk. | Thinking stall warning. | TODO list updated. | Tool invocation. | Tool mode changed/locked. | Tool result. | A prompt or workflow dispatch was accepted but discarded without running, because it was queued while another client's turn waited on a confirmation or question. It closes that dispatch only (its turn_id); the waiting turn keeps running and no event.agent_done is sent for the discarded one. | The durable admission receipt for a prompt or workflow turn — a sender-only frame {turn_id, state, duplicate, accepted_at, request_id, …} written once the ledger row is on disk. CONSUMED BY THE GATEWAY: it is the 202 body of the request that dispatched the turn and is never fanned out to stream subscribers. | Echo of the user's input. | Question posed to the user (parks a gate). On a helper_gates session a helper's question carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. | Verbosity setting changed. | Workflow run complete. | Workflow run started. | Workflow step done. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | Workflow step output. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | Workflow step start. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | The workflow-authoring tools became available or unavailable mid-session (the session's tool mode, standard or orchestrator, was applied by its first dispatch; the chat agent was switched; or the agent's `tools:` frontmatter was edited on disk). Not sent for the initial value, which the init state carries as workflow_tools_available. | Available workflows list updated. | YOLO auto-approve mode toggled. | Gateway control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring or belongs to another incarnation. Carries {code: lagged|replay_gap[, min_seq, max_seq, incarnation, resume]}; reconcile by reconnecting with ?since= and ?incarnation=. | Gateway control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq, incarnation, turn_id?, turn_since?}; turn_id names the turn being watched and turn_since the cursor before its first frame (see the payload). | Gateway control frame: the stream is terminating because the session closed. Carries {reason}. | Gateway control frame, connection-local: the WS command this client just sent was REJECTED and nothing was forwarded to the daemon — the WS twin of a REST error envelope. Carries {frame: the client frame type that was refused, code, reason}. Codes match the REST ones for the same condition: bad_frame (the frame did not decode — the reason names the field and the JSON type it must carry, e.g. a gate_id sent as the daemon number instead of the addressable string), no_pending_gate / stale_gate / gate_already_answered / gate_type_mismatch (the frame did not match the parked gate), approved_required (a confirm frame without a boolean approved; it never resolves a gate), decision_incomplete (an always session needs an explicit approved, the exact gate_id and its generation; or a confirm without gate_id while several gates are parked). For a confirm: gate_already_resolved (the gate already ended and this decision was not applied; the frame also carries gate_id, generation, outcome, decision {approved, persist_dirs, session_scope, trust_container, remember?, superseded?} or decision_unknown:true, and request_id when the decision consumed carried that request_id) and gate_decision_pending (a decision for the gate is in flight and its outcome is not known yet — another client's, or this one past the wait; carries gate_id, generation and reason:connection_lost when the agent connection was lost; retry naming the gate to learn the outcome). For an answer: gate_cancelled (the question was resolved without consuming this answer) and decision_unconfirmed (the daemon did not acknowledge within the wait — it may still apply). It is sent ONLY to the client that sent the frame, never broadcast. | Gateway control frame, connection-local: the replayed acknowledgement of a question answer. When an answer frame is a RETRY naming the question gate this client already resolved, it carries replayed:true and {resolved: the ORIGINAL event.gate_resolved payload} — a retry never forwards a second answer. A confirm retry is refused gate_already_resolved instead. Sent only to the client that sent the frame. */
+/** Provider account rotated mid-turn. | Turn complete: it ends a prompt turn. Carries the turn's typed outcome / error_code and notices [{code, message?, detail?}]. Notices are advisory, never an error: hook_skipped_by_policy when a configured user hook was skipped under the always policy, agent_compacts_itself when a Claude Code session's agent decides on its own when to compact its conversation, history_unsaved when a Claude Code session answered from a conversation Hoody could not save, spend_cap_warning when the session's spend file sets action warn and the turn ran over a spend cap (detail session_cap or turn_cap; one notice per cap) (open set). A turn a spend cap stopped fails with error_code spend_cap. | The session's approval policy (mode / lock / rules) changed; carries the new revision. | Hoody platform auth state changed: login, token adopt, or logout (global broadcast; mirrors GET /api/v1/agent/hoody/auth/status). | Auto-user composed the next user turn. | Auto-user composition progress. | Background bash job list snapshot. | Background bash job output tail chunk. | Conversation cleared. | Commands sent with POST /api/v1/agent/sessions/{id}/commands reached the session: messages added to the conversation (how next_step inside the running turn, new_turn in a turn of their own, with turn_id), or a stop carried out (how stop, with what it stopped). Carries command_ids. | Commands sent with POST /api/v1/agent/sessions/{id}/commands ended without reaching the session: superseded by a stop, refused (a hook blocked them, the session closed, or the session cannot take them) or failed (the session could not record them). Carries command_ids, state and reason. | A waiter this session owns (POST /api/v1/agent/sessions/{id}/waiters) ended: an outcome was found, or it timed out, was cancelled, or its target closed. Carries the waiter. | Context window compacted. | A delegated agent discarded its conversation and started a new one: the context meter no longer describes anything (clear it). | Context compaction started. | Tool/plan confirmation requested (parks a gate). On a helper_gates session a helper's request carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. | The decision requirements of the PARKED gate changed (the approver lease was acquired, taken over, renewed past expiry or released while a gate is parked): {gate_id, generation, lease_required, helper_id?}. A client that captured the gate at park time refreshes what its decision must carry. On a helper_gates session each parked helper confirm is re-announced too, with its helper_id. | Directory-access scope changed/locked. | A peer client detached from this shared live session (multi-attach presence). | A delegated turn went quiet past the stall window but is still running (not fatal, not an error). | Session error (e.g. join_not_ready). | A parked confirm/question gate was resolved (possibly by another attached client). | Files-tab import progress. | Fusion configuration changed. | A Jev decision made for this session finished (success, error or invalid answer): {cost_usd (null when any attempt's spend is unknown), known_cost_usd, cost_unknown_attempts, attempts, latency_ms, model, request_id, input_tokens, output_tokens, error_code}. Produced by POST /api/v1/agent/sessions/{id}/jev/decide; the standalone /api/v1/agent/jev routes report usage only in their reply and in GET /api/v1/agent/jev/settings. | Token usage of a turn that already ended, counted after its completion events went out (a Claude Code agent reported it after the turn closed). Add it to the session's lifetime totals only: it is not a response, and it belongs to no turn in progress, so it changes no turn's usage, timing or context use. turn_id names the ended turn. | Fusion member trajectory progress. Not sent while the fusion runs inside a silent workflow step. | Hoody concept mode toggled. | A hook executed. | Hook execution summary. | Initial session state snapshot. | Available loops list updated. | A master TODO was filed. | Memory subsystem notice. | Orchestrator delegation finished. | Orchestrator delegated a task to a subagent. | Orchestrator run complete. | Orchestrator narration. | Orchestrator run started. | Orchestrator step progress. | On an outcome_claims session, the report the turn closes with, sent just before event.agent_done: the model's claims and, for each tool call it cited, whether it is this turn's own call and what it returned. The claims are the model's words; nothing here says they are true. | The agent was paused or resumed (PUT /api/v1/agent/pause, or the TUI's pause): sent to every attached session, since the pause covers every session of the agent. | A session permission rule auto-applied (first time). | Session permission rules snapshot. | Plan-mode planning complete. | Question-assist suggestion. | The agent is shutting down. | A delegated agent's subscription usage limits (session/weekly windows) changed. | Active realm changed (global broadcast). | Resolved default working dir of the bound computer (filetree/chip scope hint). | Full viewport snapshot after session_started. | Mid-turn join with an overflowed turn journal: the active turn's earlier output is elided (connection-local frame). | A model call is retried: attempt of max_retries, after wait_secs, with the cause in reason. With attempt 0 and max_retries 0 it is a one-off notice instead, its whole text in reason, to show as a status line and not as a retry: a Claude Code session reconnecting, a previous Claude Code conversation that could not be resumed (a new one was started), a fork or trim whose Claude Code conversation starts fresh with the history passed in as text, or the model an auto-reply round uses on a Claude Code session. | The session was archived for every attached client. | The set of listable sessions (or a session's attach state) changed. Clients re-list. | Session title set or cleared by a person, or generated by the agent (name_auto true). | Session attached. Its data is the same `started` object POST /api/v1/agent/sessions returns. It is the first frame (seq 1) of a fresh attach while the stream still retains seq 1. A resume with `since` does not repeat it, except when the cursor cannot be resumed: an invalid `since` (or Last-Event-ID), an `incarnation` that does not match the session's current one, or a cursor ahead of the stream is each answered with a `lagged` frame (code replay_gap) and the whole retained stream, which includes it if seq 1 is still retained. A late attach after the oldest frames were evicted starts with a `lagged` frame (code replay_gap) instead and does not carry it. In either case read the same object as `started` from GET /api/v1/agent/sessions/{id}, which carries it while the session is attached. | Available skills list updated. | Skill enable/trust state changed. | Assistant text stream chunk. | Assistant text stream complete. | Profile sync status. | Background task activity. | Background task finished. | Background task started. | Background task transcript entry (upsert-poll). | Snapshot of background tasks. | Reasoning/thinking stream chunk. | Thinking stall warning. | TODO list updated. | Tool invocation. | Tool mode changed/locked. | Tool result. | The result of one trim, naming the request id the trim carried: done, refused (turn_in_flight, delegated_session or session_closed; nothing changed), failed (nothing was trimmed) or outcome_unknown (the trim may have been saved; the session sends nothing until it can save its state). Never an error event: another client's trim does not fail this client's turn. | A prompt or workflow dispatch was accepted but discarded without running, because it was queued while another client's turn waited on a confirmation or question. It closes that dispatch only (its turn_id); the waiting turn keeps running and no event.agent_done is sent for the discarded one. | Echo of the user's input. | Question posed to the user (parks a gate). On a helper_gates session a helper's question carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. | Verbosity setting changed. | Workflow run complete. | Workflow run started. | Workflow step done. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | Workflow step output. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | Workflow step start. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | The workflow-authoring tools became available or unavailable mid-session (the session's tool mode, standard or orchestrator, was applied by its first dispatch; the chat agent was switched; or the agent's `tools:` frontmatter was edited on disk). Not sent for the initial value, which the init state carries as workflow_tools_available. | Available workflows list updated. | YOLO auto-approve mode toggled. | Control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring or belongs to another incarnation. Carries {code: lagged|replay_gap[, min_seq, max_seq, incarnation, resume]}; reconcile by reconnecting with ?since= and ?incarnation=. | Control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq, incarnation, turn_id?, turn_since?}; turn_id names the turn being watched and turn_since the cursor before its first frame (see the payload). | Control frame: the stream is terminating because the session closed. Carries {reason}. | Control frame, connection-local: the WS command this client just sent was REJECTED and was not applied. It is the WS twin of a REST error envelope. Carries {frame: the client frame type that was refused, code, reason}. Codes match the REST ones for the same condition: bad_frame (the frame did not decode; the reason names the field and the JSON type it must carry, e.g. a gate_id sent as the event payload's number instead of the envelope's string), no_pending_gate / stale_gate / gate_already_answered / gate_type_mismatch (the frame did not match the parked gate), approved_required (a confirm frame without a boolean approved; it never resolves a gate), decision_incomplete (an always session needs an explicit approved, the exact gate_id and its generation; or a confirm without gate_id while several gates are parked). For a confirm: gate_already_resolved (the gate already ended and this decision was not applied; the frame also carries gate_id, generation, outcome, decision {approved, persist_dirs, session_scope, trust_computer, remember?, superseded?} or decision_unknown:true, and request_id when the decision consumed carried that request_id) and gate_decision_pending (a decision for the gate is in flight and its outcome is not known yet: another client's, or this one past the wait; carries gate_id, generation and reason:connection_lost when the agent connection was lost; retry naming the gate to learn the outcome). For an answer: bad_request (the frame carries no answer, text or answers, an empty answer never resolves a question; or a workflow question with options gets an answer that names none of them, and stays parked), gate_cancelled (the question was resolved without consuming this answer) and decision_unconfirmed (the answer was not acknowledged within the wait; it may still apply). It is sent ONLY to the client that sent the frame, never broadcast. | Control frame, connection-local: the replayed acknowledgement of a question answer. When an answer frame is a RETRY naming the question gate this client already resolved, with the same answer, it carries replayed:true and {resolved: the ORIGINAL event.gate_resolved payload}. A retry never forwards a second answer. A confirm retry is refused gate_already_resolved instead. Sent only to the client that sent the frame. */
 export interface UnknownServerMessage {
-  /** The session's current count of recorded turns, the numbering POST /sessions/{id}/trim uses. Do not count agent_done frames instead: some commands end without recording a turn, and compaction renumbers. Omitted when 0. */
+  /** The session's current count of recorded turns, the numbering POST /api/v1/agent/sessions/{id}/trim uses. Do not count agent_done frames instead: some commands end without recording a turn, and compaction renumbers. Omitted when 0. */
   turns?: number;
   /** Always cancelled: the dispatch never ran. */
-  outcome?: 'cancelled';
-  /** The turn this stream is watching: on promptStream, the turn the request dispatched (equal to X-Hoody-Turn-Id); on streamSession, the turn dispatched through this gateway that was running when the stream attached. Omitted when no such turn is running, including a turn another client (the TUI) started on the same session; GET /sessions/{id}/state current_turn_id covers that case. It names the turn for POST /sessions/{id}/cancel turn_id and matches its agent_done turn_id. Later frames carry their own envelope turn_id. */
+  outcome?: 'completed' | 'failed' | 'cancelled' | 'answered' | 'yolo' | 'timeout' | 'done' | 'refused' | 'outcome_unknown';
+  /** The turn this stream is watching: on POST /api/v1/agent/sessions/{id}/prompt:stream, the turn the request dispatched (equal to X-Hoody-Turn-Id); on GET /api/v1/agent/sessions/{id}/stream, the turn dispatched through this API that was running when the stream attached. Omitted when no such turn is running, including a turn another client (the TUI) started on the same session; GET /api/v1/agent/sessions/{id}/state current_turn_id covers that case. It names the turn for POST /api/v1/agent/sessions/{id}/cancel turn_id and matches its agent_done turn_id. Later frames carry their own envelope turn_id. */
   turn_id?: string;
   /** discarded_while_parked. */
   error_code?: string;
-  /** Coded facts about how this turn ran that are not errors, for example hook_skipped_by_policy. Open set. Omitted when there are none. */
+  /** Coded facts about how this turn ran that are not errors, for example hook_skipped_by_policy, or spend_cap_warning (detail session_cap or turn_cap) when the turn ran over a spend cap set to warn. Open set. Omitted when there are none. */
   notices?: { code: string; message?: string; detail?: string }[];
   /** Set when this closes a workflow run started in the session: the outcome note the agent recorded in the conversation, so the model knows how the run ended. It is its own recorded turn (turns counts it). A reload of the transcript shows the same two messages. Omitted on every other turn. */
   workflow_note?: { run_id: string; note: string; ack: string };
+  /** The background shells that can be attached as a terminal, running or recently finished; null or empty when there are none. GET /sessions/{id}/bash-jobs lists every background shell the session started. */
+  jobs?: unknown;
+  /** The job. */
+  job_id?: string;
+  /** A chunk of the job's terminal output, base64 (it carries raw control bytes). Omitted when empty. */
+  data?: string;
+  /** The output offset after this chunk; attach again from it to continue. Omitted when 0. */
+  next_offset?: number;
+  /** true when output before this chunk was dropped because the viewer fell behind. Omitted when false. */
+  gap?: boolean;
+  /** true on the final event: the job ended, or there is no such attachable job. Omitted when false. */
+  eof?: boolean;
+  /** The job's exit status text, on the final event once it is known. Omitted otherwise. */
+  exit?: string;
+  /** Why the attach ended without output (for example, no such job). Omitted otherwise. */
+  err?: string;
   /** The commands. */
-  command_ids: string[];
+  command_ids?: string[];
   /** next_step: added inside the running turn; new_turn: started a turn; stop: a stop carried out. */
-  how: 'next_step' | 'new_turn' | 'stop';
+  how?: 'next_step' | 'new_turn' | 'stop';
   /** A stop: the work it acted on and how each ended. Omitted otherwise. */
-  stopped?: { kind: 'session' | 'task' | 'workflow_run' | 'bash_job' | 'loop'; id: string; outcome: 'stopped' | 'already_done' | 'failed'; detail?: string }[];
+  stopped?: { kind: 'session' | 'task' | 'workflow_run' | 'bash_job' | 'loop'; id: string; outcome: 'stopped' | 'already_done' | 'failed'; detail?: string; cleanup?: 'detached_may_survive' }[];
+  /** A committed stop, whether or not it found work running: detached_may_survive means a shell command the session ran may have left a process (started in the background, detached) that no stop can be shown to have reached, so it may still be running. Absent when there is no such process. */
+  cleanup?: 'detached_may_survive';
   /** What they became. */
-  state: 'superseded' | 'refused' | 'failed';
+  state?: 'superseded' | 'refused' | 'failed';
   /** Why the stream ended: "session closed" or "session not authorized" (the session's owner is no longer the active account). */
   reason?: string;
   /** Rich preview for the chat (an edit diff, the first lines of a written file). Omitted when there is none. */
   detail?: string;
   /** The stop that superseded them. Omitted otherwise. */
   superseded_by?: string;
+  /** The waiter, ended (as GET /api/v1/agent/sessions/{id}/waiters/{waiter_id} returns it). */
+  waiter?: { waiter_id: string; label?: string; owner: string; target: string; outcomes: { name: string; when?: string; match?: { kind: 'tool_result' | 'tool_call' | 'gate' | 'turn_end'; tool?: string; exit_code?: number; is_error?: boolean; text_contains?: string; outcome?: 'completed' | 'failed' | 'cancelled' } }[]; from?: string; state: 'waiting' | 'done'; outcome?: string; reason?: string; also_found?: string[]; evidence?: { seq: number; turn_id?: string; kind: 'tool_result' | 'tool_call' | 'gate' | 'turn_end'; tool?: string; exit_code?: number; is_error?: boolean; excerpt?: string; by: 'match' | 'judge'; p?: number }; on_timeout?: 'continue' | 'stop' | 'ask'; created_at: string; deadline_at: string; ended_at?: string; elapsed_ms?: number; max_checks: number; checks: number; items_seen: number; gap?: boolean; cost_usd: number; cost_known: boolean; model?: string };
   /** The tool waiting for a decision. */
-  tool_name: string;
+  tool_name?: string;
   /** The tool input the decision is about, redacted, without the agent's own dispatch markers. Always present; null when the call had no input. */
-  params: unknown;
+  params?: unknown;
   /** Directories outside the session's scope the call needs. Omitted when none. */
   requested_dirs?: string[];
   /** true when an allow-for-the-session answer may be offered (session_scope on /confirm). Omitted when false. */
   offer_session_allow?: boolean;
-  /** The daemon's number for a resolved confirm gate. Omitted on a question gate. */
-  gate_id: number;
+  /** The agent's own number for a resolved confirm gate. Omitted on a question gate. */
+  gate_id?: number;
   /** Why the gate exists, for example static_stakes, dir_access, hook_ask or approval_policy. Open set. Omitted by an older agent. */
   gate_cause?: string;
   /** The agent's coarse risk label for the call: read, write or destructive for a fleet action, write for a file write or edit, destructive for a file delete, high for a human-only gate, credential_access when a read, write or unknown call touches a known credential store (a label only: it parks and denies nothing by itself), unknown when the call has no class. Omitted by an older agent. */
   risk?: 'read' | 'write' | 'destructive' | 'high' | 'credential_access' | 'unknown';
   /** true when no automatic policy may answer this gate; a person must. Always present. */
-  human_only: boolean;
+  human_only?: boolean;
   /** The approver-lease generation the decision was made under. Omitted when there is none. */
-  generation: number;
+  generation?: number;
   /** true when the decision must now come from the approver-lease holder. */
-  lease_required: boolean;
+  lease_required?: boolean;
   /** On a helper_gates session, the background task of the helper that asked. Omitted otherwise. */
   task_id?: string;
-  /** On a hoody_exec_* card: the per-container trust option. Answer /confirm with approved true and trust_container true to run the call and stop exec cards on that container in this realm until the grant is revoked (setHookRules exec_trust). Omitted when no grant can be offered: another tool, a container that did not resolve, a hook or rules ask, the always approval policy, a headless session. */
-  exec_trust?: { container_id: string; container_name?: string; realm: string; label: string };
+  /** On a hoody_exec_* card: the per-computer trust option. Answer /confirm with approved true and trust_computer true to run the call and stop exec cards on that computer in this realm until the grant is revoked (exec_trust on POST /api/v1/agent/hooks/rules). Omitted when no grant can be offered: another tool, a computer that did not resolve, a hook or rules ask, the always approval policy, a headless session. */
+  exec_trust?: { computer_id: string; computer_name?: string; realm: string; label: string };
   /** On a call a tool-call rule denied: the rules behind it. outcome deny = the call breaks these limit rules; unchecked = the rules check could not complete where no one can be asked (a helper), so the call was denied. Omitted on every other result. */
-  rules?: { rule_ids: string[]; outcome: 'deny' | 'unchecked'; reason?: string };
+  rules?: { rule_ids: string[]; outcome: 'ask' | 'unchecked'; reason?: string } | { rule_ids: string[]; outcome: 'deny' | 'unchecked'; reason?: string };
   /** The helper that produced this event (a background helper's task id, or a per-spawn helper id). Omitted on the session's own events. */
   helper_id?: string;
   /** The tool_use id of the spawn_agent call that started that helper. Omitted on the session's own events. */
   parent_tool_call_id?: string;
   /** The delegated agent that went quiet. */
-  agent: string;
+  agent?: string;
   /** The stall window it went quiet for, in milliseconds. */
-  idle_ms: number;
-  /** A human-readable description. */
-  message: string;
+  idle_ms?: number;
+  /** A sentence for the user. Omitted when done. */
+  message?: string;
   /** lagged: this subscriber was dropped for reading too slowly and the stream ends. replay_gap: the resume cursor was behind or ahead of the retained ring, invalid, or from another incarnation; the frames that follow are the whole retained ring. */
-  code?: 'lagged' | 'replay_gap';
-  /** Provider diagnostics for a failed model call (provider, model, endpoint, key source and a redacted prefix, HTTP status, attempts). Omitted for every other error. */
+  code?: string;
+  /** Provider diagnostics for a failed model call (provider, model, endpoint, key source and a redacted prefix, HTTP status, attempts). With code no_credentials it names the provider and model that have no stored key. Omitted for every other error. */
   diag?: { provider?: string; model?: string; base_url?: string; key_source?: string; key_prefix?: string; http_status?: number; retryable?: boolean; attempts?: number; req_id?: string; err_code?: 'timeout' | 'rate_limit' | 'auth' | 'network' | 'provider' | 'canceled' | 'context_overflow' | 'provider_incomplete_response' | 'max_tokens' | 'bad_tool_args' | 'unknown'; stop_reason?: string; last_error?: string };
   /** With code max_steps: the step limit in force for the turn that stopped (the agent's max_steps_per_turn). Omitted on every other error. */
   max_steps?: number;
-  /** With code quota_wait_too_long: the seconds the model provider asked to wait before the next request. The turn ended instead of waiting; send the message again after that. Omitted on every other error. */
+  /** The seconds the model provider asked to wait before the next request: always with code quota_wait_too_long (the turn ended instead of waiting), and on a failed model request whose last answer (a rate limit or a busy provider) named a wait. Send the message again after that. Omitted otherwise. */
   retry_after_secs?: number;
+  /** With retry_after_secs: when that wait ends, RFC 3339 in UTC (for example 2026-10-10T14:47:00Z), the same time the message names. Send the message again after it. Omitted otherwise. */
+  retry_at?: string;
+  /** With code spend_cap and reason session_cap or turn_cap: the cap that was reached, in US dollars. Omitted otherwise. */
+  spend_cap_usd?: number;
+  /** With spend_cap_usd: the spend that reached it, in US dollars (the session's whole spend for session_cap, the turn's own model requests for turn_cap). Omitted otherwise. */
+  spent_usd?: number;
+  /** With code resume_superseded (a workflow run's resume was refused after it was accepted, because a newer run of the same original run started a step): the run to resume instead. Omitted otherwise. */
+  resume_run_id?: string;
   /** Which kind of gate was resolved. */
-  kind: 'confirm' | 'question';
+  kind?: 'confirm' | 'question';
   /** The agent's own number for this question, for diagnostics. Answer with the frame envelope's gate ref, not this. */
   question_id?: number;
   /** What resolved the gate. Only decision is a real answer; every other value means nobody decided, and the outcome is then never answered. timeout is a helper's gate that ran out of time. Omitted by an older agent. */
   provenance?: 'decision' | 'yolo' | 'cancelled' | 'closed' | 'context_cancelled' | 'timeout';
   /** The approver-lease holder whose decision resolved a confirm gate (the holder sent when the lease was acquired). Omitted when there is none. */
   holder?: string;
-  /** The request id of the decision that resolved the gate, when that decision carried one. On the copy sent only to the sender of a retried or late decision (one naming a gate that already resolved, including a helper gate that timed out or was cancelled while the decision was in flight), it is that decision's own request id. */
+  /** The request id of the trim this answers. */
   request_id?: string;
   /** On a confirm gate whose outcome is answered: the decision it consumed. Omitted otherwise. */
-  decision?: { approved?: boolean; persist_dirs?: boolean; session_scope?: boolean; trust_container?: boolean; remember?: boolean; superseded?: boolean };
+  decision?: { approved?: boolean; persist_dirs?: boolean; session_scope?: boolean; trust_computer?: boolean; remember?: boolean; superseded?: boolean };
   /** false when an approving session_scope decision applied once only (a locked approval policy keeps the session-wide rule from being added); see note. Omitted otherwise. */
   session_scope_applied?: boolean;
   /** Present beside session_scope_applied: why the wider grant did not apply. */
   note?: string;
+  /** An agent step's billed prompt tokens. Omitted when 0. */
+  input_tokens?: number;
+  /** An agent step's billed output tokens. Omitted when 0. */
+  output_tokens?: number;
+  /** An agent step's prompt tokens written to the provider's cache. Omitted when 0. */
+  cache_creation_tokens?: number;
+  /** An agent step's prompt tokens read from the provider's cache. Omitted when 0. */
+  cache_read_tokens?: number;
   /** The delegation's id; its event.orchestrator_delegate_done carries the same one. */
-  delegate_id: string;
+  delegate_id?: string;
   /** The agent the work was delegated to. */
-  agent_type: string;
+  agent_type?: string;
   /** The delegation's role: change, readonly or verify. */
-  role: string;
+  role?: string;
   /** A verify delegation's reviewer verdict, DONE or NEEDS_FIX. Omitted otherwise. */
   verdict?: string;
   /** The tool failed, or the call was denied or cancelled. */
-  is_error: boolean;
+  is_error?: boolean;
   /** How long the step ran, in milliseconds. Omitted when not measured. */
-  duration_ms: number;
+  duration_ms?: number;
   /** The start of the delegated prompt. Omitted when empty. */
   prompt_preview?: string;
   /** true for spend outside the foreground turn (a background helper, an exploration): add it to totals only, not to the turn. Omitted when false. */
   background?: boolean;
   /** The background workflow run this response belongs to. Omitted otherwise. */
-  run_id: string;
+  run_id?: string;
   /** Files the run touched. */
-  files: number;
+  files?: number;
   /** Shell commands the run executed. */
-  bash_n: number;
+  bash_n?: number;
   /** Steps of the run that failed. */
-  errors: number;
+  errors?: number;
   /** Whether the step succeeded. */
-  success: boolean;
+  success?: boolean;
   /** The tool_use id of the call this result answers (the tool_id of its event.tool_call). */
-  tool_id: string;
+  tool_id?: string;
   /** The claims of the turn's last accepted report, in the model's order. */
   claims?: { text: string; evidence: { tool_call_id: string; status: 'linked' | 'foreign' | 'ambiguous' | 'unknown'; receipt?: { tool_name: string; is_error: boolean; exit_code?: number; truncated?: boolean; after_last_write: boolean } }[]; evidence_status: 'linked' | 'none' }[];
   /** true when this report replaced an earlier report_outcome of the same turn. Omitted otherwise. */
   replaced?: boolean;
+  /** true while the agent is paused: sessions hold at their next step until resumed (see PUT /api/v1/agent/pause). */
+  paused?: boolean;
+  /** When the pause began, in Unix milliseconds. Omitted while not paused. */
+  since_ms?: number;
   /** The question-panel generation the assist request carried (POST /sessions/{id}/assist gen), echoed so a client drops a suggestion for a panel it no longer shows. */
-  gen: number;
+  gen?: number;
   /** The assist mode the request carried, echoed: suggest or auto. */
-  mode: string;
+  mode?: string;
   /** An agent step: the model it ran on. Omitted otherwise. */
-  model: string;
+  model?: string;
   /** One proposed answer per pending question. Omitted when the helper failed (see error) or proposed nothing. */
   items?: { id: string; answer: string; text?: string; rationale?: string; confident: boolean }[];
   /** Why the helper produced no proposals. Omitted on success. */
@@ -393,19 +458,13 @@ export interface UnknownServerMessage {
   /** The renamed session. */
   id?: string;
   /** The tool name. */
-  name: string;
+  name?: string;
+  /** True when the agent generated this title (feature session_titles). Omitted when a person set or cleared it. */
+  name_auto?: boolean;
   /** The message that started the turn. */
-  text: string;
-  /** An agent step's billed prompt tokens. Omitted when 0. */
-  input_tokens: number;
-  /** An agent step's billed output tokens. Omitted when 0. */
-  output_tokens: number;
-  /** An agent step's prompt tokens written to the provider's cache. Omitted when 0. */
-  cache_creation_tokens: number;
-  /** An agent step's prompt tokens read from the provider's cache. Omitted when 0. */
-  cache_read_tokens: number;
+  text?: string;
   /** How long the tool ran, in milliseconds (0 is a real value). Omitted when the tool never ran or its run was not timed. */
-  elapsed_ms: number;
+  elapsed_ms?: number;
   /** The context window to measure context use against, when the agent knows it better than the model catalogue (a delegated agent reports its own). Omitted when unknown: keep the value you had. */
   context_window?: number;
   /** true when context_input_tokens is an estimate rather than a measured prompt size. Omitted when false. */
@@ -414,16 +473,18 @@ export interface UnknownServerMessage {
   context_input_tokens?: number;
   /** The session's total spend after this response, the figure to display. Omitted when 0. */
   total_cost_usd?: number;
-  /** The task: {id, name, status, kind?, prompt, started_at, updated_at?, tool_calls?, elapsed_ms?, output_preview?, container?, cwd?, parent_tool_call_id?, rev?, pending_gate_kind?, pending_gate_id?}; rev is the session's task-state revision of the task's last transition; pending_gate_kind (confirm or question) and pending_gate_id (the daemon's gate_id or question_id) are present while the task's helper has a gate parked on a helper_gates session (keep, per task, the state with the higher rev; see event.tasks_snapshot). */
+  /** true for foreground-turn spend that belongs to no single model response, for example the part of a delegated agent's reported turn usage its responses did not carry: add it to the session's and the turn's totals, but do not count it as a response or read timing or context use from it. Omitted when false. */
+  usage_only?: boolean;
+  /** The task: {id, name, status, kind?, prompt, started_at, updated_at?, tool_calls?, elapsed_ms?, output_preview?, computer?, read_only?, cwd?, parent_tool_call_id?, rev?, pending_gate_kind?, pending_gate_id?}; rev is the session's task-state revision of the task's last transition; pending_gate_kind (confirm or question) and pending_gate_id (the agent's own gate_id or question_id number) are present while the task's helper has a gate parked on a helper_gates session (keep, per task, the state with the higher rev; see event.tasks_snapshot). */
   task?: Record<string, unknown>;
-  /** Every background task of the session, each {id, name, status, kind?, prompt, started_at, updated_at?, tool_calls?, elapsed_ms?, output_preview?, container?, cwd?, parent_tool_call_id?, rev?, pending_gate_kind?, pending_gate_id?}; rev is the session's task-state revision of the task's last transition; pending_gate_kind (confirm or question) and pending_gate_id (the daemon's gate_id or question_id) are present while the task's helper has a gate parked on a helper_gates session. */
+  /** Every background task of the session, each {id, name, status, kind?, prompt, started_at, updated_at?, tool_calls?, elapsed_ms?, output_preview?, computer?, read_only?, cwd?, parent_tool_call_id?, rev?, pending_gate_kind?, pending_gate_id?}; rev is the session's task-state revision of the task's last transition; pending_gate_kind (confirm or question) and pending_gate_id (the agent's own gate_id or question_id number) are present while the task's helper has a gate parked on a helper_gates session. */
   tasks?: Record<string, unknown>[];
   /** The session's task-state revision read before tasks was captured: every transition with rev <= this is reflected in tasks, and a task absent from tasks had no running state at it. A task event whose task.rev is greater is newer than this snapshot and wins. Omitted (0) = unordered: apply as-is. */
   rev?: number;
   /** The tool input as the model issued it, with secrets redacted: the value of a credential-named key (token, password, api_key, authorization and the like) and secret-shaped text become "[REDACTED]". Omitted when empty. */
   arguments?: Record<string, unknown>;
   /** A one-line human summary of the call, for example "$ ls -la", with secret-shaped text redacted. */
-  summary: string;
+  summary?: string;
   /** The call's effective timeout in seconds, after the agent's floor and cap. Omitted when the tool has none. */
   timeout_sec?: number;
   /** bash only: why the model did not use read_file. Omitted when empty. */
@@ -435,22 +496,24 @@ export interface UnknownServerMessage {
   /** bash or glob_files: why the model raised the timeout above the default. Omitted when empty. */
   reason_to_increase_timeout?: string;
   /** The session's tool mode: standard or orchestrator. */
-  tool_mode: string;
+  tool_mode?: string;
   /** Whether the mode is locked for the rest of the session. Always true today. */
-  locked: boolean;
+  locked?: boolean;
   /** The tool's output text, with secret-shaped text redacted. It may be shorter than what the tool produced: see truncated. Always empty for tool_orchestrator. */
-  output: string;
+  output?: string;
   /** A remediation sentence for a coding-CLI tool's sign-in failure. Omitted otherwise. */
   hint?: string;
   /** The command that fixes the failure hint describes. Omitted otherwise. */
   hint_cmd?: string;
   /** The bash exit status, 0 included. Omitted when no process exit was observed; evidence of success needs exit_code 0, not just is_error false. */
   exit_code?: number;
-  /** true is positive evidence that output is not the tool's whole output. It is set by bash (including container and long-running commands), bash_job_wait, read_file, read_minified_file, grep, glob_files, web_fetch, load_hoody_skill, MCP tools and tool_orchestrator, when the agent cut the output to a size cap, a file search stopped past max_results or the container's search limits, or the event leaves the output out (tool_orchestrator). A range the model asked for (read_file offset and limit) is not a cut, and neither is secret redaction or deny-list filtering. A missing truncated is inconclusive, even from an agent with the tool_output_completeness capability: other tools never set it, and some tools say in their own output when they shortened it. */
+  /** true is positive evidence that output is not the tool's whole output. It is set by bash (including computer and long-running commands), bash_job_wait, read_file, read_minified_file, grep, glob_files, web_fetch, load_hoody_skill, MCP tools and tool_orchestrator, when the agent cut the output to a size cap, a file search stopped past max_results or the computer's search limits, or the event leaves the output out (tool_orchestrator). A range the model asked for (read_file offset and limit) is not a cut, and neither is secret redaction or deny-list filtering. A missing truncated is inconclusive, even from an agent with the tool_output_completeness capability: other tools never set it, and some tools say in their own output when they shortened it. */
   truncated?: boolean;
-  /** When truncated is true, the size in bytes of the text the cut was applied to: the whole output, or for a log tail or a fetched page that log or page alone. Omitted when the size is unknown, for example when the agent stopped reading a stream or a container cut it first. */
+  /** When truncated is true, the size in bytes of the text the cut was applied to: the whole output, or for a log tail or a fetched page that log or page alone. Omitted when the size is unknown, for example when the agent stopped reading a stream or a computer cut it first. */
   original_bytes?: number;
-  /** The tag the sending client attached to its input. A client drops an echo carrying its own tag (it already shows the message). On a gateway-dispatched turn it is the turn id. Omitted on turns the agent started itself. */
+  /** The turn index the trim named. */
+  turn_idx?: number;
+  /** The tag the sending client attached to its input. A client drops an echo carrying its own tag (it already shows the message). On a turn dispatched through this API it is the turn id. Omitted on turns the agent started itself. */
   echo_tag?: string;
   /** Set when a loop fire started the turn: the loop. Omitted otherwise. */
   loop_id?: string;
@@ -465,9 +528,9 @@ export interface UnknownServerMessage {
   /** What became of the turn's image attachments, metadata only; order is not a pairing contract. Omitted when there were none. */
   attachments?: { name: string; media_type?: string; size?: number; delivered: boolean }[];
   /** The question, for a single question. Always present; empty on a batch, which uses questions instead. */
-  question: string;
+  question?: string;
   /** Suggested answers for a single question (answer). Always present: null on a batch, and it may be empty, in which case any text is accepted. */
-  options: unknown;
+  options?: unknown;
   /** Structured options (workflow tool steps). Omitted when none. */
   rich_options?: { title: string; description: string; has_user_input?: boolean }[];
   /** Placeholder text for a free-form answer. Omitted when none. */
@@ -475,15 +538,15 @@ export interface UnknownServerMessage {
   /** A short label for the question. Omitted when none. frame_request on a question a request_view or a Bot tool parked (frame_request is then set). */
   category?: string;
   /** On a frame_tools session, a question the model's request_view parked: what it asks the Frame to make. The Frame answers it on /answer with its status JSON as answer. On a Bot's own session, a call to one of the Bot's tools (kind bot.dispatch, bot.message, bot.stop, bot.delegates, bot.answer_gate or bot.peek), answered by the Bot runtime. Omitted on every other question. */
-  frame_request?: { kind: 'view' | 'bot.dispatch' | 'bot.message' | 'bot.stop' | 'bot.delegates' | 'bot.answer_gate' | 'bot.peek'; request: string; id: string; tool_use_id?: string };
+  frame_request?: { kind: 'view' | 'bot.dispatch' | 'bot.message' | 'bot.stop' | 'bot.delegates' | 'bot.answer_gate' | 'bot.peek' | 'bot.wait'; request: string; id: string; tool_use_id?: string };
   /** A batch of questions; when present it replaces the single-question fields. Answer each by its id in answers. */
   questions?: { id: string; category: string; question: string; options?: string[] }[];
   /** The step's id in the workflow. */
-  step_id: string;
+  step_id?: string;
   /** The step's position in the run, as on its event.workflow_step_start; 0 for a step refused before it got one. */
-  step_idx: number;
+  step_idx?: number;
   /** The run's step count; 0 when the producer does not know it. */
-  total: number;
+  total?: number;
   /** true when a bash step was killed by its timeout (the workflow may continue). Omitted when false. */
   timed_out?: boolean;
   /** A line to show for the step's end, for example why it was refused. Omitted when empty. */
@@ -501,7 +564,7 @@ export interface UnknownServerMessage {
   /** true when a resumed run replayed the step's recorded result instead of running it. Omitted when false. */
   replayed?: boolean;
   /** Whether the active agent now holds the workflow-authoring tools. */
-  available: boolean;
+  available?: boolean;
   /** On replay_gap, the lowest seq still retained. */
   min_seq?: number;
   /** The highest seq the ring held when the stream attached: frames up to it are replay, later frames are live. Pass the last seq you read as ?since= to resume. */
@@ -510,24 +573,24 @@ export interface UnknownServerMessage {
   incarnation?: string;
   /** On an SSE lagged frame, how to recover: reconnect with ?since= set to the last seq read. The WS frame omits it; the recovery is the same. */
   resume?: string;
-  /** While a turn runs: the cursor just before its first frame (the same value as GET /sessions/{id}/state turn_since). A client holding every frame after it can reconnect with ?since=turn_since to replay the whole turn. Omitted when idle, and on promptStream when the dispatched turn already ended and another holds the slot. */
+  /** While a turn runs: the cursor just before its first frame (the same value as GET /api/v1/agent/sessions/{id}/state turn_since). A client holding every frame after it can reconnect with ?since=turn_since to replay the whole turn. Omitted when idle, and on POST /api/v1/agent/sessions/{id}/prompt:stream when the dispatched turn already ended and another holds the slot. */
   turn_since?: number;
 }
 
 
-export interface IAgentStreamSessionWebSocket {
+export interface IAgentSessionsConnectWebSocket {
   // ============================================================================
   // Send Messages (Client → Server)
   // ============================================================================
 
-  /** Inbound WS frame: answer a parked confirm gate. Carries {type:"confirm", gate_id?, generation?, approved, persist_dirs?, trust_container?, reason?, remember?, superseded?}. trust_container (with approved) accepts the event.confirm_request exec_trust offer, as on /confirm. reason, remember and superseded are as on /confirm: reason (with approved false, at most 500 characters) reaches the agent in the refused call's result; remember false approves this call only; superseded (with approved false, no reason, no session_scope) declines because the user sent a new message instead, and the agent does not read it as a refusal. gate_id is the stream frame ENVELOPE's gate.id (a sibling of `event`, NOT a field inside the event payload — the payload's own gate_id is the daemon's number), and is published as pending_gate.id on GET /sessions/{id} and /replay and as pending_gate_ref.id on GET /sessions/{id}/state. It is a STRING: sending the payload's number is refused bad_frame, naming the field; without it the answer applies to whatever gate is parked when it arrives. request_id? is the client's own id for the decision (at most 64 characters from A-Z, a-z, 0-9, '.', '_', '-'). Every outcome is ANSWERED, never silently dropped: a consumed decision by the broadcast event.gate_resolved, anything else by a `refused` frame naming the code — a stale or absent gate, a gate that already ended (gate_already_resolved, with what was decided; never a second forward), or a decision in flight (gate_decision_pending). approved is required in every mode: a frame without a boolean approved is refused approved_required and never resolves a gate. On an always session the frame must also carry the exact gate_id and its generation, or it is refused decision_incomplete. | Inbound WS frame: answer a parked question gate. Carries {type:"answer", gate_id?, generation?, answer?, text?, answers?}; gate_id is as for confirm. A stale, duplicate or absent gate is a `refused` frame, and a retry that names the question this client already resolved replays the original `gate_resolved_ack`. | Inbound WS frame: cancel the active turn (Esc). Carries {type:"cancel", turn_id?}. With turn_id it cancels only that turn (as POST /sessions/{id}/cancel with turn_id); without, whatever is running. | Inbound WS frame: feed input to a running workflow. Carries {type:"workflow_message", text}. */
-  unknown(): void;
+  /** Inbound WS frame: answer a parked confirm gate. Carries {type:"confirm", gate_id?, generation?, approved, persist_dirs?, trust_computer?, reason?, remember?, superseded?}. trust_computer (with approved) accepts the event.confirm_request exec_trust offer, as on /api/v1/agent/sessions/{id}/confirm. reason, remember and superseded are as on /api/v1/agent/sessions/{id}/confirm: reason (with approved false, at most 500 characters) reaches the agent in the refused call's result; remember false approves this call only; superseded (with approved false, no reason, no session_scope) declines because the user sent a new message instead, and the agent does not read it as a refusal. gate_id is the stream frame ENVELOPE's gate.id (a sibling of `event`, NOT a field inside the event payload; the payload's own gate_id is the agent's own number, a different id), and is published as pending_gate.id on GET /api/v1/agent/sessions/{id} and /api/v1/agent/sessions/{id}/replay and as pending_gate_ref.id on GET /api/v1/agent/sessions/{id}/state. It is a STRING: sending the payload's number is refused bad_frame, naming the field; without it the answer applies to whatever gate is parked when it arrives. request_id? is the client's own id for the decision (at most 64 characters from A-Z, a-z, 0-9, '.', '_', '-'). Every outcome is ANSWERED, never silently dropped: a consumed decision by the broadcast event.gate_resolved, anything else by a `refused` frame naming the code. That covers a stale or absent gate, a gate that already ended (gate_already_resolved, with what was decided; never a second forward) and a decision in flight (gate_decision_pending). approved is required in every mode: a frame without a boolean approved is refused approved_required and never resolves a gate. On an always session the frame must also carry the exact gate_id and its generation, or it is refused decision_incomplete. | Inbound WS frame: answer a parked question gate. Carries {type:"answer", gate_id?, generation?, answer?, text?, answers?}; gate_id is as for confirm. A stale, duplicate or absent gate is a `refused` frame, and a retry that names the question this client already resolved replays the original `gate_resolved_ack` when it carries the same answer (another answer is a `refused` frame, gate_already_answered). | Inbound WS frame: cancel the active turn (Esc). Carries {type:"cancel", turn_id?}. With turn_id it cancels only that turn (as POST /api/v1/agent/sessions/{id}/cancel with turn_id); without, whatever is running. | Inbound WS frame: feed input to a running workflow. Carries {type:"workflow_message", text}. */
+  unknown(fields?: Record<string, unknown>): void;
 
   // ============================================================================
   // Receive Messages (Server → Client)
   // ============================================================================
 
-  /** Provider account rotated mid-turn. | Turn complete — terminates a prompt turn. Carries the turn's typed outcome / error_code and notices [{code, message?, detail?}] — advisory, never an error: hook_skipped_by_policy when a configured user hook was skipped under the always policy (open set). | The session's approval policy (mode / lock / rules) changed; carries the new revision. | Hoody platform auth state changed — login, token adopt, or logout (global broadcast; mirrors GET /hoody/auth/status). | Auto-user composed the next user turn. | Auto-user composition progress. | Background bash job list snapshot. | Background bash job output tail chunk. | Conversation cleared. | The daemon admitted and forwarded a command that carried a request_id — the sender-only positive counterpart of event.command_refused {type, request_id}; the command's effect still arrives as its ordinary broadcast event. CONSUMED BY THE GATEWAY: it answers the HTTP request / WS frame that sent the command and is never fanned out to stream subscribers. | Commands sent with POST /sessions/{id}/commands reached the session: messages added to the conversation (how next_step inside the running turn, new_turn in a turn of their own, with turn_id), or a stop carried out (how stop, with what it stopped). Carries command_ids. | A session command was refused (unregistered type, a setter frozen by a locked approval policy, an incomplete decision, a decision dropped at consumption) — a sender-only frame carrying type, code, reason, protocol_version, request_id; never fails a turn. CONSUMED BY THE GATEWAY: it answers the HTTP request / WS frame that sent the command and is never fanned out to stream subscribers. | Commands sent with POST /sessions/{id}/commands ended without reaching the session: superseded by a stop, refused (a hook blocked them, the session closed, or the session cannot take them) or failed (the session could not record them). Carries command_ids, state and reason. | Context window compacted. | A delegated agent discarded its conversation and started a new one: the context meter no longer describes anything (clear it). | Context compaction started. | Tool/plan confirmation requested (parks a gate). On a helper_gates session a helper's request carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. | The decision requirements of the PARKED gate changed (the approver lease was acquired, taken over, renewed past expiry or released while a gate is parked): {gate_id, generation, lease_required, helper_id?} — a client that captured the gate at park time refreshes what its decision must carry. On a helper_gates session each parked helper confirm is re-announced too, with its helper_id. | Directory-access scope changed/locked. | A peer client detached from this shared live session (multi-attach presence). | A delegated turn went quiet past the stall window but is still running (NON-FATAL — not an error). | Session error (e.g. join_not_ready). | A parked confirm/question gate was resolved (possibly by another attached client). | Files-tab import progress. | Fusion configuration changed. | A Jev decision made for this session finished (success, error or invalid answer): {cost_usd (null when any attempt's spend is unknown), known_cost_usd, cost_unknown_attempts, attempts, latency_ms, model, request_id, input_tokens, output_tokens, error_code}. Produced by POST /sessions/{id}/jev/decide; the standalone /jev routes report usage only in their reply and in GET /jev/settings. | Fusion member trajectory progress. Not sent while the fusion runs inside a silent workflow step. | Hoody concept mode toggled. | A hook executed. | Hook execution summary. | Initial session state snapshot. | Available loops list updated. | A master TODO was filed. | Memory subsystem notice. | Orchestrator delegation finished. | Orchestrator delegated a task to a subagent. | Orchestrator run complete. | Orchestrator narration. | Orchestrator run started. | Orchestrator step progress. | On an outcome_claims session, the report the turn closes with, sent just before event.agent_done: the model's claims and, for each tool call it cited, whether it is this turn's own call and what it returned. The claims are the model's words; nothing here says they are true. | global pause-freeze state changed. | A session permission rule auto-applied (first time). | Session permission rules snapshot. | Plan-mode planning complete. | Question-assist suggestion. | Daemon quitting. | A delegated agent's subscription usage limits (session/weekly windows) changed. | Active realm changed (global broadcast). | Resolved default working dir of the bound container (filetree/chip scope hint). | Full viewport snapshot after session_started. | Mid-turn join with an overflowed turn journal — the active turn's earlier output is elided (connection-local frame). | LLM call retried. | The session was archived for every attached client. | The set of listable sessions (or a session's attach state) changed — clients re-list. | Session title set or cleared. | Session attached. Built by the gateway from the attach acknowledgement; its data is the same `started` object POST /sessions returns. It is the first frame (seq 1) of a fresh attach while the stream still retains seq 1. A resume with `since` does not repeat it, except when the cursor cannot be resumed: an invalid `since` (or Last-Event-ID), an `incarnation` that does not match the session's current one, or a cursor ahead of the stream is each answered with a `lagged` frame (code replay_gap) and the whole retained stream, which includes it if seq 1 is still retained. A late attach after the oldest frames were evicted starts with a `lagged` frame (code replay_gap) instead and does not carry it. In either case read the same object as `started` from GET /sessions/{id}, which carries it while the session is attached. | Available skills list updated. | Skill enable/trust state changed. | Assistant text stream chunk. | Assistant text stream complete. | Profile sync status. | Background task activity. | Background task finished. | Background task started. | Background task transcript entry (upsert-poll). | Snapshot of background tasks. | Reasoning/thinking stream chunk. | Thinking stall warning. | TODO list updated. | Tool invocation. | Tool mode changed/locked. | Tool result. | A prompt or workflow dispatch was accepted but discarded without running, because it was queued while another client's turn waited on a confirmation or question. It closes that dispatch only (its turn_id); the waiting turn keeps running and no event.agent_done is sent for the discarded one. | The durable admission receipt for a prompt or workflow turn — a sender-only frame {turn_id, state, duplicate, accepted_at, request_id, …} written once the ledger row is on disk. CONSUMED BY THE GATEWAY: it is the 202 body of the request that dispatched the turn and is never fanned out to stream subscribers. | Echo of the user's input. | Question posed to the user (parks a gate). On a helper_gates session a helper's question carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. | Verbosity setting changed. | Workflow run complete. | Workflow run started. | Workflow step done. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | Workflow step output. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | Workflow step start. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | The workflow-authoring tools became available or unavailable mid-session (the session's tool mode, standard or orchestrator, was applied by its first dispatch; the chat agent was switched; or the agent's `tools:` frontmatter was edited on disk). Not sent for the initial value, which the init state carries as workflow_tools_available. | Available workflows list updated. | YOLO auto-approve mode toggled. | Gateway control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring or belongs to another incarnation. Carries {code: lagged|replay_gap[, min_seq, max_seq, incarnation, resume]}; reconcile by reconnecting with ?since= and ?incarnation=. | Gateway control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq, incarnation, turn_id?, turn_since?}; turn_id names the turn being watched and turn_since the cursor before its first frame (see the payload). | Gateway control frame: the stream is terminating because the session closed. Carries {reason}. | Gateway control frame, connection-local: the WS command this client just sent was REJECTED and nothing was forwarded to the daemon — the WS twin of a REST error envelope. Carries {frame: the client frame type that was refused, code, reason}. Codes match the REST ones for the same condition: bad_frame (the frame did not decode — the reason names the field and the JSON type it must carry, e.g. a gate_id sent as the daemon number instead of the addressable string), no_pending_gate / stale_gate / gate_already_answered / gate_type_mismatch (the frame did not match the parked gate), approved_required (a confirm frame without a boolean approved; it never resolves a gate), decision_incomplete (an always session needs an explicit approved, the exact gate_id and its generation; or a confirm without gate_id while several gates are parked). For a confirm: gate_already_resolved (the gate already ended and this decision was not applied; the frame also carries gate_id, generation, outcome, decision {approved, persist_dirs, session_scope, trust_container, remember?, superseded?} or decision_unknown:true, and request_id when the decision consumed carried that request_id) and gate_decision_pending (a decision for the gate is in flight and its outcome is not known yet — another client's, or this one past the wait; carries gate_id, generation and reason:connection_lost when the agent connection was lost; retry naming the gate to learn the outcome). For an answer: gate_cancelled (the question was resolved without consuming this answer) and decision_unconfirmed (the daemon did not acknowledge within the wait — it may still apply). It is sent ONLY to the client that sent the frame, never broadcast. | Gateway control frame, connection-local: the replayed acknowledgement of a question answer. When an answer frame is a RETRY naming the question gate this client already resolved, it carries replayed:true and {resolved: the ORIGINAL event.gate_resolved payload} — a retry never forwards a second answer. A confirm retry is refused gate_already_resolved instead. Sent only to the client that sent the frame. */
+  /** Provider account rotated mid-turn. | Turn complete: it ends a prompt turn. Carries the turn's typed outcome / error_code and notices [{code, message?, detail?}]. Notices are advisory, never an error: hook_skipped_by_policy when a configured user hook was skipped under the always policy, agent_compacts_itself when a Claude Code session's agent decides on its own when to compact its conversation, history_unsaved when a Claude Code session answered from a conversation Hoody could not save, spend_cap_warning when the session's spend file sets action warn and the turn ran over a spend cap (detail session_cap or turn_cap; one notice per cap) (open set). A turn a spend cap stopped fails with error_code spend_cap. | The session's approval policy (mode / lock / rules) changed; carries the new revision. | Hoody platform auth state changed: login, token adopt, or logout (global broadcast; mirrors GET /api/v1/agent/hoody/auth/status). | Auto-user composed the next user turn. | Auto-user composition progress. | Background bash job list snapshot. | Background bash job output tail chunk. | Conversation cleared. | Commands sent with POST /api/v1/agent/sessions/{id}/commands reached the session: messages added to the conversation (how next_step inside the running turn, new_turn in a turn of their own, with turn_id), or a stop carried out (how stop, with what it stopped). Carries command_ids. | Commands sent with POST /api/v1/agent/sessions/{id}/commands ended without reaching the session: superseded by a stop, refused (a hook blocked them, the session closed, or the session cannot take them) or failed (the session could not record them). Carries command_ids, state and reason. | A waiter this session owns (POST /api/v1/agent/sessions/{id}/waiters) ended: an outcome was found, or it timed out, was cancelled, or its target closed. Carries the waiter. | Context window compacted. | A delegated agent discarded its conversation and started a new one: the context meter no longer describes anything (clear it). | Context compaction started. | Tool/plan confirmation requested (parks a gate). On a helper_gates session a helper's request carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. | The decision requirements of the PARKED gate changed (the approver lease was acquired, taken over, renewed past expiry or released while a gate is parked): {gate_id, generation, lease_required, helper_id?}. A client that captured the gate at park time refreshes what its decision must carry. On a helper_gates session each parked helper confirm is re-announced too, with its helper_id. | Directory-access scope changed/locked. | A peer client detached from this shared live session (multi-attach presence). | A delegated turn went quiet past the stall window but is still running (not fatal, not an error). | Session error (e.g. join_not_ready). | A parked confirm/question gate was resolved (possibly by another attached client). | Files-tab import progress. | Fusion configuration changed. | A Jev decision made for this session finished (success, error or invalid answer): {cost_usd (null when any attempt's spend is unknown), known_cost_usd, cost_unknown_attempts, attempts, latency_ms, model, request_id, input_tokens, output_tokens, error_code}. Produced by POST /api/v1/agent/sessions/{id}/jev/decide; the standalone /api/v1/agent/jev routes report usage only in their reply and in GET /api/v1/agent/jev/settings. | Token usage of a turn that already ended, counted after its completion events went out (a Claude Code agent reported it after the turn closed). Add it to the session's lifetime totals only: it is not a response, and it belongs to no turn in progress, so it changes no turn's usage, timing or context use. turn_id names the ended turn. | Fusion member trajectory progress. Not sent while the fusion runs inside a silent workflow step. | Hoody concept mode toggled. | A hook executed. | Hook execution summary. | Initial session state snapshot. | Available loops list updated. | A master TODO was filed. | Memory subsystem notice. | Orchestrator delegation finished. | Orchestrator delegated a task to a subagent. | Orchestrator run complete. | Orchestrator narration. | Orchestrator run started. | Orchestrator step progress. | On an outcome_claims session, the report the turn closes with, sent just before event.agent_done: the model's claims and, for each tool call it cited, whether it is this turn's own call and what it returned. The claims are the model's words; nothing here says they are true. | The agent was paused or resumed (PUT /api/v1/agent/pause, or the TUI's pause): sent to every attached session, since the pause covers every session of the agent. | A session permission rule auto-applied (first time). | Session permission rules snapshot. | Plan-mode planning complete. | Question-assist suggestion. | The agent is shutting down. | A delegated agent's subscription usage limits (session/weekly windows) changed. | Active realm changed (global broadcast). | Resolved default working dir of the bound computer (filetree/chip scope hint). | Full viewport snapshot after session_started. | Mid-turn join with an overflowed turn journal: the active turn's earlier output is elided (connection-local frame). | A model call is retried: attempt of max_retries, after wait_secs, with the cause in reason. With attempt 0 and max_retries 0 it is a one-off notice instead, its whole text in reason, to show as a status line and not as a retry: a Claude Code session reconnecting, a previous Claude Code conversation that could not be resumed (a new one was started), a fork or trim whose Claude Code conversation starts fresh with the history passed in as text, or the model an auto-reply round uses on a Claude Code session. | The session was archived for every attached client. | The set of listable sessions (or a session's attach state) changed. Clients re-list. | Session title set or cleared by a person, or generated by the agent (name_auto true). | Session attached. Its data is the same `started` object POST /api/v1/agent/sessions returns. It is the first frame (seq 1) of a fresh attach while the stream still retains seq 1. A resume with `since` does not repeat it, except when the cursor cannot be resumed: an invalid `since` (or Last-Event-ID), an `incarnation` that does not match the session's current one, or a cursor ahead of the stream is each answered with a `lagged` frame (code replay_gap) and the whole retained stream, which includes it if seq 1 is still retained. A late attach after the oldest frames were evicted starts with a `lagged` frame (code replay_gap) instead and does not carry it. In either case read the same object as `started` from GET /api/v1/agent/sessions/{id}, which carries it while the session is attached. | Available skills list updated. | Skill enable/trust state changed. | Assistant text stream chunk. | Assistant text stream complete. | Profile sync status. | Background task activity. | Background task finished. | Background task started. | Background task transcript entry (upsert-poll). | Snapshot of background tasks. | Reasoning/thinking stream chunk. | Thinking stall warning. | TODO list updated. | Tool invocation. | Tool mode changed/locked. | Tool result. | The result of one trim, naming the request id the trim carried: done, refused (turn_in_flight, delegated_session or session_closed; nothing changed), failed (nothing was trimmed) or outcome_unknown (the trim may have been saved; the session sends nothing until it can save its state). Never an error event: another client's trim does not fail this client's turn. | A prompt or workflow dispatch was accepted but discarded without running, because it was queued while another client's turn waited on a confirmation or question. It closes that dispatch only (its turn_id); the waiting turn keeps running and no event.agent_done is sent for the discarded one. | Echo of the user's input. | Question posed to the user (parks a gate). On a helper_gates session a helper's question carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. | Verbosity setting changed. | Workflow run complete. | Workflow run started. | Workflow step done. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | Workflow step output. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | Workflow step start. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | The workflow-authoring tools became available or unavailable mid-session (the session's tool mode, standard or orchestrator, was applied by its first dispatch; the chat agent was switched; or the agent's `tools:` frontmatter was edited on disk). Not sent for the initial value, which the init state carries as workflow_tools_available. | Available workflows list updated. | YOLO auto-approve mode toggled. | Control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring or belongs to another incarnation. Carries {code: lagged|replay_gap[, min_seq, max_seq, incarnation, resume]}; reconcile by reconnecting with ?since= and ?incarnation=. | Control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq, incarnation, turn_id?, turn_since?}; turn_id names the turn being watched and turn_since the cursor before its first frame (see the payload). | Control frame: the stream is terminating because the session closed. Carries {reason}. | Control frame, connection-local: the WS command this client just sent was REJECTED and was not applied. It is the WS twin of a REST error envelope. Carries {frame: the client frame type that was refused, code, reason}. Codes match the REST ones for the same condition: bad_frame (the frame did not decode; the reason names the field and the JSON type it must carry, e.g. a gate_id sent as the event payload's number instead of the envelope's string), no_pending_gate / stale_gate / gate_already_answered / gate_type_mismatch (the frame did not match the parked gate), approved_required (a confirm frame without a boolean approved; it never resolves a gate), decision_incomplete (an always session needs an explicit approved, the exact gate_id and its generation; or a confirm without gate_id while several gates are parked). For a confirm: gate_already_resolved (the gate already ended and this decision was not applied; the frame also carries gate_id, generation, outcome, decision {approved, persist_dirs, session_scope, trust_computer, remember?, superseded?} or decision_unknown:true, and request_id when the decision consumed carried that request_id) and gate_decision_pending (a decision for the gate is in flight and its outcome is not known yet: another client's, or this one past the wait; carries gate_id, generation and reason:connection_lost when the agent connection was lost; retry naming the gate to learn the outcome). For an answer: bad_request (the frame carries no answer, text or answers, an empty answer never resolves a question; or a workflow question with options gets an answer that names none of them, and stays parked), gate_cancelled (the question was resolved without consuming this answer) and decision_unconfirmed (the answer was not acknowledged within the wait; it may still apply). It is sent ONLY to the client that sent the frame, never broadcast. | Control frame, connection-local: the replayed acknowledgement of a question answer. When an answer frame is a RETRY naming the question gate this client already resolved, with the same answer, it carries replayed:true and {resolved: the ORIGINAL event.gate_resolved payload}. A retry never forwards a second answer. A confirm retry is refused gate_already_resolved instead. Sent only to the client that sent the frame. */
   onUnknown(callback: (message: UnknownServerMessage) => void): () => void;
 
   // ============================================================================
@@ -550,7 +613,7 @@ export interface IAgentStreamSessionWebSocket {
   setAutoReconnect(enabled: boolean): void;
 
   /** Whether automatic reconnection is currently enabled */
-  readonly autoReconnect: boolean;
+  isAutoReconnect(): boolean;
 
   /** Disconnect from WebSocket server */
   disconnect(reason?: string): void;
@@ -570,8 +633,23 @@ export interface IAgentStreamSessionWebSocket {
   /** Called when all reconnection attempts fail */
   onReconnectFailed(callback: () => void): () => void;
 
-  /** Called when WebSocket error occurs */
+  /**
+   * Called when WebSocket error occurs. A frame of type "error" the server
+   * sent arrives here as a WebSocketServerError (name "WebSocketServerError",
+   * with its `code` and the `frame`): the server refused one request, and
+   * the connection stays open unless a close follows.
+   */
   onError(callback: (error: Error) => void): () => void;
+
+  /**
+   * Called when the server closed the connection because another one took
+   * its place (close 1000, reason "taken over"; a Bot's voice has one
+   * controller). No automatic reconnect follows, even with
+   * reconnectOnNormalClose: connect again (with takeover) only when the
+   * user asks for it, or two always-connected clients take it from each
+   * other forever. onDisconnect still runs first.
+   */
+  onTakenOver(callback: (reason: string) => void): () => void;
 
   /** Remove event listener(s) */
   off(event: string, callback?: Function): void;
@@ -583,16 +661,16 @@ export interface IAgentStreamSessionWebSocket {
   close(code?: number, reason?: string): void;
 
   /** WebSocket ready state */
-  readonly readyState: number;
+  getReadyState(): number;
 
   /** WebSocket URL */
-  readonly url: string;
+  getUrl(): string;
 
   /** Whether currently connected */
-  readonly connected: boolean;
+  isConnected(): boolean;
 
   /** Whether currently attempting to reconnect */
-  readonly reconnecting: boolean;
+  isReconnecting(): boolean;
 
   // ============================================================================
   // Gateway stream (sequenced envelopes + control frames)
@@ -631,10 +709,10 @@ export interface IAgentStreamSessionWebSocket {
   frames(): AsyncIterableIterator<IStreamFrame>;
 
   /** The last seq seen. Survives reconnects; this is the resume cursor. */
-  readonly cursor: number | undefined;
+  getCursor(): number | undefined;
 
-  /** The incarnation that stamped `cursor`, when the gateway sends one. */
-  readonly incarnation: string | undefined;
+  /** The incarnation that stamped the cursor (`getCursor()`), when the gateway sends one. */
+  getIncarnation(): string | undefined;
 
   /**
    * Seed the cursor before connecting — resume a stream this client did
@@ -643,22 +721,16 @@ export interface IAgentStreamSessionWebSocket {
   setCursor(seq: number | undefined, incarnation?: string): void;
 }
 
+/** A credential passed for this socket cannot be sent by a browser WebSocket; connect() rejects with it. */
+function credentialNotSentError(headers: string[]): Error {
+  return Object.assign(
+    new Error(`WebSocket credential not sent: a browser WebSocket cannot send ${headers.join(", ")}. Pass a token group read from a query parameter, or use a cookie on the kit host.`),
+    { name: "WebSocketCredentialNotSentError", code: "WS_CREDENTIAL_NOT_SENT", headers },
+  );
+}
+
 const RAW_WEBSOCKET_OPEN = 1;
 const RAW_WEBSOCKET_CLOSED = 3;
-
-/**
- * The server refused the WebSocket upgrade for good: automatic reconnect has
- * stopped. `status` is the HTTP status; `code` the server's error code when
- * its answer named one, else "HTTP_<status>"; `via` says how it was learned:
- * "upgrade" (the transport showed the status) or "probe" (a plain GET after
- * repeated failures, see refusalProbeAfter).
- */
-export interface WebSocketUpgradeRefusedError extends Error {
-  name: "WebSocketUpgradeRefusedError";
-  status: number;
-  code: string;
-  via: "upgrade" | "probe";
-}
 
 function upgradeRefusedError(status: number, code: string | undefined, via: "upgrade" | "probe", cause?: unknown): WebSocketUpgradeRefusedError {
   const error = new Error(`WebSocket upgrade refused: HTTP ${status}`) as WebSocketUpgradeRefusedError;
@@ -667,6 +739,81 @@ function upgradeRefusedError(status: number, code: string | undefined, via: "upg
   error.code = code ?? `HTTP_${status}`;
   error.via = via;
   if (cause !== undefined) (error as Error & { cause?: unknown }).cause = cause;
+  return error;
+}
+
+/** Bytes of a refused upgrade's body read for its error; the rest is dropped. */
+const UPGRADE_BODY_CAP = 16384;
+/** Longest wait for that body, inside the connect timeout. */
+const UPGRADE_BODY_DEADLINE_MS = 2000;
+
+/**
+ * The error for an upgrade answered with `status` instead of 101. `body` is
+ * the response text when it was read completely (never when cut at the cap
+ * or by a deadline); only a JSON object naming a string `code` (at the top,
+ * or under `error`) adds the server's code, message and details.
+ */
+function upgradeResponseError(status: number, headers: Record<string, unknown>, body: string | undefined): WebSocketUpgradeRefusedError | WebSocketUpgradeFailedError {
+  let envelope: Record<string, unknown> | undefined;
+  if (body !== undefined) {
+    try {
+      const parsed: unknown = JSON.parse(body);
+      const isObject = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v);
+      if (isObject(parsed)) {
+        if (typeof parsed.code === "string") envelope = parsed;
+        else if (isObject(parsed.error) && typeof parsed.error.code === "string") envelope = parsed.error;
+      }
+    } catch { /* not JSON: the status alone */ }
+  }
+  const code = envelope ? envelope.code as string : undefined;
+  const serverMessage = envelope && typeof envelope.message === "string" && envelope.message !== "" ? envelope.message : undefined;
+  const details = envelope && envelope.details !== null && typeof envelope.details === "object" && !Array.isArray(envelope.details)
+    ? envelope.details as Record<string, unknown>
+    : undefined;
+  let retryAfterSecs: number | undefined;
+  const fromDetails = details?.retry_after_secs;
+  const header = headers["retry-after"];
+  if (typeof fromDetails === "number" && Number.isFinite(fromDetails) && fromDetails >= 0) retryAfterSecs = fromDetails;
+  else if (typeof header === "string" && /^\d+$/.test(header.trim())) retryAfterSecs = Number(header.trim());
+  if (status >= 400 && status < 500 && status !== 408 && status !== 425 && status !== 429) {
+    const refused = upgradeRefusedError(status, code, "upgrade");
+    if (serverMessage !== undefined) refused.serverMessage = serverMessage;
+    if (details !== undefined) refused.details = details;
+    if (retryAfterSecs !== undefined) refused.retryAfterSecs = retryAfterSecs;
+    return refused;
+  }
+  const failed = new Error(serverMessage ?? "WebSocket connection error") as WebSocketUpgradeFailedError;
+  failed.name = "WebSocketUpgradeFailedError";
+  failed.status = status;
+  if (code !== undefined) failed.code = code;
+  if (serverMessage !== undefined) failed.serverMessage = serverMessage;
+  if (details !== undefined) failed.details = details;
+  if (retryAfterSecs !== undefined) failed.retryAfterSecs = retryAfterSecs;
+  failed.via = "upgrade";
+  return failed;
+}
+
+/**
+ * A frame of type "error" the server sent: it refused one request, and the
+ * connection stays open unless a close follows. onError receives it as this
+ * Error, never as the bare frame, so `name` tells it from a transport failure.
+ * `code` is the frame's code (or its `error.code` / `error.type`), else
+ * "server_error"; `frame` is the frame as received.
+ */
+export interface WebSocketServerError extends Error {
+  name: "WebSocketServerError";
+  code: string;
+  frame: Record<string, unknown>;
+}
+
+function serverFrameError(frame: Record<string, unknown>): WebSocketServerError {
+  const nested = frame.error !== null && typeof frame.error === "object" ? frame.error as Record<string, unknown> : {};
+  const text = (...values: unknown[]): string | undefined => values.find((v): v is string => typeof v === "string" && v !== "");
+  const code = text(frame.code, nested.code, nested.type) ?? "server_error";
+  const error = new Error(text(frame.message, nested.message) ?? `server error: ${code}`) as WebSocketServerError;
+  error.name = "WebSocketServerError";
+  error.code = code;
+  error.frame = frame;
   return error;
 }
 
@@ -701,12 +848,12 @@ const nodeBuiltinWebSocketUnsafe =
   if (a === 6) return !ge(6, 27, 0);
   if (a === 7) return !ge(7, 28, 0);
   if (a === 8) return !ge(8, 5, 0);
-  return a < 6;                                         // ≥ 9: ASSUMED fixed (a later major carries the fix); T1 row
+  return a < 6;                                         // ≥ 9: ASSUMED fixed (a later major carries the fix)
 }
 // </node-builtin-ws-unsafe>
 ;
 
-export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket {
+export class AgentSessionsConnectWebSocket implements IAgentSessionsConnectWebSocket {
   /**
    * The socket constructor every instance of this client uses, in place of
    * its own choice (the `ws` package on Node, the global WebSocket
@@ -737,6 +884,16 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
   // and the URL the last socket was opened with, for the probe.
   private _unopenedFailures = 0;
   private _lastConnectUrl: string | undefined = undefined;
+  // The last socket created is the global WebSocket (no HTTP status of a
+  // refused upgrade can be read from it).
+  private _lastSocketGlobal = false;
+  // Ends the body read of a refused upgrade still in progress; disconnect()
+  // calls it so the attempt settles at once.
+  private _upgradeReadAbort: (() => void) | null = null;
+  // The open attempt disconnect() retired (0: none since the last openSocket).
+  // Only that attempt still reports a refused upgrade; an attempt another
+  // connect superseded settles silently even if a disconnect follows.
+  private _retiredByDisconnect = 0;
   // FIFO queue for message dispatch — preserves frame ordering even when
   // a Blob frame requires async arrayBuffer() decode and a later string/
   // ArrayBuffer frame arrives synchronously.
@@ -898,7 +1055,13 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
     this.reconnectAttempts = 0;
     this._reconnecting = false;
     this.clearReconnectTimer();
-    return this.openSocket(false);
+    // A new connect() starts a new stream for frames().
+    this._streamEnded = false;
+    return this.openSocket(false).catch((error: unknown) => {
+      // Rejected to the caller and nothing retries it: frames() ends.
+      if (!this._reconnecting) this.endFrames();
+      throw error;
+    });
   }
 
   /**
@@ -912,12 +1075,28 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
       // after each await, because the caller may have disconnected and
       // connected again while this attempt was still waiting.
       const attempt = ++this._openAttempt;
+      this._retiredByDisconnect = 0;
+      // An older attempt still reading a refused upgrade's body is superseded
+      // now: it settles at once, silently.
+      const olderRead = this._upgradeReadAbort;
+      this._upgradeReadAbort = null;
+      olderRead?.();
       const superseded = (): boolean => attempt !== this._openAttempt;
       let timedOut = false;
       // The socket this attempt installed, once it has one.
       let installed: IRawWebSocketLike | null = null;
+      // Settles a refused upgrade whose body is being read (see the
+      // unexpected-response handler below); set only during that read.
+      let settleUpgrade: (() => void) | null = null;
+      const deadlineAt = Date.now() + (this.options.timeout ?? 30000);
       const timeoutId = setTimeout(() => {
         timedOut = true;
+        // The server already answered the upgrade: report that answer (from
+        // what was read so far) instead of a bare timeout.
+        if (settleUpgrade) {
+          settleUpgrade();
+          return;
+        }
         reject(new Error(`Connection timeout after ${this.options.timeout}ms`));
         if (superseded()) return;
         if (installed) {
@@ -1007,6 +1186,11 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
           // Set when this socket ended for a reason a reconnect cannot cure: a
           // local resource cap, or an upgrade the server refused for good.
           let finalError: Error | undefined;
+          // Set once the server answered the upgrade with an HTTP status: from
+          // then on the attempt settles from that answer only, and every native
+          // error/close of this socket is dropped (`ws` emits them after
+          // terminate(), Bun's built-in `ws` a close 1002 of its own).
+          let upgradeHeld = false;
           this.stopLiveness();
 
 
@@ -1195,7 +1379,14 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
               // dispatch after the disconnect announcement below.
               dispatchAlive.alive = false;
               if (this._socketGen !== installedGen) return;
+              // Another connection took this one's place on purpose (a Bot's voice
+              // has one controller). Reconnecting would take it back, and two
+              // clients that both reconnect trade it forever: final, whatever
+              // reconnectOnNormalClose says. Not after the caller's own disconnect();
+              // read before onDisconnect runs, which may call disconnect() itself.
+              const takenOver = code === 1000 && reason === "taken over" && this.shouldReconnect;
               this.emitEvent("disconnect", code, reason);
+              if (takenOver) this.emitEvent("__taken_over", reason);
               // The backoff starts over only after a connection that lasted.
               if (opened && Date.now() - openedAt >= (this.options.reconnectStableMs ?? 30000)) {
                 this.reconnectAttempts = 0;
@@ -1215,7 +1406,7 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
               // is cured by trying again.
               const isTerminal = code === 1008 || code === 1003 || code === 1002 || (code >= 4000 && code < 5000)
                 || (code === 1000 && this.options.reconnectOnNormalClose !== true)
-                || finalError !== undefined;
+                || takenOver || finalError !== undefined;
               // A connect() the caller made that never opened was rejected to
               // the caller. It must not leave a reconnect loop running behind
               // that rejection; the caller decides whether to connect again.
@@ -1231,21 +1422,27 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
                 } else {
                   this.scheduleReconnect();
                 }
-              } else if (this._reconnecting) {
-                // A reconnect attempt that will not be followed by another.
-                this._reconnecting = false;
-                if (this.shouldReconnect && this.options.reconnect) this.emitEvent("reconnect_failed");
+              } else {
+                if (this._reconnecting) {
+                  // A reconnect attempt that will not be followed by another.
+                  this._reconnecting = false;
+                  if (this.shouldReconnect && this.options.reconnect) this.emitEvent("reconnect_failed");
+                }
+                // No socket follows this one: frames() ends.
+                this.endFrames();
               }
             });
           };
 
           this.ws.onclose = (event) => {
+            if (upgradeHeld) return;
             finishClose(event.code, event.reason);
           };
 
           this.ws.onerror = (event) => {
-            // Noise from a socket the liveness check already gave up on.
-            if (closeHandled) return;
+            // Noise from a socket the liveness check already gave up on, or
+            // from one whose refused upgrade settles the attempt itself.
+            if (closeHandled || upgradeHeld) return;
             clearTimeout(timeoutId);
             // The transport's own error when it exposes one: `ws` does, a
             // browser socket and Node's built-in one do not.
@@ -1275,6 +1472,109 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
             this.emitEvent("error", error);
             reject(error);
           };
+
+          // A refused upgrade on the `ws` transport (the npm package or Bun's
+          // built-in one). With this listener `ws` neither aborts the request
+          // nor emits error/close, so the client reads the answer, tears the
+          // socket down and reports once: error event, rejection, disconnect
+          // 1006, exactly what the native events gave before.
+          const emitter = socket as unknown as {
+            on?: (event: string, listener: (...args: any[]) => void) => void;
+            terminate?: () => void;
+          };
+          if (!this._lastSocketGlobal && typeof emitter.on === "function") {
+            emitter.on("unexpected-response", (_request: unknown, response: unknown) => {
+              const res = (response ?? {}) as {
+                statusCode?: number;
+                headers?: Record<string, unknown>;
+                on?: (event: string, listener: (...args: any[]) => void) => void;
+                destroy?: () => void;
+              };
+              // Before anything else: no native event of this socket counts now.
+              upgradeHeld = true;
+              const tearDown = (): void => {
+                try { res.destroy?.(); } catch { /* already gone */ }
+                try { emitter.terminate?.(); } catch { /* already closed */ }
+              };
+              if (closeHandled) {
+                tearDown();
+                return;
+              }
+              const status = typeof res.statusCode === "number" ? res.statusCode : 0;
+              const chunks: Uint8Array[] = [];
+              let size = 0;
+              let complete = false;
+              let truncated = false;
+              let settled = false;
+              let bodyTimer: ReturnType<typeof setTimeout> | null = null;
+              const settle = (): void => {
+                if (settled) return;
+                settled = true;
+                settleUpgrade = null;
+                if (this._upgradeReadAbort === settle) this._upgradeReadAbort = null;
+                if (bodyTimer) clearTimeout(bodyTimer);
+                tearDown();
+                // Replaced by a newer connect(): that one owns the client. This
+                // attempt ends silently, its own promise rejected without an event.
+                if (superseded() && this._retiredByDisconnect !== attempt) {
+                  closeHandled = true;
+                  abandoned();
+                  return;
+                }
+                let body: string | undefined;
+                if (complete && !truncated) {
+                  const all = new Uint8Array(size);
+                  let at = 0;
+                  for (const chunk of chunks) { all.set(chunk, at); at += chunk.length; }
+                  body = new TextDecoder().decode(all);
+                }
+                const error = upgradeResponseError(status, res.headers ?? {}, body);
+                if (error.name === "WebSocketUpgradeRefusedError") finalError = error;
+                clearTimeout(timeoutId);
+                this.emitEvent("error", error);
+                // A no-op when the connect timeout already answered.
+                reject(error);
+                finishClose(1006, "");
+              };
+              if (superseded() || timedOut) {
+                // Nothing will read this answer: settle without its body.
+                settle();
+                return;
+              }
+              settleUpgrade = settle;
+              this._upgradeReadAbort = settle;
+              const left = deadlineAt - Date.now();
+              // Past the connect deadline the connect timer settles the read.
+              if (left > UPGRADE_BODY_DEADLINE_MS) bodyTimer = setTimeout(settle, UPGRADE_BODY_DEADLINE_MS);
+              if (typeof res.on !== "function") {
+                settle();
+                return;
+              }
+              res.on("data", (data: unknown) => {
+                if (settled) return;
+                const chunk = typeof data === "string" ? new TextEncoder().encode(data)
+                  : data instanceof Uint8Array ? data
+                  : data instanceof ArrayBuffer ? new Uint8Array(data)
+                  : new Uint8Array(0);
+                if (size + chunk.length > UPGRADE_BODY_CAP) {
+                  truncated = true;
+                  settle();
+                  return;
+                }
+                chunks.push(chunk);
+                size += chunk.length;
+              });
+              res.on("end", () => {
+                // Bun's built-in `ws` ends the response with whatever had arrived
+                // with the status line, so an end is a whole body only when it
+                // matches a declared length.
+                const declared = Number((res.headers ?? {})["content-length"]);
+                if (!settled) complete = !(Number.isInteger(declared) && declared >= 0) || declared === size;
+                settle();
+              });
+              for (const event of ["error", "aborted", "close"]) res.on(event, () => settle());
+            });
+          }
         } catch (error) {
           clearTimeout(timeoutId);
           if (isRetry) {
@@ -1283,6 +1583,7 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
             this.emitEvent("error", error instanceof Error ? error : new Error(String(error)));
             this._reconnecting = false;
             this.emitEvent("reconnect_failed");
+            this.endFrames();
           }
           reject(error);
         }
@@ -1342,6 +1643,14 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
     };
     const connectUrl = buildConnectUrl();
     this._lastConnectUrl = connectUrl;
+    this._lastSocketGlobal = false;
+    // socketTransport "ws": the `ws` package or nothing for the automatic
+    // choice below. An injected factory or webSocketImpl still wins. Checked
+    // before any socket exists, so an invalid value opens nothing.
+    const forceWs = this.options.socketTransport === "ws";
+    if (this.options.socketTransport !== undefined && this.options.socketTransport !== "auto" && !forceWs) {
+      throw new Error(`socketTransport must be "auto" or "ws", got ${JSON.stringify(this.options.socketTransport)}`);
+    }
 
     // Injected transport wins outright. No global-WebSocket probe, no `ws`
     // import, no degraded path: if the factory throws or returns something
@@ -1359,8 +1668,17 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
       }
       return socket;
     }
-    const impl = AgentStreamSessionWebSocket.webSocketImpl;
-    if (typeof impl === "function") return new impl(connectUrl, this.options.protocols);
+    const impl = AgentSessionsConnectWebSocket.webSocketImpl;
+    if (typeof impl === "function") {
+      // The injected constructor takes only a URL and protocols: a header credential the call
+      // asked for cannot reach the upgrade on any runtime, so refuse it as a browser socket does.
+      if (this.options.requireHeaderCredentials && this.options.requireHeaderCredentials.length > 0 && this.options.headers) {
+        const wanted = this.options.requireHeaderCredentials.map((name) => name.toLowerCase());
+        const refused = Object.keys(this.options.headers).filter((name) => wanted.includes(name.toLowerCase()));
+        if (refused.length > 0) throw credentialNotSentError(refused);
+      }
+      return new impl(connectUrl, this.options.protocols);
+    }
 
     // Runtime detection: on Node >=22 `globalThis.WebSocket` exists but cannot
     // accept custom headers. When the caller supplied `options.headers`, prefer
@@ -1393,19 +1711,28 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
       ),
       { cause },
     );
-    if (typeof globalCtor === "function" && !builtinUnsafe && (isBrowserRuntime || (!hasHeaders && !isNode))) {
+    if (forceWs && isBrowserRuntime) {
+      throw new Error("socketTransport \"ws\" is not available in a browser, which only has the global WebSocket");
+    }
+    if (typeof globalCtor === "function" && !builtinUnsafe && !forceWs && (isBrowserRuntime || (!hasHeaders && !isNode))) {
       if (isBrowserRuntime && hasHeaders) {
         // A browser WebSocket cannot send headers, so kitAuth password, jwt
         // and identity headers never reach the upgrade. The proxy accepts two
         // header-free forms: a token group read from a query parameter, or a
         // cookie on the kit host. Say so once instead of failing silently.
         const dropped = Object.keys(this.options.headers!).filter((name) => /^(authorization|cookie|x-hoody-[\w-]+|proxy-authorization)$/i.test(name));
+        if (this.options.requireHeaderCredentials && this.options.requireHeaderCredentials.length > 0) {
+          const wanted = this.options.requireHeaderCredentials.map((name) => name.toLowerCase());
+          const refused = Object.keys(this.options.headers!).filter((name) => wanted.includes(name.toLowerCase()));
+          if (refused.length > 0) throw credentialNotSentError(refused);
+        }
         const flags = globalThis as { __hoodyWsHeaderWarned?: boolean };
         if (dropped.length > 0 && !flags.__hoodyWsHeaderWarned) {
           flags.__hoodyWsHeaderWarned = true;
           console.warn(`[hoody-sdk] a browser WebSocket cannot send headers; ${dropped.join(", ")} not sent on the upgrade. Use a proxy token group read from a query parameter, or a cookie on the kit host.`);
         }
       }
+      this._lastSocketGlobal = true;
       return new globalCtor(connectUrl, this.options.protocols);
     }
 
@@ -1415,16 +1742,20 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
       wsModule = await import(specifier) as { default?: IRawWebSocketCtor };
     } catch (cause) {
       if (builtinUnsafe) throw builtinRefused(cause);
+      if (forceWs) throw Object.assign(new Error("socketTransport \"ws\": the `ws` package could not be loaded (" + (cause instanceof Error ? cause.message : String(cause)) + ")"), { cause });
       // `ws` not installed — fall back to global WS, losing headers. This is
       // the same degraded path as when the module exists but has no default.
       if (typeof globalCtor === "function") {
+        this._lastSocketGlobal = true;
         return new globalCtor(connectUrl, this.options.protocols);
       }
       throw new Error("WebSocket implementation unavailable in this runtime");
     }
     if (typeof wsModule.default !== "function") {
       if (builtinUnsafe) throw builtinRefused(new Error("the module has no WebSocket constructor export"));
+      if (forceWs) throw new Error("socketTransport \"ws\": the `ws` module has no WebSocket constructor export");
       if (typeof globalCtor === "function") {
+        this._lastSocketGlobal = true;
         return new globalCtor(connectUrl, this.options.protocols);
       }
       throw new Error("WebSocket implementation unavailable in this runtime");
@@ -1466,7 +1797,7 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
     }
   }
 
-  get autoReconnect(): boolean {
+  isAutoReconnect(): boolean {
     return this.options.reconnect !== false;
   }
 
@@ -1476,7 +1807,9 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
   disconnect(reason?: string): void {
     this.shouldReconnect = false;
     this.clearReconnectTimer();
-    // Retire an open attempt still waiting for its URL or its socket.
+    // Retire an open attempt still waiting for its URL or its socket. Only the
+    // attempt current at the first disconnect() is the one it retired.
+    if (this._retiredByDisconnect === 0) this._retiredByDisconnect = this._openAttempt;
     this._openAttempt++;
     // A disconnect during a backoff wait ends the series: nothing is pending.
     this._reconnecting = false;
@@ -1491,6 +1824,12 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
       this.ws.close(1000, reason || "Normal closure");
       this.ws = null;
     }
+    // A refused upgrade still being read reports now; nothing follows it.
+    const read = this._upgradeReadAbort;
+    this._upgradeReadAbort = null;
+    read?.();
+    // The caller closed it: frames() ends after what is already buffered.
+    this.endFrames();
   }
 
   /**
@@ -1500,6 +1839,7 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
     if (this.reconnectAttempts >= (this.options.reconnectAttempts ?? Infinity)) {
       this._reconnecting = false;
       this.emitEvent("reconnect_failed");
+      this.endFrames();
       return;
     }
 
@@ -1580,6 +1920,7 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
       this._reconnecting = false;
       this.emitEvent("error", upgradeRefusedError(status, code, "probe"));
       this.emitEvent("reconnect_failed");
+      this.endFrames();
       return;
     }
     this.scheduleReconnect();
@@ -1670,8 +2011,14 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
     this.dispatchTypedMessage(messageType, message);
   }
 
-  /** The original per-type dispatch, unchanged in behaviour. */
+  /** The per-type dispatch. */
   private dispatchTypedMessage(messageType: unknown, message: unknown): void {
+    if (messageType === "error") {
+      // "error" is also the key of onError's listeners: they get the frame as an
+      // Error, as their type says, and never the bare frame.
+      this.emitEvent("error", serverFrameError(message as Record<string, unknown>));
+      return;
+    }
     const handlers = this.eventHandlers.get(messageType as string);
     if (handlers) {
       handlers.forEach(handler => {
@@ -1766,6 +2113,14 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
     }
   }
 
+  /** End frames() without an end frame: the socket is gone and none follows. */
+  private endFrames(): void {
+    this._streamEnded = true;
+    for (const resolveWaiter of this._frameWaiters.splice(0, this._frameWaiters.length)) {
+      resolveWaiter({ value: undefined as never, done: true });
+    }
+  }
+
   /**
    * Handle an incoming BINARY frame. Default implementation decodes
    * the bytes as UTF-8 and routes them to `handleString` — i.e. for
@@ -1802,16 +2157,18 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
   }
 
   /**
-   * Inbound WS frame: answer a parked confirm gate. Carries {type:"confirm", gate_id?, generation?, approved, persist_dirs?, trust_container?, reason?, remember?, superseded?}. trust_container (with approved) accepts the event.confirm_request exec_trust offer, as on /confirm. reason, remember and superseded are as on /confirm: reason (with approved false, at most 500 characters) reaches the agent in the refused call's result; remember false approves this call only; superseded (with approved false, no reason, no session_scope) declines because the user sent a new message instead, and the agent does not read it as a refusal. gate_id is the stream frame ENVELOPE's gate.id (a sibling of `event`, NOT a field inside the event payload — the payload's own gate_id is the daemon's number), and is published as pending_gate.id on GET /sessions/{id} and /replay and as pending_gate_ref.id on GET /sessions/{id}/state. It is a STRING: sending the payload's number is refused bad_frame, naming the field; without it the answer applies to whatever gate is parked when it arrives. request_id? is the client's own id for the decision (at most 64 characters from A-Z, a-z, 0-9, '.', '_', '-'). Every outcome is ANSWERED, never silently dropped: a consumed decision by the broadcast event.gate_resolved, anything else by a `refused` frame naming the code — a stale or absent gate, a gate that already ended (gate_already_resolved, with what was decided; never a second forward), or a decision in flight (gate_decision_pending). approved is required in every mode: a frame without a boolean approved is refused approved_required and never resolves a gate. On an always session the frame must also carry the exact gate_id and its generation, or it is refused decision_incomplete. | Inbound WS frame: answer a parked question gate. Carries {type:"answer", gate_id?, generation?, answer?, text?, answers?}; gate_id is as for confirm. A stale, duplicate or absent gate is a `refused` frame, and a retry that names the question this client already resolved replays the original `gate_resolved_ack`. | Inbound WS frame: cancel the active turn (Esc). Carries {type:"cancel", turn_id?}. With turn_id it cancels only that turn (as POST /sessions/{id}/cancel with turn_id); without, whatever is running. | Inbound WS frame: feed input to a running workflow. Carries {type:"workflow_message", text}.
+   * Inbound WS frame: answer a parked confirm gate. Carries {type:"confirm", gate_id?, generation?, approved, persist_dirs?, trust_computer?, reason?, remember?, superseded?}. trust_computer (with approved) accepts the event.confirm_request exec_trust offer, as on /api/v1/agent/sessions/{id}/confirm. reason, remember and superseded are as on /api/v1/agent/sessions/{id}/confirm: reason (with approved false, at most 500 characters) reaches the agent in the refused call's result; remember false approves this call only; superseded (with approved false, no reason, no session_scope) declines because the user sent a new message instead, and the agent does not read it as a refusal. gate_id is the stream frame ENVELOPE's gate.id (a sibling of `event`, NOT a field inside the event payload; the payload's own gate_id is the agent's own number, a different id), and is published as pending_gate.id on GET /api/v1/agent/sessions/{id} and /api/v1/agent/sessions/{id}/replay and as pending_gate_ref.id on GET /api/v1/agent/sessions/{id}/state. It is a STRING: sending the payload's number is refused bad_frame, naming the field; without it the answer applies to whatever gate is parked when it arrives. request_id? is the client's own id for the decision (at most 64 characters from A-Z, a-z, 0-9, '.', '_', '-'). Every outcome is ANSWERED, never silently dropped: a consumed decision by the broadcast event.gate_resolved, anything else by a `refused` frame naming the code. That covers a stale or absent gate, a gate that already ended (gate_already_resolved, with what was decided; never a second forward) and a decision in flight (gate_decision_pending). approved is required in every mode: a frame without a boolean approved is refused approved_required and never resolves a gate. On an always session the frame must also carry the exact gate_id and its generation, or it is refused decision_incomplete. | Inbound WS frame: answer a parked question gate. Carries {type:"answer", gate_id?, generation?, answer?, text?, answers?}; gate_id is as for confirm. A stale, duplicate or absent gate is a `refused` frame, and a retry that names the question this client already resolved replays the original `gate_resolved_ack` when it carries the same answer (another answer is a `refused` frame, gate_already_answered). | Inbound WS frame: cancel the active turn (Esc). Carries {type:"cancel", turn_id?}. With turn_id it cancels only that turn (as POST /api/v1/agent/sessions/{id}/cancel with turn_id); without, whatever is running. | Inbound WS frame: feed input to a running workflow. Carries {type:"workflow_message", text}.
+   * @param fields Message parameters
    */
-  unknown(): void {
+  unknown(fields?: Record<string, unknown>): void {
     this.send({
+      ...fields,
       type: "unknown",
     });
   }
 
   /**
-   * Provider account rotated mid-turn. | Turn complete — terminates a prompt turn. Carries the turn's typed outcome / error_code and notices [{code, message?, detail?}] — advisory, never an error: hook_skipped_by_policy when a configured user hook was skipped under the always policy (open set). | The session's approval policy (mode / lock / rules) changed; carries the new revision. | Hoody platform auth state changed — login, token adopt, or logout (global broadcast; mirrors GET /hoody/auth/status). | Auto-user composed the next user turn. | Auto-user composition progress. | Background bash job list snapshot. | Background bash job output tail chunk. | Conversation cleared. | The daemon admitted and forwarded a command that carried a request_id — the sender-only positive counterpart of event.command_refused {type, request_id}; the command's effect still arrives as its ordinary broadcast event. CONSUMED BY THE GATEWAY: it answers the HTTP request / WS frame that sent the command and is never fanned out to stream subscribers. | Commands sent with POST /sessions/{id}/commands reached the session: messages added to the conversation (how next_step inside the running turn, new_turn in a turn of their own, with turn_id), or a stop carried out (how stop, with what it stopped). Carries command_ids. | A session command was refused (unregistered type, a setter frozen by a locked approval policy, an incomplete decision, a decision dropped at consumption) — a sender-only frame carrying type, code, reason, protocol_version, request_id; never fails a turn. CONSUMED BY THE GATEWAY: it answers the HTTP request / WS frame that sent the command and is never fanned out to stream subscribers. | Commands sent with POST /sessions/{id}/commands ended without reaching the session: superseded by a stop, refused (a hook blocked them, the session closed, or the session cannot take them) or failed (the session could not record them). Carries command_ids, state and reason. | Context window compacted. | A delegated agent discarded its conversation and started a new one: the context meter no longer describes anything (clear it). | Context compaction started. | Tool/plan confirmation requested (parks a gate). On a helper_gates session a helper's request carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. | The decision requirements of the PARKED gate changed (the approver lease was acquired, taken over, renewed past expiry or released while a gate is parked): {gate_id, generation, lease_required, helper_id?} — a client that captured the gate at park time refreshes what its decision must carry. On a helper_gates session each parked helper confirm is re-announced too, with its helper_id. | Directory-access scope changed/locked. | A peer client detached from this shared live session (multi-attach presence). | A delegated turn went quiet past the stall window but is still running (NON-FATAL — not an error). | Session error (e.g. join_not_ready). | A parked confirm/question gate was resolved (possibly by another attached client). | Files-tab import progress. | Fusion configuration changed. | A Jev decision made for this session finished (success, error or invalid answer): {cost_usd (null when any attempt's spend is unknown), known_cost_usd, cost_unknown_attempts, attempts, latency_ms, model, request_id, input_tokens, output_tokens, error_code}. Produced by POST /sessions/{id}/jev/decide; the standalone /jev routes report usage only in their reply and in GET /jev/settings. | Fusion member trajectory progress. Not sent while the fusion runs inside a silent workflow step. | Hoody concept mode toggled. | A hook executed. | Hook execution summary. | Initial session state snapshot. | Available loops list updated. | A master TODO was filed. | Memory subsystem notice. | Orchestrator delegation finished. | Orchestrator delegated a task to a subagent. | Orchestrator run complete. | Orchestrator narration. | Orchestrator run started. | Orchestrator step progress. | On an outcome_claims session, the report the turn closes with, sent just before event.agent_done: the model's claims and, for each tool call it cited, whether it is this turn's own call and what it returned. The claims are the model's words; nothing here says they are true. | global pause-freeze state changed. | A session permission rule auto-applied (first time). | Session permission rules snapshot. | Plan-mode planning complete. | Question-assist suggestion. | Daemon quitting. | A delegated agent's subscription usage limits (session/weekly windows) changed. | Active realm changed (global broadcast). | Resolved default working dir of the bound container (filetree/chip scope hint). | Full viewport snapshot after session_started. | Mid-turn join with an overflowed turn journal — the active turn's earlier output is elided (connection-local frame). | LLM call retried. | The session was archived for every attached client. | The set of listable sessions (or a session's attach state) changed — clients re-list. | Session title set or cleared. | Session attached. Built by the gateway from the attach acknowledgement; its data is the same `started` object POST /sessions returns. It is the first frame (seq 1) of a fresh attach while the stream still retains seq 1. A resume with `since` does not repeat it, except when the cursor cannot be resumed: an invalid `since` (or Last-Event-ID), an `incarnation` that does not match the session's current one, or a cursor ahead of the stream is each answered with a `lagged` frame (code replay_gap) and the whole retained stream, which includes it if seq 1 is still retained. A late attach after the oldest frames were evicted starts with a `lagged` frame (code replay_gap) instead and does not carry it. In either case read the same object as `started` from GET /sessions/{id}, which carries it while the session is attached. | Available skills list updated. | Skill enable/trust state changed. | Assistant text stream chunk. | Assistant text stream complete. | Profile sync status. | Background task activity. | Background task finished. | Background task started. | Background task transcript entry (upsert-poll). | Snapshot of background tasks. | Reasoning/thinking stream chunk. | Thinking stall warning. | TODO list updated. | Tool invocation. | Tool mode changed/locked. | Tool result. | A prompt or workflow dispatch was accepted but discarded without running, because it was queued while another client's turn waited on a confirmation or question. It closes that dispatch only (its turn_id); the waiting turn keeps running and no event.agent_done is sent for the discarded one. | The durable admission receipt for a prompt or workflow turn — a sender-only frame {turn_id, state, duplicate, accepted_at, request_id, …} written once the ledger row is on disk. CONSUMED BY THE GATEWAY: it is the 202 body of the request that dispatched the turn and is never fanned out to stream subscribers. | Echo of the user's input. | Question posed to the user (parks a gate). On a helper_gates session a helper's question carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. | Verbosity setting changed. | Workflow run complete. | Workflow run started. | Workflow step done. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | Workflow step output. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | Workflow step start. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | The workflow-authoring tools became available or unavailable mid-session (the session's tool mode, standard or orchestrator, was applied by its first dispatch; the chat agent was switched; or the agent's `tools:` frontmatter was edited on disk). Not sent for the initial value, which the init state carries as workflow_tools_available. | Available workflows list updated. | YOLO auto-approve mode toggled. | Gateway control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring or belongs to another incarnation. Carries {code: lagged|replay_gap[, min_seq, max_seq, incarnation, resume]}; reconcile by reconnecting with ?since= and ?incarnation=. | Gateway control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq, incarnation, turn_id?, turn_since?}; turn_id names the turn being watched and turn_since the cursor before its first frame (see the payload). | Gateway control frame: the stream is terminating because the session closed. Carries {reason}. | Gateway control frame, connection-local: the WS command this client just sent was REJECTED and nothing was forwarded to the daemon — the WS twin of a REST error envelope. Carries {frame: the client frame type that was refused, code, reason}. Codes match the REST ones for the same condition: bad_frame (the frame did not decode — the reason names the field and the JSON type it must carry, e.g. a gate_id sent as the daemon number instead of the addressable string), no_pending_gate / stale_gate / gate_already_answered / gate_type_mismatch (the frame did not match the parked gate), approved_required (a confirm frame without a boolean approved; it never resolves a gate), decision_incomplete (an always session needs an explicit approved, the exact gate_id and its generation; or a confirm without gate_id while several gates are parked). For a confirm: gate_already_resolved (the gate already ended and this decision was not applied; the frame also carries gate_id, generation, outcome, decision {approved, persist_dirs, session_scope, trust_container, remember?, superseded?} or decision_unknown:true, and request_id when the decision consumed carried that request_id) and gate_decision_pending (a decision for the gate is in flight and its outcome is not known yet — another client's, or this one past the wait; carries gate_id, generation and reason:connection_lost when the agent connection was lost; retry naming the gate to learn the outcome). For an answer: gate_cancelled (the question was resolved without consuming this answer) and decision_unconfirmed (the daemon did not acknowledge within the wait — it may still apply). It is sent ONLY to the client that sent the frame, never broadcast. | Gateway control frame, connection-local: the replayed acknowledgement of a question answer. When an answer frame is a RETRY naming the question gate this client already resolved, it carries replayed:true and {resolved: the ORIGINAL event.gate_resolved payload} — a retry never forwards a second answer. A confirm retry is refused gate_already_resolved instead. Sent only to the client that sent the frame.
+   * Provider account rotated mid-turn. | Turn complete: it ends a prompt turn. Carries the turn's typed outcome / error_code and notices [{code, message?, detail?}]. Notices are advisory, never an error: hook_skipped_by_policy when a configured user hook was skipped under the always policy, agent_compacts_itself when a Claude Code session's agent decides on its own when to compact its conversation, history_unsaved when a Claude Code session answered from a conversation Hoody could not save, spend_cap_warning when the session's spend file sets action warn and the turn ran over a spend cap (detail session_cap or turn_cap; one notice per cap) (open set). A turn a spend cap stopped fails with error_code spend_cap. | The session's approval policy (mode / lock / rules) changed; carries the new revision. | Hoody platform auth state changed: login, token adopt, or logout (global broadcast; mirrors GET /api/v1/agent/hoody/auth/status). | Auto-user composed the next user turn. | Auto-user composition progress. | Background bash job list snapshot. | Background bash job output tail chunk. | Conversation cleared. | Commands sent with POST /api/v1/agent/sessions/{id}/commands reached the session: messages added to the conversation (how next_step inside the running turn, new_turn in a turn of their own, with turn_id), or a stop carried out (how stop, with what it stopped). Carries command_ids. | Commands sent with POST /api/v1/agent/sessions/{id}/commands ended without reaching the session: superseded by a stop, refused (a hook blocked them, the session closed, or the session cannot take them) or failed (the session could not record them). Carries command_ids, state and reason. | A waiter this session owns (POST /api/v1/agent/sessions/{id}/waiters) ended: an outcome was found, or it timed out, was cancelled, or its target closed. Carries the waiter. | Context window compacted. | A delegated agent discarded its conversation and started a new one: the context meter no longer describes anything (clear it). | Context compaction started. | Tool/plan confirmation requested (parks a gate). On a helper_gates session a helper's request carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. | The decision requirements of the PARKED gate changed (the approver lease was acquired, taken over, renewed past expiry or released while a gate is parked): {gate_id, generation, lease_required, helper_id?}. A client that captured the gate at park time refreshes what its decision must carry. On a helper_gates session each parked helper confirm is re-announced too, with its helper_id. | Directory-access scope changed/locked. | A peer client detached from this shared live session (multi-attach presence). | A delegated turn went quiet past the stall window but is still running (not fatal, not an error). | Session error (e.g. join_not_ready). | A parked confirm/question gate was resolved (possibly by another attached client). | Files-tab import progress. | Fusion configuration changed. | A Jev decision made for this session finished (success, error or invalid answer): {cost_usd (null when any attempt's spend is unknown), known_cost_usd, cost_unknown_attempts, attempts, latency_ms, model, request_id, input_tokens, output_tokens, error_code}. Produced by POST /api/v1/agent/sessions/{id}/jev/decide; the standalone /api/v1/agent/jev routes report usage only in their reply and in GET /api/v1/agent/jev/settings. | Token usage of a turn that already ended, counted after its completion events went out (a Claude Code agent reported it after the turn closed). Add it to the session's lifetime totals only: it is not a response, and it belongs to no turn in progress, so it changes no turn's usage, timing or context use. turn_id names the ended turn. | Fusion member trajectory progress. Not sent while the fusion runs inside a silent workflow step. | Hoody concept mode toggled. | A hook executed. | Hook execution summary. | Initial session state snapshot. | Available loops list updated. | A master TODO was filed. | Memory subsystem notice. | Orchestrator delegation finished. | Orchestrator delegated a task to a subagent. | Orchestrator run complete. | Orchestrator narration. | Orchestrator run started. | Orchestrator step progress. | On an outcome_claims session, the report the turn closes with, sent just before event.agent_done: the model's claims and, for each tool call it cited, whether it is this turn's own call and what it returned. The claims are the model's words; nothing here says they are true. | The agent was paused or resumed (PUT /api/v1/agent/pause, or the TUI's pause): sent to every attached session, since the pause covers every session of the agent. | A session permission rule auto-applied (first time). | Session permission rules snapshot. | Plan-mode planning complete. | Question-assist suggestion. | The agent is shutting down. | A delegated agent's subscription usage limits (session/weekly windows) changed. | Active realm changed (global broadcast). | Resolved default working dir of the bound computer (filetree/chip scope hint). | Full viewport snapshot after session_started. | Mid-turn join with an overflowed turn journal: the active turn's earlier output is elided (connection-local frame). | A model call is retried: attempt of max_retries, after wait_secs, with the cause in reason. With attempt 0 and max_retries 0 it is a one-off notice instead, its whole text in reason, to show as a status line and not as a retry: a Claude Code session reconnecting, a previous Claude Code conversation that could not be resumed (a new one was started), a fork or trim whose Claude Code conversation starts fresh with the history passed in as text, or the model an auto-reply round uses on a Claude Code session. | The session was archived for every attached client. | The set of listable sessions (or a session's attach state) changed. Clients re-list. | Session title set or cleared by a person, or generated by the agent (name_auto true). | Session attached. Its data is the same `started` object POST /api/v1/agent/sessions returns. It is the first frame (seq 1) of a fresh attach while the stream still retains seq 1. A resume with `since` does not repeat it, except when the cursor cannot be resumed: an invalid `since` (or Last-Event-ID), an `incarnation` that does not match the session's current one, or a cursor ahead of the stream is each answered with a `lagged` frame (code replay_gap) and the whole retained stream, which includes it if seq 1 is still retained. A late attach after the oldest frames were evicted starts with a `lagged` frame (code replay_gap) instead and does not carry it. In either case read the same object as `started` from GET /api/v1/agent/sessions/{id}, which carries it while the session is attached. | Available skills list updated. | Skill enable/trust state changed. | Assistant text stream chunk. | Assistant text stream complete. | Profile sync status. | Background task activity. | Background task finished. | Background task started. | Background task transcript entry (upsert-poll). | Snapshot of background tasks. | Reasoning/thinking stream chunk. | Thinking stall warning. | TODO list updated. | Tool invocation. | Tool mode changed/locked. | Tool result. | The result of one trim, naming the request id the trim carried: done, refused (turn_in_flight, delegated_session or session_closed; nothing changed), failed (nothing was trimmed) or outcome_unknown (the trim may have been saved; the session sends nothing until it can save its state). Never an error event: another client's trim does not fail this client's turn. | A prompt or workflow dispatch was accepted but discarded without running, because it was queued while another client's turn waited on a confirmation or question. It closes that dispatch only (its turn_id); the waiting turn keeps running and no event.agent_done is sent for the discarded one. | Echo of the user's input. | Question posed to the user (parks a gate). On a helper_gates session a helper's question carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. | Verbosity setting changed. | Workflow run complete. | Workflow run started. | Workflow step done. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | Workflow step output. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | Workflow step start. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | The workflow-authoring tools became available or unavailable mid-session (the session's tool mode, standard or orchestrator, was applied by its first dispatch; the chat agent was switched; or the agent's `tools:` frontmatter was edited on disk). Not sent for the initial value, which the init state carries as workflow_tools_available. | Available workflows list updated. | YOLO auto-approve mode toggled. | Control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring or belongs to another incarnation. Carries {code: lagged|replay_gap[, min_seq, max_seq, incarnation, resume]}; reconcile by reconnecting with ?since= and ?incarnation=. | Control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq, incarnation, turn_id?, turn_since?}; turn_id names the turn being watched and turn_since the cursor before its first frame (see the payload). | Control frame: the stream is terminating because the session closed. Carries {reason}. | Control frame, connection-local: the WS command this client just sent was REJECTED and was not applied. It is the WS twin of a REST error envelope. Carries {frame: the client frame type that was refused, code, reason}. Codes match the REST ones for the same condition: bad_frame (the frame did not decode; the reason names the field and the JSON type it must carry, e.g. a gate_id sent as the event payload's number instead of the envelope's string), no_pending_gate / stale_gate / gate_already_answered / gate_type_mismatch (the frame did not match the parked gate), approved_required (a confirm frame without a boolean approved; it never resolves a gate), decision_incomplete (an always session needs an explicit approved, the exact gate_id and its generation; or a confirm without gate_id while several gates are parked). For a confirm: gate_already_resolved (the gate already ended and this decision was not applied; the frame also carries gate_id, generation, outcome, decision {approved, persist_dirs, session_scope, trust_computer, remember?, superseded?} or decision_unknown:true, and request_id when the decision consumed carried that request_id) and gate_decision_pending (a decision for the gate is in flight and its outcome is not known yet: another client's, or this one past the wait; carries gate_id, generation and reason:connection_lost when the agent connection was lost; retry naming the gate to learn the outcome). For an answer: bad_request (the frame carries no answer, text or answers, an empty answer never resolves a question; or a workflow question with options gets an answer that names none of them, and stays parked), gate_cancelled (the question was resolved without consuming this answer) and decision_unconfirmed (the answer was not acknowledged within the wait; it may still apply). It is sent ONLY to the client that sent the frame, never broadcast. | Control frame, connection-local: the replayed acknowledgement of a question answer. When an answer frame is a RETRY naming the question gate this client already resolved, with the same answer, it carries replayed:true and {resolved: the ORIGINAL event.gate_resolved payload}. A retry never forwards a second answer. A confirm retry is refused gate_already_resolved instead. Sent only to the client that sent the frame.
    * @param callback Function to call when unknown message received
    * @returns Unsubscribe function
    */
@@ -1845,6 +2202,10 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
 
   onError(callback: (error: Error) => void): () => void {
     return this.addEventListener("error", callback);
+  }
+
+  onTakenOver(callback: (reason: string) => void): () => void {
+    return this.addEventListener("__taken_over", callback);
   }
 
   /**
@@ -1903,11 +2264,11 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
     this.disconnect(reason);
   }
 
-  get readyState(): number {
+  getReadyState(): number {
     return this.ws?.readyState ?? RAW_WEBSOCKET_CLOSED;
   }
 
-  get url(): string {
+  getUrl(): string {
     return this._url;
   }
 
@@ -1918,15 +2279,15 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
    * offers beyond this client (the `ws` package: ping(), the ping and pong
    * events); do not assign its on* handlers, the client owns them.
    */
-  get rawSocket(): IRawWebSocketLike | null {
+  getRawSocket(): IRawWebSocketLike | null {
     return this.ws;
   }
 
-  get connected(): boolean {
+  isConnected(): boolean {
     return this.ws?.readyState === RAW_WEBSOCKET_OPEN;
   }
 
-  get reconnecting(): boolean {
+  isReconnecting(): boolean {
     return this._reconnecting;
   }
 
@@ -1978,17 +2339,22 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
           this._frameWaiters.push(resolve);
         });
       },
-      return: (): Promise<IteratorResult<IStreamFrame>> =>
-        Promise.resolve({ value: undefined as never, done: true }),
+      // break / return(): a next() still pending ends too.
+      return: (): Promise<IteratorResult<IStreamFrame>> => {
+        for (const resolveWaiter of this._frameWaiters.splice(0, this._frameWaiters.length)) {
+          resolveWaiter({ value: undefined as never, done: true });
+        }
+        return Promise.resolve({ value: undefined as never, done: true });
+      },
     };
     return iterator;
   }
 
-  get cursor(): number | undefined {
+  getCursor(): number | undefined {
     return this._cursor;
   }
 
-  get incarnation(): string | undefined {
+  getIncarnation(): string | undefined {
     return this._incarnation;
   }
 
@@ -1999,3 +2365,18 @@ export class AgentStreamSessionWebSocket implements IAgentStreamSessionWebSocket
     }
   }
 }
+
+/** A retired getter refuses, naming the method that replaced it. Not an alias. */
+function retireAccessors(target: object, owner: string, renames: Readonly<Record<string, string>>): void {
+  for (const [retired, current] of Object.entries(renames)) {
+    Object.defineProperty(target, retired, {
+      configurable: true,
+      enumerable: false,
+      get(): never {
+        throw new TypeError(owner + '.' + retired + ' was renamed to ' + current + '. Call ' + current + ' instead.');
+      },
+    });
+  }
+}
+
+retireAccessors(AgentSessionsConnectWebSocket.prototype, 'AgentSessionsConnectWebSocket', { url: 'getUrl()', connected: 'isConnected()', cursor: 'getCursor()', readyState: 'getReadyState()', reconnecting: 'isReconnecting()', autoReconnect: 'isAutoReconnect()', rawSocket: 'getRawSocket()', incarnation: 'getIncarnation()' });

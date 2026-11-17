@@ -1,17 +1,15 @@
 /**
- * TasksService
- * User-extensible Tasks service
+ * TemplatesService
+ * User-extensible Templates service
  * 
  * ✅ SAFE TO EDIT ✅
  * This file extends the generated base class and is yours to customize.
  * Add your own methods, override base methods, or add custom logic here.
- * 
- * Generated at: 2026-10-10T08:37:08.000Z
  */
 
-import { TasksServiceBase } from './tasks.service.generated.js';
+import { TemplatesServiceBase } from './templates.service.generated.js';
 
-export class TasksService extends TasksServiceBase {
+export class TemplatesService extends TemplatesServiceBase {
   // Add custom properties here
 
 }

@@ -21,8 +21,8 @@
  * - egress
  * - run
  * - proxyLogs
+ * - vm
  * - agent
- * - bot
    *
    * @example
    * ```typescript
@@ -48,8 +48,8 @@
  * const egressService = new SDK.egress.SomeService(); // egress
  * const runService = new SDK.run.SomeService(); // run
  * const proxyLogsService = new SDK.proxyLogs.SomeService(); // proxyLogs
+ * const vmService = new SDK.vm.SomeService(); // vm
  * const agentService = new SDK.agent.SomeService(); // agent
- * const botService = new SDK.bot.SomeService(); // bot
    * ```
    *
    * @packageDocumentation
@@ -74,12 +74,12 @@ export * as tunnel from './tunnel/index.js';
 export * as egress from './egress/index.js';
 export * as run from './run/index.js';
 export * as proxyLogs from './proxyLogs/index.js';
+export * as vm from './vm/index.js';
 export * as agent from './agent/index.js';
-export * as bot from './bot/index.js';
 
 // Export shared runtime/types
 export * from './types.js';
-export { ApiError, isApiError, isRetryableApiError, ValidationError, isApiErrorCode, type ApiErrorRequestContext, type ApiErrorResponseDetails, type RetryableApiError, type RetryableStatus } from './errors.js';
+export { ApiError, isApiError, isRetryableApiError, ValidationError, RetiredOptionError, isApiErrorCode, type ApiErrorOutcome, type ApiErrorRequestContext, type ApiErrorResponseDetails, type RetryableApiError, type RetryableStatus } from './errors.js';
 export { HttpClient } from './http-client.js';
 export { createStreamFrameBuffer, parseSseChunk, finishSseStream, DEFAULT_MAX_STREAM_FRAME_BYTES } from './http-client.js';
 export type {
@@ -92,6 +92,7 @@ export type {
   IStreamEventsOptions,
   IStreamFrameBuffer,
   IStreamResponse,
+  IStreamTurnEnd,
   IHttpClientMiddleware,
   IHttpClientMiddlewareRequestContext,
   IHttpClientMiddlewareResponseContext,

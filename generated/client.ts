@@ -5,10 +5,12 @@
  */
 
 import { HttpClient, type IHttpClientConfig, type IHttpClientMiddlewareRequestContext, type IRequestData } from './http-client.js';
-import { ApiError, isApiError, ValidationError } from './errors.js';
+import { ApiError, isApiError, refuseRetiredOptions, ValidationError } from './errors.js';
 import type { ApiIpGetResponse, ApiAuthLoginResponse } from './types.js';
 import { type ProxyAuth, type ProxyAuthPolicy } from '../lib/proxy-auth.js';
 import { createProxyAuthMiddleware } from '../lib/proxy-auth-middleware.js';
+import { computersDomainFor, requireDnsComputersDomain } from '../lib/domain-utils.js';
+import { retireMethods } from '../lib/retired-accessor.js';
 import * as api from './api/index.js';
 import * as browser from './browser/index.js';
 import * as code from './code/index.js';
@@ -28,8 +30,8 @@ import * as tunnel from './tunnel/index.js';
 import * as egress from './egress/index.js';
 import * as run from './run/index.js';
 import * as proxyLogs from './proxyLogs/index.js';
+import * as vm from './vm/index.js';
 import * as agent from './agent/index.js';
-import * as bot from './bot/index.js';
 
 /**
  * Credentials for `HoodyClient.login()`, `client.login()` and
@@ -43,10 +45,28 @@ import * as bot from './bot/index.js';
  * as `email` is rejected the same way. So the spelling is load-bearing and
  * both must be expressible here. Passing `{ username, password }` keeps
  * working unchanged.
+ *
+ * `client` is optional: the source channel this sign-in reports to the
+ * API, for analytics only. Left out, the SDK sends 'sdk'.
  */
 export type HoodyCredentials =
-  | { username: string; email?: string; password: string }
-  | { email: string; username?: string; password: string };
+  | { username: string; email?: string; password: string; client?: string }
+  | { email: string; username?: string; password: string; client?: string };
+
+/**
+ * The source channel every SDK sign-in declares to the API: `client` on a
+ * login and on the two-factor step that finishes it. The API records it on the
+ * account's sign-in session (web, ssh, webssh, cli, sdk, agent, admin, else
+ * unknown). It is an analytics label only and never affects authentication.
+ * A `client` the caller sets in HoodyCredentials (a tool built on the SDK
+ * that reports its own channel) is sent instead.
+ */
+const _SDK_CLIENT_CHANNEL = 'sdk';
+
+/** The login body: the credentials as given, plus the SDK's channel when they set none. The caller's object is not changed. */
+function _loginBody(credentials: HoodyCredentials): HoodyCredentials {
+  return credentials.client !== undefined ? credentials : { ...credentials, client: _SDK_CLIENT_CHANNEL };
+}
 
 export interface HoodyClientConfig extends IHttpClientConfig {
   urlTemplates?: Record<string, Record<string, string | number>>;
@@ -78,12 +98,12 @@ export interface HoodyClientConfig extends IHttpClientConfig {
    * exchanges the refresh token ('refresh') or signs in again with the stored
    * credentials ('relogin'). It receives the access token now in use and the
    * refresh token that goes with it, so a long-running service can save the
-   * pair and start its next run with adoptSession(). hoody-api rotates the
+   * pair and start its next run with adoptSession(). The API rotates the
    * refresh token on every refresh: the one saved before is spent.
    *
    * Concurrent 401s share one recovery, so it is called once per new pair,
    * before the failed requests are replayed. Clients derived with
-   * withRealm() / withContainer() carry it. It is not called for tokens the
+   * withRealm() / withComputer() carry it. It is not called for tokens the
    * caller supplied (adoptSession(), setToken(), setSessionToken(),
    * onTokenExpired, refreshToken). It is not awaited, and whatever it throws
    * or rejects with is discarded: a failed save must not fail the request
@@ -93,12 +113,12 @@ export interface HoodyClientConfig extends IHttpClientConfig {
   /**
    * What baseURL points at.
    *  - 'account': the Hoody account API. Kit namespaces refuse to send there
-   *    (call withContainer() first), and a realm label on the host
+   *    (call withComputer() first), and a realm label on the host
    *    ({realmId}.api.hoody.com) is read as the client's realm.
    *  - 'kit': a kit or daemon reached directly. The URL is used as given.
    * When omitted: 'account' if the client has credentials, has no baseURL, has
    * a relative baseURL ('/proxy', resolved against the page), or baseURL is a
-   * Hoody API host (api.hoody.com, or a host under it); otherwise 'kit'. Clients derived with withRealm()/withContainer() keep it.
+   * Hoody API host (api.hoody.com, or a host under it); otherwise 'kit'. Clients derived with withRealm()/withComputer() keep it.
    */
   target?: 'account' | 'kit';
 }
@@ -165,7 +185,7 @@ function _resolveClientTarget(config: { target?: 'account' | 'kit'; credentials?
     console.warn(
       '[HoodyClient] ' + host + ' is not a Hoody API host, so this client treats baseURL as a kit or daemon '
         + "reached directly (kit namespaces are not refused, a realm label in the host is kept as given). Pass target: 'account' "
-        + "if it is an account API (kit calls then need withContainer(), and withRealm('all') can clear a realm label), or "
+        + "if it is an account API (kit calls then need withComputer(), and withRealm('all') can clear a realm label), or "
         + "target: 'kit' to silence this warning.",
     );
   }
@@ -175,13 +195,13 @@ function _resolveClientTarget(config: { target?: 'account' | 'kit'; credentials?
 /** _resolveClientTarget warns about an ambiguous target once per process. */
 let _warnedAmbiguousTarget = false;
 
-/** A realm id as hoody-api accepts it: exactly 24 hexadecimal characters (case-insensitive). */
+/** A realm id as the API accepts it: exactly 24 hexadecimal characters (case-insensitive). */
 const REALM_ID_PATTERN = /^[a-f0-9]{24}$/i;
 
 /**
  * Normalise a realm selector. Returns the lower-cased realm id, or undefined
  * for the selectors that mean "no realm" ('', '*', 'all', 'default'). Anything
- * else is refused: hoody-api only reads a realm from a 24-hex host label and
+ * else is refused: the API only reads a realm from a 24-hex host label and
  * silently treats any other label as unscoped, so passing it through would run
  * the request against every realm of the account. Same rule as the CLI.
  */
@@ -203,7 +223,7 @@ function _normalizeRealmSelector(value: unknown, field: string): string | undefi
 
 /**
  * The realm host of an account base URL, or undefined when its host cannot
- * carry one: hoody-api reads a realm only from a host of four labels or more,
+ * carry one: the API reads a realm only from a host of four labels or more,
  * and an IP literal has no labels to prefix.
  */
 function _realmHostOf(accountBaseURL: string, realmId: string): { accountHost: string; realmHost: string } | undefined {
@@ -299,7 +319,7 @@ function _spendWhenSettled(result: unknown, tag: object | undefined): unknown {
  * It carries the stream's `response` (IEventStream) across the wrapper: the
  * opened stream's own, or, for one closed or refused before it opened, a
  * rejection. Without it the headers a stream answers with (hoody-agent's
- * X-Hoody-Turn-Id) were out of reach on every container-scoped client.
+ * X-Hoody-Turn-Id) were out of reach on every computer-scoped client.
  */
 function _lazyTaggedStream(open: () => { iterable: unknown; tag: object | undefined }): AsyncIterableIterator<unknown> & { readonly response: Promise<unknown> } {
   let inner: AsyncIterator<unknown> | undefined;
@@ -436,7 +456,7 @@ function _refusedStream(error: unknown): AsyncIterableIterator<never> & { readon
  * token, 2FA or device code, OAuth exchange): every call other than a read
  * under the two auth route prefixes. They are refused outside the API's
  * credential scope and sent with every redirect refused, same-origin ones
- * included: hoody-api does not redirect these routes, so a redirect there is
+ * included: the API does not redirect these routes, so a redirect there is
  * not something to follow.
  *
  * This covers the credentials the SDK itself sends or injects. Other calls
@@ -538,8 +558,8 @@ function _effectiveBaseURL(baseURL: string): string {
  * as the account base URL, its host or a realm host of it (exactly one label,
  * a realm id, in front of it), and a path under its base path. Account
  * credentials go nowhere else. Any subdomain used to count, and the kit hosts
- * withContainer() derives from a base with no api. label
- * (containers.<base host>) are subdomains of it.
+ * withComputer() derives from a base with no api. label
+ * (computers.<base host>) are subdomains of it.
  *
  * Both are resolved as the transport resolves them (_resolveTransportUrl), an
  * omitted base being the page's origin. When neither resolves (no page, and a
@@ -644,7 +664,7 @@ function _configuredBaseView(
 /**
  * Split a base URL whose host starts with a realm label
  * ({24hex}.api.example.com) into the account base URL and the realm it names.
- * Four labels at least, the same threshold hoody-api uses before it reads a
+ * Four labels at least, the same threshold the API uses before it reads a
  * realm from the host. Any other URL is returned unchanged.
  */
 function _splitRealmBaseURL(baseURL: string): { baseURL: string; realmId: string | undefined } {
@@ -672,7 +692,7 @@ function _splitRealmBaseURL(baseURL: string): { baseURL: string; realmId: string
 
 /**
  * Account-session state shared by a client and every client derived from it
- * (withRealm / withContainer): the stored login credentials, the refresh token
+ * (withRealm / withComputer): the stored login credentials, the refresh token
  * and whether the session was logged out. Sharing it by reference is what lets
  * a derived client refresh through the parent's session, and what makes a
  * logout on any of them stop automatic re-login on all of them.
@@ -776,26 +796,28 @@ export function isRealmScopeError(error: unknown): error is RealmScopeApiError {
 }
 
 /**
- * Minimal shape required by getKitUrl / getKitUrls / withContainer. The full
- * container response from the API has dozens of optional fields; these three
+ * Minimal shape required by getKitUrl / listKitUrls / withComputer. The full
+ * computer response from the API has dozens of optional fields; these three
  * methods only need id + project_id + server_name to build the URL. Extra
  * fields are permitted (index signature).
  *
  * Both `server` and `server_name` are accepted: the API response exposes
- * server_name, while some hand-constructed objects use the shorter `server`.
- * Supporting both means consumers can pass the raw API response OR a
- * hand-constructed object without remapping. _resolveContainerServer below
- * normalises to a single value: a containers.list item's `server` is the
- * server-details object, and its `name` is used.
+ * server_name, while some hand-constructed objects use the shorter string
+ * `server`. Supporting both means consumers can pass the raw API response OR a
+ * hand-constructed object without remapping. _resolveComputerServer below
+ * normalises to a single value. The routing host is the flat server_name (for a
+ * computer on a subserver, the PARENT server the proxy serves). A computers.list
+ * item's `server` is the server-details object: its `name` is the slice's own
+ * display name, never a routing host, so it is not used.
  */
-export interface ContainerLike {
-  // Every routing field is optional in the TYPE, because the SDK's own container responses
-  // declare them so: containers.get / create return `id?: string; project_id?: string;
-  // server_name?: string | null`, and a containers.list item carries `server` as a
+export interface ComputerLike {
+  // Every routing field is optional in the TYPE, because the SDK's own computer responses
+  // declare them so: computers.get / create return `id?: string; project_id?: string;
+  // server_name?: string | null`, and a computers.list item carries `server` as a
   // server-details object. A response is therefore assignable unchanged, with no cast and no
   // re-assembly. server / server_name flow through the index signature.
   // Nothing is optional at RUNTIME: getKitUrl() validates id + project_id + a resolvable
-  // server and throws "Invalid container object" when any is missing; withContainer() looks
+  // server and throws "Invalid computer object" when any is missing; withComputer() looks
   // an object with an id but no project_id or server up by that id first, and refuses one
   // with no id.
   id?: string;
@@ -808,74 +830,77 @@ function _isServerName(value: unknown): value is string {
   return typeof value === 'string' && /^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/.test(value);
 }
 
-function _resolveContainerServer(container: ContainerLike | null | undefined): string | undefined {
-  if (!container) return undefined;
-  // server_name, else server: a string when hand-built, the server-details object ({ name, country, … })
-  // on a containers.list item. Anything that is not a server name resolves to nothing and the caller
-  // refuses the container.
-  const given = container.server_name ?? container.server;
-  const name = typeof given === 'object' && given !== null ? (given as { name?: unknown }).name : given;
-  return _isServerName(name) ? name : undefined;
+function _resolveComputerServer(computer: ComputerLike | null | undefined): string | undefined {
+  if (!computer) return undefined;
+  // server_name, else a string `server` a caller built by hand. The server-details object on a
+  // computers.list item names the slice, not the routing host, so it never resolves to a server.
+  // Anything that is not a server name resolves to nothing and the caller refuses the computer.
+  const given = computer.server_name ?? computer.server;
+  return _isServerName(given) ? given : undefined;
 }
 
-/** A routing field the caller supplied: any value but undefined. A supplied null is refused, never read as absent (see _assertGivenContainerRouting for the one server-field exception). */
-function _containerFieldGiven(value: unknown): boolean {
+/** A routing field the caller supplied: any value but undefined. A supplied null is refused, never read as absent (see _assertGivenComputerRouting for the two exceptions: a null server_name beside a usable server or a server object, and a null server beside a usable server_name). */
+function _computerFieldGiven(value: unknown): boolean {
   return value !== undefined;
 }
 
 /**
- * withContainer() looks a container object up by id when it has a string id but lacks its
- * project_id or every server field. An object with both is used as given, with no request;
- * an object without an id is refused as before.
+ * withComputer() looks a computer object up by id when it has a string id but lacks its
+ * project_id or a routing server (see _resolveComputerServer: a server-details object is not one).
+ * An object with both is used as given, with no request; an object without an id is refused as before.
  */
-function _containerNeedsLookup(container: ContainerLike | null | undefined): container is ContainerLike {
-  if (!container || typeof container !== 'object' || typeof container.id !== 'string' || container.id === '') return false;
-  return !_containerFieldGiven(container.project_id)
-    || !(_containerFieldGiven(container.server_name) || _containerFieldGiven(container.server));
+function _computerNeedsLookup(computer: ComputerLike | null | undefined): computer is ComputerLike {
+  if (!computer || typeof computer !== 'object' || typeof computer.id !== 'string' || computer.id === '') return false;
+  return !_computerFieldGiven(computer.project_id) || _resolveComputerServer(computer) === undefined;
 }
 
 /**
  * Every routing field the caller supplied must be usable before server_name / server are resolved
  * and before any request, each on its own: id and project_id a non-empty string, server_name a
- * server name, server a server name or a server-details object whose name is one. null is refused,
- * with one exception: a containers.list item carries `server_name: null` beside its server object, so a
- * null server_name (or server) is ignored when the OTHER server field is usable. Both null, or a null
- * beside an unusable other one, is refused.
+ * server name, server a server name or a server-details object (display data, not checked). null is
+ * refused, with two exceptions: a null server_name (or server) is ignored when the OTHER server field is a
+ * usable name, and a null server_name is also ignored beside a server-details object (a computers.list item
+ * of an unplaced computer), so that withComputer() looks the computer up by id and the API's server_name
+ * decides. Both null, or a null beside an unusable other one, is refused.
  */
-function _assertGivenContainerRouting(container: ContainerLike): void {
-  if (_containerFieldGiven(container.id) && (typeof container.id !== 'string' || container.id === '')) {
-    throw new ValidationError('Invalid container object: id must be a non-empty string', 'id');
+function _assertGivenComputerRouting(computer: ComputerLike): void {
+  if (_computerFieldGiven(computer.id) && (typeof computer.id !== 'string' || computer.id === '')) {
+    throw new ValidationError('Invalid computer object: id must be a non-empty string', 'id');
   }
-  if (_containerFieldGiven(container.project_id) && (typeof container.project_id !== 'string' || container.project_id === '')) {
-    throw new ValidationError('Invalid container object: project_id must be a non-empty string', 'project_id');
+  if (_computerFieldGiven(computer.project_id) && (typeof computer.project_id !== 'string' || computer.project_id === '')) {
+    throw new ValidationError('Invalid computer object: project_id must be a non-empty string', 'project_id');
   }
-  const serverName = container.server_name;
-  const server = container.server;
-  const serverUsable = _isServerName(typeof server === 'object' && server !== null ? (server as { name?: unknown }).name : server);
-  if (_containerFieldGiven(serverName) && !(serverName === null && serverUsable) && !_isServerName(serverName)) {
-    throw new ValidationError('Invalid container object: server_name must be a server name', 'server_name');
+  const serverName = computer.server_name;
+  const server = computer.server;
+  // A server-details object is the slice's display data and routes nowhere: it is accepted as given and
+  // never counts as a usable server.
+  const serverIsObject = typeof server === 'object' && server !== null;
+  const serverUsable = _isServerName(server);
+  if (_computerFieldGiven(serverName) && !(serverName === null && (serverUsable || serverIsObject)) && !_isServerName(serverName)) {
+    throw new ValidationError('Invalid computer object: server_name must be a server name', 'server_name');
   }
-  if (_containerFieldGiven(server) && !(server === null && _isServerName(serverName)) && !serverUsable) {
-    throw new ValidationError('Invalid container object: server must be a server name or an object with one', 'server');
+  if (_computerFieldGiven(server) && !serverIsObject && !(server === null && _isServerName(serverName)) && !serverUsable) {
+    throw new ValidationError('Invalid computer object: server must be a server name', 'server');
   }
 }
 
 /**
- * The routing fields of a container looked up by id: the API's id, project_id and server
+ * The routing fields of a computer looked up by id: the API's id, project_id and server
  * name. A project_id or server the caller also gave must equal the API's.
  */
-function _containerFromLookup(given: ContainerLike, found: unknown): ContainerLike {
-  const record = (found && typeof found === 'object' ? found : {}) as ContainerLike;
-  const server = _resolveContainerServer(record);
+function _computerFromLookup(given: ComputerLike, found: unknown): ComputerLike {
+  const record = (found && typeof found === 'object' ? found : {}) as ComputerLike;
+  // An API row routes on its flat server_name only: the bare-string server is a caller-built form.
+  const server = _resolveComputerServer({ ...record, server: undefined });
   if (typeof record.id !== 'string' || record.id === '' || typeof record.project_id !== 'string' || record.project_id === '' || !server) {
-    throw new Error('Invalid container object: the lookup of container ' + given.id + ' returned no id, project_id and server_name');
+    throw new Error('Invalid computer object: the lookup of computer ' + given.id + ' returned no id, project_id and server_name');
   }
-  if (_containerFieldGiven(given.project_id) && given.project_id !== record.project_id) {
-    throw new ValidationError('Invalid container object: project_id ' + String(given.project_id) + ' is not the project of container ' + given.id + ' (' + record.project_id + ')', 'project_id');
+  if (_computerFieldGiven(given.project_id) && given.project_id !== record.project_id) {
+    throw new ValidationError('Invalid computer object: project_id ' + String(given.project_id) + ' is not the project of computer ' + given.id + ' (' + record.project_id + ')', 'project_id');
   }
-  const givenServer = _resolveContainerServer(given);
+  const givenServer = _resolveComputerServer(given);
   if (givenServer !== undefined && givenServer !== server) {
-    throw new ValidationError('Invalid container object: server ' + givenServer + ' is not the server of container ' + given.id + ' (' + server + ')', 'server_name');
+    throw new ValidationError('Invalid computer object: server ' + givenServer + ' is not the server of computer ' + given.id + ' (' + server + ')', 'server_name');
   }
   return { id: record.id, project_id: record.project_id, server_name: server };
 }
@@ -929,7 +954,7 @@ export class HoodyClient {
    * before an omitted base is resolved against the page (_effectiveBaseURL).
    * The kit domain is derived from it, and derived clients are built from it,
    * so the kit URLs of a same-origin browser client keep the default
-   * containers domain they always had; only realm routing and credential
+   * computers domain they always had; only realm routing and credential
    * scope use the page.
    */
   private readonly callerBaseURL: string;
@@ -937,19 +962,29 @@ export class HoodyClient {
   private realmIntrospectionCache: { token: string; realms: string[] } | undefined;
 
   public readonly api: {
+    abuseNotices: api.AbuseNoticesService;
     activity: api.ActivityService;
     ai: api.AiService;
     auth: api.AuthService & {
       device: api.AuthDeviceService;
+      email: api.AuthEmailService;
       oauth: api.AuthOauthService;
+      sessions: api.AuthSessionsService;
       tokens: api.AuthTokensService;
       twoFactor: api.AuthTwoFactorService;
     };
-    containers: api.ContainersService & {
-      env: api.ContainersEnvService;
+    botUrls: api.BotUrlsService & {
+      keys: api.BotUrlsKeysService;
+    };
+    computers: api.ComputersService & {
+      env: api.ComputersEnvService;
+      proxy: api.ComputersProxyService;
     };
     events: api.EventsService;
-    firewall: api.FirewallService;
+    firewall: api.FirewallService & {
+      egress: api.FirewallEgressService;
+      ingress: api.FirewallIngressService;
+    };
     images: api.ImagesService;
     inbox: api.InboxService;
     ip: api.IpService;
@@ -959,32 +994,36 @@ export class HoodyClient {
       invitations: api.PoolsInvitationsService;
       members: api.PoolsMembersService;
     };
-    projects: api.ProjectsService;
+    projects: api.ProjectsService & {
+      permissions: api.ProjectsPermissionsService;
+      proxy: api.ProjectsProxyService;
+    };
     proxy: {
       aliases: api.ProxyAliasesService;
-      containerPermissions: api.ProxyContainerPermissionsService;
-      groups: api.ProxyGroupsService;
-      hooks: api.ProxyHooksService;
-      projectPermissions: api.ProxyProjectPermissionsService;
-      services: api.ProxyServicesService;
-      settings: api.ProxySettingsService;
     };
     realms: api.RealmsService;
+    referrals: api.ReferralsService & {
+      codes: api.ReferralsCodesService;
+    };
     servers: api.ServersService & {
-      commands: api.ServersCommandsService;
-      jobs: api.ServersJobsService;
-      offers: api.ServersOffersService;
       plans: api.ServersPlansService;
-      reservations: api.ServersReservationsService;
       subscriptions: api.ServersSubscriptionsService;
     };
     snapshots: api.SnapshotsService;
     storage: {
+      incoming: api.StorageIncomingService;
       shares: api.StorageSharesService;
+    };
+    support: api.SupportService & {
+      tickets: api.SupportTicketsService;
     };
     users: api.UsersService;
     vault: api.VaultService;
-    wallet: api.WalletService;
+    wallet: api.WalletService & {
+      credits: api.WalletCreditsService;
+      invoices: api.WalletInvoicesService;
+      payments: api.WalletPaymentsService;
+    };
   };
 
   public readonly browser: {
@@ -1032,13 +1071,17 @@ export class HoodyClient {
 
   public readonly exec: exec.ExecService & {
     cache: exec.CacheService;
+    env: exec.EnvService;
     kit: exec.KitService;
     logs: exec.LogsService;
     magicComments: exec.MagicCommentsService;
     modules: exec.ModulesService;
     namespaces: exec.NamespacesService;
     openapi: exec.OpenapiService;
-    packages: exec.PackagesService;
+    ops: exec.OpsService;
+    packages: exec.PackagesService & {
+      manifest: exec.PackagesManifestService;
+    };
     routes: exec.RoutesService;
     schedules: exec.SchedulesService;
     scripts: exec.ScriptsService;
@@ -1046,6 +1089,7 @@ export class HoodyClient {
     sdks: exec.SdksService;
     store: exec.StoreService;
     templates: exec.TemplatesService;
+    tests: exec.TestsService;
   };
 
   public readonly files: files.FilesService & {
@@ -1068,18 +1112,23 @@ export class HoodyClient {
   public readonly notifications: notifications.NotificationsService & {
     icons: notifications.IconsService;
     kit: notifications.KitService;
+    push: notifications.PushService & {
+      subscriptions: notifications.PushSubscriptionsService;
+    };
   };
 
   public readonly sqlite: {
     databases: sqlite.DatabasesService;
     history: sqlite.HistoryService;
     kit: sqlite.KitService;
-    kv: sqlite.KvService;
+    kv: sqlite.KvService & {
+      arrays: sqlite.KvArraysService;
+      table: sqlite.KvTableService;
+    };
     sql: sqlite.SqlService;
   };
 
   public readonly terminal: {
-    automation: terminal.AutomationService;
     commands: terminal.CommandsService;
     drops: terminal.DropsService;
     keys: terminal.KeysService;
@@ -1087,6 +1136,7 @@ export class HoodyClient {
     processes: terminal.ProcessesService;
     sessions: terminal.SessionsService;
     system: terminal.SystemService;
+    workloads: terminal.WorkloadsService;
   };
 
   public readonly watch: {
@@ -1098,7 +1148,9 @@ export class HoodyClient {
   public readonly cron: {
     crontabs: cron.CrontabsService;
     entries: cron.EntriesService;
+    events: cron.EventsService;
     kit: cron.KitService;
+    runs: cron.RunsService;
   };
 
   public readonly pipe: pipe.PipeService & {
@@ -1136,8 +1188,9 @@ export class HoodyClient {
   };
 
   public readonly run: run.RunService & {
-    config: run.ConfigService;
+    catalog: run.CatalogService;
     jobs: run.JobsService;
+    kit: run.KitService;
     profiles: run.ProfilesService;
     recipes: run.RecipesService;
     sources: run.SourcesService;
@@ -1145,17 +1198,46 @@ export class HoodyClient {
 
   public readonly proxyLogs: proxyLogs.ProxyLogsService;
 
+  public readonly vm: {
+    console: vm.ConsoleService;
+    events: vm.EventsService;
+    guestAgent: vm.GuestAgentService;
+    imports: vm.ImportsService;
+    isos: vm.IsosService & {
+      downloads: vm.IsosDownloadsService;
+    };
+    kit: vm.KitService;
+    osinfo: vm.OsinfoService;
+    snapshots: vm.SnapshotsService & {
+      export: vm.SnapshotsExportService;
+    };
+    templates: vm.TemplatesService;
+    unidentifiedRuns: vm.UnidentifiedRunsService;
+    vms: vm.VmsService;
+  };
+
   public readonly agent: agent.AgentService & {
     acp: agent.AcpService;
-    bots: agent.BotsService;
+    audio: agent.AudioService;
+    bots: agent.BotsService & {
+      channels: agent.BotsChannelsService;
+      messages: agent.BotsMessagesService;
+    };
     changes: agent.ChangesService;
     completions: agent.CompletionsService;
-    containers: agent.ContainersService;
+    computers: agent.ComputersService;
     definitions: agent.DefinitionsService;
     files: agent.FilesService;
     fusions: agent.FusionsService;
     gates: agent.GatesService;
-    github: agent.GithubService;
+    github: agent.GithubService & {
+      auth: agent.GithubAuthService;
+      branches: agent.GithubBranchesService;
+      commits: agent.GithubCommitsService;
+      prs: agent.GithubPrsService;
+      repos: agent.GithubReposService;
+      worktrees: agent.GithubWorktreesService;
+    };
     headless: agent.HeadlessService;
     hooks: agent.HooksService;
     jev: agent.JevService;
@@ -1164,34 +1246,46 @@ export class HoodyClient {
     logs: agent.LogsService;
     loops: agent.LoopsService;
     mcp: agent.McpService;
-    memory: agent.MemoryService;
+    memory: agent.MemoryService & {
+      items: agent.MemoryItemsService;
+    };
     models: agent.ModelsService;
-    platform: agent.PlatformService;
-    providers: agent.ProvidersService;
+    providers: agent.ProvidersService & {
+      accounts: agent.ProvidersAccountsService;
+      auth: agent.ProvidersAuthService;
+      oauth: agent.ProvidersOauthService;
+    };
     realms: agent.RealmsService;
+    scripts: agent.ScriptsService & {
+      templates: agent.ScriptsTemplatesService;
+    };
     sessions: agent.SessionsService & {
+      approval: agent.SessionsApprovalService;
+      approverLease: agent.SessionsApproverLeaseService;
+      attachments: agent.SessionsAttachmentsService;
+      autoReply: agent.SessionsAutoReplyService;
       commands: agent.SessionsCommandsService;
+      tasks: agent.SessionsTasksService;
+      tools: agent.SessionsToolsService;
       turns: agent.SessionsTurnsService;
+      waiters: agent.SessionsWaitersService;
     };
     settings: agent.SettingsService;
     skills: agent.SkillsService & {
       hub: agent.SkillsHubService;
     };
-    stats: agent.StatsService;
-    tasks: agent.TasksService;
     todos: agent.TodosService;
     tools: agent.ToolsService;
     usage: agent.UsageService;
-    workflows: agent.WorkflowsService;
-  };
-
-  public readonly bot: {
-    kit: bot.KitService;
-    registrations: bot.RegistrationsService;
+    workflows: agent.WorkflowsService & {
+      runs: agent.WorkflowsRunsService;
+    };
   };
 
   constructor(config: HoodyClientConfig) {
-    // A session handed over by withRealm()/withContainer() is SHARED, not
+    // Config keys an earlier release took (spelled with an all-caps acronym): refused by name, never dropped.
+    refuseRetiredOptions(config, 'HoodyClient', [['forceIPv4', 'forceIpv4'], ['forceIPv4Cache', 'forceIpv4Cache']]);
+    // A session handed over by withRealm()/withComputer() is SHARED, not
     // copied: see _HoodySessionState.
     this.ownCredentials = config.credentials ? config.credentials : undefined;
     this.session = _SESSION_HANDOFF.get(config) ?? _newSessionState(this.ownCredentials);
@@ -1229,6 +1323,8 @@ export class HoodyClient {
     const configWithRetry: IHttpClientConfig = {
       ...config,
       baseURL: splitBase.baseURL,
+      // The resolved target, inferred ones included: a 'kit' client's requests carry no X-Hoody-Client-Version.
+      target: this.target,
       onError: async (error: any) => {
         // Enrich a realm-scope 403 in place first, so the caller (and the
         // caller's own onError) receive the same ApiError with the realm
@@ -1246,6 +1342,9 @@ export class HoodyClient {
       // caller's callback (it is removed below).
       onTokenExpired: (error: any) => this.recoverSession(error),
       acceptRefreshedToken: (token: string) => this.acceptRefreshedToken(token),
+      // A request made before this client's session changed (setToken, adoptSession,
+      // setSessionToken, login, logout) is never sent again under the new session.
+      sessionMark: () => this.session.generation,
     };
     delete (configWithRetry as { refreshToken?: unknown }).refreshToken;
     // A HoodyClient hook: the transport has no use for it.
@@ -1257,7 +1356,7 @@ export class HoodyClient {
         this.callerBaseURL
       );
       // Exactly ONE kit-auth middleware per client. A derived client
-      // (withContainer / withRealm) inherits the parent's middlewares, which
+      // (withComputer / withRealm) inherits the parent's middlewares, which
       // include the parent's kit-auth middleware; it read the PARENT's kitAuth
       // and ran after this one, so a credential refreshed on the child was
       // overwritten by the parent's stale one.
@@ -1300,7 +1399,7 @@ export class HoodyClient {
     //    realm of its own, so a per-call _realm holds on an account-wide
     //    client too. A destination outside the API is the caller's explicit
     //    routing and is left alone (confinement strips inherited credentials);
-    //  - any other request (client.http used directly, as hoody-bot does)
+    //  - any other request (client.http used directly)
     //    that ends on the account host goes to this client's realm host, if
     //    it has one.
     // A host that cannot carry a realm (localhost, an IP, a two-label host)
@@ -1405,8 +1504,7 @@ export class HoodyClient {
     // realm host and sent the bearer to the base unscoped, while the relative
     // spelling '/proxy' applied the realm. A raw request bound for the base
     // host is refused instead, unless that host already carries the realm
-    // (its first label is the realm id: '{realmId}.api.example.com', which is
-    // how hoody-bot builds its client).
+    // (its first label is the realm id: '{realmId}.api.example.com').
     const kitRealm = this.target !== 'account' ? this.realmId : undefined;
     const kitBaseHost = kitRealm ? _hostOf(splitBase.baseURL) : undefined;
     const kitBaseLabels = kitBaseHost ? kitBaseHost.split('.') : [];
@@ -1453,19 +1551,29 @@ export class HoodyClient {
     const kitHttp = (namespace: string): HttpClient => this.guardKitHttp(namespace);
 
     this.api = {
+      abuseNotices: new api.AbuseNoticesService(apiHttp, 'api', this.realmId),
       activity: new api.ActivityService(apiHttp, 'api', this.realmId),
       ai: new api.AiService(apiHttp, 'api', this.realmId),
       auth: Object.assign(new api.AuthService(apiHttp, 'api', this.realmId), {
         device: new api.AuthDeviceService(apiHttp, 'api', this.realmId),
+        email: new api.AuthEmailService(apiHttp, 'api', this.realmId),
         oauth: new api.AuthOauthService(apiHttp, 'api', this.realmId),
+        sessions: new api.AuthSessionsService(apiHttp, 'api', this.realmId),
         tokens: new api.AuthTokensService(apiHttp, 'api', this.realmId),
         twoFactor: new api.AuthTwoFactorService(apiHttp, 'api', this.realmId),
       }),
-      containers: Object.assign(new api.ContainersService(apiHttp, 'api', this.realmId), {
-        env: new api.ContainersEnvService(apiHttp, 'api', this.realmId),
+      botUrls: Object.assign(new api.BotUrlsService(apiHttp, 'api', this.realmId), {
+        keys: new api.BotUrlsKeysService(apiHttp, 'api', this.realmId),
+      }),
+      computers: Object.assign(new api.ComputersService(apiHttp, 'api', this.realmId), {
+        env: new api.ComputersEnvService(apiHttp, 'api', this.realmId),
+        proxy: new api.ComputersProxyService(apiHttp, 'api', this.realmId),
       }),
       events: new api.EventsService(apiHttp, 'api', this.realmId),
-      firewall: new api.FirewallService(apiHttp, 'api', this.realmId),
+      firewall: Object.assign(new api.FirewallService(apiHttp, 'api', this.realmId), {
+        egress: new api.FirewallEgressService(apiHttp, 'api', this.realmId),
+        ingress: new api.FirewallIngressService(apiHttp, 'api', this.realmId),
+      }),
       images: new api.ImagesService(apiHttp, 'api', this.realmId),
       inbox: new api.InboxService(apiHttp, 'api', this.realmId),
       ip: new api.IpService(apiHttp, 'api', this.realmId),
@@ -1475,32 +1583,36 @@ export class HoodyClient {
         invitations: new api.PoolsInvitationsService(apiHttp, 'api', this.realmId),
         members: new api.PoolsMembersService(apiHttp, 'api', this.realmId),
       }),
-      projects: new api.ProjectsService(apiHttp, 'api', this.realmId),
+      projects: Object.assign(new api.ProjectsService(apiHttp, 'api', this.realmId), {
+        permissions: new api.ProjectsPermissionsService(apiHttp, 'api', this.realmId),
+        proxy: new api.ProjectsProxyService(apiHttp, 'api', this.realmId),
+      }),
       proxy: {
         aliases: new api.ProxyAliasesService(apiHttp, 'api', this.realmId),
-        containerPermissions: new api.ProxyContainerPermissionsService(apiHttp, 'api', this.realmId),
-        groups: new api.ProxyGroupsService(apiHttp, 'api', this.realmId),
-        hooks: new api.ProxyHooksService(apiHttp, 'api', this.realmId),
-        projectPermissions: new api.ProxyProjectPermissionsService(apiHttp, 'api', this.realmId),
-        services: new api.ProxyServicesService(apiHttp, 'api', this.realmId),
-        settings: new api.ProxySettingsService(apiHttp, 'api', this.realmId),
       },
       realms: new api.RealmsService(apiHttp, 'api', this.realmId),
+      referrals: Object.assign(new api.ReferralsService(apiHttp, 'api', this.realmId), {
+        codes: new api.ReferralsCodesService(apiHttp, 'api', this.realmId),
+      }),
       servers: Object.assign(new api.ServersService(apiHttp, 'api', this.realmId), {
-        commands: new api.ServersCommandsService(apiHttp, 'api', this.realmId),
-        jobs: new api.ServersJobsService(apiHttp, 'api', this.realmId),
-        offers: new api.ServersOffersService(apiHttp, 'api', this.realmId),
         plans: new api.ServersPlansService(apiHttp, 'api', this.realmId),
-        reservations: new api.ServersReservationsService(apiHttp, 'api', this.realmId),
         subscriptions: new api.ServersSubscriptionsService(apiHttp, 'api', this.realmId),
       }),
       snapshots: new api.SnapshotsService(apiHttp, 'api', this.realmId),
       storage: {
+        incoming: new api.StorageIncomingService(apiHttp, 'api', this.realmId),
         shares: new api.StorageSharesService(apiHttp, 'api', this.realmId),
       },
+      support: Object.assign(new api.SupportService(apiHttp, 'api', this.realmId), {
+        tickets: new api.SupportTicketsService(apiHttp, 'api', this.realmId),
+      }),
       users: new api.UsersService(apiHttp, 'api', this.realmId),
       vault: new api.VaultService(apiHttp, 'api', this.realmId),
-      wallet: new api.WalletService(apiHttp, 'api', this.realmId),
+      wallet: Object.assign(new api.WalletService(apiHttp, 'api', this.realmId), {
+        credits: new api.WalletCreditsService(apiHttp, 'api', this.realmId),
+        invoices: new api.WalletInvoicesService(apiHttp, 'api', this.realmId),
+        payments: new api.WalletPaymentsService(apiHttp, 'api', this.realmId),
+      }),
     };
 
     this.browser = {
@@ -1548,13 +1660,17 @@ export class HoodyClient {
 
     this.exec = Object.assign(new exec.ExecService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')), {
       cache: new exec.CacheService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
+      env: new exec.EnvService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
       kit: new exec.KitService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
       logs: new exec.LogsService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
       magicComments: new exec.MagicCommentsService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
       modules: new exec.ModulesService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
       namespaces: new exec.NamespacesService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
       openapi: new exec.OpenapiService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
-      packages: new exec.PackagesService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
+      ops: new exec.OpsService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
+      packages: Object.assign(new exec.PackagesService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')), {
+        manifest: new exec.PackagesManifestService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
+      }),
       routes: new exec.RoutesService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
       schedules: new exec.SchedulesService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
       scripts: new exec.ScriptsService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
@@ -1562,6 +1678,7 @@ export class HoodyClient {
       sdks: new exec.SdksService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
       store: new exec.StoreService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
       templates: new exec.TemplatesService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
+      tests: new exec.TestsService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
     });
 
     this.files = Object.assign(new files.FilesService(kitHttp('files'), 'files', this.urlTemplates?.['files'] as any, this.getKitUrlTemplatePattern('files')), {
@@ -1584,18 +1701,23 @@ export class HoodyClient {
     this.notifications = Object.assign(new notifications.NotificationsService(kitHttp('notifications'), 'notifications', this.urlTemplates?.['notifications'] as any, this.getKitUrlTemplatePattern('notifications')), {
       icons: new notifications.IconsService(kitHttp('notifications'), 'notifications', this.urlTemplates?.['notifications'] as any, this.getKitUrlTemplatePattern('notifications')),
       kit: new notifications.KitService(kitHttp('notifications'), 'notifications', this.urlTemplates?.['notifications'] as any, this.getKitUrlTemplatePattern('notifications')),
+      push: Object.assign(new notifications.PushService(kitHttp('notifications'), 'notifications', this.urlTemplates?.['notifications'] as any, this.getKitUrlTemplatePattern('notifications')), {
+        subscriptions: new notifications.PushSubscriptionsService(kitHttp('notifications'), 'notifications', this.urlTemplates?.['notifications'] as any, this.getKitUrlTemplatePattern('notifications')),
+      }),
     });
 
     this.sqlite = {
       databases: new sqlite.DatabasesService(kitHttp('sqlite'), 'sqlite', this.urlTemplates?.['sqlite'] as any, this.getKitUrlTemplatePattern('sqlite')),
       history: new sqlite.HistoryService(kitHttp('sqlite'), 'sqlite', this.urlTemplates?.['sqlite'] as any, this.getKitUrlTemplatePattern('sqlite')),
       kit: new sqlite.KitService(kitHttp('sqlite'), 'sqlite', this.urlTemplates?.['sqlite'] as any, this.getKitUrlTemplatePattern('sqlite')),
-      kv: new sqlite.KvService(kitHttp('sqlite'), 'sqlite', this.urlTemplates?.['sqlite'] as any, this.getKitUrlTemplatePattern('sqlite')),
+      kv: Object.assign(new sqlite.KvService(kitHttp('sqlite'), 'sqlite', this.urlTemplates?.['sqlite'] as any, this.getKitUrlTemplatePattern('sqlite')), {
+        arrays: new sqlite.KvArraysService(kitHttp('sqlite'), 'sqlite', this.urlTemplates?.['sqlite'] as any, this.getKitUrlTemplatePattern('sqlite')),
+        table: new sqlite.KvTableService(kitHttp('sqlite'), 'sqlite', this.urlTemplates?.['sqlite'] as any, this.getKitUrlTemplatePattern('sqlite')),
+      }),
       sql: new sqlite.SqlService(kitHttp('sqlite'), 'sqlite', this.urlTemplates?.['sqlite'] as any, this.getKitUrlTemplatePattern('sqlite')),
     };
 
     this.terminal = {
-      automation: new terminal.AutomationService(kitHttp('terminal'), 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
       commands: new terminal.CommandsService(kitHttp('terminal'), 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
       drops: new terminal.DropsService(kitHttp('terminal'), 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
       keys: new terminal.KeysService(kitHttp('terminal'), 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
@@ -1603,6 +1725,7 @@ export class HoodyClient {
       processes: new terminal.ProcessesService(kitHttp('terminal'), 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
       sessions: new terminal.SessionsService(kitHttp('terminal'), 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
       system: new terminal.SystemService(kitHttp('terminal'), 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
+      workloads: new terminal.WorkloadsService(kitHttp('terminal'), 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
     };
 
     this.watch = {
@@ -1614,7 +1737,9 @@ export class HoodyClient {
     this.cron = {
       crontabs: new cron.CrontabsService(kitHttp('cron'), 'cron', this.urlTemplates?.['cron'] as any, this.getKitUrlTemplatePattern('cron')),
       entries: new cron.EntriesService(kitHttp('cron'), 'cron', this.urlTemplates?.['cron'] as any, this.getKitUrlTemplatePattern('cron')),
+      events: new cron.EventsService(kitHttp('cron'), 'cron', this.urlTemplates?.['cron'] as any, this.getKitUrlTemplatePattern('cron')),
       kit: new cron.KitService(kitHttp('cron'), 'cron', this.urlTemplates?.['cron'] as any, this.getKitUrlTemplatePattern('cron')),
+      runs: new cron.RunsService(kitHttp('cron'), 'cron', this.urlTemplates?.['cron'] as any, this.getKitUrlTemplatePattern('cron')),
     };
 
     this.pipe = Object.assign(new pipe.PipeService(kitHttp('pipe'), 'pipe', this.urlTemplates?.['pipe'] as any, this.getKitUrlTemplatePattern('pipe')), {
@@ -1652,8 +1777,9 @@ export class HoodyClient {
     };
 
     this.run = Object.assign(new run.RunService(kitHttp('run'), 'run', this.urlTemplates?.['run'] as any, this.getKitUrlTemplatePattern('run')), {
-      config: new run.ConfigService(kitHttp('run'), 'run', this.urlTemplates?.['run'] as any, this.getKitUrlTemplatePattern('run')),
+      catalog: new run.CatalogService(kitHttp('run'), 'run', this.urlTemplates?.['run'] as any, this.getKitUrlTemplatePattern('run')),
       jobs: new run.JobsService(kitHttp('run'), 'run', this.urlTemplates?.['run'] as any, this.getKitUrlTemplatePattern('run')),
+      kit: new run.KitService(kitHttp('run'), 'run', this.urlTemplates?.['run'] as any, this.getKitUrlTemplatePattern('run')),
       profiles: new run.ProfilesService(kitHttp('run'), 'run', this.urlTemplates?.['run'] as any, this.getKitUrlTemplatePattern('run')),
       recipes: new run.RecipesService(kitHttp('run'), 'run', this.urlTemplates?.['run'] as any, this.getKitUrlTemplatePattern('run')),
       sources: new run.SourcesService(kitHttp('run'), 'run', this.urlTemplates?.['run'] as any, this.getKitUrlTemplatePattern('run')),
@@ -1661,17 +1787,46 @@ export class HoodyClient {
 
     this.proxyLogs = new proxyLogs.ProxyLogsService(kitHttp('proxyLogs'), 'proxyLogs', this.urlTemplates?.['proxyLogs'] as any, this.getKitUrlTemplatePattern('proxyLogs'));
 
+    this.vm = {
+      console: new vm.ConsoleService(kitHttp('vm'), 'vm', this.urlTemplates?.['vm'] as any, this.getKitUrlTemplatePattern('vm')),
+      events: new vm.EventsService(kitHttp('vm'), 'vm', this.urlTemplates?.['vm'] as any, this.getKitUrlTemplatePattern('vm')),
+      guestAgent: new vm.GuestAgentService(kitHttp('vm'), 'vm', this.urlTemplates?.['vm'] as any, this.getKitUrlTemplatePattern('vm')),
+      imports: new vm.ImportsService(kitHttp('vm'), 'vm', this.urlTemplates?.['vm'] as any, this.getKitUrlTemplatePattern('vm')),
+      isos: Object.assign(new vm.IsosService(kitHttp('vm'), 'vm', this.urlTemplates?.['vm'] as any, this.getKitUrlTemplatePattern('vm')), {
+        downloads: new vm.IsosDownloadsService(kitHttp('vm'), 'vm', this.urlTemplates?.['vm'] as any, this.getKitUrlTemplatePattern('vm')),
+      }),
+      kit: new vm.KitService(kitHttp('vm'), 'vm', this.urlTemplates?.['vm'] as any, this.getKitUrlTemplatePattern('vm')),
+      osinfo: new vm.OsinfoService(kitHttp('vm'), 'vm', this.urlTemplates?.['vm'] as any, this.getKitUrlTemplatePattern('vm')),
+      snapshots: Object.assign(new vm.SnapshotsService(kitHttp('vm'), 'vm', this.urlTemplates?.['vm'] as any, this.getKitUrlTemplatePattern('vm')), {
+        export: new vm.SnapshotsExportService(kitHttp('vm'), 'vm', this.urlTemplates?.['vm'] as any, this.getKitUrlTemplatePattern('vm')),
+      }),
+      templates: new vm.TemplatesService(kitHttp('vm'), 'vm', this.urlTemplates?.['vm'] as any, this.getKitUrlTemplatePattern('vm')),
+      unidentifiedRuns: new vm.UnidentifiedRunsService(kitHttp('vm'), 'vm', this.urlTemplates?.['vm'] as any, this.getKitUrlTemplatePattern('vm')),
+      vms: new vm.VmsService(kitHttp('vm'), 'vm', this.urlTemplates?.['vm'] as any, this.getKitUrlTemplatePattern('vm')),
+    };
+
     this.agent = Object.assign(new agent.AgentService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')), {
       acp: new agent.AcpService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
-      bots: new agent.BotsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+      audio: new agent.AudioService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+      bots: Object.assign(new agent.BotsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')), {
+        channels: new agent.BotsChannelsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+        messages: new agent.BotsMessagesService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+      }),
       changes: new agent.ChangesService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       completions: new agent.CompletionsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
-      containers: new agent.ContainersService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+      computers: new agent.ComputersService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       definitions: new agent.DefinitionsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       files: new agent.FilesService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       fusions: new agent.FusionsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       gates: new agent.GatesService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
-      github: new agent.GithubService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+      github: Object.assign(new agent.GithubService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')), {
+        auth: new agent.GithubAuthService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+        branches: new agent.GithubBranchesService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+        commits: new agent.GithubCommitsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+        prs: new agent.GithubPrsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+        repos: new agent.GithubReposService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+        worktrees: new agent.GithubWorktreesService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+      }),
       headless: new agent.HeadlessService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       hooks: new agent.HooksService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       jev: new agent.JevService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
@@ -1680,31 +1835,41 @@ export class HoodyClient {
       logs: new agent.LogsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       loops: new agent.LoopsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       mcp: new agent.McpService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
-      memory: new agent.MemoryService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+      memory: Object.assign(new agent.MemoryService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')), {
+        items: new agent.MemoryItemsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+      }),
       models: new agent.ModelsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
-      platform: new agent.PlatformService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
-      providers: new agent.ProvidersService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+      providers: Object.assign(new agent.ProvidersService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')), {
+        accounts: new agent.ProvidersAccountsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+        auth: new agent.ProvidersAuthService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+        oauth: new agent.ProvidersOauthService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+      }),
       realms: new agent.RealmsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+      scripts: Object.assign(new agent.ScriptsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')), {
+        templates: new agent.ScriptsTemplatesService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+      }),
       sessions: Object.assign(new agent.SessionsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')), {
+        approval: new agent.SessionsApprovalService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+        approverLease: new agent.SessionsApproverLeaseService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+        attachments: new agent.SessionsAttachmentsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+        autoReply: new agent.SessionsAutoReplyService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
         commands: new agent.SessionsCommandsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+        tasks: new agent.SessionsTasksService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+        tools: new agent.SessionsToolsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
         turns: new agent.SessionsTurnsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+        waiters: new agent.SessionsWaitersService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       }),
       settings: new agent.SettingsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       skills: Object.assign(new agent.SkillsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')), {
         hub: new agent.SkillsHubService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       }),
-      stats: new agent.StatsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
-      tasks: new agent.TasksService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       todos: new agent.TodosService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       tools: new agent.ToolsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       usage: new agent.UsageService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
-      workflows: new agent.WorkflowsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+      workflows: Object.assign(new agent.WorkflowsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')), {
+        runs: new agent.WorkflowsRunsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+      }),
     });
-
-    this.bot = {
-      kit: new bot.KitService(kitHttp('bot'), 'bot', this.urlTemplates?.['bot'] as any, this.getKitUrlTemplatePattern('bot')),
-      registrations: new bot.RegistrationsService(kitHttp('bot'), 'bot', this.urlTemplates?.['bot'] as any, this.getKitUrlTemplatePattern('bot')),
-    };
 
     this.installAuthLifecycleHooks();
   }
@@ -1717,7 +1882,9 @@ export class HoodyClient {
    * afterwards share the new session. The new session keeps the credentials
    * this client was constructed with (a derived client has none) and no
    * refresh token. A token recovery still in flight for this client is
-   * discarded. To change the token of the whole session, use setSessionToken().
+   * discarded, and a request in flight is not sent again with this one: a 401
+   * for the old token, or a failure it would have retried, is its answer. To
+   * change the token of the whole session, use setSessionToken().
    */
   public setToken(token: string): void {
     const own = _newSessionState(this.ownCredentials);
@@ -1733,7 +1900,9 @@ export class HoodyClient {
    * derived from and every client derived from either send it from now on. A
    * non-empty token also ends a logged-out state (see logout()), and any token
    * recovery still in flight is discarded. The refresh token and stored
-   * credentials are kept; to replace those too, use adoptSession().
+   * credentials are kept; to replace those too, use adoptSession(). A request
+   * in flight is not sent again with the new token: a 401, or a failure it
+   * would have retried, is its answer.
    */
   public setSessionToken(token: string): void {
     this.bumpGeneration();
@@ -1881,6 +2050,9 @@ export class HoodyClient {
    * answered with a two-factor challenge or an auth_intent_token there is no
    * session to adopt, and this throws a ValidationError naming the step that
    * finishes the login.
+   *
+   * A request in flight under the previous session is not sent again with the
+   * adopted token: a 401, or a failure it would have retried, is its answer.
    */
   public adoptSession(tokens: HoodySessionTokens): string {
     const envelope = tokens as { data?: unknown; token?: unknown; refreshToken?: unknown } | null | undefined;
@@ -1918,13 +2090,19 @@ export class HoodyClient {
    * Finish a login that returned a two-factor challenge (data.temp_token):
    * verify the code with api.auth.twoFactor.verify() and adopt the session it returns.
    * Resolves to the new access token.
+   *
+   * The request body declares the same source channel as the login it
+   * finishes: options.client, else the `client` of this client's stored
+   * credentials, else 'sdk'. The API records it unless the challenge itself
+   * already names a channel (an OAuth sign-in keeps the one it started with).
    */
-  public async completeTwoFactorLogin(tempToken: string, code: string): Promise<string> {
+  public async completeTwoFactorLogin(tempToken: string, code: string, options?: { client?: string }): Promise<string> {
     const tfa = (this as any).api && (this as any).api.auth && (this as any).api.auth.twoFactor;
     if (!tfa || typeof tfa.verify !== 'function') {
       throw new Error('Two-factor service not available');
     }
-    const response = await tfa.verify({ temp_token: tempToken, code }, { authRetry: false });
+    const client = options?.client ?? this.session.credentials?.client ?? _SDK_CLIENT_CHANNEL;
+    const response = await tfa.verify({ temp_token: tempToken, code, client }, { authRetry: false });
     return this.adoptSession(response);
   }
 
@@ -1938,12 +2116,12 @@ export class HoodyClient {
    * devices, the CLI, other apps) stay signed in. It is what the CLI's
    * hoody logout does.
    *
-   * hoody-api has no call that revokes one session: the dropped access token
+   * The API has no call that revokes one session: the dropped access token
    * stays valid on the server until it expires. Use logoutAll() when the
    * token may have leaked, or to sign the account out everywhere.
    *
    * kitAuth is cleared because it is sent on the session's behalf (it often
-   * holds the account token itself); pass it again with withContainer() when
+   * holds the account token itself); pass it again with withComputer() when
    * a kit still needs it. Streams and sockets already open are NOT closed:
    * they belong to the caller, who holds their AbortSignal or close(), and
    * the client keeps no registry of them. Close them when logging out. An
@@ -2047,7 +2225,7 @@ export class HoodyClient {
    *
    * Documented in the README (tunnel helpers pass `await hoody.getAuthToken()`)
    * and used by the agent streaming helper (lib/agent-client.ts) to mint the
-   * `X-Hoody-Token` half of a container-claim kit handshake.
+   * `X-Hoody-Token` half of a computer-claim kit handshake.
    */
   public async getAuthToken(): Promise<string | undefined> {
     const current = (this.http as any).config?.token;
@@ -2077,7 +2255,7 @@ export class HoodyClient {
     // @ts-ignore - Assuming api namespace exists and has authentication service
     if ((this as any).api && (this as any).api.auth) {
       // @ts-ignore
-      const response = await (this as any).api.auth.login(credentials) as ApiAuthLoginResponse;
+      const response = await (this as any).api.auth.login(_loginBody(credentials)) as ApiAuthLoginResponse;
       // A logout, adoption or newer login that landed meanwhile wins.
       if (this.isCurrentSession(generation)) this.updateTokensFromAuthResponse(response, 'login');
       return response;
@@ -2172,7 +2350,7 @@ export class HoodyClient {
     // authRetry: false keeps a 401 on the refresh call itself from
     // re-entering this recovery path. (No backticks in this comment: it sits
     // inside the template literal that emits the client, and a pair of them
-    // terminates that literal — which is exactly what broke the 08:16 deploy.)
+    // terminates that literal and breaks the generated client.)
     // The public api.auth.refresh() does both itself (see
     // installAuthLifecycleHooks); they are repeated here so this path does
     // not depend on the hook having been installed.
@@ -2202,7 +2380,7 @@ export class HoodyClient {
     if (credentials && this.isCurrentSession(generation)) {
       try {
         // @ts-ignore
-        const loginResponse = await (this as any).api.auth.login(credentials, { authRetry: false });
+        const loginResponse = await (this as any).api.auth.login(_loginBody(credentials), { authRetry: false });
         if (!this.isCurrentSession(generation)) return undefined;
         return this.updateTokensFromAuthResponse(loginResponse, 'relogin');
       } catch {
@@ -2265,9 +2443,8 @@ export class HoodyClient {
       //
       // This request carries the caller's BEARER, so it must leave through the caller's transport
       // like every other request. An earlier version built it with baseURL/token/timeout only, so on a realm 403 the
-      // bearer went out through the runtime's global fetch — outside the injected egress policy
-      // (hoody-bot injects one into every per-user client). Carry the injected transport and the
-      // middleware chain.
+      // bearer went out through the runtime's global fetch — outside the injected egress policy.
+      // Carry the injected transport and the middleware chain.
       const parentConfig = (this.http as any).config;
       const injectedFetch = this.http.getInjectedFetch();
       const introspectionConfig: IHttpClientConfig = {
@@ -2280,9 +2457,9 @@ export class HoodyClient {
           m => !(m as { _realmHostMiddleware?: boolean })._realmHostMiddleware
         ), // never undefined: exactOptionalPropertyTypes
       };
-      // The same five knobs withRealm() and withContainer() copy, and for the same reason. An earlier
-      // fix carried the fetch and the middleware chain and stopped there, which is enough for
-      // hoody-bot (it injects a fetch) and not for anyone who configures the transport instead:
+      // The same five knobs withRealm() and withComputer() copy, and for the same reason. An earlier
+      // fix carried the fetch and the middleware chain and stopped there, which is enough for a
+      // caller that injects a fetch and not for anyone who configures the transport instead:
       // a Node SDK or CLI user behind the dispatcher-based proxy had this ONE request leave on
       // the default agent, with their bearer on it, and be identified as nobody in particular
       // because the client id and name were dropped too.
@@ -2290,8 +2467,8 @@ export class HoodyClient {
       // default filled in, and the browser client warns about each Node-only knob it is handed.
       const configuredTransport = this.http.getConfiguredTransport();
       if (configuredTransport) introspectionConfig.transport = configuredTransport;
-      if (parentConfig.forceIPv4 !== undefined) introspectionConfig.forceIPv4 = parentConfig.forceIPv4;
-      if (parentConfig.forceIPv4Cache) introspectionConfig.forceIPv4Cache = parentConfig.forceIPv4Cache;
+      if (parentConfig.forceIpv4 !== undefined) introspectionConfig.forceIpv4 = parentConfig.forceIpv4;
+      if (parentConfig.forceIpv4Cache) introspectionConfig.forceIpv4Cache = parentConfig.forceIpv4Cache;
       if (parentConfig.clientId) introspectionConfig.clientId = parentConfig.clientId;
       if (parentConfig.clientName) introspectionConfig.clientName = parentConfig.clientName;
       if (parentConfig.kitStartingWaitMs !== undefined) introspectionConfig.kitStartingWaitMs = parentConfig.kitStartingWaitMs;  // keep 0 (off)
@@ -2324,58 +2501,60 @@ export class HoodyClient {
   }
 
   /**
-   * Create a new client instance scoped to a specific container
+   * Create a new client instance scoped to a specific computer
    *
-   * Automatically fetches container details if ID is provided,
-   * and configures URL templates for all hoody-kit services.
+   * Automatically fetches computer details if ID is provided,
+   * and configures URL templates for all Hoody Kit services.
    *
-   * An object needs its id, project_id and a server (server_name, a string
-   * server, or a server object's name) to route without a request. One that
+   * An object needs its id, project_id and a server (server_name, or a string
+   * server) to route without a request. One that
    * has an id but no project_id or no server is looked up by id through the
    * account API, and the API's project and server are used; a project_id or
    * server it does give must be well formed and match them, or this throws
    * ValidationError. A failed lookup throws the API's error.
    *
-   * @param containerOrId - Container object or ID
-   * @param options - Container scoping options
+   * @param computerOrId - Computer object or ID
+   * @param options - Computer scoping options
    */
-  async withContainer(
-    containerOrId: string | ContainerLike,
+  async withComputer(
+    computerOrId: string | ComputerLike,
     options?: {
       kitAuth?: ProxyAuth | ProxyAuthPolicy;
       onKitAuthExpired?: (namespace: string, error: ApiError) => Promise<ProxyAuth | undefined>;
     }
   ): Promise<HoodyClient> {
-    let container: ContainerLike;
+    let computer: ComputerLike;
     
-    if (typeof containerOrId === 'string') {
-      // Fetch container details
-      const response = await this.api.containers.get(containerOrId) as any;
-      container = response.data;
+    if (typeof computerOrId === 'string') {
+      // Fetch computer details
+      const response = await this.api.computers.get(computerOrId) as any;
+      // An API row routes on its flat server_name only: a server (string or object) in it is never a node.
+      computer = response.data && typeof response.data === 'object' ? { ...response.data, server: undefined } : response.data;
     } else {
       // A routing field the caller gave must be well formed, whether or not the object is
       // then looked up: a complete object with `project_id: 42` or `id: 123` would route to
       // `42-<id>…` or install a numeric id, and `project_id: null` is not a missing one. A null
-      // server_name beside a usable server (a containers.list item) is the one null that is ignored.
-      if (containerOrId && typeof containerOrId === 'object') _assertGivenContainerRouting(containerOrId);
-      if (_containerNeedsLookup(containerOrId)) {
-        // An object that names the container but not where it runs ({ id }, or metadata without
+      // server_name beside a usable server name, or beside a server-details object (so the computer is
+      // looked up by id), is ignored, and so is a null server beside a usable server_name.
+      if (computerOrId && typeof computerOrId === 'object') _assertGivenComputerRouting(computerOrId);
+      if (_computerNeedsLookup(computerOrId)) {
+        // An object that names the computer but not where it runs ({ id }, or metadata without
         // its project or server) is looked up by id, and the API's answer routes the client.
         // A routing field the caller did give must match that answer: it is checked, never
         // replaced. A failed lookup throws the API's own error.
-        // _containerNeedsLookup() answered true, so id is a non-empty string (the type has it optional).
-        const response = await this.api.containers.get(containerOrId.id as string) as any;
-        container = _containerFromLookup(containerOrId, response?.data);
+        // _computerNeedsLookup() answered true, so id is a non-empty string (the type has it optional).
+        const response = await this.api.computers.get(computerOrId.id as string) as any;
+        computer = _computerFromLookup(computerOrId, response?.data);
       } else {
-        container = containerOrId;
+        computer = computerOrId;
       }
     }
 
     // Accept either server or server_name (API response uses the latter;
     // hand-built objects often use the former).
-    const containerServer = _resolveContainerServer(container);
-    if (!container || !container.id || !container.project_id || !containerServer) {
-      throw new Error('Invalid container object: missing id, project_id, or server/server_name');
+    const computerServer = _resolveComputerServer(computer);
+    if (!computer || !computer.id || !computer.project_id || !computerServer) {
+      throw new Error('Invalid computer object: missing id, project_id, or server/server_name');
     }
 
     // Create new client with pre-filled templates
@@ -2389,7 +2568,7 @@ export class HoodyClient {
     };
 
     // Preserve ALL parent config fields on the scoped client. Without this,
-    // transport, forceIPv4, forceIPv4Cache, and clientId/clientName are
+    // transport, forceIpv4, forceIpv4Cache, and clientId/clientName are
     // silently dropped, and `timeout: 0` (caller opt-out) gets coerced to the
     // default 30s because a truthy check rejects 0. Use explicit `!== undefined`
     // for numeric fields where 0 is a meaningful value.
@@ -2409,6 +2588,10 @@ export class HoodyClient {
     if (this.userRefreshToken) newConfig.refreshToken = this.userRefreshToken;
     if (this.userOnSession) newConfig.onSession = this.userOnSession;
     if (config.autoRetryAuth !== undefined) newConfig.autoRetryAuth = config.autoRetryAuth;
+    // Resolved on the transport (true, [] and [] by default): only what the caller set is carried.
+    if (config.keyedInProgressWait === false) newConfig.keyedInProgressWait = false;
+    if (config.redactBodyKeys && config.redactBodyKeys.length > 0) newConfig.redactBodyKeys = [...config.redactBodyKeys];
+    if (config.credentialHeaders && config.credentialHeaders.length > 0) newConfig.credentialHeaders = [...config.credentialHeaders];
     // The CALLER's transport options, never the normalised `config.transport`: that one has every
     // default filled in, so each derived browser client warned about Node-only knobs nobody set.
     const configuredTransport = this.http.getConfiguredTransport();
@@ -2417,11 +2600,11 @@ export class HoodyClient {
     // the runtime's global fetch would leave the caller's egress policy.
     // Read it through getInjectedFetch(), NOT config.fetch: the BROWSER HttpClient keeps the injection out
     // of its config on purpose (it late-binds the global when nothing was injected), so the config copy
-    // alone drops the transport in the very build hoody-bot bundles.
+    // alone drops the transport in the browser build.
     const injectedFetch = this.http.getInjectedFetch();
     if (injectedFetch) newConfig.fetch = injectedFetch;
-    if (config.forceIPv4 !== undefined) newConfig.forceIPv4 = config.forceIPv4;
-    if (config.forceIPv4Cache) newConfig.forceIPv4Cache = config.forceIPv4Cache;
+    if (config.forceIpv4 !== undefined) newConfig.forceIpv4 = config.forceIpv4;
+    if (config.forceIpv4Cache) newConfig.forceIpv4Cache = config.forceIpv4Cache;
     if (config.clientId) newConfig.clientId = config.clientId;
     if (config.clientName) newConfig.clientName = config.clientName;
     // Raw-body capture for response-signature checks (lib/signing.ts) must
@@ -2429,6 +2612,12 @@ export class HoodyClient {
     if ((config as { captureRawBody?: boolean }).captureRawBody) (newConfig as { captureRawBody?: boolean }).captureRawBody = true;
     // The event-stream frame limit is part of the transport configuration too.
     if (config.maxStreamFrameBytes !== undefined) newConfig.maxStreamFrameBytes = config.maxStreamFrameBytes;
+    // The step-up hook, the fetch options and the byte limits are the transport's configuration too.
+    if (config.onStepUp) newConfig.onStepUp = config.onStepUp;
+    if (config.fetchCredentials !== undefined) newConfig.fetchCredentials = config.fetchCredentials;
+    if (config.fetchCache !== undefined) newConfig.fetchCache = config.fetchCache;
+    if (config.maxResponseBytes !== undefined) newConfig.maxResponseBytes = config.maxResponseBytes;
+    if (config.maxStreamBytes !== undefined) newConfig.maxStreamBytes = config.maxStreamBytes;
     if (config.onStreamDiagnostic) newConfig.onStreamDiagnostic = config.onStreamDiagnostic;
 
     if (this.realmId) newConfig.realmId = this.realmId;
@@ -2464,143 +2653,143 @@ export class HoodyClient {
 
     newConfig.urlTemplates = {
         'browser': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'code': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'curl': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'daemon': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'display': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'exec': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'files': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'notifications': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'sqlite': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'terminal': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'watch': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'cron': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'pipe': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'notes': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'tunnel': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'egress': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'run': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'proxyLogs': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
+          serviceIndex: 1
+        },
+        'vm': {
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         },
         'agent': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
-          serviceIndex: 1
-        },
-        'bot': {
-          projectId: container.project_id,
-          containerId: container.id,
-          server: containerServer,
-          serverName: containerServer,
+          projectId: computer.project_id,
+          computerId: computer.id,
+          server: computerServer,
+          serverName: computerServer,
           serviceIndex: 1
         }
     };
@@ -2645,7 +2834,7 @@ export class HoodyClient {
       newConfig.realmId = selectedRealm;
     }
     // Preserve all parent config + kit auth state. Without this, withRealm()
-    // drops transport/forceIPv4/clientId/kitAuth/onKitAuthExpired and coerces
+    // drops transport/forceIpv4/clientId/kitAuth/onKitAuthExpired and coerces
     // timeout:0 to the default 30s.
     if (config.token) newConfig.token = config.token;
     if (config.timeout !== undefined) newConfig.timeout = config.timeout;
@@ -2663,6 +2852,10 @@ export class HoodyClient {
     if (this.userRefreshToken) newConfig.refreshToken = this.userRefreshToken;
     if (this.userOnSession) newConfig.onSession = this.userOnSession;
     if (config.autoRetryAuth !== undefined) newConfig.autoRetryAuth = config.autoRetryAuth;
+    // Resolved on the transport (true, [] and [] by default): only what the caller set is carried.
+    if (config.keyedInProgressWait === false) newConfig.keyedInProgressWait = false;
+    if (config.redactBodyKeys && config.redactBodyKeys.length > 0) newConfig.redactBodyKeys = [...config.redactBodyKeys];
+    if (config.credentialHeaders && config.credentialHeaders.length > 0) newConfig.credentialHeaders = [...config.credentialHeaders];
     // The CALLER's transport options, never the normalised `config.transport`: that one has every
     // default filled in, so each derived browser client warned about Node-only knobs nobody set.
     const configuredTransport = this.http.getConfiguredTransport();
@@ -2671,15 +2864,21 @@ export class HoodyClient {
     // the runtime's global fetch would leave the caller's egress policy.
     // Read it through getInjectedFetch(), NOT config.fetch: the BROWSER HttpClient keeps the injection out
     // of its config on purpose (it late-binds the global when nothing was injected), so the config copy
-    // alone drops the transport in the very build hoody-bot bundles.
+    // alone drops the transport in the browser build.
     const injectedFetch = this.http.getInjectedFetch();
     if (injectedFetch) newConfig.fetch = injectedFetch;
-    if (config.forceIPv4 !== undefined) newConfig.forceIPv4 = config.forceIPv4;
-    if (config.forceIPv4Cache) newConfig.forceIPv4Cache = config.forceIPv4Cache;
+    if (config.forceIpv4 !== undefined) newConfig.forceIpv4 = config.forceIpv4;
+    if (config.forceIpv4Cache) newConfig.forceIpv4Cache = config.forceIpv4Cache;
     if (config.clientId) newConfig.clientId = config.clientId;
     if (config.clientName) newConfig.clientName = config.clientName;
     if ((config as { captureRawBody?: boolean }).captureRawBody) (newConfig as { captureRawBody?: boolean }).captureRawBody = true;
     if (config.maxStreamFrameBytes !== undefined) newConfig.maxStreamFrameBytes = config.maxStreamFrameBytes;
+    // The step-up hook, the fetch options and the byte limits are the transport's configuration too.
+    if (config.onStepUp) newConfig.onStepUp = config.onStepUp;
+    if (config.fetchCredentials !== undefined) newConfig.fetchCredentials = config.fetchCredentials;
+    if (config.fetchCache !== undefined) newConfig.fetchCache = config.fetchCache;
+    if (config.maxResponseBytes !== undefined) newConfig.maxResponseBytes = config.maxResponseBytes;
+    if (config.maxStreamBytes !== undefined) newConfig.maxStreamBytes = config.maxStreamBytes;
     if (config.onStreamDiagnostic) newConfig.onStreamDiagnostic = config.onStreamDiagnostic;
     if (this.urlTemplates) newConfig.urlTemplates = this.urlTemplates;
     if (this.kitAuth) newConfig.kitAuth = this.kitAuth;
@@ -2767,10 +2966,10 @@ export class HoodyClient {
 
   /**
    * Transport for a kit namespace's services. A kit service that has no
-   * container to build its URL from (the client was not made by
-   * withContainer()) produces a bare path; on an account-API client that path
+   * computer to build its URL from (the client was not made by
+   * withComputer()) produces a bare path; on an account-API client that path
    * would go to the API host with the account bearer. Refuse it before it is
-   * sent. Container clients (the service builds a full kit URL) and direct-kit
+   * sent. Computer clients (the service builds a full kit URL) and direct-kit
    * clients (baseURL is the kit) are unaffected.
    */
   private guardKitHttp(namespace: string): HttpClient {
@@ -2779,9 +2978,9 @@ export class HoodyClient {
       if (lowered.startsWith('http://') || lowered.startsWith('https://')) return;
       if (!this.isAccountApiBase()) return;
       throw new ValidationError(
-        namespace + ' is a container kit: call client.withContainer(container) first and use the client it returns'
+        namespace + ' is a computer kit: call client.withComputer(computer) first and use the client it returns'
           + ' (or construct the client with the kit URL as baseURL). This client targets the account API, which does not serve ' + path + '.',
-        'container',
+        'computer',
       );
     }, false);
   }
@@ -2823,7 +3022,7 @@ export class HoodyClient {
           '_realm',
         );
       }
-      // hoody-api reads a realm only from a host of four labels or more
+      // The API reads a realm only from a host of four labels or more
       // ({realm}.api.example.com); on a shorter one ({realm}.localhost) it
       // would silently serve the request unscoped.
       if (host.split('.').length < 4) {
@@ -2839,17 +3038,17 @@ export class HoodyClient {
    * Generate a URL for a specific kit service.
    *
    * When `local: true` is passed in options, returns the local Kit URL
-   * (`https://localhost.{containersDomain}/{serviceSegment}`) instead of the
-   * full external URL. The local URL only works from inside the container's
+   * (`https://localhost.{computersDomain}/{serviceSegment}`) instead of the
+   * full external URL. The local URL only works from inside the computer's
    * own network — the Host auto-identifies the caller. Use this for cron
-   * jobs, CLI scripts, or any in-container automation targeting the
-   * container's own services. For cross-container calls, use the default
+   * jobs, CLI scripts, or any in-computer automation targeting the
+   * computer's own services. For cross-computer calls, use the default
    * (full external URL).
    */
   getKitUrl(
     kit: string,
-    container: ContainerLike | null,
-    serviceIndexOrOptions: number | { serviceIndex?: number; protocol?: 'http' | 'https'; port?: number; local?: boolean } = 1
+    computer: ComputerLike | null,
+    serviceIndexOrOptions?: number | { serviceIndex?: number; protocol?: 'http' | 'https'; port?: number; local?: boolean }
   ): string {
     const hasOptionsObject =
       typeof serviceIndexOrOptions === 'object'
@@ -2858,87 +3057,57 @@ export class HoodyClient {
     const isLocal = hasOptionsObject && (serviceIndexOrOptions as any).local === true;
 
     const serviceSegment = this.resolveKitServiceSegment(kit, serviceIndexOrOptions);
-    const containersDomain = this.resolveContainersDomain();
+    const computersDomain = this.resolveComputersDomain();
 
     if (isLocal) {
-      return `https://localhost.${containersDomain}/${serviceSegment}`;
+      return `https://localhost.${computersDomain}/${serviceSegment}`;
     }
 
-    // Not local — container identity is mandatory. Accept either server_name
-    // (API response) or server (hand-built objects) via _resolveContainerServer.
-    const containerServer = _resolveContainerServer(container);
-    if (!container || !container.id || !container.project_id || !containerServer) {
-      throw new Error('Invalid container object');
+    // Not local — computer identity is mandatory. Accept either server_name
+    // (API response) or server (hand-built objects) via _resolveComputerServer.
+    const computerServer = _resolveComputerServer(computer);
+    if (!computer || !computer.id || !computer.project_id || !computerServer) {
+      throw new Error('Invalid computer object');
     }
 
     // A DNS label holds 63 characters. Two 24-character ids and terminal-<N> make 64 from
-    // N = 10000 up (every ephemeral terminal), a host no resolver accepts. The containers proxy
+    // N = 10000 up (only an older kit's ephemeral terminal), a host no resolver accepts. The computers proxy
     // answers to the short alias t-<N> with the same index handling, so the label switches to it
     // only when the long one does not fit (the rule of lib/terminal-host.ts).
-    const kitLabel = `${container.project_id}-${container.id}-${serviceSegment}`;
+    const kitLabel = `${computer.project_id}-${computer.id}-${serviceSegment}`;
     const hostLabel = kitLabel.length > 63 ? kitLabel.replace(/-terminal-(\d+)$/, '-t-$1') : kitLabel;
-    return `https://${hostLabel}.${containerServer}.${containersDomain}`;
+    return `https://${hostLabel}.${computerServer}.${computersDomain}`;
   }
 
   /**
    * Build a URL-template pattern for a specific kit namespace
-   * using a baseURL-derived containers domain (domain-agnostic).
+   * using a baseURL-derived computers domain (domain-agnostic).
    */
   private getKitUrlTemplatePattern(namespace: string): string {
-    const containersDomain = this.resolveContainersDomain();
+    // Built for every kit namespace when the client is constructed, so an IP address base URL (which has no
+    // kit host) must not throw here: the service refuses it when a kit URL is actually built (buildTemplateUrl).
+    const computersDomain = computersDomainFor(this.callerBaseURL);
     const kitSegment = this.resolveKitNamespaceSegment(namespace);
     // Every kit names the server {serverName}, as the kit specs do. For one release a caller still
     // passing server has it copied to serverName (_withServerNameAlias).
-    return `https://{projectId}-{containerId}-${kitSegment}-{serviceIndex}.{serverName}.${containersDomain}`;
+    return `https://{projectId}-{computerId}-${kitSegment}-{serviceIndex}.{serverName}.${computersDomain}`;
   }
 
   /**
-   * Derive containers domain from configured baseURL.
+   * The computers domain of the configured baseURL: lib/domain-utils.ts computersDomainFor(), the one
+   * derivation the CLI client, the embeds runtime and the kitAuth middleware share.
    *
    * Examples:
-   * - api.hoody.com -> containers.hoody.com
-   * - api.hoody.com -> containers.hoody.com
-   * - {realm}.api.hoody.com -> containers.hoody.com
+   * - api.hoody.com -> computers.hoody.com
+   * - api.hoody.com -> computers.hoody.com
+   * - {realm}.api.hoody.com -> computers.hoody.com
+   * - localhost -> localhost (a kit host is a subdomain of it)
+   *
+   * An IP address base has no kit host: this throws where one is about to be built, so a client that
+   * only calls the account API on an IP base URL keeps working.
    */
-  private resolveContainersDomain(): string {
-    const fallback = 'containers.hoody.com';
-    const baseURL = this.callerBaseURL;
-
-    try {
-      const host = new URL(baseURL).hostname;
-      if (!host) return fallback;
-
-      // Localhost / IP literal / bare-hostname baseURLs have no DNS-suffix we
-      // can meaningfully transform. Returning 'containers.localhost' /
-      // 'containers.127.0.0.1' would produce unresolvable subdomains for
-      // dev/testing setups.
-      const isIpv4 = /^\d{1,3}(?:\.\d{1,3}){3}$/.test(host);
-      const isIpv6 = /:/.test(host);
-      const isLocalhost = host === 'localhost' || host.endsWith('.localhost');
-      if (isIpv4 || isIpv6 || isLocalhost) return host;
-
-      if (host.startsWith('containers.')) {
-        return host;
-      }
-
-      const realmScopedApiHostPattern = /^[a-f0-9]{24}\.api\./i;
-      if (realmScopedApiHostPattern.test(host)) {
-        return host.replace(realmScopedApiHostPattern, 'containers.');
-      }
-
-      if (host.startsWith('api.')) {
-        return `containers.${host.slice(4)}`;
-      }
-
-      const replaced = host.replace('.api.', '.containers.');
-      if (replaced !== host) {
-        return replaced;
-      }
-
-      return `containers.${host}`;
-    } catch {
-      return fallback;
-    }
+  private resolveComputersDomain(): string {
+    return requireDnsComputersDomain(this.callerBaseURL);
   }
 
   /**
@@ -2961,11 +3130,20 @@ export class HoodyClient {
    */
   private resolveKitServiceSegment(
     kit: string,
-    serviceIndexOrOptions: number | { serviceIndex?: number; protocol?: 'http' | 'https'; port?: number; local?: boolean }
+    serviceIndexOrOptions: number | { serviceIndex?: number; protocol?: 'http' | 'https'; port?: number; local?: boolean } | undefined
   ): string {
-    const rawKit = String(kit || '').trim().toLowerCase();
+    let rawKit = String(kit || '').trim().toLowerCase();
     if (!rawKit) {
       throw new Error('Kit name is required');
+    }
+
+    // The catalog's pattern rows (http-<port>, https-<port>) name the dynamic form; the port must be given.
+    const placeholder = /^(https?)-<port>$/.exec(rawKit);
+    if (placeholder) {
+      if (typeof serviceIndexOrOptions !== 'number' && serviceIndexOrOptions?.port === undefined) {
+        throw new Error(`A port is required for the ${rawKit} kit URL: pass { port }`);
+      }
+      rawKit = placeholder[1]!;
     }
     // proxyLogs must normalize to 'logs' here, matching
     // resolveKitNamespaceSegment. Without this, getKitUrl('proxyLogs', ...)
@@ -2974,6 +3152,9 @@ export class HoodyClient {
       rawKit === 'notifications' ? 'n'
       : rawKit === 'proxylogs' ? 'logs'
       : rawKit;
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(normalizedKit)) {
+      throw new Error(`Invalid kit name for a kit URL: ${kit}`);
+    }
 
     // Accept explicit dynamic service slugs as-is (http-8080, https-8443).
     if (/^(https?)-\d+$/.test(normalizedKit)) {
@@ -2996,9 +3177,9 @@ export class HoodyClient {
     const optionPort = options.port;
 
     // Support protocol + port URL helpers:
-    // - getKitUrl('http', container, { port: 8080 })
-    // - getKitUrl('https', container, { port: 8443 })
-    // - getKitUrl('http', container, 8080) // number interpreted as port for http/https
+    // - getKitUrl('http', computer, { port: 8080 })
+    // - getKitUrl('https', computer, { port: 8443 })
+    // - getKitUrl('http', computer, 8080) // number interpreted as port for http/https
     if (normalizedKit === 'http' || normalizedKit === 'https' || protocol) {
       const resolvedProtocol = protocol || (normalizedKit === 'https' ? 'https' : 'http');
       const port = optionPort ?? (typeof serviceIndexOrOptions === 'number' ? serviceIndexOrOptions : undefined) ?? (resolvedProtocol === 'https' ? 443 : 80);
@@ -3014,7 +3195,7 @@ export class HoodyClient {
       throw new Error(`Invalid serviceIndex for kit URL: ${serviceIndex}`);
     }
 
-    // One egress process serves the whole container, so every index reaches the
+    // One egress process serves the whole computer, so every index reaches the
     // same proxy and the canonical URL carries no suffix — the form the CLI,
     // the docs and the edge's prefix handling all use. The suffix is not
     // cosmetic though: proxy permissions are evaluated per service index, so an
@@ -3030,15 +3211,15 @@ export class HoodyClient {
   /**
    * Generate URLs for all standard kits
    */
-  getKitUrls(
-    container: ContainerLike | null,
+  listKitUrls(
+    computer: ComputerLike | null,
     serviceIndexOrOptions: number | { serviceIndex?: number; protocol?: 'http' | 'https'; port?: number; local?: boolean } = 1
   ): Record<string, string> {
-    const kits = ['terminal', 'browser', 'code', 'curl', 'cron', 'daemon', 'display', 'desktop', 'exec', 'files', 'notifications', 'sqlite', 'watch', 'logs', 'notes', 'run', 'pipe', 'tunnel', 'agent', 'bot', 'egress'];
+    const kits = ['terminal', 'browser', 'code', 'curl', 'cron', 'daemon', 'display', 'desktop', 'exec', 'files', 'notifications', 'sqlite', 'watch', 'logs', 'notes', 'run', 'pipe', 'tunnel', 'agent', 'vm', 'egress'];
     const urls: Record<string, string> = {};
 
     for (const kit of kits) {
-      urls[kit] = this.getKitUrl(kit, container, serviceIndexOrOptions);
+      urls[kit] = this.getKitUrl(kit, computer, serviceIndexOrOptions);
     }
 
     return urls;
@@ -3047,8 +3228,8 @@ export class HoodyClient {
   /**
    * Get the Hoody IP check base URL (https://ip.hoody.com).
    *
-   * Useful for verifying the exit IP of a container proxy.
-   * Example: `curl -x ${client.getKitUrl('proxy', container)} ${client.getIpUrl()}`
+   * Useful for verifying the exit IP of a computer proxy.
+   * Example: `curl -x ${client.getKitUrl('proxy', computer)} ${client.getIpUrl()}`
    */
   getIpUrl(): string {
     return `https://${this.resolveIpDomain()}`;
@@ -3058,14 +3239,14 @@ export class HoodyClient {
    * Check the caller's external IP by querying ip.hoody.com.
    *
    * Returns the same typed response as GET /api/v1/ip (ApiIpGetResponse).
-   * No authentication required. Useful for verifying container proxy exit IPs.
+   * No authentication required. Useful for verifying computer proxy exit IPs.
    *
    * @example
-   * const { data } = await client.checkIp();
+   * const { data } = await client.getIp();
    * console.log(data.ip);           // "203.0.113.42"
    * console.log(data.ip_info?.country); // "SG"
    */
-  async checkIp(options?: { signal?: AbortSignal; timeoutMs?: number }): Promise<ApiIpGetResponse> {
+  async getIp(options?: { signal?: AbortSignal; timeoutMs?: number }): Promise<ApiIpGetResponse> {
     const url = `https://${this.resolveIpDomain()}/api/v1/ip`;
     const requestData: IRequestData = {};
     if (options?.signal) requestData.signal = options.signal;
@@ -3117,3 +3298,7 @@ export class HoodyClient {
     }
   }
 }
+
+// Methods renamed before the stable release: the earlier names are refused, naming the method that
+// replaced them, never kept as aliases. Non-enumerable and in no type.
+retireMethods(HoodyClient.prototype, 'HoodyClient', { getKitUrls: 'listKitUrls()', checkIp: 'getIp()' });
