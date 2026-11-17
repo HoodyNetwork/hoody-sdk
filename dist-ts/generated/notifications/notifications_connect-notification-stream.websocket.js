@@ -5,6 +5,10 @@
  * Protocol: unknown
  * @see Notification Stream v1.0.0
  */
+/** A credential passed for this socket cannot be sent by a browser WebSocket; connect() rejects with it. */
+function credentialNotSentError(headers) {
+    return Object.assign(new Error(`WebSocket credential not sent: a browser WebSocket cannot send ${headers.join(", ")}. Pass a token group read from a query parameter, or use a cookie on the kit host.`), { name: "WebSocketCredentialNotSentError", code: "WS_CREDENTIAL_NOT_SENT", headers });
+}
 const RAW_WEBSOCKET_OPEN = 1;
 const RAW_WEBSOCKET_CLOSED = 3;
 function upgradeRefusedError(status, code, via, cause) {
@@ -15,6 +19,77 @@ function upgradeRefusedError(status, code, via, cause) {
     error.via = via;
     if (cause !== undefined)
         error.cause = cause;
+    return error;
+}
+/** Bytes of a refused upgrade's body read for its error; the rest is dropped. */
+const UPGRADE_BODY_CAP = 16384;
+/** Longest wait for that body, inside the connect timeout. */
+const UPGRADE_BODY_DEADLINE_MS = 2000;
+/**
+ * The error for an upgrade answered with `status` instead of 101. `body` is
+ * the response text when it was read completely (never when cut at the cap
+ * or by a deadline); only a JSON object naming a string `code` (at the top,
+ * or under `error`) adds the server's code, message and details.
+ */
+function upgradeResponseError(status, headers, body) {
+    let envelope;
+    if (body !== undefined) {
+        try {
+            const parsed = JSON.parse(body);
+            const isObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+            if (isObject(parsed)) {
+                if (typeof parsed.code === "string")
+                    envelope = parsed;
+                else if (isObject(parsed.error) && typeof parsed.error.code === "string")
+                    envelope = parsed.error;
+            }
+        }
+        catch { /* not JSON: the status alone */ }
+    }
+    const code = envelope ? envelope.code : undefined;
+    const serverMessage = envelope && typeof envelope.message === "string" && envelope.message !== "" ? envelope.message : undefined;
+    const details = envelope && envelope.details !== null && typeof envelope.details === "object" && !Array.isArray(envelope.details)
+        ? envelope.details
+        : undefined;
+    let retryAfterSecs;
+    const fromDetails = details?.retry_after_secs;
+    const header = headers["retry-after"];
+    if (typeof fromDetails === "number" && Number.isFinite(fromDetails) && fromDetails >= 0)
+        retryAfterSecs = fromDetails;
+    else if (typeof header === "string" && /^\d+$/.test(header.trim()))
+        retryAfterSecs = Number(header.trim());
+    if (status >= 400 && status < 500 && status !== 408 && status !== 425 && status !== 429) {
+        const refused = upgradeRefusedError(status, code, "upgrade");
+        if (serverMessage !== undefined)
+            refused.serverMessage = serverMessage;
+        if (details !== undefined)
+            refused.details = details;
+        if (retryAfterSecs !== undefined)
+            refused.retryAfterSecs = retryAfterSecs;
+        return refused;
+    }
+    const failed = new Error(serverMessage ?? "WebSocket connection error");
+    failed.name = "WebSocketUpgradeFailedError";
+    failed.status = status;
+    if (code !== undefined)
+        failed.code = code;
+    if (serverMessage !== undefined)
+        failed.serverMessage = serverMessage;
+    if (details !== undefined)
+        failed.details = details;
+    if (retryAfterSecs !== undefined)
+        failed.retryAfterSecs = retryAfterSecs;
+    failed.via = "upgrade";
+    return failed;
+}
+function serverFrameError(frame) {
+    const nested = frame.error !== null && typeof frame.error === "object" ? frame.error : {};
+    const text = (...values) => values.find((v) => typeof v === "string" && v !== "");
+    const code = text(frame.code, nested.code, nested.type) ?? "server_error";
+    const error = new Error(text(frame.message, nested.message) ?? `server error: ${code}`);
+    error.name = "WebSocketServerError";
+    error.code = code;
+    error.frame = frame;
     return error;
 }
 /**
@@ -54,9 +129,9 @@ const nodeBuiltinWebSocketUnsafe =
         return !ge(7, 28, 0);
     if (a === 8)
         return !ge(8, 5, 0);
-    return a < 6; // ≥ 9: ASSUMED fixed (a later major carries the fix); T1 row
+    return a < 6; // ≥ 9: ASSUMED fixed (a later major carries the fix)
 };
-export class NotificationsConnectNotificationStreamWebSocket {
+export class NotificationsConnectWebSocket {
     /**
      * The socket constructor every instance of this client uses, in place of
      * its own choice (the `ws` package on Node, the global WebSocket
@@ -86,6 +161,16 @@ export class NotificationsConnectNotificationStreamWebSocket {
     // and the URL the last socket was opened with, for the probe.
     _unopenedFailures = 0;
     _lastConnectUrl = undefined;
+    // The last socket created is the global WebSocket (no HTTP status of a
+    // refused upgrade can be read from it).
+    _lastSocketGlobal = false;
+    // Ends the body read of a refused upgrade still in progress; disconnect()
+    // calls it so the attempt settles at once.
+    _upgradeReadAbort = null;
+    // The open attempt disconnect() retired (0: none since the last openSocket).
+    // Only that attempt still reports a refused upgrade; an attempt another
+    // connect superseded settles silently even if a disconnect follows.
+    _retiredByDisconnect = 0;
     // FIFO queue for message dispatch — preserves frame ordering even when
     // a Blob frame requires async arrayBuffer() decode and a later string/
     // ArrayBuffer frame arrives synchronously.
@@ -248,7 +333,14 @@ export class NotificationsConnectNotificationStreamWebSocket {
         this.reconnectAttempts = 0;
         this._reconnecting = false;
         this.clearReconnectTimer();
-        return this.openSocket(false);
+        // A new connect() starts a new stream for frames().
+        this._streamEnded = false;
+        return this.openSocket(false).catch((error) => {
+            // Rejected to the caller and nothing retries it: frames() ends.
+            if (!this._reconnecting)
+                this.endFrames();
+            throw error;
+        });
     }
     /**
      * Open one socket. `isRetry` is true for an automatic reconnect attempt and
@@ -261,12 +353,28 @@ export class NotificationsConnectNotificationStreamWebSocket {
             // after each await, because the caller may have disconnected and
             // connected again while this attempt was still waiting.
             const attempt = ++this._openAttempt;
+            this._retiredByDisconnect = 0;
+            // An older attempt still reading a refused upgrade's body is superseded
+            // now: it settles at once, silently.
+            const olderRead = this._upgradeReadAbort;
+            this._upgradeReadAbort = null;
+            olderRead?.();
             const superseded = () => attempt !== this._openAttempt;
             let timedOut = false;
             // The socket this attempt installed, once it has one.
             let installed = null;
+            // Settles a refused upgrade whose body is being read (see the
+            // unexpected-response handler below); set only during that read.
+            let settleUpgrade = null;
+            const deadlineAt = Date.now() + (this.options.timeout ?? 30000);
             const timeoutId = setTimeout(() => {
                 timedOut = true;
+                // The server already answered the upgrade: report that answer (from
+                // what was read so far) instead of a bare timeout.
+                if (settleUpgrade) {
+                    settleUpgrade();
+                    return;
+                }
                 reject(new Error(`Connection timeout after ${this.options.timeout}ms`));
                 if (superseded())
                     return;
@@ -360,6 +468,11 @@ export class NotificationsConnectNotificationStreamWebSocket {
                     // Set when this socket ended for a reason a reconnect cannot cure: a
                     // local resource cap, or an upgrade the server refused for good.
                     let finalError;
+                    // Set once the server answered the upgrade with an HTTP status: from
+                    // then on the attempt settles from that answer only, and every native
+                    // error/close of this socket is dropped (`ws` emits them after
+                    // terminate(), Bun's built-in `ws` a close 1002 of its own).
+                    let upgradeHeld = false;
                     this.stopLiveness();
                     // Request binary frames as ArrayBuffer rather than Blob.
                     // Browser default is "blob" which would force every binary frame
@@ -564,7 +677,15 @@ export class NotificationsConnectNotificationStreamWebSocket {
                             dispatchAlive.alive = false;
                             if (this._socketGen !== installedGen)
                                 return;
+                            // Another connection took this one's place on purpose (a Bot's voice
+                            // has one controller). Reconnecting would take it back, and two
+                            // clients that both reconnect trade it forever: final, whatever
+                            // reconnectOnNormalClose says. Not after the caller's own disconnect();
+                            // read before onDisconnect runs, which may call disconnect() itself.
+                            const takenOver = code === 1000 && reason === "taken over" && this.shouldReconnect;
                             this.emitEvent("disconnect", code, reason);
+                            if (takenOver)
+                                this.emitEvent("__taken_over", reason);
                             // The backoff starts over only after a connection that lasted.
                             if (opened && Date.now() - openedAt >= (this.options.reconnectStableMs ?? 30000)) {
                                 this.reconnectAttempts = 0;
@@ -584,7 +705,7 @@ export class NotificationsConnectNotificationStreamWebSocket {
                             // is cured by trying again.
                             const isTerminal = code === 1008 || code === 1003 || code === 1002 || (code >= 4000 && code < 5000)
                                 || (code === 1000 && this.options.reconnectOnNormalClose !== true)
-                                || finalError !== undefined;
+                                || takenOver || finalError !== undefined;
                             // A connect() the caller made that never opened was rejected to
                             // the caller. It must not leave a reconnect loop running behind
                             // that rejection; the caller decides whether to connect again.
@@ -603,20 +724,27 @@ export class NotificationsConnectNotificationStreamWebSocket {
                                     this.scheduleReconnect();
                                 }
                             }
-                            else if (this._reconnecting) {
-                                // A reconnect attempt that will not be followed by another.
-                                this._reconnecting = false;
-                                if (this.shouldReconnect && this.options.reconnect)
-                                    this.emitEvent("reconnect_failed");
+                            else {
+                                if (this._reconnecting) {
+                                    // A reconnect attempt that will not be followed by another.
+                                    this._reconnecting = false;
+                                    if (this.shouldReconnect && this.options.reconnect)
+                                        this.emitEvent("reconnect_failed");
+                                }
+                                // No socket follows this one: frames() ends.
+                                this.endFrames();
                             }
                         });
                     };
                     this.ws.onclose = (event) => {
+                        if (upgradeHeld)
+                            return;
                         finishClose(event.code, event.reason);
                     };
                     this.ws.onerror = (event) => {
-                        // Noise from a socket the liveness check already gave up on.
-                        if (closeHandled)
+                        // Noise from a socket the liveness check already gave up on, or
+                        // from one whose refused upgrade settles the attempt itself.
+                        if (closeHandled || upgradeHeld)
                             return;
                         clearTimeout(timeoutId);
                         // The transport's own error when it exposes one: `ws` does, a
@@ -650,6 +778,117 @@ export class NotificationsConnectNotificationStreamWebSocket {
                         this.emitEvent("error", error);
                         reject(error);
                     };
+                    // A refused upgrade on the `ws` transport (the npm package or Bun's
+                    // built-in one). With this listener `ws` neither aborts the request
+                    // nor emits error/close, so the client reads the answer, tears the
+                    // socket down and reports once: error event, rejection, disconnect
+                    // 1006, exactly what the native events gave before.
+                    const emitter = socket;
+                    if (!this._lastSocketGlobal && typeof emitter.on === "function") {
+                        emitter.on("unexpected-response", (_request, response) => {
+                            const res = (response ?? {});
+                            // Before anything else: no native event of this socket counts now.
+                            upgradeHeld = true;
+                            const tearDown = () => {
+                                try {
+                                    res.destroy?.();
+                                }
+                                catch { /* already gone */ }
+                                try {
+                                    emitter.terminate?.();
+                                }
+                                catch { /* already closed */ }
+                            };
+                            if (closeHandled) {
+                                tearDown();
+                                return;
+                            }
+                            const status = typeof res.statusCode === "number" ? res.statusCode : 0;
+                            const chunks = [];
+                            let size = 0;
+                            let complete = false;
+                            let truncated = false;
+                            let settled = false;
+                            let bodyTimer = null;
+                            const settle = () => {
+                                if (settled)
+                                    return;
+                                settled = true;
+                                settleUpgrade = null;
+                                if (this._upgradeReadAbort === settle)
+                                    this._upgradeReadAbort = null;
+                                if (bodyTimer)
+                                    clearTimeout(bodyTimer);
+                                tearDown();
+                                // Replaced by a newer connect(): that one owns the client. This
+                                // attempt ends silently, its own promise rejected without an event.
+                                if (superseded() && this._retiredByDisconnect !== attempt) {
+                                    closeHandled = true;
+                                    abandoned();
+                                    return;
+                                }
+                                let body;
+                                if (complete && !truncated) {
+                                    const all = new Uint8Array(size);
+                                    let at = 0;
+                                    for (const chunk of chunks) {
+                                        all.set(chunk, at);
+                                        at += chunk.length;
+                                    }
+                                    body = new TextDecoder().decode(all);
+                                }
+                                const error = upgradeResponseError(status, res.headers ?? {}, body);
+                                if (error.name === "WebSocketUpgradeRefusedError")
+                                    finalError = error;
+                                clearTimeout(timeoutId);
+                                this.emitEvent("error", error);
+                                // A no-op when the connect timeout already answered.
+                                reject(error);
+                                finishClose(1006, "");
+                            };
+                            if (superseded() || timedOut) {
+                                // Nothing will read this answer: settle without its body.
+                                settle();
+                                return;
+                            }
+                            settleUpgrade = settle;
+                            this._upgradeReadAbort = settle;
+                            const left = deadlineAt - Date.now();
+                            // Past the connect deadline the connect timer settles the read.
+                            if (left > UPGRADE_BODY_DEADLINE_MS)
+                                bodyTimer = setTimeout(settle, UPGRADE_BODY_DEADLINE_MS);
+                            if (typeof res.on !== "function") {
+                                settle();
+                                return;
+                            }
+                            res.on("data", (data) => {
+                                if (settled)
+                                    return;
+                                const chunk = typeof data === "string" ? new TextEncoder().encode(data)
+                                    : data instanceof Uint8Array ? data
+                                        : data instanceof ArrayBuffer ? new Uint8Array(data)
+                                            : new Uint8Array(0);
+                                if (size + chunk.length > UPGRADE_BODY_CAP) {
+                                    truncated = true;
+                                    settle();
+                                    return;
+                                }
+                                chunks.push(chunk);
+                                size += chunk.length;
+                            });
+                            res.on("end", () => {
+                                // Bun's built-in `ws` ends the response with whatever had arrived
+                                // with the status line, so an end is a whole body only when it
+                                // matches a declared length.
+                                const declared = Number((res.headers ?? {})["content-length"]);
+                                if (!settled)
+                                    complete = !(Number.isInteger(declared) && declared >= 0) || declared === size;
+                                settle();
+                            });
+                            for (const event of ["error", "aborted", "close"])
+                                res.on(event, () => settle());
+                        });
+                    }
                 }
                 catch (error) {
                     clearTimeout(timeoutId);
@@ -659,6 +898,7 @@ export class NotificationsConnectNotificationStreamWebSocket {
                         this.emitEvent("error", error instanceof Error ? error : new Error(String(error)));
                         this._reconnecting = false;
                         this.emitEvent("reconnect_failed");
+                        this.endFrames();
                     }
                     reject(error);
                 }
@@ -719,6 +959,14 @@ export class NotificationsConnectNotificationStreamWebSocket {
         };
         const connectUrl = buildConnectUrl();
         this._lastConnectUrl = connectUrl;
+        this._lastSocketGlobal = false;
+        // socketTransport "ws": the `ws` package or nothing for the automatic
+        // choice below. An injected factory or webSocketImpl still wins. Checked
+        // before any socket exists, so an invalid value opens nothing.
+        const forceWs = this.options.socketTransport === "ws";
+        if (this.options.socketTransport !== undefined && this.options.socketTransport !== "auto" && !forceWs) {
+            throw new Error(`socketTransport must be "auto" or "ws", got ${JSON.stringify(this.options.socketTransport)}`);
+        }
         // Injected transport wins outright. No global-WebSocket probe, no `ws`
         // import, no degraded path: if the factory throws or returns something
         // unusable the connect fails loudly. A silent fallback here would send
@@ -735,9 +983,18 @@ export class NotificationsConnectNotificationStreamWebSocket {
             }
             return socket;
         }
-        const impl = NotificationsConnectNotificationStreamWebSocket.webSocketImpl;
-        if (typeof impl === "function")
+        const impl = NotificationsConnectWebSocket.webSocketImpl;
+        if (typeof impl === "function") {
+            // The injected constructor takes only a URL and protocols: a header credential the call
+            // asked for cannot reach the upgrade on any runtime, so refuse it as a browser socket does.
+            if (this.options.requireHeaderCredentials && this.options.requireHeaderCredentials.length > 0 && this.options.headers) {
+                const wanted = this.options.requireHeaderCredentials.map((name) => name.toLowerCase());
+                const refused = Object.keys(this.options.headers).filter((name) => wanted.includes(name.toLowerCase()));
+                if (refused.length > 0)
+                    throw credentialNotSentError(refused);
+            }
             return new impl(connectUrl, this.options.protocols);
+        }
         // Runtime detection: on Node >=22 `globalThis.WebSocket` exists but cannot
         // accept custom headers. When the caller supplied `options.headers`, prefer
         // the `ws` module (which accepts a 3rd-arg options bag) so headers actually
@@ -764,19 +1021,29 @@ export class NotificationsConnectNotificationStreamWebSocket {
             + "cannot be shown to be free of CVE-2026-12151 and the `ws` package could not be loaded ("
             + (cause instanceof Error ? cause.message : String(cause))
             + "). Reinstall hoody-sdk, or use an official Node 22.23.0+, 24.17.0+ or 26.3.1+."), { cause });
-        if (typeof globalCtor === "function" && !builtinUnsafe && (isBrowserRuntime || (!hasHeaders && !isNode))) {
+        if (forceWs && isBrowserRuntime) {
+            throw new Error("socketTransport \"ws\" is not available in a browser, which only has the global WebSocket");
+        }
+        if (typeof globalCtor === "function" && !builtinUnsafe && !forceWs && (isBrowserRuntime || (!hasHeaders && !isNode))) {
             if (isBrowserRuntime && hasHeaders) {
                 // A browser WebSocket cannot send headers, so kitAuth password, jwt
                 // and identity headers never reach the upgrade. The proxy accepts two
                 // header-free forms: a token group read from a query parameter, or a
                 // cookie on the kit host. Say so once instead of failing silently.
                 const dropped = Object.keys(this.options.headers).filter((name) => /^(authorization|cookie|x-hoody-[\w-]+|proxy-authorization)$/i.test(name));
+                if (this.options.requireHeaderCredentials && this.options.requireHeaderCredentials.length > 0) {
+                    const wanted = this.options.requireHeaderCredentials.map((name) => name.toLowerCase());
+                    const refused = Object.keys(this.options.headers).filter((name) => wanted.includes(name.toLowerCase()));
+                    if (refused.length > 0)
+                        throw credentialNotSentError(refused);
+                }
                 const flags = globalThis;
                 if (dropped.length > 0 && !flags.__hoodyWsHeaderWarned) {
                     flags.__hoodyWsHeaderWarned = true;
                     console.warn(`[hoody-sdk] a browser WebSocket cannot send headers; ${dropped.join(", ")} not sent on the upgrade. Use a proxy token group read from a query parameter, or a cookie on the kit host.`);
                 }
             }
+            this._lastSocketGlobal = true;
             return new globalCtor(connectUrl, this.options.protocols);
         }
         const specifier = "ws";
@@ -787,9 +1054,12 @@ export class NotificationsConnectNotificationStreamWebSocket {
         catch (cause) {
             if (builtinUnsafe)
                 throw builtinRefused(cause);
+            if (forceWs)
+                throw Object.assign(new Error("socketTransport \"ws\": the `ws` package could not be loaded (" + (cause instanceof Error ? cause.message : String(cause)) + ")"), { cause });
             // `ws` not installed — fall back to global WS, losing headers. This is
             // the same degraded path as when the module exists but has no default.
             if (typeof globalCtor === "function") {
+                this._lastSocketGlobal = true;
                 return new globalCtor(connectUrl, this.options.protocols);
             }
             throw new Error("WebSocket implementation unavailable in this runtime");
@@ -797,7 +1067,10 @@ export class NotificationsConnectNotificationStreamWebSocket {
         if (typeof wsModule.default !== "function") {
             if (builtinUnsafe)
                 throw builtinRefused(new Error("the module has no WebSocket constructor export"));
+            if (forceWs)
+                throw new Error("socketTransport \"ws\": the `ws` module has no WebSocket constructor export");
             if (typeof globalCtor === "function") {
+                this._lastSocketGlobal = true;
                 return new globalCtor(connectUrl, this.options.protocols);
             }
             throw new Error("WebSocket implementation unavailable in this runtime");
@@ -835,7 +1108,7 @@ export class NotificationsConnectNotificationStreamWebSocket {
             this._reconnecting = false;
         }
     }
-    get autoReconnect() {
+    isAutoReconnect() {
         return this.options.reconnect !== false;
     }
     /**
@@ -844,7 +1117,10 @@ export class NotificationsConnectNotificationStreamWebSocket {
     disconnect(reason) {
         this.shouldReconnect = false;
         this.clearReconnectTimer();
-        // Retire an open attempt still waiting for its URL or its socket.
+        // Retire an open attempt still waiting for its URL or its socket. Only the
+        // attempt current at the first disconnect() is the one it retired.
+        if (this._retiredByDisconnect === 0)
+            this._retiredByDisconnect = this._openAttempt;
         this._openAttempt++;
         // A disconnect during a backoff wait ends the series: nothing is pending.
         this._reconnecting = false;
@@ -859,6 +1135,12 @@ export class NotificationsConnectNotificationStreamWebSocket {
             this.ws.close(1000, reason || "Normal closure");
             this.ws = null;
         }
+        // A refused upgrade still being read reports now; nothing follows it.
+        const read = this._upgradeReadAbort;
+        this._upgradeReadAbort = null;
+        read?.();
+        // The caller closed it: frames() ends after what is already buffered.
+        this.endFrames();
     }
     /**
      * Schedule reconnection with exponential backoff
@@ -867,6 +1149,7 @@ export class NotificationsConnectNotificationStreamWebSocket {
         if (this.reconnectAttempts >= (this.options.reconnectAttempts ?? Infinity)) {
             this._reconnecting = false;
             this.emitEvent("reconnect_failed");
+            this.endFrames();
             return;
         }
         this._reconnecting = true;
@@ -951,6 +1234,7 @@ export class NotificationsConnectNotificationStreamWebSocket {
             this._reconnecting = false;
             this.emitEvent("error", upgradeRefusedError(status, code, "probe"));
             this.emitEvent("reconnect_failed");
+            this.endFrames();
             return;
         }
         this.scheduleReconnect();
@@ -1035,8 +1319,14 @@ export class NotificationsConnectNotificationStreamWebSocket {
         }
         this.dispatchTypedMessage(messageType, message);
     }
-    /** The original per-type dispatch, unchanged in behaviour. */
+    /** The per-type dispatch. */
     dispatchTypedMessage(messageType, message) {
+        if (messageType === "error") {
+            // "error" is also the key of onError's listeners: they get the frame as an
+            // Error, as their type says, and never the bare frame.
+            this.emitEvent("error", serverFrameError(message));
+            return;
+        }
         const handlers = this.eventHandlers.get(messageType);
         if (handlers) {
             handlers.forEach(handler => {
@@ -1143,6 +1433,13 @@ export class NotificationsConnectNotificationStreamWebSocket {
             for (const resolveWaiter of pending) {
                 resolveWaiter({ value: undefined, done: true });
             }
+        }
+    }
+    /** End frames() without an end frame: the socket is gone and none follows. */
+    endFrames() {
+        this._streamEnded = true;
+        for (const resolveWaiter of this._frameWaiters.splice(0, this._frameWaiters.length)) {
+            resolveWaiter({ value: undefined, done: true });
         }
     }
     /**
@@ -1252,6 +1549,9 @@ export class NotificationsConnectNotificationStreamWebSocket {
     onError(callback) {
         return this.addEventListener("error", callback);
     }
+    onTakenOver(callback) {
+        return this.addEventListener("__taken_over", callback);
+    }
     /**
      * Add event listener
      * @returns Unsubscribe function
@@ -1305,10 +1605,10 @@ export class NotificationsConnectNotificationStreamWebSocket {
     close(code, reason) {
         this.disconnect(reason);
     }
-    get readyState() {
+    getReadyState() {
         return this.ws?.readyState ?? RAW_WEBSOCKET_CLOSED;
     }
-    get url() {
+    getUrl() {
         return this._url;
     }
     /**
@@ -1318,13 +1618,13 @@ export class NotificationsConnectNotificationStreamWebSocket {
      * offers beyond this client (the `ws` package: ping(), the ping and pong
      * events); do not assign its on* handlers, the client owns them.
      */
-    get rawSocket() {
+    getRawSocket() {
         return this.ws;
     }
-    get connected() {
+    isConnected() {
         return this.ws?.readyState === RAW_WEBSOCKET_OPEN;
     }
-    get reconnecting() {
+    isReconnecting() {
         return this._reconnecting;
     }
     // ============================================================================
@@ -1368,14 +1668,20 @@ export class NotificationsConnectNotificationStreamWebSocket {
                     this._frameWaiters.push(resolve);
                 });
             },
-            return: () => Promise.resolve({ value: undefined, done: true }),
+            // break / return(): a next() still pending ends too.
+            return: () => {
+                for (const resolveWaiter of this._frameWaiters.splice(0, this._frameWaiters.length)) {
+                    resolveWaiter({ value: undefined, done: true });
+                }
+                return Promise.resolve({ value: undefined, done: true });
+            },
         };
         return iterator;
     }
-    get cursor() {
+    getCursor() {
         return this._cursor;
     }
-    get incarnation() {
+    getIncarnation() {
         return this._incarnation;
     }
     setCursor(seq, incarnation) {
@@ -1385,3 +1691,16 @@ export class NotificationsConnectNotificationStreamWebSocket {
         }
     }
 }
+/** A retired getter refuses, naming the method that replaced it. Not an alias. */
+function retireAccessors(target, owner, renames) {
+    for (const [retired, current] of Object.entries(renames)) {
+        Object.defineProperty(target, retired, {
+            configurable: true,
+            enumerable: false,
+            get() {
+                throw new TypeError(owner + '.' + retired + ' was renamed to ' + current + '. Call ' + current + ' instead.');
+            },
+        });
+    }
+}
+retireAccessors(NotificationsConnectWebSocket.prototype, 'NotificationsConnectWebSocket', { url: 'getUrl()', connected: 'isConnected()', cursor: 'getCursor()', readyState: 'getReadyState()', reconnecting: 'isReconnecting()', autoReconnect: 'isAutoReconnect()', rawSocket: 'getRawSocket()', incarnation: 'getIncarnation()' });

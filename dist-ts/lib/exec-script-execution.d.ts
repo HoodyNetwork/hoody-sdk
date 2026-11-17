@@ -40,7 +40,7 @@ export type ExecScriptCallOptions = ExecExecutionRequestOptions & {
     query?: Record<string, unknown> | undefined;
     /** Request body (ignored for GET/HEAD). Objects are sent as JSON. */
     body?: unknown;
-    /** Per-call URL template variables (projectId/containerId/serviceIndex/server). */
+    /** Per-call URL template variables (projectId/computerId/serviceIndex/server). */
     templateVars?: ExecExecutionTemplateVars;
 };
 declare module '../generated/exec/exec.service.js' {
@@ -72,4 +72,5 @@ export declare function encodeExecScriptPath(path: string, helperName: string): 
  * retries, middleware and ApiError behave as for every generated method.
  */
 export declare function dispatchExecScript<TResponse = unknown>(service: ExecService, encodedPath: string, options?: ExecScriptCallOptions): Promise<ApiResponse<TResponse>>;
+/** Replaces `run()` on the generated exec service with the any-method form described above. Runs once: a second call does nothing. */
 export declare function patchExecScriptExecutionPrototype(): void;

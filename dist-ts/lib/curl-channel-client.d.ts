@@ -159,7 +159,7 @@ export interface ResponseEndMessage {
     /** Number of SSE events emitted; only set for is_sse streams. */
     sse_events?: number;
 }
-export type ChannelErrorType = "validation_error" | "cancelled" | "timeout" | "queue_full" | "sse_capacity" | "sse_max_duration" | "execution_error" | "internal_error" | "protocol_error";
+export type ChannelErrorType = "validation_error" | "cancelled" | "timeout" | "queue_full" | "sse_capacity" | "sse_max_duration" | "execution_error" | "internal_error" | "protocol_error" | "body_buffer_full";
 export interface ErrorMessage {
     type: "error";
     stream_id?: number;
@@ -251,7 +251,7 @@ export declare const nodeBuiltinWebSocketUnsafe: (v: Record<string, string | und
 /**
  * Maximum inbound WS frame size the SDK will JSON.parse. Frames larger than this drop the connection.
  * On a `ws` socket it is a byte limit on the whole message (`maxPayload`); the SDK's own check on
- * the global WebSocket path counts decoded characters. A the upstream curl kit server never sends a message
+ * the global WebSocket path counts decoded characters. A curl kit server never sends a message
  * near either (its frames are bounded by hello `limits.max_frame_bytes`, 1 MiB by default).
  */
 export declare const MAX_INBOUND_FRAME_BYTES: number;
@@ -263,6 +263,13 @@ export declare function localWsCapCode(ev: unknown): string | undefined;
 export declare function openWebSocket(url: string, headers?: Record<string, string>): Promise<WsLike>;
 /** Maximum buffered SSE events per stream before the SDK cancels the upstream and emits a `dropped` synthetic event. Protects against memory-DoS from hostile/fast upstreams. */
 export declare const SSE_EVENT_QUEUE_CAP = 4096;
+/**
+ * Default cap on response body bytes received but not yet read, per stream
+ * (64 MiB). The channel protocol has no flow control, so a consumer that stops
+ * reading would otherwise buffer the whole transfer in memory. Past the cap the
+ * SDK cancels the stream; see `ChannelOptions.maxBufferedBodyBytes`.
+ */
+export declare const DEFAULT_MAX_BUFFERED_BODY_BYTES: number;
 /** Configuration for opening a channel. */
 export interface ChannelOptions {
     /** WebSocket URL, e.g. `wss://example.com/api/v1/curl/channel`. */
@@ -303,6 +310,15 @@ export interface ChannelOptions {
      * support it. Set `false` to force the legacy text protocol.
      */
     binary?: boolean;
+    /**
+     * Per-stream cap on response body bytes that have arrived but have not been
+     * read from `bodyStream` (default `DEFAULT_MAX_BUFFERED_BODY_BYTES`, 64 MiB).
+     * The relay does not slow down for a slow reader, so when unread bytes exceed
+     * this cap the SDK cancels the request upstream and fails the stream with a
+     * `ChannelError` whose `errorType` is `"body_buffer_full"`. A consumer that
+     * keeps reading is never limited by it. `Infinity` disables the cap.
+     */
+    maxBufferedBodyBytes?: number;
 }
 /** Auto-reconnect configuration. */
 export interface ReconnectOptions {
@@ -363,13 +379,17 @@ export declare class CurlChannelStream {
     readonly end: Promise<ResponseEndMessage>;
     /**
      * ReadableStream of body bytes for non-SSE responses (chunked). Only ONE of
-     * `bodyStream` or `body()` may be consumed — they share the same underlying
-     * source. Calling `body()` locks/drains the stream.
+     * `bodyStream` or `readBytes()` may be consumed — they share the same underlying
+     * source. Calling `readBytes()` locks/drains the stream.
      */
     readonly bodyStream: ReadableStream<Uint8Array>;
     /** Async iterable of typed SSE events (only meaningful when start.is_sse). */
     readonly events: AsyncIterable<SseEvent>;
-    /** Trigger server-side cancellation. */
+    /**
+     * Cancel the request: the stream settles at once with an `AbortError` and is
+     * forgotten locally; `request.cancel` goes on the wire only if the request
+     * was already sent. A no-op once the stream has finished.
+     */
     readonly cancel: () => void;
     /** @internal */ readonly _streamId: number;
     /** @internal */ _resolveStart: (m: ResponseStartMessage) => void;
@@ -382,13 +402,24 @@ export declare class CurlChannelStream {
     /** @internal */ _errorBody: (e: Error) => void;
     /** @internal */ _closeEvents: () => void;
     /** @internal */ _errorEvents: (e: Error) => void;
-    constructor(streamId: number, sendCancel: () => void);
+    /**
+     * @param sendCancel puts `request.cancel` on the wire (used on SSE queue
+     *   overflow, where buffered events must still reach the consumer).
+     * @param options internal wiring from `CurlChannel.request()`: `cancel` settles
+     *   the stream locally (defaults to `sendCancel`), `failWith` ends it with an
+     *   error (body buffer overflow), `maxBufferedBodyBytes` caps unread bytes.
+     */
+    constructor(streamId: number, sendCancel: () => void, options?: {
+        cancel?: () => void;
+        failWith?: (err: Error) => void;
+        maxBufferedBodyBytes?: number;
+    });
     /**
      * Drain `bodyStream` into a single `Uint8Array`. Convenience for callers
      * that don't need streaming. Locks the stream — incompatible with
      * `bodyStream` direct consumption.
      */
-    body(): Promise<Uint8Array>;
+    readBytes(): Promise<Uint8Array>;
 }
 /** Per-request invocation options. */
 export interface RequestOptions {
@@ -442,6 +473,8 @@ export declare class CurlChannel {
     /** True once the server's `hello` confirmed `features.binary_frames`. */
     private binaryNegotiated;
     private warnedBinaryFrame;
+    /** Per-stream cap on unread body bytes (see `ChannelOptions.maxBufferedBodyBytes`). */
+    private readonly maxBufferedBodyBytes;
     constructor(options: ChannelOptions);
     /**
      * invoke a user hook with a try/catch so a throwing
@@ -477,7 +510,7 @@ export declare class CurlChannel {
     private permanentlyClose;
     private maybeWarnInsecureTransport;
     /** Static opener; awaits the WebSocket open + `hello` frame before resolving. */
-    static open(options: ChannelOptions): Promise<CurlChannel>;
+    static connect(options: ChannelOptions): Promise<CurlChannel>;
     /** Promise that resolves once the server's `hello` frame arrives. */
     ready(): Promise<ChannelHello>;
     /** Issue a CurlRequest. Resolves to a CurlChannelStream you can consume. */
@@ -548,5 +581,5 @@ export interface CurlFetchOptions extends ChannelOptions {
 }
 /** The fetch-compatible function returned by `createCurlFetch`. */
 export type CurlFetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
-/** Build a fetch-shaped function bound to a the upstream curl kit channel. */
+/** Build a fetch-shaped function bound to a curl kit channel. */
 export declare function createCurlFetch(options: CurlFetchOptions): CurlFetch;

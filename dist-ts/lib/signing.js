@@ -253,7 +253,7 @@ export function verifyHoodySignatureHeader(header, input, options = {}) {
         if (!set.has(header.keyId))
             return false;
     }
-    // Freshness check. Default 5 minutes per the upstream recommendation.
+    // Freshness check. Default 5 minutes.
     const skew = options.maxSkewSeconds ?? 300;
     if (Number.isFinite(skew)) {
         const now = options.now ?? Math.floor(Date.now() / 1000);
@@ -294,7 +294,7 @@ export function verifyHoodySignatureFrom(source, input, options = {}) {
     return verifyHoodySignatureHeader(parsed, input, options);
 }
 /**
- * The `path` hoody-api signs for a request URL: the request target as the
+ * The `path` the API signs for a request URL: the request target as the
  * server received it, path plus query string (Fastify's `request.url`).
  */
 export function hoodySignaturePath(url) {

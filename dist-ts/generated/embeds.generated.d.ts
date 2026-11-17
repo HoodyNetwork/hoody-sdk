@@ -1,7 +1,7 @@
 /** Every kit slug that has at least one buildable view. */
-export type EmbedKit = "terminal" | "desktop" | "agent" | "display" | "browser" | "code" | "files" | "notes" | "sqlite" | "notifications" | "pipe" | "cron" | "bot" | "run" | "watch" | "exec" | "http" | "https";
+export type EmbedKit = "terminal" | "desktop" | "agent" | "display" | "browser" | "code" | "files" | "notes" | "sqlite" | "notifications" | "pipe" | "cron" | "run" | "watch" | "exec" | "http" | "https";
 /** Every buildable view, as `<kit>.<view>`. */
-export type EmbedViewId = "terminal.session" | "desktop.session" | "agent.webui" | "display.client" | "browser.status" | "browser.display" | "code.root" | "code.editor" | "code.extension" | "files.root" | "files.folder" | "files.editor" | "files.search" | "notes.home" | "notes.create" | "notes.notebook" | "notes.notebookHome" | "notes.node" | "notes.modal" | "notes.alias" | "notes.files" | "notes.uploads" | "notes.downloads" | "notes.users" | "notes.settings" | "notes.account" | "sqlite.overview" | "sqlite.tables" | "sqlite.query" | "sqlite.kvStore" | "sqlite.history" | "sqlite.pragmas" | "notifications.landing" | "pipe.send" | "pipe.noscript" | "pipe.progress" | "pipe.video" | "pipe.share" | "pipe.receive" | "cron.manager" | "bot.index" | "bot.detail" | "bot.confirmDelete" | "run.results" | "watch.index" | "exec.script" | "http.content" | "https.content";
+export type EmbedViewId = "terminal.session" | "desktop.session" | "agent.webui" | "display.client" | "browser.status" | "browser.display" | "code.root" | "code.editor" | "code.extension" | "files.root" | "files.folder" | "files.editor" | "files.search" | "notes.home" | "notes.create" | "notes.notebook" | "notes.notebookHome" | "notes.node" | "notes.modal" | "notes.alias" | "notes.files" | "notes.uploads" | "notes.downloads" | "notes.users" | "notes.settings" | "notes.account" | "sqlite.overview" | "sqlite.tables" | "sqlite.query" | "sqlite.kvStore" | "sqlite.history" | "sqlite.pragmas" | "notifications.landing" | "pipe.send" | "pipe.noscript" | "pipe.progress" | "pipe.video" | "pipe.share" | "pipe.receive" | "cron.manager" | "run.results" | "watch.index" | "exec.script" | "http.content" | "https.content";
 /** Typed params per view (path params included; required ones are not optional). */
 export interface EmbedViewParams {
     "terminal.session": {
@@ -39,6 +39,8 @@ export interface EmbedViewParams {
         disableResizeOverlay?: boolean;
         unicodeVersion?: "graphemes" | "11";
         rendererType?: "dom" | "canvas" | "webgl";
+        parent_keys?: boolean;
+        parent_origin?: string;
     };
     "desktop.session": {
         desktop_env?: "xfce" | "mate";
@@ -77,6 +79,8 @@ export interface EmbedViewParams {
         disableResizeOverlay?: boolean;
         unicodeVersion?: "graphemes" | "11";
         rendererType?: "dom" | "canvas" | "webgl";
+        parent_keys?: boolean;
+        parent_origin?: string;
     };
     "display.client": {
         decorations?: boolean;
@@ -90,6 +94,8 @@ export interface EmbedViewParams {
         file_transfer?: false;
         title_show_hoody?: boolean;
         title_show_display_id?: boolean;
+        parent_keys?: boolean;
+        parent_origin?: string;
     };
     "browser.status": {
         maximize_new_windows?: boolean;
@@ -360,13 +366,6 @@ export interface EmbedViewParams {
         sha256?: "1";
     };
     "cron.manager": Record<string, never>;
-    "bot.index": Record<string, never>;
-    "bot.detail": {
-        registrationId: string;
-    };
-    "bot.confirmDelete": {
-        registrationId: string;
-    };
     "run.results": {
         app: string;
         os?: "linux" | "windows" | "any";
@@ -397,28 +396,42 @@ export interface EmbedViewQuery {
     "desktop.session": Record<string, never>;
     "agent.webui": Record<string, never>;
     "display.client": {
+        colorScheme?: "light" | "dark" | "system";
+        theme?: "oc-1" | "aura" | "ayu" | "carbonfox" | "catppuccin" | "dracula" | "gruvbox" | "monokai" | "nightowl" | "nord" | "onedarkpro" | "shadesofpurple" | "solarized" | "tokyonight" | "vesper";
+        font?: string;
         encoding?: "auto" | "webp" | "jpeg" | "png" | "rgb";
+        quality_mode?: "auto" | "best" | "reduced";
+        quality?: number;
         offscreen?: boolean;
+        scroll?: boolean;
         bandwidth_limit?: number;
         override_width?: string;
-        override_height?: string;
         vrefresh?: number;
         suspend_inactive_tab?: boolean;
         sound?: boolean;
         audio_codec?: string;
         keyboard?: boolean;
         swap_keys?: boolean;
+        scroll_speed?: number;
+        touchpad_scroll_scale?: number;
         clipboard_preferred_format?: "text/plain" | "text/html" | "UTF8_STRING";
+        clipboard_poll?: false;
         video?: boolean;
-        mediasource_video?: boolean;
-        web_notifications?: boolean;
         display_notifications?: boolean;
-        notification_connection_type?: "websocket" | "polling";
         reconnect?: boolean;
+        reconnect_count?: number;
+        soft_giveup_attempts?: number;
+        soft_giveup_ms?: number;
+        slow_retry_delay?: number;
+        slow_retry_max_ms?: number;
         floating_menu?: boolean;
         clock?: boolean;
         scroll_reverse_y?: "auto" | "true" | "false";
         scroll_reverse_x?: boolean;
+        record?: boolean;
+        record_format?: "mp4" | "webm" | "gif";
+        record_codec?: "h264" | "h265" | "vp8" | "vp9";
+        record_fps?: number;
     };
     "browser.status": Record<string, never>;
     "browser.display": Record<string, never>;
@@ -456,9 +469,6 @@ export interface EmbedViewQuery {
     "pipe.share": Record<string, never>;
     "pipe.receive": Record<string, never>;
     "cron.manager": Record<string, never>;
-    "bot.index": Record<string, never>;
-    "bot.detail": Record<string, never>;
-    "bot.confirmDelete": Record<string, never>;
     "run.results": Record<string, never>;
     "watch.index": Record<string, never>;
     "exec.script": Record<string, string | ReadonlyArray<string>>;
@@ -479,15 +489,15 @@ export declare const EMBEDS_CATALOG: {
     readonly catalogVersion: 1;
     readonly catalogUrl: "https://docs.hoody.com/embeds/catalog.v1.json";
     readonly host: {
-        readonly template: "https://{projectId}-{containerId}-{segment}.{serverName}.{containersDomain}";
+        readonly template: "https://{projectId}-{computerId}-{segment}.{serverName}.{computersDomain}";
         readonly inputs: {
-            readonly projectId: "container.project_id";
-            readonly containerId: "container.id";
-            readonly serverName: "container.server_name";
+            readonly projectId: "computer.project_id";
+            readonly computerId: "computer.id";
+            readonly serverName: "computer.server_name";
         };
     };
     readonly domain: {
-        readonly fallback: "containers.hoody.com";
+        readonly fallback: "computers.hoody.com";
         readonly branches: readonly [{
             readonly branch: 1;
             readonly when: {
@@ -517,7 +527,11 @@ export declare const EMBEDS_CATALOG: {
         }, {
             readonly branch: 3;
             readonly when: {
-                readonly startsWith: "containers.";
+                readonly any: readonly [{
+                    readonly startsWith: "computers.";
+                }, {
+                    readonly startsWith: "containers.";
+                }];
             };
             readonly result: {
                 readonly host: true;
@@ -534,7 +548,7 @@ export declare const EMBEDS_CATALOG: {
                 readonly replaceRegex: {
                     readonly pattern: "^[a-f0-9]{24}\\.api\\.";
                     readonly caseInsensitive: true;
-                    readonly with: "containers.";
+                    readonly with: "computers.";
                 };
             };
         }, {
@@ -545,7 +559,7 @@ export declare const EMBEDS_CATALOG: {
             readonly result: {
                 readonly stripPrefixThenPrepend: {
                     readonly strip: "api.";
-                    readonly prepend: "containers.";
+                    readonly prepend: "computers.";
                 };
             };
         }, {
@@ -556,7 +570,7 @@ export declare const EMBEDS_CATALOG: {
             readonly result: {
                 readonly replaceFirst: {
                     readonly find: ".api.";
-                    readonly with: ".containers.";
+                    readonly with: ".computers.";
                 };
             };
         }, {
@@ -565,7 +579,7 @@ export declare const EMBEDS_CATALOG: {
                 readonly always: true;
             };
             readonly result: {
-                readonly prepend: "containers.";
+                readonly prepend: "computers.";
             };
         }];
     };
@@ -613,17 +627,17 @@ export declare const EMBEDS_CATALOG: {
             readonly segment: "terminal-{index}";
             readonly index: {
                 readonly min: 1;
-                readonly max: 65535;
+                readonly max: 9999;
                 readonly default: 1;
                 readonly selects: "instance";
-                readonly publicMeaning: "session number. With 24-character project and container ids, numbers above 9999 make a host label longer than 63 characters, which the SDK refuses (HOST_LABEL_TOO_LONG).";
+                readonly publicMeaning: "session number, 1-9999 (4501-5000 are agent sessions and are refused).";
             };
         };
         readonly desktop: {
             readonly segment: "desktop-{index}";
             readonly index: {
                 readonly min: 1;
-                readonly max: 59935;
+                readonly max: 2900;
                 readonly default: 1;
                 readonly selects: "instance";
                 readonly publicMeaning: "desktop number, 1 or more";
@@ -633,7 +647,7 @@ export declare const EMBEDS_CATALOG: {
             readonly segment: "agent-{index}";
             readonly index: {
                 readonly min: 1;
-                readonly max: 19999;
+                readonly max: 500;
                 readonly default: 1;
                 readonly selects: "instance";
                 readonly publicMeaning: "agent number, 1 or more";
@@ -643,7 +657,7 @@ export declare const EMBEDS_CATALOG: {
             readonly segment: "display-{index}";
             readonly index: {
                 readonly min: 1;
-                readonly max: 61535;
+                readonly max: 9999;
                 readonly default: 1;
                 readonly selects: "instance";
                 readonly publicMeaning: "display number";
@@ -663,7 +677,7 @@ export declare const EMBEDS_CATALOG: {
             readonly segment: "code-{index}";
             readonly index: {
                 readonly min: 1;
-                readonly max: 58535;
+                readonly max: 9999;
                 readonly default: 1;
                 readonly selects: "instance";
                 readonly publicMeaning: "Editor instance number, 1 or more. Each number is a separate editor instance with its own folder and state.";
@@ -703,7 +717,7 @@ export declare const EMBEDS_CATALOG: {
             readonly segment: "n-{index}";
             readonly index: {
                 readonly min: 1;
-                readonly max: 61535;
+                readonly max: 9999;
                 readonly default: 1;
                 readonly selects: "instance";
                 readonly publicMeaning: "Display number the page sends its test notification to.";
@@ -721,16 +735,6 @@ export declare const EMBEDS_CATALOG: {
         };
         readonly cron: {
             readonly segment: "cron-{index}";
-            readonly index: {
-                readonly min: 1;
-                readonly max: 9999;
-                readonly default: 1;
-                readonly selects: "none";
-                readonly publicMeaning: "Any index opens the same instance.";
-            };
-        };
-        readonly bot: {
-            readonly segment: "bot-{index}";
             readonly index: {
                 readonly min: 1;
                 readonly max: 9999;
@@ -1167,6 +1171,14 @@ export declare const EMBEDS_CATALOG: {
                     readonly class: "excluded";
                     readonly reasonCode: "mutating";
                 };
+                readonly parent_keys: {
+                    readonly class: "nonUi";
+                    readonly reasonCode: "non-ui";
+                };
+                readonly parent_origin: {
+                    readonly class: "nonUi";
+                    readonly reasonCode: "non-ui";
+                };
             };
             readonly publicDescription: "A full graphical desktop environment in the browser.";
             readonly defaultView: "desktop.session";
@@ -1330,7 +1342,7 @@ export declare const EMBEDS_CATALOG: {
                     readonly class: "excluded";
                     readonly reasonCode: "mutating";
                 };
-                readonly container_id: {
+                readonly computer_id: {
                     readonly class: "excluded";
                     readonly reasonCode: "mutating";
                 };
@@ -1358,11 +1370,11 @@ export declare const EMBEDS_CATALOG: {
                     readonly class: "excluded";
                     readonly reasonCode: "mutating";
                 };
-                readonly keyboard_layout: {
+                readonly override_height: {
                     readonly class: "excluded";
-                    readonly reasonCode: "mutating";
+                    readonly reasonCode: "not-supported";
                 };
-                readonly clipboard_poll: {
+                readonly keyboard_layout: {
                     readonly class: "excluded";
                     readonly reasonCode: "mutating";
                 };
@@ -1373,6 +1385,14 @@ export declare const EMBEDS_CATALOG: {
                 readonly notification_server_url: {
                     readonly class: "excluded";
                     readonly reasonCode: "mutating";
+                };
+                readonly web_notifications: {
+                    readonly class: "dead";
+                    readonly reasonCode: "not-supported";
+                };
+                readonly notification_connection_type: {
+                    readonly class: "dead";
+                    readonly reasonCode: "not-supported";
                 };
                 readonly sharing: {
                     readonly class: "excluded";
@@ -1477,7 +1497,7 @@ export declare const EMBEDS_CATALOG: {
                     readonly reasonCode: "mutating";
                 };
             };
-            readonly publicDescription: "A VS Code editor in the browser, opened on a folder of the container, optionally focused on a single extension.";
+            readonly publicDescription: "A VS Code editor in the browser, opened on a folder of the computer, optionally focused on a single extension.";
             readonly defaultView: "code.editor";
         };
         readonly files: {
@@ -1557,7 +1577,7 @@ export declare const EMBEDS_CATALOG: {
                     readonly reasonCode: "non-ui";
                 };
             };
-            readonly publicDescription: "A file manager for the container: folder listings, search, a code editor and a read-only viewer.";
+            readonly publicDescription: "A file manager for the computer: folder listings, search, a code editor and a read-only viewer.";
             readonly defaultView: "files.folder";
         };
         readonly notes: {
@@ -1626,13 +1646,6 @@ export declare const EMBEDS_CATALOG: {
             readonly publicDescription: "Cron manager: browse and edit the crontab entries of each user.";
             readonly defaultView: "cron.manager";
         };
-        readonly bot: {
-            readonly ui: "app";
-            readonly views: readonly ["bot.index", "bot.detail", "bot.confirmDelete"];
-            readonly refused: {};
-            readonly publicDescription: "Management pages for chat-channel bot registrations.";
-            readonly defaultView: "bot.index";
-        };
         readonly run: {
             readonly ui: "app";
             readonly views: readonly ["run.results"];
@@ -1666,6 +1679,26 @@ export declare const EMBEDS_CATALOG: {
                     readonly reasonCode: "non-ui";
                 };
                 readonly print_curl: {
+                    readonly class: "nonUi";
+                    readonly reasonCode: "non-ui";
+                };
+                readonly args: {
+                    readonly class: "nonUi";
+                    readonly reasonCode: "non-ui";
+                };
+                readonly pass_env: {
+                    readonly class: "nonUi";
+                    readonly reasonCode: "non-ui";
+                };
+                readonly launch_tag: {
+                    readonly class: "nonUi";
+                    readonly reasonCode: "non-ui";
+                };
+                readonly launch_env: {
+                    readonly class: "nonUi";
+                    readonly reasonCode: "non-ui";
+                };
+                readonly enrich: {
                     readonly class: "nonUi";
                     readonly reasonCode: "non-ui";
                 };
@@ -1740,6 +1773,12 @@ export declare const EMBEDS_CATALOG: {
             readonly views: readonly [];
             readonly refused: {};
             readonly publicDescription: "Reverse tunnel service; it has no browser page.";
+        };
+        readonly vm: {
+            readonly ui: "none";
+            readonly views: readonly [];
+            readonly refused: {};
+            readonly publicDescription: "Virtual machine service; it has no browser page.";
         };
         readonly ssh: {
             readonly ui: "none";
@@ -2029,6 +2068,22 @@ export declare const EMBEDS_CATALOG: {
                     readonly class: "typed";
                     readonly enum: readonly ["dom", "canvas", "webgl"];
                     readonly publicDescription: "Renderer used to draw the terminal: webgl (the default; Firefox uses dom), dom, or canvas (drawn with WebGL). Phones, tablets and other touch-screen devices use dom even when webgl or canvas is asked for. Try dom if text renders wrongly with WebGL on a particular browser or GPU.";
+                };
+                readonly parent_keys: {
+                    readonly wire: "parent_keys";
+                    readonly in: "query";
+                    readonly type: "boolean";
+                    readonly class: "typed";
+                    readonly publicDescription: "Hand two keyboard chords to the page that frames the terminal: Ctrl+Alt+B and Ctrl+Alt with an arrow key are not sent to the terminal, and that page receives a hoody-parent-key message naming the chord (escape, left, right, up or down), sent only to its own origin. Without a framing page the keys work as usual.";
+                };
+                readonly parent_origin: {
+                    readonly wire: "parent_origin";
+                    readonly in: "query";
+                    readonly type: "string";
+                    readonly class: "typed";
+                    readonly pattern: "^https?://";
+                    readonly format: "uri";
+                    readonly publicDescription: "The origin of the page that frames the terminal, such as https://app.example.com, for parent_keys. Used when the browser sends no referrer naming that page. The terminal keeps the origin it uses in its own address, so its own reloads keep reaching that page. Ignored unless it is an http or https origin.";
                 };
             };
             readonly required: readonly [];
@@ -2343,6 +2398,22 @@ export declare const EMBEDS_CATALOG: {
                     readonly enum: readonly ["dom", "canvas", "webgl"];
                     readonly publicDescription: "Renderer used to draw the terminal: webgl (the default; Firefox uses dom), dom, or canvas (drawn with WebGL). Phones, tablets and other touch-screen devices use dom even when webgl or canvas is asked for. Try dom if text renders wrongly with WebGL on a particular browser or GPU.";
                 };
+                readonly parent_keys: {
+                    readonly wire: "parent_keys";
+                    readonly in: "query";
+                    readonly type: "boolean";
+                    readonly class: "typed";
+                    readonly publicDescription: "Hand two keyboard chords to the page that frames the terminal: Ctrl+Alt+B and Ctrl+Alt with an arrow key are not sent to the terminal, and that page receives a hoody-parent-key message naming the chord (escape, left, right, up or down), sent only to its own origin. Without a framing page the keys work as usual.";
+                };
+                readonly parent_origin: {
+                    readonly wire: "parent_origin";
+                    readonly in: "query";
+                    readonly type: "string";
+                    readonly class: "typed";
+                    readonly pattern: "^https?://";
+                    readonly format: "uri";
+                    readonly publicDescription: "The origin of the page that frames the terminal, such as https://app.example.com, for parent_keys. Used when the browser sends no referrer naming that page. The terminal keeps the origin it uses in its own address, so its own reloads keep reaching that page. Ignored unless it is an http or https origin.";
+                };
             };
             readonly required: readonly [];
             readonly const: {};
@@ -2391,7 +2462,7 @@ export declare const EMBEDS_CATALOG: {
                     readonly in: "query";
                     readonly type: "boolean";
                     readonly class: "typed";
-                    readonly publicDescription: "Open new application windows maximized. Takes effect only on a desktop of at least 1024x1024; on a smaller desktop new windows already fill the screen.";
+                    readonly publicDescription: "Open new application windows maximized. On by default; off by default when decorations is false or 0, since a window without a title bar has nothing to restore it from. Set false to keep the centred placement. On a desktop smaller than 1024 pixels in either direction new windows fill the screen whatever this says; dialogs, menus and fixed-size windows are never maximized.";
                 };
                 readonly readonly: {
                     readonly wire: "readonly";
@@ -2407,20 +2478,68 @@ export declare const EMBEDS_CATALOG: {
                     readonly class: "typed";
                     readonly publicDescription: "Use the dark colour scheme.";
                 };
+                readonly colorScheme: {
+                    readonly wire: "colorScheme";
+                    readonly in: "query";
+                    readonly type: "string";
+                    readonly class: "passthrough";
+                    readonly enum: readonly ["light", "dark", "system"];
+                    readonly publicDescription: "Colour scheme of the viewer: `light`, `dark`, or `system` to follow the device. The default is `system`. If dark_mode is also set, `system` wins over it and `dark_mode=true` wins over `light`.";
+                };
+                readonly theme: {
+                    readonly wire: "theme";
+                    readonly in: "query";
+                    readonly type: "string";
+                    readonly class: "passthrough";
+                    readonly enum: readonly ["oc-1", "aura", "ayu", "carbonfox", "catppuccin", "dracula", "gruvbox", "monokai", "nightowl", "nord", "onedarkpro", "shadesofpurple", "solarized", "tokyonight", "vesper"];
+                    readonly publicDescription: "Colour theme of the viewer interface. The default is `oc-1`.";
+                };
+                readonly font: {
+                    readonly wire: "font";
+                    readonly in: "query";
+                    readonly type: "string";
+                    readonly class: "passthrough";
+                    readonly pattern: "^[a-zA-Z0-9 _-]+$";
+                    readonly publicDescription: "Font family of the viewer interface, by name, for example `Inter` or `IBM Plex Mono`. Letters, digits, spaces, underscores and hyphens only. A name the browser cannot find falls back to Inter. By default the viewer uses its own font.";
+                };
                 readonly encoding: {
                     readonly wire: "encoding";
                     readonly in: "query";
                     readonly type: "string";
                     readonly class: "passthrough";
                     readonly enum: readonly ["auto", "webp", "jpeg", "png", "rgb"];
-                    readonly publicDescription: "Pre-selects the encoding in the settings dialog; does not change the stream encoding.";
+                    readonly publicDescription: "Encoding the viewer asks the server to use for window updates. Defaults to `webp`, which keeps text sharp. `auto` lets the server choose, and it may switch busy windows to a video encoding that looks blurry. The server only uses an encoding that both ends support.";
+                };
+                readonly quality_mode: {
+                    readonly wire: "quality_mode";
+                    readonly in: "query";
+                    readonly type: "string";
+                    readonly class: "passthrough";
+                    readonly enum: readonly ["auto", "best", "reduced"];
+                    readonly publicDescription: "How the viewer picks image quality, the same choice as the Image Quality menu. `auto` (the default) uses full quality and switches to a lower one while the connection is detected as slow, then back; each switch reconnects the viewer, so it needs reconnect to be on (with reconnect off the viewer stays at full quality). `best` always uses full quality. `reduced` uses a lower quality, for picture formats that have one: png, rgb and avif encodings stay as they are. Any other value counts as `auto`. A fixed quality overrides it.";
+                };
+                readonly quality: {
+                    readonly wire: "quality";
+                    readonly in: "query";
+                    readonly type: "integer";
+                    readonly class: "passthrough";
+                    readonly min: 0;
+                    readonly max: 100;
+                    readonly publicDescription: "Fixed image quality for this viewer, 0 to 100. Unset, quality_mode decides, and a fixed quality wins over it. It also hides the Image Quality choice in the menu. Lossless encodings (png, rgb) ignore it.";
                 };
                 readonly offscreen: {
                     readonly wire: "offscreen";
                     readonly in: "query";
                     readonly type: "boolean";
                     readonly class: "passthrough";
-                    readonly publicDescription: "Render with an offscreen canvas.";
+                    readonly publicDescription: "Decode and paint in a Web Worker (offscreen canvas). On by default in Chrome and Chromium over https and in Firefox 108 or later; never on Safari or other WebKit browsers, where it stays off even if you ask for it. false turns it off.";
+                };
+                readonly scroll: {
+                    readonly wire: "scroll";
+                    readonly in: "query";
+                    readonly type: "boolean";
+                    readonly class: "passthrough";
+                    readonly publicDescription: "Let the server send region copies instead of new pixels when a window scrolls, which keeps scrolling smooth. On by default except in Safari. Without this parameter the viewer offers it only to a server it has already found safe for it, and only with reconnect on; true or false forces the choice.";
                 };
                 readonly bandwidth_limit: {
                     readonly wire: "bandwidth_limit";
@@ -2435,21 +2554,14 @@ export declare const EMBEDS_CATALOG: {
                     readonly in: "query";
                     readonly type: "string";
                     readonly class: "passthrough";
-                    readonly publicDescription: "Requested desktop width: auto or a number.";
-                };
-                readonly override_height: {
-                    readonly wire: "override_height";
-                    readonly in: "query";
-                    readonly type: "string";
-                    readonly class: "passthrough";
-                    readonly publicDescription: "Requested desktop height: auto or a number.";
+                    readonly publicDescription: "Width in pixels of the desktop the viewer asks for; the page scales it to fit the window. `auto` (the default) uses the window's own width.";
                 };
                 readonly vrefresh: {
                     readonly wire: "vrefresh";
                     readonly in: "query";
                     readonly type: "integer";
                     readonly class: "passthrough";
-                    readonly publicDescription: "Refresh rate in Hz; -1 picks it automatically.";
+                    readonly publicDescription: "Screen refresh rate in Hz sent to the server. Unset, or -1, the viewer measures it and uses 60 when it cannot.";
                 };
                 readonly suspend_inactive_tab: {
                     readonly wire: "suspend_inactive_tab";
@@ -2477,14 +2589,32 @@ export declare const EMBEDS_CATALOG: {
                     readonly in: "query";
                     readonly type: "boolean";
                     readonly class: "passthrough";
-                    readonly publicDescription: "Show the on-screen keyboard.";
+                    readonly publicDescription: "Show the on-screen keyboard from the start. On by default in mobile browsers and off elsewhere; the keyboard button in the menu opens and closes it either way.";
                 };
                 readonly swap_keys: {
                     readonly wire: "swap_keys";
                     readonly in: "query";
                     readonly type: "boolean";
                     readonly class: "passthrough";
-                    readonly publicDescription: "Swap the Cmd and Ctrl keys.";
+                    readonly publicDescription: "Swap the Ctrl and Cmd (Meta) keys. On by default on macOS and off elsewhere.";
+                };
+                readonly scroll_speed: {
+                    readonly wire: "scroll_speed";
+                    readonly in: "query";
+                    readonly type: "number";
+                    readonly class: "passthrough";
+                    readonly min: 0.2;
+                    readonly max: 3;
+                    readonly publicDescription: "Scroll speed multiplier for a mouse wheel. 1 is normal. The default is 1; the page keeps it between 0.2 and 3.";
+                };
+                readonly touchpad_scroll_scale: {
+                    readonly wire: "touchpad_scroll_scale";
+                    readonly in: "query";
+                    readonly type: "number";
+                    readonly class: "passthrough";
+                    readonly min: 0.2;
+                    readonly max: 2;
+                    readonly publicDescription: "Scroll speed multiplier for a touchpad. Lower values make scrolling less sensitive. The default is 0.85; the page keeps it between 0.2 and 2.";
                 };
                 readonly clipboard: {
                     readonly wire: "clipboard";
@@ -2501,6 +2631,14 @@ export declare const EMBEDS_CATALOG: {
                     readonly class: "passthrough";
                     readonly enum: readonly ["text/plain", "text/html", "UTF8_STRING"];
                     readonly publicDescription: "Preferred clipboard format.";
+                };
+                readonly clipboard_poll: {
+                    readonly wire: "clipboard_poll";
+                    readonly in: "query";
+                    readonly type: "boolean";
+                    readonly class: "passthrough";
+                    readonly enum: readonly [false];
+                    readonly publicDescription: "Set false to stop the viewer polling your local clipboard for changes to send to the session. Polling is on by default, except in Firefox, and in Safari over https.";
                 };
                 readonly printing: {
                     readonly wire: "printing";
@@ -2525,34 +2663,12 @@ export declare const EMBEDS_CATALOG: {
                     readonly class: "passthrough";
                     readonly publicDescription: "Allow video encodings.";
                 };
-                readonly mediasource_video: {
-                    readonly wire: "mediasource_video";
-                    readonly in: "query";
-                    readonly type: "boolean";
-                    readonly class: "passthrough";
-                    readonly publicDescription: "Allow MediaSource video decoding.";
-                };
-                readonly web_notifications: {
-                    readonly wire: "web_notifications";
-                    readonly in: "query";
-                    readonly type: "boolean";
-                    readonly class: "passthrough";
-                    readonly publicDescription: "Pre-set the browser-notifications option in the connection dialog.";
-                };
                 readonly display_notifications: {
                     readonly wire: "display_notifications";
                     readonly in: "query";
                     readonly type: "boolean";
                     readonly class: "passthrough";
                     readonly publicDescription: "Show notifications inside the display view.";
-                };
-                readonly notification_connection_type: {
-                    readonly wire: "notification_connection_type";
-                    readonly in: "query";
-                    readonly type: "string";
-                    readonly class: "passthrough";
-                    readonly enum: readonly ["websocket", "polling"];
-                    readonly publicDescription: "Pre-set the notification connection type in the connection dialog.";
                 };
                 readonly reconnect: {
                     readonly wire: "reconnect";
@@ -2561,12 +2677,57 @@ export declare const EMBEDS_CATALOG: {
                     readonly class: "passthrough";
                     readonly publicDescription: "Reconnect automatically after a lost connection.";
                 };
+                readonly reconnect_count: {
+                    readonly wire: "reconnect_count";
+                    readonly in: "query";
+                    readonly type: "integer";
+                    readonly class: "passthrough";
+                    readonly min: 1;
+                    readonly max: 1000;
+                    readonly publicDescription: "How many quick reconnect attempts the viewer makes after a connection that worked is lost, before it stops. The default is 30. Needs reconnect to be on.";
+                };
+                readonly soft_giveup_attempts: {
+                    readonly wire: "soft_giveup_attempts";
+                    readonly in: "query";
+                    readonly type: "integer";
+                    readonly class: "passthrough";
+                    readonly min: 1;
+                    readonly max: 1000;
+                    readonly publicDescription: "Failed attempts to reach a display that has not connected yet before the viewer reports that it cannot connect and moves to slow retries. The default is 30. The time limit soft_giveup_ms counts too, whichever comes first.";
+                };
+                readonly soft_giveup_ms: {
+                    readonly wire: "soft_giveup_ms";
+                    readonly in: "query";
+                    readonly type: "integer";
+                    readonly class: "passthrough";
+                    readonly min: 1000;
+                    readonly max: 3600000;
+                    readonly publicDescription: "Milliseconds of failed attempts to reach a display that has not connected yet before the viewer reports that it cannot connect and moves to slow retries. The default is 90000.";
+                };
+                readonly slow_retry_delay: {
+                    readonly wire: "slow_retry_delay";
+                    readonly in: "query";
+                    readonly type: "integer";
+                    readonly class: "passthrough";
+                    readonly min: 2000;
+                    readonly max: 300000;
+                    readonly publicDescription: "Milliseconds between the slow retries that follow that report. The default is 15000.";
+                };
+                readonly slow_retry_max_ms: {
+                    readonly wire: "slow_retry_max_ms";
+                    readonly in: "query";
+                    readonly type: "integer";
+                    readonly class: "passthrough";
+                    readonly min: 0;
+                    readonly max: 7200000;
+                    readonly publicDescription: "Milliseconds, counted from the first attempt, after which a viewer that has never connected stops its slow retries and closes. It is checked only once the first-connection give-up (soft_giveup_attempts, soft_giveup_ms) has happened, and does not apply after a connection that worked is lost (reconnect_count covers that). 0 removes this limit only. The default is 1200000 (20 minutes).";
+                };
                 readonly floating_menu: {
                     readonly wire: "floating_menu";
                     readonly in: "query";
                     readonly type: "boolean";
                     readonly class: "passthrough";
-                    readonly publicDescription: "Show the floating menu.";
+                    readonly publicDescription: "Show the floating menu. false hides it together with the menu button.";
                 };
                 readonly clock: {
                     readonly wire: "clock";
@@ -2604,13 +2765,61 @@ export declare const EMBEDS_CATALOG: {
                     readonly class: "typed";
                     readonly publicDescription: "Show the display number in the page title.";
                 };
+                readonly record: {
+                    readonly wire: "record";
+                    readonly in: "query";
+                    readonly type: "boolean";
+                    readonly class: "passthrough";
+                    readonly publicDescription: "Start recording the display in the browser about two seconds after the recorder is ready, which is after the viewer has painted the display for the first time (or 4 seconds after it began waiting for that paint, if nothing paints). mp4 and webm recordings normally stream to a browser download; some browsers download only after recording stops, and if the viewer falls back to buffering, use its Download menu after stopping. A gif downloads automatically after rendering. See record_format, record_codec and record_fps. The default is off.";
+                };
+                readonly record_format: {
+                    readonly wire: "record_format";
+                    readonly in: "query";
+                    readonly type: "string";
+                    readonly class: "passthrough";
+                    readonly enum: readonly ["mp4", "webm", "gif"];
+                    readonly publicDescription: "File format of the recording started by record: `mp4`, `webm` or `gif`. The default is `mp4`.";
+                };
+                readonly record_codec: {
+                    readonly wire: "record_codec";
+                    readonly in: "query";
+                    readonly type: "string";
+                    readonly class: "passthrough";
+                    readonly enum: readonly ["h264", "h265", "vp8", "vp9"];
+                    readonly publicDescription: "Video codec of the recording: `h264` or `h265` for mp4, `vp8` or `vp9` for webm. The default is `h264` for mp4 and `vp9` (else `vp8`) for webm. A codec the format or the browser does not support is replaced by another codec of the same format when the browser has one; when it has none (no mp4 codec, or no webm support), recording does not start and the viewer does not switch to another format. gif has no codec.";
+                };
+                readonly record_fps: {
+                    readonly wire: "record_fps";
+                    readonly in: "query";
+                    readonly type: "integer";
+                    readonly class: "passthrough";
+                    readonly min: 1;
+                    readonly max: 60;
+                    readonly publicDescription: "Frames per second of the recording, 1 to 60. The default is 30, or 10 for gif.";
+                };
+                readonly parent_keys: {
+                    readonly wire: "parent_keys";
+                    readonly in: "query";
+                    readonly type: "boolean";
+                    readonly class: "typed";
+                    readonly publicDescription: "Hand two keyboard chords to the page that frames the viewer: Ctrl+Alt+B and Ctrl+Alt with an arrow key are not sent to the display, and that page receives a hoody-parent-key message naming the chord (escape, left, right, up or down), sent only to its own origin. Without a framing page the keys work as usual.";
+                };
+                readonly parent_origin: {
+                    readonly wire: "parent_origin";
+                    readonly in: "query";
+                    readonly type: "string";
+                    readonly class: "typed";
+                    readonly pattern: "^https?://";
+                    readonly format: "uri";
+                    readonly publicDescription: "The origin of the page that frames the viewer, such as https://app.example.com, for parent_keys. Used when the browser sends no referrer naming that page. The viewer keeps the origin it uses in its own address, so its own reloads and reconnects keep reaching that page. Ignored unless it is an http or https origin.";
+                };
             };
             readonly required: readonly [];
             readonly const: {};
             readonly flags: readonly [];
             readonly freeQuery: false;
             readonly frameable: "yes";
-            readonly alias: "refused";
+            readonly alias: "supported";
             readonly spawns: false;
             readonly mutating: false;
             readonly forwardsQuery: true;
@@ -2641,7 +2850,7 @@ export declare const EMBEDS_CATALOG: {
             readonly flags: readonly [];
             readonly freeQuery: false;
             readonly frameable: "yes";
-            readonly alias: "refused";
+            readonly alias: "supported";
             readonly spawns: false;
             readonly mutating: false;
             readonly forwardsQuery: true;
@@ -2682,7 +2891,7 @@ export declare const EMBEDS_CATALOG: {
             readonly flags: readonly [];
             readonly freeQuery: false;
             readonly frameable: "yes";
-            readonly alias: "refused";
+            readonly alias: "supported";
             readonly spawns: false;
             readonly mutating: false;
             readonly forwardsQuery: true;
@@ -2755,7 +2964,7 @@ export declare const EMBEDS_CATALOG: {
                     readonly type: "string";
                     readonly class: "typed";
                     readonly pattern: "^/";
-                    readonly publicDescription: "Absolute path of the folder to open. It applies when the editor instance starts; a running instance keeps the folder it was started with.";
+                    readonly publicDescription: "Absolute path of the folder to open. It applies when the editor instance starts; on a running instance the page opens this folder, and the instance keeps reporting the folder it was started with.";
                 };
                 readonly locale: {
                     readonly wire: "locale";
@@ -2814,7 +3023,7 @@ export declare const EMBEDS_CATALOG: {
                     readonly type: "string";
                     readonly class: "typed";
                     readonly pattern: "^/";
-                    readonly publicDescription: "Absolute path of the folder to open. It applies when the editor instance starts; a running instance keeps the folder it was started with.";
+                    readonly publicDescription: "Absolute path of the folder to open. It applies when the editor instance starts; on a running instance the page opens this folder, and the instance keeps reporting the folder it was started with.";
                 };
                 readonly extension: {
                     readonly wire: "extension";
@@ -2872,7 +3081,7 @@ export declare const EMBEDS_CATALOG: {
             readonly ui: "app";
             readonly default: false;
             readonly label: "Root folder";
-            readonly publicDescription: "The listing of the container root folder, with upload, rename and delete controls for the user.";
+            readonly publicDescription: "The listing of the computer root folder, with upload, rename and delete controls for the user.";
             readonly path: "/";
             readonly params: {
                 readonly sort: {
@@ -3011,7 +3220,7 @@ export declare const EMBEDS_CATALOG: {
                     readonly type: "string";
                     readonly class: "typed";
                     readonly encoder: "path-segments";
-                    readonly publicDescription: "Absolute path inside the container, starting with /. Each segment is percent-encoded; the slashes between segments are kept.";
+                    readonly publicDescription: "Absolute path inside the computer, starting with /. Each segment is percent-encoded; the slashes between segments are kept.";
                 };
                 readonly sort: {
                     readonly wire: "sort";
@@ -3149,7 +3358,7 @@ export declare const EMBEDS_CATALOG: {
                     readonly type: "string";
                     readonly class: "typed";
                     readonly encoder: "path-segments";
-                    readonly publicDescription: "Absolute path inside the container, starting with /. Each segment is percent-encoded; the slashes between segments are kept.";
+                    readonly publicDescription: "Absolute path inside the computer, starting with /. Each segment is percent-encoded; the slashes between segments are kept.";
                 };
                 readonly theme: {
                     readonly wire: "theme";
@@ -3377,7 +3586,7 @@ export declare const EMBEDS_CATALOG: {
             readonly ui: "app";
             readonly default: true;
             readonly label: "Home";
-            readonly publicDescription: "Opens the last used locally available notebook, or the first available one.";
+            readonly publicDescription: "Opens the last used locally available notebook, or the first available one. On a first visit, with no notebook stored in this browser, Notes needs the server to set one up.";
             readonly path: "/";
             readonly params: {
                 readonly mode: {
@@ -3789,7 +3998,7 @@ export declare const EMBEDS_CATALOG: {
             readonly ui: "app";
             readonly default: false;
             readonly label: "Page by alias";
-            readonly publicDescription: "Opens the page that has the given alias, or the notebook home when none has it.";
+            readonly publicDescription: "Opens the page with the given alias if it is available in this browser. If it is not, Notes waits while the first sync runs, for up to 30 seconds. If the page is still not available, Notes opens the notebook home.";
             readonly path: "/notebook/{userId}/alias/{alias}";
             readonly params: {
                 readonly userId: {
@@ -3807,7 +4016,7 @@ export declare const EMBEDS_CATALOG: {
                     readonly class: "typed";
                     readonly maxLength: 48;
                     readonly pattern: "^[a-z0-9_-]{1,48}$";
-                    readonly publicDescription: "Page alias (lowercase letters, digits, '_' and '-', up to 48 characters). Opens the page with that alias, or the notebook home when no page has it.";
+                    readonly publicDescription: "Page alias (lowercase letters, digits, '_' and '-', up to 48 characters). Opens the matching page available in this browser, or the notebook home if it is still not available after waiting up to 30 seconds for the first sync.";
                 };
                 readonly mode: {
                     readonly wire: "mode";
@@ -4987,85 +5196,6 @@ export declare const EMBEDS_CATALOG: {
             readonly mutating: false;
             readonly forwardsQuery: true;
         };
-        readonly "bot.index": {
-            readonly kit: "bot";
-            readonly view: "index";
-            readonly service: "bot";
-            readonly program: "bot";
-            readonly ui: "app";
-            readonly default: true;
-            readonly label: "Bot registrations";
-            readonly publicDescription: "Lists every bot registration of the owner, with a form to register a new one.";
-            readonly path: "/";
-            readonly params: {};
-            readonly required: readonly [];
-            readonly const: {};
-            readonly flags: readonly [];
-            readonly freeQuery: false;
-            readonly frameable: "yes";
-            readonly alias: "refused";
-            readonly spawns: false;
-            readonly mutating: false;
-            readonly forwardsQuery: true;
-        };
-        readonly "bot.detail": {
-            readonly kit: "bot";
-            readonly view: "detail";
-            readonly service: "bot";
-            readonly program: "bot";
-            readonly ui: "app";
-            readonly default: false;
-            readonly label: "Registration";
-            readonly publicDescription: "One bot registration with its state and its start and stop controls.";
-            readonly path: "/api/v1/bot/ui/registrations/{registrationId}";
-            readonly params: {
-                readonly registrationId: {
-                    readonly wire: "registrationId";
-                    readonly in: "path";
-                    readonly type: "string";
-                    readonly class: "typed";
-                    readonly publicDescription: "Registration id, as returned when the bot was registered or listed.";
-                };
-            };
-            readonly required: readonly ["registrationId"];
-            readonly const: {};
-            readonly flags: readonly [];
-            readonly freeQuery: false;
-            readonly frameable: "yes";
-            readonly alias: "refused";
-            readonly spawns: false;
-            readonly mutating: false;
-            readonly forwardsQuery: true;
-        };
-        readonly "bot.confirmDelete": {
-            readonly kit: "bot";
-            readonly view: "confirmDelete";
-            readonly service: "bot";
-            readonly program: "bot";
-            readonly ui: "app";
-            readonly default: false;
-            readonly label: "Confirm deletion";
-            readonly publicDescription: "Asks for confirmation before a registration is deleted. Opening this page deletes nothing.";
-            readonly path: "/api/v1/bot/ui/registrations/{registrationId}/delete";
-            readonly params: {
-                readonly registrationId: {
-                    readonly wire: "registrationId";
-                    readonly in: "path";
-                    readonly type: "string";
-                    readonly class: "typed";
-                    readonly publicDescription: "Registration id, as returned when the bot was registered or listed.";
-                };
-            };
-            readonly required: readonly ["registrationId"];
-            readonly const: {};
-            readonly flags: readonly [];
-            readonly freeQuery: false;
-            readonly frameable: "yes";
-            readonly alias: "refused";
-            readonly spawns: false;
-            readonly mutating: false;
-            readonly forwardsQuery: true;
-        };
         readonly "run.results": {
             readonly kit: "run";
             readonly view: "results";
@@ -5202,7 +5332,7 @@ export declare const EMBEDS_CATALOG: {
             readonly ui: "user-content";
             readonly default: true;
             readonly label: "Script page";
-            readonly publicDescription: "The response of your script for the given path. Opening it runs the script; any query parameters are passed to it unchanged.";
+            readonly publicDescription: "The response of your script for the given path. Opening it runs the script, which reads the query parameters in `metadata.query`; a repeated key keeps only its last value. On a script with `@token`, a `token` query parameter that authenticates the request is removed first. A route parameter, such as `id` in `[id].ts`, replaces a query parameter of the same name.";
             readonly path: "/{path}";
             readonly params: {
                 readonly path: {
@@ -5211,7 +5341,7 @@ export declare const EMBEDS_CATALOG: {
                     readonly type: "string";
                     readonly class: "typed";
                     readonly encoder: "path-segments";
-                    readonly publicDescription: "Path of the script route to open, without the leading slash. Each segment is percent-encoded; the slashes between segments are kept.";
+                    readonly publicDescription: "Path of the script route to open, starting with `/`. Each segment is percent-encoded and the slashes between segments are kept; the builder refuses a `.` or `..` segment. Once decoded, the path may hold only ASCII letters, digits, `-`, `_`, `.` and `/`: any other character gets a 400 answer, even when it is percent-encoded.";
                 };
             };
             readonly required: readonly ["path"];
@@ -5395,14 +5525,6 @@ export declare function makeEmbedWrappers<TTarget>(build: (viewId: EmbedViewId, 
     cron: {
         /** Cron manager. */
         manager: (target: TTarget, opts?: EmbedWrapperOptions<"cron.manager">) => string;
-    };
-    bot: {
-        /** Bot registrations. */
-        index: (target: TTarget, opts?: EmbedWrapperOptions<"bot.index">) => string;
-        /** Registration. */
-        detail: (target: TTarget, opts: EmbedWrapperOptions<"bot.detail">) => string;
-        /** Confirm deletion. */
-        confirmDelete: (target: TTarget, opts: EmbedWrapperOptions<"bot.confirmDelete">) => string;
     };
     run: {
         /** Results. */

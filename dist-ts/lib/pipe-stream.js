@@ -25,6 +25,7 @@ import { globalFetchPipeTransport, pipeTransportFromClient } from './pipe-transp
 import { clientKitAuth, kitAuthForNamespace, kitAuthWebSocketParts, openWebSocketWithHeaders } from './kit-ws-auth.js';
 import { openPipeDuplex, toWebSocketUrl } from './pipe-ws.js';
 import { bridgeTcpOverWs } from './pipe-ws-forward.js';
+import { retireMethods } from './retired-accessor.js';
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -35,6 +36,7 @@ export class PipeIntegrityError extends Error {
     expected;
     actual;
     transferId;
+    /** Build the error; the parameters are its `kind`, message, the two digests and the transfer id, kept as the fields documented here. */
     constructor(
     /** `mismatch`: digests differ; `unavailable`: the kit has no digest for the transfer; `incomplete`: the body was not read to the end. */
     kind, message, 
@@ -50,7 +52,11 @@ export class PipeIntegrityError extends Error {
         this.name = 'PipeIntegrityError';
     }
 }
-// Public custom error so callers can detect bodyless responses.
+/**
+ * Thrown by `PipeStream.receive()` when the response carries no body to
+ * read. `status` and `headers` are the response's, so a caller can tell a
+ * bodyless answer from a failed transfer.
+ */
 export class PipeReceiveEmptyBodyError extends Error {
     status;
     headers;
@@ -62,7 +68,7 @@ export class PipeReceiveEmptyBodyError extends Error {
     }
 }
 // ---------------------------------------------------------------------------
-// URL building (shared with pipe-media.ts in spirit; not extracted yet)
+// URL building (the same rule as pipe-media.ts, which inlines it)
 // ---------------------------------------------------------------------------
 /**
  * A path segment a URL parser resolves as "stay here" / "go up".
@@ -100,6 +106,11 @@ function isPipeDotSegment(segment) {
  * and the request still carries the caller's bearer token. `validatePipePath`
  * does NOT cover this — it checks only length and a reserved-name set.
  *
+ * Leading `/`s are dropped, as the generated `pipe.send`/`pipe.receive` drop
+ * them: `/name` and `name` are one pipe on every client surface. Keeping them
+ * would send `/name` to `/api/v1/pipe//name`, a different channel from the
+ * SDK's `name`.
+ *
  * Keep this rule identical to `PipeMediaClient.getUrl` in pipe-media.ts, which
  * inlines it because importing from this module pulls node:net/fs into the
  * browser bundle.
@@ -108,6 +119,7 @@ export function encodePipePath(path) {
     if (!path)
         return '';
     return path
+        .replace(/^\/+/, '')
         .split('/')
         .map(segment => {
         if (isPipeDotSegment(segment)) {
@@ -128,9 +140,8 @@ export function validatePipePath(path) {
     }
     // Relative segments change WHICH endpoint is called, so a path carrying one is
     // never valid. Checked here as well as in encodePipePath: this function is the
-    // documented "strict validation" entry point and callers reasonably expect it to
-    // be the thing that catches a bad path, but it used to pass `../../admin`
-    // untouched — length and reserved-name checks cannot see a traversal.
+    // documented "strict validation" entry point and callers expect it to catch a
+    // bad path; length and reserved-name checks alone cannot see a traversal.
     for (const segment of path.split('/')) {
         if (isPipeDotSegment(segment)) {
             throw new Error(`pipe path "${path}" contains a "${segment}" path segment; relative segments are not allowed`);
@@ -335,8 +346,8 @@ export async function* parseStatusStream(stream) {
         catch { /* ignore */ }
     }
 }
-// SSE parser — moved to ./sse-stream.ts (web-API only, so the browser bundle
-// can carry it). Re-exported so this module's public surface is unchanged.
+// SSE parser: lives in ./sse-stream.ts (web-API only, so the browser bundle
+// can carry it); re-exported here.
 export { parseSseEvent, parseSseStream } from './sse-stream.js';
 // ---------------------------------------------------------------------------
 // Query helpers — pipe accepts string-encoded booleans
@@ -347,11 +358,30 @@ export function boolQuery(v) {
         return undefined;
     return v ? 'true' : 'false';
 }
+/**
+ * Node client for the Hoody Pipe program of one computer. A pipe is a path
+ * name on which a sender and one or more receivers meet; the bytes stream
+ * straight through and nothing is stored.
+ *
+ * `send()` and `receive()` move bytes over HTTP from or to any source or
+ * sink (string, buffer, stream, file URL, TCP or Unix socket);
+ * `getStatus()` and `streamProgress()` report on a transfer; `connect()`
+ * opens a two-way WebSocket relay on a name; `forwardTcp()` carries a TCP
+ * connection through a pipe. Create one with `PipeStream.fromClient(client,
+ * computer)` so the client's credentials apply. In a browser use
+ * `PipeMedia` instead.
+ */
 export class PipeStream {
     baseUrl;
     basePath;
     transport;
     kitAuth;
+    /**
+     * Create a client for the pipe program at `config.pipeBaseUrl`. Without
+     * `config.transport` requests use the global `fetch` and send no
+     * credentials; `PipeStream.fromClient()` sets both from a `HoodyClient`.
+     * Makes no request.
+     */
     constructor(config) {
         this.baseUrl = config.pipeBaseUrl.replace(/\/+$/, '');
         this.basePath = (config.basePath ?? '/api/v1/pipe').replace(/\/+$/, '');
@@ -359,13 +389,13 @@ export class PipeStream {
         this.kitAuth = config.kitAuth;
     }
     /**
-     * Create a PipeStream from an already-constructed HoodyClient + container.
-     * Relies on `client.getKitUrl('pipe', container, serviceIndex)`, and sends
+     * Create a PipeStream from an already-constructed HoodyClient + computer.
+     * Relies on `client.getKitUrl('pipe', computer, serviceIndex)`, and sends
      * through `client.http` so the client's injected transport and kitAuth
      * apply (lib/pipe-transport.ts).
      */
-    static fromClient(client, container, serviceIndex = 1) {
-        const pipeBaseUrl = client.getKitUrl('pipe', container, serviceIndex);
+    static fromClient(client, computer, serviceIndex = 1) {
+        const pipeBaseUrl = client.getKitUrl('pipe', computer, serviceIndex);
         const transport = pipeTransportFromClient(client);
         const kitAuth = clientKitAuth(client);
         return new PipeStream({ pipeBaseUrl, ...(transport ? { transport } : {}), ...(kitAuth ? { kitAuth } : {}) });
@@ -415,8 +445,21 @@ export class PipeStream {
             'Content-Type': contentType,
             ...(opts.headers ?? {}),
         };
-        if (opts.contentLength !== undefined)
-            headers['Content-Length'] = String(opts.contentLength);
+        // A string or byte source has a known size: it goes as Content-Length, so a transfer cut
+        // short fails instead of reading complete. An explicit contentLength wins,
+        // then one the caller set in `headers`. Exactly one header goes out, whatever the caller's
+        // spelling: Fetch joins two spellings into "5, 5", which the kit refuses.
+        let callerLength;
+        for (const k of Object.keys(headers)) {
+            if (k.toLowerCase() === 'content-length') {
+                callerLength = headers[k];
+                delete headers[k];
+            }
+        }
+        const contentLength = opts.contentLength !== undefined ? String(opts.contentLength)
+            : callerLength ?? (typeof source === 'string' ? String(Buffer.byteLength(source, 'utf8')) : source instanceof Uint8Array ? String(source.byteLength) : undefined);
+        if (contentLength !== undefined)
+            headers['Content-Length'] = contentLength;
         if (opts.filename !== undefined)
             headers['Content-Disposition'] = pipeContentDisposition(opts.filename);
         const url = this.getUrl(path, {
@@ -531,7 +574,7 @@ export class PipeStream {
      * The kit's `/api/v1/pipe/metrics` text (Prometheus 0.0.4): counters and
      * gauges with fixed labels, never a pipe name.
      */
-    async metrics(opts = {}) {
+    async getMetrics(opts = {}) {
         // Metrics exist only under /api/v1/pipe (a bare /metrics is 404), so a
         // root-route basePath ('') still asks the canonical path.
         const prefix = this.basePath.endsWith('/api/v1/pipe') ? this.basePath : '/api/v1/pipe';
@@ -547,7 +590,7 @@ export class PipeStream {
      * live record while it runs, then for a hashed transfer its receipt (kept
      * 10 minutes). An unknown or expired id throws (HTTP 404).
      */
-    async status(path, opts = {}) {
+    async getStatus(path, opts = {}) {
         validatePipePath(path);
         const res = await this.transport('GET', this.getUrl(path, { status: true, transfer: opts.transfer }), opts.signal ? { signal: opts.signal } : {});
         if (!res.ok) {
@@ -637,7 +680,7 @@ export class PipeStream {
         for (;;) {
             let st = null;
             try {
-                st = await this.status(path, { transfer: transferId, signal: AbortSignal.timeout(Math.max(1, deadline - Date.now())) });
+                st = await this.getStatus(path, { transfer: transferId, signal: AbortSignal.timeout(Math.max(1, deadline - Date.now())) });
             }
             catch (err) {
                 if (err.status === 404)
@@ -665,7 +708,7 @@ export class PipeStream {
      * a transfer on `path` ends, the kit answers 204 and this yields nothing.
      * Breaking out of the loop, or aborting `signal`, closes the connection.
      */
-    async *subscribeProgress(path, opts = {}) {
+    async *streamProgress(path, opts = {}) {
         validatePipePath(path);
         const url = this.getUrl(path, { progress: 'true' });
         const res = await this.transport('GET', url, {
@@ -1382,3 +1425,9 @@ function writeToSocket(sock, chunk) {
             sock.once('drain', onDrain);
     });
 }
+// Renamed methods refuse under the old name, naming the new method.
+retireMethods(PipeStream.prototype, 'PipeStream', {
+    status: 'getStatus()',
+    metrics: 'getMetrics()',
+    subscribeProgress: 'streamProgress()',
+});

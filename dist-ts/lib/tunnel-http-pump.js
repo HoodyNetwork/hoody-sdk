@@ -23,6 +23,7 @@ function getAgent(host, port) {
     agentCache.set(key, agent);
     return agent;
 }
+/** Destroy every keep-alive HTTP agent this module holds for local targets, closing their idle sockets, and forget them. */
 export function destroyAllLocalAgents() {
     for (const agent of agentCache.values()) {
         try {
@@ -102,8 +103,9 @@ function declaresBody(raw) {
  */
 function streamEnd(session, streamId) {
     let ended = false;
+    let eofSent = false;
     let handler = null;
-    const generationOf = () => session.generation;
+    const generationOf = () => session.getGeneration?.();
     const generation = generationOf();
     const isEnded = () => ended || generationOf() !== generation;
     return {
@@ -120,6 +122,17 @@ function streamEnd(session, streamId) {
             if (isEnded())
                 return;
             ended = true;
+            session.sendEof(streamId);
+        },
+        /**
+         * A half-close (TCP only): our EOF ends only what we send. The visitor's direction stays
+         * open, its DATA is still delivered, and either side can still RESET; the kit treats our
+         * EOF the same way. Sent once.
+         */
+        halfClose: () => {
+            if (isEnded() || eofSent)
+                return;
+            eofSent = true;
             session.sendEof(streamId);
         },
         /** Register this request's handler for its stream. */
@@ -442,6 +455,12 @@ async function forwardHttpStream(session, streamId, openPayload, target) {
         detachSessionGone();
     }
 }
+/**
+ * Serve one HTTP request that arrived on tunnel stream `streamId`: forward the request described by
+ * `openPayload` to the local `target` and write the response back on the stream. The returned
+ * promise resolves as soon as forwarding has started, not when the response is complete; a failure
+ * resets the stream and never rejects here.
+ */
 export async function handleHttpStream(session, streamId, openPayload, target) {
     forwardHttpStream(session, streamId, openPayload, target);
 }
@@ -651,7 +670,9 @@ export function handleTcpStream(session, streamId, target) {
     // TCP socket opens can't OOM the process. When we hit the cap, reset the
     // stream back to the peer and drop the socket attempt.
     const PRE_CONNECT_BUFFER_CAP = 1 * 1024 * 1024; // 1 MiB
-    const socket = createConnection({ host: target.host, port: target.port }, () => {
+    // Half-open: the local service's FIN ends only its direction. Without it the runtime ends
+    // our writable side at that FIN, and the rest of the visitor's upload is lost.
+    const socket = createConnection({ host: target.host, port: target.port, allowHalfOpen: true }, () => {
         if (end.ended()) {
             // Stream was reset before the TCP connect completed.
             // Destroy the socket without touching the (already-cleared) buffer.
@@ -760,9 +781,11 @@ export function handleTcpStream(session, streamId, target) {
         // Bun emits `end` on a socket we destroy ourselves: that is no end from the local side.
         if (socket.destroyed)
             return;
+        // The local service has sent everything: half-close our direction, behind its DATA. The
+        // handler stays, so the visitor's DATA still reaches the service until the visitor's EOF
+        // (or a RESET), and the socket's close unregisters it.
         out.after(() => {
-            end.eof();
-            end.off();
+            end.halfClose();
         });
     });
     socket.on("error", () => {

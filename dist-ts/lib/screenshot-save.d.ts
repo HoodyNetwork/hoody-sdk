@@ -1,5 +1,5 @@
 /**
- * Screenshot save — capture + save to container filesystem in one call.
+ * Screenshot save — capture + save to computer filesystem in one call.
  *
  * Architecture:
  *   This module extends HoodyClient with four convenience methods:
@@ -9,7 +9,7 @@
  *   - `browser.page.saveScreenshot(path?, options?)` — capture browser + save
  *   - `terminal.sessions.saveScreenshot(path?, options?)` — capture terminal + save
  *
- *   All methods require a container-scoped client (via `withContainer()`).
+ *   All methods require a computer-scoped client (via `withComputer()`).
  *   They compose: capture API call → decode → validate → putFile → chmod.
  *
  *   Data flow:
@@ -56,7 +56,8 @@ export interface TerminalScreenshotCaptureOptions {
     terminal_id?: string;
     foreground?: string;
     background?: string;
-    fontsize?: number;
+    /** Font size in pixels (the `fontsize` query of terminal.sessions.captureScreenshot). */
+    fontSize?: number;
 }
 export interface SaveScreenshotResult {
     /** Final absolute path where the screenshot was saved */
@@ -71,6 +72,10 @@ export interface SaveScreenshotResult {
     format: ScreenshotFormat;
 }
 export type ScreenshotSaveErrorCode = 'CAPTURE_FAILED' | 'WRITE_FAILED' | 'UNSUPPORTED_ENV' | 'INVALID_PATH' | 'FORMAT_MISMATCH' | 'INVALID_IMAGE_DATA' | 'PAYLOAD_TOO_LARGE';
+/**
+ * Thrown when a screenshot could not be captured or saved. `code` says which step failed; `source` and `path` name
+ * the capture source and the target file when known, and `cause` holds the underlying error.
+ */
 export declare class ScreenshotSaveError extends Error {
     readonly code: ScreenshotSaveErrorCode;
     readonly source: ScreenshotSource | undefined;
@@ -85,9 +90,9 @@ export declare class ScreenshotSaveError extends Error {
 declare module './hoody-client.js' {
     interface HoodyClient {
         /**
-         * Capture a screenshot and save it to the container filesystem.
+         * Capture a screenshot and save it to the computer filesystem.
          *
-         * Requires a container-scoped client (call `withContainer()` first).
+         * Requires a computer-scoped client (call `withComputer()` first).
          */
         saveScreenshot(options: SaveScreenshotOptions): Promise<SaveScreenshotResult>;
     }
@@ -95,7 +100,7 @@ declare module './hoody-client.js' {
 declare module '../generated/display/screenshots.service.js' {
     interface ScreenshotsService {
         /**
-         * Capture a display screenshot and save it to the container filesystem.
+         * Capture a display screenshot and save it to the computer filesystem.
          *
          * @param path - File path or filename. If omitted, auto-generates in /hoody/storage/hoody-sdk/screenshots/.
          *               Bare filenames (e.g. "foo.png") are placed in the default directory.
@@ -106,7 +111,7 @@ declare module '../generated/display/screenshots.service.js' {
 declare module '../generated/browser/page.service.js' {
     interface PageService {
         /**
-         * Capture a browser screenshot and save it to the container filesystem.
+         * Capture a browser screenshot and save it to the computer filesystem.
          *
          * @param path - File path or filename. If omitted, auto-generates in /hoody/storage/hoody-sdk/screenshots/.
          */
@@ -116,13 +121,18 @@ declare module '../generated/browser/page.service.js' {
 declare module '../generated/terminal/sessions.service.js' {
     interface SessionsService {
         /**
-         * Capture a terminal screenshot and save it to the container filesystem.
+         * Capture a terminal screenshot and save it to the computer filesystem.
          *
          * @param path - File path or filename. If omitted, auto-generates in /hoody/storage/hoody-sdk/screenshots/.
          */
         saveScreenshot(path?: string, options?: Omit<SaveScreenshotOptions, 'source' | 'path'>): Promise<SaveScreenshotResult>;
     }
 }
+/**
+ * Install `saveScreenshot()` on the client class and the per-service helpers (`display.screenshots.save()`,
+ * `browser.page.saveScreenshot()`, `terminal.sessions.saveScreenshot()`). The SDK entry point calls it once; a
+ * second call does nothing.
+ */
 export declare function patchScreenshotSavePrototype(HoodyClientClass: {
     prototype: unknown;
 }): void;

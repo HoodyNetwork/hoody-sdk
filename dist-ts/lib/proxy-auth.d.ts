@@ -1,10 +1,15 @@
 /**
- * Kit Proxy Authentication Types (v1 — simplified)
+ * Kit Proxy Authentication Types
  *
  * These types define credentials for authenticating against
  * Hoody Kit services protected by proxy permissions.
  */
-/** JWT auth — pre-signed token, sent as Authorization: Bearer or custom header */
+/**
+ * JWT auth — pre-signed token, sent as `Bearer <token>` on Authorization or on a
+ * custom header (the proxy's JWT rule reads a Bearer value from every header it
+ * takes a token from). On a custom header, a token that already starts with
+ * `Bearer ` is sent as given.
+ */
 export interface ProxyAuthJwt {
     type: 'jwt';
     token: string;
@@ -20,9 +25,9 @@ export interface ProxyAuthPassword {
  * Static token auth, sent as Authorization: Bearer, a custom header, or a
  * query parameter.
  *
- * Match the proxy rule's TokenAuth delivery (hoody-containers-reverse-proxy-
- * endpoints src/types/matrix.types.ts TokenAuth {param, header, cookie};
- * checked in src/permissions/matrix.service.ts case 'token'): a rule with
+ * Match the proxy rule's TokenAuth delivery (the proxy takes
+ * a token by {param, header, cookie};
+ * checked by the proxy's own token check): a rule with
  * `param` reads ONLY that query parameter, whose name the operator chose —
  * there is no fixed name.
  */
@@ -35,7 +40,7 @@ export interface ProxyAuthToken {
      * the value is sent as `?<param>=<value>` on every kit request and on
      * WebSocket upgrade URLs (HttpClient.prepareUpgrade, tunnel, curl channel)
      * INSTEAD of a header — the only token form a browser WebSocket can carry.
-     * The proxy strips the parameter before forwarding to the container. The
+     * The proxy strips the parameter before forwarding to the computer. The
      * HTTP clients record the name for each request
      * (`middlewareContext._credentialQueryParams`) and mask the parameter in
      * logged URLs, ApiError request context and bodies whatever it is called,
@@ -47,9 +52,9 @@ export interface ProxyAuthToken {
      */
     param?: string;
 }
-/** Container claim auth — sends both X-Hoody-Container-Claim and X-Hoody-Token */
-export interface ProxyAuthContainerClaim {
-    type: 'containerClaim';
+/** Computer claim auth — sends both X-Hoody-Computer-Claim and X-Hoody-Token */
+export interface ProxyAuthComputerClaim {
+    type: 'computerClaim';
     claim: string;
     token: string;
 }
@@ -57,9 +62,9 @@ export interface ProxyAuthContainerClaim {
 export interface ProxyAuthIp {
     type: 'ip';
 }
-export type ProxyAuth = ProxyAuthJwt | ProxyAuthPassword | ProxyAuthToken | ProxyAuthContainerClaim | ProxyAuthIp;
+export type ProxyAuth = ProxyAuthJwt | ProxyAuthPassword | ProxyAuthToken | ProxyAuthComputerClaim | ProxyAuthIp;
 /** Known Kit program slugs (from kit-catalog). Extensible with string. */
-export type KitProgram = 'terminal' | 'browser' | 'code' | 'curl' | 'cron' | 'daemon' | 'display' | 'exec' | 'files' | 'notifications' | 'sqlite' | 'agent' | 'watch' | 'logs' | 'notes' | 'run' | 'pipe' | (string & {});
+export type KitProgram = 'terminal' | 'browser' | 'code' | 'curl' | 'cron' | 'daemon' | 'display' | 'exec' | 'files' | 'notifications' | 'sqlite' | 'agent' | 'watch' | 'logs' | 'notes' | 'run' | 'pipe' | 'vm' | (string & {});
 /** Per-service auth overrides. */
 export interface ProxyAuthPolicy {
     default?: ProxyAuth;
@@ -72,6 +77,15 @@ export declare function isProxyAuthPolicy(auth: ProxyAuth | ProxyAuthPolicy): au
  * Checks Buffer first (Node.js — no deprecated functions) then btoa (browser).
  */
 export declare function base64Encode(str: string): string;
+/**
+ * The header value of a `jwt` or `token` credential on header `header`, the way
+ * the proxy reads it: a JWT is `Bearer <token>` on every header (its rule strips
+ * the scheme from each header source and drops a value without one); a static
+ * token is `Bearer <value>` on Authorization and the raw value on any other
+ * header (its rule compares the raw header). A value that already carries the
+ * Bearer scheme is sent as given on every header, never with the scheme twice.
+ */
+export declare function credentialHeaderValue(auth: ProxyAuthJwt | ProxyAuthToken, header: string): string;
 /**
  * `url` with a token credential in its query parameter (`auth.param`),
  * replacing any value already there. Only a kit credential ever goes here —

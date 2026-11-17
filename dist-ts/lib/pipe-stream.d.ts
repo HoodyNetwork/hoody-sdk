@@ -19,7 +19,13 @@ import { type PipeTransport } from './pipe-transport.js';
 import type { ProxyAuth, ProxyAuthPolicy } from './proxy-auth.js';
 import { type PipeConnectOptions, type PipeDuplex } from './pipe-ws.js';
 export { PipeTransferError };
-export type PipeSource = string | Buffer | Uint8Array | ReadableStream<Uint8Array> | NodeJS.ReadableStream | AsyncIterable<Uint8Array | Buffer | string> | URL | {
+/** A Node readable (fs.createReadStream, net.Socket, child_process.stdout), typed structurally so
+ *  the declarations need no Node types. */
+export interface NodeReadableLike {
+    pipe(destination: any, options?: any): unknown;
+    on(event: string, listener: (...args: any[]) => void): unknown;
+}
+export type PipeSource = string | Uint8Array | ReadableStream<Uint8Array> | NodeReadableLike | AsyncIterable<Uint8Array | string> | URL | {
     tcp: {
         host: string;
         port: number;
@@ -34,7 +40,7 @@ export type PipeSendOptions = {
     n?: number;
     /** Content-Type header. Default: application/octet-stream (text/plain for string sources). */
     contentType?: string;
-    /** Optional Content-Length when known (helps progress tracking; otherwise chunked). */
+    /** Content-Length when known (progress totals, and a cut transfer fails); a string or byte source gets its own size. Otherwise chunked. */
     contentLength?: number;
     /** Sets Content-Disposition filename forwarded to receivers. */
     filename?: string;
@@ -52,7 +58,7 @@ export type PipeSendOptions = {
     live?: boolean;
     /**
      * This transfer's id (`?transfer=`, 16-64 characters of A-Z a-z 0-9 `_` `-`):
-     * `status(path, { transfer })` then reads this transfer from the start. The
+     * `getStatus(path, { transfer })` then reads this transfer from the start. The
      * kit refuses an id already in use (409).
      */
     transfer?: string;
@@ -138,7 +144,7 @@ export type PipeReceiveResult = {
      */
     verified?: Promise<string>;
 };
-/** `?status` of a name, or of one transfer with `status(path, { transfer })`. */
+/** `?status` of a name, or of one transfer with `getStatus(path, { transfer })`. */
 export type PipeStatus = {
     state: 'idle' | 'waiting' | 'streaming' | 'complete' | 'failed';
     /** What holds the name: an HTTP transfer, a WebSocket pair or a live stream; null when idle. */
@@ -174,6 +180,7 @@ export declare class PipeIntegrityError extends Error {
     /** The digest of the bytes read, when they were all read. */
     readonly actual: string | null;
     readonly transferId: string | null;
+    /** Build the error; the parameters are its `kind`, message, the two digests and the transfer id, kept as the fields documented here. */
     constructor(
     /** `mismatch`: digests differ; `unavailable`: the kit has no digest for the transfer; `incomplete`: the body was not read to the end. */
     kind: 'mismatch' | 'unavailable' | 'incomplete', message: string, 
@@ -183,12 +190,12 @@ export declare class PipeIntegrityError extends Error {
     actual: string | null, transferId: string | null);
 }
 /**
- * A `?progress` event from subscribeProgress. Only `done` says how a transfer
+ * A `?progress` event from streamProgress. Only `done` says how a transfer
  * ended (`state: 'complete' | 'failed'`): the kit's `state` events carry idle,
  * waiting and streaming (`complete` and `failed` stay in that union for older
  * kits). `ts` is when the event arrived (ms since the epoch).
  *
- * subscribeProgress always sets every field. The fields added later
+ * streamProgress always sets every field. The fields added later
  * (`hasSender`, `activeReceivers`, `totalReceivers`, `totalBytes`, `elapsed`,
  * `live`, done's `state`) are optional in this type only so that code which
  * builds events in the earlier shape (wrappers, mocks, fixtures) still
@@ -296,6 +303,11 @@ export type PipeForwardTcpResult = {
         port: number;
     }> | undefined;
 };
+/**
+ * Thrown by `PipeStream.receive()` when the response carries no body to
+ * read. `status` and `headers` are the response's, so a caller can tell a
+ * bodyless answer from a failed transfer.
+ */
 export declare class PipeReceiveEmptyBodyError extends Error {
     readonly status: number;
     readonly headers: Headers;
@@ -316,6 +328,11 @@ export declare class PipeReceiveEmptyBodyError extends Error {
  *
  * and the request still carries the caller's bearer token. `validatePipePath`
  * does NOT cover this — it checks only length and a reserved-name set.
+ *
+ * Leading `/`s are dropped, as the generated `pipe.send`/`pipe.receive` drop
+ * them: `/name` and `name` are one pipe on every client surface. Keeping them
+ * would send `/name` to `/api/v1/pipe//name`, a different channel from the
+ * SDK's `name`.
  *
  * Keep this rule identical to `PipeMediaClient.getUrl` in pipe-media.ts, which
  * inlines it because importing from this module pulls node:net/fs into the
@@ -352,7 +369,7 @@ export type { SseEvent } from './sse-stream.js';
 /** Encode a boolean for ?download / ?video / ?progress query strings. */
 export declare function boolQuery(v: boolean | undefined): string | undefined;
 export interface PipeStreamConfig {
-    /** Full pipe kit base URL (e.g. https://proj-ctr-pipe-1.srv.containers.hoody.com) */
+    /** Full pipe kit base URL (e.g. https://proj-ctr-pipe-1.srv.computers.hoody.com) */
     pipeBaseUrl: string;
     /** Path prefix for pipe endpoints (default: '/api/v1/pipe') */
     basePath?: string;
@@ -368,21 +385,40 @@ export interface PipeStreamConfig {
      */
     kitAuth?: ProxyAuth | ProxyAuthPolicy;
 }
+/**
+ * Node client for the Hoody Pipe program of one computer. A pipe is a path
+ * name on which a sender and one or more receivers meet; the bytes stream
+ * straight through and nothing is stored.
+ *
+ * `send()` and `receive()` move bytes over HTTP from or to any source or
+ * sink (string, buffer, stream, file URL, TCP or Unix socket);
+ * `getStatus()` and `streamProgress()` report on a transfer; `connect()`
+ * opens a two-way WebSocket relay on a name; `forwardTcp()` carries a TCP
+ * connection through a pipe. Create one with `PipeStream.fromClient(client,
+ * computer)` so the client's credentials apply. In a browser use
+ * `PipeMedia` instead.
+ */
 export declare class PipeStream {
     private readonly baseUrl;
     private readonly basePath;
     private readonly transport;
     private readonly kitAuth;
+    /**
+     * Create a client for the pipe program at `config.pipeBaseUrl`. Without
+     * `config.transport` requests use the global `fetch` and send no
+     * credentials; `PipeStream.fromClient()` sets both from a `HoodyClient`.
+     * Makes no request.
+     */
     constructor(config: PipeStreamConfig);
     /**
-     * Create a PipeStream from an already-constructed HoodyClient + container.
-     * Relies on `client.getKitUrl('pipe', container, serviceIndex)`, and sends
+     * Create a PipeStream from an already-constructed HoodyClient + computer.
+     * Relies on `client.getKitUrl('pipe', computer, serviceIndex)`, and sends
      * through `client.http` so the client's injected transport and kitAuth
      * apply (lib/pipe-transport.ts).
      */
     static fromClient(client: {
-        getKitUrl(kit: string, container: import('../generated/client.js').ContainerLike | null, serviceIndex?: number): string;
-    }, container: import('../generated/client.js').ContainerLike, serviceIndex?: number): PipeStream;
+        getKitUrl(kit: string, computer: import('../generated/client.js').ComputerLike | null, serviceIndex?: number): string;
+    }, computer: import('../generated/client.js').ComputerLike, serviceIndex?: number): PipeStream;
     /** Build a full pipe URL for `path` with optional query params. A reserved name throws (see validatePipePath). */
     getUrl(path: string, query?: Record<string, string | number | boolean | undefined>): string;
     /**
@@ -406,7 +442,7 @@ export declare class PipeStream {
      * The kit's `/api/v1/pipe/metrics` text (Prometheus 0.0.4): counters and
      * gauges with fixed labels, never a pipe name.
      */
-    metrics(opts?: {
+    getMetrics(opts?: {
         signal?: AbortSignal;
     }): Promise<string>;
     /**
@@ -415,7 +451,7 @@ export declare class PipeStream {
      * live record while it runs, then for a hashed transfer its receipt (kept
      * 10 minutes). An unknown or expired id throws (HTTP 404).
      */
-    status(path: string, opts?: {
+    getStatus(path: string, opts?: {
         transfer?: string;
         signal?: AbortSignal;
     }): Promise<PipeStatus>;
@@ -439,7 +475,7 @@ export declare class PipeStream {
      * a transfer on `path` ends, the kit answers 204 and this yields nothing.
      * Breaking out of the loop, or aborting `signal`, closes the connection.
      */
-    subscribeProgress(path: string, opts?: {
+    streamProgress(path: string, opts?: {
         signal?: AbortSignal;
     }): AsyncIterable<PipeProgressEvent>;
     /** `ws(s)://…/{name}?ws[&wait=]` — the relay URL for `name` (no credential in it). */

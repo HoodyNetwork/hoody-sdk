@@ -23,9 +23,28 @@ export type FacadeJson<P> = P extends Promise<infer R> ? Promise<Exclude<R, {
 }>> : P;
 /** Refuse a caller-supplied value for a key the method fixes or does not take. */
 export declare function facadeRefuse(label: string, given: Record<string, unknown>, keys: readonly string[]): void;
+/**
+ * Refuse a caller-supplied value for a key the method does not take. `instead` names, per key, the method that
+ * takes it (`agent.github.auth.login({ token })`).
+ */
+export declare function facadeForbid(label: string, given: Record<string, unknown>, keys: readonly string[], instead?: Readonly<Record<string, string>>): void;
+/**
+ * Refuse an option only another branch of the method takes, naming what reaches that branch
+ * (`agent.sessions.turns.start: gatePolicy needs stream: true`). Each entry is [key, condition, current key of a
+ * retired spelling or null]. Without it the chosen branch's backing method would drop the key without a word. A
+ * retired spelling is refused first, as RetiredOptionError with the branch requirement added to its message.
+ */
+export declare function facadeNeeds(label: string, given: Record<string, unknown>, keys: ReadonlyArray<readonly [string, string, string | null]>): void;
 /** Refuse a body that lacks a field the method needs. */
 export declare function facadeRequire(label: string, body: Record<string, unknown> | undefined, key: string): void;
 /** Refuse a body field whose value is not one the method allows. */
 export declare function facadeRestrict(label: string, body: Record<string, unknown> | undefined, key: string, allowed: readonly unknown[]): void;
+/**
+ * The caller's options as a facade passes them on: every key the backing method could read by name, own or
+ * inherited, enumerable or not, a getter's value included, minus `omit` (the facade's own options). A non-enumerable
+ * function (a class method, `constructor`) is not an option and stays behind. An object spread copies own enumerable
+ * keys only: an inherited `ifMatch` was dropped, and a conditional write went out unconditional.
+ */
+export declare function facadeOptions(given: Record<string, unknown>, omit?: readonly string[]): Record<string, unknown>;
 /** Is the value a byte body: a Blob, ArrayBuffer, typed array or stream? */
 export declare function facadeIsBytes(value: unknown): boolean;

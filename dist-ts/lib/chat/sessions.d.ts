@@ -70,6 +70,11 @@ export declare function createSession(opts: CreateSessionOptions): Promise<{
     meta: SessionMeta;
     filePath: string;
 }>;
+/**
+ * Append one turn to the session file at `filePath` as a JSON line, with secrets in `turn.content`
+ * redacted first. Rejects with `ENOENT` when the file no longer exists: a deleted session is never
+ * recreated as a file without its meta line.
+ */
 export declare function appendTurn(filePath: string, turn: Omit<SessionTurn, 'type'>): Promise<void>;
 /** Read a session file fully. Returns null if malformed (and quarantines it). */
 export declare function readSession(filePath: string): Promise<SessionFull | null>;
@@ -105,6 +110,11 @@ export declare function deleteSession(filePath: string): Promise<void>;
  * retried reply only.
  */
 export declare function truncateSessionTurns(filePath: string, keepCount: number): Promise<void>;
+/**
+ * Delete every session file in the chats directory, including ones whose content cannot be parsed.
+ * Returns how many were deleted (a file already gone counts) and how many could not be removed.
+ * Never throws for a single file; an unreadable directory answers zero for both.
+ */
 export declare function wipeAllSessions(): Promise<{
     deleted: number;
     failed: number;

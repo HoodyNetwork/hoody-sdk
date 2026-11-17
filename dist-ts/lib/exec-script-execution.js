@@ -33,9 +33,11 @@ export function encodeExecScriptPath(path, helperName) {
     const normalized = assertBasePath(relative, helperName);
     return normalized.split('/').map((segment) => encodeURIComponent(segment)).join('/');
 }
+// Every request option ExecExecutionRequestOptions declares, but responseIsFinal (always set below).
 const REQUEST_OPTION_KEYS = [
     'signal', 'timeoutMs', 'retries', 'retryDelayMs', 'retryOnStatuses',
-    'middlewareContext', 'authRetry', 'rawResponse', 'responseType', 'headers',
+    'middlewareContext', 'authRetry', 'cache', 'rawResponse', 'responseType', 'headers',
+    'keyedInProgressWait', 'redactBodyKeys', 'maxResponseBytes',
 ];
 /**
  * Dispatch one request to an already-encoded script path through the
@@ -65,13 +67,16 @@ export function dispatchExecScript(service, encodedPath, options = {}) {
     }
     // A script is arbitrary code: a status it returned cannot be told from a
     // platform failure, and a retry would run it again. Its answer is final;
-    // `retries` covers only a request that never reached the container.
+    // `retries` covers only a request that never reached the computer.
     requestData.responseIsFinal = true;
+    // A script's answer is its body as sent, never read as a response envelope.
+    requestData.bodyAsData = true;
     return internals.http.request(method, requestUrl, requestData);
 }
 // Global Symbol used as a once-guard so the prototype patch is idempotent.
 // Symbol.for ensures a single shared key even if the module is loaded multiple times.
 const EXEC_SCRIPT_EXECUTION_PATCH_MARKER = Symbol.for('hoody.sdk.exec.run.patch');
+/** Replaces `run()` on the generated exec service with the any-method form described above. Runs once: a second call does nothing. */
 export function patchExecScriptExecutionPrototype() {
     const prototype = ExecService.prototype;
     if (prototype[EXEC_SCRIPT_EXECUTION_PATCH_MARKER])

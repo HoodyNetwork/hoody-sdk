@@ -14,6 +14,7 @@
  *   Windows — powershell.exe WinRT toast (Windows 10+, ships with OS)
  */
 import { ValidationError } from '../generated/errors.js';
+import { retireAccessors } from './retired-accessor.js';
 import { spawn as cpSpawn, execFileSync } from 'node:child_process';
 import { unlink } from 'node:fs';
 // ═══════════════════════════════════════════════════════════════════
@@ -28,8 +29,8 @@ import { unlink } from 'node:fs';
  */
 export function parseNotificationData(message, baseUrl) {
     const raw = (message.data ?? {});
-    // The kit serves only notifications with an integer id (hoody-notifications: the spec requires
-    // Notification.id, and history entries without one are dropped by transform_notification). A message
+    // The kit serves only notifications with an integer id (the notification spec requires an id, and
+    // the kit drops history entries without one). A message
     // without one is refused, never given an invented id; the WebSocket emitter catches a listener's
     // throw, so a live stream drops it and goes on.
     if (typeof raw.id !== 'number' || !Number.isInteger(raw.id)) {
@@ -184,9 +185,8 @@ function buildArgs(tool, notification, showIcons) {
                 args.push('-subtitle', data.appname);
             if (urgency === 'CRITICAL')
                 args.push('-sound', 'default');
-            // Honour showIcons on macOS too. terminal-notifier accepts
-            // -contentImage for a custom icon; without this the option was silently
-            // no-ops on macOS despite the config being exposed.
+            // Honour showIcons on macOS too: terminal-notifier takes -contentImage
+            // for a custom icon.
             if (showIcons && notification.iconUrl)
                 args.push('-contentImage', notification.iconUrl);
             return args;
@@ -254,8 +254,9 @@ export function createNotificationPresenter(config) {
     let resolved = null;
     const spawnFn = config?.spawn ?? defaultSpawn;
     const tempIconPaths = [];
-    return {
-        get ready() {
+    // The getter `isReady()` replaced refuses, naming the method.
+    return retireAccessors({
+        isReady() {
             return _ready;
         },
         async initialize() {
@@ -271,11 +272,8 @@ export function createNotificationPresenter(config) {
             return _ready;
         },
         async show(notification) {
-            // Every failure path invokes `config.onError` (if
-            // provided) before rethrowing. Pre-fix the callback was documented in
-            // NotificationPresenterConfig but never called — direct consumers of
-            // createNotificationPresenter() silently lost every error. The rethrow
-            // preserves existing behavior for callers that don't provide the hook.
+            // Every failure path invokes `config.onError` (if provided), then
+            // rethrows, so callers without the hook still see the error.
             const reportError = (err) => {
                 try {
                     config?.onError?.(notification, err);
@@ -314,5 +312,5 @@ export function createNotificationPresenter(config) {
             }
             tempIconPaths.length = 0;
         },
-    };
+    }, 'NotificationPresenter', { ready: 'isReady()' });
 }

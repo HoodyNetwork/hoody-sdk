@@ -1,5 +1,5 @@
 /**
- * Screenshot save — capture + save to container filesystem in one call.
+ * Screenshot save — capture + save to computer filesystem in one call.
  *
  * Architecture:
  *   This module extends HoodyClient with four convenience methods:
@@ -9,7 +9,7 @@
  *   - `browser.page.saveScreenshot(path?, options?)` — capture browser + save
  *   - `terminal.sessions.saveScreenshot(path?, options?)` — capture terminal + save
  *
- *   All methods require a container-scoped client (via `withContainer()`).
+ *   All methods require a computer-scoped client (via `withComputer()`).
  *   They compose: capture API call → decode → validate → putFile → chmod.
  *
  *   Data flow:
@@ -29,6 +29,7 @@ import { randomUUID } from 'node:crypto';
 import { ScreenshotsService } from '../generated/display/screenshots.service.js';
 import { PageService } from '../generated/browser/page.service.js';
 import { SessionsService } from '../generated/terminal/sessions.service.js';
+import { RetiredOptionError } from '../generated/errors.js';
 import { ownerOf } from './service-owner.js';
 import { terminalHostLabel } from './terminal-host.js';
 // ---------------------------------------------------------------------------
@@ -42,6 +43,10 @@ const MAX_COMPONENT_LENGTH = 255;
 const PNG_MAGIC = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 /** JPEG magic bytes: FF D8 */
 const JPEG_MAGIC = [0xff, 0xd8];
+/**
+ * Thrown when a screenshot could not be captured or saved. `code` says which step failed; `source` and `path` name
+ * the capture source and the target file when known, and `cause` holds the underlying error.
+ */
 export class ScreenshotSaveError extends Error {
     code;
     source;
@@ -298,13 +303,13 @@ function validateMagicBytes(buffer, format) {
     }
 }
 // ---------------------------------------------------------------------------
-// Container-scoped assertion
+// Computer-scoped assertion
 // ---------------------------------------------------------------------------
-function assertContainerScoped(client) {
+function assertComputerScoped(client) {
     const c = client;
     const hasTemplates = c.urlTemplates && Object.keys(c.urlTemplates).length > 0;
     if (!hasTemplates) {
-        throw new ScreenshotSaveError('CAPTURE_FAILED', 'saveScreenshot requires a container-scoped client. Call withContainer() first.');
+        throw new ScreenshotSaveError('CAPTURE_FAILED', 'saveScreenshot requires a computer-scoped client. Call withComputer() first.');
     }
 }
 // ---------------------------------------------------------------------------
@@ -366,7 +371,7 @@ async function captureBrowser(client, format, options) {
  * Resolve the URL template vars that put `terminal_id` where it is actually
  * read: the HOST segment (`…-terminal-<id>.…`).
  *
- * The containers proxy forces `?terminal_id=` from the SNI host index and
+ * The computers proxy forces `?terminal_id=` from the SNI host index and
  * overwrites whatever the client sent, so a capture that only passes the id as
  * a query param silently screenshots terminal 1 (the default template index).
  * Two ids cannot ride the host: a non-canonical one ("007", which the proxy
@@ -379,8 +384,8 @@ function terminalCaptureTemplateVars(client, terminalId) {
         throw new ScreenshotSaveError('CAPTURE_FAILED', `terminal_id ${terminalId} is not addressable: the host index normalizes it to ${Number(terminalId)}`, { source: 'terminal' });
     }
     const t = client?.urlTemplates?.['terminal'];
-    const label = terminalHostLabel(t?.projectId ?? '', t?.containerId ?? '', terminalId);
-    if (t?.projectId && t?.containerId && label.length > 63) {
+    const label = terminalHostLabel(t?.projectId ?? '', t?.computerId ?? '', terminalId);
+    if (t?.projectId && t?.computerId && label.length > 63) {
         throw new ScreenshotSaveError('CAPTURE_FAILED', `terminal_id ${terminalId} is unreachable: host label is ${label.length} bytes (DNS limit 63)`, { source: 'terminal' });
     }
     return { serviceIndex: Number(terminalId) };
@@ -389,8 +394,14 @@ async function captureTerminal(client, format, options) {
     const templateVars = options?.terminal_id !== undefined && options.terminal_id !== ''
         ? terminalCaptureTemplateVars(client, String(options.terminal_id))
         : undefined;
+    // `fontsize` was this bag's key before `fontSize`: refused by name, never passed through.
+    if (options !== undefined && options.fontsize !== undefined) {
+        throw new RetiredOptionError('saveScreenshot terminalOptions', 'fontsize', 'fontSize');
+    }
+    const { fontSize, ...rest } = options ?? {};
     const response = await client.terminal.sessions.captureScreenshot({
-        ...options,
+        ...rest,
+        ...(fontSize !== undefined ? { fontsize: fontSize } : {}),
         // Wrapper-controlled fields always win (prevent caller override)
         save: false,
         format: format === 'jpeg' ? 'jpeg' : 'png',
@@ -428,7 +439,7 @@ async function captureTerminal(client, format, options) {
 // Core save implementation
 // ---------------------------------------------------------------------------
 async function saveScreenshotImpl(options) {
-    assertContainerScoped(this);
+    assertComputerScoped(this);
     const { source, displayOptions, browserOptions, terminalOptions } = options;
     // Resolve path and format
     const { resolvedPath, resolvedFormat, needsMkdir, mkdirPath } = resolvePathAndFormat(source, options.path, options.dir, options.format);
@@ -450,7 +461,7 @@ async function saveScreenshotImpl(options) {
         }
     }
     catch (err) {
-        if (err instanceof ScreenshotSaveError)
+        if (err instanceof ScreenshotSaveError || err instanceof RetiredOptionError)
             throw err;
         throw new ScreenshotSaveError('CAPTURE_FAILED', `Screenshot capture failed: ${err.message}`, {
             source,
@@ -460,9 +471,8 @@ async function saveScreenshotImpl(options) {
     // 2. Validate magic bytes
     validateMagicBytes(buffer, resolvedFormat);
     // 3. Create directory if needed
-    // Typed calls on the generated FilesService (mkdir/upload/chmod/delete): the
-    // old untyped `(this as any).files.putFile` named methods that had been
-    // renamed, so every save failed and the chmod was silently skipped.
+    // Typed calls on the generated FilesService (mkdir/upload/chmod/delete), so a
+    // renamed method fails the typecheck instead of every save at run time.
     const filesService = this.files;
     if (needsMkdir) {
         try {
@@ -518,13 +528,18 @@ async function saveScreenshotImpl(options) {
 // Prototype patching
 // ---------------------------------------------------------------------------
 const SCREENSHOT_SAVE_PATCH_MARKER = Symbol.for('hoody.sdk.screenshot.save.patch');
+/**
+ * Install `saveScreenshot()` on the client class and the per-service helpers (`display.screenshots.save()`,
+ * `browser.page.saveScreenshot()`, `terminal.sessions.saveScreenshot()`). The SDK entry point calls it once; a
+ * second call does nothing.
+ */
 export function patchScreenshotSavePrototype(HoodyClientClass) {
     const prototype = HoodyClientClass.prototype;
     if (prototype[SCREENSHOT_SAVE_PATCH_MARKER])
         return;
     prototype.saveScreenshot = saveScreenshotImpl;
     // The per-kit helpers sit on their own services and reach the client through its owner stamp
-    // (lib/service-owner.ts): the capture and the write both go through the container-scoped client.
+    // (lib/service-owner.ts): the capture and the write both go through the computer-scoped client.
     const onService = (service, name, source, label) => {
         service.prototype[name] = function saveFromService(path, options) {
             const opts = { ...options, source };

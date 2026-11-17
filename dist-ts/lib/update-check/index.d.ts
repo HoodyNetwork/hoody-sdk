@@ -1,11 +1,11 @@
 /**
- * hoody-sdk/update-check — minisign-verified version check.
+ * Minisign-verified version check, internal to the package (not a package export).
  *
  * ┌────────────────────────────────────────────────────────────────────────┐
  * │ Trust chain (multi-domain)                                              │
  * │                                                                         │
  * │   build-time: package.json.version + trusted-domains JSON pins         │
- * │                → bake-domains.ts → generated/domains.ts                │
+ * │                → the bake step   → generated/domains.ts                │
  * │                → bun build --compile                                   │
  * │                                                                        │
  * │   runtime: hoody update                                                │
@@ -117,4 +117,9 @@ export interface PreActionResult {
     /** Promise for the in-flight refresh (or null if no refresh was kicked off). */
     refreshPromise: Promise<void> | null;
 }
+/**
+ * Read the cached update-check result and, when it is missing or stale, start a background refresh.
+ * Returns at once with the cache as read and the refresh promise (null when none was started); that
+ * promise never rejects. With `opts.optOut` it reads nothing and starts nothing.
+ */
 export declare function startPreAction(opts: PreActionOptions): PreActionResult;

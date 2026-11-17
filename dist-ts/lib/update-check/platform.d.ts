@@ -15,6 +15,7 @@ export declare function installUrlFor(domain: string): string;
 /** Build the docs landing page URL for a given domain. Note: docs live on the
  *  apex (`hoody.com/install`), not the install. subdomain. */
 export declare function docsInstallUrlFor(domain: string): string;
+/** Map a Node platform name to the family the update instructions are written for: `posix` (Linux, macOS), `windows`, or `other`. */
 export declare function detectPlatform(p?: NodeJS.Platform): Platform;
 export interface UpdateCommandLines {
     /** Primary copy-pasteable command (or docs URL for unknown platforms). */

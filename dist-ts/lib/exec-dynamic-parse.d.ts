@@ -6,7 +6,7 @@
  * method resolution, dual-method variant generation, path-param merging,
  * and deduplication live in one place.
  */
-import { type DiscoveredScript } from './exec-dynamic-discovery.js';
+import { type CallableScript } from './exec-dynamic-discovery.js';
 export interface RawScriptEntry {
     path?: string;
     label?: string;
@@ -31,18 +31,18 @@ export interface RawScriptEntry {
  * `{statusCode, message, data: <body>}`, so the array sits two `data` levels
  * below the response. Each level is probed for an array, `scripts` or
  * `items` before stepping into its `data`; reading one fixed level found
- * nothing and discovery was always empty (BT2-EXEC-001).
+ * nothing and discovery was always empty.
  */
 export declare function extractRawScriptList(response: unknown): RawScriptEntry[];
 /**
- * Parse a single raw script entry into zero or more DiscoveredScript objects.
+ * Parse a single raw script entry into zero or more CallableScript objects.
  *
  * Returns an empty array if the entry is invalid (missing path, invalid name,
  * path traversal detected, etc.). Returns multiple entries when the script
  * declares dual-method support (both GET and POST).
  */
-export declare function parseRawScriptEntry(raw: RawScriptEntry): DiscoveredScript[];
+export declare function parseRawScriptEntry(raw: RawScriptEntry): CallableScript[];
 /**
  * Parse an array of raw script entries, deduplicate by name (first wins).
  */
-export declare function parseRawScriptEntries(rawScripts: RawScriptEntry[]): DiscoveredScript[];
+export declare function parseRawScriptEntries(rawScripts: RawScriptEntry[]): CallableScript[];

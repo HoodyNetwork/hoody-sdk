@@ -17,7 +17,7 @@ import { assertBasePath } from './exec-path-utils.js';
  * `{statusCode, message, data: <body>}`, so the array sits two `data` levels
  * below the response. Each level is probed for an array, `scripts` or
  * `items` before stepping into its `data`; reading one fixed level found
- * nothing and discovery was always empty (BT2-EXEC-001).
+ * nothing and discovery was always empty.
  */
 export function extractRawScriptList(response) {
     let node = response;
@@ -35,7 +35,7 @@ export function extractRawScriptList(response) {
 }
 // ─── Single-entry parser ─────────────────────────────────────────────────────
 /**
- * Parse a single raw script entry into zero or more DiscoveredScript objects.
+ * Parse a single raw script entry into zero or more CallableScript objects.
  *
  * Returns an empty array if the entry is invalid (missing path, invalid name,
  * path traversal detected, etc.). Returns multiple entries when the script

@@ -20,9 +20,9 @@
  *   history  ≤ 20 turns     (CHATBOT_MAX_HISTORY)
  *   30 requests/hour per IP, plus a global daily cap answered with 503.
  */
-import { readSseFrames } from '../ai/openai-client.js';
 import { checkAcceptance } from './endpoint-accept.js';
 import { platformUrl } from '../domain-utils.js';
+import { redactBotKeys } from './redact.js';
 /**
  * The documentation assistant of the platform an account is on: `/api/chat` on the `chatbot.` host
  * of the platform domain of its API base URL. One package serves every platform, so a fixed host
@@ -143,18 +143,22 @@ export class RollingRateLimiter {
     limit;
     windowMs;
     hits = [];
+    /** Allow at most `limit` recorded requests in any `windowMs` (one hour by default). */
     constructor(limit, windowMs = 3_600_000) {
         this.limit = limit;
         this.windowMs = windowMs;
     }
+    /** True when another request fits in the window ending at `now`. Does not record it. */
     canProceed(now = Date.now()) {
         this.prune(now);
         return this.hits.length < this.limit;
     }
+    /** Count one request at `now`. It does not check the limit: call `canProceed()` first. */
     record(now = Date.now()) {
         this.prune(now);
         this.hits.push(now);
     }
+    /** Milliseconds until the oldest counted request leaves the window; 0 when a request fits now. */
     retryAfterMs(now = Date.now()) {
         this.prune(now);
         if (this.hits.length < this.limit)
@@ -230,7 +234,8 @@ export async function askHoody(opts) {
     }
     // 3. Input cap — the server rejects anything longer, so say so locally
     //    rather than spending a request to be told.
-    const message = opts.message.trim();
+    // A Bot URL key secret never goes to the service: only its 12-character prefix does.
+    const message = redactBotKeys(opts.message.trim());
     if (message.length === 0) {
         return { error: 'bad-request', message: 'Empty question.' };
     }
@@ -290,7 +295,7 @@ function normalizeHistory(history) {
         .slice(-MAX_HISTORY_TURNS)
         // Clamp each turn's characters (the server truncates to this length anyway,
         // so nothing is lost) …
-        .map(h => ({ role: h.role, content: h.content.slice(0, MAX_MESSAGE_CHARS) }));
+        .map(h => ({ role: h.role, content: redactBotKeys(h.content).slice(0, MAX_MESSAGE_CHARS) }));
     // … then enforce a real BYTE budget, newest-first. Characters are not bytes:
     // 20 turns of 2000 CJK characters serialise to ~120 KB and the server rejects
     // the body at 50 KB, which the client would then misreport as "question too
@@ -401,7 +406,7 @@ async function fetchOnce(url, message, history, maxBytes, totalMs, firstByteMs, 
             }
         }
         if (fatal)
-            return { error: 'failed', message: stripTerminalControls(fatal) };
+            return { error: 'failed', message: redactBotKeys(stripTerminalControls(fatal)) };
         if (framesSeen === 0) {
             return { error: 'network', message: 'No data received from the service.' };
         }
@@ -424,7 +429,7 @@ async function fetchOnce(url, message, history, maxBytes, totalMs, firstByteMs, 
         if (/timeout/.test(msg)) {
             return { error: 'timeout', message: 'The service timed out.' };
         }
-        return { error: 'network', message: msg.slice(0, 200) };
+        return { error: 'network', message: redactBotKeys(msg).slice(0, 200) };
     }
     finally {
         if (firstByteTimer)
@@ -448,7 +453,8 @@ function mapHttpError(status, retryAfterHeader, body) {
     catch {
         /* not JSON — fall back to the status */
     }
-    const snippet = stripTerminalControls(prose ?? body).slice(0, 200);
+    // Scrubbed after control stripping (which could join a split key) and before the cut.
+    const snippet = redactBotKeys(stripTerminalControls(prose ?? body)).slice(0, 200);
     if (status === 400) {
         return { error: 'bad-request', message: snippet || 'Rejected by the service (400).' };
     }
@@ -538,4 +544,93 @@ function defaultSleep(ms, signal) {
             res();
         }, { once: true });
     });
+}
+/**
+ * Async generator: consume a ReadableStream of SSE events and yield the
+ * data payload of each event as a string: the text after `data:`, less one
+ * leading whitespace character (the space senders put after the colon, or a
+ * tab; a second one is kept, and so is trailing whitespace). The sentinel
+ * `[DONE]` is yielded as the string `'[DONE]'` unchanged — callers should
+ * check for it before JSON.parse.
+ *
+ * Handles:
+ *   - Split chunks across reader.read() boundaries.
+ *   - Keepalive comments (lines starting with ':').
+ *   - Multi-line data (concatenates `data:` continuations within one event).
+ *   - CRLF and LF line endings.
+ *   - A peer that never sends an event delimiter: past 2 MiB the reader is
+ *     cancelled and the generator throws.
+ */
+export async function* readSseFrames(body) {
+    const reader = body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buf = '';
+    // Cap the per-event buffer. Without this, a peer that streams chunks
+    // forever without a blank-line delimiter would grow `buf` until the
+    // total timeout fired, with no graceful cancellation.
+    const MAX_SSE_EVENT_BYTES = 2 * 1024 * 1024; // 2 MiB per event
+    try {
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done)
+                break;
+            buf += decoder.decode(value, { stream: true });
+            // Split on double newline (event boundary).
+            let eventEnd;
+            while (true) {
+                const crlfcrlf = buf.indexOf('\r\n\r\n');
+                const lflf = buf.indexOf('\n\n');
+                eventEnd =
+                    crlfcrlf === -1 ? lflf : lflf === -1 ? crlfcrlf : Math.min(crlfcrlf, lflf);
+                if (eventEnd === -1)
+                    break;
+                const rawEvent = buf.slice(0, eventEnd);
+                buf = buf.slice(eventEnd + (buf[eventEnd] === '\r' ? 4 : 2));
+                // Parse the event's data field(s). Collect `data:` lines; ignore
+                // comments and unrelated fields like `event:` or `id:`.
+                const dataLines = [];
+                for (const rawLine of rawEvent.split(/\r?\n/)) {
+                    if (rawLine.startsWith(':'))
+                        continue; // keepalive comment
+                    if (rawLine.startsWith('data:')) {
+                        dataLines.push(rawLine.slice(5).replace(/^\s/, ''));
+                    }
+                }
+                if (dataLines.length === 0)
+                    continue;
+                const data = dataLines.join('\n');
+                yield data;
+            }
+            // Enforce the 2 MiB cap AFTER consuming all complete frames in this
+            // chunk, so coalesced sub-MiB events don't spuriously trip the limit.
+            // Only a true delimiterless residual fails.
+            if (buf.length > MAX_SSE_EVENT_BYTES) {
+                try {
+                    await reader.cancel();
+                }
+                catch { /* best effort */ }
+                throw new Error(`SSE event buffer exceeded ${MAX_SSE_EVENT_BYTES} bytes without a delimiter`);
+            }
+        }
+        // Flush remaining buffer as the last frame only if it looks like a data event.
+        buf += decoder.decode();
+        if (buf.trim()) {
+            const dataLines = [];
+            for (const rawLine of buf.split(/\r?\n/)) {
+                if (rawLine.startsWith(':'))
+                    continue;
+                if (rawLine.startsWith('data:')) {
+                    dataLines.push(rawLine.slice(5).replace(/^\s/, ''));
+                }
+            }
+            if (dataLines.length > 0)
+                yield dataLines.join('\n');
+        }
+    }
+    finally {
+        try {
+            reader.releaseLock();
+        }
+        catch { /* already released */ }
+    }
 }

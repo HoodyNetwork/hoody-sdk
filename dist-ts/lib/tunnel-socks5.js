@@ -1,17 +1,19 @@
 /**
  * SOCKS5 over a hoody-tunnel PULL bind.
  *
- * Binds a loopback port inside the container and terminates SOCKS5 on every
+ * Binds a loopback port inside the computer and terminates SOCKS5 on every
  * connection that arrives there. Nothing listens on the local machine: the
  * tunnel WebSocket is the only transport, so there is no port to firewall and no
  * local listener to secure.
  *
- * Pair this with hoody-egress (`upstream = socks5h://127.0.0.1:<containerPort>`)
+ * Pair this with hoody-egress (`upstream = socks5h://127.0.0.1:<computerPort>`)
  * to get a public HTTPS proxy whose exit IP is this machine.
  */
 import { TunnelSession } from './tunnel-session.js';
 import { FrameType } from './tunnel-protocol-types.js';
 import { decodeFrames } from './tunnel-protocol-codec.js';
+import { withAsyncDispose } from './async-dispose.js';
+import { refuseRetiredOptions } from '../generated/errors.js';
 import { handleSocks5Stream, createServerState, } from './socks5-server.js';
 /** Adapt one tunnel stream id to the transport seam the SOCKS5 machine expects. */
 function makeStream(session, streamId, onDone) {
@@ -101,13 +103,15 @@ function makeStream(session, streamId, onDone) {
 /**
  * Connect, bind a loopback PULL port, and serve SOCKS5 on it.
  */
-export async function tunnelSocks5(opts) {
+export async function startTunnelSocks5(opts) {
+    // The `token` option is refused; the proxy credential is `kitAuth`.
+    refuseRetiredOptions(opts, 'startTunnelSocks5', [['token', 'kitAuth']]);
     if (!opts.url)
-        throw new Error('tunnelSocks5: `url` is required');
+        throw new Error('startTunnelSocks5: `url` is required');
     if (!opts.auth?.username || !opts.auth?.password) {
         // Refuse rather than default to anonymous: this port is reachable by every
-        // process in the container.
-        throw new Error('tunnelSocks5: `auth` with username and password is required');
+        // process in the computer.
+        throw new Error('startTunnelSocks5: `auth` with username and password is required');
     }
     // Validate BEFORE connecting. `handleSocks5Stream` throws on a bad
     // maxConcurrent, but by then makeStream() has already registered onStream and
@@ -116,11 +120,11 @@ export async function tunnelSocks5(opts) {
     // listener. Fail at the call that can still report it to the caller.
     if (opts.maxConcurrent !== undefined
         && (!Number.isInteger(opts.maxConcurrent) || opts.maxConcurrent < 1)) {
-        throw new Error(`tunnelSocks5: maxConcurrent must be a positive integer, got ${String(opts.maxConcurrent)}`);
+        throw new Error(`startTunnelSocks5: maxConcurrent must be a positive integer, got ${String(opts.maxConcurrent)}`);
     }
     const session = new TunnelSession({
         url: opts.url,
-        token: opts.token,
+        ...(opts.kitAuth ? { kitAuth: opts.kitAuth } : {}),
         ...(opts.resumeSessionId !== undefined && { resumeSessionId: opts.resumeSessionId }),
     });
     const state = createServerState();
@@ -193,14 +197,14 @@ export async function tunnelSocks5(opts) {
         const bind = await session.bind({
             kind: 'tcp',
             mode: 'pull',
-            containerPort: opts.containerPort ?? 0,
+            computerPort: opts.computerPort ?? 0,
             ...(opts.host !== undefined && { host: opts.host }),
         });
         let closingByCaller = false;
         // Remember that the session was lost. startLocalExit subscribes only
-        // after several awaited calls, and a drop inside that window used to fire
-        // into an empty listener set and be forgotten — leaving a dead exit that
-        // reported itself healthy.
+        // after several awaited calls, and a drop inside that window would otherwise
+        // fire into an empty listener set and be forgotten, leaving a dead exit that
+        // reports itself healthy.
         let sessionLost = false;
         const lostListeners = new Set();
         const announceLost = () => {
@@ -229,11 +233,11 @@ export async function tunnelSocks5(opts) {
             live.clear();
             await session.close();
         };
-        return {
+        return withAsyncDispose({
             session,
             bind,
-            containerPort: bind.containerPort,
-            activeStreams: () => state.active,
+            computerPort: bind.computerPort,
+            getActiveStreamCount: () => state.active,
             onSessionLost(cb) {
                 if (sessionLost) {
                     queueMicrotask(() => { try {
@@ -246,8 +250,7 @@ export async function tunnelSocks5(opts) {
                 return () => { lostListeners.delete(cb); };
             },
             close,
-            [Symbol.asyncDispose]: close,
-        };
+        }, close);
     }
     catch (err) {
         await session.close().catch(() => { });

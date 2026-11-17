@@ -4,26 +4,26 @@
  *
  * Usage:
  *
- *   const scoped = await client.withContainer({ project, container });
+ *   const scoped = await client.withComputer({ project, computer });
  *   const ch = await scoped.curl.channel.connect();
  *   const fetch = createCurlFetch({ url: ch.url, channel: ch });
  *   const res = await fetch('https://api.example.com/x');
  *
  * The helper:
- *   • derives `wss://<projectId>-<containerId>-curl-<idx>.<server>.<containersDomain>/api/v1/curl/channel`
- *     from `client.urlTemplates['curl']` (set by `withContainer()`).
+ *   • derives `wss://<projectId>-<computerId>-curl-<idx>.<server>.<computersDomain>/api/v1/curl/channel`
+ *     from `client.urlTemplates['curl']` (set by `withComputer()`).
  *   • or uses `opts.url` verbatim — the test escape hatch + custom-routing
  *     surface for non-Hoody-hosted curl bridges.
  *
  * The curl-channel WS route at `/api/v1/curl/channel` has no in-process auth
- * (verified in the upstream curl protocol). Where a Hoody Proxy permission
+ * (the curl kit's own protocol). Where a Hoody Proxy permission
  * rule guards the curl service, the kit credential is the client's `kitAuth`
  * (its `curl` entry for a policy) or `opts.kitAuth`, applied to the upgrade
  * the way lib/kit-ws-auth.ts describes: headers in Node/Bun, `?token=` in a
  * browser. The account token is never sent.
  *
  * Channel limits (`opts.limits`) are the server's own query parameters on the
- * channel URL (hoody-curl `ChannelQuery`); the server clamps each one.
+ * channel URL (the curl kit's channel query); the server clamps each one.
  */
 import type { HoodyClient } from './hoody-client.js';
 import { CurlChannel } from './curl-channel-client.js';
@@ -38,11 +38,11 @@ export interface CurlChannelHelperOptions {
      */
     url?: string;
     /**
-     * Container scope. Omit when the client is already container-scoped via
-     * `client.withContainer({ project, container })` — the helper reads
+     * Computer scope. Omit when the client is already computer-scoped via
+     * `client.withComputer({ project, computer })` — the helper reads
      * `client.urlTemplates['curl']` in that case.
      */
-    containerId?: string;
+    computerId?: string;
     projectId?: string;
     /** Server slug, e.g. `code-example-1`. Required only with explicit ids. */
     server?: string;
@@ -69,7 +69,7 @@ export interface CurlChannelHelperOptions {
     /** Per-channel limits, sent as the server's channel query parameters. */
     limits?: CurlChannelLimits;
 }
-/** hoody-curl channel limits (`ChannelQuery`); the server clamps each value. */
+/** hoody-curl channel limits; the server clamps each value. */
 export interface CurlChannelLimits {
     /** Concurrent streams on this channel (`max_concurrent_streams`). */
     maxConcurrentStreams?: number;
@@ -103,7 +103,7 @@ export declare function assembleCurlChannelUrl(client: HoodyClient, opts?: CurlC
 declare module '../generated/curl/channel.service.js' {
     interface ChannelService {
         /**
-         * Open a {@link CurlChannel} against this client's container kit. Returns
+         * Open a {@link CurlChannel} against this client's computer kit. Returns
          * a Promise that resolves once the hello frame has arrived (the channel
          * is ready to accept `request()` calls).
          *
@@ -112,4 +112,5 @@ declare module '../generated/curl/channel.service.js' {
         connect(opts?: CurlChannelHelperOptions): Promise<CurlChannel>;
     }
 }
+/** Installs `connect()` on the generated `curl.channel` service. Runs once: a second call does nothing. */
 export declare function patchCurlChannelPrototype(): void;

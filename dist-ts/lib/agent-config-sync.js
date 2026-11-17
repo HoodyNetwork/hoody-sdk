@@ -1,22 +1,22 @@
 /**
- * Agent config sync — push local AI-agent CLI config/credentials into a container.
+ * Agent config sync — push local AI-agent CLI config/credentials into a computer.
  *
  * Purpose:
- *   Dev containers created with `--dev-kit` ship the agent CLIs (claude-code,
+ *   Dev computers created with `--dev-kit` ship the agent CLIs (claude-code,
  *   codex, opencode, gemini) but NOT their credentials. This helper copies the
  *   relevant files from the operator's local home (`~/.codex`, `~/.claude`,
- *   `~/.config/opencode`, `~/.gemini`, …) into the container so the tools are
+ *   `~/.config/opencode`, `~/.gemini`, …) into the computer so the tools are
  *   usable immediately.
  *
  * Design:
  *   - Filesystem-only transport. No vault. We send the file bytes over the
- *     files kit (capability-URL, HTTPS) and harden perms in-container.
+ *     files kit (capability-URL, HTTPS) and harden perms in-computer.
  *   - "Whole dir with excludes" by default: everything EXCEPT history/cache.
  *     Intelligent category flags let you narrow to e.g. credentials-only or
  *     skills-only.
  *   - Uses the PROPER raw-byte write path: `files.upload(path, Buffer)`. Passing a
  *     Buffer/Uint8Array sends the body verbatim (http-client.browser.ts), unlike
- *     `files.upload(path, {content})` which stores the JSON envelope (GOTCHA-5).
+ *     `files.upload(path, {content})` which stores the JSON envelope.
  *   - Perms via TYPED endpoints `files.chmod` / `files.chown` (no shell-exec,
  *     no injection surface). Dirs 0700, files 0600, chown <user>:<user>.
  *
@@ -31,7 +31,7 @@
  *   - agent.importLocalConfigs(tools[], options?) — import several
  *   - agent.listLocalConfigTools()               — inspect the registry
  *
- * All three require a container-scoped client (call `withContainer()` first).
+ * All three require a computer-scoped client (call `withComputer()` first).
  */
 import { promises as fs } from 'node:fs';
 import { homedir } from 'node:os';
@@ -374,7 +374,7 @@ async function pool(items, limit, fn) {
 function getFilesService(client) {
     const files = client.files;
     if (!files || typeof files.upload !== 'function') {
-        throw new Error('agent.importLocalConfig() requires a container-scoped client with a files service. Call withContainer() first.');
+        throw new Error('agent.importLocalConfig() requires a computer-scoped client with a files service. Call withComputer() first.');
     }
     return files;
 }

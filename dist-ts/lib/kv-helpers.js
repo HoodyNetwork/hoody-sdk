@@ -16,8 +16,8 @@
  * `set`, `delete` and the other key calls take the key first, and callers
  * guess the object form for all of them (`get({ db, key })` was refused with
  * "db is required"). Each key call, and `read`, also accepts its arguments as
- * one object: `{ key, ...options }`, plus `value` for `set` and `push` (and an
- * optional one for `remove`). It sends the same request as the
+ * one object: `{ key, ...options }`, plus `value` for `set` and `kv.arrays.push`
+ * (and an optional one for `kv.arrays.remove`). It sends the same request as the
  * positional call. The object form leaves out `rawResponse` and
  * `responseType`, which choose what the call resolves to: pass those
  * positionally. The batch calls and `list` keep their shapes.
@@ -42,24 +42,54 @@
  * Same declare-module + prototype-patch pattern as lib/files-service-extensions.ts.
  */
 import { KvService } from '../generated/sqlite/kv.service.js';
-import { ValidationError, isApiError } from '../generated/errors.js';
+import { KvArraysService } from '../generated/sqlite/kv-arrays.service.js';
+import { ValidationError, isApiError, refuseRetiredOptions } from '../generated/errors.js';
 const KV_HELPERS_PATCH_MARKER = Symbol.for('hoody.sdk.sqlite.kv.helpers');
 const KEY_METHODS = [
-    'get', 'delete', 'exists', 'increment', 'decrement', 'pop', 'listHistory', 'rollback', 'getSnapshot',
+    'get', 'delete', 'exists', 'increment', 'decrement', 'listHistory', 'rollback', 'getSnapshot',
 ];
-const KEY_VALUE_METHODS = ['set', 'push', 'remove'];
+const KEY_VALUE_METHODS = ['set'];
+const ARRAYS_KEY_METHODS = ['pop'];
+const ARRAYS_KEY_VALUE_METHODS = ['push', 'remove'];
 /** Whether a first argument is the object form: a key is a string, so any plain object is not one. */
 function isArgsObject(first) {
     return first !== null && typeof first === 'object' && !Array.isArray(first);
 }
+/**
+ * A copy of an options object that keeps every key the positional call reads by name: own or inherited,
+ * enumerable or not, a getter's value included, minus `omit`. A non-enumerable function (a class method) is not an
+ * option. An object spread keeps own enumerable keys only: a retired key that was inherited, non-enumerable or a
+ * getter then escaped the generated call's refusal, and an inherited `ifMatch` was dropped without a word.
+ */
+function copyOptions(given, omit = []) {
+    const out = {};
+    const seen = new Set();
+    for (let level = given; level !== null && level !== Object.prototype; level = Object.getPrototypeOf(level)) {
+        for (const name of Object.getOwnPropertyNames(level)) {
+            if (seen.has(name))
+                continue;
+            seen.add(name);
+            if (omit.includes(name))
+                continue;
+            const value = given[name];
+            if (value === undefined)
+                continue;
+            if (typeof value === 'function' && Object.getOwnPropertyDescriptor(level, name)?.enumerable !== true)
+                continue;
+            out[name] = value;
+        }
+    }
+    return out;
+}
 /** The key and options of an object-form call, checked as the positional call would check them. */
 function splitArgs(method, args, value) {
-    const { key, value: given, ...options } = args;
+    const { key, value: given } = args;
+    const options = copyOptions(args, ['key', 'value']);
     if (typeof key !== 'string' || key === '') {
         throw new ValidationError(`sqlite.kv.${method}: key must be a non-empty string`, 'key');
     }
     for (const shape of ['rawResponse', 'responseType']) {
-        if (shape in options) {
+        if (shape in args) {
             throw new ValidationError(`sqlite.kv.${method}: ${shape} is not taken by the object form; pass it positionally: ${method}(key, ${value === 'none' ? '' : 'value, '}{ db, ${shape} })`, shape);
         }
     }
@@ -83,9 +113,9 @@ function keyValueCall(method, positional) {
     return async function (first, ...rest) {
         if (!isArgsObject(first))
             return positional.call(this, first, ...rest);
-        const { key, value, options } = splitArgs(method, first, method === 'remove' ? 'optional' : 'required');
+        const { key, value, options } = splitArgs(method, first, method === 'arrays.remove' ? 'optional' : 'required');
         // remove's body is the kit's { value } wrapper (main.kvRemoveRequest), not the element.
-        const body = method === 'remove' ? ('value' in first ? { value } : undefined) : value;
+        const body = method === 'arrays.remove' ? ('value' in first ? { value } : undefined) : value;
         return positional.call(this, key, body, options, rest[0]);
     };
 }
@@ -107,7 +137,7 @@ function jsonStringSet(positional) {
         const contentType = typeof options.contentType === 'string' && options.contentType !== ''
             ? options.contentType
             : 'application/json';
-        return positional.call(this, key, value, { ...options, headers: { ...headers, 'Content-Type': contentType } }, ...rest);
+        return positional.call(this, key, value, { ...copyOptions(options), headers: { ...headers, 'Content-Type': contentType } }, ...rest);
     };
 }
 /** `exists` as a boolean over the generated HEAD call: 404 is the answer "no", not a failure. */
@@ -138,9 +168,36 @@ async function read(keyOrArgs, optionsOrTarget, templateVars) {
     if (!options || typeof options !== 'object') {
         throw new ValidationError('sqlite.kv.read: options with db are required', 'db');
     }
+    // sqlite.kv.get refuses this too, but under its own name; check it here so
+    // the error names sqlite.kv.read.
+    refuseRetiredOptions(options, 'sqlite.kv.read', [['IfNoneMatch', 'ifNoneMatch']]);
     // Whatever the caller passed for the shape options, the body comes back as is.
-    const getOptions = { ...options, responseType: 'auto', rawResponse: true };
-    return (await this.get(key, getOptions, templateVars));
+    const getOptions = { ...copyOptions(options), responseType: 'auto', rawResponse: true };
+    try {
+        return (await this.get(key, getOptions, templateVars));
+    }
+    catch (err) {
+        throw relabelRefusal(err, 'sqlite.kv.get', 'sqlite.kv.read');
+    }
+}
+/**
+ * A refusal the backing call raised names that call (`sqlite.kv.get does not take "stat"`); the caller
+ * used sqlite.kv.read. Relabel it in place, keeping its class, field and replacement text. Any other error
+ * (transport, HTTP) passes through untouched.
+ */
+function relabelRefusal(err, backing, helper) {
+    if (!(err instanceof ValidationError) || !err.message.startsWith(backing))
+        return err;
+    const next = err.message.charAt(backing.length);
+    if (next !== ' ' && next !== ':' && next !== '(')
+        return err;
+    err.message = helper + err.message.slice(backing.length);
+    if (typeof err.stack === 'string')
+        err.stack = err.stack.replace(backing, helper);
+    const retired = err;
+    if (retired.method === backing)
+        Object.defineProperty(err, 'method', { value: helper });
+    return err;
 }
 /**
  * Attach `read`, and the object form of the key calls, to the KvService
@@ -162,5 +219,14 @@ export function patchKvHelpersPrototype() {
         proto[method] = keyValueCall(method, positional(method));
     proto.read = read;
     proto[KV_HELPERS_PATCH_MARKER] = true;
+    // `kv.arrays` (pop, push, remove): the same object forms, labelled `sqlite.kv.arrays.<method>`.
+    const arrays = KvArraysService.prototype;
+    if (arrays[KV_HELPERS_PATCH_MARKER])
+        return;
+    for (const method of ARRAYS_KEY_METHODS)
+        arrays[method] = keyCall(`arrays.${method}`, arrays[method]);
+    for (const method of ARRAYS_KEY_VALUE_METHODS)
+        arrays[method] = keyValueCall(`arrays.${method}`, arrays[method]);
+    arrays[KV_HELPERS_PATCH_MARKER] = true;
 }
 patchKvHelpersPrototype();

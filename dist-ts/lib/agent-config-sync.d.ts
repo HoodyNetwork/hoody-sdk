@@ -1,22 +1,22 @@
 /**
- * Agent config sync — push local AI-agent CLI config/credentials into a container.
+ * Agent config sync — push local AI-agent CLI config/credentials into a computer.
  *
  * Purpose:
- *   Dev containers created with `--dev-kit` ship the agent CLIs (claude-code,
+ *   Dev computers created with `--dev-kit` ship the agent CLIs (claude-code,
  *   codex, opencode, gemini) but NOT their credentials. This helper copies the
  *   relevant files from the operator's local home (`~/.codex`, `~/.claude`,
- *   `~/.config/opencode`, `~/.gemini`, …) into the container so the tools are
+ *   `~/.config/opencode`, `~/.gemini`, …) into the computer so the tools are
  *   usable immediately.
  *
  * Design:
  *   - Filesystem-only transport. No vault. We send the file bytes over the
- *     files kit (capability-URL, HTTPS) and harden perms in-container.
+ *     files kit (capability-URL, HTTPS) and harden perms in-computer.
  *   - "Whole dir with excludes" by default: everything EXCEPT history/cache.
  *     Intelligent category flags let you narrow to e.g. credentials-only or
  *     skills-only.
  *   - Uses the PROPER raw-byte write path: `files.upload(path, Buffer)`. Passing a
  *     Buffer/Uint8Array sends the body verbatim (http-client.browser.ts), unlike
- *     `files.upload(path, {content})` which stores the JSON envelope (GOTCHA-5).
+ *     `files.upload(path, {content})` which stores the JSON envelope.
  *   - Perms via TYPED endpoints `files.chmod` / `files.chown` (no shell-exec,
  *     no injection surface). Dirs 0700, files 0600, chown <user>:<user>.
  *
@@ -31,7 +31,7 @@
  *   - agent.importLocalConfigs(tools[], options?) — import several
  *   - agent.listLocalConfigTools()               — inspect the registry
  *
- * All three require a container-scoped client (call `withContainer()` first).
+ * All three require a computer-scoped client (call `withComputer()` first).
  */
 export type SyncCategory = 'credentials' | 'config' | 'skills' | 'history' | 'cache';
 /** Categories synced by default ("whole dir minus history+cache"). */
@@ -61,9 +61,9 @@ export interface AgentConfigSyncOptions {
     source?: string;
     /** Override local paths per registry-root local string. */
     sources?: Record<string, string>;
-    /** Container home used to expand remote `~` (default '/home/user'). */
+    /** Computer home used to expand remote `~` (default '/home/user'). */
     destHome?: string;
-    /** Container user for chown (default 'user'). */
+    /** Computer user for chown (default 'user'). */
     user?: string;
     /** Categories to include (default DEFAULT_SYNC_CATEGORIES). */
     categories?: SyncCategory[];
@@ -136,11 +136,11 @@ declare function buildPlan(spec: AgentConfigToolSpec, opts: AgentConfigSyncOptio
 declare module '../generated/agent/agent.service.js' {
     interface AgentService {
         /**
-         * Push a local agent CLI's config/credentials into the container.
-         * Requires a container-scoped client (call `withContainer()` first).
+         * Push a local agent CLI's config/credentials into the computer.
+         * Requires a computer-scoped client (call `withComputer()` first).
          *
          * @example
-         * const box = await client.withContainer(container);
+         * const box = await client.withComputer(computer);
          * await box.agent.importLocalConfig('codex');                    // whole dir minus history/cache
          * await box.agent.importLocalConfig('claude', { only: 'credentials' });
          * await box.agent.importLocalConfig('gemini', { source: '/custom/.gemini', dryRun: true });

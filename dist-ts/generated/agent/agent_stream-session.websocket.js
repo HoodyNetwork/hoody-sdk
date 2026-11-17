@@ -5,6 +5,10 @@
  * Protocol: unknown
  * @see hoody-agent session events v1.0.0
  */
+/** A credential passed for this socket cannot be sent by a browser WebSocket; connect() rejects with it. */
+function credentialNotSentError(headers) {
+    return Object.assign(new Error(`WebSocket credential not sent: a browser WebSocket cannot send ${headers.join(", ")}. Pass a token group read from a query parameter, or use a cookie on the kit host.`), { name: "WebSocketCredentialNotSentError", code: "WS_CREDENTIAL_NOT_SENT", headers });
+}
 const RAW_WEBSOCKET_OPEN = 1;
 const RAW_WEBSOCKET_CLOSED = 3;
 function upgradeRefusedError(status, code, via, cause) {
@@ -15,6 +19,77 @@ function upgradeRefusedError(status, code, via, cause) {
     error.via = via;
     if (cause !== undefined)
         error.cause = cause;
+    return error;
+}
+/** Bytes of a refused upgrade's body read for its error; the rest is dropped. */
+const UPGRADE_BODY_CAP = 16384;
+/** Longest wait for that body, inside the connect timeout. */
+const UPGRADE_BODY_DEADLINE_MS = 2000;
+/**
+ * The error for an upgrade answered with `status` instead of 101. `body` is
+ * the response text when it was read completely (never when cut at the cap
+ * or by a deadline); only a JSON object naming a string `code` (at the top,
+ * or under `error`) adds the server's code, message and details.
+ */
+function upgradeResponseError(status, headers, body) {
+    let envelope;
+    if (body !== undefined) {
+        try {
+            const parsed = JSON.parse(body);
+            const isObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+            if (isObject(parsed)) {
+                if (typeof parsed.code === "string")
+                    envelope = parsed;
+                else if (isObject(parsed.error) && typeof parsed.error.code === "string")
+                    envelope = parsed.error;
+            }
+        }
+        catch { /* not JSON: the status alone */ }
+    }
+    const code = envelope ? envelope.code : undefined;
+    const serverMessage = envelope && typeof envelope.message === "string" && envelope.message !== "" ? envelope.message : undefined;
+    const details = envelope && envelope.details !== null && typeof envelope.details === "object" && !Array.isArray(envelope.details)
+        ? envelope.details
+        : undefined;
+    let retryAfterSecs;
+    const fromDetails = details?.retry_after_secs;
+    const header = headers["retry-after"];
+    if (typeof fromDetails === "number" && Number.isFinite(fromDetails) && fromDetails >= 0)
+        retryAfterSecs = fromDetails;
+    else if (typeof header === "string" && /^\d+$/.test(header.trim()))
+        retryAfterSecs = Number(header.trim());
+    if (status >= 400 && status < 500 && status !== 408 && status !== 425 && status !== 429) {
+        const refused = upgradeRefusedError(status, code, "upgrade");
+        if (serverMessage !== undefined)
+            refused.serverMessage = serverMessage;
+        if (details !== undefined)
+            refused.details = details;
+        if (retryAfterSecs !== undefined)
+            refused.retryAfterSecs = retryAfterSecs;
+        return refused;
+    }
+    const failed = new Error(serverMessage ?? "WebSocket connection error");
+    failed.name = "WebSocketUpgradeFailedError";
+    failed.status = status;
+    if (code !== undefined)
+        failed.code = code;
+    if (serverMessage !== undefined)
+        failed.serverMessage = serverMessage;
+    if (details !== undefined)
+        failed.details = details;
+    if (retryAfterSecs !== undefined)
+        failed.retryAfterSecs = retryAfterSecs;
+    failed.via = "upgrade";
+    return failed;
+}
+function serverFrameError(frame) {
+    const nested = frame.error !== null && typeof frame.error === "object" ? frame.error : {};
+    const text = (...values) => values.find((v) => typeof v === "string" && v !== "");
+    const code = text(frame.code, nested.code, nested.type) ?? "server_error";
+    const error = new Error(text(frame.message, nested.message) ?? `server error: ${code}`);
+    error.name = "WebSocketServerError";
+    error.code = code;
+    error.frame = frame;
     return error;
 }
 /**
@@ -54,9 +129,9 @@ const nodeBuiltinWebSocketUnsafe =
         return !ge(7, 28, 0);
     if (a === 8)
         return !ge(8, 5, 0);
-    return a < 6; // ≥ 9: ASSUMED fixed (a later major carries the fix); T1 row
+    return a < 6; // ≥ 9: ASSUMED fixed (a later major carries the fix)
 };
-export class AgentStreamSessionWebSocket {
+export class AgentSessionsConnectWebSocket {
     /**
      * The socket constructor every instance of this client uses, in place of
      * its own choice (the `ws` package on Node, the global WebSocket
@@ -86,6 +161,16 @@ export class AgentStreamSessionWebSocket {
     // and the URL the last socket was opened with, for the probe.
     _unopenedFailures = 0;
     _lastConnectUrl = undefined;
+    // The last socket created is the global WebSocket (no HTTP status of a
+    // refused upgrade can be read from it).
+    _lastSocketGlobal = false;
+    // Ends the body read of a refused upgrade still in progress; disconnect()
+    // calls it so the attempt settles at once.
+    _upgradeReadAbort = null;
+    // The open attempt disconnect() retired (0: none since the last openSocket).
+    // Only that attempt still reports a refused upgrade; an attempt another
+    // connect superseded settles silently even if a disconnect follows.
+    _retiredByDisconnect = 0;
     // FIFO queue for message dispatch — preserves frame ordering even when
     // a Blob frame requires async arrayBuffer() decode and a later string/
     // ArrayBuffer frame arrives synchronously.
@@ -248,7 +333,14 @@ export class AgentStreamSessionWebSocket {
         this.reconnectAttempts = 0;
         this._reconnecting = false;
         this.clearReconnectTimer();
-        return this.openSocket(false);
+        // A new connect() starts a new stream for frames().
+        this._streamEnded = false;
+        return this.openSocket(false).catch((error) => {
+            // Rejected to the caller and nothing retries it: frames() ends.
+            if (!this._reconnecting)
+                this.endFrames();
+            throw error;
+        });
     }
     /**
      * Open one socket. `isRetry` is true for an automatic reconnect attempt and
@@ -261,12 +353,28 @@ export class AgentStreamSessionWebSocket {
             // after each await, because the caller may have disconnected and
             // connected again while this attempt was still waiting.
             const attempt = ++this._openAttempt;
+            this._retiredByDisconnect = 0;
+            // An older attempt still reading a refused upgrade's body is superseded
+            // now: it settles at once, silently.
+            const olderRead = this._upgradeReadAbort;
+            this._upgradeReadAbort = null;
+            olderRead?.();
             const superseded = () => attempt !== this._openAttempt;
             let timedOut = false;
             // The socket this attempt installed, once it has one.
             let installed = null;
+            // Settles a refused upgrade whose body is being read (see the
+            // unexpected-response handler below); set only during that read.
+            let settleUpgrade = null;
+            const deadlineAt = Date.now() + (this.options.timeout ?? 30000);
             const timeoutId = setTimeout(() => {
                 timedOut = true;
+                // The server already answered the upgrade: report that answer (from
+                // what was read so far) instead of a bare timeout.
+                if (settleUpgrade) {
+                    settleUpgrade();
+                    return;
+                }
                 reject(new Error(`Connection timeout after ${this.options.timeout}ms`));
                 if (superseded())
                     return;
@@ -360,6 +468,11 @@ export class AgentStreamSessionWebSocket {
                     // Set when this socket ended for a reason a reconnect cannot cure: a
                     // local resource cap, or an upgrade the server refused for good.
                     let finalError;
+                    // Set once the server answered the upgrade with an HTTP status: from
+                    // then on the attempt settles from that answer only, and every native
+                    // error/close of this socket is dropped (`ws` emits them after
+                    // terminate(), Bun's built-in `ws` a close 1002 of its own).
+                    let upgradeHeld = false;
                     this.stopLiveness();
                     // Request binary frames as ArrayBuffer rather than Blob.
                     // Browser default is "blob" which would force every binary frame
@@ -564,7 +677,15 @@ export class AgentStreamSessionWebSocket {
                             dispatchAlive.alive = false;
                             if (this._socketGen !== installedGen)
                                 return;
+                            // Another connection took this one's place on purpose (a Bot's voice
+                            // has one controller). Reconnecting would take it back, and two
+                            // clients that both reconnect trade it forever: final, whatever
+                            // reconnectOnNormalClose says. Not after the caller's own disconnect();
+                            // read before onDisconnect runs, which may call disconnect() itself.
+                            const takenOver = code === 1000 && reason === "taken over" && this.shouldReconnect;
                             this.emitEvent("disconnect", code, reason);
+                            if (takenOver)
+                                this.emitEvent("__taken_over", reason);
                             // The backoff starts over only after a connection that lasted.
                             if (opened && Date.now() - openedAt >= (this.options.reconnectStableMs ?? 30000)) {
                                 this.reconnectAttempts = 0;
@@ -584,7 +705,7 @@ export class AgentStreamSessionWebSocket {
                             // is cured by trying again.
                             const isTerminal = code === 1008 || code === 1003 || code === 1002 || (code >= 4000 && code < 5000)
                                 || (code === 1000 && this.options.reconnectOnNormalClose !== true)
-                                || finalError !== undefined;
+                                || takenOver || finalError !== undefined;
                             // A connect() the caller made that never opened was rejected to
                             // the caller. It must not leave a reconnect loop running behind
                             // that rejection; the caller decides whether to connect again.
@@ -603,20 +724,27 @@ export class AgentStreamSessionWebSocket {
                                     this.scheduleReconnect();
                                 }
                             }
-                            else if (this._reconnecting) {
-                                // A reconnect attempt that will not be followed by another.
-                                this._reconnecting = false;
-                                if (this.shouldReconnect && this.options.reconnect)
-                                    this.emitEvent("reconnect_failed");
+                            else {
+                                if (this._reconnecting) {
+                                    // A reconnect attempt that will not be followed by another.
+                                    this._reconnecting = false;
+                                    if (this.shouldReconnect && this.options.reconnect)
+                                        this.emitEvent("reconnect_failed");
+                                }
+                                // No socket follows this one: frames() ends.
+                                this.endFrames();
                             }
                         });
                     };
                     this.ws.onclose = (event) => {
+                        if (upgradeHeld)
+                            return;
                         finishClose(event.code, event.reason);
                     };
                     this.ws.onerror = (event) => {
-                        // Noise from a socket the liveness check already gave up on.
-                        if (closeHandled)
+                        // Noise from a socket the liveness check already gave up on, or
+                        // from one whose refused upgrade settles the attempt itself.
+                        if (closeHandled || upgradeHeld)
                             return;
                         clearTimeout(timeoutId);
                         // The transport's own error when it exposes one: `ws` does, a
@@ -650,6 +778,117 @@ export class AgentStreamSessionWebSocket {
                         this.emitEvent("error", error);
                         reject(error);
                     };
+                    // A refused upgrade on the `ws` transport (the npm package or Bun's
+                    // built-in one). With this listener `ws` neither aborts the request
+                    // nor emits error/close, so the client reads the answer, tears the
+                    // socket down and reports once: error event, rejection, disconnect
+                    // 1006, exactly what the native events gave before.
+                    const emitter = socket;
+                    if (!this._lastSocketGlobal && typeof emitter.on === "function") {
+                        emitter.on("unexpected-response", (_request, response) => {
+                            const res = (response ?? {});
+                            // Before anything else: no native event of this socket counts now.
+                            upgradeHeld = true;
+                            const tearDown = () => {
+                                try {
+                                    res.destroy?.();
+                                }
+                                catch { /* already gone */ }
+                                try {
+                                    emitter.terminate?.();
+                                }
+                                catch { /* already closed */ }
+                            };
+                            if (closeHandled) {
+                                tearDown();
+                                return;
+                            }
+                            const status = typeof res.statusCode === "number" ? res.statusCode : 0;
+                            const chunks = [];
+                            let size = 0;
+                            let complete = false;
+                            let truncated = false;
+                            let settled = false;
+                            let bodyTimer = null;
+                            const settle = () => {
+                                if (settled)
+                                    return;
+                                settled = true;
+                                settleUpgrade = null;
+                                if (this._upgradeReadAbort === settle)
+                                    this._upgradeReadAbort = null;
+                                if (bodyTimer)
+                                    clearTimeout(bodyTimer);
+                                tearDown();
+                                // Replaced by a newer connect(): that one owns the client. This
+                                // attempt ends silently, its own promise rejected without an event.
+                                if (superseded() && this._retiredByDisconnect !== attempt) {
+                                    closeHandled = true;
+                                    abandoned();
+                                    return;
+                                }
+                                let body;
+                                if (complete && !truncated) {
+                                    const all = new Uint8Array(size);
+                                    let at = 0;
+                                    for (const chunk of chunks) {
+                                        all.set(chunk, at);
+                                        at += chunk.length;
+                                    }
+                                    body = new TextDecoder().decode(all);
+                                }
+                                const error = upgradeResponseError(status, res.headers ?? {}, body);
+                                if (error.name === "WebSocketUpgradeRefusedError")
+                                    finalError = error;
+                                clearTimeout(timeoutId);
+                                this.emitEvent("error", error);
+                                // A no-op when the connect timeout already answered.
+                                reject(error);
+                                finishClose(1006, "");
+                            };
+                            if (superseded() || timedOut) {
+                                // Nothing will read this answer: settle without its body.
+                                settle();
+                                return;
+                            }
+                            settleUpgrade = settle;
+                            this._upgradeReadAbort = settle;
+                            const left = deadlineAt - Date.now();
+                            // Past the connect deadline the connect timer settles the read.
+                            if (left > UPGRADE_BODY_DEADLINE_MS)
+                                bodyTimer = setTimeout(settle, UPGRADE_BODY_DEADLINE_MS);
+                            if (typeof res.on !== "function") {
+                                settle();
+                                return;
+                            }
+                            res.on("data", (data) => {
+                                if (settled)
+                                    return;
+                                const chunk = typeof data === "string" ? new TextEncoder().encode(data)
+                                    : data instanceof Uint8Array ? data
+                                        : data instanceof ArrayBuffer ? new Uint8Array(data)
+                                            : new Uint8Array(0);
+                                if (size + chunk.length > UPGRADE_BODY_CAP) {
+                                    truncated = true;
+                                    settle();
+                                    return;
+                                }
+                                chunks.push(chunk);
+                                size += chunk.length;
+                            });
+                            res.on("end", () => {
+                                // Bun's built-in `ws` ends the response with whatever had arrived
+                                // with the status line, so an end is a whole body only when it
+                                // matches a declared length.
+                                const declared = Number((res.headers ?? {})["content-length"]);
+                                if (!settled)
+                                    complete = !(Number.isInteger(declared) && declared >= 0) || declared === size;
+                                settle();
+                            });
+                            for (const event of ["error", "aborted", "close"])
+                                res.on(event, () => settle());
+                        });
+                    }
                 }
                 catch (error) {
                     clearTimeout(timeoutId);
@@ -659,6 +898,7 @@ export class AgentStreamSessionWebSocket {
                         this.emitEvent("error", error instanceof Error ? error : new Error(String(error)));
                         this._reconnecting = false;
                         this.emitEvent("reconnect_failed");
+                        this.endFrames();
                     }
                     reject(error);
                 }
@@ -719,6 +959,14 @@ export class AgentStreamSessionWebSocket {
         };
         const connectUrl = buildConnectUrl();
         this._lastConnectUrl = connectUrl;
+        this._lastSocketGlobal = false;
+        // socketTransport "ws": the `ws` package or nothing for the automatic
+        // choice below. An injected factory or webSocketImpl still wins. Checked
+        // before any socket exists, so an invalid value opens nothing.
+        const forceWs = this.options.socketTransport === "ws";
+        if (this.options.socketTransport !== undefined && this.options.socketTransport !== "auto" && !forceWs) {
+            throw new Error(`socketTransport must be "auto" or "ws", got ${JSON.stringify(this.options.socketTransport)}`);
+        }
         // Injected transport wins outright. No global-WebSocket probe, no `ws`
         // import, no degraded path: if the factory throws or returns something
         // unusable the connect fails loudly. A silent fallback here would send
@@ -735,9 +983,18 @@ export class AgentStreamSessionWebSocket {
             }
             return socket;
         }
-        const impl = AgentStreamSessionWebSocket.webSocketImpl;
-        if (typeof impl === "function")
+        const impl = AgentSessionsConnectWebSocket.webSocketImpl;
+        if (typeof impl === "function") {
+            // The injected constructor takes only a URL and protocols: a header credential the call
+            // asked for cannot reach the upgrade on any runtime, so refuse it as a browser socket does.
+            if (this.options.requireHeaderCredentials && this.options.requireHeaderCredentials.length > 0 && this.options.headers) {
+                const wanted = this.options.requireHeaderCredentials.map((name) => name.toLowerCase());
+                const refused = Object.keys(this.options.headers).filter((name) => wanted.includes(name.toLowerCase()));
+                if (refused.length > 0)
+                    throw credentialNotSentError(refused);
+            }
             return new impl(connectUrl, this.options.protocols);
+        }
         // Runtime detection: on Node >=22 `globalThis.WebSocket` exists but cannot
         // accept custom headers. When the caller supplied `options.headers`, prefer
         // the `ws` module (which accepts a 3rd-arg options bag) so headers actually
@@ -764,19 +1021,29 @@ export class AgentStreamSessionWebSocket {
             + "cannot be shown to be free of CVE-2026-12151 and the `ws` package could not be loaded ("
             + (cause instanceof Error ? cause.message : String(cause))
             + "). Reinstall hoody-sdk, or use an official Node 22.23.0+, 24.17.0+ or 26.3.1+."), { cause });
-        if (typeof globalCtor === "function" && !builtinUnsafe && (isBrowserRuntime || (!hasHeaders && !isNode))) {
+        if (forceWs && isBrowserRuntime) {
+            throw new Error("socketTransport \"ws\" is not available in a browser, which only has the global WebSocket");
+        }
+        if (typeof globalCtor === "function" && !builtinUnsafe && !forceWs && (isBrowserRuntime || (!hasHeaders && !isNode))) {
             if (isBrowserRuntime && hasHeaders) {
                 // A browser WebSocket cannot send headers, so kitAuth password, jwt
                 // and identity headers never reach the upgrade. The proxy accepts two
                 // header-free forms: a token group read from a query parameter, or a
                 // cookie on the kit host. Say so once instead of failing silently.
                 const dropped = Object.keys(this.options.headers).filter((name) => /^(authorization|cookie|x-hoody-[\w-]+|proxy-authorization)$/i.test(name));
+                if (this.options.requireHeaderCredentials && this.options.requireHeaderCredentials.length > 0) {
+                    const wanted = this.options.requireHeaderCredentials.map((name) => name.toLowerCase());
+                    const refused = Object.keys(this.options.headers).filter((name) => wanted.includes(name.toLowerCase()));
+                    if (refused.length > 0)
+                        throw credentialNotSentError(refused);
+                }
                 const flags = globalThis;
                 if (dropped.length > 0 && !flags.__hoodyWsHeaderWarned) {
                     flags.__hoodyWsHeaderWarned = true;
                     console.warn(`[hoody-sdk] a browser WebSocket cannot send headers; ${dropped.join(", ")} not sent on the upgrade. Use a proxy token group read from a query parameter, or a cookie on the kit host.`);
                 }
             }
+            this._lastSocketGlobal = true;
             return new globalCtor(connectUrl, this.options.protocols);
         }
         const specifier = "ws";
@@ -787,9 +1054,12 @@ export class AgentStreamSessionWebSocket {
         catch (cause) {
             if (builtinUnsafe)
                 throw builtinRefused(cause);
+            if (forceWs)
+                throw Object.assign(new Error("socketTransport \"ws\": the `ws` package could not be loaded (" + (cause instanceof Error ? cause.message : String(cause)) + ")"), { cause });
             // `ws` not installed — fall back to global WS, losing headers. This is
             // the same degraded path as when the module exists but has no default.
             if (typeof globalCtor === "function") {
+                this._lastSocketGlobal = true;
                 return new globalCtor(connectUrl, this.options.protocols);
             }
             throw new Error("WebSocket implementation unavailable in this runtime");
@@ -797,7 +1067,10 @@ export class AgentStreamSessionWebSocket {
         if (typeof wsModule.default !== "function") {
             if (builtinUnsafe)
                 throw builtinRefused(new Error("the module has no WebSocket constructor export"));
+            if (forceWs)
+                throw new Error("socketTransport \"ws\": the `ws` module has no WebSocket constructor export");
             if (typeof globalCtor === "function") {
+                this._lastSocketGlobal = true;
                 return new globalCtor(connectUrl, this.options.protocols);
             }
             throw new Error("WebSocket implementation unavailable in this runtime");
@@ -835,7 +1108,7 @@ export class AgentStreamSessionWebSocket {
             this._reconnecting = false;
         }
     }
-    get autoReconnect() {
+    isAutoReconnect() {
         return this.options.reconnect !== false;
     }
     /**
@@ -844,7 +1117,10 @@ export class AgentStreamSessionWebSocket {
     disconnect(reason) {
         this.shouldReconnect = false;
         this.clearReconnectTimer();
-        // Retire an open attempt still waiting for its URL or its socket.
+        // Retire an open attempt still waiting for its URL or its socket. Only the
+        // attempt current at the first disconnect() is the one it retired.
+        if (this._retiredByDisconnect === 0)
+            this._retiredByDisconnect = this._openAttempt;
         this._openAttempt++;
         // A disconnect during a backoff wait ends the series: nothing is pending.
         this._reconnecting = false;
@@ -859,6 +1135,12 @@ export class AgentStreamSessionWebSocket {
             this.ws.close(1000, reason || "Normal closure");
             this.ws = null;
         }
+        // A refused upgrade still being read reports now; nothing follows it.
+        const read = this._upgradeReadAbort;
+        this._upgradeReadAbort = null;
+        read?.();
+        // The caller closed it: frames() ends after what is already buffered.
+        this.endFrames();
     }
     /**
      * Schedule reconnection with exponential backoff
@@ -867,6 +1149,7 @@ export class AgentStreamSessionWebSocket {
         if (this.reconnectAttempts >= (this.options.reconnectAttempts ?? Infinity)) {
             this._reconnecting = false;
             this.emitEvent("reconnect_failed");
+            this.endFrames();
             return;
         }
         this._reconnecting = true;
@@ -951,6 +1234,7 @@ export class AgentStreamSessionWebSocket {
             this._reconnecting = false;
             this.emitEvent("error", upgradeRefusedError(status, code, "probe"));
             this.emitEvent("reconnect_failed");
+            this.endFrames();
             return;
         }
         this.scheduleReconnect();
@@ -1035,8 +1319,14 @@ export class AgentStreamSessionWebSocket {
         }
         this.dispatchTypedMessage(messageType, message);
     }
-    /** The original per-type dispatch, unchanged in behaviour. */
+    /** The per-type dispatch. */
     dispatchTypedMessage(messageType, message) {
+        if (messageType === "error") {
+            // "error" is also the key of onError's listeners: they get the frame as an
+            // Error, as their type says, and never the bare frame.
+            this.emitEvent("error", serverFrameError(message));
+            return;
+        }
         const handlers = this.eventHandlers.get(messageType);
         if (handlers) {
             handlers.forEach(handler => {
@@ -1145,6 +1435,13 @@ export class AgentStreamSessionWebSocket {
             }
         }
     }
+    /** End frames() without an end frame: the socket is gone and none follows. */
+    endFrames() {
+        this._streamEnded = true;
+        for (const resolveWaiter of this._frameWaiters.splice(0, this._frameWaiters.length)) {
+            resolveWaiter({ value: undefined, done: true });
+        }
+    }
     /**
      * Handle an incoming BINARY frame. Default implementation decodes
      * the bytes as UTF-8 and routes them to `handleString` — i.e. for
@@ -1179,15 +1476,17 @@ export class AgentStreamSessionWebSocket {
         this.ws.send(JSON.stringify(message));
     }
     /**
-     * Inbound WS frame: answer a parked confirm gate. Carries {type:"confirm", gate_id?, generation?, approved, persist_dirs?, trust_container?, reason?, remember?, superseded?}. trust_container (with approved) accepts the event.confirm_request exec_trust offer, as on /confirm. reason, remember and superseded are as on /confirm: reason (with approved false, at most 500 characters) reaches the agent in the refused call's result; remember false approves this call only; superseded (with approved false, no reason, no session_scope) declines because the user sent a new message instead, and the agent does not read it as a refusal. gate_id is the stream frame ENVELOPE's gate.id (a sibling of `event`, NOT a field inside the event payload — the payload's own gate_id is the daemon's number), and is published as pending_gate.id on GET /sessions/{id} and /replay and as pending_gate_ref.id on GET /sessions/{id}/state. It is a STRING: sending the payload's number is refused bad_frame, naming the field; without it the answer applies to whatever gate is parked when it arrives. request_id? is the client's own id for the decision (at most 64 characters from A-Z, a-z, 0-9, '.', '_', '-'). Every outcome is ANSWERED, never silently dropped: a consumed decision by the broadcast event.gate_resolved, anything else by a `refused` frame naming the code — a stale or absent gate, a gate that already ended (gate_already_resolved, with what was decided; never a second forward), or a decision in flight (gate_decision_pending). approved is required in every mode: a frame without a boolean approved is refused approved_required and never resolves a gate. On an always session the frame must also carry the exact gate_id and its generation, or it is refused decision_incomplete. | Inbound WS frame: answer a parked question gate. Carries {type:"answer", gate_id?, generation?, answer?, text?, answers?}; gate_id is as for confirm. A stale, duplicate or absent gate is a `refused` frame, and a retry that names the question this client already resolved replays the original `gate_resolved_ack`. | Inbound WS frame: cancel the active turn (Esc). Carries {type:"cancel", turn_id?}. With turn_id it cancels only that turn (as POST /sessions/{id}/cancel with turn_id); without, whatever is running. | Inbound WS frame: feed input to a running workflow. Carries {type:"workflow_message", text}.
+     * Inbound WS frame: answer a parked confirm gate. Carries {type:"confirm", gate_id?, generation?, approved, persist_dirs?, trust_computer?, reason?, remember?, superseded?}. trust_computer (with approved) accepts the event.confirm_request exec_trust offer, as on /api/v1/agent/sessions/{id}/confirm. reason, remember and superseded are as on /api/v1/agent/sessions/{id}/confirm: reason (with approved false, at most 500 characters) reaches the agent in the refused call's result; remember false approves this call only; superseded (with approved false, no reason, no session_scope) declines because the user sent a new message instead, and the agent does not read it as a refusal. gate_id is the stream frame ENVELOPE's gate.id (a sibling of `event`, NOT a field inside the event payload; the payload's own gate_id is the agent's own number, a different id), and is published as pending_gate.id on GET /api/v1/agent/sessions/{id} and /api/v1/agent/sessions/{id}/replay and as pending_gate_ref.id on GET /api/v1/agent/sessions/{id}/state. It is a STRING: sending the payload's number is refused bad_frame, naming the field; without it the answer applies to whatever gate is parked when it arrives. request_id? is the client's own id for the decision (at most 64 characters from A-Z, a-z, 0-9, '.', '_', '-'). Every outcome is ANSWERED, never silently dropped: a consumed decision by the broadcast event.gate_resolved, anything else by a `refused` frame naming the code. That covers a stale or absent gate, a gate that already ended (gate_already_resolved, with what was decided; never a second forward) and a decision in flight (gate_decision_pending). approved is required in every mode: a frame without a boolean approved is refused approved_required and never resolves a gate. On an always session the frame must also carry the exact gate_id and its generation, or it is refused decision_incomplete. | Inbound WS frame: answer a parked question gate. Carries {type:"answer", gate_id?, generation?, answer?, text?, answers?}; gate_id is as for confirm. A stale, duplicate or absent gate is a `refused` frame, and a retry that names the question this client already resolved replays the original `gate_resolved_ack` when it carries the same answer (another answer is a `refused` frame, gate_already_answered). | Inbound WS frame: cancel the active turn (Esc). Carries {type:"cancel", turn_id?}. With turn_id it cancels only that turn (as POST /api/v1/agent/sessions/{id}/cancel with turn_id); without, whatever is running. | Inbound WS frame: feed input to a running workflow. Carries {type:"workflow_message", text}.
+     * @param fields Message parameters
      */
-    unknown() {
+    unknown(fields) {
         this.send({
+            ...fields,
             type: "unknown",
         });
     }
     /**
-     * Provider account rotated mid-turn. | Turn complete — terminates a prompt turn. Carries the turn's typed outcome / error_code and notices [{code, message?, detail?}] — advisory, never an error: hook_skipped_by_policy when a configured user hook was skipped under the always policy (open set). | The session's approval policy (mode / lock / rules) changed; carries the new revision. | Hoody platform auth state changed — login, token adopt, or logout (global broadcast; mirrors GET /hoody/auth/status). | Auto-user composed the next user turn. | Auto-user composition progress. | Background bash job list snapshot. | Background bash job output tail chunk. | Conversation cleared. | The daemon admitted and forwarded a command that carried a request_id — the sender-only positive counterpart of event.command_refused {type, request_id}; the command's effect still arrives as its ordinary broadcast event. CONSUMED BY THE GATEWAY: it answers the HTTP request / WS frame that sent the command and is never fanned out to stream subscribers. | Commands sent with POST /sessions/{id}/commands reached the session: messages added to the conversation (how next_step inside the running turn, new_turn in a turn of their own, with turn_id), or a stop carried out (how stop, with what it stopped). Carries command_ids. | A session command was refused (unregistered type, a setter frozen by a locked approval policy, an incomplete decision, a decision dropped at consumption) — a sender-only frame carrying type, code, reason, protocol_version, request_id; never fails a turn. CONSUMED BY THE GATEWAY: it answers the HTTP request / WS frame that sent the command and is never fanned out to stream subscribers. | Commands sent with POST /sessions/{id}/commands ended without reaching the session: superseded by a stop, refused (a hook blocked them, the session closed, or the session cannot take them) or failed (the session could not record them). Carries command_ids, state and reason. | Context window compacted. | A delegated agent discarded its conversation and started a new one: the context meter no longer describes anything (clear it). | Context compaction started. | Tool/plan confirmation requested (parks a gate). On a helper_gates session a helper's request carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. | The decision requirements of the PARKED gate changed (the approver lease was acquired, taken over, renewed past expiry or released while a gate is parked): {gate_id, generation, lease_required, helper_id?} — a client that captured the gate at park time refreshes what its decision must carry. On a helper_gates session each parked helper confirm is re-announced too, with its helper_id. | Directory-access scope changed/locked. | A peer client detached from this shared live session (multi-attach presence). | A delegated turn went quiet past the stall window but is still running (NON-FATAL — not an error). | Session error (e.g. join_not_ready). | A parked confirm/question gate was resolved (possibly by another attached client). | Files-tab import progress. | Fusion configuration changed. | A Jev decision made for this session finished (success, error or invalid answer): {cost_usd (null when any attempt's spend is unknown), known_cost_usd, cost_unknown_attempts, attempts, latency_ms, model, request_id, input_tokens, output_tokens, error_code}. Produced by POST /sessions/{id}/jev/decide; the standalone /jev routes report usage only in their reply and in GET /jev/settings. | Fusion member trajectory progress. Not sent while the fusion runs inside a silent workflow step. | Hoody concept mode toggled. | A hook executed. | Hook execution summary. | Initial session state snapshot. | Available loops list updated. | A master TODO was filed. | Memory subsystem notice. | Orchestrator delegation finished. | Orchestrator delegated a task to a subagent. | Orchestrator run complete. | Orchestrator narration. | Orchestrator run started. | Orchestrator step progress. | On an outcome_claims session, the report the turn closes with, sent just before event.agent_done: the model's claims and, for each tool call it cited, whether it is this turn's own call and what it returned. The claims are the model's words; nothing here says they are true. | global pause-freeze state changed. | A session permission rule auto-applied (first time). | Session permission rules snapshot. | Plan-mode planning complete. | Question-assist suggestion. | Daemon quitting. | A delegated agent's subscription usage limits (session/weekly windows) changed. | Active realm changed (global broadcast). | Resolved default working dir of the bound container (filetree/chip scope hint). | Full viewport snapshot after session_started. | Mid-turn join with an overflowed turn journal — the active turn's earlier output is elided (connection-local frame). | LLM call retried. | The session was archived for every attached client. | The set of listable sessions (or a session's attach state) changed — clients re-list. | Session title set or cleared. | Session attached. Built by the gateway from the attach acknowledgement; its data is the same `started` object POST /sessions returns. It is the first frame (seq 1) of a fresh attach while the stream still retains seq 1. A resume with `since` does not repeat it, except when the cursor cannot be resumed: an invalid `since` (or Last-Event-ID), an `incarnation` that does not match the session's current one, or a cursor ahead of the stream is each answered with a `lagged` frame (code replay_gap) and the whole retained stream, which includes it if seq 1 is still retained. A late attach after the oldest frames were evicted starts with a `lagged` frame (code replay_gap) instead and does not carry it. In either case read the same object as `started` from GET /sessions/{id}, which carries it while the session is attached. | Available skills list updated. | Skill enable/trust state changed. | Assistant text stream chunk. | Assistant text stream complete. | Profile sync status. | Background task activity. | Background task finished. | Background task started. | Background task transcript entry (upsert-poll). | Snapshot of background tasks. | Reasoning/thinking stream chunk. | Thinking stall warning. | TODO list updated. | Tool invocation. | Tool mode changed/locked. | Tool result. | A prompt or workflow dispatch was accepted but discarded without running, because it was queued while another client's turn waited on a confirmation or question. It closes that dispatch only (its turn_id); the waiting turn keeps running and no event.agent_done is sent for the discarded one. | The durable admission receipt for a prompt or workflow turn — a sender-only frame {turn_id, state, duplicate, accepted_at, request_id, …} written once the ledger row is on disk. CONSUMED BY THE GATEWAY: it is the 202 body of the request that dispatched the turn and is never fanned out to stream subscribers. | Echo of the user's input. | Question posed to the user (parks a gate). On a helper_gates session a helper's question carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. | Verbosity setting changed. | Workflow run complete. | Workflow run started. | Workflow step done. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | Workflow step output. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | Workflow step start. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | The workflow-authoring tools became available or unavailable mid-session (the session's tool mode, standard or orchestrator, was applied by its first dispatch; the chat agent was switched; or the agent's `tools:` frontmatter was edited on disk). Not sent for the initial value, which the init state carries as workflow_tools_available. | Available workflows list updated. | YOLO auto-approve mode toggled. | Gateway control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring or belongs to another incarnation. Carries {code: lagged|replay_gap[, min_seq, max_seq, incarnation, resume]}; reconcile by reconnecting with ?since= and ?incarnation=. | Gateway control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq, incarnation, turn_id?, turn_since?}; turn_id names the turn being watched and turn_since the cursor before its first frame (see the payload). | Gateway control frame: the stream is terminating because the session closed. Carries {reason}. | Gateway control frame, connection-local: the WS command this client just sent was REJECTED and nothing was forwarded to the daemon — the WS twin of a REST error envelope. Carries {frame: the client frame type that was refused, code, reason}. Codes match the REST ones for the same condition: bad_frame (the frame did not decode — the reason names the field and the JSON type it must carry, e.g. a gate_id sent as the daemon number instead of the addressable string), no_pending_gate / stale_gate / gate_already_answered / gate_type_mismatch (the frame did not match the parked gate), approved_required (a confirm frame without a boolean approved; it never resolves a gate), decision_incomplete (an always session needs an explicit approved, the exact gate_id and its generation; or a confirm without gate_id while several gates are parked). For a confirm: gate_already_resolved (the gate already ended and this decision was not applied; the frame also carries gate_id, generation, outcome, decision {approved, persist_dirs, session_scope, trust_container, remember?, superseded?} or decision_unknown:true, and request_id when the decision consumed carried that request_id) and gate_decision_pending (a decision for the gate is in flight and its outcome is not known yet — another client's, or this one past the wait; carries gate_id, generation and reason:connection_lost when the agent connection was lost; retry naming the gate to learn the outcome). For an answer: gate_cancelled (the question was resolved without consuming this answer) and decision_unconfirmed (the daemon did not acknowledge within the wait — it may still apply). It is sent ONLY to the client that sent the frame, never broadcast. | Gateway control frame, connection-local: the replayed acknowledgement of a question answer. When an answer frame is a RETRY naming the question gate this client already resolved, it carries replayed:true and {resolved: the ORIGINAL event.gate_resolved payload} — a retry never forwards a second answer. A confirm retry is refused gate_already_resolved instead. Sent only to the client that sent the frame.
+     * Provider account rotated mid-turn. | Turn complete: it ends a prompt turn. Carries the turn's typed outcome / error_code and notices [{code, message?, detail?}]. Notices are advisory, never an error: hook_skipped_by_policy when a configured user hook was skipped under the always policy, agent_compacts_itself when a Claude Code session's agent decides on its own when to compact its conversation, history_unsaved when a Claude Code session answered from a conversation Hoody could not save, spend_cap_warning when the session's spend file sets action warn and the turn ran over a spend cap (detail session_cap or turn_cap; one notice per cap) (open set). A turn a spend cap stopped fails with error_code spend_cap. | The session's approval policy (mode / lock / rules) changed; carries the new revision. | Hoody platform auth state changed: login, token adopt, or logout (global broadcast; mirrors GET /api/v1/agent/hoody/auth/status). | Auto-user composed the next user turn. | Auto-user composition progress. | Background bash job list snapshot. | Background bash job output tail chunk. | Conversation cleared. | Commands sent with POST /api/v1/agent/sessions/{id}/commands reached the session: messages added to the conversation (how next_step inside the running turn, new_turn in a turn of their own, with turn_id), or a stop carried out (how stop, with what it stopped). Carries command_ids. | Commands sent with POST /api/v1/agent/sessions/{id}/commands ended without reaching the session: superseded by a stop, refused (a hook blocked them, the session closed, or the session cannot take them) or failed (the session could not record them). Carries command_ids, state and reason. | A waiter this session owns (POST /api/v1/agent/sessions/{id}/waiters) ended: an outcome was found, or it timed out, was cancelled, or its target closed. Carries the waiter. | Context window compacted. | A delegated agent discarded its conversation and started a new one: the context meter no longer describes anything (clear it). | Context compaction started. | Tool/plan confirmation requested (parks a gate). On a helper_gates session a helper's request carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. | The decision requirements of the PARKED gate changed (the approver lease was acquired, taken over, renewed past expiry or released while a gate is parked): {gate_id, generation, lease_required, helper_id?}. A client that captured the gate at park time refreshes what its decision must carry. On a helper_gates session each parked helper confirm is re-announced too, with its helper_id. | Directory-access scope changed/locked. | A peer client detached from this shared live session (multi-attach presence). | A delegated turn went quiet past the stall window but is still running (not fatal, not an error). | Session error (e.g. join_not_ready). | A parked confirm/question gate was resolved (possibly by another attached client). | Files-tab import progress. | Fusion configuration changed. | A Jev decision made for this session finished (success, error or invalid answer): {cost_usd (null when any attempt's spend is unknown), known_cost_usd, cost_unknown_attempts, attempts, latency_ms, model, request_id, input_tokens, output_tokens, error_code}. Produced by POST /api/v1/agent/sessions/{id}/jev/decide; the standalone /api/v1/agent/jev routes report usage only in their reply and in GET /api/v1/agent/jev/settings. | Token usage of a turn that already ended, counted after its completion events went out (a Claude Code agent reported it after the turn closed). Add it to the session's lifetime totals only: it is not a response, and it belongs to no turn in progress, so it changes no turn's usage, timing or context use. turn_id names the ended turn. | Fusion member trajectory progress. Not sent while the fusion runs inside a silent workflow step. | Hoody concept mode toggled. | A hook executed. | Hook execution summary. | Initial session state snapshot. | Available loops list updated. | A master TODO was filed. | Memory subsystem notice. | Orchestrator delegation finished. | Orchestrator delegated a task to a subagent. | Orchestrator run complete. | Orchestrator narration. | Orchestrator run started. | Orchestrator step progress. | On an outcome_claims session, the report the turn closes with, sent just before event.agent_done: the model's claims and, for each tool call it cited, whether it is this turn's own call and what it returned. The claims are the model's words; nothing here says they are true. | The agent was paused or resumed (PUT /api/v1/agent/pause, or the TUI's pause): sent to every attached session, since the pause covers every session of the agent. | A session permission rule auto-applied (first time). | Session permission rules snapshot. | Plan-mode planning complete. | Question-assist suggestion. | The agent is shutting down. | A delegated agent's subscription usage limits (session/weekly windows) changed. | Active realm changed (global broadcast). | Resolved default working dir of the bound computer (filetree/chip scope hint). | Full viewport snapshot after session_started. | Mid-turn join with an overflowed turn journal: the active turn's earlier output is elided (connection-local frame). | A model call is retried: attempt of max_retries, after wait_secs, with the cause in reason. With attempt 0 and max_retries 0 it is a one-off notice instead, its whole text in reason, to show as a status line and not as a retry: a Claude Code session reconnecting, a previous Claude Code conversation that could not be resumed (a new one was started), a fork or trim whose Claude Code conversation starts fresh with the history passed in as text, or the model an auto-reply round uses on a Claude Code session. | The session was archived for every attached client. | The set of listable sessions (or a session's attach state) changed. Clients re-list. | Session title set or cleared by a person, or generated by the agent (name_auto true). | Session attached. Its data is the same `started` object POST /api/v1/agent/sessions returns. It is the first frame (seq 1) of a fresh attach while the stream still retains seq 1. A resume with `since` does not repeat it, except when the cursor cannot be resumed: an invalid `since` (or Last-Event-ID), an `incarnation` that does not match the session's current one, or a cursor ahead of the stream is each answered with a `lagged` frame (code replay_gap) and the whole retained stream, which includes it if seq 1 is still retained. A late attach after the oldest frames were evicted starts with a `lagged` frame (code replay_gap) instead and does not carry it. In either case read the same object as `started` from GET /api/v1/agent/sessions/{id}, which carries it while the session is attached. | Available skills list updated. | Skill enable/trust state changed. | Assistant text stream chunk. | Assistant text stream complete. | Profile sync status. | Background task activity. | Background task finished. | Background task started. | Background task transcript entry (upsert-poll). | Snapshot of background tasks. | Reasoning/thinking stream chunk. | Thinking stall warning. | TODO list updated. | Tool invocation. | Tool mode changed/locked. | Tool result. | The result of one trim, naming the request id the trim carried: done, refused (turn_in_flight, delegated_session or session_closed; nothing changed), failed (nothing was trimmed) or outcome_unknown (the trim may have been saved; the session sends nothing until it can save its state). Never an error event: another client's trim does not fail this client's turn. | A prompt or workflow dispatch was accepted but discarded without running, because it was queued while another client's turn waited on a confirmation or question. It closes that dispatch only (its turn_id); the waiting turn keeps running and no event.agent_done is sent for the discarded one. | Echo of the user's input. | Question posed to the user (parks a gate). On a helper_gates session a helper's question carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. | Verbosity setting changed. | Workflow run complete. | Workflow run started. | Workflow step done. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | Workflow step output. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | Workflow step start. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. | The workflow-authoring tools became available or unavailable mid-session (the session's tool mode, standard or orchestrator, was applied by its first dispatch; the chat agent was switched; or the agent's `tools:` frontmatter was edited on disk). Not sent for the initial value, which the init state carries as workflow_tools_available. | Available workflows list updated. | YOLO auto-approve mode toggled. | Control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring or belongs to another incarnation. Carries {code: lagged|replay_gap[, min_seq, max_seq, incarnation, resume]}; reconcile by reconnecting with ?since= and ?incarnation=. | Control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq, incarnation, turn_id?, turn_since?}; turn_id names the turn being watched and turn_since the cursor before its first frame (see the payload). | Control frame: the stream is terminating because the session closed. Carries {reason}. | Control frame, connection-local: the WS command this client just sent was REJECTED and was not applied. It is the WS twin of a REST error envelope. Carries {frame: the client frame type that was refused, code, reason}. Codes match the REST ones for the same condition: bad_frame (the frame did not decode; the reason names the field and the JSON type it must carry, e.g. a gate_id sent as the event payload's number instead of the envelope's string), no_pending_gate / stale_gate / gate_already_answered / gate_type_mismatch (the frame did not match the parked gate), approved_required (a confirm frame without a boolean approved; it never resolves a gate), decision_incomplete (an always session needs an explicit approved, the exact gate_id and its generation; or a confirm without gate_id while several gates are parked). For a confirm: gate_already_resolved (the gate already ended and this decision was not applied; the frame also carries gate_id, generation, outcome, decision {approved, persist_dirs, session_scope, trust_computer, remember?, superseded?} or decision_unknown:true, and request_id when the decision consumed carried that request_id) and gate_decision_pending (a decision for the gate is in flight and its outcome is not known yet: another client's, or this one past the wait; carries gate_id, generation and reason:connection_lost when the agent connection was lost; retry naming the gate to learn the outcome). For an answer: bad_request (the frame carries no answer, text or answers, an empty answer never resolves a question; or a workflow question with options gets an answer that names none of them, and stays parked), gate_cancelled (the question was resolved without consuming this answer) and decision_unconfirmed (the answer was not acknowledged within the wait; it may still apply). It is sent ONLY to the client that sent the frame, never broadcast. | Control frame, connection-local: the replayed acknowledgement of a question answer. When an answer frame is a RETRY naming the question gate this client already resolved, with the same answer, it carries replayed:true and {resolved: the ORIGINAL event.gate_resolved payload}. A retry never forwards a second answer. A confirm retry is refused gate_already_resolved instead. Sent only to the client that sent the frame.
      * @param callback Function to call when unknown message received
      * @returns Unsubscribe function
      */
@@ -1214,6 +1513,9 @@ export class AgentStreamSessionWebSocket {
     }
     onError(callback) {
         return this.addEventListener("error", callback);
+    }
+    onTakenOver(callback) {
+        return this.addEventListener("__taken_over", callback);
     }
     /**
      * Add event listener
@@ -1268,10 +1570,10 @@ export class AgentStreamSessionWebSocket {
     close(code, reason) {
         this.disconnect(reason);
     }
-    get readyState() {
+    getReadyState() {
         return this.ws?.readyState ?? RAW_WEBSOCKET_CLOSED;
     }
-    get url() {
+    getUrl() {
         return this._url;
     }
     /**
@@ -1281,13 +1583,13 @@ export class AgentStreamSessionWebSocket {
      * offers beyond this client (the `ws` package: ping(), the ping and pong
      * events); do not assign its on* handlers, the client owns them.
      */
-    get rawSocket() {
+    getRawSocket() {
         return this.ws;
     }
-    get connected() {
+    isConnected() {
         return this.ws?.readyState === RAW_WEBSOCKET_OPEN;
     }
-    get reconnecting() {
+    isReconnecting() {
         return this._reconnecting;
     }
     // ============================================================================
@@ -1331,14 +1633,20 @@ export class AgentStreamSessionWebSocket {
                     this._frameWaiters.push(resolve);
                 });
             },
-            return: () => Promise.resolve({ value: undefined, done: true }),
+            // break / return(): a next() still pending ends too.
+            return: () => {
+                for (const resolveWaiter of this._frameWaiters.splice(0, this._frameWaiters.length)) {
+                    resolveWaiter({ value: undefined, done: true });
+                }
+                return Promise.resolve({ value: undefined, done: true });
+            },
         };
         return iterator;
     }
-    get cursor() {
+    getCursor() {
         return this._cursor;
     }
-    get incarnation() {
+    getIncarnation() {
         return this._incarnation;
     }
     setCursor(seq, incarnation) {
@@ -1348,3 +1656,16 @@ export class AgentStreamSessionWebSocket {
         }
     }
 }
+/** A retired getter refuses, naming the method that replaced it. Not an alias. */
+function retireAccessors(target, owner, renames) {
+    for (const [retired, current] of Object.entries(renames)) {
+        Object.defineProperty(target, retired, {
+            configurable: true,
+            enumerable: false,
+            get() {
+                throw new TypeError(owner + '.' + retired + ' was renamed to ' + current + '. Call ' + current + ' instead.');
+            },
+        });
+    }
+}
+retireAccessors(AgentSessionsConnectWebSocket.prototype, 'AgentSessionsConnectWebSocket', { url: 'getUrl()', connected: 'isConnected()', cursor: 'getCursor()', readyState: 'getReadyState()', reconnecting: 'isReconnecting()', autoReconnect: 'isAutoReconnect()', rawSocket: 'getRawSocket()', incarnation: 'getIncarnation()' });

@@ -20,13 +20,16 @@
  */
 import { FilesService } from '../generated/files/files.service.js';
 import { UiService as FilesUiService } from '../generated/files/ui.service.js';
-import { ValidationError, isApiError } from '../generated/errors.js';
+import { facadeOptions } from '../generated/facade-types.js';
+import { ValidationError, isApiError, refuseRetiredOptions } from '../generated/errors.js';
 import { FilesService as NotesFilesService } from '../generated/notes/files.service.js';
 import { ImagesService } from '../generated/files/images.service.js';
 // Notes TUS upload helpers (upload / resumeUpload / uploads.getOffset /
 // uploads.cancel) live in their own module; patched with the rest so every
 // entry that loads the files extensions gets them.
 import { patchNotesUploadExtensions } from './notes-upload.js';
+// Notes ZIP export (notebooks.exportStream), patched here for the same reason.
+import { patchNotesExportExtensions } from './notes-export.js';
 // ---------------------------------------------------------------------------
 // Idempotency guards (Symbol.for survives HMR / duplicate imports)
 // ---------------------------------------------------------------------------
@@ -82,20 +85,20 @@ function classifyFile(filepath) {
  *
  *     /api/v1/files/../../elsewhere   ->   /api/elsewhere
  *
- * hoody-files DOES reject dot segments server-side, but that check never runs —
- * `new URL()` normalises the traversal during URL construction, so the request
- * arrives at a different endpoint entirely and the file-path validator is never
- * consulted. Same mechanism as the pipe traversal fixed in lib/pipe-stream.ts.
+ * The files kit rejects dot segments too, but `new URL()` normalises the
+ * traversal during URL construction, so the request would arrive at a
+ * different endpoint and that check would never see the path. The pipe helpers
+ * in lib/pipe-stream.ts refuse dot segments for the same reason.
  *
  * Checked after percent-decoding, since `%2e%2e` normalises identically.
  */
 function encodeFilePathSegments(path, label) {
     const segments = path.split('/');
     // Drop LEADING empties. The call sites strip exactly ONE separator, so a
-    // `//tmp/f.txt` input previously survived as `/tmp/f.txt` here and emitted
-    // `/api/v1/files//tmp/f.txt` — hoody-files strips one separator then rejects
-    // the remaining leading one as an absolute path, so it 400'd
-    // where the CLI's encoder handled the same value. Interior and trailing empties
+    // `//tmp/f.txt` input would otherwise survive as `/tmp/f.txt` here and emit
+    // `/api/v1/files//tmp/f.txt`, which the files kit refuses (it strips one
+    // separator, then rejects the remaining leading one as an absolute path);
+    // the CLI's encoder handles the same value. Interior and trailing empties
     // are preserved: hoody-code proxies on this path and hoody-pipe keys channels by
     // it, so a doubled separator names a DIFFERENT target.
     let start = 0;
@@ -119,6 +122,11 @@ function encodeFilePathSegments(path, label) {
     })
         .join('/');
 }
+// ---------------------------------------------------------------------------
+// Value readers
+// ---------------------------------------------------------------------------
+/** The retired option keys of files.get (its generated refusal table). */
+const FILES_GET_RETIRED_OPTIONS = [['Range', 'range'], ['IfRange', 'ifRange']];
 /**
  * `get` with the decoding forced: set AFTER the caller's options, so a
  * `responseType` or `rawResponse` slipped in (plain JS has no type check)
@@ -128,7 +136,34 @@ function getRaw(service, method, path, responseType, options, templateVars) {
     if (typeof path !== 'string' || path === '') {
         throw new ValidationError(`files.${method}: path must be a non-empty string`, 'path');
     }
-    return service.get(path, { ...options, responseType, rawResponse: true }, templateVars);
+    // files.get refuses these too, but under its own name; check them here on
+    // the caller's object so the error names the method the caller used.
+    refuseRetiredOptions(options, `files.${method}`, FILES_GET_RETIRED_OPTIONS);
+    // facadeOptions keeps inherited and non-enumerable keys, so files.get sees
+    // (and refuses or sends) every key the caller passed; an object spread
+    // would drop them without a word.
+    const given = options !== null && typeof options === 'object' ? facadeOptions(options) : {};
+    return service.get(path, { ...given, responseType, rawResponse: true }, templateVars)
+        .catch((err) => { throw relabelRefusal(err, 'files.get', `files.${method}`); });
+}
+/**
+ * A refusal the backing call raised names that call (`files.get does not take "stat"`); the caller
+ * used files.readText / readBytes / readJson. Relabel it in place, keeping its class, field and replacement text. Any other error
+ * (transport, HTTP) passes through untouched.
+ */
+function relabelRefusal(err, backing, helper) {
+    if (!(err instanceof ValidationError) || !err.message.startsWith(backing))
+        return err;
+    const next = err.message.charAt(backing.length);
+    if (next !== ' ' && next !== ':' && next !== '(')
+        return err;
+    err.message = helper + err.message.slice(backing.length);
+    if (typeof err.stack === 'string')
+        err.stack = err.stack.replace(backing, helper);
+    const retired = err;
+    if (retired.method === backing)
+        Object.defineProperty(err, 'method', { value: helper });
+    return err;
 }
 function describeValue(value) {
     if (value === null)
@@ -277,11 +312,17 @@ function patchImagesService(proto) {
 // ---------------------------------------------------------------------------
 // Public entry point
 // ---------------------------------------------------------------------------
+/**
+ * Installs every helper of this module on the generated files, images and notes services,
+ * the notes upload and export helpers included. Safe to call again; importing this module
+ * already runs it.
+ */
 export function patchFilesServiceExtensions() {
     patchFilesService(FilesService.prototype, true);
     patchFilesService(NotesFilesService.prototype, false);
     patchImagesService(ImagesService.prototype);
     patchNotesUploadExtensions();
+    patchNotesExportExtensions();
 }
 // Auto-run on import (idempotent via Symbol.for guards)
 patchFilesServiceExtensions();

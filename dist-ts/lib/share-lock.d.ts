@@ -2,8 +2,7 @@
  * The owner lock of a `hoody share`, which is also its stop channel.
  *
  * The owner listens on a local channel for its whole life, and holding the
- * channel's name is ownership (plans/share-local-folder.md, "Ownership, lock
- * and journals"):
+ * channel's name is ownership:
  *
  *   - Linux: the abstract socket `\0hoody-share-<uid>-<id>`. A second bind
  *     fails while a process holds it, and the kernel frees it when the process
@@ -20,6 +19,7 @@
  * who cannot read that file, cannot stop the share.
  */
 export type LockFlavor = 'abstract' | 'pipe' | 'file';
+/** The lock flavour of a platform: `abstract` on Linux, `pipe` on Windows, `file` everywhere else. */
 export declare function defaultLockFlavor(platform?: NodeJS.Platform): LockFlavor;
 /** A gate whose writer is dead is removed only once it is older than this. */
 export declare const RECLAIM_GATE_STALE_MS = 30000;
@@ -33,8 +33,11 @@ export interface LockPaths {
     /** The user part of an abstract or pipe name. Defaults to the uid, or the user SID on Windows. */
     user?: string;
 }
+/** A fresh random run token: 32 hex characters. */
 export declare function newRunToken(): string;
+/** Path of the file holding the owner's run token for share `id`. */
 export declare function ownerTokenPath(dir: string, id: string): string;
+/** Path of the reclaim gate of share `id` (used by the `file` flavour only). */
 export declare function reclaimGatePath(dir: string, id: string): string;
 /** The address the owner listens on. */
 export declare function channelAddress(paths: LockPaths): Promise<string>;
@@ -47,8 +50,12 @@ export declare function channelAddress(paths: LockPaths): Promise<string>;
 export declare function processStartIdentity(pid: number): Promise<string | null>;
 /** Whether a process with this pid and start identity is still running. */
 export declare function isSameProcessAlive(pid: number, identity: string | null | undefined): Promise<boolean>;
+/**
+ * The owner's run token for share `id`, or null when the file is missing, unreadable or does not hold 32 hex
+ * characters.
+ */
 export declare function readOwnerToken(dir: string, id: string): Promise<string | null>;
-/** `force` (stop only): discard what the container has not sent yet instead of waiting for it. */
+/** `force` (stop only): discard what the computer has not sent yet instead of waiting for it. */
 export type ChannelRequest = {
     op: 'stop' | 'status';
     token: string;

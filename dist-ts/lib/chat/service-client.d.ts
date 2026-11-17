@@ -112,9 +112,13 @@ export declare class RollingRateLimiter {
     private limit;
     private windowMs;
     private hits;
+    /** Allow at most `limit` recorded requests in any `windowMs` (one hour by default). */
     constructor(limit: number, windowMs?: number);
+    /** True when another request fits in the window ending at `now`. Does not record it. */
     canProceed(now?: number): boolean;
+    /** Count one request at `now`. It does not check the limit: call `canProceed()` first. */
     record(now?: number): void;
+    /** Milliseconds until the oldest counted request leaves the window; 0 when a request fits now. */
     retryAfterMs(now?: number): number;
     private prune;
 }
@@ -158,3 +162,20 @@ export interface AskOptions {
  * re-issuing it would duplicate text the user has already seen.
  */
 export declare function askHoody(opts: AskOptions): Promise<AskResult>;
+/**
+ * Async generator: consume a ReadableStream of SSE events and yield the
+ * data payload of each event as a string: the text after `data:`, less one
+ * leading whitespace character (the space senders put after the colon, or a
+ * tab; a second one is kept, and so is trailing whitespace). The sentinel
+ * `[DONE]` is yielded as the string `'[DONE]'` unchanged — callers should
+ * check for it before JSON.parse.
+ *
+ * Handles:
+ *   - Split chunks across reader.read() boundaries.
+ *   - Keepalive comments (lines starting with ':').
+ *   - Multi-line data (concatenates `data:` continuations within one event).
+ *   - CRLF and LF line endings.
+ *   - A peer that never sends an event delimiter: past 2 MiB the reader is
+ *     cancelled and the generator throws.
+ */
+export declare function readSseFrames(body: ReadableStream<Uint8Array>): AsyncGenerator<string, void, void>;

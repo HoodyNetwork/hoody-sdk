@@ -1,19 +1,20 @@
 /**
  * `hoody-sdk/mount` — programmatic and CLI-facing module for
- * mounting Hoody container filesystems locally via rclone+WebDAV.
+ * mounting Hoody computer filesystems locally via rclone+WebDAV.
  *
  * Architecture:
- *   - Resolves a kit URL: a caller-supplied raw URL, or a {@link ContainerLike}
- *     on the containers domain of the caller's API (`client.getKitUrl`, or
- *     `containersDomain`). No platform host is written in here.
+ *   - Resolves a kit URL: a caller-supplied raw URL, or a {@link ComputerLike}
+ *     on the computers domain of the caller's API (`client.getKitUrl`, or
+ *     `computersDomain`). No platform host is written in here.
  *   - Probes the mounted path with the supplied {@link ProxyAuth} ({@link probeKit},
  *     PROPFIND) before rclone starts, and reports the mount only once it is in the
  *     OS mount table.
  *   - Writes a 0600 rclone config at `~/.hoody/sdk/mounts/<id>.conf`
- *     containing the secret material (bearer_token / pass / headers).
- *     `--auth-container-claim` is the only auth type that may leak via
- *     argv `--header` if the bundled rclone is older than 1.61; v1.74
- *     (the modern reference) supports `headers` config natively.
+ *     containing the secret material (bearer_token / pass / headers). No
+ *     credential ever goes on a command line, where every local user can read
+ *     it (`ps`, /proc/<pid>/cmdline): the password reaches `rclone obscure` on
+ *     stdin, and an rclone too old to take a credential from its config is
+ *     refused ({@link refuseRcloneTooOldForAuth}).
  *   - Spawns `rclone mount hoody: <localPath>` with `--config <id>.conf`,
  *     foreground (default) or `--daemon` (background; Linux/macOS only).
  *   - Records the mount in `~/.hoody/sdk/mounts/<id>.json` via the
@@ -21,16 +22,36 @@
  */
 import { spawn } from 'node:child_process';
 import { promises as fs } from 'node:fs';
-import { homedir, hostname, platform, userInfo } from 'node:os';
-import { resolve } from 'node:path';
+import { constants as osConstants, homedir, hostname, platform, userInfo } from 'node:os';
+import { join, relative, resolve, sep } from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { STATUS_CODES } from 'node:http';
 import { promisify } from 'node:util';
 import { execFile as execFileCb } from 'node:child_process';
-import { assertRcloneInstalled, detectRcloneVersion, isVersionAtLeast } from './rclone-local.js';
-import { cacheDirPath, checkLiveness, claimState, computeMountId, configFilePath, deleteState, ensureMountpointParent, getStateDir, isMountpointEmpty, listStates, mountTableHas, pruneStale, readState, stateFilePath, } from './mount-state.js';
+import { credentialHeaderValue } from './proxy-auth.js';
+import { RCLONE_INSTALL_HINT, assertRcloneInstalled, detectRcloneVersion, formatVersion, isVersionAtLeast, } from './rclone-local.js';
+import { cacheDirPath, checkLiveness, claimState, computeMountId, configFilePath, deleteOwnState, ensureMountpointParent, findMountProcesses, getStateDir, isMountpointEmpty, isStarting, listStates, mountProcessIdentity, mountTableHas, processStartTime, pruneStale, readState, starterMarker, writeOwnState, } from './mount-state.js';
 const execFile = promisify(execFileCb);
-const RCLONE_HEADERS_MIN_VERSION = [1, 61];
+/**
+ * The oldest rclone that reads custom WebDAV headers from its config (`headers`): changelog
+ * v1.56.0 (2021-07-20), "WebDAV: Add headers option". A token under a header other than
+ * Authorization, and a computer claim, need it; an older rclone could take them only as
+ * `--header` on its command line, so it is refused.
+ */
+export const RCLONE_HEADERS_MIN_VERSION = [1, 56];
+/**
+ * The oldest rclone whose `rclone obscure -` reads the password from stdin: changelog v1.53.0
+ * (2020-09-02), "Allow obscure command to accept password on STDIN". An older one obscures the
+ * literal `-`.
+ */
+export const RCLONE_OBSCURE_STDIN_MIN_VERSION = [1, 53];
 // ─── Public entry points ─────────────────────────────────────────────────
+/**
+ * List every recorded mount of this user with its current liveness (`alive`:
+ * `'alive'`, `'stale'` or `'dead'`), checked against the process and the OS
+ * mount table at call time. Removes nothing; see `pruneStaleMounts()`.
+ * `home` overrides the home directory the records are kept under.
+ */
 export async function listMounts(home) {
     const records = await listStates(home);
     const out = [];
@@ -38,7 +59,7 @@ export async function listMounts(home) {
         const liveness = await checkLiveness(r);
         out.push({
             id: r.id,
-            containerId: r.containerId,
+            computerId: r.computerId,
             kitUrl: r.kitUrl,
             subpath: r.subpath,
             localPath: r.localPath,
@@ -50,6 +71,12 @@ export async function listMounts(home) {
     }
     return out;
 }
+/**
+ * Remove the records (and rclone config files) of mounts that are no longer
+ * alive. Resolves with `removed`, the dead records deleted, and `orphans`,
+ * the config files deleted that had no record. A mount still starting counts
+ * as alive and is kept.
+ */
 export async function pruneStaleMounts(home) {
     return pruneStale(home);
 }
@@ -58,10 +85,16 @@ export async function pruneStaleMounts(home) {
  * and speaks WebDAV; `PROPFIND` (Depth 0) also answers whether the path exists (404).
  */
 export async function probeKit(kitUrl, auth, timeoutMs = 10000, method = 'OPTIONS') {
+    // The probe predicts the mount, and a mount cannot send a query-parameter token.
+    if (auth?.type === 'token' && auth.param !== undefined)
+        return { ok: false, status: 0, needsAuth: false, detail: QUERY_TOKEN_REFUSED };
     const headers = {};
     applyAuthToHeaders(headers, auth);
     if (method === 'PROPFIND')
         headers['depth'] = '0';
+    const unsendable = unsendableHeadersDetail(headers);
+    if (unsendable !== null)
+        return { ok: false, status: 0, needsAuth: false, detail: unsendable };
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -73,20 +106,25 @@ export async function probeKit(kitUrl, auth, timeoutMs = 10000, method = 'OPTION
             signal: controller.signal,
             redirect: 'manual',
         });
-        const dav = res.headers.get('dav') ?? undefined;
+        // The kit's own text can quote the request's headers back: a detail names the status with the
+        // standard phrase, never the server's reason phrase, and the DAV header is scrubbed.
+        const davRaw = res.headers.get('dav');
+        const dav = davRaw === null ? undefined : scrubAuth(davRaw, auth);
+        const said = () => `${res.status}${STATUS_CODES[res.status] ? ` ${STATUS_CODES[res.status]}` : ''}`;
         if (res.type === 'opaqueredirect' || (res.status >= 300 && res.status < 400)) {
             return { ok: false, status: res.status, davHeader: dav, needsAuth: false, detail: `redirect refused (${res.status}): the probe carries the kit credential and is sent only to ${kitUrl}` };
         }
         if (res.status === 401 || res.status === 403) {
-            return { ok: false, status: res.status, davHeader: dav, needsAuth: true, detail: `${res.status} ${res.statusText}` };
+            return { ok: false, status: res.status, davHeader: dav, needsAuth: true, detail: said() };
         }
         if (res.status >= 200 && res.status < 300) {
             return { ok: true, status: res.status, davHeader: dav, needsAuth: false };
         }
-        return { ok: false, status: res.status, davHeader: dav, needsAuth: false, detail: `${res.status} ${res.statusText}` };
+        return { ok: false, status: res.status, davHeader: dav, needsAuth: false, detail: said() };
     }
     catch (err) {
-        return { ok: false, status: 0, needsAuth: false, detail: err.message };
+        // fetch's messages can quote a header value, that is the credential: never pass one on.
+        return { ok: false, status: 0, needsAuth: false, detail: scrubAuth(err.message, auth) };
     }
     finally {
         clearTimeout(t);
@@ -106,24 +144,23 @@ export function resolveKitUrl(target) {
         return {
             kitUrl: stripTrailingSlash(target.kitUrl),
             subpath,
-            containerId: extractContainerIdFromUrl(target.kitUrl),
+            computerId: extractComputerIdFromUrl(target.kitUrl),
         };
     }
-    const c = target.container;
-    // server_name, else server: a string when hand-built, the server-details object
-    // ({ name, country, … }) on a containers.list item, whose server_name is null.
-    const serverField = typeof c.server === 'object' && c.server !== null ? c.server.name : c.server;
+    const c = target.computer;
+    // server_name, else a hand-built string `server`. The server-details object on a
+    // computers.list item carries a slice's display name, which is not a routing host.
     const server = typeof c.server_name === 'string' && c.server_name !== ''
         ? c.server_name
-        : (typeof serverField === 'string' ? serverField : undefined);
+        : (typeof c.server === 'string' ? c.server : undefined);
     if (typeof c.id !== 'string' || !c.id || typeof c.project_id !== 'string' || !c.project_id || !server) {
-        throw new Error('container must include id, project_id, and server_name (or server)');
+        throw new Error('computer must include id, project_id, and server_name (or server)');
     }
     const idx = target.serviceIndex ?? 1;
     const client = 'client' in target ? target.client : undefined;
-    const domain = 'containersDomain' in target ? target.containersDomain : undefined;
+    const domain = 'computersDomain' in target ? target.computersDomain : undefined;
     if (client !== undefined && domain !== undefined) {
-        throw new Error('pass client or containersDomain, not both');
+        throw new Error('pass client or computersDomain, not both');
     }
     let kitUrl;
     if (client !== undefined && client !== null && typeof client.getKitUrl === 'function') {
@@ -136,16 +173,37 @@ export function resolveKitUrl(target) {
         kitUrl = `https://${c.project_id}-${c.id}-files-${idx}.${server}.${domain.toLowerCase()}`;
     }
     else if (domain !== undefined) {
-        throw new Error(`containersDomain must be a DNS name such as containers.example.com (got ${JSON.stringify(domain)})`);
+        throw new Error(`computersDomain must be a DNS name such as computers.example.com (got ${JSON.stringify(domain)})`);
     }
     else {
-        throw new Error('a container target needs the API it belongs to: pass client (a HoodyClient) or containersDomain, ' +
-            "or pass kitUrl (client.getKitUrl('files', container))");
+        throw new Error('a computer target needs the API it belongs to: pass client (a HoodyClient) or computersDomain, ' +
+            "or pass kitUrl (client.getKitUrl('files', computer))");
     }
-    return { kitUrl, subpath, containerId: c.id };
+    return { kitUrl, subpath, computerId: c.id };
 }
+/**
+ * Mount a folder of a computer at `opts.localPath` with rclone over WebDAV.
+ * The target is a `computer` (with `client` or `computersDomain`) or a
+ * `kitUrl`, optionally narrowed by `subpath`; `auth` is the credential the
+ * computer's files program expects (default: none, access by IP rule).
+ *
+ * Resolves once the path is in the OS mount table. In the foreground
+ * (default) rclone runs as a child of this process: `handle.wait()` resolves
+ * with its exit code and `handle.unmount()` stops it. With `background:
+ * true` rclone runs detached and outlives this process; stop it later with
+ * `unmount()`. The mount is recorded under `~/.hoody/sdk/mounts` so
+ * `listMounts()` and `unmount()` find it from any process.
+ *
+ * Throws before anything is started when rclone is missing or too old for
+ * the credential, the mount point is not empty (on Windows: exists), the
+ * path is already mounted, or the probe finds the files program
+ * unreachable, the credential refused or the path missing. Throws when the
+ * mount does not come up within `readyTimeoutMs`; what was started is then
+ * stopped. `background` is not available on Windows. The credential is
+ * written to a 0600 config file and never put on a command line.
+ */
 export async function mount(opts) {
-    const { kitUrl, subpath, containerId } = resolveKitUrl(opts);
+    const { kitUrl, subpath, computerId } = resolveKitUrl(opts);
     const localPath = resolve(opts.localPath);
     refuseSafeSaveHeaders(opts.auth, opts.extraRcloneArgs);
     if (opts.background && platform() === 'win32') {
@@ -157,7 +215,16 @@ export async function mount(opts) {
     if (!empty) {
         throw new Error(`mountpoint ${localPath} is not empty (rclone requires an empty directory)`);
     }
-    await fs.mkdir(localPath, { recursive: true, mode: 0o700 }).catch(() => undefined);
+    if (platform() === 'win32') {
+        // WinFsp mounts on a directory that does not exist yet and creates it itself; only the parent
+        // is made here.
+        if (await pathExists(localPath)) {
+            throw new Error(`mountpoint ${localPath} exists: on Windows rclone creates the mount folder itself, so it must not exist yet (remove the empty folder, or pick a new path)`);
+        }
+    }
+    else {
+        await fs.mkdir(localPath, { recursive: true, mode: 0o700 }).catch(() => undefined);
+    }
     const rclonePath = opts.rclonePath ?? 'rclone';
     await assertRcloneInstalled(rclonePath);
     const rcloneVersion = await detectRcloneVersion(rclonePath);
@@ -165,9 +232,12 @@ export async function mount(opts) {
     const id = computeMountId(localPath, userInfo().uid);
     const url = subpath ? `${kitUrl}/${subpath}` : kitUrl;
     const auth = opts.auth ?? { type: 'ip' };
+    // Before the probe: its fetch would refuse such a credential with a message that quotes it.
+    assertAuthSendable(auth);
+    refuseRcloneTooOldForAuth(auth, rcloneVersion, rclonePath);
     if (opts.probe !== false)
         await assertKitAnswers(url, subpath, auth);
-    const { configBody, authMethod, headerArgs } = await buildAuthDelivery({
+    const { configBody, authMethod } = await buildAuthDelivery({
         auth,
         url,
         rclonePath,
@@ -175,12 +245,14 @@ export async function mount(opts) {
     });
     await fs.mkdir(getStateDir(opts.home), { recursive: true, mode: 0o700 });
     const confPath = configFilePath(id, opts.home);
-    const cacheDir = cacheDirPath(id, url, opts.home);
-    await fs.mkdir(cacheDir, { recursive: true, mode: 0o700 });
+    const defaultCacheDir = cacheDirPath(id, url, opts.home);
+    await fs.mkdir(defaultCacheDir, { recursive: true, mode: 0o700 });
+    // Where rclone may queue uploads: unmount waits on what these directories hold.
+    const cache = mountCache(defaultCacheDir, opts.extraRcloneArgs);
     const record = {
         id,
         version: 1,
-        containerId,
+        computerId,
         kitUrl: url,
         subpath,
         localPath,
@@ -190,13 +262,25 @@ export async function mount(opts) {
         auth: { method: authMethod },
         startedAt: new Date().toISOString(),
         platform: platform(),
+        cacheDirs: [...cache.dirs],
+        // Until the pid is known the record is alive while this process runs: no other mount of
+        // the path takes it over and prune leaves it.
+        starter: await starterMarker(),
+        // Every later rewrite and removal of the record is made only while it still holds this token.
+        claimToken: randomBytes(8).toString('hex'),
+        rclonePath,
     };
+    // The claim also refuses a path that is a mount point already: whatever appears in the mount
+    // table at it from here on is this mount's, and its stop unmounts it.
     await claimState(record, opts.home);
+    const earlierUnsent = await unsentFromEarlierMounts(url, localPath, id, cache, opts.home).catch(() => []);
+    // Lets a later mount of this URL at another path find what this one leaves unsent.
+    await fs.writeFile(join(defaultCacheDir, CACHE_OWNER_FILE), JSON.stringify({ kitUrl: url, localPath }), { mode: 0o600 }).catch(() => undefined);
     try {
         await fs.writeFile(confPath, configBody, { mode: 0o600 });
     }
     catch (err) {
-        await deleteState(id, opts.home);
+        await forgetFailedMount(record, opts.home);
         throw err;
     }
     const args = [
@@ -206,10 +290,9 @@ export async function mount(opts) {
         '--config',
         confPath,
         '--cache-dir',
-        cacheDir,
+        defaultCacheDir,
         ...syncArgs(opts.noVfsCache === true),
         ...(opts.readOnly ? ['--read-only'] : []),
-        ...headerArgs,
         ...safeSaveHeaderArgs(),
         ...(opts.extraRcloneArgs ?? []),
     ];
@@ -229,58 +312,111 @@ export async function mount(opts) {
             });
         }
         catch (err) {
-            await deleteState(id, opts.home);
+            await forgetFailedMount(record, opts.home);
             throw err;
         }
         child.unref();
         let parentExit = null;
+        // A spawn that fails (rclone not found, not executable) is an 'error' event, never an exit.
+        const spawnFailure = {};
         await new Promise((res) => {
+            const t = setTimeout(() => res(), 12000);
             child.once('exit', (code) => {
                 parentExit = code ?? -1;
+                clearTimeout(t);
                 res();
             });
-            const t = setTimeout(() => res(), 12000);
-            child.once('exit', () => clearTimeout(t));
+            child.on('error', (err) => {
+                // Only a failed spawn ends the wait; a failed kill of the running parent is no exit.
+                if (child.pid !== undefined || spawnFailure.err)
+                    return;
+                spawnFailure.err = err;
+                clearTimeout(t);
+                res();
+            });
         });
+        if (spawnFailure.err) {
+            await forgetFailedMount(record, opts.home);
+            throw new Error(`could not start rclone (${spawnFailure.err.message}) — mount failed`);
+        }
         if (parentExit !== 0 && parentExit !== null) {
-            await deleteState(id, opts.home);
+            await forgetFailedMount(record, opts.home);
             throw new Error(`rclone --daemon parent exited with code ${parentExit} — mount failed`);
         }
-        const daemonPid = await pollDaemonPid(rclonePath, localPath);
+        // The daemon is the rclone mount of this path other than the parent, which carries the
+        // same command line until it exits.
+        const parentPid = child.pid;
+        // Only the rclone started here: this binary, mounting this path with this mount's config.
+        const launch = { binary: rclonePath, confPath };
+        // Each daemon pid is recorded with its start time when found, and signalled only while it is
+        // still that process: the waits below take seconds, and the daemon may end meanwhile.
+        const startOf = new Map();
+        const discover = async (ms) => {
+            const pid = await pollDaemonPid(localPath, ms, parentPid, launch);
+            if (pid !== null && !startOf.has(pid))
+                startOf.set(pid, await processStartTime(pid));
+            return pid;
+        };
+        const stopDaemon = async (pid) => {
+            if ((await mountProcessIdentity(pid, localPath, startOf.get(pid), launch)) !== 'same')
+                return;
+            try {
+                process.kill(pid, 'SIGTERM');
+            }
+            catch { /* gone */ }
+        };
+        let daemonPid = await discover(15000);
         const ready = await waitUntilMounted(localPath, null, opts.readyTimeoutMs ?? 30000);
-        if (ready !== true) {
+        if (ready === true && daemonPid === null)
+            daemonPid = await discover(5000);
+        if (ready !== true || daemonPid === null) {
             // Stop everything this call started (the parent, if its wait ran out, and the daemon,
             // looked for again when it was not found), then undo a mount that came up meanwhile.
-            // The record goes only once the path is known not to be mounted.
+            // The record goes only once the path is known not to be mounted. A mount with no daemon
+            // pid is undone too: nothing could stop its rclone later.
             if (child.exitCode === null && child.signalCode === null) {
                 try {
                     child.kill('SIGTERM');
                 }
                 catch { /* ignore */ }
             }
-            const daemon = daemonPid ?? (await pollDaemonPid(rclonePath, localPath, 3000));
-            if (daemon !== null) {
-                try {
-                    process.kill(daemon, 'SIGTERM');
-                }
-                catch { /* gone */ }
-            }
-            const reason = `rclone did not mount ${localPath}: ${ready === 'unreadable' ? 'the OS mount table could not be read' : 'it is not in the OS mount table'} (daemon ${daemon === null ? 'not found' : `pid ${daemon} stopped`})`;
+            const daemon = daemonPid ?? (await discover(3000));
+            if (daemon !== null)
+                await stopDaemon(daemon);
+            const reason = ready === true
+                ? `rclone mounted ${localPath}, but its daemon process could not be found, so the mount could not be stopped later; it was unmounted`
+                : `rclone did not mount ${localPath}: ${ready === 'unreadable' ? 'the OS mount table could not be read' : 'it is not in the OS mount table'} (daemon ${daemon === null ? 'not found' : `pid ${daemon} stopped`})`;
             try {
                 await detachMountpoint(localPath, null);
             }
             catch (err) {
                 record.pid = daemon;
                 record.rclonePid = daemon;
-                await fs.writeFile(stateFilePath(id, opts.home), JSON.stringify(record, null, 2), { mode: 0o600 }).catch(() => undefined);
-                throw new Error(`${reason}; ${ready === 'unreadable' ? 'it could not be confirmed unmounted' : 'it then appeared and could not be unmounted'} (${err.message}); its record is kept`);
+                record.pidStart = daemon === null ? null : (startOf.get(daemon) ?? null);
+                await writeOwnState(record, opts.home).catch(() => false);
+                const how = ready === true ? 'it could not be unmounted' : ready === 'unreadable' ? 'it could not be confirmed unmounted' : 'it then appeared and could not be unmounted';
+                throw new Error(`${ready === true ? reason.replace(/; it was unmounted$/, '') : reason}; ${how} (${err.message}); its record is kept`);
             }
-            await deleteState(id, opts.home);
+            await forgetFailedMount(record, opts.home);
             throw new Error(reason);
         }
         record.pid = daemonPid;
         record.rclonePid = daemonPid;
-        await fs.writeFile(stateFilePath(id, opts.home), JSON.stringify(record, null, 2), { mode: 0o600 });
+        record.pidStart = startOf.get(daemonPid) ?? null;
+        const notKept = await writeOwnState(record, opts.home).then((kept) => (kept ? null : 'removed'), (err) => err);
+        if (notKept !== null) {
+            // Nothing would find this rclone later: it is stopped (and unmounts what it mounted).
+            await stopDaemon(daemonPid);
+            if (notKept === 'removed') {
+                // The path may be another mount's by now: only this rclone is stopped, and only a .conf
+                // no record claims is removed.
+                await forgetFailedMount(record, opts.home);
+                throw new Error(`could not record the mount at ${localPath}: ${LOST_CLAIM}, so its rclone was stopped`);
+            }
+            await detachMountpoint(localPath, null).catch(() => undefined);
+            await forgetFailedMount(record, opts.home);
+            throw new Error(`could not record the mount at ${localPath}: ${notKept.message}; its rclone was stopped and the mount undone`);
+        }
         return {
             id,
             pid: daemonPid,
@@ -288,8 +424,9 @@ export async function mount(opts) {
             localPath,
             kitUrl: url,
             mode: 'background',
+            earlierUnsent,
             wait: () => Promise.resolve(0),
-            unmount: () => unmountById(id, opts.home),
+            unmount: (o) => unmountById(id, opts.home, { ...(opts.drainTimeoutMs !== undefined && { drainTimeoutMs: opts.drainTimeoutMs }), ...o }),
         };
     }
     let child;
@@ -297,23 +434,57 @@ export async function mount(opts) {
         child = spawn(rclonePath, args, {
             stdio: opts.stdio ?? 'inherit',
             env,
+            // Its own process group: a Ctrl-C at the terminal reaches only this process, whose stop
+            // waits for pending uploads before it stops rclone. rclone stops at once on a signal and
+            // leaves them unsent. Windows has no process groups to leave; detached
+            // there opens a new console.
+            detached: process.platform !== 'win32',
         });
     }
     catch (err) {
-        await deleteState(id, opts.home);
+        await forgetFailedMount(record, opts.home);
         throw err;
     }
-    // Listen at once: an rclone that exits during the awaits below would otherwise go unseen.
-    const childExit = new Promise((res) => child.once('exit', (code) => res(code ?? -1)));
+    // Listen at once: an rclone that exits during the awaits below would otherwise go unseen. A
+    // spawn that fails (rclone not found, not executable) is an 'error' event with no exit; with
+    // no listener it would be thrown as an uncaught error.
+    const spawnFailure = {};
+    const childExit = new Promise((res) => {
+        child.once('exit', (code) => res(code ?? -1));
+        child.on('error', (err) => {
+            // A failed kill of a running rclone is no exit; only a failed spawn (no pid) is.
+            if (child.pid !== undefined || spawnFailure.err)
+                return;
+            spawnFailure.err = err;
+            res(-1);
+        });
+    });
     const childPid = child.pid ?? null;
     record.pid = childPid;
     record.rclonePid = childPid;
-    const recordWrite = fs.writeFile(stateFilePath(id, opts.home), JSON.stringify(record, null, 2), { mode: 0o600 });
+    const recordWrite = (async () => {
+        if (childPid !== null)
+            record.pidStart = await processStartTime(childPid);
+        return writeOwnState(record, opts.home);
+    })();
     const recordWritten = recordWrite.then(() => undefined, () => undefined);
+    // Set once this mount's rclone is seen in the OS mount table: from then on the mount point is
+    // this mount's to unmount. Before, a stop unmounts it only while this rclone runs.
+    let seenMounted = false;
     // The stop and the signal handler exist before the first await after spawn, so a signal from
     // here on stops this rclone; the stop waits for the record write so it never outlives it.
-    const stop = makeForegroundStop(child, id, opts.home, localPath, recordWritten);
-    const signalHandler = installSignalHandlers(stop, localPath);
+    const stop = makeForegroundStop(child, record, opts.home, localPath, recordWritten, {
+        cache,
+        kitUrl: url,
+        drainTimeoutMs: opts.drainTimeoutMs,
+        seenMounted: () => seenMounted,
+        spawnFailed: () => spawnFailure.err !== undefined,
+    });
+    // A stop a signal started that failed rejects wait(), so the caller learns the mount was left.
+    let rejectSignalStop;
+    const signalStopFailed = new Promise((_, reject) => { rejectSignalStop = reject; });
+    signalStopFailed.catch(() => undefined); // reported through wait(); never an unhandled rejection
+    const signalHandler = installSignalHandlers(stop, localPath, rejectSignalStop);
     // rclone may end on its own (a crash, a signal from the terminal); its mount can outlive it.
     // wait() rejects when the mount point could not be unmounted afterwards.
     const exited = childExit.then(async (code) => {
@@ -326,8 +497,11 @@ export async function mount(opts) {
         return code;
     });
     exited.catch(() => undefined); // reported through wait(); never an unhandled rejection
+    const waitResult = Promise.race([exited, signalStopFailed]);
+    waitResult.catch(() => undefined);
+    let kept;
     try {
-        await recordWrite;
+        kept = await recordWrite;
     }
     catch (err) {
         // No record of this rclone exists: never leave it running, even when its mount is busy
@@ -340,24 +514,40 @@ export async function mount(opts) {
         });
         throw err;
     }
+    if (!kept) {
+        // The record was removed (or the path claimed again) while this rclone started: the path
+        // may be another mount's now, so only this rclone is stopped (it unmounts what it mounted)
+        // and the mount point is left alone.
+        uninstallSignalHandlers(signalHandler);
+        try {
+            child.kill('SIGTERM');
+        }
+        catch { /* ignore */ }
+        await forgetFailedMount(record, opts.home);
+        throw new Error(`could not record the mount at ${localPath}: ${LOST_CLAIM}, so its rclone was stopped`);
+    }
     // Report the mount only once it is there: rclone that fails (bad config, no FUSE) exits, and
     // one that never mounts is stopped. Its own messages are on the inherited stderr.
     let childCode = null;
     void childExit.then((code) => { childCode = code; });
     const ready = await waitUntilMounted(localPath, () => childCode !== null, opts.readyTimeoutMs ?? 30000);
+    seenMounted = ready === true;
     if (ready !== true) {
-        const reason = childCode !== null
-            ? `rclone exited with code ${childCode} before ${localPath} was mounted`
-            : ready === 'unreadable'
-                ? `could not confirm ${localPath} was mounted: the OS mount table could not be read; rclone was stopped`
-                : `rclone did not mount ${localPath} within ${Math.round((opts.readyTimeoutMs ?? 30000) / 1000)} s; it was stopped`;
-        await stop().catch(() => {
+        const reason = spawnFailure.err
+            ? `could not start rclone (${spawnFailure.err.message})`
+            : childCode !== null
+                ? `rclone exited with code ${childCode} before ${localPath} was mounted`
+                : ready === 'unreadable'
+                    ? `could not confirm ${localPath} was mounted: the OS mount table could not be read; rclone was stopped`
+                    : `rclone did not mount ${localPath} within ${Math.round((opts.readyTimeoutMs ?? 30000) / 1000)} s; it was stopped`;
+        const stopFailure = await stop().then(() => null, (err) => {
             try {
                 child.kill('SIGTERM');
             }
             catch { /* ignore */ }
+            return err;
         });
-        throw new Error(reason);
+        throw new Error(stopFailure ? `${reason}; ${stopFailure.message}` : reason);
     }
     return {
         id,
@@ -366,11 +556,22 @@ export async function mount(opts) {
         localPath,
         kitUrl: url,
         mode: 'foreground',
-        wait: () => exited,
-        unmount: () => stop(),
+        earlierUnsent,
+        wait: () => waitResult,
+        unmount: (o) => stop(o),
     };
 }
-export async function unmountById(id, home) {
+/**
+ * Unmount the mount with record `id`: wait for its uploads, unmount the path, stop its rclone,
+ * remove its record.
+ *
+ * Known limit (accepted): two unmounts of one mount at once are not coordinated. If the second
+ * finishes while the first waits for uploads, and a new mount claims the path in between, the
+ * first then runs the unmount command on the path and unmounts the new mount. Its record
+ * survives (the removal is conditional), its rclone is never signalled (the pid check fails),
+ * and the record is cleaned up later as dead. All three steps are commands of the same user.
+ */
+export async function unmountById(id, home, opts = {}) {
     let rec;
     try {
         rec = await readState(id, home);
@@ -381,28 +582,75 @@ export async function unmountById(id, home) {
         }
         throw err;
     }
-    // Unmount first: on a busy mount this throws and leaves rclone and the record in place,
-    // so the mount keeps working and a later unmount still finds it.
-    await detachMountpoint(rec.localPath, rec.pid);
-    if (rec.pid !== null) {
-        try {
-            process.kill(rec.pid, 'SIGTERM');
-        }
-        catch {
-            // pid may be gone
-        }
+    // A mount still starting belongs to the process starting it until it records its rclone:
+    // removing its record now would leave that rclone running with nothing to find it by.
+    if (await isStarting(rec)) {
+        throw new Error(`the mount at ${rec.localPath} is still starting (process ${rec.starter.pid}): unmount it once it has started, or stop that process`);
     }
-    await deleteState(id, home);
+    const pid = rec.pid;
+    // The recorded pid is signalled only while it is still this mount's rclone (same start time,
+    // the rclone mount of this path with this mount's config): after rclone died the OS may have
+    // given it to another process. Windows can tell neither, so there the record is trusted.
+    // Checked again right before every signal: the upload wait and the unmount take time, and
+    // rclone may end (and its pid be reused) meanwhile.
+    const launch = { ...(rec.rclonePath !== undefined && { binary: rec.rclonePath }), confPath: configFilePath(id, home) };
+    const stillOurs = async () => {
+        if (pid === null)
+            return null;
+        const identity = await mountProcessIdentity(pid, rec.localPath, rec.pidStart, launch);
+        return identity === 'same' || (identity === 'unknown' && process.platform === 'win32') ? pid : null;
+    };
+    const signalIfOurs = async () => {
+        const own = await stillOurs();
+        if (own !== null)
+            signalPid(own);
+        return own;
+    };
+    const ownPid = await stillOurs();
+    const defaultCacheDir = cacheDirPath(id, rec.kitUrl, home);
+    const cache = { defaultDir: defaultCacheDir, dirs: rec.cacheDirs ?? [defaultCacheDir] };
+    if (!opts.force) {
+        await drainUploads(cache, rec.localPath, rec.kitUrl, () => pid === null || (ownPid !== null && pidAlive(ownPid)), opts);
+    }
+    // Then unmount: on a busy mount this throws and leaves rclone and the record in place,
+    // so the mount keeps working and a later unmount still finds it.
+    await detachMountpoint(rec.localPath, ownPid === null ? null : async () => { await signalIfOurs(); });
+    if (ownPid !== null) {
+        const signalled = await signalIfOurs();
+        if (signalled !== null)
+            await waitUntil(() => !pidAlive(signalled), RCLONE_EXIT_WAIT_MS);
+    }
+    // Only this record: a mount that claimed the path since keeps its own.
+    await deleteOwnState(rec, home);
+    await assertNothingLeftUnsent(cache, rec.localPath, rec.kitUrl);
 }
-export async function unmount(idOrPath, home) {
+/**
+ * Unmount one recorded mount, named by its 16-hex mount id or its local
+ * path (an id is tried first; a folder with such a name still works as a
+ * path). Waits for files written to the mount to finish uploading unless
+ * `opts.force` is set, then unmounts, stops rclone and removes the record.
+ *
+ * Throws an Error when no mount matches, and `PendingUploadsError` when
+ * files are still unsent. A busy mount point throws and leaves the mount
+ * and its record in place, so a later call can retry.
+ */
+export async function unmount(idOrPath, home, opts) {
+    // A mount id wins; a name that only looks like one (a folder called 0123456789abcdef) is a path.
     if (/^[a-f0-9]{16}$/.test(idOrPath)) {
-        return unmountById(idOrPath, home);
+        try {
+            await readState(idOrPath, home);
+            return unmountById(idOrPath, home, opts);
+        }
+        catch (err) {
+            if (err.code !== 'ENOENT')
+                throw err;
+        }
     }
     const localPath = resolve(idOrPath);
     const id = computeMountId(localPath, userInfo().uid);
     try {
         await readState(id, home);
-        return unmountById(id, home);
+        return unmountById(id, home, opts);
     }
     catch (err) {
         if (err.code !== 'ENOENT')
@@ -412,15 +660,17 @@ export async function unmount(idOrPath, home) {
     const match = records.find((r) => resolve(r.localPath) === localPath);
     if (!match)
         throw new Error(`no mount found for ${idOrPath}`);
-    return unmountById(match.id, home);
+    return unmountById(match.id, home, opts);
 }
-/** Thrown by {@link unmountAll} / {@link unmountByContainer} when a mount could not be unmounted. */
+/** Thrown by {@link unmountAll} / {@link unmountByComputer} when a mount could not be unmounted. */
 export class UnmountError extends Error {
     unmounted;
     failures;
     constructor(
     /** How many mounts were unmounted. */
-    unmounted, failures) {
+    unmounted, 
+    /** `mounted`: whether the path is still mounted (false: unmounted, with files left unsent). */
+    failures) {
         super(`unmounted ${unmounted} mount(s); ${failures.length} failed:\n` +
             failures.map((f) => `  ${f.localPath}: ${f.message}`).join('\n'));
         this.unmounted = unmounted;
@@ -428,7 +678,26 @@ export class UnmountError extends Error {
         this.name = 'UnmountError';
     }
 }
-/** Unmount every record; throws {@link UnmountError} after trying them all if any is still mounted. */
+/**
+ * Thrown by unmount when files written to the mount have not reached the computer. With
+ * `mounted` true the wait for them ran out and the mount and its record are kept (rclone goes on
+ * uploading; unmount again later). With `mounted` false the path is unmounted and the files are
+ * left in the mount's cache, which a mount of the same URL at the same path uploads.
+ */
+export class PendingUploadsError extends Error {
+    localPath;
+    files;
+    mounted;
+    constructor(message, localPath, 
+    /** The files, relative to the mounted folder. */
+    files, mounted) {
+        super(message);
+        this.localPath = localPath;
+        this.files = files;
+        this.mounted = mounted;
+        this.name = 'PendingUploadsError';
+    }
+}
 /** Throw a clear error unless the kit answers a PROPFIND of `url` with `auth`. */
 async function assertKitAnswers(url, subpath, auth) {
     const probe = await probeKit(url, auth, 10000, 'PROPFIND');
@@ -441,7 +710,7 @@ async function assertKitAnswers(url, subpath, auth) {
         throw new Error(`the files kit refused the request (${probe.detail}): pass the credential its permission rule expects (--auth-token-file / --auth-password-file; SDK: auth)`);
     }
     if (probe.status === 404) {
-        throw new Error(`/${decodeURIComponent(subpath)} does not exist in the container (404 from the files kit)`);
+        throw new Error(`/${decodeURIComponent(subpath)} does not exist in the computer (404 from the files kit)`);
     }
     throw new Error(`the files kit at ${url} answered ${probe.detail ?? probe.status}`);
 }
@@ -461,37 +730,47 @@ async function waitUntilMounted(localPath, gaveUp, timeoutMs) {
         await sleep(200);
     }
 }
-async function unmountRecords(records, home) {
+async function unmountRecords(records, home, opts) {
     let count = 0;
     const failures = [];
     for (const r of records) {
         try {
-            await unmountById(r.id, home);
+            await unmountById(r.id, home, opts);
             count++;
         }
         catch (err) {
             // A record another process removed meanwhile is not a failure.
             if (/^no mount found/.test(err.message))
                 continue;
-            failures.push({ id: r.id, localPath: r.localPath, message: err.message });
+            // Unmounted with files left unsent: counted as unmounted, and still a failure.
+            const mounted = !(err instanceof PendingUploadsError && !err.mounted);
+            if (!mounted)
+                count++;
+            failures.push({ id: r.id, localPath: r.localPath, message: err.message, mounted });
         }
     }
     if (failures.length > 0)
         throw new UnmountError(count, failures);
     return count;
 }
-export async function unmountAll(home) {
-    return unmountRecords(await listStates(home), home);
+/** Unmount every record; throws {@link UnmountError} after trying them all if any failed. */
+export async function unmountAll(home, opts) {
+    return unmountRecords(await listStates(home), home, opts);
 }
-export async function unmountByContainer(containerId, home) {
+/**
+ * Unmount every recorded mount of the computer `computerId`. Resolves with
+ * how many were unmounted (0 when it has none); throws `UnmountError` after
+ * trying them all if any failed.
+ */
+export async function unmountByComputer(computerId, home, opts) {
     const records = await listStates(home);
-    return unmountRecords(records.filter((x) => x.containerId === containerId), home);
+    return unmountRecords(records.filter((x) => x.computerId === computerId), home, opts);
 }
 // ─── Internals ───────────────────────────────────────────────────────────
 /**
  * How long a mount trusts its own directory listing, and how long a file must stay closed and
  * idle before its upload starts. rclone's defaults (5 min, 5 s) left another machine's (or the
- * container's) changes and deletes invisible for up to 5 min, and served a file the box had
+ * computer's) changes and deletes invisible for up to 5 min, and served a file the box had
  * rewritten cut to the size the stale listing recorded. A change that has landed now shows at
  * the next lookup after MOUNT_DIR_CACHE_TIME (plus rclone's 1 s attribute cache); a handle
  * that is already open can keep its old view.
@@ -505,6 +784,207 @@ export async function unmountByContainer(containerId, home) {
  */
 export const MOUNT_DIR_CACHE_TIME = '5s';
 export const MOUNT_WRITE_BACK = '1s';
+/** How long unmount waits for pending uploads, counted again each time one finishes. */
+export const UNMOUNT_DRAIN_TIMEOUT_MS = 60_000;
+const RCLONE_EXIT_WAIT_MS = 10_000;
+function mountCache(defaultDir, extraRcloneArgs = []) {
+    const dirs = [defaultDir];
+    let given = false;
+    for (let i = 0; i < extraRcloneArgs.length; i++) {
+        const m = /^--cache-dir(?:=(.*))?$/s.exec(extraRcloneArgs[i]);
+        if (m)
+            given = true;
+        const value = m ? (m[1] ?? extraRcloneArgs[i + 1]) : undefined;
+        if (value !== undefined && value !== '' && !dirs.includes(resolve(value)))
+            dirs.push(resolve(value));
+    }
+    return { defaultDir, dirs, given };
+}
+/**
+ * The files rclone's caches hold as written but not yet uploaded. rclone keeps a JSON record per
+ * cached file at <cache dir>/vfsMeta/<remote>/<path> and sets "Dirty" in it until the upload has
+ * succeeded; a record that cannot be parsed (rclone is rewriting it) counts as pending.
+ */
+async function pendingUploads(cache) {
+    const out = [];
+    for (const cacheDir of cache.dirs) {
+        const root = join(cacheDir, 'vfsMeta');
+        const walk = async (dir) => {
+            let entries;
+            try {
+                entries = await fs.readdir(dir, { withFileTypes: true });
+            }
+            catch (err) {
+                const code = err.code;
+                if (code === 'ENOENT' || code === 'ENOTDIR')
+                    return;
+                throw err;
+            }
+            for (const e of entries) {
+                const p = join(dir, e.name);
+                if (e.isDirectory()) {
+                    await walk(p);
+                    continue;
+                }
+                let raw;
+                try {
+                    raw = await fs.readFile(p, 'utf-8');
+                }
+                catch (err) {
+                    if (err.code === 'ENOENT')
+                        continue; // expired meanwhile
+                    throw err;
+                }
+                let dirty = true;
+                try {
+                    dirty = JSON.parse(raw).Dirty === true;
+                }
+                catch { /* half-written: still pending */ }
+                // Named relative to the mounted folder: drop the remote's own directory (`hoody`).
+                if (dirty)
+                    out.push({ cacheDir, file: relative(root, p).split(sep).slice(1).join('/') });
+            }
+        };
+        await walk(root);
+    }
+    return out.sort((a, b) => (a.file < b.file ? -1 : a.file > b.file ? 1 : 0));
+}
+function describeFiles(pending) {
+    const shown = pending.slice(0, 5).map((p) => p.file).join(', ');
+    const more = pending.length > 5 ? ` and ${pending.length - 5} more` : '';
+    return `${pending.length} file(s) (${shown}${more})`;
+}
+/**
+ * The mount that uploads the files: the same URL, path and, when the caller gave one, cache dir.
+ * The default cache dir is not named (an internal location, kept per URL and path).
+ */
+function whereKept(pending, cache, kitUrl, localPath) {
+    const custom = pending.map((p) => p.cacheDir).find((d) => d !== cache.defaultDir);
+    const sameCache = custom === undefined
+        ? ''
+        : ` with the same cache dir (hoody mount --extra --cache-dir ${custom}; SDK: extraRcloneArgs: ['--cache-dir', '${custom}'])`;
+    return `they are kept on this machine until ${kitUrl} is mounted at ${localPath} again${sameCache}, which uploads them`;
+}
+/**
+ * rclone uploads a closed file only after MOUNT_WRITE_BACK, and stopping it (a
+ * signal, or an unmount) leaves what is still queued unsent, while unmount reported success.
+ * Wait until its cache holds nothing unsent while rclone runs; when the wait runs out with no
+ * upload finishing, throw and leave the mount up so rclone can finish and a retry works.
+ */
+async function drainUploads(cache, localPath, kitUrl, rcloneRunning, opts) {
+    // An rclone that is gone uploads nothing: the check after the stop reports what it left.
+    if (!rcloneRunning())
+        return;
+    const timeoutMs = opts.drainTimeoutMs ?? UNMOUNT_DRAIN_TIMEOUT_MS;
+    const key = (p) => `${p.cacheDir}\0${p.file}`;
+    let pending = await pendingUploads(cache);
+    let deadline = Date.now() + timeoutMs;
+    if (pending.length > 0 && rcloneRunning())
+        opts.onPending?.(pending.map((p) => p.file));
+    while (pending.length > 0 && rcloneRunning()) {
+        if (Date.now() >= deadline) {
+            throw new PendingUploadsError(`${describeFiles(pending)} written to ${localPath} not uploaded yet: no upload finished in ${Math.round(timeoutMs / 1000)} s. ` +
+                `The mount is kept so they can finish; unmount again later, or force it (hoody unmount --force; SDK: force: true) ` +
+                `to stop now: ${whereKept(pending, cache, kitUrl, localPath)}`, localPath, pending.map((p) => p.file), true);
+        }
+        await sleep(250);
+        const next = await pendingUploads(cache);
+        const nextKeys = new Set(next.map(key));
+        if (pending.some((p) => !nextKeys.has(key(p))))
+            deadline = Date.now() + timeoutMs;
+        pending = next;
+    }
+}
+/** After rclone stopped: throw when its cache still holds files it never uploaded. */
+async function assertNothingLeftUnsent(cache, localPath, kitUrl) {
+    const left = await pendingUploads(cache);
+    if (left.length === 0)
+        return;
+    throw new PendingUploadsError(`${localPath} is unmounted, but ${describeFiles(left)} written to it did not reach the computer; ` +
+        whereKept(left, cache, kitUrl, localPath), localPath, left.map((p) => p.file), false);
+}
+/** Written into a mount's own cache dir: which URL and path it belongs to (rclone keeps only vfs/ and vfsMeta/ there). */
+const CACHE_OWNER_FILE = 'hoody-mount.json';
+/**
+ * What earlier mounts of `kitUrl` left unsent. rclone uploads what its own cache holds as it
+ * starts. With no `--cache-dir` given that is this path's default cache, so its files are being
+ * uploaded. With one given, which dir rclone takes depends on how rclone reads the whole argument
+ * list, so each of this path's caches is reported with the dir it is in and no upload is promised.
+ * Files in another path's default cache (found by its owner file, checked against this user's
+ * cache key for that path) are uploaded only by a mount at that path. A cache a mount record still holds (a running mount) is not looked
+ * at. A report only: the caller ignores a failure.
+ */
+async function unsentFromEarlierMounts(kitUrl, localPath, id, own, home) {
+    const out = [];
+    const files = async (dir) => (await pendingUploads({ defaultDir: dir, dirs: [dir] }).catch(() => [])).map((p) => p.file);
+    const custom = own.dirs.filter((d) => d !== own.defaultDir);
+    const ownDefault = await files(own.defaultDir);
+    if (ownDefault.length > 0)
+        out.push({ localPath, files: ownDefault, uploading: own.given !== true });
+    for (const dir of custom) {
+        const left = await files(dir);
+        if (left.length > 0)
+            out.push({ localPath, files: left, uploading: false, cacheDir: dir });
+    }
+    const root = join(getStateDir(home), 'cache');
+    let names;
+    try {
+        names = await fs.readdir(root);
+    }
+    catch {
+        return out;
+    }
+    const held = new Set();
+    for (const r of await listStates(home).catch(() => [])) {
+        for (const d of r.cacheDirs ?? [cacheDirPath(r.id, r.kitUrl, home)])
+            held.add(d);
+    }
+    for (const name of names.sort()) {
+        const dir = join(root, name);
+        if (own.dirs.includes(dir) || held.has(dir))
+            continue;
+        let owner;
+        try {
+            owner = JSON.parse(await fs.readFile(join(dir, CACHE_OWNER_FILE), 'utf-8'));
+        }
+        catch {
+            continue;
+        }
+        const other = owner !== null && typeof owner === 'object' ? owner.localPath : undefined;
+        if (owner?.kitUrl !== kitUrl || typeof other !== 'string')
+            continue;
+        // Only a cache that a mount of this URL at that path would use: this user's key for it.
+        const otherId = computeMountId(other, userInfo().uid);
+        if (otherId === id || cacheDirPath(otherId, kitUrl, home) !== dir)
+            continue;
+        const left = await files(dir);
+        if (left.length > 0)
+            out.push({ localPath: other, files: left, uploading: false });
+    }
+    return out;
+}
+function signalPid(pid) {
+    try {
+        process.kill(pid, 'SIGTERM');
+    }
+    catch {
+        // pid may be gone
+    }
+}
+function pidAlive(pid) {
+    try {
+        process.kill(pid, 0);
+        return true;
+    }
+    catch (err) {
+        return err.code === 'EPERM';
+    }
+}
+async function waitUntil(done, timeoutMs) {
+    const deadline = Date.now() + timeoutMs;
+    while (!done() && Date.now() < deadline)
+        await sleep(100);
+}
 /**
  * Safe save: the headers that name this mount to the files kit. The kit keeps, per session,
  * which versions this mount has received (a download, or its own upload); an upload or delete
@@ -589,8 +1069,23 @@ function syncArgs(noVfsCache) {
         ...(noVfsCache ? [] : ['--vfs-cache-mode', 'writes', '--vfs-write-back', MOUNT_WRITE_BACK]),
     ];
 }
+/**
+ * Build the rclone config text that carries `opts.auth` for the WebDAV
+ * remote at `opts.url`: a password is obscured with `rclone obscure`, a
+ * token for `Authorization` becomes `bearer_token`, and a token under
+ * another header or a computer claim becomes a `headers` line. Nothing is
+ * written to disk and `headerArgs` is always empty.
+ *
+ * Throws when the URL or a credential field holds a line break, when the
+ * token is delivered as a query parameter (a mount cannot send one), and
+ * when a header credential is needed but `supportsHeadersConfig` is false.
+ */
 export async function buildAuthDelivery(opts) {
     const { auth, url, rclonePath, supportsHeadersConfig } = opts;
+    if (/[\r\n]/.test(url))
+        throw new Error(`the kit URL ${JSON.stringify(url)} contains a line break; rclone's config cannot hold it`);
+    refuseQueryToken(auth);
+    refuseLineBreaks(auth);
     const base = `[hoody]\ntype = webdav\nurl = ${url}\nvendor = other\n`;
     switch (auth.type) {
         case 'ip':
@@ -610,40 +1105,100 @@ export async function buildAuthDelivery(opts) {
             if (!headerName || /^authorization$/i.test(headerName)) {
                 return { configBody: `${base}bearer_token = ${tokenValue}\n`, authMethod: 'token', headerArgs: [] };
             }
-            if (supportsHeadersConfig) {
-                const csv = csvEncodeHeader(headerName, tokenValue);
-                return { configBody: `${base}headers = ${csv}\n`, authMethod: 'header', headerArgs: [] };
-            }
-            return {
-                configBody: base,
-                authMethod: 'header',
-                headerArgs: ['--header', `${headerName}: ${tokenValue}`],
-            };
+            if (!supportsHeadersConfig)
+                throw new Error(headersTooOldMessage(`a token under the ${headerName} header`, undefined, rclonePath));
+            // As every other kit request sends it: a JWT is `Bearer <jwt>`, a token its raw value.
+            const csv = csvEncodeHeader(headerName, credentialHeaderValue(auth, headerName));
+            return { configBody: `${base}headers = ${csv}\n`, authMethod: 'header', headerArgs: [] };
         }
-        case 'containerClaim': {
-            if (supportsHeadersConfig) {
-                const csv = csvEncodeHeaders([
-                    ['X-Hoody-Container-Claim', auth.claim],
-                    ['X-Hoody-Token', auth.token],
-                ]);
-                return { configBody: `${base}headers = ${csv}\n`, authMethod: 'containerClaim', headerArgs: [] };
-            }
-            return {
-                configBody: base,
-                authMethod: 'containerClaim',
-                headerArgs: [
-                    '--header',
-                    `X-Hoody-Container-Claim: ${auth.claim}`,
-                    '--header',
-                    `X-Hoody-Token: ${auth.token}`,
-                ],
-            };
+        case 'computerClaim': {
+            if (!supportsHeadersConfig)
+                throw new Error(headersTooOldMessage('a computer claim', undefined, rclonePath));
+            const csv = csvEncodeHeaders([
+                ['X-Hoody-Computer-Claim', auth.claim],
+                ['X-Hoody-Token', auth.token],
+            ]);
+            return { configBody: `${base}headers = ${csv}\n`, authMethod: 'computerClaim', headerArgs: [] };
         }
         default: {
             const _exhaustive = auth;
             throw new Error(`unsupported ProxyAuth: ${JSON.stringify(_exhaustive)}`);
         }
     }
+}
+/**
+ * A line break in a credential would end its line of the rclone config and start another, and
+ * `rclone obscure -` reads the password up to the first one.
+ */
+function refuseLineBreaks(auth) {
+    const fields = auth.type === 'password' ? [['username', auth.username], ['password', auth.password]]
+        : auth.type === 'jwt' ? [['token', auth.token], ['header name', auth.header]]
+            : auth.type === 'token' ? [['token', auth.value], ['header name', auth.header]]
+                : auth.type === 'computerClaim' ? [['claim', auth.claim], ['token', auth.token]]
+                    : [];
+    for (const [what, value] of fields) {
+        if (value !== undefined && /[\r\n]/.test(value))
+            throw new Error(`the ${what} contains a line break, which rclone cannot take`);
+    }
+}
+/**
+ * A token whose permission rule reads it from a query parameter (`param`) cannot be used by a
+ * mount: rclone sends its WebDAV requests to paths under the configured URL and has no way to
+ * add a query parameter to every one of them. It is refused rather than sent as a header the
+ * rule does not read.
+ */
+const QUERY_TOKEN_REFUSED = 'a token delivered as a query parameter (param) cannot be used by mount: rclone cannot add a query parameter to every WebDAV request. ' +
+    'Use a permission rule that reads the token from a header, and pass the token with that header (or with none, for Authorization)';
+function refuseQueryToken(auth) {
+    if (auth.type === 'token' && auth.param !== undefined)
+        throw new Error(QUERY_TOKEN_REFUSED);
+}
+/** Refuse, without quoting it, a credential that cannot go into rclone's config or an HTTP header. */
+function assertAuthSendable(auth) {
+    refuseQueryToken(auth);
+    refuseLineBreaks(auth);
+    const headers = {};
+    applyAuthToHeaders(headers, auth);
+    const unsendable = unsendableHeadersDetail(headers);
+    if (unsendable !== null)
+        throw new Error(unsendable);
+}
+/** Null when fetch takes these headers; else why not, never quoting a value (Headers' own message does). */
+function unsendableHeadersDetail(headers) {
+    try {
+        new Headers(headers);
+        return null;
+    }
+    catch {
+        return 'the credential cannot be sent as an HTTP header: its header name or value holds a character HTTP does not allow (a line break, a NUL, or a character above U+00FF)';
+    }
+}
+/** `text` with every form of `auth`'s secrets a message could quote replaced by [redacted]. */
+function scrubAuth(text, auth) {
+    if (!auth)
+        return text;
+    const secrets = auth.type === 'password' ? [auth.password, base64(`${auth.username}:${auth.password}`)]
+        : auth.type === 'jwt' ? [auth.token]
+            : auth.type === 'token' ? [auth.value]
+                : auth.type === 'computerClaim' ? [auth.claim, auth.token]
+                    : [];
+    // encodeURIComponent throws on a lone surrogate; such a secret has no URI-encoded form to find.
+    const uriEncoded = (v) => {
+        try {
+            return [encodeURIComponent(v)];
+        }
+        catch {
+            return [];
+        }
+    };
+    // fetch strips a header value's leading and trailing whitespace, so a server echoes it trimmed.
+    const needles = [...new Set(secrets.flatMap((v) => [v, v.trim()]).flatMap((v) => [v, JSON.stringify(v).slice(1, -1), ...uriEncoded(v)]))]
+        .filter((n) => n !== '')
+        .sort((a, b) => b.length - a.length);
+    let out = text;
+    for (const n of needles)
+        out = out.split(n).join('[redacted]');
+    return out;
 }
 function csvEncodeHeader(name, value) {
     return `${csvField(name)},${csvField(value)}`;
@@ -666,15 +1221,14 @@ function applyAuthToHeaders(headers, auth) {
         return;
     }
     if (auth.type === 'jwt' || auth.type === 'token') {
-        // As buildAuthDelivery hands it to rclone: `Bearer <value>` on Authorization (bearer_token),
-        // the raw value under any other header name.
-        const value = auth.type === 'jwt' ? auth.token : auth.value;
+        // As buildAuthDelivery hands it to rclone: `Bearer <value>` on Authorization (bearer_token);
+        // under any other header name a JWT as `Bearer <jwt>` and a token as its raw value.
         const name = auth.header?.toLowerCase() ?? 'authorization';
-        headers[name] = name === 'authorization' ? `Bearer ${value}` : value;
+        headers[name] = credentialHeaderValue(auth, name);
         return;
     }
-    if (auth.type === 'containerClaim') {
-        headers['x-hoody-container-claim'] = auth.claim;
+    if (auth.type === 'computerClaim') {
+        headers['x-hoody-computer-claim'] = auth.claim;
         headers['x-hoody-token'] = auth.token;
     }
 }
@@ -683,67 +1237,101 @@ function base64(s) {
         return Buffer.from(s).toString('base64');
     return btoa(s);
 }
-async function rcloneObscure(rclonePath, plaintext) {
-    // execFile (no shell): plaintext password cannot contain shell syntax
-    // that would inject commands. Worst case is a weird-but-literal value
-    // passed to rclone obscure, which rclone handles fine.
-    const { stdout } = await execFile(rclonePath, ['obscure', plaintext], { timeout: 10000 });
-    return stdout.trim();
+/**
+ * Refuse, before anything is probed or written, an rclone that cannot take `auth` off its command
+ * line: a password needs `rclone obscure -` ({@link RCLONE_OBSCURE_STDIN_MIN_VERSION}), a token
+ * under another header or a computer claim needs config headers ({@link RCLONE_HEADERS_MIN_VERSION}).
+ * A version that could not be read counts as too old. No credential, no limit.
+ */
+export function refuseRcloneTooOldForAuth(auth, version, rclonePath = 'rclone') {
+    if (auth.type === 'password') {
+        if (!isVersionAtLeast(version, RCLONE_OBSCURE_STDIN_MIN_VERSION)) {
+            throw new Error(tooOldMessage('a password', version, RCLONE_OBSCURE_STDIN_MIN_VERSION, rclonePath));
+        }
+        return;
+    }
+    if (auth.type === 'computerClaim') {
+        if (!isVersionAtLeast(version, RCLONE_HEADERS_MIN_VERSION))
+            throw new Error(headersTooOldMessage('a computer claim', version, rclonePath));
+        return;
+    }
+    if ((auth.type === 'token' || auth.type === 'jwt') && auth.header && !/^authorization$/i.test(auth.header)) {
+        if (!isVersionAtLeast(version, RCLONE_HEADERS_MIN_VERSION))
+            throw new Error(headersTooOldMessage(`a token under the ${auth.header} header`, version, rclonePath));
+    }
+}
+/** `version` undefined: the caller knows only that this rclone is too old (buildAuthDelivery). */
+function headersTooOldMessage(what, version, rclonePath) {
+    return tooOldMessage(what, version, RCLONE_HEADERS_MIN_VERSION, rclonePath);
+}
+function tooOldMessage(what, version, min, rclonePath) {
+    const have = version
+        ? `rclone v${formatVersion(version)}`
+        : version === null
+            ? `the rclone at "${rclonePath}" (its version could not be read)`
+            : `the rclone at "${rclonePath}"`;
+    return `${have} cannot be given ${what} without putting it on its command line, where other users of this machine can read it; ` +
+        `rclone v${formatVersion(min)} or newer is required. ${RCLONE_INSTALL_HINT}`;
 }
 /**
- * Poll the OS process table for the rclone daemon process matching the
- * given localPath. Uses execFile (no shell) so untrusted-looking
- * characters in `localPath` cannot inject shell syntax.
+ * `rclone obscure -` with the password on stdin: never in argv, where every local user can read
+ * it. rclone reads one line (a password holding a line break is refused before). A failure names the
+ * exit code or signal and never rclone's output, which could repeat its input.
  */
-async function pollDaemonPid(rclonePath, localPath, deadlineMs = 15000) {
-    void rclonePath;
+async function rcloneObscure(rclonePath, plaintext) {
+    return new Promise((res, rej) => {
+        const child = execFileCb(rclonePath, ['obscure', '-'], { timeout: 10000 }, (err, stdout) => {
+            if (!err) {
+                const obscured = String(stdout).trim();
+                if (obscured === '')
+                    rej(new Error('rclone obscure printed nothing'));
+                else
+                    res(obscured);
+                return;
+            }
+            const e = err;
+            const how = e.killed && e.signal
+                ? `was stopped (${e.signal}) after 10 s`
+                : typeof e.code === 'number'
+                    ? `exited with code ${e.code}`
+                    : typeof e.code === 'string'
+                        ? `could not run (${e.code})`
+                        : e.signal
+                            ? `was stopped (${e.signal})`
+                            : 'failed';
+            rej(new Error(`rclone obscure ${how}, so the password could not be written to the mount's rclone config (rclone's output is not shown: it could hold the password)`));
+        });
+        // The child may exit before reading stdin (a wrong rclonePath): its EPIPE is reported above.
+        child.stdin?.on('error', () => undefined);
+        child.stdin?.end(plaintext);
+    });
+}
+async function pathExists(p) {
+    try {
+        await fs.lstat(p);
+        return true;
+    }
+    catch (err) {
+        if (err.code === 'ENOENT')
+            return false;
+        throw err;
+    }
+}
+/**
+ * Poll the OS process table for the rclone daemon process mounting `localPath` (other than
+ * `exclude`, the `--daemon` parent, which has the same command line until it exits): its pid
+ * once exactly one is running, null when none is by the deadline. The command lines are read
+ * as argv ({@link findMountProcesses}), so a path with spaces is found.
+ */
+async function pollDaemonPid(localPath, deadlineMs, exclude, launch) {
     const start = Date.now();
     while (Date.now() - start < deadlineMs) {
-        try {
-            let stdout;
-            if (process.platform === 'win32') {
-                const escaped = localPath.replace(/'/g, "''");
-                const { stdout: out } = await execFile('wmic', ['process', 'where', `CommandLine like '%${escaped}%'`, 'get', 'processid'], { timeout: 3000 });
-                stdout = out;
-            }
-            else {
-                // `pgrep -af <regex>` — pattern is the LAST arg, not concatenated
-                // into a shell command, so it cannot inject shell syntax. The regex
-                // is anchored loosely (rclone mount ... <localPath>) but exact
-                // argv-token matching happens in parseRcloneCandidates anyway.
-                const { stdout: out } = await execFile('pgrep', ['-af', `rclone mount.*${escapeForRegex(localPath)}`], { timeout: 3000 });
-                stdout = out;
-            }
-            const candidates = parseRcloneCandidates(stdout, localPath);
-            if (candidates.length === 1)
-                return candidates[0];
-        }
-        catch {
-            // ignore; retry
-        }
+        const candidates = await findMountProcesses(localPath, exclude, launch);
+        if (candidates.length === 1)
+            return candidates[0];
         await sleep(500);
     }
     return null;
-}
-function parseRcloneCandidates(stdout, localPath) {
-    const out = [];
-    for (const line of stdout.split('\n')) {
-        if (!hasExactPathArg(line, localPath))
-            continue;
-        const m = line.match(/^\s*(\d+)/);
-        if (m)
-            out.push(Number(m[1]));
-    }
-    return out;
-}
-/**
- * Whether `line` contains `localPath` as a *whole argv token*, not as a
- * substring. Avoids false matches when one mountpoint is a prefix of
- * another (e.g. `/mnt/a` and `/mnt/abc`).
- */
-function hasExactPathArg(line, localPath) {
-    const tokens = line.split(/\s+/);
-    return tokens.some((t) => t === localPath || t === `"${localPath}"` || t === `'${localPath}'`);
 }
 /** The unmount commands to try in order; the next one runs only when one is not installed. */
 function unmountCommands(localPath) {
@@ -754,16 +1342,12 @@ function unmountCommands(localPath) {
 /**
  * Unmount the filesystem at `localPath`, then check the OS mount table. Throws while the path
  * is still mounted (busy: an open file, a shell inside it), and in that case leaves rclone
- * running. On Windows WinFsp unmounts when rclone exits, so rclone is stopped instead.
+ * running. On Windows WinFsp unmounts when rclone exits, so rclone is stopped instead
+ * (`stopRclone`, null when there is no rclone of this mount to stop).
  */
-async function detachMountpoint(localPath, pid) {
+async function detachMountpoint(localPath, stopRclone) {
     if (process.platform === 'win32') {
-        if (pid !== null) {
-            try {
-                process.kill(pid, 'SIGTERM');
-            }
-            catch { /* pid may be gone */ }
-        }
+        await stopRclone?.();
         return;
     }
     let failure = 'no unmount command (fusermount, fusermount3, umount) is installed';
@@ -789,97 +1373,152 @@ async function detachMountpoint(localPath, pid) {
         'close what is using it (a shell or editor inside it, a running program) and unmount again');
 }
 /**
- * Stop a foreground mount: unmount, stop rclone, remove the record. One run at a time; after a
- * failure (the mount is busy) a later call tries again.
+ * Remove a failed mount's own record before its error is thrown. A failure to remove it (the
+ * state lock held past its wait) never replaces that error.
  */
-function makeForegroundStop(child, id, home, localPath, recordWritten) {
+async function forgetFailedMount(record, home) {
+    await deleteOwnState(record, home).catch(() => undefined);
+}
+/** Why a mount that lost its record while starting was stopped. */
+const LOST_CLAIM = 'its record was removed while the mount was starting (by an unmount or another hoody process)';
+/**
+ * Stop a foreground mount: wait for pending uploads, unmount, stop rclone, remove the record. One
+ * run at a time; after a failure (uploads still pending, the mount is busy) a later call tries again.
+ *
+ * It undoes only what this mount did: the mount point is unmounted when this rclone was seen
+ * mounted or is still running. An rclone that never started, or exited before its mount was
+ * seen, leaves the path as it is; when the path is mounted then, the record is kept and the
+ * stop says so. The record goes only while it is still this mount's ({@link deleteOwnState}).
+ */
+function makeForegroundStop(child, record, home, localPath, recordWritten, opts) {
     let running = null;
-    const run = async () => {
-        await recordWritten;
-        const exited = new Promise((res) => {
-            if (child.exitCode !== null || child.signalCode !== null)
-                return res();
-            child.once('exit', () => res());
-        });
-        await detachMountpoint(localPath, child.pid ?? null);
-        if (child.exitCode === null && child.signalCode === null) {
+    const rcloneRunning = () => !opts.spawnFailed() && child.pid !== undefined && child.exitCode === null && child.signalCode === null;
+    const stopRclone = () => {
+        if (rcloneRunning()) {
             try {
                 child.kill('SIGTERM');
             }
             catch { /* ignore */ }
         }
-        await Promise.race([exited, sleep(10000)]);
-        await deleteState(id, home);
     };
-    return () => {
+    const run = async (o) => {
+        await recordWritten;
+        const exited = new Promise((res) => {
+            if (!rcloneRunning())
+                return res();
+            child.once('exit', () => res());
+        });
+        if (!opts.seenMounted() && !rcloneRunning()) {
+            if ((await mountTableHas(localPath)) === true) {
+                throw new Error(`${localPath} is mounted, but rclone ended before this mount saw it mounted, so it was left as it is; ` +
+                    `if it is this mount's, unmount it with hoody unmount ${localPath}`);
+            }
+            await deleteOwnState(record, home);
+            return;
+        }
+        if (!o.force) {
+            await drainUploads(opts.cache, localPath, opts.kitUrl, rcloneRunning, {
+                drainTimeoutMs: o.drainTimeoutMs ?? opts.drainTimeoutMs,
+                onPending: o.onPending,
+            });
+        }
+        await detachMountpoint(localPath, stopRclone);
+        stopRclone();
+        await Promise.race([exited, sleep(RCLONE_EXIT_WAIT_MS)]);
+        await deleteOwnState(record, home);
+        await assertNothingLeftUnsent(opts.cache, localPath, opts.kitUrl);
+    };
+    return (o = {}) => {
         if (!running) {
-            running = run();
+            running = run(o);
             running.catch(() => { running = null; });
         }
         return running;
     };
 }
 /**
- * Per-mount signal handler. Each foreground mount installs its own
- * handler so concurrent programmatic mounts both clean up on SIGINT.
- * The previous singleton design dropped cleanup for the 2nd+ mount.
+ * Per-mount signal handler. Each foreground mount installs its own handler so concurrent
+ * programmatic mounts all clean up on SIGINT, SIGTERM, SIGHUP (and Ctrl-Break on Windows).
  *
- * The process exits once the mount is stopped, with `process.exitCode` (the CLI sets 130 /
- * 143; 0 when nothing set it), or 1 when the mount could not be unmounted. A second signal
- * exits at once.
+ * The library never decides the process's exit while someone else handles the signal: when
+ * the process has a listener of its own for it (the CLI, an SDK app), each mount is stopped
+ * and that is all; a stop that fails rejects the mount's `wait()` with its error, and the mount
+ * is left as it is. When the mount handlers are the only listeners, the signal would have ended
+ * the process had no mount been running: once every mount the signal stopped has settled, the
+ * handlers are removed and the signal is raised again, so the process ends as it would have. A
+ * second signal does that at once.
  */
-/** Foreground mounts whose stop a signal started and that have not settled; the last one exits. */
-const signalStops = { pending: 0, failed: false };
-function installSignalHandlers(stop, localPath) {
+/** Foreground mounts whose stop a signal started and that have not settled; the last one re-raises. */
+const signalStops = { pending: 0 };
+/** Every installed mount signal handler, so "someone else listens" can leave them out. */
+const mountSignalHandlers = new Set();
+function mountSignals() {
+    return process.platform === 'win32' ? ['SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBREAK'] : ['SIGINT', 'SIGTERM', 'SIGHUP'];
+}
+/** Whether a listener other than a mount's own handles `signal`. */
+function othersHandle(signal) {
+    return process.listeners(signal).some((l) => !mountSignalHandlers.has(l));
+}
+/** Remove every mount handler and raise `signal` again, for the process to end by it. */
+function reraise(signal) {
+    for (const h of [...mountSignalHandlers])
+        uninstallSignalHandlers(h);
+    try {
+        process.kill(process.pid, signal);
+    }
+    catch {
+        // A signal this platform cannot raise (Ctrl-Break on Windows): end as the shell reports it.
+        process.exit(128 + (osConstants.signals[signal] ?? 2));
+    }
+}
+function installSignalHandlers(stop, localPath, onStopFailed) {
     let signalled = false;
-    const handler = (..._args) => {
+    const handler = (...args) => {
+        const signal = (typeof args[0] === 'string' ? args[0] : 'SIGINT');
         if (signalled) {
+            if (othersHandle(signal))
+                return;
             process.stderr.write(`hoody mount: exiting before ${localPath} was unmounted; it may still be mounted (hoody unmount ${localPath})\n`);
-            process.exit();
+            reraise(signal);
+            return;
         }
         signalled = true;
-        // Every mount's handler runs for the same signal before any stop settles, so the process
-        // exits once all of them have finished, not when the quickest one has.
+        // Every mount's handler runs for the same signal before any stop settles, so the signal is
+        // raised again once all of them have finished, not when the quickest one has.
         signalStops.pending++;
-        stop()
+        stop({
+            onPending: (files) => {
+                process.stderr.write(`hoody mount: waiting for ${files.length} file(s) to finish uploading before unmounting ${localPath} (press Ctrl-C again to exit now; they stay queued)\n`);
+            },
+        })
             .catch((err) => {
-            signalStops.failed = true;
-            process.stderr.write(`hoody mount: ${err.message}. It is left mounted; unmount it later with hoody unmount ${localPath}\n`);
+            if (othersHandle(signal)) {
+                onStopFailed(err);
+                return;
+            }
+            // Unmounted, with files left unsent: the message says how to send them; nothing is left mounted.
+            const unmounted = err instanceof PendingUploadsError && !err.mounted;
+            process.stderr.write(`hoody mount: ${err.message}${unmounted ? '' : `. It is left mounted; unmount it later with hoody unmount ${localPath}`}\n`);
         })
             .finally(() => {
             if (--signalStops.pending > 0)
                 return;
-            const failed = signalStops.failed;
-            signalStops.failed = false;
-            if (failed) {
-                process.exitCode = 1;
-                process.exit(1);
-            }
-            else {
-                process.exit();
-            }
+            if (!othersHandle(signal))
+                reraise(signal);
         });
     };
-    process.on('SIGINT', handler);
-    process.on('SIGTERM', handler);
-    process.on('SIGHUP', handler);
-    // Ctrl-Break on Windows; the CLI's lock handler only records 149 for it while a mount runs.
-    if (process.platform === 'win32')
-        process.on('SIGBREAK', handler);
+    for (const s of mountSignals())
+        process.on(s, handler);
+    mountSignalHandlers.add(handler);
     return handler;
 }
 function uninstallSignalHandlers(handler) {
-    process.removeListener('SIGINT', handler);
-    process.removeListener('SIGTERM', handler);
-    process.removeListener('SIGHUP', handler);
-    if (process.platform === 'win32')
-        process.removeListener('SIGBREAK', handler);
+    for (const s of mountSignals())
+        process.removeListener(s, handler);
+    mountSignalHandlers.delete(handler);
 }
 function sleep(ms) {
     return new Promise((res) => setTimeout(res, ms));
-}
-function escapeForRegex(s) {
-    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 function stripTrailingSlash(s) {
     return s.endsWith('/') ? s.slice(0, -1) : s;
@@ -892,7 +1531,7 @@ function normalizeSubpath(subpath) {
         throw new Error(`subpath ${JSON.stringify(subpath)} contains '..' (path traversal not allowed)`);
     return s.split('/').map(encodeURIComponent).join('/');
 }
-function extractContainerIdFromUrl(url) {
+function extractComputerIdFromUrl(url) {
     try {
         const u = new URL(url);
         const m = u.hostname.match(/^[a-z0-9]+-([a-z0-9]+)-/i);
@@ -904,20 +1543,36 @@ function extractContainerIdFromUrl(url) {
     }
     return '';
 }
+/** A computer id or name as the API allows a name: 3 to 100 letters, digits, hyphens and underscores. */
+const COMPUTER_REF = /^[A-Za-z0-9_-]{3,100}$/;
+/**
+ * Parse a CLI target like "abc123", "my_box:/path" or "https://...".
+ * Disambiguation:
+ *   - starts with http:// or https://          → `kitUrl`, a URL of the files
+ *     program (a `#` in it throws)
+ *   - <ref> or <ref>:/<subpath>, where <ref> is a computer id or name by the
+ *     API's name rule (3 to 100 letters, digits, `-` and `_`) → `computerId`,
+ *     with the subpath without its leading slash (the caller resolves a name
+ *     to its id)
+ *   - anything else (hostname:port, a local path, a malformed URL) → throws
+ *     an Error
+ */
 export function parseCliTarget(input) {
     if (/^https?:\/\//.test(input)) {
         const hashIdx = input.indexOf('#');
         if (hashIdx >= 0)
             throw new Error(`URL must not contain '#': ${input}`);
-        return { containerId: null, kitUrl: stripTrailingSlash(input), subpath: '' };
+        return { computerId: null, kitUrl: stripTrailingSlash(input), subpath: '' };
     }
-    const idOnly = input.match(/^([a-z0-9]{4,64})$/i);
-    if (idOnly)
-        return { containerId: idOnly[1], kitUrl: null, subpath: '' };
-    const withSub = input.match(/^([a-z0-9]{4,64}):\/(.*)$/i);
-    if (withSub)
-        return { containerId: withSub[1], kitUrl: null, subpath: withSub[2] ?? '' };
+    // The optional `:/subpath` first, then the part before it: a computer id or any name the API allows (`dev`,
+    // `build_box`, `my-box`), which the CLI resolves to its id.
+    const colon = input.indexOf(':');
+    const ref = colon === -1 ? input : input.slice(0, colon);
+    const rest = colon === -1 ? undefined : input.slice(colon + 1);
+    if (COMPUTER_REF.test(ref) && (rest === undefined || rest.startsWith('/'))) {
+        return { computerId: ref, kitUrl: null, subpath: rest === undefined ? '' : rest.slice(1) };
+    }
     throw new Error(`cannot parse mount target ${JSON.stringify(input)}: ` +
-        'expected <containerId>, <containerId>:/path, or https://...');
+        'expected <computerId>, <computerId>:/path, or https://...');
 }
 export { homedir as _homedir };

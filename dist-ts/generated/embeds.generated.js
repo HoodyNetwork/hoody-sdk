@@ -8,15 +8,15 @@ export const EMBEDS_CATALOG = {
     "catalogVersion": 1,
     "catalogUrl": "https://docs.hoody.com/embeds/catalog.v1.json",
     "host": {
-        "template": "https://{projectId}-{containerId}-{segment}.{serverName}.{containersDomain}",
+        "template": "https://{projectId}-{computerId}-{segment}.{serverName}.{computersDomain}",
         "inputs": {
-            "projectId": "container.project_id",
-            "containerId": "container.id",
-            "serverName": "container.server_name"
+            "projectId": "computer.project_id",
+            "computerId": "computer.id",
+            "serverName": "computer.server_name"
         }
     },
     "domain": {
-        "fallback": "containers.hoody.com",
+        "fallback": "computers.hoody.com",
         "branches": [
             {
                 "branch": 1,
@@ -54,7 +54,14 @@ export const EMBEDS_CATALOG = {
             {
                 "branch": 3,
                 "when": {
-                    "startsWith": "containers."
+                    "any": [
+                        {
+                            "startsWith": "computers."
+                        },
+                        {
+                            "startsWith": "containers."
+                        }
+                    ]
                 },
                 "result": {
                     "host": true
@@ -72,7 +79,7 @@ export const EMBEDS_CATALOG = {
                     "replaceRegex": {
                         "pattern": "^[a-f0-9]{24}\\.api\\.",
                         "caseInsensitive": true,
-                        "with": "containers."
+                        "with": "computers."
                     }
                 }
             },
@@ -84,7 +91,7 @@ export const EMBEDS_CATALOG = {
                 "result": {
                     "stripPrefixThenPrepend": {
                         "strip": "api.",
-                        "prepend": "containers."
+                        "prepend": "computers."
                     }
                 }
             },
@@ -96,7 +103,7 @@ export const EMBEDS_CATALOG = {
                 "result": {
                     "replaceFirst": {
                         "find": ".api.",
-                        "with": ".containers."
+                        "with": ".computers."
                     }
                 }
             },
@@ -106,7 +113,7 @@ export const EMBEDS_CATALOG = {
                     "always": true
                 },
                 "result": {
-                    "prepend": "containers."
+                    "prepend": "computers."
                 }
             }
         ]
@@ -160,17 +167,17 @@ export const EMBEDS_CATALOG = {
             "segment": "terminal-{index}",
             "index": {
                 "min": 1,
-                "max": 65535,
+                "max": 9999,
                 "default": 1,
                 "selects": "instance",
-                "publicMeaning": "session number. With 24-character project and container ids, numbers above 9999 make a host label longer than 63 characters, which the SDK refuses (HOST_LABEL_TOO_LONG)."
+                "publicMeaning": "session number, 1-9999 (4501-5000 are agent sessions and are refused)."
             }
         },
         "desktop": {
             "segment": "desktop-{index}",
             "index": {
                 "min": 1,
-                "max": 59935,
+                "max": 2900,
                 "default": 1,
                 "selects": "instance",
                 "publicMeaning": "desktop number, 1 or more"
@@ -180,7 +187,7 @@ export const EMBEDS_CATALOG = {
             "segment": "agent-{index}",
             "index": {
                 "min": 1,
-                "max": 19999,
+                "max": 500,
                 "default": 1,
                 "selects": "instance",
                 "publicMeaning": "agent number, 1 or more"
@@ -190,7 +197,7 @@ export const EMBEDS_CATALOG = {
             "segment": "display-{index}",
             "index": {
                 "min": 1,
-                "max": 61535,
+                "max": 9999,
                 "default": 1,
                 "selects": "instance",
                 "publicMeaning": "display number"
@@ -210,7 +217,7 @@ export const EMBEDS_CATALOG = {
             "segment": "code-{index}",
             "index": {
                 "min": 1,
-                "max": 58535,
+                "max": 9999,
                 "default": 1,
                 "selects": "instance",
                 "publicMeaning": "Editor instance number, 1 or more. Each number is a separate editor instance with its own folder and state."
@@ -250,7 +257,7 @@ export const EMBEDS_CATALOG = {
             "segment": "n-{index}",
             "index": {
                 "min": 1,
-                "max": 61535,
+                "max": 9999,
                 "default": 1,
                 "selects": "instance",
                 "publicMeaning": "Display number the page sends its test notification to."
@@ -268,16 +275,6 @@ export const EMBEDS_CATALOG = {
         },
         "cron": {
             "segment": "cron-{index}",
-            "index": {
-                "min": 1,
-                "max": 9999,
-                "default": 1,
-                "selects": "none",
-                "publicMeaning": "Any index opens the same instance."
-            }
-        },
-        "bot": {
-            "segment": "bot-{index}",
             "index": {
                 "min": 1,
                 "max": 9999,
@@ -717,6 +714,14 @@ export const EMBEDS_CATALOG = {
                 "ephemeral": {
                     "class": "excluded",
                     "reasonCode": "mutating"
+                },
+                "parent_keys": {
+                    "class": "nonUi",
+                    "reasonCode": "non-ui"
+                },
+                "parent_origin": {
+                    "class": "nonUi",
+                    "reasonCode": "non-ui"
                 }
             },
             "publicDescription": "A full graphical desktop environment in the browser.",
@@ -885,7 +890,7 @@ export const EMBEDS_CATALOG = {
                     "class": "excluded",
                     "reasonCode": "mutating"
                 },
-                "container_id": {
+                "computer_id": {
                     "class": "excluded",
                     "reasonCode": "mutating"
                 },
@@ -913,11 +918,11 @@ export const EMBEDS_CATALOG = {
                     "class": "excluded",
                     "reasonCode": "mutating"
                 },
-                "keyboard_layout": {
+                "override_height": {
                     "class": "excluded",
-                    "reasonCode": "mutating"
+                    "reasonCode": "not-supported"
                 },
-                "clipboard_poll": {
+                "keyboard_layout": {
                     "class": "excluded",
                     "reasonCode": "mutating"
                 },
@@ -928,6 +933,14 @@ export const EMBEDS_CATALOG = {
                 "notification_server_url": {
                     "class": "excluded",
                     "reasonCode": "mutating"
+                },
+                "web_notifications": {
+                    "class": "dead",
+                    "reasonCode": "not-supported"
+                },
+                "notification_connection_type": {
+                    "class": "dead",
+                    "reasonCode": "not-supported"
                 },
                 "sharing": {
                     "class": "excluded",
@@ -1039,7 +1052,7 @@ export const EMBEDS_CATALOG = {
                     "reasonCode": "mutating"
                 }
             },
-            "publicDescription": "A VS Code editor in the browser, opened on a folder of the container, optionally focused on a single extension.",
+            "publicDescription": "A VS Code editor in the browser, opened on a folder of the computer, optionally focused on a single extension.",
             "defaultView": "code.editor"
         },
         "files": {
@@ -1124,7 +1137,7 @@ export const EMBEDS_CATALOG = {
                     "reasonCode": "non-ui"
                 }
             },
-            "publicDescription": "A file manager for the container: folder listings, search, a code editor and a read-only viewer.",
+            "publicDescription": "A file manager for the computer: folder listings, search, a code editor and a read-only viewer.",
             "defaultView": "files.folder"
         },
         "notes": {
@@ -1225,17 +1238,6 @@ export const EMBEDS_CATALOG = {
             "publicDescription": "Cron manager: browse and edit the crontab entries of each user.",
             "defaultView": "cron.manager"
         },
-        "bot": {
-            "ui": "app",
-            "views": [
-                "bot.index",
-                "bot.detail",
-                "bot.confirmDelete"
-            ],
-            "refused": {},
-            "publicDescription": "Management pages for chat-channel bot registrations.",
-            "defaultView": "bot.index"
-        },
         "run": {
             "ui": "app",
             "views": [
@@ -1271,6 +1273,26 @@ export const EMBEDS_CATALOG = {
                     "reasonCode": "non-ui"
                 },
                 "print_curl": {
+                    "class": "nonUi",
+                    "reasonCode": "non-ui"
+                },
+                "args": {
+                    "class": "nonUi",
+                    "reasonCode": "non-ui"
+                },
+                "pass_env": {
+                    "class": "nonUi",
+                    "reasonCode": "non-ui"
+                },
+                "launch_tag": {
+                    "class": "nonUi",
+                    "reasonCode": "non-ui"
+                },
+                "launch_env": {
+                    "class": "nonUi",
+                    "reasonCode": "non-ui"
+                },
+                "enrich": {
                     "class": "nonUi",
                     "reasonCode": "non-ui"
                 },
@@ -1353,6 +1375,12 @@ export const EMBEDS_CATALOG = {
             "views": [],
             "refused": {},
             "publicDescription": "Reverse tunnel service; it has no browser page."
+        },
+        "vm": {
+            "ui": "none",
+            "views": [],
+            "refused": {},
+            "publicDescription": "Virtual machine service; it has no browser page."
         },
         "ssh": {
             "ui": "none",
@@ -1688,6 +1716,22 @@ export const EMBEDS_CATALOG = {
                         "webgl"
                     ],
                     "publicDescription": "Renderer used to draw the terminal: webgl (the default; Firefox uses dom), dom, or canvas (drawn with WebGL). Phones, tablets and other touch-screen devices use dom even when webgl or canvas is asked for. Try dom if text renders wrongly with WebGL on a particular browser or GPU."
+                },
+                "parent_keys": {
+                    "wire": "parent_keys",
+                    "in": "query",
+                    "type": "boolean",
+                    "class": "typed",
+                    "publicDescription": "Hand two keyboard chords to the page that frames the terminal: Ctrl+Alt+B and Ctrl+Alt with an arrow key are not sent to the terminal, and that page receives a hoody-parent-key message naming the chord (escape, left, right, up or down), sent only to its own origin. Without a framing page the keys work as usual."
+                },
+                "parent_origin": {
+                    "wire": "parent_origin",
+                    "in": "query",
+                    "type": "string",
+                    "class": "typed",
+                    "pattern": "^https?://",
+                    "format": "uri",
+                    "publicDescription": "The origin of the page that frames the terminal, such as https://app.example.com, for parent_keys. Used when the browser sends no referrer naming that page. The terminal keeps the origin it uses in its own address, so its own reloads keep reaching that page. Ignored unless it is an http or https origin."
                 }
             },
             "required": [],
@@ -2050,6 +2094,22 @@ export const EMBEDS_CATALOG = {
                         "webgl"
                     ],
                     "publicDescription": "Renderer used to draw the terminal: webgl (the default; Firefox uses dom), dom, or canvas (drawn with WebGL). Phones, tablets and other touch-screen devices use dom even when webgl or canvas is asked for. Try dom if text renders wrongly with WebGL on a particular browser or GPU."
+                },
+                "parent_keys": {
+                    "wire": "parent_keys",
+                    "in": "query",
+                    "type": "boolean",
+                    "class": "typed",
+                    "publicDescription": "Hand two keyboard chords to the page that frames the terminal: Ctrl+Alt+B and Ctrl+Alt with an arrow key are not sent to the terminal, and that page receives a hoody-parent-key message naming the chord (escape, left, right, up or down), sent only to its own origin. Without a framing page the keys work as usual."
+                },
+                "parent_origin": {
+                    "wire": "parent_origin",
+                    "in": "query",
+                    "type": "string",
+                    "class": "typed",
+                    "pattern": "^https?://",
+                    "format": "uri",
+                    "publicDescription": "The origin of the page that frames the terminal, such as https://app.example.com, for parent_keys. Used when the browser sends no referrer naming that page. The terminal keeps the origin it uses in its own address, so its own reloads keep reaching that page. Ignored unless it is an http or https origin."
                 }
             },
             "required": [],
@@ -2099,7 +2159,7 @@ export const EMBEDS_CATALOG = {
                     "in": "query",
                     "type": "boolean",
                     "class": "typed",
-                    "publicDescription": "Open new application windows maximized. Takes effect only on a desktop of at least 1024x1024; on a smaller desktop new windows already fill the screen."
+                    "publicDescription": "Open new application windows maximized. On by default; off by default when decorations is false or 0, since a window without a title bar has nothing to restore it from. Set false to keep the centred placement. On a desktop smaller than 1024 pixels in either direction new windows fill the screen whatever this says; dialogs, menus and fixed-size windows are never maximized."
                 },
                 "readonly": {
                     "wire": "readonly",
@@ -2115,6 +2175,50 @@ export const EMBEDS_CATALOG = {
                     "class": "typed",
                     "publicDescription": "Use the dark colour scheme."
                 },
+                "colorScheme": {
+                    "wire": "colorScheme",
+                    "in": "query",
+                    "type": "string",
+                    "class": "passthrough",
+                    "enum": [
+                        "light",
+                        "dark",
+                        "system"
+                    ],
+                    "publicDescription": "Colour scheme of the viewer: `light`, `dark`, or `system` to follow the device. The default is `system`. If dark_mode is also set, `system` wins over it and `dark_mode=true` wins over `light`."
+                },
+                "theme": {
+                    "wire": "theme",
+                    "in": "query",
+                    "type": "string",
+                    "class": "passthrough",
+                    "enum": [
+                        "oc-1",
+                        "aura",
+                        "ayu",
+                        "carbonfox",
+                        "catppuccin",
+                        "dracula",
+                        "gruvbox",
+                        "monokai",
+                        "nightowl",
+                        "nord",
+                        "onedarkpro",
+                        "shadesofpurple",
+                        "solarized",
+                        "tokyonight",
+                        "vesper"
+                    ],
+                    "publicDescription": "Colour theme of the viewer interface. The default is `oc-1`."
+                },
+                "font": {
+                    "wire": "font",
+                    "in": "query",
+                    "type": "string",
+                    "class": "passthrough",
+                    "pattern": "^[a-zA-Z0-9 _-]+$",
+                    "publicDescription": "Font family of the viewer interface, by name, for example `Inter` or `IBM Plex Mono`. Letters, digits, spaces, underscores and hyphens only. A name the browser cannot find falls back to Inter. By default the viewer uses its own font."
+                },
                 "encoding": {
                     "wire": "encoding",
                     "in": "query",
@@ -2127,14 +2231,42 @@ export const EMBEDS_CATALOG = {
                         "png",
                         "rgb"
                     ],
-                    "publicDescription": "Pre-selects the encoding in the settings dialog; does not change the stream encoding."
+                    "publicDescription": "Encoding the viewer asks the server to use for window updates. Defaults to `webp`, which keeps text sharp. `auto` lets the server choose, and it may switch busy windows to a video encoding that looks blurry. The server only uses an encoding that both ends support."
+                },
+                "quality_mode": {
+                    "wire": "quality_mode",
+                    "in": "query",
+                    "type": "string",
+                    "class": "passthrough",
+                    "enum": [
+                        "auto",
+                        "best",
+                        "reduced"
+                    ],
+                    "publicDescription": "How the viewer picks image quality, the same choice as the Image Quality menu. `auto` (the default) uses full quality and switches to a lower one while the connection is detected as slow, then back; each switch reconnects the viewer, so it needs reconnect to be on (with reconnect off the viewer stays at full quality). `best` always uses full quality. `reduced` uses a lower quality, for picture formats that have one: png, rgb and avif encodings stay as they are. Any other value counts as `auto`. A fixed quality overrides it."
+                },
+                "quality": {
+                    "wire": "quality",
+                    "in": "query",
+                    "type": "integer",
+                    "class": "passthrough",
+                    "min": 0,
+                    "max": 100,
+                    "publicDescription": "Fixed image quality for this viewer, 0 to 100. Unset, quality_mode decides, and a fixed quality wins over it. It also hides the Image Quality choice in the menu. Lossless encodings (png, rgb) ignore it."
                 },
                 "offscreen": {
                     "wire": "offscreen",
                     "in": "query",
                     "type": "boolean",
                     "class": "passthrough",
-                    "publicDescription": "Render with an offscreen canvas."
+                    "publicDescription": "Decode and paint in a Web Worker (offscreen canvas). On by default in Chrome and Chromium over https and in Firefox 108 or later; never on Safari or other WebKit browsers, where it stays off even if you ask for it. false turns it off."
+                },
+                "scroll": {
+                    "wire": "scroll",
+                    "in": "query",
+                    "type": "boolean",
+                    "class": "passthrough",
+                    "publicDescription": "Let the server send region copies instead of new pixels when a window scrolls, which keeps scrolling smooth. On by default except in Safari. Without this parameter the viewer offers it only to a server it has already found safe for it, and only with reconnect on; true or false forces the choice."
                 },
                 "bandwidth_limit": {
                     "wire": "bandwidth_limit",
@@ -2149,21 +2281,14 @@ export const EMBEDS_CATALOG = {
                     "in": "query",
                     "type": "string",
                     "class": "passthrough",
-                    "publicDescription": "Requested desktop width: auto or a number."
-                },
-                "override_height": {
-                    "wire": "override_height",
-                    "in": "query",
-                    "type": "string",
-                    "class": "passthrough",
-                    "publicDescription": "Requested desktop height: auto or a number."
+                    "publicDescription": "Width in pixels of the desktop the viewer asks for; the page scales it to fit the window. `auto` (the default) uses the window's own width."
                 },
                 "vrefresh": {
                     "wire": "vrefresh",
                     "in": "query",
                     "type": "integer",
                     "class": "passthrough",
-                    "publicDescription": "Refresh rate in Hz; -1 picks it automatically."
+                    "publicDescription": "Screen refresh rate in Hz sent to the server. Unset, or -1, the viewer measures it and uses 60 when it cannot."
                 },
                 "suspend_inactive_tab": {
                     "wire": "suspend_inactive_tab",
@@ -2191,14 +2316,32 @@ export const EMBEDS_CATALOG = {
                     "in": "query",
                     "type": "boolean",
                     "class": "passthrough",
-                    "publicDescription": "Show the on-screen keyboard."
+                    "publicDescription": "Show the on-screen keyboard from the start. On by default in mobile browsers and off elsewhere; the keyboard button in the menu opens and closes it either way."
                 },
                 "swap_keys": {
                     "wire": "swap_keys",
                     "in": "query",
                     "type": "boolean",
                     "class": "passthrough",
-                    "publicDescription": "Swap the Cmd and Ctrl keys."
+                    "publicDescription": "Swap the Ctrl and Cmd (Meta) keys. On by default on macOS and off elsewhere."
+                },
+                "scroll_speed": {
+                    "wire": "scroll_speed",
+                    "in": "query",
+                    "type": "number",
+                    "class": "passthrough",
+                    "min": 0.2,
+                    "max": 3,
+                    "publicDescription": "Scroll speed multiplier for a mouse wheel. 1 is normal. The default is 1; the page keeps it between 0.2 and 3."
+                },
+                "touchpad_scroll_scale": {
+                    "wire": "touchpad_scroll_scale",
+                    "in": "query",
+                    "type": "number",
+                    "class": "passthrough",
+                    "min": 0.2,
+                    "max": 2,
+                    "publicDescription": "Scroll speed multiplier for a touchpad. Lower values make scrolling less sensitive. The default is 0.85; the page keeps it between 0.2 and 2."
                 },
                 "clipboard": {
                     "wire": "clipboard",
@@ -2221,6 +2364,16 @@ export const EMBEDS_CATALOG = {
                         "UTF8_STRING"
                     ],
                     "publicDescription": "Preferred clipboard format."
+                },
+                "clipboard_poll": {
+                    "wire": "clipboard_poll",
+                    "in": "query",
+                    "type": "boolean",
+                    "class": "passthrough",
+                    "enum": [
+                        false
+                    ],
+                    "publicDescription": "Set false to stop the viewer polling your local clipboard for changes to send to the session. Polling is on by default, except in Firefox, and in Safari over https."
                 },
                 "printing": {
                     "wire": "printing",
@@ -2249,37 +2402,12 @@ export const EMBEDS_CATALOG = {
                     "class": "passthrough",
                     "publicDescription": "Allow video encodings."
                 },
-                "mediasource_video": {
-                    "wire": "mediasource_video",
-                    "in": "query",
-                    "type": "boolean",
-                    "class": "passthrough",
-                    "publicDescription": "Allow MediaSource video decoding."
-                },
-                "web_notifications": {
-                    "wire": "web_notifications",
-                    "in": "query",
-                    "type": "boolean",
-                    "class": "passthrough",
-                    "publicDescription": "Pre-set the browser-notifications option in the connection dialog."
-                },
                 "display_notifications": {
                     "wire": "display_notifications",
                     "in": "query",
                     "type": "boolean",
                     "class": "passthrough",
                     "publicDescription": "Show notifications inside the display view."
-                },
-                "notification_connection_type": {
-                    "wire": "notification_connection_type",
-                    "in": "query",
-                    "type": "string",
-                    "class": "passthrough",
-                    "enum": [
-                        "websocket",
-                        "polling"
-                    ],
-                    "publicDescription": "Pre-set the notification connection type in the connection dialog."
                 },
                 "reconnect": {
                     "wire": "reconnect",
@@ -2288,12 +2416,57 @@ export const EMBEDS_CATALOG = {
                     "class": "passthrough",
                     "publicDescription": "Reconnect automatically after a lost connection."
                 },
+                "reconnect_count": {
+                    "wire": "reconnect_count",
+                    "in": "query",
+                    "type": "integer",
+                    "class": "passthrough",
+                    "min": 1,
+                    "max": 1000,
+                    "publicDescription": "How many quick reconnect attempts the viewer makes after a connection that worked is lost, before it stops. The default is 30. Needs reconnect to be on."
+                },
+                "soft_giveup_attempts": {
+                    "wire": "soft_giveup_attempts",
+                    "in": "query",
+                    "type": "integer",
+                    "class": "passthrough",
+                    "min": 1,
+                    "max": 1000,
+                    "publicDescription": "Failed attempts to reach a display that has not connected yet before the viewer reports that it cannot connect and moves to slow retries. The default is 30. The time limit soft_giveup_ms counts too, whichever comes first."
+                },
+                "soft_giveup_ms": {
+                    "wire": "soft_giveup_ms",
+                    "in": "query",
+                    "type": "integer",
+                    "class": "passthrough",
+                    "min": 1000,
+                    "max": 3600000,
+                    "publicDescription": "Milliseconds of failed attempts to reach a display that has not connected yet before the viewer reports that it cannot connect and moves to slow retries. The default is 90000."
+                },
+                "slow_retry_delay": {
+                    "wire": "slow_retry_delay",
+                    "in": "query",
+                    "type": "integer",
+                    "class": "passthrough",
+                    "min": 2000,
+                    "max": 300000,
+                    "publicDescription": "Milliseconds between the slow retries that follow that report. The default is 15000."
+                },
+                "slow_retry_max_ms": {
+                    "wire": "slow_retry_max_ms",
+                    "in": "query",
+                    "type": "integer",
+                    "class": "passthrough",
+                    "min": 0,
+                    "max": 7200000,
+                    "publicDescription": "Milliseconds, counted from the first attempt, after which a viewer that has never connected stops its slow retries and closes. It is checked only once the first-connection give-up (soft_giveup_attempts, soft_giveup_ms) has happened, and does not apply after a connection that worked is lost (reconnect_count covers that). 0 removes this limit only. The default is 1200000 (20 minutes)."
+                },
                 "floating_menu": {
                     "wire": "floating_menu",
                     "in": "query",
                     "type": "boolean",
                     "class": "passthrough",
-                    "publicDescription": "Show the floating menu."
+                    "publicDescription": "Show the floating menu. false hides it together with the menu button."
                 },
                 "clock": {
                     "wire": "clock",
@@ -2334,6 +2507,63 @@ export const EMBEDS_CATALOG = {
                     "type": "boolean",
                     "class": "typed",
                     "publicDescription": "Show the display number in the page title."
+                },
+                "record": {
+                    "wire": "record",
+                    "in": "query",
+                    "type": "boolean",
+                    "class": "passthrough",
+                    "publicDescription": "Start recording the display in the browser about two seconds after the recorder is ready, which is after the viewer has painted the display for the first time (or 4 seconds after it began waiting for that paint, if nothing paints). mp4 and webm recordings normally stream to a browser download; some browsers download only after recording stops, and if the viewer falls back to buffering, use its Download menu after stopping. A gif downloads automatically after rendering. See record_format, record_codec and record_fps. The default is off."
+                },
+                "record_format": {
+                    "wire": "record_format",
+                    "in": "query",
+                    "type": "string",
+                    "class": "passthrough",
+                    "enum": [
+                        "mp4",
+                        "webm",
+                        "gif"
+                    ],
+                    "publicDescription": "File format of the recording started by record: `mp4`, `webm` or `gif`. The default is `mp4`."
+                },
+                "record_codec": {
+                    "wire": "record_codec",
+                    "in": "query",
+                    "type": "string",
+                    "class": "passthrough",
+                    "enum": [
+                        "h264",
+                        "h265",
+                        "vp8",
+                        "vp9"
+                    ],
+                    "publicDescription": "Video codec of the recording: `h264` or `h265` for mp4, `vp8` or `vp9` for webm. The default is `h264` for mp4 and `vp9` (else `vp8`) for webm. A codec the format or the browser does not support is replaced by another codec of the same format when the browser has one; when it has none (no mp4 codec, or no webm support), recording does not start and the viewer does not switch to another format. gif has no codec."
+                },
+                "record_fps": {
+                    "wire": "record_fps",
+                    "in": "query",
+                    "type": "integer",
+                    "class": "passthrough",
+                    "min": 1,
+                    "max": 60,
+                    "publicDescription": "Frames per second of the recording, 1 to 60. The default is 30, or 10 for gif."
+                },
+                "parent_keys": {
+                    "wire": "parent_keys",
+                    "in": "query",
+                    "type": "boolean",
+                    "class": "typed",
+                    "publicDescription": "Hand two keyboard chords to the page that frames the viewer: Ctrl+Alt+B and Ctrl+Alt with an arrow key are not sent to the display, and that page receives a hoody-parent-key message naming the chord (escape, left, right, up or down), sent only to its own origin. Without a framing page the keys work as usual."
+                },
+                "parent_origin": {
+                    "wire": "parent_origin",
+                    "in": "query",
+                    "type": "string",
+                    "class": "typed",
+                    "pattern": "^https?://",
+                    "format": "uri",
+                    "publicDescription": "The origin of the page that frames the viewer, such as https://app.example.com, for parent_keys. Used when the browser sends no referrer naming that page. The viewer keeps the origin it uses in its own address, so its own reloads and reconnects keep reaching that page. Ignored unless it is an http or https origin."
                 }
             },
             "required": [],
@@ -2341,7 +2571,7 @@ export const EMBEDS_CATALOG = {
             "flags": [],
             "freeQuery": false,
             "frameable": "yes",
-            "alias": "refused",
+            "alias": "supported",
             "spawns": false,
             "mutating": false,
             "forwardsQuery": true
@@ -2372,7 +2602,7 @@ export const EMBEDS_CATALOG = {
             "flags": [],
             "freeQuery": false,
             "frameable": "yes",
-            "alias": "refused",
+            "alias": "supported",
             "spawns": false,
             "mutating": false,
             "forwardsQuery": true
@@ -2413,7 +2643,7 @@ export const EMBEDS_CATALOG = {
             "flags": [],
             "freeQuery": false,
             "frameable": "yes",
-            "alias": "refused",
+            "alias": "supported",
             "spawns": false,
             "mutating": false,
             "forwardsQuery": true
@@ -2486,7 +2716,7 @@ export const EMBEDS_CATALOG = {
                     "type": "string",
                     "class": "typed",
                     "pattern": "^/",
-                    "publicDescription": "Absolute path of the folder to open. It applies when the editor instance starts; a running instance keeps the folder it was started with."
+                    "publicDescription": "Absolute path of the folder to open. It applies when the editor instance starts; on a running instance the page opens this folder, and the instance keeps reporting the folder it was started with."
                 },
                 "locale": {
                     "wire": "locale",
@@ -2547,7 +2777,7 @@ export const EMBEDS_CATALOG = {
                     "type": "string",
                     "class": "typed",
                     "pattern": "^/",
-                    "publicDescription": "Absolute path of the folder to open. It applies when the editor instance starts; a running instance keeps the folder it was started with."
+                    "publicDescription": "Absolute path of the folder to open. It applies when the editor instance starts; on a running instance the page opens this folder, and the instance keeps reporting the folder it was started with."
                 },
                 "extension": {
                     "wire": "extension",
@@ -2607,7 +2837,7 @@ export const EMBEDS_CATALOG = {
             "ui": "app",
             "default": false,
             "label": "Root folder",
-            "publicDescription": "The listing of the container root folder, with upload, rename and delete controls for the user.",
+            "publicDescription": "The listing of the computer root folder, with upload, rename and delete controls for the user.",
             "path": "/",
             "params": {
                 "sort": {
@@ -2787,7 +3017,7 @@ export const EMBEDS_CATALOG = {
                     "type": "string",
                     "class": "typed",
                     "encoder": "path-segments",
-                    "publicDescription": "Absolute path inside the container, starting with /. Each segment is percent-encoded; the slashes between segments are kept."
+                    "publicDescription": "Absolute path inside the computer, starting with /. Each segment is percent-encoded; the slashes between segments are kept."
                 },
                 "sort": {
                     "wire": "sort",
@@ -2968,7 +3198,7 @@ export const EMBEDS_CATALOG = {
                     "type": "string",
                     "class": "typed",
                     "encoder": "path-segments",
-                    "publicDescription": "Absolute path inside the container, starting with /. Each segment is percent-encoded; the slashes between segments are kept."
+                    "publicDescription": "Absolute path inside the computer, starting with /. Each segment is percent-encoded; the slashes between segments are kept."
                 },
                 "theme": {
                     "wire": "theme",
@@ -3271,7 +3501,7 @@ export const EMBEDS_CATALOG = {
             "ui": "app",
             "default": true,
             "label": "Home",
-            "publicDescription": "Opens the last used locally available notebook, or the first available one.",
+            "publicDescription": "Opens the last used locally available notebook, or the first available one. On a first visit, with no notebook stored in this browser, Notes needs the server to set one up.",
             "path": "/",
             "params": {
                 "mode": {
@@ -3917,7 +4147,7 @@ export const EMBEDS_CATALOG = {
             "ui": "app",
             "default": false,
             "label": "Page by alias",
-            "publicDescription": "Opens the page that has the given alias, or the notebook home when none has it.",
+            "publicDescription": "Opens the page with the given alias if it is available in this browser. If it is not, Notes waits while the first sync runs, for up to 30 seconds. If the page is still not available, Notes opens the notebook home.",
             "path": "/notebook/{userId}/alias/{alias}",
             "params": {
                 "userId": {
@@ -3935,7 +4165,7 @@ export const EMBEDS_CATALOG = {
                     "class": "typed",
                     "maxLength": 48,
                     "pattern": "^[a-z0-9_-]{1,48}$",
-                    "publicDescription": "Page alias (lowercase letters, digits, '_' and '-', up to 48 characters). Opens the page with that alias, or the notebook home when no page has it."
+                    "publicDescription": "Page alias (lowercase letters, digits, '_' and '-', up to 48 characters). Opens the matching page available in this browser, or the notebook home if it is still not available after waiting up to 30 seconds for the first sync."
                 },
                 "mode": {
                     "wire": "mode",
@@ -5457,89 +5687,6 @@ export const EMBEDS_CATALOG = {
             "mutating": false,
             "forwardsQuery": true
         },
-        "bot.index": {
-            "kit": "bot",
-            "view": "index",
-            "service": "bot",
-            "program": "bot",
-            "ui": "app",
-            "default": true,
-            "label": "Bot registrations",
-            "publicDescription": "Lists every bot registration of the owner, with a form to register a new one.",
-            "path": "/",
-            "params": {},
-            "required": [],
-            "const": {},
-            "flags": [],
-            "freeQuery": false,
-            "frameable": "yes",
-            "alias": "refused",
-            "spawns": false,
-            "mutating": false,
-            "forwardsQuery": true
-        },
-        "bot.detail": {
-            "kit": "bot",
-            "view": "detail",
-            "service": "bot",
-            "program": "bot",
-            "ui": "app",
-            "default": false,
-            "label": "Registration",
-            "publicDescription": "One bot registration with its state and its start and stop controls.",
-            "path": "/api/v1/bot/ui/registrations/{registrationId}",
-            "params": {
-                "registrationId": {
-                    "wire": "registrationId",
-                    "in": "path",
-                    "type": "string",
-                    "class": "typed",
-                    "publicDescription": "Registration id, as returned when the bot was registered or listed."
-                }
-            },
-            "required": [
-                "registrationId"
-            ],
-            "const": {},
-            "flags": [],
-            "freeQuery": false,
-            "frameable": "yes",
-            "alias": "refused",
-            "spawns": false,
-            "mutating": false,
-            "forwardsQuery": true
-        },
-        "bot.confirmDelete": {
-            "kit": "bot",
-            "view": "confirmDelete",
-            "service": "bot",
-            "program": "bot",
-            "ui": "app",
-            "default": false,
-            "label": "Confirm deletion",
-            "publicDescription": "Asks for confirmation before a registration is deleted. Opening this page deletes nothing.",
-            "path": "/api/v1/bot/ui/registrations/{registrationId}/delete",
-            "params": {
-                "registrationId": {
-                    "wire": "registrationId",
-                    "in": "path",
-                    "type": "string",
-                    "class": "typed",
-                    "publicDescription": "Registration id, as returned when the bot was registered or listed."
-                }
-            },
-            "required": [
-                "registrationId"
-            ],
-            "const": {},
-            "flags": [],
-            "freeQuery": false,
-            "frameable": "yes",
-            "alias": "refused",
-            "spawns": false,
-            "mutating": false,
-            "forwardsQuery": true
-        },
         "run.results": {
             "kit": "run",
             "view": "results",
@@ -5690,7 +5837,7 @@ export const EMBEDS_CATALOG = {
             "ui": "user-content",
             "default": true,
             "label": "Script page",
-            "publicDescription": "The response of your script for the given path. Opening it runs the script; any query parameters are passed to it unchanged.",
+            "publicDescription": "The response of your script for the given path. Opening it runs the script, which reads the query parameters in `metadata.query`; a repeated key keeps only its last value. On a script with `@token`, a `token` query parameter that authenticates the request is removed first. A route parameter, such as `id` in `[id].ts`, replaces a query parameter of the same name.",
             "path": "/{path}",
             "params": {
                 "path": {
@@ -5699,7 +5846,7 @@ export const EMBEDS_CATALOG = {
                     "type": "string",
                     "class": "typed",
                     "encoder": "path-segments",
-                    "publicDescription": "Path of the script route to open, without the leading slash. Each segment is percent-encoded; the slashes between segments are kept."
+                    "publicDescription": "Path of the script route to open, starting with `/`. Each segment is percent-encoded and the slashes between segments are kept; the builder refuses a `.` or `..` segment. Once decoded, the path may hold only ASCII letters, digits, `-`, `_`, `.` and `/`: any other character gets a 400 answer, even when it is percent-encoded."
                 }
             },
             "required": [
@@ -5885,14 +6032,6 @@ export function makeEmbedWrappers(build) {
         cron: {
             /** Cron manager. */
             manager: (target, opts) => build("cron.manager", target, (opts ?? {})),
-        },
-        bot: {
-            /** Bot registrations. */
-            index: (target, opts) => build("bot.index", target, (opts ?? {})),
-            /** Registration. */
-            detail: (target, opts) => build("bot.detail", target, (opts ?? {})),
-            /** Confirm deletion. */
-            confirmDelete: (target, opts) => build("bot.confirmDelete", target, (opts ?? {})),
         },
         run: {
             /** Results. */

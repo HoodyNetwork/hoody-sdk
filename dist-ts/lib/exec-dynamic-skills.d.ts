@@ -4,8 +4,8 @@
  * Provides the `filterAgentScripts` utility used to select only scripts
  * tagged with `@tags agent` from the full discovery result.
  */
-import type { DiscoveredScript } from './exec-dynamic-discovery.js';
+import type { CallableScript } from './exec-dynamic-discovery.js';
 /**
  * Filter discovered scripts to only those with `@tags agent`.
  */
-export declare function filterAgentScripts(scripts: DiscoveredScript[]): DiscoveredScript[];
+export declare function filterAgentScripts(scripts: CallableScript[]): CallableScript[];

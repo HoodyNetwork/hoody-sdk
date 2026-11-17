@@ -11,7 +11,7 @@
  * The generated client already tracks a session `generation`, but privately,
  * so `lib/hoody-client.ts` overrides the four session methods and calls
  * {@link bumpEventsSession} around `super`. A session is shared by a client
- * and every client derived from it (withRealm/withContainer), and logout,
+ * and every client derived from it (withRealm/withComputer), and logout,
  * login and adoptSession end it for all of them; setToken moves only the one
  * client to a session of its own.
  */
@@ -20,9 +20,13 @@ export declare class EventsSession {
     private readonly listeners;
     private gen;
     /** Increases on every bump. The runtime records it and discards work started under an older value. */
-    get generation(): number;
+    getGeneration(): number;
     /** End the current session for this runtime: listeners close the socket and drop all state. */
     bump(): void;
+    /**
+     * Call `listener` on every later {@link bump}. Returns a function that removes it.
+     * A listener that throws does not stop the others.
+     */
     onBump(listener: () => void): () => void;
 }
 /** The EventsSession of `client`, created on first use. */

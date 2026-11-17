@@ -1,15 +1,15 @@
 /** Every event type the server declares, in catalog order. */
-export declare const EVENT_TYPES: readonly ["account.updated", "activity.logged", "auth.token.created", "auth.token.deleted", "auth.token.disabled", "auth.token.enabled", "auth.token.updated", "billing.balance_changed", "billing.invoice.created", "billing.payment_method.added", "billing.payment_method.default_changed", "billing.payment_method.removed", "billing.payment_method.updated", "billing.payment.failed", "billing.payment.succeeded", "billing.payment.updated", "container.access_restored", "container.access_suspended", "container.autostart_disabled", "container.autostart_enabled", "container.copying", "container.creating", "container.deleted", "container.deleting", "container.display.enabled", "container.env.applied", "container.env.failed", "container.env.updated", "container.failed", "container.network.created", "container.network.deleted", "container.network.failed", "container.network.running", "container.network.stopped", "container.network.updated", "container.operation.completed", "container.operation.failed", "container.paused", "container.renamed", "container.resource_updated", "container.running", "container.snapshot.created", "container.snapshot.deleted", "container.snapshot.renamed", "container.snapshot.restored", "container.ssh_key.added", "container.ssh_key.removed", "container.stopped", "container.updated", "firewall.rule.added", "firewall.rule.disabled", "firewall.rule.enabled", "firewall.rule.removed", "firewall.rule.updated", "image.library.added", "notification.created", "notification.deleted", "notification.read", "notification.updated", "pool.created", "pool.deleted", "pool.invitation_revoked", "pool.invited", "pool.member.joined", "pool.member.left", "pool.member.role_changed", "pool.updated", "project.created", "project.deleted", "project.permission.granted", "project.permission.revoked", "project.permission.updated", "project.updated", "proxy.alias.created", "proxy.alias.deleted", "proxy.alias.disabled", "proxy.alias.enabled", "proxy.alias.expired", "proxy.alias.expiring_soon", "proxy.alias.updated", "proxy.permissions.default_changed", "proxy.permissions.group_added", "proxy.permissions.group_removed", "proxy.permissions.group_updated", "proxy.permissions.updated", "server.command.completed", "server.command.failed", "server.created", "server.deleted", "server.disabled", "server.enabled", "server.health_changed", "server.offer.published", "server.offer.updated", "server.offer.withdrawn", "server.rental_expired", "server.rental_expiring", "server.rental_extended", "server.rental_hold_started", "server.rental_started", "server.rental_terminated", "server.rental_updated", "server.reservation.created", "server.reservation.fulfilled", "server.reservation.refunded", "server.updated", "storage.share.created", "storage.share.deleted", "storage.share.disabled", "storage.share.enabled", "storage.share.expired", "storage.share.expiring_soon", "storage.share.mount_changed", "storage.share.updated", "vault.cleared", "vault.key.deleted", "vault.key.set"];
+export declare const EVENT_TYPES: readonly ["account.updated", "activity.logged", "auth.token.created", "auth.token.deleted", "auth.token.disabled", "auth.token.enabled", "auth.token.updated", "billing.balance_changed", "billing.invoice.created", "billing.payment_method.added", "billing.payment_method.default_changed", "billing.payment_method.removed", "billing.payment_method.updated", "billing.payment.failed", "billing.payment.succeeded", "billing.payment.updated", "computer.access_restored", "computer.access_suspended", "computer.autostart_disabled", "computer.autostart_enabled", "computer.copying", "computer.creating", "computer.deleted", "computer.deleting", "computer.display.enabled", "computer.env.applied", "computer.env.failed", "computer.env.updated", "computer.failed", "computer.network.created", "computer.network.deleted", "computer.network.failed", "computer.network.running", "computer.network.stopped", "computer.network.updated", "computer.operation.completed", "computer.operation.failed", "computer.paused", "computer.renamed", "computer.resource_updated", "computer.running", "computer.snapshot.created", "computer.snapshot.deleted", "computer.snapshot.renamed", "computer.snapshot.restored", "computer.ssh_key.added", "computer.ssh_key.removed", "computer.stopped", "computer.updated", "firewall.rule.added", "firewall.rule.disabled", "firewall.rule.enabled", "firewall.rule.removed", "firewall.rule.updated", "image.library.added", "notification.created", "notification.deleted", "notification.read", "notification.updated", "pool.created", "pool.deleted", "pool.invitation_revoked", "pool.invited", "pool.member.joined", "pool.member.left", "pool.member.role_changed", "pool.updated", "project.created", "project.deleted", "project.permission.granted", "project.permission.revoked", "project.permission.updated", "project.updated", "proxy.alias.created", "proxy.alias.deleted", "proxy.alias.disabled", "proxy.alias.enabled", "proxy.alias.expired", "proxy.alias.expiring_soon", "proxy.alias.updated", "proxy.permissions.default_changed", "proxy.permissions.group_added", "proxy.permissions.group_removed", "proxy.permissions.group_updated", "proxy.permissions.updated", "server.command.completed", "server.command.failed", "server.created", "server.deleted", "server.disabled", "server.enabled", "server.health_changed", "server.offer.published", "server.offer.updated", "server.offer.withdrawn", "server.rental_expired", "server.rental_expiring", "server.rental_extended", "server.rental_hold_started", "server.rental_started", "server.rental_terminated", "server.rental_updated", "server.reservation.created", "server.reservation.fulfilled", "server.reservation.refunded", "server.updated", "storage.share.created", "storage.share.deleted", "storage.share.disabled", "storage.share.enabled", "storage.share.expired", "storage.share.expiring_soon", "storage.share.mount_changed", "storage.share.updated", "vault.cleared", "vault.key.deleted", "vault.key.set"];
 /** An event type name. */
 export type EventType = typeof EVENT_TYPES[number];
 /** A resource type named by the catalog. */
-export type ResourceType = 'account' | 'activity_log' | 'auth_token' | 'container' | 'container_network' | 'firewall' | 'invoice' | 'notification' | 'payment' | 'payment_method' | 'pool' | 'project' | 'project_permission' | 'proxy_alias' | 'proxy_permissions' | 'reservation' | 'server' | 'server_offer' | 'storage_share' | 'user_image' | 'vault' | 'wallet';
+export type ResourceType = 'account' | 'activity_log' | 'auth_token' | 'computer' | 'computer_network' | 'firewall' | 'invoice' | 'notification' | 'payment' | 'payment_method' | 'pool' | 'project' | 'project_permission' | 'proxy_alias' | 'proxy_permissions' | 'reservation' | 'server' | 'server_offer' | 'storage_share' | 'user_image' | 'vault' | 'wallet';
 /** Types written to history and delivered with a cursor. */
-export type PersistedEventType = 'account.updated' | 'auth.token.created' | 'auth.token.deleted' | 'auth.token.disabled' | 'auth.token.enabled' | 'auth.token.updated' | 'billing.balance_changed' | 'billing.invoice.created' | 'billing.payment_method.added' | 'billing.payment_method.default_changed' | 'billing.payment_method.removed' | 'billing.payment_method.updated' | 'billing.payment.failed' | 'billing.payment.succeeded' | 'billing.payment.updated' | 'container.access_restored' | 'container.access_suspended' | 'container.autostart_disabled' | 'container.autostart_enabled' | 'container.copying' | 'container.creating' | 'container.deleted' | 'container.deleting' | 'container.display.enabled' | 'container.env.applied' | 'container.env.failed' | 'container.env.updated' | 'container.failed' | 'container.network.created' | 'container.network.deleted' | 'container.network.failed' | 'container.network.running' | 'container.network.stopped' | 'container.network.updated' | 'container.operation.completed' | 'container.operation.failed' | 'container.paused' | 'container.renamed' | 'container.resource_updated' | 'container.running' | 'container.snapshot.created' | 'container.snapshot.deleted' | 'container.snapshot.renamed' | 'container.snapshot.restored' | 'container.ssh_key.added' | 'container.ssh_key.removed' | 'container.stopped' | 'container.updated' | 'firewall.rule.added' | 'firewall.rule.disabled' | 'firewall.rule.enabled' | 'firewall.rule.removed' | 'firewall.rule.updated' | 'image.library.added' | 'notification.created' | 'notification.deleted' | 'notification.read' | 'notification.updated' | 'pool.created' | 'pool.deleted' | 'pool.invitation_revoked' | 'pool.invited' | 'pool.member.joined' | 'pool.member.left' | 'pool.member.role_changed' | 'pool.updated' | 'project.created' | 'project.deleted' | 'project.permission.granted' | 'project.permission.revoked' | 'project.permission.updated' | 'project.updated' | 'proxy.alias.created' | 'proxy.alias.deleted' | 'proxy.alias.disabled' | 'proxy.alias.enabled' | 'proxy.alias.expired' | 'proxy.alias.expiring_soon' | 'proxy.alias.updated' | 'proxy.permissions.default_changed' | 'proxy.permissions.group_added' | 'proxy.permissions.group_removed' | 'proxy.permissions.group_updated' | 'proxy.permissions.updated' | 'server.command.completed' | 'server.command.failed' | 'server.created' | 'server.deleted' | 'server.disabled' | 'server.enabled' | 'server.health_changed' | 'server.offer.published' | 'server.offer.updated' | 'server.offer.withdrawn' | 'server.rental_expired' | 'server.rental_expiring' | 'server.rental_extended' | 'server.rental_hold_started' | 'server.rental_started' | 'server.rental_terminated' | 'server.rental_updated' | 'server.reservation.created' | 'server.reservation.fulfilled' | 'server.reservation.refunded' | 'server.updated' | 'storage.share.created' | 'storage.share.deleted' | 'storage.share.disabled' | 'storage.share.enabled' | 'storage.share.expired' | 'storage.share.expiring_soon' | 'storage.share.mount_changed' | 'storage.share.updated' | 'vault.cleared' | 'vault.key.deleted' | 'vault.key.set';
+export type PersistedEventType = 'account.updated' | 'auth.token.created' | 'auth.token.deleted' | 'auth.token.disabled' | 'auth.token.enabled' | 'auth.token.updated' | 'billing.balance_changed' | 'billing.invoice.created' | 'billing.payment_method.added' | 'billing.payment_method.default_changed' | 'billing.payment_method.removed' | 'billing.payment_method.updated' | 'billing.payment.failed' | 'billing.payment.succeeded' | 'billing.payment.updated' | 'computer.access_restored' | 'computer.access_suspended' | 'computer.autostart_disabled' | 'computer.autostart_enabled' | 'computer.copying' | 'computer.creating' | 'computer.deleted' | 'computer.deleting' | 'computer.display.enabled' | 'computer.env.applied' | 'computer.env.failed' | 'computer.env.updated' | 'computer.failed' | 'computer.network.created' | 'computer.network.deleted' | 'computer.network.failed' | 'computer.network.running' | 'computer.network.stopped' | 'computer.network.updated' | 'computer.operation.completed' | 'computer.operation.failed' | 'computer.paused' | 'computer.renamed' | 'computer.resource_updated' | 'computer.running' | 'computer.snapshot.created' | 'computer.snapshot.deleted' | 'computer.snapshot.renamed' | 'computer.snapshot.restored' | 'computer.ssh_key.added' | 'computer.ssh_key.removed' | 'computer.stopped' | 'computer.updated' | 'firewall.rule.added' | 'firewall.rule.disabled' | 'firewall.rule.enabled' | 'firewall.rule.removed' | 'firewall.rule.updated' | 'image.library.added' | 'notification.created' | 'notification.deleted' | 'notification.read' | 'notification.updated' | 'pool.created' | 'pool.deleted' | 'pool.invitation_revoked' | 'pool.invited' | 'pool.member.joined' | 'pool.member.left' | 'pool.member.role_changed' | 'pool.updated' | 'project.created' | 'project.deleted' | 'project.permission.granted' | 'project.permission.revoked' | 'project.permission.updated' | 'project.updated' | 'proxy.alias.created' | 'proxy.alias.deleted' | 'proxy.alias.disabled' | 'proxy.alias.enabled' | 'proxy.alias.expired' | 'proxy.alias.expiring_soon' | 'proxy.alias.updated' | 'proxy.permissions.default_changed' | 'proxy.permissions.group_added' | 'proxy.permissions.group_removed' | 'proxy.permissions.group_updated' | 'proxy.permissions.updated' | 'server.command.completed' | 'server.command.failed' | 'server.created' | 'server.deleted' | 'server.disabled' | 'server.enabled' | 'server.health_changed' | 'server.offer.published' | 'server.offer.updated' | 'server.offer.withdrawn' | 'server.rental_expired' | 'server.rental_expiring' | 'server.rental_extended' | 'server.rental_hold_started' | 'server.rental_started' | 'server.rental_terminated' | 'server.rental_updated' | 'server.reservation.created' | 'server.reservation.fulfilled' | 'server.reservation.refunded' | 'server.updated' | 'storage.share.created' | 'storage.share.deleted' | 'storage.share.disabled' | 'storage.share.enabled' | 'storage.share.expired' | 'storage.share.expiring_soon' | 'storage.share.mount_changed' | 'storage.share.updated' | 'vault.cleared' | 'vault.key.deleted' | 'vault.key.set';
 /** Live-only types: `cursor: null`, `ephemeral: true`, never replayed; losing one never raises a gap. */
 export type EphemeralEventType = 'activity.logged';
 /** Declared names the server does not emit. */
-export type ReservedEventType = 'container.deleting' | 'container.display.enabled' | 'firewall.rule.updated' | 'server.health_changed';
+export type ReservedEventType = 'computer.deleting' | 'computer.display.enabled' | 'firewall.rule.updated' | 'server.health_changed';
 /** Per-type catalog metadata (the payload schema lives in lib/events-catalog.json). */
 export interface EventCatalogInfo {
     readonly group: string;
@@ -199,9 +199,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.access_restored': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.access_restored': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -210,9 +210,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.access_suspended': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.access_suspended': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -221,9 +221,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.autostart_disabled': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.autostart_disabled': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -232,9 +232,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.autostart_enabled': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.autostart_enabled': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -243,9 +243,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.copying': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.copying': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -254,9 +254,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.creating': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.creating': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -265,9 +265,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.deleted': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.deleted': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -276,9 +276,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.deleting': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.deleting': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "reserved";
         readonly persisted: true;
@@ -287,9 +287,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.display.enabled': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.display.enabled': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "reserved";
         readonly persisted: true;
@@ -298,9 +298,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.env.applied': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.env.applied': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -309,9 +309,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.env.failed': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.env.failed': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -320,9 +320,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.env.updated': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.env.updated': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -331,9 +331,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.failed': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.failed': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -342,9 +342,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.network.created': {
-        readonly group: "container";
-        readonly resource_type: "container_network";
+    readonly 'computer.network.created': {
+        readonly group: "computer";
+        readonly resource_type: "computer_network";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -353,9 +353,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.network.deleted': {
-        readonly group: "container";
-        readonly resource_type: "container_network";
+    readonly 'computer.network.deleted': {
+        readonly group: "computer";
+        readonly resource_type: "computer_network";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -364,9 +364,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.network.failed': {
-        readonly group: "container";
-        readonly resource_type: "container_network";
+    readonly 'computer.network.failed': {
+        readonly group: "computer";
+        readonly resource_type: "computer_network";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -375,9 +375,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.network.running': {
-        readonly group: "container";
-        readonly resource_type: "container_network";
+    readonly 'computer.network.running': {
+        readonly group: "computer";
+        readonly resource_type: "computer_network";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -386,9 +386,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.network.stopped': {
-        readonly group: "container";
-        readonly resource_type: "container_network";
+    readonly 'computer.network.stopped': {
+        readonly group: "computer";
+        readonly resource_type: "computer_network";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -397,9 +397,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.network.updated': {
-        readonly group: "container";
-        readonly resource_type: "container_network";
+    readonly 'computer.network.updated': {
+        readonly group: "computer";
+        readonly resource_type: "computer_network";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -408,9 +408,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.operation.completed': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.operation.completed': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -419,9 +419,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.operation.failed': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.operation.failed': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -430,9 +430,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.paused': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.paused': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -441,9 +441,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.renamed': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.renamed': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -452,9 +452,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.resource_updated': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.resource_updated': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -463,9 +463,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.running': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.running': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -474,9 +474,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.snapshot.created': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.snapshot.created': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -485,9 +485,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.snapshot.deleted': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.snapshot.deleted': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -496,9 +496,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.snapshot.renamed': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.snapshot.renamed': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -507,9 +507,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.snapshot.restored': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.snapshot.restored': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -518,9 +518,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.ssh_key.added': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.ssh_key.added': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -529,9 +529,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.ssh_key.removed': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.ssh_key.removed': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -540,9 +540,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.stopped': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.stopped': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -551,9 +551,9 @@ export declare const EVENT_CATALOG: {
         readonly schema_version: 1;
         readonly since: "2026-09-27";
     };
-    readonly 'container.updated': {
-        readonly group: "container";
-        readonly resource_type: "container";
+    readonly 'computer.updated': {
+        readonly group: "computer";
+        readonly resource_type: "computer";
         readonly audience: "user";
         readonly status: "emitted";
         readonly persisted: true;
@@ -1329,39 +1329,39 @@ export interface EventResourceTypeMap {
     'billing.payment.failed': 'payment';
     'billing.payment.succeeded': 'payment';
     'billing.payment.updated': 'payment';
-    'container.access_restored': 'container';
-    'container.access_suspended': 'container';
-    'container.autostart_disabled': 'container';
-    'container.autostart_enabled': 'container';
-    'container.copying': 'container';
-    'container.creating': 'container';
-    'container.deleted': 'container';
-    'container.deleting': 'container';
-    'container.display.enabled': 'container';
-    'container.env.applied': 'container';
-    'container.env.failed': 'container';
-    'container.env.updated': 'container';
-    'container.failed': 'container';
-    'container.network.created': 'container_network';
-    'container.network.deleted': 'container_network';
-    'container.network.failed': 'container_network';
-    'container.network.running': 'container_network';
-    'container.network.stopped': 'container_network';
-    'container.network.updated': 'container_network';
-    'container.operation.completed': 'container';
-    'container.operation.failed': 'container';
-    'container.paused': 'container';
-    'container.renamed': 'container';
-    'container.resource_updated': 'container';
-    'container.running': 'container';
-    'container.snapshot.created': 'container';
-    'container.snapshot.deleted': 'container';
-    'container.snapshot.renamed': 'container';
-    'container.snapshot.restored': 'container';
-    'container.ssh_key.added': 'container';
-    'container.ssh_key.removed': 'container';
-    'container.stopped': 'container';
-    'container.updated': 'container';
+    'computer.access_restored': 'computer';
+    'computer.access_suspended': 'computer';
+    'computer.autostart_disabled': 'computer';
+    'computer.autostart_enabled': 'computer';
+    'computer.copying': 'computer';
+    'computer.creating': 'computer';
+    'computer.deleted': 'computer';
+    'computer.deleting': 'computer';
+    'computer.display.enabled': 'computer';
+    'computer.env.applied': 'computer';
+    'computer.env.failed': 'computer';
+    'computer.env.updated': 'computer';
+    'computer.failed': 'computer';
+    'computer.network.created': 'computer_network';
+    'computer.network.deleted': 'computer_network';
+    'computer.network.failed': 'computer_network';
+    'computer.network.running': 'computer_network';
+    'computer.network.stopped': 'computer_network';
+    'computer.network.updated': 'computer_network';
+    'computer.operation.completed': 'computer';
+    'computer.operation.failed': 'computer';
+    'computer.paused': 'computer';
+    'computer.renamed': 'computer';
+    'computer.resource_updated': 'computer';
+    'computer.running': 'computer';
+    'computer.snapshot.created': 'computer';
+    'computer.snapshot.deleted': 'computer';
+    'computer.snapshot.renamed': 'computer';
+    'computer.snapshot.restored': 'computer';
+    'computer.ssh_key.added': 'computer';
+    'computer.ssh_key.removed': 'computer';
+    'computer.stopped': 'computer';
+    'computer.updated': 'computer';
     'firewall.rule.added': 'firewall';
     'firewall.rule.disabled': 'firewall';
     'firewall.rule.enabled': 'firewall';
@@ -1631,9 +1631,9 @@ export type BillingPaymentUpdatedPayload = {
         failure_code?: string;
     };
 };
-/** Payload of `container.access_restored` (schema_version 1). */
-export type ContainerAccessRestoredPayload = {
-    container: {
+/** Payload of `computer.access_restored` (schema_version 1). */
+export type ComputerAccessRestoredPayload = {
+    computer: {
         id: string;
     };
     access: {
@@ -1642,9 +1642,9 @@ export type ContainerAccessRestoredPayload = {
     };
     reason_code: string;
 };
-/** Payload of `container.access_suspended` (schema_version 1). */
-export type ContainerAccessSuspendedPayload = {
-    container: {
+/** Payload of `computer.access_suspended` (schema_version 1). */
+export type ComputerAccessSuspendedPayload = {
+    computer: {
         id: string;
     };
     access: {
@@ -1653,27 +1653,26 @@ export type ContainerAccessSuspendedPayload = {
     };
     reason_code: string;
 };
-/** Payload of `container.autostart_disabled` (schema_version 1). */
-export type ContainerAutostartDisabledPayload = {
-    container: {
+/** Payload of `computer.autostart_disabled` (schema_version 1). */
+export type ComputerAutostartDisabledPayload = {
+    computer: {
         id: string;
         project_id: string;
         server_id: string | null;
         name: string | null;
         color: string | null;
-        container_image: string | null;
-        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming") | null;
+        computer_image: string | null;
+        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled") | null;
         ai: boolean;
         hoody_kit: boolean;
         dev_kit: boolean;
         kvm: boolean;
         autostart: boolean;
         ramdisk: boolean;
-        ramdisk_scope: "container" | "project";
-        prespawn: boolean;
+        ramdisk_scope: "computer" | "project";
         is_default: boolean;
         comment: string | null;
-        source_container_id: string | null;
+        source_computer_id: string | null;
         server_expired: boolean;
         server_expired_at: string | null;
         server_expired_reason: string | null;
@@ -1682,27 +1681,26 @@ export type ContainerAutostartDisabledPayload = {
     };
     reason_code?: string;
 };
-/** Payload of `container.autostart_enabled` (schema_version 1). */
-export type ContainerAutostartEnabledPayload = {
-    container: {
+/** Payload of `computer.autostart_enabled` (schema_version 1). */
+export type ComputerAutostartEnabledPayload = {
+    computer: {
         id: string;
         project_id: string;
         server_id: string | null;
         name: string | null;
         color: string | null;
-        container_image: string | null;
-        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming") | null;
+        computer_image: string | null;
+        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled") | null;
         ai: boolean;
         hoody_kit: boolean;
         dev_kit: boolean;
         kvm: boolean;
         autostart: boolean;
         ramdisk: boolean;
-        ramdisk_scope: "container" | "project";
-        prespawn: boolean;
+        ramdisk_scope: "computer" | "project";
         is_default: boolean;
         comment: string | null;
-        source_container_id: string | null;
+        source_computer_id: string | null;
         server_expired: boolean;
         server_expired_at: string | null;
         server_expired_reason: string | null;
@@ -1711,37 +1709,36 @@ export type ContainerAutostartEnabledPayload = {
     };
     reason_code?: string;
 };
-/** Payload of `container.copying` (schema_version 1). */
-export type ContainerCopyingPayload = {
-    container: {
+/** Payload of `computer.copying` (schema_version 1). */
+export type ComputerCopyingPayload = {
+    computer: {
         id: string;
-        status: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming";
+        status: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled";
     };
     previous: {
-        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming") | null;
+        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled") | null;
     };
 };
-/** Payload of `container.creating` (schema_version 1). */
-export type ContainerCreatingPayload = {
-    container: {
+/** Payload of `computer.creating` (schema_version 1). */
+export type ComputerCreatingPayload = {
+    computer: {
         id: string;
         project_id: string;
         server_id: string | null;
         name: string | null;
         color: string | null;
-        container_image: string | null;
-        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming") | null;
+        computer_image: string | null;
+        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled") | null;
         ai: boolean;
         hoody_kit: boolean;
         dev_kit: boolean;
         kvm: boolean;
         autostart: boolean;
         ramdisk: boolean;
-        ramdisk_scope: "container" | "project";
-        prespawn: boolean;
+        ramdisk_scope: "computer" | "project";
         is_default: boolean;
         comment: string | null;
-        source_container_id: string | null;
+        source_computer_id: string | null;
         server_expired: boolean;
         server_expired_at: string | null;
         server_expired_reason: string | null;
@@ -1750,27 +1747,26 @@ export type ContainerCreatingPayload = {
     };
     reason_code?: string;
 };
-/** Payload of `container.deleted` (schema_version 1). */
-export type ContainerDeletedPayload = {
-    container: {
+/** Payload of `computer.deleted` (schema_version 1). */
+export type ComputerDeletedPayload = {
+    computer: {
         id: string;
         project_id: string;
         server_id: string | null;
         name: string | null;
         color: string | null;
-        container_image: string | null;
-        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming") | null;
+        computer_image: string | null;
+        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled") | null;
         ai: boolean;
         hoody_kit: boolean;
         dev_kit: boolean;
         kvm: boolean;
         autostart: boolean;
         ramdisk: boolean;
-        ramdisk_scope: "container" | "project";
-        prespawn: boolean;
+        ramdisk_scope: "computer" | "project";
         is_default: boolean;
         comment: string | null;
-        source_container_id: string | null;
+        source_computer_id: string | null;
         server_expired: boolean;
         server_expired_at: string | null;
         server_expired_reason: string | null;
@@ -1780,24 +1776,24 @@ export type ContainerDeletedPayload = {
     reason_code?: string;
 };
 /**
- * Payload of `container.deleting` (schema_version 1).
+ * Payload of `computer.deleting` (schema_version 1).
  *
  * @remarks Reserved: declared but not emitted by the server.
  */
-export type ContainerDeletingPayload = {
+export type ComputerDeletingPayload = {
     [key: string]: unknown;
 };
 /**
- * Payload of `container.display.enabled` (schema_version 1).
+ * Payload of `computer.display.enabled` (schema_version 1).
  *
  * @remarks Reserved: declared but not emitted by the server.
  */
-export type ContainerDisplayEnabledPayload = {
+export type ComputerDisplayEnabledPayload = {
     [key: string]: unknown;
 };
-/** Payload of `container.env.applied` (schema_version 1). */
-export type ContainerEnvAppliedPayload = {
-    container: {
+/** Payload of `computer.env.applied` (schema_version 1). */
+export type ComputerEnvAppliedPayload = {
+    computer: {
         id: string;
     };
     env: {
@@ -1807,9 +1803,9 @@ export type ContainerEnvAppliedPayload = {
     keys?: Array<string>;
     reason_code?: string;
 };
-/** Payload of `container.env.failed` (schema_version 1). */
-export type ContainerEnvFailedPayload = {
-    container: {
+/** Payload of `computer.env.failed` (schema_version 1). */
+export type ComputerEnvFailedPayload = {
+    computer: {
         id: string;
     };
     env: {
@@ -1819,9 +1815,9 @@ export type ContainerEnvFailedPayload = {
     keys?: Array<string>;
     reason_code?: string;
 };
-/** Payload of `container.env.updated` (schema_version 1). */
-export type ContainerEnvUpdatedPayload = {
-    container: {
+/** Payload of `computer.env.updated` (schema_version 1). */
+export type ComputerEnvUpdatedPayload = {
+    computer: {
         id: string;
     };
     env: {
@@ -1831,41 +1827,40 @@ export type ContainerEnvUpdatedPayload = {
     keys?: Array<string>;
     reason_code?: string;
 };
-/** Payload of `container.failed` (schema_version 1). */
-export type ContainerFailedPayload = {
-    container: {
+/** Payload of `computer.failed` (schema_version 1). */
+export type ComputerFailedPayload = {
+    computer: {
         id: string;
         project_id: string;
         server_id: string | null;
         name: string | null;
         color: string | null;
-        container_image: string | null;
-        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming") | null;
+        computer_image: string | null;
+        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled") | null;
         ai: boolean;
         hoody_kit: boolean;
         dev_kit: boolean;
         kvm: boolean;
         autostart: boolean;
         ramdisk: boolean;
-        ramdisk_scope: "container" | "project";
-        prespawn: boolean;
+        ramdisk_scope: "computer" | "project";
         is_default: boolean;
         comment: string | null;
-        source_container_id: string | null;
+        source_computer_id: string | null;
         server_expired: boolean;
         server_expired_at: string | null;
         server_expired_reason: string | null;
         created_at: string | null;
         updated_at: string | null;
     };
-    previous_status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming") | null;
-    current_status: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming";
+    previous_status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled") | null;
+    current_status: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled";
     reason?: string;
     operation_id?: string;
 };
-/** Payload of `container.network.created` (schema_version 1). */
-export type ContainerNetworkCreatedPayload = ({
-    container: {
+/** Payload of `computer.network.created` (schema_version 1). */
+export type ComputerNetworkCreatedPayload = ({
+    computer: {
         id: string;
     };
     network: {
@@ -1877,7 +1872,7 @@ export type ContainerNetworkCreatedPayload = ({
     changes?: Array<string>;
     reason_code?: string;
 }) | ({
-    container: {
+    computer: {
         id: string;
     };
     network: {
@@ -1888,9 +1883,9 @@ export type ContainerNetworkCreatedPayload = ({
     changes?: Array<string>;
     reason_code?: string;
 });
-/** Payload of `container.network.deleted` (schema_version 1). */
-export type ContainerNetworkDeletedPayload = ({
-    container: {
+/** Payload of `computer.network.deleted` (schema_version 1). */
+export type ComputerNetworkDeletedPayload = ({
+    computer: {
         id: string;
     };
     network: {
@@ -1902,7 +1897,7 @@ export type ContainerNetworkDeletedPayload = ({
     changes?: Array<string>;
     reason_code?: string;
 }) | ({
-    container: {
+    computer: {
         id: string;
     };
     network: {
@@ -1913,9 +1908,9 @@ export type ContainerNetworkDeletedPayload = ({
     changes?: Array<string>;
     reason_code?: string;
 });
-/** Payload of `container.network.failed` (schema_version 1). */
-export type ContainerNetworkFailedPayload = ({
-    container: {
+/** Payload of `computer.network.failed` (schema_version 1). */
+export type ComputerNetworkFailedPayload = ({
+    computer: {
         id: string;
     };
     network: {
@@ -1927,7 +1922,7 @@ export type ContainerNetworkFailedPayload = ({
     changes?: Array<string>;
     reason_code?: string;
 }) | ({
-    container: {
+    computer: {
         id: string;
     };
     network: {
@@ -1938,9 +1933,9 @@ export type ContainerNetworkFailedPayload = ({
     changes?: Array<string>;
     reason_code?: string;
 });
-/** Payload of `container.network.running` (schema_version 1). */
-export type ContainerNetworkRunningPayload = ({
-    container: {
+/** Payload of `computer.network.running` (schema_version 1). */
+export type ComputerNetworkRunningPayload = ({
+    computer: {
         id: string;
     };
     network: {
@@ -1952,7 +1947,7 @@ export type ContainerNetworkRunningPayload = ({
     changes?: Array<string>;
     reason_code?: string;
 }) | ({
-    container: {
+    computer: {
         id: string;
     };
     network: {
@@ -1963,9 +1958,9 @@ export type ContainerNetworkRunningPayload = ({
     changes?: Array<string>;
     reason_code?: string;
 });
-/** Payload of `container.network.stopped` (schema_version 1). */
-export type ContainerNetworkStoppedPayload = ({
-    container: {
+/** Payload of `computer.network.stopped` (schema_version 1). */
+export type ComputerNetworkStoppedPayload = ({
+    computer: {
         id: string;
     };
     network: {
@@ -1977,7 +1972,7 @@ export type ContainerNetworkStoppedPayload = ({
     changes?: Array<string>;
     reason_code?: string;
 }) | ({
-    container: {
+    computer: {
         id: string;
     };
     network: {
@@ -1988,9 +1983,9 @@ export type ContainerNetworkStoppedPayload = ({
     changes?: Array<string>;
     reason_code?: string;
 });
-/** Payload of `container.network.updated` (schema_version 1). */
-export type ContainerNetworkUpdatedPayload = ({
-    container: {
+/** Payload of `computer.network.updated` (schema_version 1). */
+export type ComputerNetworkUpdatedPayload = ({
+    computer: {
         id: string;
     };
     network: {
@@ -2002,7 +1997,7 @@ export type ContainerNetworkUpdatedPayload = ({
     changes?: Array<string>;
     reason_code?: string;
 }) | ({
-    container: {
+    computer: {
         id: string;
     };
     network: {
@@ -2013,9 +2008,9 @@ export type ContainerNetworkUpdatedPayload = ({
     changes?: Array<string>;
     reason_code?: string;
 });
-/** Payload of `container.operation.completed` (schema_version 1). */
-export type ContainerOperationCompletedPayload = {
-    container: {
+/** Payload of `computer.operation.completed` (schema_version 1). */
+export type ComputerOperationCompletedPayload = {
+    computer: {
         id: string;
     };
     operation: {
@@ -2027,9 +2022,9 @@ export type ContainerOperationCompletedPayload = {
         supersedes?: "completed" | "failed" | "terminated" | "timeout";
     };
 };
-/** Payload of `container.operation.failed` (schema_version 1). */
-export type ContainerOperationFailedPayload = {
-    container: {
+/** Payload of `computer.operation.failed` (schema_version 1). */
+export type ComputerOperationFailedPayload = {
+    computer: {
         id: string;
     };
     operation: {
@@ -2041,37 +2036,36 @@ export type ContainerOperationFailedPayload = {
         supersedes?: "completed" | "failed" | "terminated" | "timeout";
     };
 };
-/** Payload of `container.paused` (schema_version 1). */
-export type ContainerPausedPayload = {
-    container: {
+/** Payload of `computer.paused` (schema_version 1). */
+export type ComputerPausedPayload = {
+    computer: {
         id: string;
-        status: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming";
+        status: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled";
     };
     previous: {
-        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming") | null;
+        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled") | null;
     };
 };
-/** Payload of `container.renamed` (schema_version 1). */
-export type ContainerRenamedPayload = {
-    container: {
+/** Payload of `computer.renamed` (schema_version 1). */
+export type ComputerRenamedPayload = {
+    computer: {
         id: string;
         project_id: string;
         server_id: string | null;
         name: string | null;
         color: string | null;
-        container_image: string | null;
-        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming") | null;
+        computer_image: string | null;
+        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled") | null;
         ai: boolean;
         hoody_kit: boolean;
         dev_kit: boolean;
         kvm: boolean;
         autostart: boolean;
         ramdisk: boolean;
-        ramdisk_scope: "container" | "project";
-        prespawn: boolean;
+        ramdisk_scope: "computer" | "project";
         is_default: boolean;
         comment: string | null;
-        source_container_id: string | null;
+        source_computer_id: string | null;
         server_expired: boolean;
         server_expired_at: string | null;
         server_expired_reason: string | null;
@@ -2083,27 +2077,26 @@ export type ContainerRenamedPayload = {
     };
     reason_code?: string;
 };
-/** Payload of `container.resource_updated` (schema_version 1). */
-export type ContainerResourceUpdatedPayload = {
-    container: {
+/** Payload of `computer.resource_updated` (schema_version 1). */
+export type ComputerResourceUpdatedPayload = {
+    computer: {
         id: string;
         project_id: string;
         server_id: string | null;
         name: string | null;
         color: string | null;
-        container_image: string | null;
-        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming") | null;
+        computer_image: string | null;
+        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled") | null;
         ai: boolean;
         hoody_kit: boolean;
         dev_kit: boolean;
         kvm: boolean;
         autostart: boolean;
         ramdisk: boolean;
-        ramdisk_scope: "container" | "project";
-        prespawn: boolean;
+        ramdisk_scope: "computer" | "project";
         is_default: boolean;
         comment: string | null;
-        source_container_id: string | null;
+        source_computer_id: string | null;
         server_expired: boolean;
         server_expired_at: string | null;
         server_expired_reason: string | null;
@@ -2113,41 +2106,40 @@ export type ContainerResourceUpdatedPayload = {
     changes: Array<"kvm" | "ramdisk" | "ramdisk_scope">;
     reason_code?: string;
 };
-/** Payload of `container.running` (schema_version 1). */
-export type ContainerRunningPayload = {
-    container: {
+/** Payload of `computer.running` (schema_version 1). */
+export type ComputerRunningPayload = {
+    computer: {
         id: string;
         project_id: string;
         server_id: string | null;
         name: string | null;
         color: string | null;
-        container_image: string | null;
-        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming") | null;
+        computer_image: string | null;
+        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled") | null;
         ai: boolean;
         hoody_kit: boolean;
         dev_kit: boolean;
         kvm: boolean;
         autostart: boolean;
         ramdisk: boolean;
-        ramdisk_scope: "container" | "project";
-        prespawn: boolean;
+        ramdisk_scope: "computer" | "project";
         is_default: boolean;
         comment: string | null;
-        source_container_id: string | null;
+        source_computer_id: string | null;
         server_expired: boolean;
         server_expired_at: string | null;
         server_expired_reason: string | null;
         created_at: string | null;
         updated_at: string | null;
     };
-    previous_status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming") | null;
-    current_status: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming";
+    previous_status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled") | null;
+    current_status: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled";
     reason?: string;
     operation_id?: string;
 };
-/** Payload of `container.snapshot.created` (schema_version 1). */
-export type ContainerSnapshotCreatedPayload = {
-    container: {
+/** Payload of `computer.snapshot.created` (schema_version 1). */
+export type ComputerSnapshotCreatedPayload = {
+    computer: {
         id: string;
     };
     snapshot: {
@@ -2160,9 +2152,9 @@ export type ContainerSnapshotCreatedPayload = {
     };
     reason_code?: string;
 };
-/** Payload of `container.snapshot.deleted` (schema_version 1). */
-export type ContainerSnapshotDeletedPayload = {
-    container: {
+/** Payload of `computer.snapshot.deleted` (schema_version 1). */
+export type ComputerSnapshotDeletedPayload = {
+    computer: {
         id: string;
     };
     snapshot: {
@@ -2175,9 +2167,9 @@ export type ContainerSnapshotDeletedPayload = {
     };
     reason_code?: string;
 };
-/** Payload of `container.snapshot.renamed` (schema_version 1). */
-export type ContainerSnapshotRenamedPayload = {
-    container: {
+/** Payload of `computer.snapshot.renamed` (schema_version 1). */
+export type ComputerSnapshotRenamedPayload = {
+    computer: {
         id: string;
     };
     snapshot: {
@@ -2190,9 +2182,9 @@ export type ContainerSnapshotRenamedPayload = {
     };
     reason_code?: string;
 };
-/** Payload of `container.snapshot.restored` (schema_version 1). */
-export type ContainerSnapshotRestoredPayload = {
-    container: {
+/** Payload of `computer.snapshot.restored` (schema_version 1). */
+export type ComputerSnapshotRestoredPayload = {
+    computer: {
         id: string;
     };
     snapshot: {
@@ -2205,9 +2197,9 @@ export type ContainerSnapshotRestoredPayload = {
     };
     reason_code?: string;
 };
-/** Payload of `container.ssh_key.added` (schema_version 1). */
-export type ContainerSshKeyAddedPayload = {
-    container: {
+/** Payload of `computer.ssh_key.added` (schema_version 1). */
+export type ComputerSshKeyAddedPayload = {
+    computer: {
         id: string;
     };
     ssh_key: {
@@ -2215,9 +2207,9 @@ export type ContainerSshKeyAddedPayload = {
         label: string | null;
     };
 };
-/** Payload of `container.ssh_key.removed` (schema_version 1). */
-export type ContainerSshKeyRemovedPayload = {
-    container: {
+/** Payload of `computer.ssh_key.removed` (schema_version 1). */
+export type ComputerSshKeyRemovedPayload = {
+    computer: {
         id: string;
     };
     ssh_key: {
@@ -2225,59 +2217,57 @@ export type ContainerSshKeyRemovedPayload = {
         label: string | null;
     };
 };
-/** Payload of `container.stopped` (schema_version 1). */
-export type ContainerStoppedPayload = {
-    container: {
+/** Payload of `computer.stopped` (schema_version 1). */
+export type ComputerStoppedPayload = {
+    computer: {
         id: string;
         project_id: string;
         server_id: string | null;
         name: string | null;
         color: string | null;
-        container_image: string | null;
-        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming") | null;
+        computer_image: string | null;
+        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled") | null;
         ai: boolean;
         hoody_kit: boolean;
         dev_kit: boolean;
         kvm: boolean;
         autostart: boolean;
         ramdisk: boolean;
-        ramdisk_scope: "container" | "project";
-        prespawn: boolean;
+        ramdisk_scope: "computer" | "project";
         is_default: boolean;
         comment: string | null;
-        source_container_id: string | null;
+        source_computer_id: string | null;
         server_expired: boolean;
         server_expired_at: string | null;
         server_expired_reason: string | null;
         created_at: string | null;
         updated_at: string | null;
     };
-    previous_status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming") | null;
-    current_status: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming";
+    previous_status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled") | null;
+    current_status: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled";
     reason?: string;
     operation_id?: string;
 };
-/** Payload of `container.updated` (schema_version 1). */
-export type ContainerUpdatedPayload = ({
-    container: {
+/** Payload of `computer.updated` (schema_version 1). */
+export type ComputerUpdatedPayload = ({
+    computer: {
         id: string;
         project_id: string;
         server_id: string | null;
         name: string | null;
         color: string | null;
-        container_image: string | null;
-        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming") | null;
+        computer_image: string | null;
+        status: ("creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming" | "host_reinstalled") | null;
         ai: boolean;
         hoody_kit: boolean;
         dev_kit: boolean;
         kvm: boolean;
         autostart: boolean;
         ramdisk: boolean;
-        ramdisk_scope: "container" | "project";
-        prespawn: boolean;
+        ramdisk_scope: "computer" | "project";
         is_default: boolean;
         comment: string | null;
-        source_container_id: string | null;
+        source_computer_id: string | null;
         server_expired: boolean;
         server_expired_at: string | null;
         server_expired_reason: string | null;
@@ -2290,7 +2280,7 @@ export type ContainerUpdatedPayload = ({
     };
     reason_code?: string;
 }) | ({
-    container: {
+    computer: {
         id: string;
     };
     visibility: "removed";
@@ -2298,7 +2288,7 @@ export type ContainerUpdatedPayload = ({
 });
 /** Payload of `firewall.rule.added` (schema_version 1). */
 export type FirewallRuleAddedPayload = {
-    container: {
+    computer: {
         id: string;
     };
     rule: {
@@ -2317,7 +2307,7 @@ export type FirewallRuleAddedPayload = {
 };
 /** Payload of `firewall.rule.disabled` (schema_version 1). */
 export type FirewallRuleDisabledPayload = {
-    container: {
+    computer: {
         id: string;
     };
     rule: {
@@ -2336,7 +2326,7 @@ export type FirewallRuleDisabledPayload = {
 };
 /** Payload of `firewall.rule.enabled` (schema_version 1). */
 export type FirewallRuleEnabledPayload = {
-    container: {
+    computer: {
         id: string;
     };
     rule: {
@@ -2355,7 +2345,7 @@ export type FirewallRuleEnabledPayload = {
 };
 /** Payload of `firewall.rule.removed` (schema_version 1). */
 export type FirewallRuleRemovedPayload = {
-    container: {
+    computer: {
         id: string;
     };
     rule: {
@@ -2550,7 +2540,7 @@ export type ProjectCreatedPayload = {
         color: string;
         created_at: string;
         updated_at: string;
-        max_containers: number | null;
+        max_computers: number | null;
         is_default: boolean;
         realm_ids: Array<string>;
     };
@@ -2564,7 +2554,7 @@ export type ProjectDeletedPayload = {
         color: string;
         created_at: string;
         updated_at: string;
-        max_containers: number | null;
+        max_computers: number | null;
         is_default: boolean;
         realm_ids: Array<string>;
     };
@@ -2617,15 +2607,15 @@ export type ProjectUpdatedPayload = ({
         color: string;
         created_at: string;
         updated_at: string;
-        max_containers: number | null;
+        max_computers: number | null;
         is_default: boolean;
         realm_ids: Array<string>;
     };
-    changes: Array<"alias" | "color" | "max_containers" | "realm_ids" | "provisioning_status">;
+    changes: Array<"alias" | "color" | "max_computers" | "realm_ids" | "provisioning_status">;
     previous?: {
         alias?: string;
         color?: string;
-        max_containers?: number | null;
+        max_computers?: number | null;
     };
 }) | ({
     project: {
@@ -2640,7 +2630,7 @@ export type ProxyAliasCreatedPayload = {
         id: string;
         user_id?: string;
         project_id?: string;
-        container_id?: string;
+        computer_id?: string;
         alias?: string;
         program?: string;
         index?: number;
@@ -2663,7 +2653,7 @@ export type ProxyAliasDeletedPayload = {
         id: string;
         user_id?: string;
         project_id?: string;
-        container_id?: string;
+        computer_id?: string;
         alias?: string;
         program?: string;
         index?: number;
@@ -2686,7 +2676,7 @@ export type ProxyAliasDisabledPayload = {
         id: string;
         user_id?: string;
         project_id?: string;
-        container_id?: string;
+        computer_id?: string;
         alias?: string;
         program?: string;
         index?: number;
@@ -2709,7 +2699,7 @@ export type ProxyAliasEnabledPayload = {
         id: string;
         user_id?: string;
         project_id?: string;
-        container_id?: string;
+        computer_id?: string;
         alias?: string;
         program?: string;
         index?: number;
@@ -2732,7 +2722,7 @@ export type ProxyAliasExpiredPayload = {
         id: string;
         user_id?: string;
         project_id?: string;
-        container_id?: string;
+        computer_id?: string;
         alias?: string;
         program?: string;
         index?: number;
@@ -2755,7 +2745,7 @@ export type ProxyAliasExpiringSoonPayload = {
         id: string;
         user_id?: string;
         project_id?: string;
-        container_id?: string;
+        computer_id?: string;
         alias?: string;
         program?: string;
         index?: number;
@@ -2778,7 +2768,7 @@ export type ProxyAliasUpdatedPayload = {
         id: string;
         user_id?: string;
         project_id?: string;
-        container_id?: string;
+        computer_id?: string;
         alias?: string;
         program?: string;
         index?: number;
@@ -2799,15 +2789,15 @@ export type ProxyAliasUpdatedPayload = {
 export type ProxyPermissionsDefaultChangedPayload = {
     permissions: {
         project: string | null;
-        container?: string;
-        default?: "allow" | "deny";
+        computer?: string;
+        default?: "allow" | "deny" | "inherit";
         enable_proxy?: boolean;
         file_version?: number;
         etag?: string;
     };
     changes?: Array<string>;
     previous?: {
-        default?: "allow" | "deny";
+        default?: "allow" | "deny" | "inherit";
     };
     group?: {
         name: string;
@@ -2819,15 +2809,15 @@ export type ProxyPermissionsDefaultChangedPayload = {
 export type ProxyPermissionsGroupAddedPayload = {
     permissions: {
         project: string | null;
-        container?: string;
-        default?: "allow" | "deny";
+        computer?: string;
+        default?: "allow" | "deny" | "inherit";
         enable_proxy?: boolean;
         file_version?: number;
         etag?: string;
     };
     changes?: Array<string>;
     previous?: {
-        default?: "allow" | "deny";
+        default?: "allow" | "deny" | "inherit";
     };
     group?: {
         name: string;
@@ -2839,15 +2829,15 @@ export type ProxyPermissionsGroupAddedPayload = {
 export type ProxyPermissionsGroupRemovedPayload = {
     permissions: {
         project: string | null;
-        container?: string;
-        default?: "allow" | "deny";
+        computer?: string;
+        default?: "allow" | "deny" | "inherit";
         enable_proxy?: boolean;
         file_version?: number;
         etag?: string;
     };
     changes?: Array<string>;
     previous?: {
-        default?: "allow" | "deny";
+        default?: "allow" | "deny" | "inherit";
     };
     group?: {
         name: string;
@@ -2859,15 +2849,15 @@ export type ProxyPermissionsGroupRemovedPayload = {
 export type ProxyPermissionsGroupUpdatedPayload = {
     permissions: {
         project: string | null;
-        container?: string;
-        default?: "allow" | "deny";
+        computer?: string;
+        default?: "allow" | "deny" | "inherit";
         enable_proxy?: boolean;
         file_version?: number;
         etag?: string;
     };
     changes?: Array<string>;
     previous?: {
-        default?: "allow" | "deny";
+        default?: "allow" | "deny" | "inherit";
     };
     group?: {
         name: string;
@@ -2879,15 +2869,15 @@ export type ProxyPermissionsGroupUpdatedPayload = {
 export type ProxyPermissionsUpdatedPayload = {
     permissions: {
         project: string | null;
-        container?: string;
-        default?: "allow" | "deny";
+        computer?: string;
+        default?: "allow" | "deny" | "inherit";
         enable_proxy?: boolean;
         file_version?: number;
         etag?: string;
     };
     changes?: Array<string>;
     previous?: {
-        default?: "allow" | "deny";
+        default?: "allow" | "deny" | "inherit";
     };
     group?: {
         name: string;
@@ -3003,6 +2993,15 @@ export type ServerOfferPublishedPayload = {
         delivery_hours?: number;
         setup_time_minutes?: number;
         stock?: number | null;
+        list_pricing_rules?: ({
+            [key: string]: number;
+        }) | null;
+        discount?: ({
+            percent_off: number;
+            label: string;
+            label_locale: string;
+            ends_at: string;
+        }) | null;
     };
 };
 /** Payload of `server.offer.updated` (schema_version 1). */
@@ -3042,6 +3041,15 @@ export type ServerOfferUpdatedPayload = {
         delivery_hours?: number;
         setup_time_minutes?: number;
         stock?: number | null;
+        list_pricing_rules?: ({
+            [key: string]: number;
+        }) | null;
+        discount?: ({
+            percent_off: number;
+            label: string;
+            label_locale: string;
+            ends_at: string;
+        }) | null;
     };
     changes: Array<string>;
     purchasable: boolean;
@@ -3083,6 +3091,15 @@ export type ServerOfferWithdrawnPayload = {
         delivery_hours?: number;
         setup_time_minutes?: number;
         stock?: number | null;
+        list_pricing_rules?: ({
+            [key: string]: number;
+        }) | null;
+        discount?: ({
+            percent_off: number;
+            label: string;
+            label_locale: string;
+            ends_at: string;
+        }) | null;
     };
 };
 /** Payload of `server.rental_expired` (schema_version 1). */
@@ -3336,7 +3353,7 @@ export type StorageShareMountChangedPayload = {
     reason_code?: string;
     party?: "source" | "target";
     mount: {
-        container_id: string;
+        computer_id: string;
         mount: boolean;
     };
 };
@@ -3401,39 +3418,39 @@ export interface HoodyEventMap {
     'billing.payment.failed': BillingPaymentFailedPayload;
     'billing.payment.succeeded': BillingPaymentSucceededPayload;
     'billing.payment.updated': BillingPaymentUpdatedPayload;
-    'container.access_restored': ContainerAccessRestoredPayload;
-    'container.access_suspended': ContainerAccessSuspendedPayload;
-    'container.autostart_disabled': ContainerAutostartDisabledPayload;
-    'container.autostart_enabled': ContainerAutostartEnabledPayload;
-    'container.copying': ContainerCopyingPayload;
-    'container.creating': ContainerCreatingPayload;
-    'container.deleted': ContainerDeletedPayload;
-    'container.deleting': ContainerDeletingPayload;
-    'container.display.enabled': ContainerDisplayEnabledPayload;
-    'container.env.applied': ContainerEnvAppliedPayload;
-    'container.env.failed': ContainerEnvFailedPayload;
-    'container.env.updated': ContainerEnvUpdatedPayload;
-    'container.failed': ContainerFailedPayload;
-    'container.network.created': ContainerNetworkCreatedPayload;
-    'container.network.deleted': ContainerNetworkDeletedPayload;
-    'container.network.failed': ContainerNetworkFailedPayload;
-    'container.network.running': ContainerNetworkRunningPayload;
-    'container.network.stopped': ContainerNetworkStoppedPayload;
-    'container.network.updated': ContainerNetworkUpdatedPayload;
-    'container.operation.completed': ContainerOperationCompletedPayload;
-    'container.operation.failed': ContainerOperationFailedPayload;
-    'container.paused': ContainerPausedPayload;
-    'container.renamed': ContainerRenamedPayload;
-    'container.resource_updated': ContainerResourceUpdatedPayload;
-    'container.running': ContainerRunningPayload;
-    'container.snapshot.created': ContainerSnapshotCreatedPayload;
-    'container.snapshot.deleted': ContainerSnapshotDeletedPayload;
-    'container.snapshot.renamed': ContainerSnapshotRenamedPayload;
-    'container.snapshot.restored': ContainerSnapshotRestoredPayload;
-    'container.ssh_key.added': ContainerSshKeyAddedPayload;
-    'container.ssh_key.removed': ContainerSshKeyRemovedPayload;
-    'container.stopped': ContainerStoppedPayload;
-    'container.updated': ContainerUpdatedPayload;
+    'computer.access_restored': ComputerAccessRestoredPayload;
+    'computer.access_suspended': ComputerAccessSuspendedPayload;
+    'computer.autostart_disabled': ComputerAutostartDisabledPayload;
+    'computer.autostart_enabled': ComputerAutostartEnabledPayload;
+    'computer.copying': ComputerCopyingPayload;
+    'computer.creating': ComputerCreatingPayload;
+    'computer.deleted': ComputerDeletedPayload;
+    'computer.deleting': ComputerDeletingPayload;
+    'computer.display.enabled': ComputerDisplayEnabledPayload;
+    'computer.env.applied': ComputerEnvAppliedPayload;
+    'computer.env.failed': ComputerEnvFailedPayload;
+    'computer.env.updated': ComputerEnvUpdatedPayload;
+    'computer.failed': ComputerFailedPayload;
+    'computer.network.created': ComputerNetworkCreatedPayload;
+    'computer.network.deleted': ComputerNetworkDeletedPayload;
+    'computer.network.failed': ComputerNetworkFailedPayload;
+    'computer.network.running': ComputerNetworkRunningPayload;
+    'computer.network.stopped': ComputerNetworkStoppedPayload;
+    'computer.network.updated': ComputerNetworkUpdatedPayload;
+    'computer.operation.completed': ComputerOperationCompletedPayload;
+    'computer.operation.failed': ComputerOperationFailedPayload;
+    'computer.paused': ComputerPausedPayload;
+    'computer.renamed': ComputerRenamedPayload;
+    'computer.resource_updated': ComputerResourceUpdatedPayload;
+    'computer.running': ComputerRunningPayload;
+    'computer.snapshot.created': ComputerSnapshotCreatedPayload;
+    'computer.snapshot.deleted': ComputerSnapshotDeletedPayload;
+    'computer.snapshot.renamed': ComputerSnapshotRenamedPayload;
+    'computer.snapshot.restored': ComputerSnapshotRestoredPayload;
+    'computer.ssh_key.added': ComputerSshKeyAddedPayload;
+    'computer.ssh_key.removed': ComputerSshKeyRemovedPayload;
+    'computer.stopped': ComputerStoppedPayload;
+    'computer.updated': ComputerUpdatedPayload;
     'firewall.rule.added': FirewallRuleAddedPayload;
     'firewall.rule.disabled': FirewallRuleDisabledPayload;
     'firewall.rule.enabled': FirewallRuleEnabledPayload;

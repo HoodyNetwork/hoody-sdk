@@ -12,7 +12,7 @@ export interface KitCatalogEntry {
     kind: KitCatalogKind;
     /** Short description intended for help/docs output. */
     description: string;
-    /** Subdomain segment pattern used in container URLs. */
+    /** Subdomain segment pattern used in computer URLs. */
     serviceSegmentPattern: string;
     /** Full URL sample format for this service slug. */
     urlTemplateSample: string;

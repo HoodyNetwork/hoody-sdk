@@ -2,12 +2,9 @@
  * Pipe transport — how PipeStream (Node) and PipeMedia (browser) reach the
  * pipe kit. Browser-safe: no Node imports.
  *
- * `fromClient()` used to copy only the kit URL and then call the global
- * `fetch` with no credentials: the client's injected transport (egress
- * policy) and its `kitAuth` were both lost, so a permission-guarded pipe
- * refused every transfer. A transport built from the client instead sends
- * each request through `client.http.stream()` — the same seam the generated
- * streaming methods use: injected fetch, request middleware (kitAuth, with the
+ * A transport built from the client (`fromClient()`) sends each request
+ * through `client.http.stream()` — the same seam the generated streaming
+ * methods use: injected fetch, request middleware (kitAuth, with the
  * `pipe` namespace so a per-service policy selects its entry), Authorization
  * stripped on kit URLs, and non-2xx raised as ApiError.
  *
@@ -36,7 +33,7 @@ export type PipeTransport = (method: string, url: string, request: PipeTransport
 export declare function pipeTransportFromClient(client: unknown): PipeTransport | undefined;
 /**
  * Whether a pipe request carries a credential, as the clients count one
- * (carriesCredential): a header the redaction set names, the container claim,
+ * (carriesCredential): a header the redaction set names, the computer claim,
  * a header named in `extraHeaderNames` (a configured kit-token header), or a
  * secret the URL redactor would hide (userinfo, a token in the query or path).
  * Such a request never follows a redirect: fetch strips only Authorization,

@@ -9,7 +9,7 @@
  * lib/terminal-client.ts uses:
  *
  *   - Node / Bun: real upgrade headers (`Authorization: Basic|Bearer …`, a
- *     custom `header` if the credential names one, or the container-claim
+ *     custom `header` if the credential names one, or the computer-claim
  *     pair). Opened with the `ws` package (a dependency), which takes headers.
  *   - A `token` credential with `param` goes in that query parameter in every
  *     runtime: it is what a proxy TokenAuth rule with `param` reads, and the
@@ -18,7 +18,7 @@
  *     password / jwt / token credential is folded into the URL as
  *     `?token=…` — accepted by the proxy only where the operator's rule is
  *     a token rule with `param: 'token'` (the legacy TerminalClient
- *     browser form); a containerClaim credential is refused loudly rather than
+ *     browser form); a computerClaim credential is refused loudly rather than
  *     silently dropped.
  *
  * The account token is never involved: only an explicit kit credential is.
@@ -28,6 +28,7 @@ import { type ProxyAuth, type ProxyAuthPolicy } from './proxy-auth.js';
 export declare function kitAuthForNamespace(auth: ProxyAuth | ProxyAuthPolicy | undefined, namespace: string): ProxyAuth | undefined;
 /** Read a client's configured kitAuth (a private field on HoodyClient). */
 export declare function clientKitAuth(client: unknown): ProxyAuth | ProxyAuthPolicy | undefined;
+/** True where both `window` and `document` exist (a browser page; not a worker, Node, Bun or Deno). */
 export declare function isBrowserRuntime(): boolean;
 /** What a WebSocket upgrade carries for one kit credential. */
 export interface KitWebSocketParts {

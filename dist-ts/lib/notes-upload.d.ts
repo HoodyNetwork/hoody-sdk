@@ -1,9 +1,9 @@
-/** The notes web client's part size (hoody-notes core FILE_UPLOAD_PART_SIZE). */
+/** The notes web client's part size. */
 export declare const NOTES_UPLOAD_CHUNK_BYTES: number;
 export type NotesUploadData = Blob | ArrayBuffer | ArrayBufferView | string;
 type TemplateVars = {
     projectId?: string;
-    containerId?: string;
+    computerId?: string;
     serviceIndex?: string | number;
     server?: string;
 };
@@ -107,6 +107,14 @@ declare module '../generated/notes/files.service.js' {
 }
 /** A notes file id: 22 lowercase hex + the File type suffix `18`. */
 export declare function generateNotesFileId(): string;
+/**
+ * Encode `metadata` as a tus `Upload-Metadata` header value: comma-separated `key base64(value)` pairs, values as
+ * UTF-8. Throws when a key is empty or contains whitespace or a comma.
+ */
 export declare function encodeTusMetadata(metadata: Record<string, string>): string;
+/**
+ * Install `upload()` and `resumeUpload()` on the notes files service. Runs once when this module loads; a second
+ * call does nothing.
+ */
 export declare function patchNotesUploadExtensions(): void;
 export {};

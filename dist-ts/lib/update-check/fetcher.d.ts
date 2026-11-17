@@ -33,6 +33,7 @@ export declare const BACKGROUND_TOTAL_TIMEOUT_MS = 30000;
  * must be rejected before we allocate a huge buffer.
  */
 export declare const MAX_RESPONSE_BYTES: number;
+/** A failed update-check request. `kind` tells a network failure, a non-2xx answer, a timeout and a caller abort apart. */
 export declare class FetchError extends Error {
     /**
      * Machine-readable class:
@@ -69,7 +70,7 @@ export declare class FetchError extends Error {
      * transient error. Such a failure must NOT be retried against the same
      * source — the caller should fall through to the next one.
      */
-    get isRateLimited(): boolean;
+    isRateLimitExhausted(): boolean;
 }
 export interface FetchedResource {
     url: string;

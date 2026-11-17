@@ -34,6 +34,7 @@ export declare const TMP_CLEANUP_MAX_AGE_MS: number;
  * tests rely on HOME override).
  */
 export declare function cacheDir(platform?: NodeJS.Platform, env?: NodeJS.ProcessEnv): string;
+/** The full path of the update-check cache file for `platform` and `env` (this process by default). */
 export declare function cachePath(platform?: NodeJS.Platform, env?: NodeJS.ProcessEnv): string;
 /**
  * Read the cache file if it exists and parses as JSON. Never throws —

@@ -1,6 +1,6 @@
 /**
  * `hoody-sdk/share` — make a folder on this machine appear inside a
- * container, at `/hoody/mounts/permanent/<name>` (plans/share-local-folder.md).
+ * computer, at `/hoody/mounts/permanent/<name>`.
  * It is the reverse of `hoody mount` (lib/mount.ts).
  *
  * The chain: `rclone serve webdav <dir>` on 127.0.0.1 with a per-share user
@@ -10,9 +10,9 @@
  * and rclone: it rewrites WebDAV `Destination` so renames work, and counts
  * the requests stop waits for.
  *
- * The container mount caches writes (`cache_mode: "writes"`): a write lands
- * in the container and is uploaded here within seconds. While this machine is
- * away (or the tunnel is down), reads and writes in the container fail at once
+ * The computer mount caches writes (`cache_mode: "writes"`): a write lands
+ * in the computer and is uploaded here within seconds. While this machine is
+ * away (or the tunnel is down), reads and writes in the computer fail at once
  * with an I/O error: with no listing cache every lookup needs this machine.
  * Writes accepted before that may still be uploading, so stop drains: it waits until the
  * mount reports nothing left to upload, then deletes the mount with
@@ -54,12 +54,12 @@ export interface ShareEvent {
 export interface ShareTunnel {
     publicUrl?: string | undefined;
     bind: {
-        containerPort: number;
+        computerPort: number;
         bindId?: number;
     };
-    /** `id`: the kit's session id while connected (TunnelSession clears it on close). */
+    /** `getId()`: the kit's session id while connected (TunnelSession clears it on close). */
     session: {
-        readonly id?: string;
+        getId(): string;
         onClose(fn: () => void): () => void;
     };
     close(): Promise<void>;
@@ -81,14 +81,14 @@ export interface ShareResumed {
         bindId: number;
         kind: string;
         mode: string;
-        containerPort: number;
+        computerPort: number;
     }>;
     close(): Promise<void>;
 }
 export interface ShareExposeOptions {
     url: string;
     kitAuth?: ProxyAuth | ProxyAuthPolicy;
-    containerPort: number;
+    computerPort: number;
     to: {
         host: string;
         port: number;
@@ -115,13 +115,13 @@ export interface ShareTimings {
     lostCreatePollMs: number;
     /** Interval of the stop's upload-state polls. */
     drainPollMs: number;
-    /** After the container confirmed delivery: the longest wait for the hop's requests in flight to end. */
+    /** After the computer confirmed delivery: the longest wait for the hop's requests in flight to end. */
     settleMs: number;
-    /** Without an owner: how long the mount's DELETE waits for the container to confirm it holds nothing. */
+    /** Without an owner: how long the mount's DELETE waits for the computer to confirm it holds nothing. */
     cleanupWaitMs: number;
 }
 export declare const SHARE_TIMINGS: ShareTimings;
-/** How long stop waits by default for the container to upload what it holds (`--drain-timeout`). */
+/** How long stop waits by default for the computer to upload what it holds (`--drain-timeout`). */
 export declare const SHARE_DRAIN_TIMEOUT_MS = 300000;
 /** Injection points for tests. Every field has a real default. */
 export interface ShareDeps {
@@ -150,7 +150,7 @@ export interface ShareDeps {
 export interface ShareTarget {
     /** Origin of the account API (`https://api.hoody.com`); part of the share's key. */
     apiOrigin: string;
-    containerId: string;
+    computerId: string;
     server?: string;
     projectId?: string;
 }
@@ -160,7 +160,7 @@ export interface ShareOptions {
     name?: string;
     readOnly?: boolean;
     target: ShareTarget;
-    /** The container's files kit. */
+    /** The computer's files kit. */
     kit: ShareKit;
     /** The tunnel kit's connect URL (`wss://…-tunnel-1…/api/v1/tunnel/connect`). */
     tunnelUrl: string;
@@ -172,12 +172,12 @@ export interface ShareOptions {
     /** Aborting it stops the share, during start or while serving. */
     signal?: AbortSignal;
     /**
-     * Aborting it during a stop ends the wait for the container's uploads (a
-     * second Ctrl+C). What the container still holds then stays there, and the
+     * Aborting it during a stop ends the wait for the computer's uploads (a
+     * second Ctrl+C). What the computer still holds then stays there, and the
      * stop is not reported clean. Aborting it before a stop also starts one.
      */
     forceSignal?: AbortSignal;
-    /** How long stop waits for the container's uploads. Default SHARE_DRAIN_TIMEOUT_MS. */
+    /** How long stop waits for the computer's uploads. Default SHARE_DRAIN_TIMEOUT_MS. */
     drainTimeoutMs?: number;
     onEvent?: (event: ShareEvent) => void;
     lockFlavor?: LockFlavor;
@@ -193,7 +193,7 @@ export interface ShareStopResult {
      * timed out or could not tell: writes may not have reached this machine.
      */
     drained: boolean;
-    /** The mount's DELETE discarded what the container had not sent (`hoody share stop --force`). */
+    /** The mount's DELETE discarded what the computer had not sent (`hoody share stop --force`). */
     discarded: boolean;
     state: 'done' | 'cleanup-pending';
     kind: StopKind;
@@ -204,32 +204,41 @@ export interface ShareStopResult {
 export interface ShareHandle {
     id: string;
     name: string;
-    containerId: string;
+    computerId: string;
     localPath: string;
-    /** The path in the container, as the files kit answered it. */
+    /** The path in the computer, as the files kit answered it. */
     mountPath: string;
     publicUrl: string;
     readOnly: boolean;
-    state(): ShareState;
-    /** `force`: as `forceSignal`, do not wait for the container's uploads. */
+    getState(): ShareState;
+    /** `force`: as `forceSignal`, do not wait for the computer's uploads. */
     stop(reason?: string, opts?: {
         force?: boolean;
     }): Promise<ShareStopResult>;
     /** Settles when the share has stopped, whatever stopped it. */
     done: Promise<ShareStopResult>;
 }
+/**
+ * Thrown when a share could not start. The message can be shown as it is; when cleanup did not finish it names
+ * what is left and the command that finishes it. `result` is the outcome of the stop that followed the failure,
+ * when one ran.
+ */
 export declare class ShareError extends Error {
     readonly result?: ShareStopResult | undefined;
     constructor(message: string, result?: ShareStopResult | undefined);
 }
+/**
+ * Thrown when a share name matches shares to more than one computer and none was picked. `choices` lists them; the
+ * message shows the stop command for each.
+ */
 export declare class AmbiguousShareError extends Error {
     readonly shareName: string;
     readonly choices: ReadonlyArray<{
-        containerId: string;
+        computerId: string;
         apiOrigin: string;
     }>;
     constructor(shareName: string, choices: ReadonlyArray<{
-        containerId: string;
+        computerId: string;
         apiOrigin: string;
     }>);
 }
@@ -242,11 +251,15 @@ export declare function shareNameProblem(name: string): string | null;
  * (`name:` before any `/`) is refused, so rclone can never read it as one.
  */
 export declare function resolveShareDir(input: string, platform?: NodeJS.Platform): Promise<string>;
+/**
+ * The origin (scheme, host, port) of `apiOrigin`, dropping any path, query or trailing slash. Throws when it is
+ * not a URL.
+ */
 export declare function normalizeApiOrigin(apiOrigin: string): string;
 /** The argv of the local WebDAV server. The password is in the environment, never here. */
 export declare function rcloneServeArgs(localPath: string, readOnly: boolean, platform?: NodeJS.Platform): string[];
 /**
- * The container mount's own settings, the one place they are decided. Create,
+ * The computer mount's own settings, the one place they are decided. Create,
  * the restart repair's PATCH and its check all use what this builds, and the
  * journal records it:
  *   - `writes`: in-place edits work; a write is uploaded within seconds,
@@ -256,6 +269,7 @@ export declare function rcloneServeArgs(localPath: string, readOnly: boolean, pl
  *     is away, reads and writes fail in seconds instead of hanging.
  */
 export declare const SHARE_VFS_CONFIG: ShareVfsConfig;
+/** A copy of `SHARE_VFS_CONFIG` for one share, with `read_only: true` added for a read-only share. */
 export declare function shareVfsConfig(readOnly: boolean): ShareVfsConfig;
 /**
  * A vfs_config value in one form for comparing: numbers, numeric strings and
@@ -276,16 +290,16 @@ export interface FetchShareKitOptions {
 }
 /**
  * A ShareKit over fetch, for the files kit at `baseUrl`
- * (`https://<project>-<container>-files-1.<server>.containers.hoody.com`).
+ * (`https://<project>-<computer>-files-1.<server>.computers.hoody.com`).
  * Redirects are refused, so kit credentials go only to that origin.
  */
 export declare function fetchShareKit(baseUrl: string, opts?: FetchShareKitOptions): ShareKit;
 /** A mount's `uploads`, or `gone` when the mount no longer exists. */
 export interface UploadsView {
     state: 'idle' | 'busy' | 'unknown' | 'gone';
-    /** Files written in the container and not yet uploaded; null when not known. */
+    /** Files written in the computer and not yet uploaded; null when not known. */
     dirty: number | null;
-    /** Files still open in the container; null when not known. */
+    /** Files still open in the computer; null when not known. */
     openHandles: number | null;
 }
 /** The mount's `uploads` field. Anything missing or malformed is `unknown`, never a made-up 0. */
@@ -303,12 +317,12 @@ export declare const SHARE_KIT_FEATURE = "mount_delete_uploads";
 export declare function killRecordedChild(pid: number, identity: string | null | undefined, opts?: {
     graceMs?: number;
 }): Promise<'gone' | 'killed' | 'identity-mismatch'>;
-/** The files kit's errors for a restored mount (hoody-files `server.rs`). */
+/** The files kit's errors for a restored mount. */
 export declare const BACKEND_UNAVAILABLE = "backend unavailable";
 export declare const OWN_SETTINGS_NOT_STARTED = "the mount has settings of its own and was not started after the restart; update it to start it";
 /**
- * Share `localPath` into the container. Resolves once the folder is mounted
- * in the container (`handle.mountPath`); the share then runs until
+ * Share `localPath` into the computer. Resolves once the folder is mounted
+ * in the computer (`handle.mountPath`); the share then runs until
  * `handle.stop()`, `opts.signal`, `stopShare()` from another process, rclone
  * exiting, or a reconnect conflict. A failed start cleans up what it made and
  * throws a ShareError.
@@ -317,7 +331,7 @@ export declare function share(opts: ShareOptions): Promise<ShareHandle>;
 export interface ShareListEntry {
     id: string;
     name: string;
-    containerId: string;
+    computerId: string;
     apiOrigin: string;
     localPath: string;
     mountPath?: string | undefined;
@@ -336,17 +350,17 @@ export interface ListSharesOptions {
 export declare function listShares(opts?: ListSharesOptions): Promise<ShareListEntry[]>;
 export interface StopShareOptions {
     name: string;
-    /** Picks one when the name is shared to more than one container. */
-    containerId?: string;
+    /** Picks one when the name is shared to more than one computer. */
+    computerId?: string;
     apiOrigin?: string;
     home?: string;
-    /** The files kit of a journal's container, for cleanup without an owner. */
+    /** The files kit of a journal's computer, for cleanup without an owner. */
     kitFor(target: ShareTargetRecord): ShareKit | Promise<ShareKit>;
     onEvent?: (event: ShareEvent) => void;
     lockFlavor?: LockFlavor;
     timings?: Partial<ShareTimings>;
     /**
-     * Discard what the container holds that never reached this machine: the
+     * Discard what the computer holds that never reached this machine: the
      * mount's DELETE asks the files kit to discard it (`?uploads=discard`).
      * Without an owner those writes cannot be delivered any more, and unless
      * this is set a stop refuses (UndeliveredWritesError) while the mount
@@ -354,15 +368,15 @@ export interface StopShareOptions {
      */
     force?: boolean;
 }
-/** `stopShare` without an owner, refused: the container holds writes that stopping would discard. */
+/** `stopShare` without an owner, refused: the computer holds writes that stopping would discard. */
 export declare class UndeliveredWritesError extends Error {
     constructor(message: string);
 }
 export interface StopShareResult {
-    /** Stopped, nothing left behind, and (with an owner) the container's writes confirmed delivered. */
+    /** Stopped, nothing left behind, and (with an owner) the computer's writes confirmed delivered. */
     ok: boolean;
     name: string;
-    containerId: string;
+    computerId: string;
     /** `owner`: the running owner stopped it. `cleanup`: no owner ran; this process cleaned up. */
     via: 'owner' | 'cleanup';
     leftovers: string[];

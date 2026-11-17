@@ -53,7 +53,7 @@ export declare function transferFailure(messages: PipeStatusMessage[], httpStatu
 export declare function checkTransferId(id: unknown): string;
 /**
  * The kit path a pipe name lands on when the kit answers it itself, or null
- * for an ordinary name. The kit's own rule (normalizeReservedPath): compared
+ * for an ordinary name. The kit's own rule: compared
  * case-insensitively after one trailing `/`, then one trailing `.`, is
  * dropped. So `Metrics`, `help/`, `noscript.` and `/` are reserved, while
  * `metrics..` is a pipe. Runs of `/` count as one first: the kit itself
@@ -72,6 +72,7 @@ export declare function reservedPipePath(name: string): string | null;
  * characters are sent; the kit sanitises the name further.
  */
 export declare function pipeContentDisposition(filename: string): string;
+/** The message of an Error, else the value as a string. */
 export declare function errorText(err: unknown): string;
 /** Run a caller's callback; a throw is reported, never allowed to break the transfer. */
 export declare function safeCall<T>(fn: (value: T) => void, value: T): void;

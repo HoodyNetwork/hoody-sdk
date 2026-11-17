@@ -1,6 +1,6 @@
 /**
- * Remote control of a live hoody-exec script (MonoRepoStorage #674, cut V9):
- * `exec.connect(url, { token })`.
+ * Remote control of a live hoody-exec script:
+ * `exec.remote(url, { token })`.
  *
  * The remote channel lives on the script's OWN URL. A marker picks the op:
  *  - one-shot ops: `X-Hoody-Remote: send|call|eval|capabilities` on a POST/GET;
@@ -10,7 +10,7 @@
  * The default transport is SSE events + one-shot requests, the same pattern as
  * hoody-agent's prompt stream. `ws: true` moves send, call and events onto one
  * attach socket. `eval` is ALWAYS a one-shot POST: the server refuses it on
- * attach, so a future proxy rule can single it out by its header.
+ * attach.
  *
  * The script token travels only as `X-Token` (recorded as a credential header,
  * so the HTTP client redacts it in ApiError and confines it on redirects) or,
@@ -28,8 +28,9 @@ import { ExecService } from '../generated/exec/exec.service.js';
 import { encodeExecScriptPath } from './exec-script-execution.js';
 import { recordCredentialHeader } from './redact.js';
 import { builtinWebSocketProhibited, SDK_WS_CAPS, unsafeBuiltinWebSocketMessage } from './kit-ws-auth.js';
+import { retireMethods } from './retired-accessor.js';
 // ---------------------------------------------------------------------------
-// Wire constants (#674)
+// Wire constants
 // ---------------------------------------------------------------------------
 /** Request header naming the remote op. */
 export const EXEC_REMOTE_HEADER = 'X-Hoody-Remote';
@@ -76,6 +77,10 @@ export class ExecRemoteError extends Error {
     details;
     /** The script URL, without query or credentials. */
     url;
+    /**
+     * `params.message` is extended with the lines of `params.fix`, when there is one; `details`
+     * defaults to an empty object.
+     */
     constructor(params) {
         super(withFixLines(params.message, params.fix), params.cause !== undefined ? { cause: params.cause } : undefined);
         this.name = 'ExecRemoteError';
@@ -107,6 +112,7 @@ export class ExecRemotePermissionError extends ExecRemoteError {
 }
 /** The script's own code threw (422 REMOTE_THREW). `remote` is the script-side error. */
 export class ExecRemoteThrewError extends ExecRemoteError {
+    /** The error the script threw, read from `details.error`: `name` defaults to `Error`, `message` to an empty string. */
     remote;
     constructor(params) {
         super(params);
@@ -241,8 +247,9 @@ export function execRemoteErrorFromBody(status, body, url) {
 /** A transport over an SDK HttpClient (the service's namespace-wrapped client). */
 export function execRemoteHttpTransport(http) {
     const client = http;
-    // X-Token does not match the client's secret-header pattern: record it, so
-    // ApiError redacts it and a cross-origin redirect drops it.
+    // Record X-Token as this request's credential header as well, so ApiError
+    // redacts it and a cross-origin redirect drops it whatever the shared
+    // secret-header pattern holds.
     const credentialContext = () => recordCredentialHeader({}, TOKEN_HEADER);
     // The client's own headers (config headers, kitAuth) must not already use
     // X-Token: they would replace the script token on the wire. Learned once per
@@ -584,7 +591,7 @@ async function openRemoteSocket(url, protocols, headers) {
         const credential = Object.keys(headers).find((h) => !NON_CREDENTIAL_UPGRADE_HEADERS.has(h.toLowerCase()));
         if (credential !== undefined) {
             // A browser socket cannot send headers; dropping the kit credential
-            // would reach the container without it.
+            // would reach the computer without it.
             throw new ExecRemoteConnectionError({
                 message: 'This client\'s kit credential is a header (' + credential + '), which a browser WebSocket cannot send. '
                     + 'Use the default transport (ws: false), or a kitAuth token with a query `param`.',
@@ -724,10 +731,10 @@ class AttachSession {
     attached;
     hello;
     helloPending;
-    /** The server sent its final `end` frame: the close that follows ends frames() normally, as on SSE. */
+    /** The server sent its final `end` frame: the close that follows ends streamEvents() normally, as on SSE. */
     sawEnd = false;
     /**
-     * Frames that arrived before the first frames() reader: the frames right after `attached` can
+     * Frames that arrived before the first streamEvents() reader: the frames right after `attached` can
      * arrive in the same read, before any reader could register. Only the latest are kept (at most
      * EXEC_REMOTE_FRAME_QUEUE_CAP frames and EXEC_REMOTE_EARLY_MAX_BYTES of UTF-8), and only
      * for EXEC_REMOTE_EARLY_WINDOW_MS after `attached`, so a send/call-only socket keeps nothing.
@@ -999,7 +1006,7 @@ class AttachSession {
         assertCallArgs(name, args);
         return (await this.request({ op: 'call', name, args }, options));
     }
-    frames(options) {
+    streamEvents(options) {
         const session = this;
         return {
             [Symbol.asyncIterator]() {
@@ -1010,7 +1017,7 @@ class AttachSession {
     async *iterate(signal) {
         if (this.consumer) {
             throw new ExecRemoteError({
-                message: 'This socket already has a frames() consumer; one at a time.',
+                message: 'This socket already has a streamEvents() consumer; one at a time.',
                 status: 0,
                 code: 'REMOTE_FRAMES_BUSY',
                 url: publicUrl(this.url),
@@ -1236,9 +1243,9 @@ function assertToken(token) {
     if (token === undefined)
         return;
     if (typeof token !== 'string' || token.length === 0)
-        throw new TypeError('connect: token must be a non-empty string');
+        throw new TypeError('remote: token must be a non-empty string');
     if (!/^[\x21-\x7e\xa1-\xff]+$/.test(token)) {
-        throw new TypeError('connect: the token may hold only printable Latin-1 characters (no spaces, control characters or characters above U+00FF)');
+        throw new TypeError('remote: the token may hold only printable Latin-1 characters (no spaces, control characters or characters above U+00FF)');
     }
 }
 /** What may be kept of a transport failure: its name and error codes, never its text (it can quote headers). */
@@ -1397,7 +1404,7 @@ class RemoteConnection {
         void session.closed.then(() => this.sessions.delete(session));
         return session;
     }
-    capabilities(options) {
+    getCapabilities(options) {
         return this.oneShot('GET', 'capabilities', undefined, options);
     }
     async send(message, options) {
@@ -1411,23 +1418,29 @@ class RemoteConnection {
             return (await untilAborted(this.attachShared(), options?.signal)).call(name, args, options);
         return this.oneShot('POST', 'call', { name, args }, options);
     }
-    eval(expression, options) {
-        let target;
-        try {
-            if (typeof expression !== 'string' || expression.length === 0)
-                throw new TypeError('eval: expression must be a non-empty string');
-            target = evalTarget(options);
+    evaluate(expressionOrFn, argsOrOptions, maybeOptions) {
+        // An expression takes (expression, options); a function takes (fn, args, options).
+        if (typeof expressionOrFn === 'string') {
+            const options = argsOrOptions;
+            let target;
+            try {
+                if (expressionOrFn.length === 0)
+                    throw new TypeError('evaluate: expression must be a non-empty string');
+                if (Array.isArray(options))
+                    throw new TypeError('evaluate: an expression takes no args; pass (expression, options)');
+                target = evalTarget(options);
+            }
+            catch (error) {
+                return Promise.reject(error);
+            }
+            return this.oneShot('POST', 'eval', { expression: expressionOrFn, ...target }, options);
         }
-        catch (error) {
-            return Promise.reject(error);
-        }
-        return this.oneShot('POST', 'eval', { expression, ...target }, options);
-    }
-    evaluate(fn, args = [], options) {
+        const args = argsOrOptions === undefined ? [] : argsOrOptions;
+        const options = maybeOptions;
         let source;
         let target;
         try {
-            source = functionSource(fn);
+            source = functionSource(expressionOrFn);
             if (!Array.isArray(args))
                 throw new TypeError('evaluate: args must be an array');
             target = evalTarget(options);
@@ -1437,7 +1450,7 @@ class RemoteConnection {
         }
         return this.oneShot('POST', 'eval', { function: source, args, ...target }, options);
     }
-    events(options) {
+    streamEvents(options) {
         const connection = this;
         return {
             [Symbol.asyncIterator]() {
@@ -1457,7 +1470,7 @@ class RemoteConnection {
             const session = own ?? await untilAborted(this.attachShared(), options?.signal);
             const { controller, unlink } = linkedController(options?.signal, this.controller.signal);
             try {
-                yield* session.frames({ signal: controller.signal });
+                yield* session.streamEvents({ signal: controller.signal });
             }
             catch (error) {
                 throw controller.signal.aborted && error === controller.signal.reason ? this.publicReason(error) : error;
@@ -1527,7 +1540,7 @@ class RemoteConnection {
             unlink();
         }
     }
-    attach() {
+    connect() {
         try {
             this.assertOpen();
         }
@@ -1549,7 +1562,7 @@ function evalTarget(options) {
     const out = {};
     if (options?.target !== undefined) {
         if (options.target !== 'latest' && options.target !== 'globals') {
-            throw new TypeError("eval: target must be 'latest' or 'globals'");
+            throw new TypeError("evaluate: target must be 'latest' or 'globals'");
         }
         out.target = options.target;
     }
@@ -1567,14 +1580,14 @@ export function assertScriptUrl(url) {
         parsed = new URL(url);
     }
     catch {
-        throw new TypeError('connect: not a valid URL');
+        throw new TypeError('remote: not a valid URL');
     }
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:')
-        throw new TypeError('connect: the URL must be http(s)');
+        throw new TypeError('remote: the URL must be http(s)');
     if (parsed.username !== '' || parsed.password !== '')
-        throw new TypeError('connect: the URL must not carry credentials; pass { token }');
+        throw new TypeError('remote: the URL must not carry credentials; pass { token }');
     if (parsed.search !== '' || parsed.hash !== '' || /[?#]/.test(url)) {
-        throw new TypeError('connect: the URL must not carry a query or fragment');
+        throw new TypeError('remote: the URL must not carry a query or fragment');
     }
 }
 /**
@@ -1583,17 +1596,18 @@ export function assertScriptUrl(url) {
  */
 export function createExecRemoteConnection(transport, url, options = {}) {
     assertToken(options.token);
-    assertTimeout(options.timeoutMs, 'connect: timeoutMs');
+    assertTimeout(options.timeoutMs, 'remote: timeoutMs');
     return new RemoteConnection(transport, url, options.token, options.ws === true, options.timeoutMs ?? EXEC_REMOTE_DEFAULT_TIMEOUT_MS);
 }
 const EXEC_REMOTE_PATCH_MARKER = Symbol.for('hoody.sdk.exec.remote.patch');
+/** Installs `remote()` on the generated exec service. Runs once: a second call does nothing; importing this module already runs it. */
 export function patchExecRemotePrototype() {
     const prototype = ExecService.prototype;
     if (prototype[EXEC_REMOTE_PATCH_MARKER])
         return;
-    prototype['connect'] = function connect(urlOrPath, options = {}) {
+    prototype['remote'] = function remote(urlOrPath, options = {}) {
         if (typeof urlOrPath !== 'string' || urlOrPath.length === 0)
-            throw new TypeError('connect: a script URL or path is required');
+            throw new TypeError('remote: a script URL or path is required');
         const internals = this;
         let url;
         if (/^[a-z][a-z0-9+.-]*:/i.test(urlOrPath)) {
@@ -1601,7 +1615,7 @@ export function patchExecRemotePrototype() {
             url = urlOrPath;
         }
         else {
-            const encoded = encodeExecScriptPath(urlOrPath.replace(/^\/+/, ''), 'connect');
+            const encoded = encodeExecScriptPath(urlOrPath.replace(/^\/+/, ''), 'remote');
             url = internals.buildTemplateUrl('/' + encoded, (options.templateVars ?? {}));
         }
         return createExecRemoteConnection(execRemoteHttpTransport(internals.http), url, {
@@ -1613,3 +1627,12 @@ export function patchExecRemotePrototype() {
     prototype[EXEC_REMOTE_PATCH_MARKER] = true;
 }
 patchExecRemotePrototype();
+// Renamed; each old name refuses, naming the new method.
+retireMethods(ExecService.prototype, 'exec', { connect: 'exec.remote()' });
+retireMethods(RemoteConnection.prototype, 'ExecRemoteConnection', {
+    capabilities: 'getCapabilities()',
+    events: 'streamEvents()',
+    attach: 'connect()',
+    eval: 'evaluate()',
+});
+retireMethods(AttachSession.prototype, 'ExecRemoteSession', { frames: 'streamEvents()' });

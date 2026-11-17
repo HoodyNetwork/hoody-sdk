@@ -14,10 +14,10 @@
  *
  * Rules this file implements:
  *  - A connection is admitted by `welcome`, not by the socket `connect`:
- *    hoody-api authenticates after the namespace connect. Frames that
+ *    the API authenticates after the namespace connect. Frames that
  *    arrive before `welcome` are buffered and replayed after it.
  *  - Control frames are never events. Every code goes through
- *    the C5 map in events-errors.ts.
+ *    the code-to-action map in events-errors.ts.
  *  - socket.io's own reconnection is off; this loop owns every retry, and the
  *    token is read afresh on each attempt.
  *  - Live frames are delivered at once and de-duplicated by event id; only
@@ -28,6 +28,7 @@ import { toHoodyEvent } from './events-types.js';
 import { EventsAuthError, EventsClosedError, EventsError, EventsGapError, EventsSessionChangedError, EventsTimeoutError, historyActionFor, socketActionFor, } from './events-errors.js';
 import { EventIdLru, EventsRecovery, HISTORY_BACKOFF_FLOOR_MS } from './events-replay.js';
 import { localWebSocketCapCode } from './kit-ws-auth.js';
+import { retireAccessors, retireMethods } from './retired-accessor.js';
 function deferred() {
     let resolve;
     let reject;
@@ -45,7 +46,7 @@ function deferred() {
     d.promise.catch(() => { });
     return d;
 }
-/** The C5 history action for a failed read (status and body code). */
+/** The history action for a failed read (status and body code). */
 function historyActionOf(error) {
     const status = error?.status;
     const code = error?.code;
@@ -69,7 +70,7 @@ function abortableSleep(ms, signal) {
         signal.addEventListener('abort', onAbort, { once: true });
     });
 }
-/** The C5 dedupe window for a code received on both `message` and the socket `error` event. */
+/** The dedupe window for a code received on both `message` and the socket `error` event. */
 const CODE_DEDUPE_MS = 1000;
 const ACTIVITY = 'activity.logged';
 function patternMatches(pattern, type) {
@@ -90,9 +91,9 @@ function matchesFilter(event, filter) {
         && event.project_id !== filter.projectId
         && !(event.resource_type === 'project' && event.resource_id === filter.projectId))
         return false;
-    if (filter.containerId
-        && event.container_id !== filter.containerId
-        && !(event.resource_type === 'container' && event.resource_id === filter.containerId))
+    if (filter.computerId
+        && event.computer_id !== filter.computerId
+        && !(event.resource_type === 'computer' && event.resource_id === filter.computerId))
         return false;
     if (filter.where && !filter.where(event))
         return false;
@@ -115,12 +116,24 @@ function subscriberWants(sub, event) {
 function computeWantsActivity(patterns, includeEphemeral) {
     return patterns.some((p) => p === ACTIVITY || (includeEphemeral && p !== ACTIVITY && patternMatches(p, ACTIVITY)));
 }
+/**
+ * Key of EventsManager's per-type listener (EventsClient `on<Event>()`). A symbol, not a method name:
+ * it is not public API (the public listener API is EventsClient.on / onState / stream).
+ */
+export const listenByType = Symbol('hoody.events.listenByType');
+/**
+ * The runtime behind an `EventsClient`: it owns the one socket of a stream,
+ * connects when there is demand, reconnects with backoff, recovers missed
+ * events from history and delivers each event to the matching handlers,
+ * streams and waits. `EventsClient` is the supported way to use it; construct
+ * one directly only to supply your own transport.
+ */
 export class EventsManager {
     createWsClient;
     subscribers = new Set();
-    /** Legacy addEventListener registrations: type → callback → subscriber (same callback once per type). */
+    /** Per-type listener registrations ([listenByType]): type → callback → subscriber (same callback once per type). */
     legacy = new Map();
-    lifecycleListeners = new Map();
+    connectionListeners = new Map();
     stateListeners = new Set();
     holds = new Set();
     welcomeWaiters = new Set();
@@ -132,11 +145,11 @@ export class EventsManager {
     opts;
     attempt = null;
     attemptSeq = 0;
-    /** Reconnect backoff timer (cancelled by disconnect(), close() and session changes). */
+    /** Reconnect backoff timer (cancelled by goIdle(), close() and session changes). */
     retryTimer = null;
     retryAttempt = 0;
     everWelcomed = false;
-    /** Since the last welcome: C5 "re-admit once" and one refresh per admission. */
+    /** Since the last welcome: "re-admit once" and one refresh per admission. */
     readmitUsed = false;
     refreshUsed = false;
     refreshing = false;
@@ -147,7 +160,7 @@ export class EventsManager {
     activitySent = false;
     lastCode = null;
     catchUpTimer = null;
-    ready = deferred();
+    readyGate = deferred();
     /** Bumped by every session reset; async work started under an older value is discarded. */
     sessionEpoch = 0;
     /** Counts gap notices; bootstrap() restarts when it moves. */
@@ -155,6 +168,13 @@ export class EventsManager {
     recovery;
     /** De-dup for live frames when there is no history (legacy runtime). */
     liveSeen;
+    /**
+     * `createWsClient` is called for every connection attempt and resolves with
+     * a transport that is not yet connected. `options` set the history reader
+     * used for recovery, the realm and session the stream is bound to, token
+     * refresh and timing; see `EventsManagerOptions`. Nothing connects until
+     * something subscribes.
+     */
     constructor(createWsClient, options) {
         this.createWsClient = createWsClient;
         this.opts = options ?? {};
@@ -199,11 +219,11 @@ export class EventsManager {
         return this.register(sub, opts.signal, () => this.unregister(sub));
     }
     /**
-     * Legacy listener API. The same callback registers once per type; `'*'`
-     * also receives `activity.logged` (legacy listeners always did) and opts
-     * the socket in to it when it has no filter.
+     * The per-type listener behind EventsClient's `on<Event>()` methods (not public API: keyed by a
+     * module symbol). The same callback registers once per type; `'*'` also receives
+     * `activity.logged` and opts the socket in to it when it has no filter.
      */
-    async addEventListener(eventType, callback, filter) {
+    async [listenByType](eventType, callback, filter) {
         if (this.debug)
             console.log(`[EventsManager] Adding listener for: ${eventType}`);
         let byCallback = this.legacy.get(eventType);
@@ -254,7 +274,10 @@ export class EventsManager {
             off();
         };
         try {
-            await this.awaitAdmission();
+            // The admission wait ends with the signal too: an abort while it is
+            // pending rejects with the reason instead of leaving the caller
+            // waiting on a connection that the unsubscribe may have closed.
+            await this.awaitAdmission(signal);
         }
         catch (error) {
             unsubscribe();
@@ -269,38 +292,59 @@ export class EventsManager {
         this.releaseIfIdle();
     }
     /** Resolve once the connection is admitted; start it when needed. */
-    awaitAdmission() {
+    awaitAdmission(signal) {
         // Legacy autoConnect:false: subscribe() returns without waiting.
         if (!this.autoConnect && !this.attempt && this.state !== 'closed')
             return Promise.resolve();
-        return this.awaitWelcome();
+        return this.awaitWelcome(signal);
     }
     /**
      * Resolve at an actual welcome, whatever autoConnect says: reads that
      * must follow admission (the after-replay) cannot take the legacy
      * shortcut, or they read before the boundary exists.
      */
-    awaitWelcome() {
+    awaitWelcome(signal) {
         if (this.attempt?.welcomed)
             return Promise.resolve();
         if (this.state === 'closed') {
             return Promise.reject(this.closedBy === 'user' ? new EventsClosedError() : new EventsClosedError('Events stream closed after a terminal refusal'));
         }
+        if (signal?.aborted)
+            return Promise.reject(signal.reason ?? new EventsClosedError('Aborted'));
         return new Promise((resolve, reject) => {
-            this.welcomeWaiters.add({ resolve, reject });
+            let onAbort;
+            const detach = () => { if (signal && onAbort)
+                signal.removeEventListener('abort', onAbort); };
+            const waiter = {
+                resolve: () => { detach(); resolve(); },
+                reject: (error) => { detach(); reject(error); },
+            };
+            if (signal) {
+                // Cancelled: drop the waiter (it also keeps a retry alive) and reject.
+                onAbort = () => {
+                    this.welcomeWaiters.delete(waiter);
+                    reject(signal.reason ?? new EventsClosedError('Aborted'));
+                };
+                signal.addEventListener('abort', onAbort, { once: true });
+            }
+            this.welcomeWaiters.add(waiter);
             this.ensureStarted();
         });
     }
-    addLifecycleListener(event, callback) {
-        let set = this.lifecycleListeners.get(event);
+    /** Observe one transport event of the socket (see `EventsConnectionEvent`). Returns an unsubscribe function. */
+    addConnectionListener(event, callback) {
+        let set = this.connectionListeners.get(event);
         if (!set) {
             set = new Set();
-            this.lifecycleListeners.set(event, set);
+            this.connectionListeners.set(event, set);
         }
         set.add(callback);
-        return () => { this.lifecycleListeners.get(event)?.delete(callback); };
+        return () => { this.connectionListeners.get(event)?.delete(callback); };
     }
-    /** Observe state changes, gaps, `scope_changed` and non-fatal notices. */
+    /**
+     * Observe state changes, gaps, `scope_changed` and non-fatal notices. A `state` event's `state`
+     * and `previous` are the values `getLifecycleState()` returns.
+     */
     onState(listener) {
         this.stateListeners.add(listener);
         return () => { this.stateListeners.delete(listener); };
@@ -311,12 +355,12 @@ export class EventsManager {
      * `has_more:false`; for a runtime without history, at `welcome`.
      * Starts the connection when needed and holds it open while waiting.
      */
-    whenReady(opts = {}) {
+    ready(opts = {}) {
         if (this.state === 'closed' && this.closedBy === 'user')
             return Promise.reject(new EventsClosedError());
-        if (this.ready.settled)
-            return this.ready.promise;
-        const ready = this.ready;
+        if (this.readyGate.settled)
+            return this.readyGate.promise;
+        const ready = this.readyGate;
         return this.withHold(opts, (fail) => {
             ready.promise.then(() => fail(null), (error) => fail(error));
         });
@@ -393,11 +437,15 @@ export class EventsManager {
             };
             // However the wait ends (event, timeout, abort, close, session
             // change), the subscriber goes with it.
-            onEnd(() => this.unregister(sub));
+            // `ended`: the wait settled (event, timeout, abort, close). A gate
+            // that resolves later, from another subscription's connection,
+            // must not run the action of a wait the caller already gave up on.
+            let ended = false;
+            onEnd(() => { ended = true; this.unregister(sub); });
             this.subscribers.add(sub);
             this.syncActivity();
-            this.ready.promise.then(async () => {
-                if (!action)
+            this.readyGate.promise.then(async () => {
+                if (!action || ended)
                     return;
                 try {
                     await action();
@@ -417,8 +465,29 @@ export class EventsManager {
         result.catch(() => { });
         // The subscription exists before ready(); once ready() resolves the
         // boundary lies behind the caller's next action. A result that
-        // arrives (or fails) first settles this too.
-        await Promise.race([this.whenReady(opts.signal ? { signal: opts.signal } : {}), result.then(() => { })]);
+        // arrives (or fails) first settles this too. The readiness branch
+        // holds the connection on its own, so it is cancelled as soon as the
+        // race is decided: a timed-out, aborted or early result must not leave
+        // that hold keeping the connection (and its retries) alive.
+        const readiness = new AbortController();
+        const outer = opts.signal;
+        const forward = () => readiness.abort(outer?.reason);
+        if (outer) {
+            if (outer.aborted)
+                forward();
+            else
+                outer.addEventListener('abort', forward, { once: true });
+        }
+        const ready = this.ready({ signal: readiness.signal });
+        ready.catch(() => { });
+        try {
+            await Promise.race([ready, result.then(() => { })]);
+        }
+        finally {
+            outer?.removeEventListener('abort', forward);
+            if (!readiness.signal.aborted)
+                readiness.abort(new EventsClosedError('prepareWait settled'));
+        }
         return { result };
     }
     /**
@@ -524,7 +593,7 @@ export class EventsManager {
             }
             wake();
         };
-        // stream({after}) (Opus F3a): while the replay reads history, live and
+        // stream({after}): while the replay reads history, live and
         // runtime deliveries wait here, so the consumer sees history in
         // order first, then what arrived meanwhile (the id set drops what the
         // replay already yielded). Bounded like the queue.
@@ -543,7 +612,7 @@ export class EventsManager {
         /**
          * A runtime delivery (live frame or recovery page). Its resume_after
          * is the recovery's confirmed cursor NOW, before any later page
-         * moves it (Opus F3b): every event at or before that cursor has
+         * moves it: every event at or before that cursor has
          * already been delivered to this stream, so resuming from it after
          * this event is at-least-once, never a skip, even when frame N was
          * lost and N+1 arrived live first.
@@ -677,7 +746,7 @@ export class EventsManager {
         // last page; read before admission, a row committed between that page
         // and the welcome is behind the welcome's boundary (so recovery never
         // reads it) and was sent before the socket registered (so it never
-        // came live): lost with no gap (SDK-3). After the welcome, the last
+        // came live): lost with no gap. After the welcome, the last
         // page's fence is at or past the boundary, and every later row is
         // sent live or read by recovery.
         try {
@@ -751,7 +820,7 @@ export class EventsManager {
         }
     }
     /**
-     * §5 bootstrap: wait for `ready()`, take the snapshot, and report
+     * Bootstrap: wait for `ready()`, take the snapshot, and report
      * every resource that events touched while the snapshot was being read,
      * so the caller refetches those through GET. Event payloads are never
      * applied over a snapshot. A gap while reading restarts the whole
@@ -761,7 +830,7 @@ export class EventsManager {
         if (this.state === 'closed' && this.closedBy === 'user')
             throw new EventsClosedError();
         // Hold the connection for the whole body. Used alone,
-        // bootstrap's only demand would be whenReady()'s own hold, which ends
+        // bootstrap's only demand would be ready()'s own hold, which ends
         // when ready() resolves: the socket closed before readFn ran, and a
         // change committed during the read touched nothing.
         let holdError = null;
@@ -778,7 +847,7 @@ export class EventsManager {
     async bootstrapHeld(readFn, opts, ended) {
         let lastReason = 'overflow';
         for (let attempt = 0; attempt < 4; attempt++) {
-            await this.whenReady(opts);
+            await this.ready(opts);
             const touched = new Map();
             const gapsBefore = this.gapCount;
             const offGap = this.onState((e) => { if (e.kind === 'gap' && !e.stream)
@@ -870,7 +939,7 @@ export class EventsManager {
         if (this.demand() > 0 || this.state === 'closed')
             return;
         if (this.attempt || this.retryTimer || this.state !== 'idle')
-            this.disconnect();
+            this.goIdle();
     }
     async connect() {
         const attempt = {
@@ -886,7 +955,7 @@ export class EventsManager {
         this.attempt = attempt;
         this.activitySent = false;
         this.setState('connecting');
-        this.emitLifecycle('connecting');
+        this.emitConnection('connecting');
         if (this.debug)
             console.log('[EventsManager] Connecting to event stream...');
         let ws;
@@ -1023,9 +1092,9 @@ export class EventsManager {
         this.welcomeWaiters = new Set();
         for (const w of waiters)
             w.resolve();
-        this.emitLifecycle('connected');
+        this.emitConnection('connected');
         if (reconnected)
-            this.emitLifecycle('reconnected', attempt.id);
+            this.emitConnection('reconnected', attempt.id);
         this.syncActivity();
         const recovery = this.recovery;
         if (recovery && typeof frame.boundary_cursor === 'string') {
@@ -1126,7 +1195,7 @@ export class EventsManager {
             default:
                 this.dropAttempt(attempt, 'readmit');
                 if (this.readmitUsed) {
-                    // Refused again before an admission: C5 allows one re-admission.
+                    // Refused again before an admission: the map allows one re-admission.
                     this.closeTerminal(new EventsAuthError(code, message));
                     return;
                 }
@@ -1176,8 +1245,8 @@ export class EventsManager {
             const cause = attempt.transportCause ?? error;
             const capError = new EventsError('EVENTS_LOCAL_LIMIT', `Events socket closed: a server message exceeded a local WebSocket receive limit (${capCode}). Not reconnecting.`, { cause });
             this.dropAttempt(attempt, 'lost');
-            this.emitLifecycle('disconnected', 1006, capError.message);
-            this.emitLifecycle('error', capError);
+            this.emitConnection('disconnected', 1006, capError.message);
+            this.emitConnection('error', capError);
             if (this.state === 'closed')
                 return;
             if (this.retryTimer) {
@@ -1188,8 +1257,8 @@ export class EventsManager {
             this.welcomeWaiters = new Set();
             for (const w of waiters)
                 w.reject(capError);
-            const ready = this.ready;
-            this.ready = deferred();
+            const ready = this.readyGate;
+            this.readyGate = deferred();
             ready.reject(capError);
             for (const hold of [...this.holds])
                 hold.fail(capError);
@@ -1198,9 +1267,9 @@ export class EventsManager {
             return;
         }
         this.dropAttempt(attempt, 'lost');
-        this.emitLifecycle('disconnected', 1006, error instanceof Error ? error.message : String(error));
+        this.emitConnection('disconnected', 1006, error instanceof Error ? error.message : String(error));
         if (!wasWelcomed)
-            this.emitLifecycle('error', error instanceof Error ? error : new Error(String(error)));
+            this.emitConnection('error', error instanceof Error ? error : new Error(String(error)));
         if (this.state === 'closed')
             return;
         if (!this.autoReconnect || this.demand() === 0) {
@@ -1232,7 +1301,7 @@ export class EventsManager {
             this.retryAttempt++;
         }
         this.setState('offline', reason, delay);
-        this.emitLifecycle('reconnecting', this.retryAttempt);
+        this.emitConnection('reconnecting', this.retryAttempt);
         const epoch = this.sessionEpoch;
         this.retryTimer = setTimeout(() => {
             this.retryTimer = null;
@@ -1289,7 +1358,7 @@ export class EventsManager {
         if (wanted === this.activitySent)
             return;
         this.activitySent = wanted;
-        // E-8: the existing subscribe/unsubscribe handler, dispatched on
+        // The existing subscribe/unsubscribe handler, dispatched on
         // `type`. activitySent is reset per connection, so an opt-in is sent
         // after every welcome and an opt-out only to a socket that opted in.
         try {
@@ -1308,7 +1377,7 @@ export class EventsManager {
         this.markReady();
     }
     markReady() {
-        this.ready.resolve();
+        this.readyGate.resolve();
     }
     // ─── Dispatch ────────────────────────────────────────────────────────────
     dispatch(event) {
@@ -1358,8 +1427,8 @@ export class EventsManager {
             catch { /* isolation */ }
         }
     }
-    emitLifecycle(event, ...args) {
-        const set = this.lifecycleListeners.get(event);
+    emitConnection(event, ...args) {
+        const set = this.connectionListeners.get(event);
         if (!set)
             return;
         for (const callback of [...set]) {
@@ -1378,7 +1447,7 @@ export class EventsManager {
         this.recovery?.stop();
         this.closedBy = 'terminal';
         this.setState('closed', error);
-        this.emitLifecycle('error', error);
+        this.emitConnection('error', error);
         this.failWaiters(error);
     }
     failWaiters(error) {
@@ -1386,7 +1455,7 @@ export class EventsManager {
         this.welcomeWaiters = new Set();
         for (const w of waiters)
             w.reject(error);
-        this.ready.reject(error);
+        this.readyGate.reject(error);
         for (const hold of [...this.holds])
             hold.fail(error);
     }
@@ -1448,8 +1517,8 @@ export class EventsManager {
         if (ownLogin)
             return;
         this.pendingAfter = undefined;
-        const ready = this.ready;
-        this.ready = deferred();
+        const ready = this.readyGate;
+        this.readyGate = deferred();
         ready.reject(error);
         for (const hold of [...this.holds])
             hold.fail(error);
@@ -1472,31 +1541,38 @@ export class EventsManager {
         this.welcomeWaiters = new Set();
         for (const w of waiters)
             w.reject(error);
-        this.ready.reject(error);
+        this.readyGate.reject(error);
         for (const hold of [...this.holds])
             hold.finish(error);
         this.subscribers.clear();
         this.legacy.clear();
-        this.emitLifecycle('disconnected', 0, 'client close');
+        this.emitConnection('disconnected', 0, 'client close');
     }
     /**
-     * Legacy: close the socket and go idle. Subscribers stay registered and
+     * Close the socket and go idle (when the last demand is gone). Subscribers stay registered and
      * the next subscription (or ready/wait/stream) connects again, from the
      * scope's boundary: cursors are dropped, so events from before the next
      * connect are never replayed to subscribers that did not ask for them.
      */
-    disconnect() {
+    goIdle() {
         if (this.debug)
             console.log('[EventsManager] Disconnecting...');
         this.teardownConnection('client disconnect');
         this.recovery?.reset();
-        const ready = this.ready;
+        const ready = this.readyGate;
         if (ready.settled)
-            this.ready = deferred();
+            this.readyGate = deferred();
         if (this.state !== 'closed')
             this.setState('idle');
-        this.emitLifecycle('disconnected', 0, 'client disconnect');
+        this.emitConnection('disconnected', 0, 'client disconnect');
     }
+    /**
+     * Change connection behaviour; omitted keys keep their value. With
+     * `autoConnect: false` a subscription resolves without waiting for the
+     * connection to be admitted. With `autoReconnect: false` a lost connection
+     * is not retried: the stream goes idle and callers waiting for admission get
+     * the error. `debug` logs connection steps to the console.
+     */
     configure(options) {
         if (options.autoConnect !== undefined)
             this.autoConnect = options.autoConnect;
@@ -1505,32 +1581,38 @@ export class EventsManager {
         if (options.debug !== undefined)
             this.debug = options.debug;
     }
-    /** The §5 state. */
-    get connectionState() {
+    /** The lifecycle state: idle, connecting, live, recovering, offline or closed. */
+    getLifecycleState() {
         return this.state;
     }
-    /** Legacy state names: idle, connecting, connected, reconnecting. */
-    getState() {
-        switch (this.state) {
-            case 'live':
-            case 'recovering':
-                return 'connected';
-            case 'offline':
-                return 'reconnecting';
-            case 'connecting':
-                return 'connecting';
-            default:
-                return 'idle';
-        }
-    }
+    /** How many subscriptions are registered: handlers, open streams and pending waits. */
     getListenerCount() {
         return this.subscribers.size;
     }
+    /** True while the current connection has been admitted by the server (its `welcome` arrived). */
     isConnected() {
         return this.attempt?.welcomed === true;
     }
     /** Test/diagnostic view of the recovery cursors. */
-    get cursors() {
+    getCursors() {
         return { confirmed: this.recovery?.confirmed ?? null, lastLatest: this.recovery?.lastLatest ?? null };
     }
 }
+// The getters these reads replaced refuse, naming the method.
+retireAccessors(EventsManager.prototype, 'EventsManager', {
+    connectionState: 'getLifecycleState()',
+    cursors: 'getCursors()',
+});
+// getState() returned idle/connecting/connected/reconnecting; one read is left, with the six lifecycle values.
+retireMethods(EventsManager.prototype, 'EventsManager', {
+    getConnectionState: 'getLifecycleState()',
+    getState: 'getLifecycleState()',
+});
+// The transport-event listener is addConnectionListener(); "lifecycle" names the six lifecycle states only.
+retireMethods(EventsManager.prototype, 'EventsManager', { addLifecycleListener: 'addConnectionListener()' });
+// Renamed or removed; each old name refuses, naming the supported call.
+retireMethods(EventsManager.prototype, 'EventsManager', {
+    whenReady: 'ready()',
+    disconnect: 'close()',
+    addEventListener: 'subscribe()',
+});

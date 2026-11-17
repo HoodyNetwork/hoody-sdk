@@ -1,11 +1,11 @@
 import { buildEmbedUrl, getEmbedCatalog, listEmbedViews, EmbedValidationError, } from './runtime.js';
 import { makeEmbedWrappers, } from '../../generated/embeds.generated.js';
 /**
- * The container a `withContainer()` client is scoped to. The generated client keeps it only as the URL
- * template variables it gives every kit namespace (all set from the one container), so it is read from
- * there. Several different identities, or none, mean the client is not scoped to one container.
+ * The computer a `withComputer()` client is scoped to. The generated client keeps it only as the URL
+ * template variables it gives every kit namespace (all set from the one computer), so it is read from
+ * there. Several different identities, or none, mean the client is not scoped to one computer.
  */
-function scopedContainer(host) {
+function scopedComputer(host) {
     const templates = host.urlTemplates;
     if (templates === undefined || templates === null)
         return undefined;
@@ -13,7 +13,7 @@ function scopedContainer(host) {
     for (const vars of Object.values(templates)) {
         if (vars === undefined || vars === null)
             continue;
-        const id = vars.containerId;
+        const id = vars.computerId;
         const projectId = vars.projectId;
         const server = vars.serverName ?? vars.server;
         if (typeof id !== 'string' || typeof projectId !== 'string' || typeof server !== 'string')
@@ -29,14 +29,14 @@ function scopedContainer(host) {
 /** Build the `embeds` object for one client. */
 export function createEmbeds(host) {
     const ctx = {
-        getKitUrl: (kit, container, opts) => host.getKitUrl(kit, container, opts),
+        getKitUrl: (kit, computer, opts) => host.getKitUrl(kit, computer, opts),
     };
     const resolveTarget = (target) => {
         if (target !== undefined && target !== null)
             return target;
-        const scoped = scopedContainer(host);
+        const scoped = scopedComputer(host);
         if (scoped === undefined) {
-            throw new EmbedValidationError('TARGET_INVALID', 'this client is not scoped to one container: pass a container or a ProxyAlias, or call withContainer() first', 'target');
+            throw new EmbedValidationError('TARGET_INVALID', 'this client is not scoped to one computer: pass a computer or a ProxyAlias, or call withComputer() first', 'target');
         }
         return scoped;
     };
@@ -47,15 +47,15 @@ export function createEmbeds(host) {
         return url(viewId.slice(0, dot), target, { ...opts, view: viewId.slice(dot + 1) });
     };
     return Object.assign(makeEmbedWrappers(build), {
-        url,
-        catalog: () => getEmbedCatalog(),
-        views: (kit) => listEmbedViews(kit),
+        getUrl: url,
+        getCatalog: () => getEmbedCatalog(),
+        listViews: (kit) => listEmbedViews(kit),
     });
 }
 const EMBEDS_BY_CLIENT = new WeakMap();
 /**
  * Define `embeds` on the HoodyClient prototype: a getter, built once per client instance. A getter
- * rather than a constructor field, because withContainer()/withRealm() promote instances by prototype
+ * rather than a constructor field, because withComputer()/withRealm() promote instances by prototype
  * swap and no constructor runs for them. Calling it again redefines the same getter over the same
  * per-instance cache, so both entry points may call it.
  */

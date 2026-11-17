@@ -1,9 +1,9 @@
 import type { BotsServiceBase } from '../generated/agent/bots.service.generated.js';
-import type { AgentBotsSendMessageResponse } from '../generated/types.js';
+import type { AgentBotsMessagesSendResponse } from '../generated/types.js';
 /** The URL template variables: the LAST parameter of a Bot method (its options come before them on a kit whose Bot routes take a realm). */
 type LastParameter<F extends (...args: never[]) => unknown> = Required<Parameters<F>> extends [...unknown[], infer L] ? L | undefined : never;
 type TemplateVars = LastParameter<BotsServiceBase['get']>;
-type BotStream = Awaited<ReturnType<BotsServiceBase['stream']>>;
+type BotStream = Awaited<ReturnType<BotsServiceBase['streamLogs']>>;
 /** A frame of a Bot's log stream. */
 export type BotStreamFrame = BotStream extends AsyncIterable<infer F> ? F : never;
 /** One row of a Bot's log, as the stream's `row` frame carries it. */
@@ -12,15 +12,15 @@ export type BotLogRow = Extract<BotStreamFrame, {
     event: 'row';
 }>['data'];
 /** A message's receipt, as POST /bots/{id}/messages returns it. */
-export type BotMessageReceipt = AgentBotsSendMessageResponse['data'];
+export type BotMessageReceipt = AgentBotsMessagesSendResponse['data'];
 /** The capability a kit lists when a keyed re-send queues nothing and answers with the same message's current state. */
 export declare const BOT_MESSAGE_IDEMPOTENCY_CAPABILITY = "bot_message_idempotency";
-export interface BotFollowOptions {
+export interface BotFollowLogsOptions {
     /**
      * The realm the Bot lives in: "global" or a realm id. Default: the agent's current realm.
-     * A Bot id the realm does not hold is 404.
+     * A Bot id the realm does not hold is 404. (The earlier key `realm` is refused.)
      */
-    realm?: string;
+    agentRealm?: string;
     /** Yield the rows after this seq. Default: every row in the log. */
     since?: number;
     /** Ends the iteration (it throws the signal's reason). */
@@ -47,8 +47,9 @@ export interface BotAskOptions {
     /**
      * The realm the Bot lives in: "global" or a realm id. Default: the agent's current realm.
      * Every request ask() makes for the Bot (the message, its log, the Bot's session turn) goes to it.
+     * (The earlier key `realm` is refused.)
      */
-    realm?: string;
+    agentRealm?: string;
     /**
      * The message's Idempotency-Key. Default: a new random key, returned as
      * `idempotencyKey`. Asking again with the same key and text (after a crash,
@@ -90,11 +91,18 @@ export interface BotAskResult {
      * without a key, and asking again sends it again.
      */
     keyed: boolean;
-    /** The Bot's reply; null when its turn ended without one (see `turnState`). */
+    /**
+     * The Bot's reply; null when its turn ended without one (see `turnState`).
+     * A turn cut short (the agent restarted under it, or it was cancelled) is
+     * no reply either: its row, the text written before the cut and the kit's
+     * "[response interrupted: …]" marker, is in `rows`, and `turnState` says
+     * how it ended.
+     */
     reply: BotLogRow | null;
     /**
      * The turn's state from the Bot session's turn ledger (completed, failed,
-     * cancelled, interrupted), when it was read. Always set when `reply` is null.
+     * cancelled, interrupted), when it was read, or `interrupted` / `cancelled`
+     * read from a cut turn's row. Always set when `reply` is null.
      */
     turnState?: string;
     /** The rows onRow received, the reply included. */
@@ -107,7 +115,8 @@ declare module '../generated/agent/bots.service.js' {
         /**
          * Send `text` to the Bot under an Idempotency-Key and wait for its reply.
          * Resolves with the `bot` row of the turn that took the message, or with
-         * `reply: null` once that turn has ended without one.
+         * `reply: null` once that turn has ended without one or was cut short
+         * (`turnState` says how: `interrupted` when the agent restarted under it).
          *
          * A queued message waits for the Bot's current turn to end. A Bot turn
          * that waits on a gate (`pending_gate` on bots.get) keeps this waiting
@@ -130,8 +139,13 @@ declare module '../generated/agent/bots.service.js' {
          * (45 s) is dropped and resumed the same way. Ends after an `end` frame
          * (the Bot was deleted).
          */
-        follow(id: string, options?: BotFollowOptions, templateVars?: TemplateVars): AsyncIterableIterator<BotLogRow>;
+        followLogs(id: string, options?: BotFollowLogsOptions, templateVars?: TemplateVars): AsyncIterableIterator<BotLogRow>;
     }
 }
+/**
+ * Install `ask()` and `followLogs()` on the generated Bots service (`box.agent.bots`), make the
+ * retired `follow()` refuse by naming `followLogs()`, and make `resumeAll()` refuse a first argument
+ * that is not an options object. Runs once when this module loads; calling it again does nothing.
+ */
 export declare function patchBotChatExtensions(): void;
 export {};

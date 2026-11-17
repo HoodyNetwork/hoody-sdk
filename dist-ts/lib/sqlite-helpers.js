@@ -45,7 +45,7 @@ function describeBinding(value) {
  * null. The client writes a bigint in the JSON body as an integer, and
  * returns an INTEGER above 2^53-1 as one, so a value read back binds again.
  * The kit reads `values` as JSON
- * (hoody-sqlite raw2params), and JSON.stringify turns NaN and Infinity into
+ * (hoody-sqlite), and JSON.stringify turns NaN and Infinity into
  * null and drops an undefined key, so an INSERT would store NULL without an
  * error; a nested value or bytes would bind as a JSON array or map.
  */

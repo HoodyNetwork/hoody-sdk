@@ -9,3 +9,5 @@ export { SqlService } from './sql.service.js';
 export { DatabasesService } from './databases.service.js';
 export { KitService } from './kit.service.js';
 export { HistoryService } from './history.service.js';
+export { KvArraysService } from './kv-arrays.service.js';
+export { KvTableService } from './kv-table.service.js';

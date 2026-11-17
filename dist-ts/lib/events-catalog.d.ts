@@ -3,11 +3,11 @@
  *
  * Everything here comes from the server's catalog, vendored as
  * `lib/events-catalog.json` and turned into `lib/events-payloads.generated.ts` by
- * `scripts/sync-events-catalog.ts`. This file adds the hand-written helpers on top; it never
+ * the catalog sync script. This file adds the hand-written helpers on top; it never
  * lists a type name itself, so the catalog stays the single source of names.
  *
  * The OpenAPI `event_type` enum in `generated/` is only checked as a subset of this catalog
- * (tests/unit/events-catalog-drift.test.ts): it lists what history can be filtered by, not what
+ * (a unit test checks it): it lists what history can be filtered by, not what
  * the stream can carry.
  */
 import { type EphemeralEventType, type EventCatalogInfo, type EventResourceTypeMap, type EventType, type HoodyEventMap, type PersistedEventType, type ReservedEventType } from './events-payloads.generated.js';
@@ -18,8 +18,8 @@ export type ResourceTypeFor<T extends EventType> = EventResourceTypeMap[T];
 export type EventPayload<T extends EventType> = HoodyEventMap[T];
 type Prefixes<S extends string> = S extends `${infer Head}.${infer Tail}` ? Head | `${Head}.${Prefixes<Tail>}` : never;
 /**
- * A subscription pattern: one type, a dotted prefix ending in `.*` (`'container.*'`,
- * `'container.snapshot.*'`), or `'*'` for everything. Only prefixes that exist in the catalog
+ * A subscription pattern: one type, a dotted prefix ending in `.*` (`'computer.*'`,
+ * `'computer.snapshot.*'`), or `'*'` for everything. Only prefixes that exist in the catalog
  * type-check.
  */
 export type EventPattern = EventType | `${Prefixes<EventType>}.*` | '*';

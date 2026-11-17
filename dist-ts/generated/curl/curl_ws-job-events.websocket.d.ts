@@ -2,9 +2,10 @@
  * WebSocket client for Subscribe to job events over WebSocket
  *
  * Generated from AsyncAPI specification
- * Protocol: ws
+ * Protocol: unknown
  * @see hoody-curl Job Events WebSocket API v0.1.0
  */
+export type { WebSocketUpgradeRefusedError } from "../../lib/websocket-errors.js";
 /** Minimal structural contract a WebSocket implementation must satisfy. */
 export type IRawWebSocketMessageEvent = {
     data: string | ArrayBuffer | ArrayBufferView | Blob;
@@ -130,6 +131,16 @@ export interface IWebSocketConnectionOptions {
     randomizationFactor?: number;
     auth?: Record<string, unknown>;
     headers?: Record<string, string>;
+    /**
+     * The header names a credential given for THIS socket would travel in (a
+     * per-call kitAuth's header, whatever its name, or a credential header on
+     * the call). A browser WebSocket cannot send headers, so connect() rejects
+     * with a WebSocketCredentialNotSentError when one of these names is among
+     * the headers, instead of opening a socket that looks unauthenticated.
+     * Unset, the dropped credential header names are reported once with a
+     * warning and the socket opens. It has no effect outside a browser.
+     */
+    requireHeaderCredentials?: string[];
     query?: Record<string, string>;
     transports?: Array<'websocket' | 'polling'>;
     path?: string;
@@ -142,10 +153,23 @@ export interface IWebSocketConnectionOptions {
      */
     webSocketFactory?: WebSocketFactory;
     /**
+     * Steers the client's own choice of transport. "ws" opens the socket with
+     * the `ws` package (in a Bun binary, Bun's built-in `ws`), never with the
+     * global WebSocket, and fails the connect when `ws` cannot be loaded. Only
+     * that transport shows the status and body of a refused upgrade (see
+     * WebSocketUpgradeFailedError). A webSocketFactory or a static
+     * webSocketImpl the caller injected still wins: this option only steers
+     * the automatic choice. Refused in a browser and on Socket.IO channels.
+     * "auto" (the default) keeps the client's own choice.
+     */
+    socketTransport?: "auto" | "ws";
+    /**
      * Reconnect after the SERVER closed the socket normally (code 1000).
      * Off by default: a normal close means the server ended the stream on
      * purpose (a deleted terminal session closes this way), and reconnecting
      * to it can silently re-create what was just deleted.
+     * A close because another connection took over (reason "taken over")
+     * is never reconnected, even with this on: see onTakenOver.
      */
     reconnectOnNormalClose?: boolean;
     /**
@@ -256,7 +280,7 @@ export interface JobcompletedServerMessage {
     status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
     type: 'jobcompleted';
 }
-export interface ICurlWsJobEventsWebSocket {
+export interface ICurlJobsConnectWebSocket {
     onJobstarted(callback: (message: JobstartedServerMessage) => void): () => void;
     onJobprogress(callback: (message: JobprogressServerMessage) => void): () => void;
     onJobcompleted(callback: (message: JobcompletedServerMessage) => void): () => void;
@@ -273,7 +297,7 @@ export interface ICurlWsJobEventsWebSocket {
      */
     setAutoReconnect(enabled: boolean): void;
     /** Whether automatic reconnection is currently enabled */
-    readonly autoReconnect: boolean;
+    isAutoReconnect(): boolean;
     /** Disconnect from WebSocket server */
     disconnect(reason?: string): void;
     /** Called when WebSocket connection is established */
@@ -286,8 +310,22 @@ export interface ICurlWsJobEventsWebSocket {
     onReconnect(callback: (attemptNumber: number) => void): () => void;
     /** Called when all reconnection attempts fail */
     onReconnectFailed(callback: () => void): () => void;
-    /** Called when WebSocket error occurs */
+    /**
+     * Called when WebSocket error occurs. A frame of type "error" the server
+     * sent arrives here as a WebSocketServerError (name "WebSocketServerError",
+     * with its `code` and the `frame`): the server refused one request, and
+     * the connection stays open unless a close follows.
+     */
     onError(callback: (error: Error) => void): () => void;
+    /**
+     * Called when the server closed the connection because another one took
+     * its place (close 1000, reason "taken over"; a Bot's voice has one
+     * controller). No automatic reconnect follows, even with
+     * reconnectOnNormalClose: connect again (with takeover) only when the
+     * user asks for it, or two always-connected clients take it from each
+     * other forever. onDisconnect still runs first.
+     */
+    onTakenOver(callback: (reason: string) => void): () => void;
     /** Remove event listener(s) */
     off(event: string, callback?: Function): void;
     /** Remove all listeners for event or all events */
@@ -295,13 +333,13 @@ export interface ICurlWsJobEventsWebSocket {
     /** Close the WebSocket connection */
     close(code?: number, reason?: string): void;
     /** WebSocket ready state */
-    readonly readyState: number;
+    getReadyState(): number;
     /** WebSocket URL */
-    readonly url: string;
+    getUrl(): string;
     /** Whether currently connected */
-    readonly connected: boolean;
+    isConnected(): boolean;
     /** Whether currently attempting to reconnect */
-    readonly reconnecting: boolean;
+    isReconnecting(): boolean;
     /**
      * Sequenced events, as the gateway publishes them.
      *
@@ -328,9 +366,9 @@ export interface ICurlWsJobEventsWebSocket {
      */
     frames(): AsyncIterableIterator<IStreamFrame>;
     /** The last seq seen. Survives reconnects; this is the resume cursor. */
-    readonly cursor: number | undefined;
-    /** The incarnation that stamped `cursor`, when the gateway sends one. */
-    readonly incarnation: string | undefined;
+    getCursor(): number | undefined;
+    /** The incarnation that stamped the cursor (`getCursor()`), when the gateway sends one. */
+    getIncarnation(): string | undefined;
     /**
      * Seed the cursor before connecting — resume a stream this client did
      * not itself read. `undefined` clears it and replays from the ring.
@@ -338,19 +376,18 @@ export interface ICurlWsJobEventsWebSocket {
     setCursor(seq: number | undefined, incarnation?: string): void;
 }
 /**
- * The server refused the WebSocket upgrade for good: automatic reconnect has
- * stopped. `status` is the HTTP status; `code` the server's error code when
- * its answer named one, else "HTTP_<status>"; `via` says how it was learned:
- * "upgrade" (the transport showed the status) or "probe" (a plain GET after
- * repeated failures, see refusalProbeAfter).
+ * A frame of type "error" the server sent: it refused one request, and the
+ * connection stays open unless a close follows. onError receives it as this
+ * Error, never as the bare frame, so `name` tells it from a transport failure.
+ * `code` is the frame's code (or its `error.code` / `error.type`), else
+ * "server_error"; `frame` is the frame as received.
  */
-export interface WebSocketUpgradeRefusedError extends Error {
-    name: "WebSocketUpgradeRefusedError";
-    status: number;
+export interface WebSocketServerError extends Error {
+    name: "WebSocketServerError";
     code: string;
-    via: "upgrade" | "probe";
+    frame: Record<string, unknown>;
 }
-export declare class CurlWsJobEventsWebSocket implements ICurlWsJobEventsWebSocket {
+export declare class CurlJobsConnectWebSocket implements ICurlJobsConnectWebSocket {
     /**
      * The socket constructor every instance of this client uses, in place of
      * its own choice (the `ws` package on Node, the global WebSocket
@@ -372,6 +409,9 @@ export declare class CurlWsJobEventsWebSocket implements ICurlWsJobEventsWebSock
     private _openAttempt;
     private _unopenedFailures;
     private _lastConnectUrl;
+    private _lastSocketGlobal;
+    private _upgradeReadAbort;
+    private _retiredByDisconnect;
     private _frameQueue;
     private _dispatchAlive;
     private _socketGen;
@@ -419,7 +459,7 @@ export declare class CurlWsJobEventsWebSocket implements ICurlWsJobEventsWebSock
      * itself — it only re-arms the close handler for the NEXT drop.
      */
     setAutoReconnect(enabled: boolean): void;
-    get autoReconnect(): boolean;
+    isAutoReconnect(): boolean;
     /**
      * Disconnect from server
      */
@@ -456,7 +496,7 @@ export declare class CurlWsJobEventsWebSocket implements ICurlWsJobEventsWebSock
      *  3. Anything else — the original dispatch on `message.type`.
      */
     private handleString;
-    /** The original per-type dispatch, unchanged in behaviour. */
+    /** The per-type dispatch. */
     private dispatchTypedMessage;
     /** Normalise a gateway control frame and publish it. */
     private handleControlFrame;
@@ -468,6 +508,8 @@ export declare class CurlWsJobEventsWebSocket implements ICurlWsJobEventsWebSock
      * connect() would otherwise miss everything replayed in between.
      */
     private pushStreamFrame;
+    /** End frames() without an end frame: the socket is gone and none follows. */
+    private endFrames;
     /**
      * Handle an incoming BINARY frame. Default implementation decodes
      * the bytes as UTF-8 and routes them to `handleString` — i.e. for
@@ -505,6 +547,7 @@ export declare class CurlWsJobEventsWebSocket implements ICurlWsJobEventsWebSock
     onReconnect(callback: (attemptNumber: number) => void): () => void;
     onReconnectFailed(callback: () => void): () => void;
     onError(callback: (error: Error) => void): () => void;
+    onTakenOver(callback: (reason: string) => void): () => void;
     /**
      * Add event listener
      * @returns Unsubscribe function
@@ -523,8 +566,8 @@ export declare class CurlWsJobEventsWebSocket implements ICurlWsJobEventsWebSock
      */
     private emitEvent;
     close(code?: number, reason?: string): void;
-    get readyState(): number;
-    get url(): string;
+    getReadyState(): number;
+    getUrl(): string;
     /**
      * The socket of the current connection, or null when there is none. It is
      * replaced on every reconnect, so read it again after each `connect`
@@ -532,9 +575,9 @@ export declare class CurlWsJobEventsWebSocket implements ICurlWsJobEventsWebSock
      * offers beyond this client (the `ws` package: ping(), the ping and pong
      * events); do not assign its on* handlers, the client owns them.
      */
-    get rawSocket(): IRawWebSocketLike | null;
-    get connected(): boolean;
-    get reconnecting(): boolean;
+    getRawSocket(): IRawWebSocketLike | null;
+    isConnected(): boolean;
+    isReconnecting(): boolean;
     onEnvelope(callback: (envelope: IStreamEnvelope) => void): () => void;
     onControlFrame(callback: (frame: IStreamControlFrame) => void): () => void;
     onLagged(callback: (frame: IStreamLaggedFrame) => void): () => void;
@@ -547,7 +590,7 @@ export declare class CurlWsJobEventsWebSocket implements ICurlWsJobEventsWebSock
      * them. Use onEnvelope()/onControlFrame() for fan-out.
      */
     frames(): AsyncIterableIterator<IStreamFrame>;
-    get cursor(): number | undefined;
-    get incarnation(): string | undefined;
+    getCursor(): number | undefined;
+    getIncarnation(): string | undefined;
     setCursor(seq: number | undefined, incarnation?: string): void;
 }

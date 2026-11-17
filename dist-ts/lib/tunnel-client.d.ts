@@ -12,76 +12,61 @@ export type { ConnectOptions, BindOptions, BindResult, JoinTicket, ResumedBind, 
 export { TunnelSessionError } from "./tunnel-session.js";
 export interface ExposeOptions {
     /**
-     * Tunnel kit hostname (`PROJECT-CONTAINER-tunnel-1.SERVER.containers.hoody.com`)
-     * or its URL. Not a container id. On a `withContainer()` client,
+     * Tunnel kit hostname (`PROJECT-COMPUTER-tunnel-1.SERVER.computers.hoody.com`)
+     * or its URL. Not a computer id. On a `withComputer()` client,
      * `box.tunnel.expose()` resolves this for you.
      */
-    container?: string;
-    /** Full WebSocket URL (overrides container). */
+    computer?: string;
+    /** Full WebSocket URL (overrides computer). */
     url?: string;
-    /**
-     * @deprecated Ignored and never sent — the tunnel kit does not read it,
-     * and sending the account token leaked it to the container. Use `kitAuth`.
-     */
-    token?: string;
     /** Kit credential for the proxy's tunnel permission rule (see ConnectOptions.kitAuth). */
     kitAuth?: ProxyAuth | ProxyAuthPolicy;
-    /** Port to expose on the container. Use 0 for auto-assigned random port. */
-    containerPort: number;
+    /** Port to expose on the computer. Use 0 for auto-assigned random port. */
+    computerPort: number;
     /** Local target to forward traffic to. */
     to: LocalTarget;
     /** Evict any existing binding on the same port. */
     takeover?: boolean;
 }
 export interface PullOptions {
-    container?: string;
+    computer?: string;
     url?: string;
-    /**
-     * @deprecated Ignored and never sent — the tunnel kit does not read it,
-     * and sending the account token leaked it to the container. Use `kitAuth`.
-     */
-    token?: string;
     /** Kit credential for the proxy's tunnel permission rule (see ConnectOptions.kitAuth). */
     kitAuth?: ProxyAuth | ProxyAuthPolicy;
-    /** Port to bind on container loopback. Use 0 for auto-assigned random port. */
-    containerPort: number;
+    /** Port to bind on computer loopback. Use 0 for auto-assigned random port. */
+    computerPort: number;
     /** Local target to forward traffic to. */
     to: LocalTarget;
     /** Loopback host (default 127.0.0.1). */
     host?: string;
 }
 export interface ServeOptions {
-    container?: string;
+    computer?: string;
     url?: string;
-    /**
-     * @deprecated Ignored and never sent — the tunnel kit does not read it,
-     * and sending the account token leaked it to the container. Use `kitAuth`.
-     */
-    token?: string;
     /** Kit credential for the proxy's tunnel permission rule (see ConnectOptions.kitAuth). */
     kitAuth?: ProxyAuth | ProxyAuthPolicy;
-    /** Port to expose on the container. Use 0 for auto-assigned random port. */
-    containerPort: number;
+    /** Port to expose on the computer. Use 0 for auto-assigned random port. */
+    computerPort: number;
     /** Bun.serve-compatible fetch handler. */
     fetch: (req: Request) => Response | Promise<Response>;
 }
 /**
- * The tunnel WebSocket URL for a `container` option: a hostname, or an
+ * The tunnel WebSocket URL for a `computer` option: a hostname, or an
  * http(s)/ws(s) URL of the tunnel kit. A DNS name gets `wss://`, since the
  * public edge serves TLS only. Loopback, IP literals and single-label hosts
  * (a kit reached directly on a private network) keep plain `ws://`.
  */
-export declare function tunnelConnectUrl(container: string): string;
+export declare function tunnelConnectUrl(computer: string): string;
 /**
- * The public URL of a container port exposed through the tunnel kit at
- * `kitUrl` (any form `container` or `url` accepts): the kit's host
- * `<project>-<container>-tunnel-<n>.<server>.<domain>` gives
- * `https://<project>-<container>-http-<port>.<server>.<domain>`, the proxy's
+ * The public URL of a computer port exposed through the tunnel kit at
+ * `kitUrl` (any form `computer` or `url` accepts): the kit's host
+ * `<project>-<computer>-tunnel-<n>.<server>.<domain>` gives
+ * `https://<project>-<computer>-http-<port>.<server>.<domain>`, the proxy's
  * route to that port (kit catalog `http-{port}`). For the BIND_OK of a kit
  * run without HOODY_TUNNEL_PUBLIC_URL_PATTERN, whose `publicUrl` is null.
  * Undefined for a host of any other shape (a kit reached directly).
  */
-export declare function exposedPortUrl(kitUrl: string, containerPort: number): string | undefined;
+export declare function exposedPortUrl(kitUrl: string, computerPort: number): string | undefined;
 export interface TunnelHandle {
     /** Underlying tunnel session. */
     session: TunnelSession;
@@ -91,23 +76,24 @@ export interface TunnelHandle {
     publicUrl?: string | undefined;
     /** Close the tunnel session. */
     close(): Promise<void>;
+    /** `await using` support; attached only where the runtime has `Symbol.asyncDispose` (Node 20.4+, Bun). */
     [Symbol.asyncDispose](): Promise<void>;
 }
 /**
  * High-level convenience: connect + expose in one call.
  *
- * Use `containerPort: 0` for auto-assigned random port.
+ * Use `computerPort: 0` for auto-assigned random port.
  * Returns the public URL in `handle.publicUrl`.
  */
 export declare function expose(opts: ExposeOptions): Promise<TunnelHandle>;
-export interface ResumeExposeOptions {
-    /** As ExposeOptions.container. */
-    container?: string;
-    /** Full WebSocket URL (overrides container). */
+export interface ResumeTunnelExposeOptions {
+    /** As ExposeOptions.computer. */
+    computer?: string;
+    /** Full WebSocket URL (overrides computer). */
     url?: string;
     /** Kit credential for the proxy's tunnel permission rule (see ConnectOptions.kitAuth). */
     kitAuth?: ProxyAuth | ProxyAuthPolicy;
-    /** The dropped session's id (`TunnelSession.id`, read while it was connected). */
+    /** The dropped session's id (`TunnelSession.getId()`, read while it was connected). */
     sessionId: string;
     /** Local target the resumed EXPOSE binds forward to. */
     to: LocalTarget;
@@ -144,6 +130,7 @@ export interface ResumedTunnel {
         publicUrl?: string | undefined;
     }>;
     close(): Promise<void>;
+    /** `await using` support; attached only where the runtime has `Symbol.asyncDispose` (Node 20.4+, Bun). */
     [Symbol.asyncDispose](): Promise<void>;
 }
 /**
@@ -156,19 +143,19 @@ export interface ResumedTunnel {
  * the id is unknown); the fresh session it opened instead is closed. Throws
  * when there was no HELLO_OK (unreachable, or "resume grace expired").
  */
-export declare function resumeExpose(opts: ResumeExposeOptions): Promise<ResumedTunnel | null>;
+export declare function resumeExpose(opts: ResumeTunnelExposeOptions): Promise<ResumedTunnel | null>;
 /**
  * High-level convenience: connect + pull in one call.
  */
 export declare function pull(opts: PullOptions): Promise<TunnelHandle>;
-export interface ResumePullOptions {
-    /** As PullOptions.container. */
-    container?: string;
-    /** Full WebSocket URL (overrides container). */
+export interface ResumeTunnelPullOptions {
+    /** As PullOptions.computer. */
+    computer?: string;
+    /** Full WebSocket URL (overrides computer). */
     url?: string;
     /** Kit credential for the proxy's tunnel permission rule (see ConnectOptions.kitAuth). */
     kitAuth?: ProxyAuth | ProxyAuthPolicy;
-    /** The dropped session's id (`TunnelSession.id`, read while it was connected). */
+    /** The dropped session's id (`TunnelSession.getId()`, read while it was connected). */
     sessionId: string;
     /** Local TCP target the resumed PULL binds forward to. */
     to: LocalTarget;
@@ -183,15 +170,15 @@ export interface ResumePullOptions {
  * Resolves null when the kit answered but did not resume; throws when there
  * was no HELLO_OK.
  */
-export declare function resumePull(opts: ResumePullOptions): Promise<ResumedTunnel | null>;
+export declare function resumePull(opts: ResumeTunnelPullOptions): Promise<ResumedTunnel | null>;
 /** How long the kit parks a dropped session's binds by default (`--takeover-grace`). */
 export declare const TUNNEL_RESUME_WINDOW_MS = 60000;
 export interface KeepTunnelAliveOptions {
     /** Which driver opened the tunnel: decides how resumed binds forward. */
     mode: "expose" | "pull";
-    /** As ExposeOptions.container. */
-    container?: string;
-    /** Full WebSocket URL (overrides container). */
+    /** As ExposeOptions.computer. */
+    computer?: string;
+    /** Full WebSocket URL (overrides computer). */
     url?: string;
     /** Kit credential for the proxy's tunnel permission rule (see ConnectOptions.kitAuth). */
     kitAuth?: ProxyAuth | ProxyAuthPolicy;
@@ -220,7 +207,7 @@ export interface TunnelEnd {
 }
 export interface KeptTunnel {
     /** The current session: replaced after each successful resume. */
-    readonly session: TunnelSession;
+    getSession(): TunnelSession;
     /** Settles (never rejects) when the tunnel is over. */
     readonly ended: Promise<TunnelEnd>;
     /** Close the tunnel for good, releasing its binds. */

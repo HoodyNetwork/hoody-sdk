@@ -19,8 +19,12 @@
  *    protocol; full ProxyAuth + getKitAuth/getToken provider callbacks
  *    for credential rotation across reconnect) --
  *   TerminalClient + TerminalClientOptions / TerminalPreferences /
- *   ShellType / ConnectionState; plus TerminalWebSocketTyped for
- *   consumers who want the typed-only client without the Duplex shim
+ *   ShellType / ConnectionState (the typed-only client without the Duplex
+ *   shim is the generated TerminalSessionsConnectWebSocket)
+ *
+ * -- WebSocket upgrade errors (generated WebSocket clients, TerminalClient) --
+ *   WebSocketUpgradeRefusedError, WebSocketUpgradeFailedError, WebSocketCredentialNotSentError +
+ *   isWebSocketUpgradeRefusedError, isWebSocketUpgradeFailedError, isWebSocketCredentialNotSentError
  *
  * -- Vault crypto (encrypt/decrypt secrets) --
  *   encrypt, decrypt, isEncrypted, parseEnvelope, EncryptedEnvelope
@@ -34,13 +38,13 @@
  *   verifyHoodySignatureHeader, verifyHoodySignatureFrom
  *
  * -- Metrics normalisation --
- *   normalizeContainerStatsResponse, normalizeProjectStatsResponse
+ *   normalizeComputerStatsResponse, normalizeProjectStatsResponse
  *
  * -- Exec helpers (prototype augmentation + dynamic script support) --
  *   filterAgentScripts + types (the prototype patches run at import; they are not exported)
  *
  * -- Embed URLs for every kit UI (client.embeds) --
- *   buildEmbedUrl, getEmbedCatalog, listEmbedViews, deriveContainersDomain,
+ *   buildEmbedUrl, getEmbedCatalog, listEmbedViews, deriveComputersDomain,
  *   EmbedValidationError, createEmbeds + types
  *
  * Safe from regeneration — add new custom exports here.
@@ -51,14 +55,17 @@ export { EventsManager } from './events-manager.js';
 // entry (lib/index.browser.ts) so consumers that directly use Socket.IO
 // don't need a separate `socket.io-client` dependency import.
 export { io } from 'socket.io-client';
-export { TerminalClient, TerminalWebSocketTyped } from './terminal-client.js';
+export { TerminalClient } from './terminal-client.js';
+// Errors of a WebSocket upgrade the server answered with an HTTP status
+// (generated WebSocket clients and TerminalClient).
+export { isWebSocketUpgradeRefusedError, isWebSocketUpgradeFailedError, isWebSocketCredentialNotSentError, } from './websocket-errors.js';
 export { encrypt, decrypt, isEncrypted, parseEnvelope, VaultCryptoError } from './vault-crypto.js';
 export { streamAgentPrompt } from './agent-client.js';
 export { formatEd25519SshPublicKey, parseEd25519SshPublicKey, generateEd25519SshKeyPair, } from './ssh-keys.js';
 export { getHoodySignatureHeader, parseHoodySignatureHeader, parseHoodySignatureFrom, verifyHoodySignatureHeader, verifyHoodySignatureFrom, verifyHoodySignatureFromContext, hoodySignaturePath, } from './signing.js';
 export { HoodyClient, } from './hoody-client.js';
 // Public API surface: errors, config, middleware contract.
-export { ApiError, isApiError, isRetryableApiError, ValidationError, isApiErrorCode, } from '../generated/errors.js';
+export { ApiError, isApiError, isRetryableApiError, ValidationError, RetiredOptionError, isApiErrorCode, } from '../generated/errors.js';
 // Session lifecycle: the two-factor challenge HoodyClient.login() raises, the token
 // shape adoptSession() takes, and the enriched realm-scope 403.
 export { TwoFactorRequiredError, isRealmScopeError } from '../generated/client.js';
@@ -68,24 +75,24 @@ export { HttpClient } from '../generated/http-client.js';
 // Whether this process sends through the SDK's own undici transport (Node 22.19+), as the README describes.
 export { nodeTransportInUse } from '../generated/http-client.js';
 export { listKits, } from './kit-catalog.js';
-export { normalizeContainerStatsResponse, normalizeProjectStatsResponse, } from './metrics.js';
+export { normalizeComputerStatsResponse, normalizeProjectStatsResponse, } from './metrics.js';
 // -- Exec dynamic discovery & skills --
-export { discoverScripts, scriptPathToName, isValidToolName, sanitizeDescription, extractParamsFromSchema, extractPathParams, } from './exec-dynamic-discovery.js';
-export { clearDiscoveryCache, } from './exec-dynamic-client.js';
+export { listCallableScripts, scriptPathToName, isValidToolName, sanitizeDescription, extractParamsFromSchema, extractPathParams, } from './exec-dynamic-discovery.js';
+export { clearCallableScriptsCache, } from './exec-dynamic-client.js';
 export { filterAgentScripts, } from './exec-dynamic-skills.js';
 export { parseRawScriptEntry, parseRawScriptEntries, } from './exec-dynamic-parse.js';
 export { readFileCache as readExecFileCache, writeFileCache as writeExecFileCache, deleteFileCache as deleteExecFileCache, pruneStaleCache as pruneExecStaleCache, } from './exec-dynamic-cache.js';
 // -- Screenshot save helpers --
 export { ScreenshotSaveError, } from './screenshot-save.js';
 // -- Mount module (rclone+WebDAV filesystem mount) --
-export { mount, unmount, unmountById, unmountAll, unmountByContainer, listMounts, pruneStaleMounts, probeKit, resolveKitUrl, parseCliTarget, } from './mount.js';
-// -- Share module (a local folder served into a container) --
+export { mount, unmount, unmountById, unmountAll, unmountByComputer, listMounts, pruneStaleMounts, probeKit, resolveKitUrl, parseCliTarget, UnmountError, PendingUploadsError, } from './mount.js';
+// -- Share module (a local folder served into a computer) --
 export { share, listShares, stopShare, ShareError, AmbiguousShareError, UndeliveredWritesError, } from './share.js';
 // -- Notification display helpers --
 export { NotificationDisplayClient } from './notification-display-client.js';
 export { createNotificationPresenter, parseNotificationData, } from './notification-presenter.js';
 export { isProxyAuthPolicy } from './proxy-auth.js';
-export { ApiConnecteventstreamWebSocket } from './events-types.js';
+export { EventsSocketTransport } from './events-types.js';
 export { EventsError, EventsAuthError, EventsClosedError, EventsSessionChangedError, EventsTimeoutError, EventsGapError, socketActionFor, historyActionFor, } from './events-errors.js';
 export { EventIdLru, EventsRecovery } from './events-replay.js';
 export { EventsSession } from './events-session.js';
@@ -95,23 +102,23 @@ export { PipeStream, PipeReceiveEmptyBodyError, PipeIntegrityError, PipeTransfer
 // -- Pipe WebSocket relay (?ws): connect() duplex --
 export { PipeWsError, PIPE_WS_MAX_MESSAGE_BYTES } from './pipe-ws.js';
 // -- Tunnel target parsing --
-export { parseLocalTarget as parseTunnelTarget, parseContainerPort as parseTunnelPort, } from './tunnel-parse-target.js';
+export { parseLocalTarget as parseTunnelTarget, parseComputerPort as parseTunnelPort, } from './tunnel-parse-target.js';
 // -- Tunnel client (WebSocket binary protocol + high-level expose/pull API) --
-export { expose as tunnelExpose, pull as tunnelPull, serve as tunnelServe, connect as tunnelConnect, tunnelConnectUrl, TunnelSession, } from './tunnel-client.js';
+export { expose as exposeTunnel, pull as pullTunnel, serve as serveTunnel, tunnelConnectUrl, TunnelSession, } from './tunnel-client.js';
 // Keeping a tunnel up across drops, and resuming a dropped session by hand.
-export { keepTunnelAlive, resumeExpose as tunnelResumeExpose, resumePull as tunnelResumePull, TunnelSessionError, TunnelResumeAbortedError, } from './tunnel-client.js';
+export { keepTunnelAlive, resumeExpose as resumeTunnelExpose, resumePull as resumeTunnelPull, TunnelSessionError, TunnelResumeAbortedError, } from './tunnel-client.js';
 export { FrameType as TunnelFrameType, ResetCode as TunnelResetCode, HEADER_SIZE as TUNNEL_HEADER_SIZE, MAX_PAYLOAD_SIZE as TUNNEL_MAX_PAYLOAD_SIZE, MAX_FRAME_SIZE as TUNNEL_MAX_FRAME_SIZE, isExtensionRange as isTunnelExtensionRange, isMandatoryUnknown as isTunnelMandatoryUnknown, isControlFrame as isTunnelControlFrame, } from './tunnel-protocol-types.js';
 // -- Tunnel protocol codec (low-level frame encode/decode) --
 export { encodeFrame as encodeTunnelFrame, encodeFrames as encodeTunnelFrames, decodeFrame as decodeTunnelFrame, decodeFrames as decodeTunnelFrames, dataFrame as tunnelDataFrame, pingFrame as tunnelPingFrame, pongFrame as tunnelPongFrame, windowFrame as tunnelWindowFrame, eofFrame as tunnelEofFrame, CodecError as TunnelCodecError, MAX_MESSAGE_SIZE as TUNNEL_MAX_MESSAGE_SIZE, MAX_FRAMES_PER_MESSAGE as TUNNEL_MAX_FRAMES_PER_MESSAGE, } from './tunnel-protocol-codec.js';
 // -- Tunnel HTTP/TCP pump (stream handlers for custom session users) --
 export { handleHttpStream as handleTunnelHttpStream, handleTcpStream as handleTunnelTcpStream, setupAutoForwarding as setupTunnelAutoForwarding, destroyAllLocalAgents as destroyAllTunnelLocalAgents, } from './tunnel-http-pump.js';
-// -- Local exit proxy (publish a container's HTTPS proxy, exit from this machine) --
+// -- Local exit proxy (publish a computer's HTTPS proxy, exit from this machine) --
 // `startLocalExit` is the one-call entry point the CLI uses. The layers
 // below it are exported too, because the pieces are independently useful: the
 // SOCKS5 machine runs on any transport implementing `Socks5Stream`, and the
 // destination gate is the same authorization used by every outbound dial.
 export { startLocalExit, fetchThroughProxy, LocalExitStartupError, } from './local-exit.js';
-export { tunnelSocks5 } from './tunnel-socks5.js';
+export { startTunnelSocks5 } from './tunnel-socks5.js';
 export { handleSocks5Stream, createServerState as createSocks5ServerState, } from './socks5-server.js';
 export { resolveAndAuthorize as resolveAndAuthorizeDestination, isPrivateAddress, clearDnsCache as clearDestinationDnsCache, DestinationDeniedError, } from './net-destination-policy.js';
 // -- curl-channel (WebSocket-multiplexed fetch over Hoody curl kit) --
@@ -122,15 +129,21 @@ export { CurlChannel, CurlChannelStream, createCurlFetch, ChannelError as CurlCh
 // Helpers the browser entry already exports (index.browser.ts); the Node entry
 // must not be the smaller one.
 export { generateNotesFileId, encodeTusMetadata, NOTES_UPLOAD_CHUNK_BYTES, } from './notes-upload.js';
-// -- Bot chat (box.agent.bots.ask / follow) --
+export { exportStream as notesExportStream } from './notes-export.js';
+// -- Bot chat (box.agent.bots.ask / followLogs) --
 export { BOT_MESSAGE_IDEMPOTENCY_CAPABILITY } from './bot-chat.js';
+// -- Open an app (box.run.open / status / watch / findOpen / canOpen / close): the shared core is lib/run-open-core.js --
+export { runOpenCore } from './run-open.js';
+// -- Bot URLs, caller side (`new BotUrlClient({ url, key })`): a Bot's public doors, by named key --
+export { BotUrlClient, BotUrlError, isBotUrlError, isGateHandle, BOT_URL_ERRORS } from './bot-url-client.js';
+export { isValidBotLabel, isValidBotZone, botLabelOfHost, botLabelOfUrl, botZoneFor, botUrlZones, BOT_URL_ZONE } from './bot-label.js';
 export { pipeTransportFromClient } from './pipe-transport.js';
-// -- Remote control of a live exec script (#674): `exec.connect(url, { token })` --
+// -- Remote control of a live exec script: `exec.remote(url, { token })` --
 export { ExecRemoteError, ExecRemoteTokenError, ExecRemotePermissionError, ExecRemoteThrewError, ExecRemoteTimeoutError, ExecRemoteUnsupportedError, ExecRemoteConnectionError, isExecRemoteError, formatExecRemoteFix, createExecRemoteConnection, } from './exec-remote.js';
 export { withTokenQueryParam } from './proxy-auth.js';
-// -- Embed URLs for every kit UI: `client.embeds.<kit>.<view>(container, opts)` --
+// -- Embed URLs for every kit UI: `client.embeds.<kit>.<view>(computer, opts)` --
 // Same block as the browser entry. `client.embeds` is installed below, never by hoody-client.ts.
-export { buildEmbedUrl, getEmbedCatalog, listEmbedViews, deriveContainersDomain, EmbedValidationError, } from './embeds/runtime.js';
+export { buildEmbedUrl, getEmbedCatalog, listEmbedViews, deriveComputersDomain, EmbedValidationError, } from './embeds/runtime.js';
 export { createEmbeds } from './embeds/attach.js';
 // Patch HoodyClient prototype with screenshot-save methods.
 // Must run after all modules are loaded to avoid circular-import TDZ errors.

@@ -13,15 +13,35 @@
  * (every backend, third-party API, and exec script defines its own
  * credential field names) but the structural patterns are bounded.
  */
+export declare const SECRET_HEADER_RE: RegExp;
 /**
  * True for a body field or query parameter name that carries a credential:
  * a name in SECRET_FIELD_RE, or one whose last word is a secret noun
  * (`current_password`, `key_file_pass`, `client_credentials`, `confirm_token`,
- * `sse_customer_key`, `otp_code`, `approver_lease`). Names that only mention a
+ * `sse_customer_key`, `otp_code`, `approver_lease`, `private_key_seed`). Names that only mention a
  * secret are not (`has_password`, `token_url`, `max_tokens`, `public_key`,
  * `idempotency_key`, `next_page_token`).
  */
 export declare function isSecretFieldName(name: string): boolean;
+/**
+ * An absolute URL too long to parse cheaply: its userinfo and its whole query
+ * string go, the rest stays. One pass over the text. Exported for its own test:
+ * callers reach it through redactSensitiveValue, whose earlier scrubs would hide
+ * a missing one here.
+ */
+export declare function scrubLongUrl(text: string): string;
+export declare const BOT_KEY_VALUE_RE: RegExp;
+/** Replace every Bot URL key secret in `text`, keeping its 12-character prefix. */
+export declare function redactBotKeys(text: string, placeholder?: string): string;
+/** Mask the fragment of every signup check link in `text` (the chat log's redaction uses it too). */
+export declare function maskChallengeLinks(text: string): string;
+/**
+ * Scrub credential values out of free diagnostic text by shape: Hoody tokens
+ * and Bot URL key secrets (prefix kept). For an output sink that prints text
+ * assembled from several sources (headings, messages, stacks, inspected
+ * objects): one call over the whole text covers every part.
+ */
+export declare function scrubDiagnosticText(text: string): string;
 /**
  * True for a header name in the secret set above. Exported so the browser
  * HttpClient's credential-scope check uses the same set the redactor does.
@@ -89,6 +109,6 @@ export declare function redactUrl(url: string, extraParamNames?: readonly string
  * pattern (the request's recorded credential query parameters). They redact
  * an object key of that name (e.g. a `query` record) and a `name=value` pair
  * inside any string value (e.g. a URL under a non-secret key).
- * `redactSensitiveValue(v)` behaves exactly as before.
+ * Without `extraFieldNames` only the built-in pattern applies.
  */
 export declare function redactSensitiveValue(v: unknown, _depth?: number, seen?: WeakSet<object>, extraFieldNames?: readonly string[]): unknown;

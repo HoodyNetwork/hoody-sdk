@@ -39,12 +39,16 @@ export interface EventsHistoryReader {
 export declare class EventIdLru {
     readonly capacity: number;
     private readonly ids;
+    /** `capacity` is the most ids kept; adding one more forgets the oldest. */
     constructor(capacity: number);
     /** Record `id`. Returns true when it was not already present. */
     add(id: string): boolean;
+    /** True when `id` is still remembered. Does not refresh its recency. */
     has(id: string): boolean;
+    /** Forget every id. */
     clear(): void;
-    get size(): number;
+    /** How many ids are remembered now. */
+    getSize(): number;
 }
 export interface EventsRecoveryOptions {
     reader: EventsHistoryReader;
@@ -90,9 +94,13 @@ export declare class EventsRecovery {
     private retryTimer;
     private retryAttempt;
     private stopped;
+    /**
+     * `opts.reader` makes the history reads and the callbacks receive the outcome. `maxReplayPages`
+     * (default 20) is floored to at least 1; `pageLimit` is kept between 1 and 500.
+     */
     constructor(opts: EventsRecoveryOptions);
     /** True while a catch-up is reading history. */
-    get busy(): boolean;
+    isBusy(): boolean;
     /**
      * Ask for a catch-up. Joins the run in flight (which then runs once more)
      * or starts one. Resolves when the run it joined or started settles.
@@ -106,7 +114,7 @@ export declare class EventsRecovery {
     retryDelay(attempt: number, floorMs: number): number;
     /**
      * Drop every cursor and every remembered id, and abandon a run in flight
-     * (F16: nothing of one session carries into another).
+     * (nothing of one session carries into another).
      */
     reset(): void;
     /** Stop for good: no further reads, no retries. */
@@ -119,7 +127,7 @@ export declare class EventsRecovery {
     /** `?bootstrap=true` → confirmed/lastLatest. Returns false when the run must end. */
     private rebootstrap;
     /**
-     * Apply the C5 HTTP row for a failed read. 'continue' means a gap was
+     * Apply the HTTP row of the code map for a failed read. 'continue' means a gap was
      * raised and the boundary re-read, so the run reads on from it.
      */
     private handleFailure;

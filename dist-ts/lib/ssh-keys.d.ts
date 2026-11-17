@@ -23,7 +23,7 @@ declare const SSH_ED25519_ALGORITHM = "ssh-ed25519";
 export type SshPublicKeyInput = Uint8Array | ArrayBuffer | ArrayBufferView | string;
 export type Ed25519SeedInput = Uint8Array | ArrayBuffer | ArrayBufferView | string;
 export interface GenerateEd25519SshKeyPairOptions {
-    /** Optional comment appended to the public key line */
+    /** Optional comment appended to the public key line; one line (a line break inside it is refused) */
     comment?: string;
     /**
      * Optional deterministic 32-byte seed.
@@ -66,11 +66,11 @@ export interface ParsedEd25519SshPublicKey {
  * This function is crypto-free and works in non-HTTPS/plain HTML contexts.
  *
  * @param publicKey - Raw 32-byte key, base64 raw key, base64 SSH key blob, or full `ssh-ed25519 ...` line
- * @param comment - Optional comment appended to output
+ * @param comment - Optional comment appended to output; one line (a line break inside it is refused)
  */
 export declare function formatEd25519SshPublicKey(publicKey: SshPublicKeyInput, comment?: string): string;
 /**
- * Parse an OpenSSH Ed25519 public key line.
+ * Parse an OpenSSH Ed25519 public key line. A line break inside it (a second entry) is refused.
  */
 export declare function parseEd25519SshPublicKey(publicKey: string): ParsedEd25519SshPublicKey;
 /**

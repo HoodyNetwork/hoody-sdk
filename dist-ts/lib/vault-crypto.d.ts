@@ -14,7 +14,7 @@
  *   and falls back to the alternative if the preferred one fails.
  *
  * Random number generation:
- *   fillRandomBytes() cascades through four CSPRNG sources:
+ *   fillRandomBytes() cascades through three CSPRNG sources, then a pseudo-random fallback:
  *   globalThis.crypto -> node:crypto.webcrypto -> node:crypto.randomFillSync/randomBytes
  *   -> pseudo-random fallback (ChaCha20 seeded from best-effort entropy).
  *   The `RandomSource` field on the envelope records which source was used
@@ -23,8 +23,7 @@
  * The envelope format stays compatible across backends.
  */
 /**
- * Typed error class for vault-crypto failures. Parity with
- * LockCryptoError in cli/local-lock/crypto.ts so consumers can branch on
+ * Typed error class for vault-crypto failures, so consumers can branch on
  * `err instanceof VaultCryptoError` (or the stable `.name` string) instead
  * of duck-typing against plain `Error` message strings.
  *
@@ -32,7 +31,9 @@
  * available for diagnostics without embedding it in the user-facing message.
  */
 export declare class VaultCryptoError extends Error {
+    /** Which check failed: a malformed envelope, an unknown version, bad key-derivation parameters, or a failed decryption. */
     readonly kind: 'invalid-envelope' | 'unsupported-version' | 'invalid-kdf' | 'decrypt-failed';
+    /** `kind` is the failure class to branch on; `options.cause` keeps the underlying error. */
     constructor(kind: VaultCryptoError['kind'], message: string, options?: {
         cause?: unknown;
     });

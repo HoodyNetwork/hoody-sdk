@@ -19,6 +19,7 @@ import { prepareChatsDir } from './prepare-dir.js';
 function markerPath() {
     return join(hoodyHomeDir(), '.hoody', 'chats', '.seen-privacy-banner');
 }
+/** True when the first-run banner's marker file exists, so the banner has already been shown to this user. */
 export function hasSeenBanner() {
     return existsSync(markerPath());
 }

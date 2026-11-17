@@ -13,13 +13,22 @@
  *     displays: 'all'
  *   });
  *   const display = new NotificationDisplayClient(ws, {
- *     baseUrl: 'https://proj-ctr-n-1.server.containers.hoody.com'
+ *     baseUrl: 'https://proj-ctr-n-1.server.computers.hoody.com'
  *   });
  *   await display.start();
  *   // → notifications now appear as OS/browser notifications
  *   display.stop();
  */
 import { parseNotificationData, createNotificationPresenter, } from './notification-presenter.js';
+import { retireAccessors, retireMethods } from './retired-accessor.js';
+/**
+ * Shows a computer's notifications on this machine: it listens on a notification stream and hands each message to
+ * a presenter (the operating system's or the browser's notifications by default), one at a time.
+ *
+ * Nothing is shown until `start()` resolves true. Pending notifications wait in a bounded queue: when it is full
+ * the oldest is dropped (`onDropped`), and `minInterval` spaces out what is shown. `stop()` stops listening,
+ * empties the queue and disposes the presenter; it does not close the stream.
+ */
 export class NotificationDisplayClient {
     presenter;
     unsubscribe = null;
@@ -31,6 +40,11 @@ export class NotificationDisplayClient {
     maxQueueLength;
     config;
     ws;
+    /**
+     * `ws` is an open notification stream (`connectNotificationStream()`). `config` sets the presenter (or the
+     * built-in one's settings), a `filter`, the spacing between notifications and the queue size; a `maxQueueLength`
+     * below 1 is read as 1.
+     */
     constructor(ws, config) {
         this.ws = ws;
         this.config = config ?? {};
@@ -50,7 +64,7 @@ export class NotificationDisplayClient {
     async start() {
         // Guard: if already started, return current state
         if (this.unsubscribe)
-            return this.presenter.ready;
+            return this.presenter.isReady();
         // Guard: if start() is already in-flight (concurrent call), return same promise
         if (this.startPromise)
             return this.startPromise;
@@ -89,15 +103,15 @@ export class NotificationDisplayClient {
         this.presenter.dispose();
     }
     /**
-     * Whether the client is actively listening and the presenter is ready.
+     * Whether the client is running: started, not stopped, and the presenter is ready.
      */
-    get isActive() {
-        return this.unsubscribe !== null && this.presenter.ready;
+    isRunning() {
+        return this.unsubscribe !== null && this.presenter.isReady();
     }
     /**
-     * Manually show a single notification (for testing or manual triggering).
+     * Show a single notification now (for testing or manual triggering).
      */
-    async showManual(message) {
+    async show(message) {
         const parsed = parseNotificationData(message, this.config.baseUrl);
         await this.presenter.show(parsed);
     }
@@ -145,3 +159,8 @@ export class NotificationDisplayClient {
         }
     }
 }
+// `isActive` shipped as a getter; a method of the same name would read as a truthy function, so it
+// refuses instead, naming the method.
+retireAccessors(NotificationDisplayClient.prototype, 'NotificationDisplayClient', { isActive: 'isRunning()' });
+// Renamed; the old name refuses, naming show().
+retireMethods(NotificationDisplayClient.prototype, 'NotificationDisplayClient', { showManual: 'show()' });

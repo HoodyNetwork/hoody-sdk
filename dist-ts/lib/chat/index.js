@@ -1,12 +1,8 @@
 /**
- * hoody-sdk/chat — programmatic access to the hoody chat feature.
+ * The chat feature's barrel, internal to the package (not a package export).
  *
- * The CLI (`hoody chat`) is a thin Commander wrapper
- * around the runners and primitives re-exported here. Any consumer of the
- * SDK can therefore drive the same chat flow without shelling out to the
- * binary — useful for embedding chat into other tools, for writing
- * integration tests against a real provider, or for building custom REPL
- * frontends.
+ * The CLI (`hoody chat`) is a thin Commander wrapper around the runners and
+ * primitives re-exported here, imported by relative path.
  *
  * Import-time side effects are minimal: no filesystem touches and no
  * network. `./docs-singletons.js` reads `HOODY_CHAT_DOCS_RATE_LIMIT` ONCE

@@ -2,7 +2,7 @@
  * Which client a service belongs to.
  *
  * Several hand-written helpers live on a generated service (`terminal.sessions.createSsh`,
- * `daemon.programs.attachTerminal`, `agent.importLocalConfig`) but need more than the service
+ * `daemon.programs.connectTerminal`, `agent.importLocalConfig`) but need more than the service
  * itself: the client's URL templates, its other namespaces, its credentials. A service does not
  * know its client, so `patchHoodyClientMetrics` stamps each such service object with its owner,
  * under a registry symbol, and the helpers read it back here.

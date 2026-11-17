@@ -54,6 +54,7 @@ export function cacheDir(platform = process.platform, env = process.env) {
     }
     return path.join(homeDir(env), '.hoody');
 }
+/** The full path of the update-check cache file for `platform` and `env` (this process by default). */
 export function cachePath(platform = process.platform, env = process.env) {
     return path.join(cacheDir(platform, env), CACHE_FILENAME);
 }

@@ -6,12 +6,12 @@
  * module extracts the script array out of the various response shapes the
  * API emits and delegates to the shared `parseRawScriptEntries` parser.
  * Companion `.schema.json` enrichment is NOT performed here — callers with
- * a ScriptsService should use `discoverScripts()` from
+ * a ScriptsService should use `listCallableScripts()` from
  * `exec-dynamic-discovery.ts` instead.
  */
 import { extractRawScriptList, parseRawScriptEntries } from './exec-dynamic-parse.js';
 /**
- * Parse a raw API response from openapi.listScripts into DiscoveredScript[].
+ * Parse a raw API response from openapi.listScripts into CallableScript[].
  * The script array is found by `extractRawScriptList`, which accepts the
  * client envelope around the kit body as well as a bare array or `scripts`
  * list at any of the first `data` levels.

@@ -9,13 +9,13 @@
  *   - `terminal.sessions.createDesktop(options)` — create a desktop terminal with X11 display
  *   - `terminal.commands.runSsh(options)` — run a command on a remote SSH server
  *
- *   All methods require a container-scoped client (via `withContainer()`).
+ *   All methods require a computer-scoped client (via `withComputer()`).
  *   They are attached to SessionsService.prototype / CommandsService.prototype via module
  *   augmentation and runtime prototype patching, following the same pattern as exec-scripts.ts.
- *   The owning client (for the container URL templates) is read back from the service
+ *   The owning client (for the computer URL templates) is read back from the service
  *   (lib/service-owner.ts).
  *
- *   Each method returns `terminal_url` built from the container's URL templates.
+ *   Each method returns `terminal_url` built from the computer's URL templates.
  */
 export interface SshTerminalOptions {
     host: string;
@@ -111,7 +111,7 @@ declare module '../generated/terminal/sessions.service.js' {
          *
          * @example
          * ```ts
-         * const scoped = await client.withContainer(container);
+         * const scoped = await client.withComputer(computer);
          * const result = await scoped.terminal.sessions.createSsh({
          *   host: '192.168.1.100',
          *   user: 'admin',
@@ -126,7 +126,7 @@ declare module '../generated/terminal/sessions.service.js' {
          *
          * @example
          * ```ts
-         * const scoped = await client.withContainer(container);
+         * const scoped = await client.withComputer(computer);
          * const result = await scoped.terminal.sessions.createLocal({ shell: 'bash' });
          * console.log(result.terminal_url);
          * ```
@@ -138,7 +138,7 @@ declare module '../generated/terminal/sessions.service.js' {
          *
          * @example
          * ```ts
-         * const scoped = await client.withContainer(container);
+         * const scoped = await client.withComputer(computer);
          * const result = await scoped.terminal.sessions.createDesktop({
          *   terminal_id: '5',
          *   desktop_env: 'xfce',
@@ -156,7 +156,7 @@ declare module '../generated/terminal/commands.service.js' {
          *
          * @example
          * ```ts
-         * const scoped = await client.withContainer(container);
+         * const scoped = await client.withComputer(computer);
          * const result = await scoped.terminal.commands.runSsh({
          *   command: 'ls -la /var/log',
          *   host: '192.168.1.100',
@@ -169,4 +169,9 @@ declare module '../generated/terminal/commands.service.js' {
         runSsh(options: SshExecOptions): Promise<SshExecResult>;
     }
 }
+/**
+ * Install `terminal.sessions.createSsh()`, `createLocal()` and `createDesktop()` and
+ * `terminal.commands.runSsh()` on the generated terminal services. Runs once when this module
+ * loads; calling it again does nothing.
+ */
 export declare function patchTerminalSshPrototype(): void;

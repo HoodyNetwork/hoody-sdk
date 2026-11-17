@@ -9,13 +9,13 @@
  *   - `terminal.sessions.createDesktop(options)` — create a desktop terminal with X11 display
  *   - `terminal.commands.runSsh(options)` — run a command on a remote SSH server
  *
- *   All methods require a container-scoped client (via `withContainer()`).
+ *   All methods require a computer-scoped client (via `withComputer()`).
  *   They are attached to SessionsService.prototype / CommandsService.prototype via module
  *   augmentation and runtime prototype patching, following the same pattern as exec-scripts.ts.
- *   The owning client (for the container URL templates) is read back from the service
+ *   The owning client (for the computer URL templates) is read back from the service
  *   (lib/service-owner.ts).
  *
- *   Each method returns `terminal_url` built from the container's URL templates.
+ *   Each method returns `terminal_url` built from the computer's URL templates.
  */
 import { SessionsService } from '../generated/terminal/sessions.service.js';
 import { CommandsService } from '../generated/terminal/commands.service.js';
@@ -24,34 +24,35 @@ import { terminalHostLabel } from './terminal-host.js';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function assertContainerScoped(client) {
+function assertComputerScoped(client) {
     const t = client.urlTemplates?.['terminal'];
     if (!t) {
-        throw new Error('SSH terminal methods require a container-scoped client. Call withContainer() first.');
+        throw new Error('SSH terminal methods require a computer-scoped client. Call withComputer() first.');
     }
-    if (!t.projectId || !t.containerId || !t.server) {
-        throw new Error('Container-scoped client has incomplete terminal URL templates (missing projectId, containerId, or server).');
+    if (!t.projectId || !t.computerId || !t.server) {
+        throw new Error('Computer-scoped client has incomplete terminal URL templates (missing projectId, computerId, or server).');
     }
 }
 function getTerminalBaseUrl(client, serviceIndex = 0) {
     const t = client.urlTemplates?.['terminal'];
-    if (!t?.projectId || !t?.containerId || !t?.server) {
+    if (!t?.projectId || !t?.computerId || !t?.server) {
         throw new Error('SSH terminal methods require complete terminal URL templates');
     }
-    const domain = typeof client.resolveContainersDomain === 'function'
-        ? client.resolveContainersDomain()
-        : 'containers.hoody.com';
-    // terminalHostLabel: an index of 10000 or more (every ephemeral session) does
-    // not fit `terminal-<N>` in a DNS label; it gets the proxy's short `t-<N>`.
-    return `https://${terminalHostLabel(t.projectId, t.containerId, serviceIndex)}.${t.server}.${domain}`;
+    const domain = typeof client.resolveComputersDomain === 'function'
+        ? client.resolveComputersDomain()
+        : 'computers.hoody.com';
+    // terminalHostLabel: an index of 10000 or more (only an older kit's
+    // ephemeral session) does not fit `terminal-<N>` in a DNS label; it gets
+    // the proxy's short `t-<N>`.
+    return `https://${terminalHostLabel(t.projectId, t.computerId, serviceIndex)}.${t.server}.${domain}`;
 }
 /**
- * Host index for a terminal request. The containers proxy injects
+ * Host index for a terminal request. The computers proxy injects
  * `terminal_id` from the SNI index and force-overwrites any client-sent
  * value, so an explicit terminal id only takes effect when it IS the index —
  * `terminal-7` *is* `terminal_id=7`. With no id the index is 0, the kit's
  * "no terminal id" sentinel these helpers pair with `ephemeral: true` to get
- * an auto-generated session (40000-65535).
+ * an auto-generated session (5001-7999).
  */
 function terminalServiceIndex(explicit, terminalId) {
     if (explicit !== undefined)
@@ -61,13 +62,13 @@ function terminalServiceIndex(explicit, terminalId) {
 }
 /**
  * Connect URL for a session that was just created. The terminal id belongs in
- * the HOST (`…-terminal-<id>.…`), not the query: the containers proxy injects
+ * the HOST (`…-terminal-<id>.…`), not the query: the computers proxy injects
  * `terminal_id` from the SNI index and force-overwrites whatever the client
  * sent, so an appended `?terminal_id=` never reached the kit — the URL
  * resolved to `terminal-<serviceIndex>` instead (index 0 = the kit's "no
  * terminal id" sentinel, which spawns a fresh ephemeral session rather than
  * attaching to the one just created). `serviceIndex` remains the fallback for
- * a non-numeric id. Ids of 10000 and up (every ephemeral session) use the
+ * a non-numeric id. Ids of 10000 and up (made only by an older kit) use the
  * proxy's short `t-<id>` label, because `terminal-<id>` is then one character
  * too long for DNS (lib/terminal-host.ts).
  */
@@ -95,7 +96,7 @@ function getTerminalApi(client) {
 // Implementations
 // ---------------------------------------------------------------------------
 async function createSshTerminalImpl(options) {
-    assertContainerScoped(this);
+    assertComputerScoped(this);
     const api = getTerminalApi(this);
     const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
     const response = await api.sessions.create({
@@ -124,7 +125,7 @@ async function createSshTerminalImpl(options) {
     };
 }
 async function createLocalTerminalImpl(options) {
-    assertContainerScoped(this);
+    assertComputerScoped(this);
     const api = getTerminalApi(this);
     const o = options || {};
     const si = terminalServiceIndex(o.serviceIndex, o.terminal_id);
@@ -147,7 +148,7 @@ async function createLocalTerminalImpl(options) {
     };
 }
 async function createDesktopTerminalImpl(options) {
-    assertContainerScoped(this);
+    assertComputerScoped(this);
     const api = getTerminalApi(this);
     const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
     const response = await api.sessions.create({
@@ -173,7 +174,7 @@ async function createDesktopTerminalImpl(options) {
     };
 }
 async function executeSshCommandImpl(options) {
-    assertContainerScoped(this);
+    assertComputerScoped(this);
     const api = getTerminalApi(this);
     const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
     if (!api.commands) {
@@ -212,6 +213,11 @@ async function executeSshCommandImpl(options) {
 // Prototype patching
 // ---------------------------------------------------------------------------
 const TERMINAL_SSH_PATCH_MARKER = Symbol.for('hoody.sdk.terminal.ssh.patch');
+/**
+ * Install `terminal.sessions.createSsh()`, `createLocal()` and `createDesktop()` and
+ * `terminal.commands.runSsh()` on the generated terminal services. Runs once when this module
+ * loads; calling it again does nothing.
+ */
 export function patchTerminalSshPrototype() {
     const sessions = SessionsService.prototype;
     if (sessions[TERMINAL_SSH_PATCH_MARKER])

@@ -34,19 +34,19 @@
  * follow it.
  *
  * The generated tus* methods cannot drive this: they return an ApiResponse
- * envelope that hides the Upload-Offset header, and the chunk body must carry
- * its own content type. So each TUS request goes through `http.stream()` —
+ * envelope that hides the Upload-Offset header. So each TUS request goes
+ * through `http.stream()` —
  * the same seam the generated streaming methods use (injected fetch, request
  * middleware incl. kitAuth under the `notes` namespace, Authorization stripped
  * on kit URLs, non-2xx raised as ApiError) — and the offset is tracked here.
- * Chunk bodies are Blobs typed application/offset+octet-stream, because the
- * HTTP client drops its own Content-Type for a Blob and lets the Blob's type
- * go on the wire.
+ * Chunk bodies are Blobs typed application/offset+octet-stream, and each
+ * PATCH names that type in its Content-Type header too.
  */
 import { FilesService as NotesFilesService } from '../generated/notes/files.service.js';
+import { isJsonContentType } from '../generated/http-client.js';
 const TUS_VERSION = '1.0.0';
 const CHUNK_TYPE = 'application/offset+octet-stream';
-/** The notes web client's part size (hoody-notes core FILE_UPLOAD_PART_SIZE). */
+/** The notes web client's part size. */
 export const NOTES_UPLOAD_CHUNK_BYTES = 20 * 1024 * 1024;
 /**
  * 409 (offset mismatch) resyncs that find the server offset no further than
@@ -103,6 +103,10 @@ function base64Utf8(value) {
         bin += String.fromCharCode(b);
     return btoa(bin);
 }
+/**
+ * Encode `metadata` as a tus `Upload-Metadata` header value: comma-separated `key base64(value)` pairs, values as
+ * UTF-8. Throws when a key is empty or contains whitespace or a comma.
+ */
 export function encodeTusMetadata(metadata) {
     return Object.entries(metadata)
         .map(([k, v]) => {
@@ -269,7 +273,7 @@ class TusSession {
                 continue;
             }
             if (res.status === 200) {
-                const body = (await res.json().catch(() => ({})));
+                const body = await readUploadAnswer(res, 'final chunk response');
                 if (typeof body.uploadId !== 'string')
                     throw new Error('notes upload: final chunk response has no uploadId');
                 opts.onProgress?.({ offset: size, size });
@@ -302,6 +306,28 @@ function tusSession(svc, notebookId, fileId, vars) {
     return new TusSession(svc, url);
 }
 /**
+ * The JSON object a 200 that finishes an upload carries. The server labels it
+ * `application/json`; an answer under any other type (a proxy's HTML page
+ * with a 200, a captive portal) is reported as that, with its status and
+ * type, instead of being swallowed into `{}` and blamed on a missing uploadId.
+ * A body that claims JSON and is not parseable is reported the same way.
+ */
+async function readUploadAnswer(res, what) {
+    const type = res.headers.get('content-type');
+    if (!isJsonContentType(type)) {
+        await discard(res);
+        throw new Error(`notes upload: ${what} is not JSON (status ${res.status}, content-type ${type?.trim() || 'none'})`);
+    }
+    let parsed;
+    try {
+        parsed = await res.json();
+    }
+    catch {
+        throw new Error(`notes upload: ${what} is not valid JSON (status ${res.status}, content-type ${type})`);
+    }
+    return parsed !== null && typeof parsed === 'object' ? parsed : {};
+}
+/**
  * The uploadId of a 200 — the response that finishes an upload: the final
  * chunk, a zero-byte create, or finishAgain().
  */
@@ -310,7 +336,7 @@ async function finalUploadId(res) {
         await discard(res);
         return undefined;
     }
-    const body = (await res.json().catch(() => ({})));
+    const body = await readUploadAnswer(res, 'upload finish response');
     return typeof body.uploadId === 'string' ? body.uploadId : undefined;
 }
 async function uploadFile(notebookId, data, options, templateVars) {
@@ -365,7 +391,7 @@ async function createAndUpload(notebookId, blob, mimeType, fileId, options, temp
     const result = await sendAndConfirm(this, tus, notebookId, fileId, 0, blob, options, templateVars);
     return { ...result, node };
 }
-/** hoody-notes core FileStatus. */
+/** A notes file's status. */
 const FILE_STATUS_PENDING = 0;
 const FILE_STATUS_READY = 1;
 /** An Error carrying the file id and a stable code, for recovery refusals. */
@@ -507,6 +533,10 @@ async function resumeUpload(notebookId, fileId, data, options = {}, templateVars
     return sendAndConfirm(this, tus, notebookId, fileId, offset, blob, options, templateVars);
 }
 const PATCHED = Symbol.for('hoody.notes-upload.patched');
+/**
+ * Install `upload()` and `resumeUpload()` on the notes files service. Runs once when this module loads; a second
+ * call does nothing.
+ */
 export function patchNotesUploadExtensions() {
     const proto = NotesFilesService.prototype;
     if (proto[PATCHED])

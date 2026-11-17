@@ -25,9 +25,12 @@ export { HoodyClient, } from './hoody-client.js';
 // browser-compatible; they must be reachable from the browser entry.
 export { EventsClient } from './events-client.js';
 export { EventsManager } from './events-manager.js';
-export { ApiError, isApiError, isRetryableApiError, ValidationError, isApiErrorCode, } from '../generated/errors.js';
+export { ApiError, isApiError, isRetryableApiError, ValidationError, RetiredOptionError, isApiErrorCode, } from '../generated/errors.js';
 export { listKits, } from './kit-catalog.js';
-export { normalizeContainerStatsResponse, normalizeProjectStatsResponse, } from './metrics.js';
+export { normalizeComputerStatsResponse, normalizeProjectStatsResponse, } from './metrics.js';
+// Errors of a WebSocket upgrade the server answered with an HTTP status
+// (generated WebSocket clients and TerminalClient).
+export { isWebSocketUpgradeRefusedError, isWebSocketUpgradeFailedError, isWebSocketCredentialNotSentError, } from './websocket-errors.js';
 export { encrypt, decrypt, isEncrypted, parseEnvelope, VaultCryptoError } from './vault-crypto.js';
 // Streamed agent prompt. Browser-safe since its SSE parser moved out of the
 // Node-only pipe-stream.ts into sse-stream.ts.
@@ -36,11 +39,11 @@ export { parseSseEvent, parseSseStream } from './sse-stream.js';
 export { formatEd25519SshPublicKey, parseEd25519SshPublicKey, generateEd25519SshKeyPair, } from './ssh-keys.js';
 export { getHoodySignatureHeader, parseHoodySignatureHeader, parseHoodySignatureFrom, verifyHoodySignatureHeader, verifyHoodySignatureFrom, verifyHoodySignatureFromContext, hoodySignaturePath, } from './signing.js';
 // -- Exec dynamic discovery & skills --
-export { discoverScripts, scriptPathToName, isValidToolName, sanitizeDescription, extractParamsFromSchema, extractPathParams, } from './exec-dynamic-discovery.js';
-export { clearDiscoveryCache, } from './exec-dynamic-client.js';
+export { listCallableScripts, scriptPathToName, isValidToolName, sanitizeDescription, extractParamsFromSchema, extractPathParams, } from './exec-dynamic-discovery.js';
+export { clearCallableScriptsCache, } from './exec-dynamic-client.js';
 export { filterAgentScripts, } from './exec-dynamic-skills.js';
 export { parseRawScriptEntry, parseRawScriptEntries, } from './exec-dynamic-parse.js';
-// -- Remote control of a live exec script (#674): `exec.connect(url, { token })` --
+// -- Remote control of a live exec script: `exec.remote(url, { token })` --
 export { ExecRemoteError, ExecRemoteTokenError, ExecRemotePermissionError, ExecRemoteThrewError, ExecRemoteTimeoutError, ExecRemoteUnsupportedError, ExecRemoteConnectionError, isExecRemoteError, formatExecRemoteFix, createExecRemoteConnection, } from './exec-remote.js';
 // Export Socket.IO for browser usage
 import { io } from 'socket.io-client';
@@ -49,18 +52,25 @@ export { io };
 export { NotificationDisplayClient } from './notification-display-client.js';
 export { parseNotificationData, createNotificationPresenter } from './notification-presenter.js';
 export { isProxyAuthPolicy, withTokenQueryParam } from './proxy-auth.js';
-export { ApiConnecteventstreamWebSocket } from './events-types.js';
+export { EventsSocketTransport } from './events-types.js';
 export { EventsError, EventsAuthError, EventsClosedError, EventsSessionChangedError, EventsTimeoutError, EventsGapError, socketActionFor, historyActionFor, } from './events-errors.js';
 export { EventIdLru, EventsRecovery } from './events-replay.js';
 export { EventsSession } from './events-session.js';
 export { EVENT_TYPES, EVENT_CATALOG, isEventType, isEventPattern, isEphemeralEventType, isPersistedEventType, isReservedEventType, expandEventPattern, eventCatalogInfo, } from './events-catalog.js';
 // -- Notes TUS upload (box.notes.files.upload / resumeUpload / …) --
 export { generateNotesFileId, encodeTusMetadata, NOTES_UPLOAD_CHUNK_BYTES, } from './notes-upload.js';
-// -- Bot chat (box.agent.bots.ask / follow) --
+// -- Notes ZIP export (box.notes.notebooks.exportStream) --
+export { exportStream as notesExportStream } from './notes-export.js';
+// -- Bot chat (box.agent.bots.ask / followLogs) --
 export { BOT_MESSAGE_IDEMPOTENCY_CAPABILITY } from './bot-chat.js';
+// -- Open an app (box.run.open / status / watch / findOpen / canOpen / close): the shared core is lib/run-open-core.js --
+export { runOpenCore } from './run-open.js';
+// -- Bot URLs, caller side (`new BotUrlClient({ url, key })`): a Bot's public doors, by named key --
+export { BotUrlClient, BotUrlError, isBotUrlError, isGateHandle, BOT_URL_ERRORS } from './bot-url-client.js';
+export { isValidBotLabel, isValidBotZone, botLabelOfHost, botLabelOfUrl, botZoneFor, botUrlZones, BOT_URL_ZONE } from './bot-label.js';
 // -- Pipe media streaming helpers (browser-only) --
 export { PipeMedia, mediaStreamToReadableStream } from './pipe-media.js';
-// -- Pipe browser data transfer: sendFile / receive / download / subscribeProgress --
+// -- Pipe browser data transfer: sendFile / receive / download / streamProgress --
 export { PipeBrowser, PipeTransferError } from './pipe-browser.js';
 export { pipeTransportFromClient } from './pipe-transport.js';
 // -- Pipe WebSocket relay (?ws): connect() duplex --
@@ -68,9 +78,9 @@ export { PipeWsError, PIPE_WS_MAX_MESSAGE_BYTES } from './pipe-ws.js';
 // -- curl-channel (WebSocket-multiplexed fetch over Hoody curl kit) --
 // In browsers, the channel uses globalThis.WebSocket (no `ws` package).
 export { CurlChannel, CurlChannelStream, createCurlFetch, ChannelError as CurlChannelError, AbortError as CurlAbortError, createAbortError as createCurlAbortError, SSE_EVENT_QUEUE_CAP as CURL_SSE_EVENT_QUEUE_CAP, MAX_INBOUND_FRAME_BYTES as CURL_MAX_INBOUND_FRAME_BYTES, } from './curl-channel-client.js';
-// -- Embed URLs for every kit UI: `client.embeds.<kit>.<view>(container, opts)` --
+// -- Embed URLs for every kit UI: `client.embeds.<kit>.<view>(computer, opts)` --
 // Same block as the Node entry; browser-safe (no Node APIs).
-export { buildEmbedUrl, getEmbedCatalog, listEmbedViews, deriveContainersDomain, EmbedValidationError, } from './embeds/runtime.js';
+export { buildEmbedUrl, getEmbedCatalog, listEmbedViews, deriveComputersDomain, EmbedValidationError, } from './embeds/runtime.js';
 export { createEmbeds } from './embeds/attach.js';
 // Patch the curl channel helper (client.curl.channel.connect) — must run after HoodyClient export
 // so the prototype object exists when patched.

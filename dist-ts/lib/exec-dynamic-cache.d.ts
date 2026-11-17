@@ -3,25 +3,25 @@
  *
  * CLI processes exit after every command, so in-memory caching is useless.
  * Discovery results are persisted to disk at:
- *   ~/.hoody/cache/exec-scripts/<containerId>.json
+ *   ~/.hoody/cache/exec-scripts/<computerId>.json
  *
  * TTL: 5 minutes by default.
  * Stale files older than 24 hours are pruned on any cache access.
  */
-import type { DiscoveredScript, DiscoveryCache } from './exec-dynamic-discovery.js';
+import type { CallableScript, CallableScriptsCache } from './exec-dynamic-discovery.js';
 /**
  * Read discovery cache from disk.
  * Returns undefined if cache doesn't exist or is expired.
  */
-export declare function readFileCache(containerId: string, ttlMs?: number): DiscoveryCache | undefined;
+export declare function readFileCache(computerId: string, ttlMs?: number): CallableScriptsCache | undefined;
 /**
  * Write discovery results to disk cache.
  */
-export declare function writeFileCache(containerId: string, scripts: DiscoveredScript[], ttlMs?: number): void;
+export declare function writeFileCache(computerId: string, scripts: CallableScript[], ttlMs?: number): void;
 /**
- * Delete the cache file for a container.
+ * Delete the cache file for a computer.
  */
-export declare function deleteFileCache(containerId: string): void;
+export declare function deleteFileCache(computerId: string): void;
 /**
  * Prune cache files older than 24 hours.
  * Called opportunistically on cache access.

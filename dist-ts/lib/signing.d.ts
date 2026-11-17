@@ -132,7 +132,7 @@ export interface HoodySignatureResponseContext {
     rawBody?: Uint8Array;
 }
 /**
- * The `path` hoody-api signs for a request URL: the request target as the
+ * The `path` the API signs for a request URL: the request target as the
  * server received it, path plus query string (Fastify's `request.url`).
  */
 export declare function hoodySignaturePath(url: string): string;

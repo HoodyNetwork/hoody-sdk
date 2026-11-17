@@ -22,7 +22,7 @@
 import type { SqlServiceBase } from '../generated/sqlite/sql.service.generated.js';
 type TemplateVars = {
     projectId?: string;
-    containerId?: string;
+    computerId?: string;
     serviceIndex?: string | number;
     serverName?: string;
     server?: string;

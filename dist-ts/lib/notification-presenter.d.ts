@@ -57,7 +57,7 @@ export interface NotificationPresenter {
     /** Clean up resources */
     dispose(): void;
     /** Whether the presenter is ready to show notifications */
-    readonly ready: boolean;
+    isReady(): boolean;
 }
 /**
  * Parse a raw WebSocket notification message into a typed ParsedNotification.

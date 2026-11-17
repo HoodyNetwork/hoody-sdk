@@ -16,6 +16,16 @@
  * offered. In non-TTY, the request is refused.
  */
 /**
+ * Normalize a URL to a canonical origin (scheme://host[:port]) for comparison.
+ * Lowercases host, strips default ports (80 for http, 443 for https),
+ * drops trailing slashes and any path component.
+ *
+ * Throws if the URL is invalid or uses a non-http(s) scheme.
+ */
+export declare function normalizeOrigin(raw: string): string;
+/** True if the origin is a loopback or RFC 1918 address, which is accepted without a prompt. */
+export declare function isLocalOrigin(origin: string): boolean;
+/**
  * Built-in origins that never require user acceptance. Stored as already-normalized
  * origins (scheme + lowercase host + non-default port).
  */

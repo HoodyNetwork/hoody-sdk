@@ -14,6 +14,10 @@
 import { homedir } from 'node:os';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+/**
+ * The user's home directory for every `~/.hoody` path: `$HOME` when it is set and not empty,
+ * else `os.homedir()`. An empty `HOME` is ignored so paths never resolve under the current directory.
+ */
 export function hoodyHomeDir() {
     // Use `||` (truthy) not `??` (nullish) so an empty-string HOME also
     // falls through to homedir(). An empty HOME would otherwise resolve

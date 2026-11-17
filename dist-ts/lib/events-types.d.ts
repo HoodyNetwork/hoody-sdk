@@ -9,11 +9,11 @@
 import { type EphemeralEventType, type EventType, type HoodyEventMap, type ResourceTypeFor } from './events-catalog.js';
 /** A server-to-client event message received over the WebSocket. */
 export interface EventServerMessage {
-    /** Dot-separated event identifier, e.g. "container.running" or "auth.token.created". */
+    /** Dot-separated event identifier, e.g. "computer.running" or "auth.token.created". */
     event_type: string;
-    /** UUID of the resource that triggered the event (container ID, project ID, etc.). */
+    /** UUID of the resource that triggered the event (computer ID, project ID, etc.). */
     resource_id: string;
-    /** Top-level resource category (e.g. "container", "project"). Optional for some event types. */
+    /** Top-level resource category (e.g. "computer", "project"). Optional for some event types. */
     resource_type?: string;
     /** ISO 8601 timestamp of when the event was emitted on the server. */
     timestamp: string;
@@ -28,7 +28,7 @@ export interface EventServerMessage {
  *
  * Subscribing joins a delivery room. It does not select event types, and there is no way to do
  * so: the server broadcasts every event type to the rooms a connection holds — its own user room,
- * its realm rooms, and any project or container room joined here — so filtering by `event_type`
+ * its realm rooms, and any project or computer room joined here — so filtering by `event_type`
  * belongs on the client, which is what {@link EventsClient}'s per-type handlers do.
  *
  * This interface previously declared `action`, `event_types`, `resource_id` and `resource_type`.
@@ -39,8 +39,8 @@ export interface EventServerMessage {
 export interface EventClientMessage {
     /** 24-hex project id. Joins that project's delivery room. */
     projectId?: string;
-    /** 24-hex container id. Joins that container's delivery room. */
-    containerId?: string;
+    /** 24-hex computer id. Joins that computer's delivery room. */
+    computerId?: string;
     /**
      * `'activity'` selects the live-only `activity.logged` feed:
      * `subscribe {type:'activity'}` opts the socket in, `unsubscribe
@@ -60,7 +60,7 @@ export type EventVisibility = 'full' | 'removed' | 'nameless';
 /**
  * One event as history returns it (without `type`). The live frame has the
  * same fields plus `type: 'event'`. Every field after `timestamp` is optional
- * here because an older hoody-api sends only `event`, `eventId`, `data` and
+ * here because an older API sends only `event`, `eventId`, `data` and
  * `timestamp`; the SDK fills the rest with explicit nulls.
  */
 export interface EventHistoryItem {
@@ -78,7 +78,7 @@ export interface EventHistoryItem {
     resource_type?: string;
     resource_id?: string;
     project_id?: string | null;
-    container_id?: string | null;
+    computer_id?: string | null;
     realm_ids?: string[];
     all_realms?: boolean;
     visibility?: EventVisibility;
@@ -151,8 +151,8 @@ type ServerWireMessage = Pick<EventWireFrame, 'event' | 'data' | 'timestamp' | '
 /**
  * Normalise the server's wire-format into the legacy consumer-facing shape.
  *
- * A frame that carries the C1 top-level `resource_type`/`resource_id` is
- * taken at its word. Only a frame from an older hoody-api without them falls
+ * A frame that carries the top-level `resource_type`/`resource_id` is
+ * taken at its word. Only a frame from an older API without them falls
  * back to guessing from the payload shape.
  */
 export declare function normalizeServerMessage(m: ServerWireMessage): EventServerMessage;
@@ -168,7 +168,7 @@ interface HoodyEventBase<T extends EventType> {
     resource_type: ResourceTypeFor<T>;
     resource_id: string;
     project_id: string | null;
-    container_id: string | null;
+    computer_id: string | null;
     realm_ids: string[];
     all_realms: boolean;
     visibility: EventVisibility;
@@ -234,13 +234,27 @@ export type HoodyEvent<T extends EventType = EventType> = T extends EventType ? 
 export declare function toHoodyEvent(item: EventHistoryItem, replayed: boolean): HoodyEvent | null;
 /** True for a `message` frame the runtime should treat as a control frame. */
 export declare function isControlFrame(frame: unknown): frame is ServerControlFrame;
-export declare class ApiConnecteventstreamWebSocket {
+/**
+ * The Socket.IO connection of the events stream: one socket on its own Manager, never shared
+ * with another `io()` call in the process. The namespace is the path of `url`.
+ *
+ * It opens with WebSocket first and does not reconnect by itself (`reconnection: false`):
+ * the events runtime that owns it decides when to connect again.
+ */
+export declare class EventsSocketTransport {
+    /** True between the socket's `connect` and `disconnect`. */
     connected: boolean;
     private readonly url;
     private readonly defaultOptions;
     /** This wrapper's own Manager: never shared, never replaced. */
     private readonly manager;
     private readonly socket;
+    /**
+     * Builds the socket without connecting; call {@link connect}. `url` must be absolute outside a
+     * browser page; a URL with no host throws a ValidationError. `options` are socket.io-client
+     * options: `autoConnect` is always off, `reconnection` is off unless set, and `transports`
+     * defaults to WebSocket first.
+     */
     constructor(url: string, options?: Record<string, any>);
     /**
      * Open the transport. Resolves on first `connect`, rejects on first
@@ -258,15 +272,29 @@ export declare class ApiConnecteventstreamWebSocket {
     connect(options?: Record<string, any>): Promise<void>;
     /** Apply per-call connect options to the Manager and Socket this wrapper already owns. */
     private applyConnectOptions;
+    /** Close the socket. The argument is accepted and not used. */
     disconnect(_reason?: string): void;
+    /** Listen to a raw socket event, control frames included. */
     on(event: string, callback: (...args: any[]) => void): void;
+    /** Send `event` to the server, with `data` when it is not `undefined`. */
     emit(event: string, data?: any): void;
+    /** Remove `callback` from `event`; with no callback, every listener of `event`. */
     off(event: string, callback?: (...args: any[]) => void): void;
+    /** Remove every listener from the socket, this wrapper's own `connected` tracking included. */
     removeAllListeners(): void;
+    /** Call `callback` on every `connect`. Returns the function that removes it. */
     onConnect(callback: () => void): () => void;
+    /**
+     * Call `callback` on every `disconnect`. Returns the function that removes it. `reason` is
+     * socket.io's reason; `code` is made up to fit the signature: 1000 for a disconnect the
+     * server asked for, 1006 for anything else.
+     */
     onDisconnect(callback: (code: number, reason: string) => void): () => void;
+    /** Call `callback` on each reconnection attempt of the Manager (none happen unless `reconnection` was turned on). Returns the function that removes it. */
     onReconnectAttempt(callback: (attempt: number) => void): () => void;
+    /** Call `callback` when the Manager's own reconnection succeeds (only with `reconnection` turned on). Returns the function that removes it. */
     onReconnect(callback: (attempt: number) => void): () => void;
+    /** Call `callback` on a failed handshake (`connect_error`) and on a Manager `error`, always with an Error. Returns the function that removes it. */
     onError(callback: (error: Error) => void): () => void;
     /**
      * Data events only, in the legacy shape. Control frames (`welcome`,
@@ -278,7 +306,7 @@ export declare class ApiConnecteventstreamWebSocket {
     /** Every `message` frame, raw: event frames and control frames alike. */
     onFrame(callback: (frame: ServerFrame) => void): () => void;
     /**
-     * The socket-level `error` event. hoody-api sends some refusals there
+     * The socket-level `error` event. The API sends some refusals there
      * (`{type:'error', error}`), REALM_SELECTION_CONFLICT among them; for one
      * release they are sent on `message` too. `error` is not a reserved
      * socket.io client event, so only a listener on it sees them.

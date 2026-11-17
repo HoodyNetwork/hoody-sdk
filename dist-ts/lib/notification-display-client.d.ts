@@ -13,13 +13,13 @@
  *     displays: 'all'
  *   });
  *   const display = new NotificationDisplayClient(ws, {
- *     baseUrl: 'https://proj-ctr-n-1.server.containers.hoody.com'
+ *     baseUrl: 'https://proj-ctr-n-1.server.computers.hoody.com'
  *   });
  *   await display.start();
  *   // → notifications now appear as OS/browser notifications
  *   display.stop();
  */
-import type { INotificationsConnectNotificationStreamWebSocket } from '../generated/notifications/notifications_connect-notification-stream.websocket.js';
+import type { INotificationsConnectWebSocket } from '../generated/notifications/notifications_connect-notification-stream.websocket.js';
 import type { NotificationServerMessage } from '../generated/notifications/notifications_connect-notification-stream.websocket.js';
 import type { NotificationPresenter, NotificationPresenterConfig, ParsedNotification } from './notification-presenter.js';
 export interface NotificationDisplayClientConfig extends NotificationPresenterConfig {
@@ -53,6 +53,14 @@ export interface NotificationDisplayClientConfig extends NotificationPresenterCo
      */
     onDropped?: (dropped: ParsedNotification, queueLength: number) => void;
 }
+/**
+ * Shows a computer's notifications on this machine: it listens on a notification stream and hands each message to
+ * a presenter (the operating system's or the browser's notifications by default), one at a time.
+ *
+ * Nothing is shown until `start()` resolves true. Pending notifications wait in a bounded queue: when it is full
+ * the oldest is dropped (`onDropped`), and `minInterval` spaces out what is shown. `stop()` stops listening,
+ * empties the queue and disposes the presenter; it does not close the stream.
+ */
 export declare class NotificationDisplayClient {
     private presenter;
     private unsubscribe;
@@ -64,7 +72,12 @@ export declare class NotificationDisplayClient {
     private maxQueueLength;
     private config;
     private ws;
-    constructor(ws: INotificationsConnectNotificationStreamWebSocket, config?: NotificationDisplayClientConfig);
+    /**
+     * `ws` is an open notification stream (`connectNotificationStream()`). `config` sets the presenter (or the
+     * built-in one's settings), a `filter`, the spacing between notifications and the queue size; a `maxQueueLength`
+     * below 1 is read as 1.
+     */
+    constructor(ws: INotificationsConnectWebSocket, config?: NotificationDisplayClientConfig);
     /**
      * Initialize the presenter and start listening to WebSocket notifications.
      *
@@ -81,13 +94,13 @@ export declare class NotificationDisplayClient {
      */
     stop(): void;
     /**
-     * Whether the client is actively listening and the presenter is ready.
+     * Whether the client is running: started, not stopped, and the presenter is ready.
      */
-    get isActive(): boolean;
+    isRunning(): boolean;
     /**
-     * Manually show a single notification (for testing or manual triggering).
+     * Show a single notification now (for testing or manual triggering).
      */
-    showManual(message: NotificationServerMessage): Promise<void>;
+    show(message: NotificationServerMessage): Promise<void>;
     private enqueue;
     private processQueue;
 }

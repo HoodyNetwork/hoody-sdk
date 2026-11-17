@@ -14,29 +14,36 @@
  *
  * Rules this file implements:
  *  - A connection is admitted by `welcome`, not by the socket `connect`:
- *    hoody-api authenticates after the namespace connect. Frames that
+ *    the API authenticates after the namespace connect. Frames that
  *    arrive before `welcome` are buffered and replayed after it.
  *  - Control frames are never events. Every code goes through
- *    the C5 map in events-errors.ts.
+ *    the code-to-action map in events-errors.ts.
  *  - socket.io's own reconnection is off; this loop owns every retry, and the
  *    token is read afresh on each attempt.
  *  - Live frames are delivered at once and de-duplicated by event id; only
  *    history moves the confirmed cursor (events-replay.ts).
  *  - Everything is bound to the client session (events-session.ts).
  */
-import type { ApiConnecteventstreamWebSocket, HoodyEvent, HoodyStreamEvent } from './events-types.js';
+import type { EventsSocketTransport, HoodyEvent, HoodyStreamEvent } from './events-types.js';
 import { EventsError, type EventsGapReason } from './events-errors.js';
 import { type EventsHistoryReader } from './events-replay.js';
 import type { EventsSession } from './events-session.js';
-/** The transport surface the runtime needs; ApiConnecteventstreamWebSocket implements it. */
-export type EventsTransport = Pick<ApiConnecteventstreamWebSocket, 'connect' | 'disconnect' | 'removeAllListeners' | 'emit' | 'onFrame' | 'onSocketError' | 'onClose'> & Partial<Pick<ApiConnecteventstreamWebSocket, 'onTransportError'>>;
-/** Connection state. */
-export type EventsConnectionState = 'idle' | 'connecting' | 'recovering' | 'live' | 'offline' | 'closed';
+/** The transport surface the runtime needs; EventsSocketTransport implements it. */
+export type EventsTransport = Pick<EventsSocketTransport, 'connect' | 'disconnect' | 'removeAllListeners' | 'emit' | 'onFrame' | 'onSocketError' | 'onClose'> & Partial<Pick<EventsSocketTransport, 'onTransportError'>>;
+/** The lifecycle state, as `getLifecycleState()` returns it and `onState` delivers it. */
+export type EventsLifecycleState = 'idle' | 'connecting' | 'recovering' | 'live' | 'offline' | 'closed';
+/**
+ * A transport event of the events socket, as `addConnectionListener` delivers it: `connecting`,
+ * `connected`, `reconnected` (with the attempt), `reconnecting` (with the attempt), `disconnected`
+ * (with the close code and reason) and `error` (with the error). These are events, not states; the
+ * state is `EventsLifecycleState`.
+ */
+export type EventsConnectionEvent = 'connecting' | 'connected' | 'reconnecting' | 'reconnected' | 'disconnected' | 'error';
 /** What `onState` listeners receive. */
 export type EventsStateEvent = {
     kind: 'state';
-    state: EventsConnectionState;
-    previous: EventsConnectionState;
+    state: EventsLifecycleState;
+    previous: EventsLifecycleState;
     error?: EventsError;
     retryInMs?: number;
 }
@@ -83,8 +90,8 @@ export interface EventFilter {
     resourceType?: string;
     /** Events of a project: `project_id` equals it, or the event is about the project itself. */
     projectId?: string;
-    /** Events of a container: `container_id` equals it, or the event is about the container itself. */
-    containerId?: string;
+    /** Events of a computer: `computer_id` equals it, or the event is about the computer itself. */
+    computerId?: string;
     /** Any further predicate. */
     where?: (event: HoodyEvent) => boolean;
 }
@@ -99,12 +106,12 @@ export interface EventsManagerOptions {
      * realm is a terminal `REALM_MISMATCH`. Not checked when absent. The
      * server admits an unscoped connection only for a token without realm
      * restrictions; a realm-restricted token on an unscoped client is refused
-     * `REALM_REQUIRED` (terminal, C5): scope the client with withRealm().
+     * `REALM_REQUIRED` (terminal): scope the client with withRealm().
      */
     realmId?: string;
     /** The client session the runtime is bound to. */
     session?: EventsSession;
-    /** C5 "refresh + reconnect": obtain a fresh access token; undefined when none can be had. */
+    /** Action "refresh + reconnect": obtain a fresh access token; undefined when none can be had. */
     refreshToken?: () => Promise<string | undefined>;
     /** False when there is no credential to connect with (after logout). Defaults to always true. */
     hasCredential?: () => boolean;
@@ -140,13 +147,25 @@ export interface EventsManagerOptions {
     historyRetryDelayMs?: (attempt: number, floorMs: number) => number;
 }
 type EventCallback = (event: HoodyEvent) => void;
-type LifecycleCallback = (...args: any[]) => void;
+type ConnectionCallback = (...args: any[]) => void;
+/**
+ * Key of EventsManager's per-type listener (EventsClient `on<Event>()`). A symbol, not a method name:
+ * it is not public API (the public listener API is EventsClient.on / onState / stream).
+ */
+export declare const listenByType: unique symbol;
+/**
+ * The runtime behind an `EventsClient`: it owns the one socket of a stream,
+ * connects when there is demand, reconnects with backoff, recovers missed
+ * events from history and delivers each event to the matching handlers,
+ * streams and waits. `EventsClient` is the supported way to use it; construct
+ * one directly only to supply your own transport.
+ */
 export declare class EventsManager {
     private createWsClient;
     private readonly subscribers;
-    /** Legacy addEventListener registrations: type → callback → subscriber (same callback once per type). */
+    /** Per-type listener registrations ([listenByType]): type → callback → subscriber (same callback once per type). */
     private readonly legacy;
-    private readonly lifecycleListeners;
+    private readonly connectionListeners;
     private readonly stateListeners;
     private readonly holds;
     private welcomeWaiters;
@@ -158,11 +177,11 @@ export declare class EventsManager {
     private readonly opts;
     private attempt;
     private attemptSeq;
-    /** Reconnect backoff timer (cancelled by disconnect(), close() and session changes). */
+    /** Reconnect backoff timer (cancelled by goIdle(), close() and session changes). */
     private retryTimer;
     private retryAttempt;
     private everWelcomed;
-    /** Since the last welcome: C5 "re-admit once" and one refresh per admission. */
+    /** Since the last welcome: "re-admit once" and one refresh per admission. */
     private readmitUsed;
     private refreshUsed;
     private refreshing;
@@ -173,7 +192,7 @@ export declare class EventsManager {
     private activitySent;
     private lastCode;
     private catchUpTimer;
-    private ready;
+    private readyGate;
     /** Bumped by every session reset; async work started under an older value is discarded. */
     private sessionEpoch;
     /** Counts gap notices; bootstrap() restarts when it moves. */
@@ -181,6 +200,13 @@ export declare class EventsManager {
     private readonly recovery;
     /** De-dup for live frames when there is no history (legacy runtime). */
     private readonly liveSeen;
+    /**
+     * `createWsClient` is called for every connection attempt and resolves with
+     * a transport that is not yet connected. `options` set the history reader
+     * used for recovery, the realm and session the stream is bound to, token
+     * refresh and timing; see `EventsManagerOptions`. Nothing connects until
+     * something subscribes.
+     */
     constructor(createWsClient: () => Promise<EventsTransport>, options?: EventsManagerOptions);
     /**
      * Subscribe `callback` to one or more patterns. Resolves with the
@@ -195,11 +221,11 @@ export declare class EventsManager {
         signal?: AbortSignal;
     }): Promise<() => void>;
     /**
-     * Legacy listener API. The same callback registers once per type; `'*'`
-     * also receives `activity.logged` (legacy listeners always did) and opts
-     * the socket in to it when it has no filter.
+     * The per-type listener behind EventsClient's `on<Event>()` methods (not public API: keyed by a
+     * module symbol). The same callback registers once per type; `'*'` also receives
+     * `activity.logged` and opts the socket in to it when it has no filter.
      */
-    addEventListener(eventType: string, callback: EventCallback, filter?: EventFilter): Promise<() => void>;
+    [listenByType](eventType: string, callback: EventCallback, filter?: EventFilter): Promise<() => void>;
     private removeEventListener;
     private register;
     private unregister;
@@ -211,15 +237,19 @@ export declare class EventsManager {
      * shortcut, or they read before the boundary exists.
      */
     private awaitWelcome;
-    addLifecycleListener(event: string, callback: LifecycleCallback): () => void;
-    /** Observe state changes, gaps, `scope_changed` and non-fatal notices. */
+    /** Observe one transport event of the socket (see `EventsConnectionEvent`). Returns an unsubscribe function. */
+    addConnectionListener(event: EventsConnectionEvent, callback: ConnectionCallback): () => void;
+    /**
+     * Observe state changes, gaps, `scope_changed` and non-fatal notices. A `state` event's `state`
+     * and `previous` are the values `getLifecycleState()` returns.
+     */
     onState(listener: (event: EventsStateEvent) => void): () => void;
     /**
      * Resolves at the first catch-up of this session that ends with
      * `has_more:false`; for a runtime without history, at `welcome`.
      * Starts the connection when needed and holds it open while waiting.
      */
-    whenReady(opts?: {
+    ready(opts?: {
         signal?: AbortSignal;
         timeoutMs?: number;
     }): Promise<void>;
@@ -274,7 +304,7 @@ export declare class EventsManager {
      */
     private replayInto;
     /**
-     * §5 bootstrap: wait for `ready()`, take the snapshot, and report
+     * Bootstrap: wait for `ready()`, take the snapshot, and report
      * every resource that events touched while the snapshot was being read,
      * so the caller refetches those through GET. Event payloads are never
      * applied over a snapshot. A gap while reading restarts the whole
@@ -325,7 +355,7 @@ export declare class EventsManager {
     private dispatch;
     private setState;
     private emitState;
-    private emitLifecycle;
+    private emitConnection;
     /** A terminal refusal: closed until the session changes. */
     private closeTerminal;
     private failWaiters;
@@ -340,25 +370,32 @@ export declare class EventsManager {
      */
     close(): void;
     /**
-     * Legacy: close the socket and go idle. Subscribers stay registered and
+     * Close the socket and go idle (when the last demand is gone). Subscribers stay registered and
      * the next subscription (or ready/wait/stream) connects again, from the
      * scope's boundary: cursors are dropped, so events from before the next
      * connect are never replayed to subscribers that did not ask for them.
      */
-    disconnect(): void;
+    private goIdle;
+    /**
+     * Change connection behaviour; omitted keys keep their value. With
+     * `autoConnect: false` a subscription resolves without waiting for the
+     * connection to be admitted. With `autoReconnect: false` a lost connection
+     * is not retried: the stream goes idle and callers waiting for admission get
+     * the error. `debug` logs connection steps to the console.
+     */
     configure(options: {
         autoConnect?: boolean;
         autoReconnect?: boolean;
         debug?: boolean;
     }): void;
-    /** The §5 state. */
-    get connectionState(): EventsConnectionState;
-    /** Legacy state names: idle, connecting, connected, reconnecting. */
-    getState(): string;
+    /** The lifecycle state: idle, connecting, live, recovering, offline or closed. */
+    getLifecycleState(): EventsLifecycleState;
+    /** How many subscriptions are registered: handlers, open streams and pending waits. */
     getListenerCount(): number;
+    /** True while the current connection has been admitted by the server (its `welcome` arrived). */
     isConnected(): boolean;
     /** Test/diagnostic view of the recovery cursors. */
-    get cursors(): {
+    getCursors(): {
         confirmed: string | null;
         lastLatest: string | null;
     };

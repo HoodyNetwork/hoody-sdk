@@ -1,18 +1,18 @@
 /**
- * The local hop of `hoody share` (plans/share-local-folder.md, v3.1): a small
+ * The local hop of `hoody share`: a small
  * HTTP proxy on 127.0.0.1 between the tunnel and `rclone serve webdav`.
  *
  *   - It rewrites WebDAV `Destination` to its path and query. The tunnel
  *     delivers with `Host: 127.0.0.1:<port>`, while `MOVE` and `COPY` carry
  *     `Destination: https://<public host>/…`; x/net/webdav answers 502 when
- *     the two hosts differ, so every rename failed. A path resolves against
+ *     the two hosts differ, so renames would fail. A path resolves against
  *     the request's own Host.
  *   - Everything else is forwarded as it came: method, target, header names,
  *     case, order and values, and the bodies, streamed both ways and never
  *     buffered. Only the connection's own headers (`Connection` and what it
  *     names, `Keep-Alive`, `Proxy-Connection`, `Upgrade`) are left to each hop.
  *   - It counts requests in flight and when the last one arrived or ended;
- *     stop uses both to keep serving while the container is still sending.
+ *     stop uses both to keep serving while the computer is still sending.
  *
  * It never logs: headers carry the share's credentials, bodies carry files.
  */

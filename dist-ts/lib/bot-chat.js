@@ -1,5 +1,5 @@
 /**
- * Talk to a Bot — `box.agent.bots.ask()` and `box.agent.bots.follow()`.
+ * Talk to a Bot — `box.agent.bots.ask()` and `box.agent.bots.followLogs()`.
  * Browser-safe (no Node imports). Maintained in lib/, not generated.
  *
  * ask() first reads whether the kit keeps message keys (GET /api/v1/agent/version
@@ -22,32 +22,50 @@
  *   ends and only when the Bot wrote text. A turn that ends silently, fails or
  *   is cancelled writes no `bot` row (one stopped at its step limit writes a
  *   `system` row), so the end of a silent turn is read from the Bot session's
- *   turn ledger (GET /sessions/{session_id}/turns/{turn_id}).
+ *   turn ledger (GET /sessions/{session_id}/turns/{turn_id}). A turn the
+ *   agent's restart cut short does write a `bot` row: the text so far, then
+ *   "[response interrupted: the agent restarted]". ask() takes that row for
+ *   no reply (`reply: null`, `turnState: 'interrupted'`), however the poll fell.
  * - Sending the same message again with the same Idempotency-Key queues
  *   nothing: the kit answers with the same message_id and the message's
  *   CURRENT state (waiting a few seconds for the turn_id). That re-send is how
  *   a queued message's turn_id is read.
  * - GET /bots/{id}/stream follows the log. Each `row` frame's id is the row's
- *   seq; a reconnect resumes with ?since=<seq> and the Last-Event-ID header
- *   (the same seq). Besides rows the kit may send
+ *   seq; a reconnect resumes with ?since=<seq> (the one resume cursor: the
+ *   Last-Event-ID header is not an SDK option there). Besides rows the kit may send
  *   `state` (the Bot, first and when it changes), `lagged` (the rows between
  *   the cursor and min_seq are no longer in the log; the rows that follow
  *   start at min_seq) and `end` (the Bot was deleted or the kit ended the
- *   stream). follow() reconnects when the connection closes without an `end`.
+ *   stream). followLogs() reconnects when the connection closes without an `end`.
  *   It also drops a connection that sends nothing, not even the heartbeat
  *   comment the kit writes every 15 s, for 45 s, and resumes the same way.
  */
 import { BotsService } from '../generated/agent/bots.service.js';
-import { isApiError, isRetryableApiError } from '../generated/errors.js';
+import { isApiError, isRetryableApiError, RetiredOptionError } from '../generated/errors.js';
+import { retireMethods } from './retired-accessor.js';
 /** The capability a kit lists when a keyed re-send queues nothing and answers with the same message's current state. */
 export const BOT_MESSAGE_IDEMPOTENCY_CAPABILITY = 'bot_message_idempotency';
 /**
  * The capabilities that say a kit keeps message keys. hoody-agent lists `bots` and not
  * BOT_MESSAGE_IDEMPOTENCY_CAPABILITY; its POST /bots/{id}/messages has honoured Idempotency-Key
- * since the /bots routes were released (routes_bots.go, idempotencyKeyFromRequest).
+ * since the /bots routes were released.
  */
 const KEYED_RESEND_CAPABILITIES = new Set([BOT_MESSAGE_IDEMPOTENCY_CAPABILITY, 'bots']);
 const TERMINAL_TURN_STATES = new Set(['completed', 'failed', 'cancelled', 'interrupted']);
+/**
+ * The marker the agent closes a cut turn's text with (its sendTurnClose), alone or after
+ * the partial text and a blank line. The row carries no other sign of the cut, and the
+ * ledger is read only on a poll tick, so a reply row is checked for it.
+ */
+const TURN_RESTART_MARKER = '[response interrupted: the agent restarted]';
+const TURN_CUT_MARKER = /(?:^|\n\n)\[response interrupted: [^\]\n]+\]$/;
+/** How a turn whose `bot` row this is was cut short, or undefined when the row is a reply. */
+function cutTurnState(row) {
+    const text = typeof row.text === 'string' ? row.text.trimEnd() : '';
+    if (!TURN_CUT_MARKER.test(text))
+        return undefined;
+    return text.endsWith(TURN_RESTART_MARKER) ? 'interrupted' : 'cancelled';
+}
 const LIVE_CONNECTION_MS = 30_000;
 /** Bot replies ask() keeps while its message's turn is unknown: at most this many rows and this much text. */
 const EARLY_REPLY_MAX_ROWS = 64;
@@ -71,7 +89,7 @@ function withStreamIdleTimeout(svc, idleTimeoutMs) {
     return Object.create(svc, { http: { value: bounded } });
 }
 /**
- * The service as sendMessage() should see it on a kit that ignores the key: its
+ * The service as messages.send() should see it on a kit that ignores the key: its
  * http sends the generated method's own request, except that the request does
  * not count as keyed and carries no key. A key set as a client default header
  * would otherwise ride the send and have a lost answer retried, which queues
@@ -139,15 +157,23 @@ function reconnectable(error) {
 function frameData(frame) {
     return frame.data;
 }
-async function* follow(id, options = {}, templateVars) {
-    const { signal, onFrame, realm } = options;
+/**
+ * The hand-written option bags renamed `realm` to `agentRealm` (the generated methods' key). In plain
+ * JavaScript an old `realm` would be dropped without a word and the call would reach the Bot of the agent's
+ * current realm instead, so it is refused by name.
+ */
+function refuseRetiredRealm(options, method) {
+    if (options !== null && typeof options === 'object' && options.realm !== undefined) {
+        throw new RetiredOptionError(method, 'realm', 'agentRealm');
+    }
+}
+async function* followLogs(id, options = {}, templateVars) {
+    refuseRetiredRealm(options, 'agent.bots.followLogs');
+    const { signal, onFrame, agentRealm } = options;
     const maxRetries = Math.floor(positive(options.maxRetries, 8));
     const idleTimeoutMs = positive(options.idleTimeoutMs, FOLLOW_IDLE_TIMEOUT_MS);
     const bots = withStreamIdleTimeout(this, idleTimeoutMs);
     let since = options.since;
-    // True while `since` is a row this follow read: a reconnect then also sends it as
-    // Last-Event-ID, the SSE resume header, on a kit whose stream takes it.
-    let resumed = false;
     let failures = 0;
     for (;;) {
         if (signal?.aborted)
@@ -157,8 +183,9 @@ async function* follow(id, options = {}, templateVars) {
         let retryMs;
         let delayMs;
         try {
-            const cursor = since === undefined ? {} : { since, ...(resumed ? { LastEventID: String(since) } : {}) };
-            const stream = await bots.stream(id, { ...cursor, ...(realm === undefined ? {} : { realm }), ...(signal ? { signal } : {}) }, templateVars);
+            // One resume cursor: the query `since` (Last-Event-ID is not an option of streamLogs).
+            const cursor = since === undefined ? {} : { since };
+            const stream = await bots.streamLogs(id, { ...cursor, ...(agentRealm === undefined ? {} : { agentRealm }), ...(signal ? { signal } : {}) }, templateVars);
             for await (const frame of stream) {
                 if (typeof frame.retry === 'number' && frame.retry > 0)
                     retryMs = frame.retry;
@@ -167,10 +194,8 @@ async function* follow(id, options = {}, templateVars) {
                     const seq = typeof row.seq === 'number' ? row.seq : frame.seq;
                     if (seq !== undefined && since !== undefined && seq <= since)
                         continue;
-                    if (seq !== undefined) {
+                    if (seq !== undefined)
                         since = seq;
-                        resumed = true;
-                    }
                     yielded = true;
                     failures = 0;
                     yield row;
@@ -181,11 +206,8 @@ async function* follow(id, options = {}, templateVars) {
                     // The rows that follow start at min_seq, which may be below the cursor (the Bot
                     // was deleted and created again): accept them.
                     const min = frameData(frame)?.min_seq;
-                    if (typeof min === 'number' && Number.isSafeInteger(min)) {
+                    if (typeof min === 'number' && Number.isSafeInteger(min))
                         since = Math.max(0, min - 1);
-                        // Not a row this follow read: the cursor goes as ?since only until the next row.
-                        resumed = false;
-                    }
                 }
                 if (frame.event === 'end')
                     return;
@@ -251,7 +273,10 @@ async function turnState(svc, sessionId, turnId, templateVars, signal, realm) {
     }
 }
 async function ask(id, text, options = {}, templateVars) {
+    refuseRetiredRealm(options, 'agent.bots.ask');
     const svc = this;
+    // agent.bots.messages (a child service the client sets on this one): the message goes through its generated send.
+    const messages = this.messages;
     const outer = options.signal;
     if (outer?.aborted)
         throw abortReason(outer);
@@ -261,8 +286,8 @@ async function ask(id, text, options = {}, templateVars) {
         throw botChatError('INVALID_IDEMPOTENCY_KEY', 'idempotencyKey must not be blank; omit it to have one made', {});
     }
     const idempotencyKey = options.idempotencyKey ?? newKey();
-    const realm = options.realm;
-    const inRealm = realm === undefined ? {} : { realm };
+    const realm = options.agentRealm;
+    const inRealm = realm === undefined ? {} : { agentRealm: realm };
     const pollMs = positive(options.pollMs, 2000);
     const graceMs = positive(options.replyGraceMs, 10_000);
     const ctl = new AbortController();
@@ -274,8 +299,8 @@ async function ask(id, text, options = {}, templateVars) {
     // retry would queue the message twice.
     let keyed = false;
     const send = async () => keyed
-        ? (await this.sendMessage(id, { text }, { ...inRealm, IdempotencyKey: idempotencyKey, signal }, templateVars)).data
-        : (await withoutMessageKey(this).sendMessage(id, { text }, { ...inRealm, signal }, templateVars)).data;
+        ? (await messages.send(id, { text }, { ...inRealm, idempotencyKey, signal }, templateVars)).data
+        : (await withoutMessageKey(messages).send(id, { text }, { ...inRealm, signal }, templateVars)).data;
     let rowsIter;
     // One handled promise per pending row: a race that loses to the timer must not leave a
     // rejection nobody handles.
@@ -308,7 +333,12 @@ async function ask(id, text, options = {}, templateVars) {
         // message's reply can be logged before the receipt names its turn.
         const early = new Map();
         let earlyChars = 0;
-        rowsIter = follow.call(this, id, { ...inRealm, ...(since === undefined ? {} : { since }), signal, ...(options.onFrame ? { onFrame: options.onFrame } : {}) }, templateVars);
+        // A cut turn's row is no reply: null, with the state the ledger gave or the marker says.
+        const settle = (row, known) => {
+            const cut = cutTurnState(row);
+            return cut === undefined ? [row, known] : [null, known ?? cut];
+        };
+        rowsIter = followLogs.call(this, id, { ...inRealm, ...(since === undefined ? {} : { since }), signal, ...(options.onFrame ? { onFrame: options.onFrame } : {}) }, templateVars);
         let next = pull(rowsIter);
         let tick = pause(pollMs, signal);
         while (reply === undefined) {
@@ -327,7 +357,7 @@ async function ask(id, text, options = {}, templateVars) {
                     continue;
                 }
                 if (turnId !== undefined && row.role === 'bot' && row.turn_id === turnId)
-                    reply = row;
+                    [reply, state] = settle(row, state);
                 if (turnId === undefined && reporting && row.role === 'bot' && typeof row.turn_id === 'string') {
                     earlyChars += (row.text ?? '').length;
                     // Dropping one could drop the reply: stop instead. The message stays queued or posted.
@@ -355,7 +385,9 @@ async function ask(id, text, options = {}, templateVars) {
                 receipt = again;
                 turnId = turnOf(again);
                 if (turnId !== undefined) {
-                    reply = early.get(turnId);
+                    const row = early.get(turnId);
+                    if (row !== undefined)
+                        [reply, state] = settle(row, state);
                     early.clear();
                 }
             }
@@ -390,12 +422,31 @@ async function ask(id, text, options = {}, templateVars) {
     }
 }
 const PATCHED = Symbol.for('hoody.bot-chat.patched');
+/**
+ * Install `ask()` and `followLogs()` on the generated Bots service (`box.agent.bots`), make the
+ * retired `follow()` refuse by naming `followLogs()`, and make `resumeAll()` refuse a first argument
+ * that is not an options object. Runs once when this module loads; calling it again does nothing.
+ */
 export function patchBotChatExtensions() {
     const proto = BotsService.prototype;
     if (proto[PATCHED])
         return;
     proto[PATCHED] = true;
     proto.ask = ask;
-    proto.follow = follow;
+    proto.followLogs = followLogs;
+    // Renamed in the naming freeze; refuses, naming followLogs().
+    retireMethods(proto, 'agent.bots', { follow: 'agent.bots.followLogs()' });
+    // `resume` is now `resumeAll` (every Bot; it takes options only). An argument that is not an options
+    // object (a Bot id, say) is refused naming the method, never read as no options.
+    const resumeAll = proto.resumeAll;
+    if (typeof resumeAll === 'function') {
+        proto.resumeAll = function (...args) {
+            const first = args[0];
+            if (first !== undefined && (first === null || typeof first !== 'object' || Array.isArray(first))) {
+                throw new TypeError('agent.bots.resumeAll(options?) resumes every Bot and takes no Bot id: pass an options object or nothing');
+            }
+            return resumeAll.apply(this, args);
+        };
+    }
 }
 patchBotChatExtensions();

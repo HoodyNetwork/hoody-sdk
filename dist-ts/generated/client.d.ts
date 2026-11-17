@@ -26,8 +26,8 @@ import * as tunnel from './tunnel/index.js';
 import * as egress from './egress/index.js';
 import * as run from './run/index.js';
 import * as proxyLogs from './proxyLogs/index.js';
+import * as vm from './vm/index.js';
 import * as agent from './agent/index.js';
-import * as bot from './bot/index.js';
 /**
  * Credentials for `HoodyClient.login()`, `client.login()` and
  * `HoodyClientConfig.credentials`.
@@ -40,15 +40,20 @@ import * as bot from './bot/index.js';
  * as `email` is rejected the same way. So the spelling is load-bearing and
  * both must be expressible here. Passing `{ username, password }` keeps
  * working unchanged.
+ *
+ * `client` is optional: the source channel this sign-in reports to the
+ * API, for analytics only. Left out, the SDK sends 'sdk'.
  */
 export type HoodyCredentials = {
     username: string;
     email?: string;
     password: string;
+    client?: string;
 } | {
     email: string;
     username?: string;
     password: string;
+    client?: string;
 };
 export interface HoodyClientConfig extends IHttpClientConfig {
     urlTemplates?: Record<string, Record<string, string | number>>;
@@ -80,12 +85,12 @@ export interface HoodyClientConfig extends IHttpClientConfig {
      * exchanges the refresh token ('refresh') or signs in again with the stored
      * credentials ('relogin'). It receives the access token now in use and the
      * refresh token that goes with it, so a long-running service can save the
-     * pair and start its next run with adoptSession(). hoody-api rotates the
+     * pair and start its next run with adoptSession(). The API rotates the
      * refresh token on every refresh: the one saved before is spent.
      *
      * Concurrent 401s share one recovery, so it is called once per new pair,
      * before the failed requests are replayed. Clients derived with
-     * withRealm() / withContainer() carry it. It is not called for tokens the
+     * withRealm() / withComputer() carry it. It is not called for tokens the
      * caller supplied (adoptSession(), setToken(), setSessionToken(),
      * onTokenExpired, refreshToken). It is not awaited, and whatever it throws
      * or rejects with is discarded: a failed save must not fail the request
@@ -95,12 +100,12 @@ export interface HoodyClientConfig extends IHttpClientConfig {
     /**
      * What baseURL points at.
      *  - 'account': the Hoody account API. Kit namespaces refuse to send there
-     *    (call withContainer() first), and a realm label on the host
+     *    (call withComputer() first), and a realm label on the host
      *    ({realmId}.api.hoody.com) is read as the client's realm.
      *  - 'kit': a kit or daemon reached directly. The URL is used as given.
      * When omitted: 'account' if the client has credentials, has no baseURL, has
      * a relative baseURL ('/proxy', resolved against the page), or baseURL is a
-     * Hoody API host (api.hoody.com, or a host under it); otherwise 'kit'. Clients derived with withRealm()/withContainer() keep it.
+     * Hoody API host (api.hoody.com, or a host under it); otherwise 'kit'. Clients derived with withRealm()/withComputer() keep it.
      */
     target?: 'account' | 'kit';
 }
@@ -171,19 +176,21 @@ export type RealmScopeApiError = ApiError & {
 /** True for the enriched realm-scope 403 the client raises. */
 export declare function isRealmScopeError(error: unknown): error is RealmScopeApiError;
 /**
- * Minimal shape required by getKitUrl / getKitUrls / withContainer. The full
- * container response from the API has dozens of optional fields; these three
+ * Minimal shape required by getKitUrl / listKitUrls / withComputer. The full
+ * computer response from the API has dozens of optional fields; these three
  * methods only need id + project_id + server_name to build the URL. Extra
  * fields are permitted (index signature).
  *
  * Both `server` and `server_name` are accepted: the API response exposes
- * server_name, while some hand-constructed objects use the shorter `server`.
- * Supporting both means consumers can pass the raw API response OR a
- * hand-constructed object without remapping. _resolveContainerServer below
- * normalises to a single value: a containers.list item's `server` is the
- * server-details object, and its `name` is used.
+ * server_name, while some hand-constructed objects use the shorter string
+ * `server`. Supporting both means consumers can pass the raw API response OR a
+ * hand-constructed object without remapping. _resolveComputerServer below
+ * normalises to a single value. The routing host is the flat server_name (for a
+ * computer on a subserver, the PARENT server the proxy serves). A computers.list
+ * item's `server` is the server-details object: its `name` is the slice's own
+ * display name, never a routing host, so it is not used.
  */
-export interface ContainerLike {
+export interface ComputerLike {
     id?: string;
     project_id?: string;
     [key: string]: unknown;
@@ -237,26 +244,36 @@ export declare class HoodyClient {
      * before an omitted base is resolved against the page (_effectiveBaseURL).
      * The kit domain is derived from it, and derived clients are built from it,
      * so the kit URLs of a same-origin browser client keep the default
-     * containers domain they always had; only realm routing and credential
+     * computers domain they always had; only realm routing and credential
      * scope use the page.
      */
     private readonly callerBaseURL;
     /** Allowed realms per access token, filled only by the opt-in realm-error introspection. */
     private realmIntrospectionCache;
     readonly api: {
+        abuseNotices: api.AbuseNoticesService;
         activity: api.ActivityService;
         ai: api.AiService;
         auth: api.AuthService & {
             device: api.AuthDeviceService;
+            email: api.AuthEmailService;
             oauth: api.AuthOauthService;
+            sessions: api.AuthSessionsService;
             tokens: api.AuthTokensService;
             twoFactor: api.AuthTwoFactorService;
         };
-        containers: api.ContainersService & {
-            env: api.ContainersEnvService;
+        botUrls: api.BotUrlsService & {
+            keys: api.BotUrlsKeysService;
+        };
+        computers: api.ComputersService & {
+            env: api.ComputersEnvService;
+            proxy: api.ComputersProxyService;
         };
         events: api.EventsService;
-        firewall: api.FirewallService;
+        firewall: api.FirewallService & {
+            egress: api.FirewallEgressService;
+            ingress: api.FirewallIngressService;
+        };
         images: api.ImagesService;
         inbox: api.InboxService;
         ip: api.IpService;
@@ -266,32 +283,36 @@ export declare class HoodyClient {
             invitations: api.PoolsInvitationsService;
             members: api.PoolsMembersService;
         };
-        projects: api.ProjectsService;
+        projects: api.ProjectsService & {
+            permissions: api.ProjectsPermissionsService;
+            proxy: api.ProjectsProxyService;
+        };
         proxy: {
             aliases: api.ProxyAliasesService;
-            containerPermissions: api.ProxyContainerPermissionsService;
-            groups: api.ProxyGroupsService;
-            hooks: api.ProxyHooksService;
-            projectPermissions: api.ProxyProjectPermissionsService;
-            services: api.ProxyServicesService;
-            settings: api.ProxySettingsService;
         };
         realms: api.RealmsService;
+        referrals: api.ReferralsService & {
+            codes: api.ReferralsCodesService;
+        };
         servers: api.ServersService & {
-            commands: api.ServersCommandsService;
-            jobs: api.ServersJobsService;
-            offers: api.ServersOffersService;
             plans: api.ServersPlansService;
-            reservations: api.ServersReservationsService;
             subscriptions: api.ServersSubscriptionsService;
         };
         snapshots: api.SnapshotsService;
         storage: {
+            incoming: api.StorageIncomingService;
             shares: api.StorageSharesService;
+        };
+        support: api.SupportService & {
+            tickets: api.SupportTicketsService;
         };
         users: api.UsersService;
         vault: api.VaultService;
-        wallet: api.WalletService;
+        wallet: api.WalletService & {
+            credits: api.WalletCreditsService;
+            invoices: api.WalletInvoicesService;
+            payments: api.WalletPaymentsService;
+        };
     };
     readonly browser: {
         cookies: browser.CookiesService;
@@ -333,13 +354,17 @@ export declare class HoodyClient {
     };
     readonly exec: exec.ExecService & {
         cache: exec.CacheService;
+        env: exec.EnvService;
         kit: exec.KitService;
         logs: exec.LogsService;
         magicComments: exec.MagicCommentsService;
         modules: exec.ModulesService;
         namespaces: exec.NamespacesService;
         openapi: exec.OpenapiService;
-        packages: exec.PackagesService;
+        ops: exec.OpsService;
+        packages: exec.PackagesService & {
+            manifest: exec.PackagesManifestService;
+        };
         routes: exec.RoutesService;
         schedules: exec.SchedulesService;
         scripts: exec.ScriptsService;
@@ -347,6 +372,7 @@ export declare class HoodyClient {
         sdks: exec.SdksService;
         store: exec.StoreService;
         templates: exec.TemplatesService;
+        tests: exec.TestsService;
     };
     readonly files: files.FilesService & {
         archives: files.ArchivesService;
@@ -367,16 +393,21 @@ export declare class HoodyClient {
     readonly notifications: notifications.NotificationsService & {
         icons: notifications.IconsService;
         kit: notifications.KitService;
+        push: notifications.PushService & {
+            subscriptions: notifications.PushSubscriptionsService;
+        };
     };
     readonly sqlite: {
         databases: sqlite.DatabasesService;
         history: sqlite.HistoryService;
         kit: sqlite.KitService;
-        kv: sqlite.KvService;
+        kv: sqlite.KvService & {
+            arrays: sqlite.KvArraysService;
+            table: sqlite.KvTableService;
+        };
         sql: sqlite.SqlService;
     };
     readonly terminal: {
-        automation: terminal.AutomationService;
         commands: terminal.CommandsService;
         drops: terminal.DropsService;
         keys: terminal.KeysService;
@@ -384,6 +415,7 @@ export declare class HoodyClient {
         processes: terminal.ProcessesService;
         sessions: terminal.SessionsService;
         system: terminal.SystemService;
+        workloads: terminal.WorkloadsService;
     };
     readonly watch: {
         events: watch.EventsService;
@@ -393,7 +425,9 @@ export declare class HoodyClient {
     readonly cron: {
         crontabs: cron.CrontabsService;
         entries: cron.EntriesService;
+        events: cron.EventsService;
         kit: cron.KitService;
+        runs: cron.RunsService;
     };
     readonly pipe: pipe.PipeService & {
         kit: pipe.KitService;
@@ -426,24 +460,53 @@ export declare class HoodyClient {
         upstream: egress.UpstreamService;
     };
     readonly run: run.RunService & {
-        config: run.ConfigService;
+        catalog: run.CatalogService;
         jobs: run.JobsService;
+        kit: run.KitService;
         profiles: run.ProfilesService;
         recipes: run.RecipesService;
         sources: run.SourcesService;
     };
     readonly proxyLogs: proxyLogs.ProxyLogsService;
+    readonly vm: {
+        console: vm.ConsoleService;
+        events: vm.EventsService;
+        guestAgent: vm.GuestAgentService;
+        imports: vm.ImportsService;
+        isos: vm.IsosService & {
+            downloads: vm.IsosDownloadsService;
+        };
+        kit: vm.KitService;
+        osinfo: vm.OsinfoService;
+        snapshots: vm.SnapshotsService & {
+            export: vm.SnapshotsExportService;
+        };
+        templates: vm.TemplatesService;
+        unidentifiedRuns: vm.UnidentifiedRunsService;
+        vms: vm.VmsService;
+    };
     readonly agent: agent.AgentService & {
         acp: agent.AcpService;
-        bots: agent.BotsService;
+        audio: agent.AudioService;
+        bots: agent.BotsService & {
+            channels: agent.BotsChannelsService;
+            messages: agent.BotsMessagesService;
+        };
         changes: agent.ChangesService;
         completions: agent.CompletionsService;
-        containers: agent.ContainersService;
+        computers: agent.ComputersService;
         definitions: agent.DefinitionsService;
         files: agent.FilesService;
         fusions: agent.FusionsService;
         gates: agent.GatesService;
-        github: agent.GithubService;
+        github: agent.GithubService & {
+            auth: agent.GithubAuthService;
+            branches: agent.GithubBranchesService;
+            commits: agent.GithubCommitsService;
+            prs: agent.GithubPrsService;
+            repos: agent.GithubReposService;
+            worktrees: agent.GithubWorktreesService;
+        };
         headless: agent.HeadlessService;
         hooks: agent.HooksService;
         jev: agent.JevService;
@@ -452,29 +515,40 @@ export declare class HoodyClient {
         logs: agent.LogsService;
         loops: agent.LoopsService;
         mcp: agent.McpService;
-        memory: agent.MemoryService;
+        memory: agent.MemoryService & {
+            items: agent.MemoryItemsService;
+        };
         models: agent.ModelsService;
-        platform: agent.PlatformService;
-        providers: agent.ProvidersService;
+        providers: agent.ProvidersService & {
+            accounts: agent.ProvidersAccountsService;
+            auth: agent.ProvidersAuthService;
+            oauth: agent.ProvidersOauthService;
+        };
         realms: agent.RealmsService;
+        scripts: agent.ScriptsService & {
+            templates: agent.ScriptsTemplatesService;
+        };
         sessions: agent.SessionsService & {
+            approval: agent.SessionsApprovalService;
+            approverLease: agent.SessionsApproverLeaseService;
+            attachments: agent.SessionsAttachmentsService;
+            autoReply: agent.SessionsAutoReplyService;
             commands: agent.SessionsCommandsService;
+            tasks: agent.SessionsTasksService;
+            tools: agent.SessionsToolsService;
             turns: agent.SessionsTurnsService;
+            waiters: agent.SessionsWaitersService;
         };
         settings: agent.SettingsService;
         skills: agent.SkillsService & {
             hub: agent.SkillsHubService;
         };
-        stats: agent.StatsService;
-        tasks: agent.TasksService;
         todos: agent.TodosService;
         tools: agent.ToolsService;
         usage: agent.UsageService;
-        workflows: agent.WorkflowsService;
-    };
-    readonly bot: {
-        kit: bot.KitService;
-        registrations: bot.RegistrationsService;
+        workflows: agent.WorkflowsService & {
+            runs: agent.WorkflowsRunsService;
+        };
     };
     constructor(config: HoodyClientConfig);
     /**
@@ -485,7 +559,9 @@ export declare class HoodyClient {
      * afterwards share the new session. The new session keeps the credentials
      * this client was constructed with (a derived client has none) and no
      * refresh token. A token recovery still in flight for this client is
-     * discarded. To change the token of the whole session, use setSessionToken().
+     * discarded, and a request in flight is not sent again with this one: a 401
+     * for the old token, or a failure it would have retried, is its answer. To
+     * change the token of the whole session, use setSessionToken().
      */
     setToken(token: string): void;
     /**
@@ -493,7 +569,9 @@ export declare class HoodyClient {
      * derived from and every client derived from either send it from now on. A
      * non-empty token also ends a logged-out state (see logout()), and any token
      * recovery still in flight is discarded. The refresh token and stored
-     * credentials are kept; to replace those too, use adoptSession().
+     * credentials are kept; to replace those too, use adoptSession(). A request
+     * in flight is not sent again with the new token: a 401, or a failure it
+     * would have retried, is its answer.
      */
     setSessionToken(token: string): void;
     /**
@@ -557,14 +635,24 @@ export declare class HoodyClient {
      * answered with a two-factor challenge or an auth_intent_token there is no
      * session to adopt, and this throws a ValidationError naming the step that
      * finishes the login.
+     *
+     * A request in flight under the previous session is not sent again with the
+     * adopted token: a 401, or a failure it would have retried, is its answer.
      */
     adoptSession(tokens: HoodySessionTokens): string;
     /**
      * Finish a login that returned a two-factor challenge (data.temp_token):
      * verify the code with api.auth.twoFactor.verify() and adopt the session it returns.
      * Resolves to the new access token.
+     *
+     * The request body declares the same source channel as the login it
+     * finishes: options.client, else the `client` of this client's stored
+     * credentials, else 'sdk'. The API records it unless the challenge itself
+     * already names a channel (an OAuth sign-in keeps the one it started with).
      */
-    completeTwoFactorLogin(tempToken: string, code: string): Promise<string>;
+    completeTwoFactorLogin(tempToken: string, code: string, options?: {
+        client?: string;
+    }): Promise<string>;
     /**
      * Log out THIS session: this client, and every client derived from it or
      * from the same parent, drops its access token, refresh token, stored
@@ -575,12 +663,12 @@ export declare class HoodyClient {
      * devices, the CLI, other apps) stay signed in. It is what the CLI's
      * hoody logout does.
      *
-     * hoody-api has no call that revokes one session: the dropped access token
+     * The API has no call that revokes one session: the dropped access token
      * stays valid on the server until it expires. Use logoutAll() when the
      * token may have leaked, or to sign the account out everywhere.
      *
      * kitAuth is cleared because it is sent on the session's behalf (it often
-     * holds the account token itself); pass it again with withContainer() when
+     * holds the account token itself); pass it again with withComputer() when
      * a kit still needs it. Streams and sockets already open are NOT closed:
      * they belong to the caller, who holds their AbortSignal or close(), and
      * the client keeps no registry of them. Close them when logging out. An
@@ -619,7 +707,7 @@ export declare class HoodyClient {
      *
      * Documented in the README (tunnel helpers pass `await hoody.getAuthToken()`)
      * and used by the agent streaming helper (lib/agent-client.ts) to mint the
-     * `X-Hoody-Token` half of a container-claim kit handshake.
+     * `X-Hoody-Token` half of a computer-claim kit handshake.
      */
     getAuthToken(): Promise<string | undefined>;
     /**
@@ -684,22 +772,22 @@ export declare class HoodyClient {
      */
     static login(baseURL: string, credentials: HoodyCredentials): Promise<HoodyClient>;
     /**
-     * Create a new client instance scoped to a specific container
+     * Create a new client instance scoped to a specific computer
      *
-     * Automatically fetches container details if ID is provided,
-     * and configures URL templates for all hoody-kit services.
+     * Automatically fetches computer details if ID is provided,
+     * and configures URL templates for all Hoody Kit services.
      *
-     * An object needs its id, project_id and a server (server_name, a string
-     * server, or a server object's name) to route without a request. One that
+     * An object needs its id, project_id and a server (server_name, or a string
+     * server) to route without a request. One that
      * has an id but no project_id or no server is looked up by id through the
      * account API, and the API's project and server are used; a project_id or
      * server it does give must be well formed and match them, or this throws
      * ValidationError. A failed lookup throws the API's error.
      *
-     * @param containerOrId - Container object or ID
-     * @param options - Container scoping options
+     * @param computerOrId - Computer object or ID
+     * @param options - Computer scoping options
      */
-    withContainer(containerOrId: string | ContainerLike, options?: {
+    withComputer(computerOrId: string | ComputerLike, options?: {
         kitAuth?: ProxyAuth | ProxyAuthPolicy;
         onKitAuthExpired?: (namespace: string, error: ApiError) => Promise<ProxyAuth | undefined>;
     }): Promise<HoodyClient>;
@@ -748,10 +836,10 @@ export declare class HoodyClient {
     private isAccountApiBase;
     /**
      * Transport for a kit namespace's services. A kit service that has no
-     * container to build its URL from (the client was not made by
-     * withContainer()) produces a bare path; on an account-API client that path
+     * computer to build its URL from (the client was not made by
+     * withComputer()) produces a bare path; on an account-API client that path
      * would go to the API host with the account bearer. Refuse it before it is
-     * sent. Container clients (the service builds a full kit URL) and direct-kit
+     * sent. Computer clients (the service builds a full kit URL) and direct-kit
      * clients (baseURL is the kit) are unaffected.
      */
     private guardKitHttp;
@@ -768,14 +856,14 @@ export declare class HoodyClient {
      * Generate a URL for a specific kit service.
      *
      * When `local: true` is passed in options, returns the local Kit URL
-     * (`https://localhost.{containersDomain}/{serviceSegment}`) instead of the
-     * full external URL. The local URL only works from inside the container's
+     * (`https://localhost.{computersDomain}/{serviceSegment}`) instead of the
+     * full external URL. The local URL only works from inside the computer's
      * own network — the Host auto-identifies the caller. Use this for cron
-     * jobs, CLI scripts, or any in-container automation targeting the
-     * container's own services. For cross-container calls, use the default
+     * jobs, CLI scripts, or any in-computer automation targeting the
+     * computer's own services. For cross-computer calls, use the default
      * (full external URL).
      */
-    getKitUrl(kit: string, container: ContainerLike | null, serviceIndexOrOptions?: number | {
+    getKitUrl(kit: string, computer: ComputerLike | null, serviceIndexOrOptions?: number | {
         serviceIndex?: number;
         protocol?: 'http' | 'https';
         port?: number;
@@ -783,18 +871,23 @@ export declare class HoodyClient {
     }): string;
     /**
      * Build a URL-template pattern for a specific kit namespace
-     * using a baseURL-derived containers domain (domain-agnostic).
+     * using a baseURL-derived computers domain (domain-agnostic).
      */
     private getKitUrlTemplatePattern;
     /**
-     * Derive containers domain from configured baseURL.
+     * The computers domain of the configured baseURL: lib/domain-utils.ts computersDomainFor(), the one
+     * derivation the CLI client, the embeds runtime and the kitAuth middleware share.
      *
      * Examples:
-     * - api.hoody.com -> containers.hoody.com
-     * - api.hoody.com -> containers.hoody.com
-     * - {realm}.api.hoody.com -> containers.hoody.com
+     * - api.hoody.com -> computers.hoody.com
+     * - api.hoody.com -> computers.hoody.com
+     * - {realm}.api.hoody.com -> computers.hoody.com
+     * - localhost -> localhost (a kit host is a subdomain of it)
+     *
+     * An IP address base has no kit host: this throws where one is about to be built, so a client that
+     * only calls the account API on an IP base URL keeps working.
      */
-    private resolveContainersDomain;
+    private resolveComputersDomain;
     /**
      * Map SDK namespace to kit subdomain segment.
      */
@@ -812,7 +905,7 @@ export declare class HoodyClient {
     /**
      * Generate URLs for all standard kits
      */
-    getKitUrls(container: ContainerLike | null, serviceIndexOrOptions?: number | {
+    listKitUrls(computer: ComputerLike | null, serviceIndexOrOptions?: number | {
         serviceIndex?: number;
         protocol?: 'http' | 'https';
         port?: number;
@@ -821,22 +914,22 @@ export declare class HoodyClient {
     /**
      * Get the Hoody IP check base URL (https://ip.hoody.com).
      *
-     * Useful for verifying the exit IP of a container proxy.
-     * Example: `curl -x ${client.getKitUrl('proxy', container)} ${client.getIpUrl()}`
+     * Useful for verifying the exit IP of a computer proxy.
+     * Example: `curl -x ${client.getKitUrl('proxy', computer)} ${client.getIpUrl()}`
      */
     getIpUrl(): string;
     /**
      * Check the caller's external IP by querying ip.hoody.com.
      *
      * Returns the same typed response as GET /api/v1/ip (ApiIpGetResponse).
-     * No authentication required. Useful for verifying container proxy exit IPs.
+     * No authentication required. Useful for verifying computer proxy exit IPs.
      *
      * @example
-     * const { data } = await client.checkIp();
+     * const { data } = await client.getIp();
      * console.log(data.ip);           // "203.0.113.42"
      * console.log(data.ip_info?.country); // "SG"
      */
-    checkIp(options?: {
+    getIp(options?: {
         signal?: AbortSignal;
         timeoutMs?: number;
     }): Promise<ApiIpGetResponse>;

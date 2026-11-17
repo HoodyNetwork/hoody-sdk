@@ -1,22 +1,22 @@
-import { type EmbedBuildOptions, type EmbedContainerTarget, type EmbedTarget } from './runtime.js';
+import { type EmbedBuildOptions, type EmbedComputerTarget, type EmbedTarget } from './runtime.js';
 import { type EmbedsCatalog, type EmbedWrappers } from '../../generated/embeds.generated.js';
-/** A container or ProxyAlias; omitted (or null) on a `withContainer()` client. */
+/** A computer or ProxyAlias; omitted (or null) on a `withComputer()` client. */
 export type EmbedTargetArg = EmbedTarget | null | undefined | void;
 /** The `client.embeds` object. */
 export type HoodyEmbeds = EmbedWrappers<EmbedTargetArg> & {
     /**
-     * Build the URL of any view by kit slug: `url('files', container, { view: 'editor', params: { path } })`.
+     * Build the URL of any view by kit slug: `getUrl('files', computer, { view: 'editor', params: { path } })`.
      * The view defaults to the kit's default view.
      */
-    url(kit: string, target?: EmbedTargetArg, opts?: EmbedBuildOptions): string;
+    getUrl(kit: string, target?: EmbedTargetArg, opts?: EmbedBuildOptions): string;
     /** A deep copy of the construction catalog. */
-    catalog(): EmbedsCatalog;
+    getCatalog(): EmbedsCatalog;
     /** The view ids of a kit, default first. */
-    views(kit: string): string[];
+    listViews(kit: string): string[];
 };
 /** What `createEmbeds` needs from a client: `getKitUrl` and, for scoping, its URL template variables. */
 export interface EmbedsHost {
-    getKitUrl(kit: string, container: EmbedContainerTarget, opts: {
+    getKitUrl(kit: string, computer: EmbedComputerTarget, opts: {
         serviceIndex?: number;
         port?: number;
     }): string;
@@ -24,8 +24,8 @@ export interface EmbedsHost {
 declare module '../hoody-client.js' {
     interface HoodyClient {
         /**
-         * Embed URLs for every Hoody kit UI view: `client.embeds.terminal.session(container, { params })`.
-         * On a `withContainer()` client the target may be omitted.
+         * Embed URLs for every Hoody kit UI view: `client.embeds.terminal.session(computer, { params })`.
+         * On a `withComputer()` client the target may be omitted.
          */
         readonly embeds: HoodyEmbeds;
     }
@@ -34,7 +34,7 @@ declare module '../hoody-client.js' {
 export declare function createEmbeds(host: EmbedsHost): HoodyEmbeds;
 /**
  * Define `embeds` on the HoodyClient prototype: a getter, built once per client instance. A getter
- * rather than a constructor field, because withContainer()/withRealm() promote instances by prototype
+ * rather than a constructor field, because withComputer()/withRealm() promote instances by prototype
  * swap and no constructor runs for them. Calling it again redefines the same getter over the same
  * per-instance cache, so both entry points may call it.
  */

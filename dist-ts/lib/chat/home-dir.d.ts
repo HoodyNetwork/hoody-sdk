@@ -11,6 +11,10 @@
  * Also exports platformEnvHint() — gives the user a copy-pasteable env-var
  * assignment in their current shell syntax (bash/zsh vs PowerShell vs cmd).
  */
+/**
+ * The user's home directory for every `~/.hoody` path: `$HOME` when it is set and not empty,
+ * else `os.homedir()`. An empty `HOME` is ignored so paths never resolve under the current directory.
+ */
 export declare function hoodyHomeDir(): string;
 /**
  * The API base URL of the account this process acts for, as the CLI resolves it without flags:

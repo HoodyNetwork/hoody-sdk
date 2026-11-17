@@ -2,8 +2,7 @@
  * The owner lock of a `hoody share`, which is also its stop channel.
  *
  * The owner listens on a local channel for its whole life, and holding the
- * channel's name is ownership (plans/share-local-folder.md, "Ownership, lock
- * and journals"):
+ * channel's name is ownership:
  *
  *   - Linux: the abstract socket `\0hoody-share-<uid>-<id>`. A second bind
  *     fails while a process holds it, and the kernel frees it when the process
@@ -27,6 +26,7 @@ import { userInfo } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 const execFile = promisify(execFileCb);
+/** The lock flavour of a platform: `abstract` on Linux, `pipe` on Windows, `file` everywhere else. */
 export function defaultLockFlavor(platform = process.platform) {
     if (platform === 'linux')
         return 'abstract';
@@ -42,12 +42,15 @@ const MAX_LINE_BYTES = 64 * 1024;
 export const CHANNEL_AUTH_TIMEOUT_MS = 5000;
 /** At release, how long an answered connection gets to read its last line before it is cut. */
 const RELEASE_GRACE_MS = 1000;
+/** A fresh random run token: 32 hex characters. */
 export function newRunToken() {
     return randomBytes(16).toString('hex');
 }
+/** Path of the file holding the owner's run token for share `id`. */
 export function ownerTokenPath(dir, id) {
     return join(dir, `${id}.owner`);
 }
+/** Path of the reclaim gate of share `id` (used by the `file` flavour only). */
 export function reclaimGatePath(dir, id) {
     return join(dir, `${id}.reclaim`);
 }
@@ -145,6 +148,10 @@ async function writeOwnerToken(dir, id, token) {
     }
     await fs.rename(tmp, target);
 }
+/**
+ * The owner's run token for share `id`, or null when the file is missing, unreadable or does not hold 32 hex
+ * characters.
+ */
 export async function readOwnerToken(dir, id) {
     try {
         const v = (await fs.readFile(ownerTokenPath(dir, id), 'utf8')).trim();

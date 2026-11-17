@@ -37,7 +37,7 @@ export interface StreamingRenderer {
     end(): void;
 }
 /**
- * Factory. Pass to streamCompletion's onDelta: (d) => r.write(d.content ?? '').
+ * Factory. Write the answer's text to it as it streams (`renderer.write(chunk)`), then call end().
  *
  * TTY / color detection:
  *   - out not TTY → raw mode regardless of noMarkdown flag.
@@ -90,4 +90,10 @@ export interface RenderFenceExtras {
     partial?: boolean;
     partialReason?: string;
 }
+/**
+ * Write one fenced code block to `out`: a header line with the language (and, for a block cut short,
+ * `extras.partialReason`), then the `body` lines behind a gutter. For a shell block the gutter colour
+ * and a warning line follow `classification.severity`, the lines listed in `dangerLines` /
+ * `reviewLines` get a warning mark, and a footer reminds the reader that nothing is executed.
+ */
 export declare function renderFenceBlock(out: NodeJS.WritableStream, lang: string, body: string, classification: ClassificationResult, extras?: RenderFenceExtras): void;

@@ -4,37 +4,40 @@
  *
  * Provides automatic connection management - users just add listeners!
  *
- * Complete coverage: 65/65 event types (100%)
+ * `on()` takes any event type of the catalog (`lib/events-catalog.json`) or a pattern over them;
+ * the typed `on<Event>()` methods cover the common ones.
  *
  * Three subscription styles are supported:
  *
- *  1. Resource-specific listeners (onContainerEvents, onProjectEvents):
+ *  1. Resource-specific listeners (onComputerEvents, onProjectEvents):
  *     Register with eventType "*" (wildcard) plus an EventFilter containing
  *     the target resourceId/resourceType. The EventsManager routes every
  *     incoming event through the wildcard bucket, and the filter narrows
  *     delivery to events matching that resource.
  *
- *  2. Lifecycle listeners (onLifecycle):
- *     Observe the WebSocket connection state itself (connected, disconnected,
- *     reconnecting, reconnected, error). These are distinct from data events
- *     and are delivered via EventsManager.addLifecycleListener, not through
- *     the data-event routing path.
+ *  2. Connection listeners (onConnection):
+ *     Observe the transport events of the WebSocket itself (connected,
+ *     disconnected, reconnecting, reconnected, error). These are distinct from
+ *     data events and are delivered via EventsManager.addConnectionListener,
+ *     not through the data-event routing path. The lifecycle state (idle,
+ *     connecting, live, recovering, offline, closed) is getLifecycleState()
+ *     and onState().
  *
- *  3. Raw / typed event listeners (onContainerRunning, onAnyEvent, etc.):
+ *  3. Raw / typed event listeners (onComputerRunning, onAnyEvent, etc.):
  *     Each registers a listener on the exact event_type string (e.g.
- *     "container.running") or on "*" for all data events.
+ *     "computer.running") or on "*" for all data events.
  */
 import type { EventsService } from '../generated/api/events.service.js';
-import { type EventFilter, type EventsConnectionState, type EventsStateEvent } from './events-manager.js';
+import { type EventFilter, type EventsLifecycleState, type EventsStateEvent } from './events-manager.js';
 import type { EventServerMessage, HoodyEvent, HoodyStreamEvent } from './events-types.js';
 import type { EventsSession } from './events-session.js';
 import { type EventPattern, type EventTypesMatching } from './events-catalog.js';
-/** Options of the §5 runtime behind an EventsClient. */
+/** Options of the runtime behind an EventsClient. */
 export interface EventsClientOptions {
     /** The client session the stream is bound to; `client.events` passes it. */
     session?: EventsSession;
     /**
-     * C5 "refresh + reconnect". Defaults to the service HTTP client's own
+     * The "refresh + reconnect" action. Defaults to the service HTTP client's own
      * single-flight 401 refresh, so the socket and REST refresh the same way.
      */
     refreshToken?: () => Promise<string | undefined>;
@@ -88,6 +91,20 @@ export interface EventsStreamOptions<P extends EventPattern = EventPattern> {
 }
 /** A `waitFor` filter: an EventFilter, or a predicate. */
 export type EventsWaitFilter<T extends HoodyEvent = HoodyEvent> = EventFilter | ((event: T) => boolean);
+/**
+ * The live event stream of an account, or of one realm on a realm-scoped
+ * client. Reach it as `client.events`. It connects when the first handler,
+ * stream or wait is registered and closes the socket when the last one is
+ * gone; after a disconnect it reconnects and recovers the events it missed
+ * from history.
+ *
+ * Use `on()` or the typed `on<Event>()` methods for handlers, `stream()` for
+ * an async iterator that can resume from a saved point, `waitFor()` to await
+ * one event around an action, and `bootstrap()` to load a starting state that
+ * stays consistent with the stream. `onState()` and `onConnection()` report
+ * the stream's own state. Past events are read with the REST history
+ * (`client.api.events`), not here.
+ */
 export declare class EventsClient {
     private manager;
     private baseURL;
@@ -106,8 +123,8 @@ export declare class EventsClient {
      */
     constructor(eventsService: EventsService, baseURL?: string, getToken?: () => string | null, options?: EventsClientOptions);
     /**
-     * Handle events of one or more types or patterns (`'container.running'`,
-     * `['container.running', 'container.stopped']`, `'container.*'`, `'*'`).
+     * Handle events of one or more types or patterns (`'computer.running'`,
+     * `['computer.running', 'computer.stopped']`, `'computer.*'`, `'*'`).
      * Resolves with the unsubscribe function once the stream is admitted.
      *
      * Wildcards leave out live-only types unless `includeEphemeral` is set.
@@ -143,8 +160,8 @@ export declare class EventsClient {
      * Wait for the first matching event. With `action`, the action runs only
      * after `ready()`, so its event cannot be missed, even on a cold start:
      *
-     *     const running = await client.events.waitFor('container.running',
-     *         { resourceId: id }, () => client.api.containers.start(id));
+     *     const running = await client.events.waitFor('computer.running',
+     *         { resourceId: id }, () => client.api.computers.start(id));
      */
     waitFor<P extends EventPattern>(pattern: P | readonly P[], filter?: EventsWaitFilter<HoodyEvent<EventTypesMatching<P>>>, action?: () => unknown, options?: EventsWaitOptions): Promise<HoodyEvent<EventTypesMatching<P>>>;
     /**
@@ -171,10 +188,13 @@ export declare class EventsClient {
             resource_id: string;
         }>;
     }>;
-    /** Observe connection state, gaps, `scope_changed` and non-fatal notices. Returns an unsubscribe function. */
+    /**
+     * Observe lifecycle state changes, gaps, `scope_changed` and non-fatal notices. A `state` event's
+     * `state` and `previous` are the values `getLifecycleState()` returns. Returns an unsubscribe function.
+     */
     onState(listener: (event: EventsStateEvent) => void): () => void;
-    /** The §5 connection state. */
-    get state(): EventsConnectionState;
+    /** The lifecycle state: idle, connecting, live, recovering, offline or closed. */
+    getLifecycleState(): EventsLifecycleState;
     /**
      * Close the stream for good: the socket closes, pending waits reject with
      * EventsClosedError, streams end and every handler is dropped. Idempotent.
@@ -217,107 +237,107 @@ export declare class EventsClient {
      */
     onAuthTokenUpdated(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for container.autostart_disabled events
+     * Listen for computer.autostart_disabled events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerAutostartDisabled(callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerAutostartDisabled(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for container.autostart_enabled events
+     * Listen for computer.autostart_enabled events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerAutostartEnabled(callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerAutostartEnabled(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for container.creating events
+     * Listen for computer.creating events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerCreating(callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerCreating(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for container.deleted events
+     * Listen for computer.deleted events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerDeleted(callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerDeleted(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for container.deleting events
+     * Listen for computer.deleting events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerDeleting(callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerDeleting(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for container.display.enabled events
+     * Listen for computer.display.enabled events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerDisplayEnabled(callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerDisplayEnabled(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for container.failed events
+     * Listen for computer.failed events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerFailed(callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerFailed(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for container.renamed events
+     * Listen for computer.renamed events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerRenamed(callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerRenamed(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for container.resource_updated events
+     * Listen for computer.resource_updated events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerResourceUpdated(callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerResourceUpdated(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for container.running events
+     * Listen for computer.running events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerRunning(callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerRunning(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for container.snapshot.created events
+     * Listen for computer.snapshot.created events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerSnapshotCreated(callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerSnapshotCreated(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for container.snapshot.deleted events
+     * Listen for computer.snapshot.deleted events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerSnapshotDeleted(callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerSnapshotDeleted(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for container.snapshot.renamed events
+     * Listen for computer.snapshot.renamed events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerSnapshotRenamed(callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerSnapshotRenamed(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for container.snapshot.restored events
+     * Listen for computer.snapshot.restored events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerSnapshotRestored(callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerSnapshotRestored(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for container.ssh_key.added events
+     * Listen for computer.ssh_key.added events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerSshKeyAdded(callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerSshKeyAdded(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for container.ssh_key.removed events
+     * Listen for computer.ssh_key.removed events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerSshKeyRemoved(callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerSshKeyRemoved(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for container.stopped events
+     * Listen for computer.stopped events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerStopped(callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerStopped(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
      * Listen for firewall.rule.added events
      * @param callback Function to call when event occurs
@@ -547,13 +567,13 @@ export declare class EventsClient {
      */
     onStorageShareUpdated(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen to all events for a specific container.
+     * Listen to all events for a specific computer.
      * Uses wildcard "*" event type with a filter on resourceId + resourceType.
-     * @param containerId Container ID to filter events
+     * @param computerId Computer ID to filter events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    onContainerEvents(containerId: string, callback: (event: EventServerMessage) => void): Promise<() => void>;
+    onComputerEvents(computerId: string, callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
      * Listen to all events for a specific project
      * @param projectId Project ID to filter events
@@ -582,38 +602,46 @@ export declare class EventsClient {
      */
     subscribe(handlers: EventListeners): Promise<() => void>;
     /**
-     * Register listeners for WebSocket connection state changes.
+     * Register listeners for the transport events of the WebSocket connection.
      *
-     * These are distinct from data events: lifecycle events report on the
+     * These are distinct from data events: connection events report on the
      * transport layer (connected, disconnected, reconnecting, reconnected,
      * error), not on server-pushed domain events. They are delivered through
-     * EventsManager.addLifecycleListener, which is a separate Map from the
-     * data-event listeners Map.
+     * EventsManager.addConnectionListener, which is a separate Map from the
+     * data-event listeners Map. For the lifecycle state, use onState().
      *
      * Returns an array of individual unsubscribe functions (one per handler
      * registered), unlike `subscribe()` which returns a single composite
      * unsubscribe.
      */
-    onLifecycle(handlers: {
+    onConnection(handlers: {
         onConnected?: () => void;
         onDisconnected?: (code: number, reason: string) => void;
         onReconnecting?: (attempt: number) => void;
         onReconnected?: (attempt: number) => void;
         onError?: (error: Error) => void;
     }): (() => void)[];
+    /**
+     * Change connection behaviour. `autoConnect: false` makes handler
+     * registration resolve without waiting for the connection to be admitted;
+     * `autoReconnect: false` stops reconnecting after a lost connection (the
+     * stream goes idle and callers waiting for a connection get the error);
+     * `debug` logs connection steps to the console. Omitted keys keep their
+     * value.
+     */
     configure(options: {
         autoConnect?: boolean;
         autoReconnect?: boolean;
         debug?: boolean;
     }): void;
-    getConnectionState(): string;
+    /** How many subscriptions are registered: handlers, open streams and pending waits. */
     getListenerCount(): number;
+    /** True while the socket is connected and the server has admitted it. False while connecting, recovering a lost connection or closed. */
     isConnected(): boolean;
-    disconnect(): void;
 }
 /**
  * Interface for batch event subscription
- * Supports all 65 event types from the Hoody Events API
+ * Typed listeners for the Hoody Events API event types; onAnyEvent receives every event
  */
 export interface EventListeners {
     /** Listen to all events */
@@ -624,23 +652,23 @@ export interface EventListeners {
     onAuthTokenDisabled?: (event: EventServerMessage) => void;
     onAuthTokenEnabled?: (event: EventServerMessage) => void;
     onAuthTokenUpdated?: (event: EventServerMessage) => void;
-    onContainerAutostartDisabled?: (event: EventServerMessage) => void;
-    onContainerAutostartEnabled?: (event: EventServerMessage) => void;
-    onContainerCreating?: (event: EventServerMessage) => void;
-    onContainerDeleted?: (event: EventServerMessage) => void;
-    onContainerDeleting?: (event: EventServerMessage) => void;
-    onContainerDisplayEnabled?: (event: EventServerMessage) => void;
-    onContainerFailed?: (event: EventServerMessage) => void;
-    onContainerRenamed?: (event: EventServerMessage) => void;
-    onContainerResourceUpdated?: (event: EventServerMessage) => void;
-    onContainerRunning?: (event: EventServerMessage) => void;
-    onContainerSnapshotCreated?: (event: EventServerMessage) => void;
-    onContainerSnapshotDeleted?: (event: EventServerMessage) => void;
-    onContainerSnapshotRenamed?: (event: EventServerMessage) => void;
-    onContainerSnapshotRestored?: (event: EventServerMessage) => void;
-    onContainerSshKeyAdded?: (event: EventServerMessage) => void;
-    onContainerSshKeyRemoved?: (event: EventServerMessage) => void;
-    onContainerStopped?: (event: EventServerMessage) => void;
+    onComputerAutostartDisabled?: (event: EventServerMessage) => void;
+    onComputerAutostartEnabled?: (event: EventServerMessage) => void;
+    onComputerCreating?: (event: EventServerMessage) => void;
+    onComputerDeleted?: (event: EventServerMessage) => void;
+    onComputerDeleting?: (event: EventServerMessage) => void;
+    onComputerDisplayEnabled?: (event: EventServerMessage) => void;
+    onComputerFailed?: (event: EventServerMessage) => void;
+    onComputerRenamed?: (event: EventServerMessage) => void;
+    onComputerResourceUpdated?: (event: EventServerMessage) => void;
+    onComputerRunning?: (event: EventServerMessage) => void;
+    onComputerSnapshotCreated?: (event: EventServerMessage) => void;
+    onComputerSnapshotDeleted?: (event: EventServerMessage) => void;
+    onComputerSnapshotRenamed?: (event: EventServerMessage) => void;
+    onComputerSnapshotRestored?: (event: EventServerMessage) => void;
+    onComputerSshKeyAdded?: (event: EventServerMessage) => void;
+    onComputerSshKeyRemoved?: (event: EventServerMessage) => void;
+    onComputerStopped?: (event: EventServerMessage) => void;
     onFirewallRuleAdded?: (event: EventServerMessage) => void;
     onFirewallRuleDisabled?: (event: EventServerMessage) => void;
     onFirewallRuleEnabled?: (event: EventServerMessage) => void;

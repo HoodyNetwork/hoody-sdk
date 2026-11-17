@@ -1,11 +1,11 @@
 /**
- * hoody-sdk/update-check — minisign-verified version check.
+ * Minisign-verified version check, internal to the package (not a package export).
  *
  * ┌────────────────────────────────────────────────────────────────────────┐
  * │ Trust chain (multi-domain)                                              │
  * │                                                                         │
  * │   build-time: package.json.version + trusted-domains JSON pins         │
- * │                → bake-domains.ts → generated/domains.ts                │
+ * │                → the bake step   → generated/domains.ts                │
  * │                → bun build --compile                                   │
  * │                                                                        │
  * │   runtime: hoody update                                                │
@@ -215,7 +215,7 @@ export async function checkForUpdate(opts) {
     // Rotation-fallback downgrade defense. If the signature
     // verified via the `previous` key, refuse any `latest` strictly less
     // than the baked version floor. A stale `previous` slot left in
-    // `trustedDomains[X]` (operator forgot to clear it after a rotation
+    // `trustedDomains[X]` (not cleared after a rotation
     // cycle) is otherwise a full update-channel takeover for any binary
     // coerced to domain X via HOODY_DOMAIN: attacker re-signs an OLDER
     // (vulnerable) channel.json with the compromised previous-key. The
@@ -313,6 +313,11 @@ export function resultToCache(result, nowMs = Date.now()) {
         not_after: result.notAfter,
     };
 }
+/**
+ * Read the cached update-check result and, when it is missing or stale, start a background refresh.
+ * Returns at once with the cache as read and the refresh promise (null when none was started); that
+ * promise never rejects. With `opts.optOut` it reads nothing and starts nothing.
+ */
 export function startPreAction(opts) {
     if (opts.optOut) {
         return { cache: null, refreshPromise: null };

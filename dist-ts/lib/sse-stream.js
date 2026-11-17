@@ -3,8 +3,7 @@
  *
  * Lives apart from lib/pipe-stream.ts, which imports `node:net` / `node:fs` /
  * `node:stream`: anything that imported the parser from there could not ship in
- * the browser bundle, and `streamAgentPrompt` was left out of it for exactly that
- * reason. pipe-stream.ts re-exports everything here, so its public surface is
+ * the browser bundle. pipe-stream.ts re-exports everything here, so its public surface is
  * unchanged.
  */
 /** Split a buffer into SSE event blocks separated by blank lines. */

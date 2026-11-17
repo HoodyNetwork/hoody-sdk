@@ -1,26 +1,28 @@
 /**
- * Local exit proxy: publish a container's HTTPS proxy, exit from this machine.
+ * Local exit proxy: publish a computer's HTTPS proxy, exit from this machine.
  *
  * Chain, outermost first:
  *
- *   client ──HTTPS proxy──> <container>-egress.<server>.containers.hoody.com
+ *   client ──HTTPS proxy──> <computer>-egress.<server>.computers.hoody.com
  *          └─ hoody-egress, upstream = socks5h://127.0.0.1:<port>
- *                └─ hoody-tunnel PULL bind on container loopback
+ *                └─ hoody-tunnel PULL bind on computer loopback
  *                      └─ WebSocket to this process
  *                            └─ SOCKS5 terminated here, destination dialled locally
  *
  * Nothing listens on this machine. The only local sockets are outbound: one
  * WebSocket to the kit, and one TCP connection per proxied request.
  *
- * The container URL is the credential, per Hoody's capability-URL model. Anyone
+ * The computer URL is the credential, per Hoody's capability-URL model. Anyone
  * holding it can relay through this machine, so treat it like a password and set
  * proxy permissions when it is going somewhere untrusted.
  */
 import { randomBytes } from 'node:crypto';
-import { tunnelSocks5 } from './tunnel-socks5.js';
+import { startTunnelSocks5 } from './tunnel-socks5.js';
+import { withAsyncDispose } from './async-dispose.js';
 import { deriveSiblingDomain, platformUrl } from './domain-utils.js';
+import { kitAuthForNamespace, kitAuthWebSocketParts } from './kit-ws-auth.js';
 /**
- * Thrown when startup fails AND the container was left with this run's upstream
+ * Thrown when startup fails AND the computer was left with this run's upstream
  * still set.
  *
  * The unwind deliberately does not drop the tunnel in that state: closing it
@@ -33,19 +35,19 @@ import { deriveSiblingDomain, platformUrl } from './domain-utils.js';
 export class LocalExitStartupError extends Error {
     /** Always false: this error exists precisely for the not-cleared case. */
     upstreamCleared = false;
-    /** The loopback port the container is still pointing at. */
-    containerPort;
+    /** The loopback port the computer is still pointing at. */
+    computerPort;
     /**
      * Close the tunnel this failed start left open. Idempotent, and never throws.
      *
-     * Doing so leaves the container pointing at a port that no longer answers, so
+     * Doing so leaves the computer pointing at a port that no longer answers, so
      * clear the upstream first if you can.
      */
     closeTunnel;
     constructor(message, opts) {
         super(message, opts.cause === undefined ? undefined : { cause: opts.cause });
         this.name = 'LocalExitStartupError';
-        this.containerPort = opts.containerPort;
+        this.computerPort = opts.computerPort;
         this.closeTunnel = opts.closeTunnel;
     }
 }
@@ -53,7 +55,7 @@ export class LocalExitStartupError extends Error {
  * The IP service of the client's own platform: `https://ip.<platform domain>`.
  *
  * It was one fixed host, so an account on any other platform confirmed its exit against
- * a different platform's service, from this machine and through the container. The client's own
+ * a different platform's service, from this machine and through the computer. The client's own
  * getIpUrl() is the answer when it has one (HoodyClient derives it from its base URL); a client
  * without it gets the same derivation from the base URL every other URL here comes from.
  * Exported for the unit test; not part of the package entry.
@@ -67,39 +69,45 @@ export function ipServiceUrl(client, baseUrl) {
     return platformUrl(baseUrl, 'ip');
 }
 /**
- * Deadline for the calls that unwire the container.
+ * Deadline for the calls that unwire the computer.
  *
  * Teardown runs from a Ctrl+C handler. Without a deadline a stalled request
  * hangs the handler, and because the handler is also what suppresses the
  * process's default exit, the command becomes unkillable short of SIGKILL —
- * which is the one way to guarantee the container is left dirty.
+ * which is the one way to guarantee the computer is left dirty.
  */
 const TEARDOWN_TIMEOUT_MS = 15_000;
-function containerIdOf(c) {
+function computerIdOf(c) {
     if (typeof c?.id !== 'string' || c.id === '')
-        throw new Error('local exit: container is missing id');
+        throw new Error('local exit: computer is missing id');
     return c.id;
 }
 function projectIdOf(c) {
     const id = c.project_id ?? c.projectId;
     if (!id)
-        throw new Error('local exit: container is missing project_id');
+        throw new Error('local exit: computer is missing project_id');
     return id;
 }
+// The tunnel URL is built on the routing node: the flat server_name (a subserver's
+// PARENT server, the host the proxy serves). A nested server object's name is a
+// slice's own display name and routes nowhere, so it is never a node; a bare string
+// `server` is a node the caller gave by hand.
 function serverNameOf(c) {
-    const s = typeof c.server === 'string' ? c.server : c.server?.name ?? c.server_name;
+    const s = typeof c.server_name === 'string' && c.server_name !== ''
+        ? c.server_name
+        : typeof c.server === 'string' ? c.server : '';
     if (!s)
-        throw new Error('local exit: container is missing server name');
+        throw new Error('local exit: computer is missing server_name');
     return s;
 }
 /**
  * Find the API base URL a client is configured with.
  *
  * HoodyClient keeps it on the inner HttpClient, not on itself, so reading
- * `client.config.baseURL` finds nothing. This used to fall back to a fixed
- * default API URL, which turned a realm mismatch into a hostname that does not
- * resolve: an account on another deployment got a tunnel URL under the
- * default's containers domain and the only symptom was "WebSocket error".
+ * `client.config.baseURL` finds nothing. A fallback to a fixed default API URL
+ * would turn a realm mismatch into a hostname that does not resolve: an account
+ * on another deployment would get a tunnel URL under the default's computers
+ * domain and the only symptom would be "WebSocket error".
  *
  * A wrong realm is not a recoverable default, so this throws instead. Every
  * URL in the chain is derived from this one value.
@@ -113,26 +121,27 @@ function resolveClientBaseUrl(client) {
             'Construct it with `new HoodyClient({ baseURL })`.');
     }
     // A non-empty string is not enough. deriveSiblingDomain is deliberately
-    // lenient for its other callers and answers `containers.hoody.com` for the
-    // three inputs it cannot derive from: an unparseable URL, an empty hostname,
-    // and localhost / an IP literal. Reaching that default HERE would reinstate
-    // exactly the failure this function exists to prevent, and silently: a client
-    // pointed at http://localhost:3000 would mint production `.hoody.com`
-    // container URLs. Refuse those three at the boundary instead.
+    // lenient for its other callers: it answers `computers.hoody.com` for an
+    // unparseable URL or an empty hostname, and for localhost or an IP literal it
+    // answers the host itself, which has no production computers domain to mint
+    // URLs under. Reaching either HERE would reinstate exactly the failure this
+    // function exists to prevent, and silently: a client pointed at
+    // http://localhost:3000 would mint computer URLs on a host that is not the
+    // account's. Refuse those three at the boundary instead.
     let host;
     try {
         host = new URL(candidate).hostname;
     }
     catch {
         throw new Error(`local exit: the client's baseURL is not a valid URL (${candidate}). ` +
-            'Every container URL is derived from it, so it cannot be guessed.');
+            'Every computer URL is derived from it, so it cannot be guessed.');
     }
     // `localhost.` (trailing root dot) and `foo.localhost` resolve to loopback
     // just as `localhost` does, and an exact-match check let them through to
-    // derive `containers.localhost.` / `containers.foo.localhost`.
+    // derive `computers.localhost.` / `computers.foo.localhost`.
     const loopbackName = host === 'localhost' || host === 'localhost.' || /(^|\.)localhost\.?$/i.test(host);
     if (!host || loopbackName || /^\d+\.\d+\.\d+\.\d+$/.test(host) || host.startsWith('[')) {
-        throw new Error(`local exit: no container realm can be derived from baseURL host "${host}". ` +
+        throw new Error(`local exit: no computer realm can be derived from baseURL host "${host}". ` +
             'Point the client at the API hostname for your realm (for example ' +
             'https://api.hoody.com) rather than a loopback or literal address.');
     }
@@ -147,26 +156,26 @@ function resolveClientBaseUrl(client) {
 const LOCAL_EXIT_SCHEME = 'socks5h';
 const LOCAL_EXIT_HOST = '127.0.0.1';
 /**
- * Does the upstream now on the container belong to somebody other than this
+ * Does the upstream now on the computer belong to somebody other than this
  * handle?
  *
  * Teardown deletes the upstream, and the kit never returns credentials, so a
  * wrong answer here is unrecoverable in one direction: clearing a third party's
- * proxy destroys a configuration nobody can restore. The check used to compare
- * the PORT alone, which is the one field a replacement can share by accident —
- * a hand-set `socks5h://user:pass@203.0.113.10:<same-port>` read as ours and
- * was deleted. Compare every field the wire exposes instead.
+ * proxy destroys a configuration nobody can restore. The PORT alone is the one
+ * field a replacement can share by accident (a hand-set
+ * `socks5h://user:pass@203.0.113.10:<same-port>` would read as ours), so every
+ * field the wire exposes is compared.
  *
  * A field the kit does not send cannot contradict us, so absence is not treated
  * as evidence either way; that keeps this from declaring every upstream foreign
- * (and so leaving dead ports set on every container) if the payload ever loses
+ * (and so leaving dead ports set on every computer) if the payload ever loses
  * a field.
  *
  * This narrows the window; it does not close it. Two gaps remain, both needing
  * a kit change rather than an SDK one:
  *
  *   - The read and the delete are two calls, so an exit that takes the
- *     container over in between is still clobbered.
+ *     computer over in between is still clobbered.
  *   - A replacement that matches on ALL FOUR visible fields is indistinguishable
  *     from ours, because the kit reports `auth` as a bare boolean and never any
  *     credential identity.
@@ -183,10 +192,10 @@ const LOCAL_EXIT_HOST = '127.0.0.1';
  * an ETag) — the SDK cannot supply it, since every discriminator it writes is
  * collapsed to `auth: true` on the way back.
  */
-function upstreamIsForeign(owned, containerPort) {
+function upstreamIsForeign(owned, computerPort) {
     if (owned?.enabled !== true)
         return false;
-    if (owned.port !== containerPort)
+    if (owned.port !== computerPort)
         return true;
     if (typeof owned.scheme === 'string' && owned.scheme !== LOCAL_EXIT_SCHEME)
         return true;
@@ -209,22 +218,21 @@ function unwrap(res) {
     return (res && typeof res === 'object' && 'data' in res ? res.data : res);
 }
 /**
- * `api.hoody.com` -> `containers.hoody.com`.
+ * `api.hoody.com` -> `computers.hoody.com`.
  *
- * This used to be a private re-implementation that "mirrored" lib/domain-utils.
- * It had drifted: the canonical function derives `containers.<host>` for a host
- * it does not recognise, while the copy returned `containers.hoody.com` — so an
- * account on any non-`api.` hostname was handed a production URL for a realm it
- * has nothing to do with. Call the real one; `resolveClientBaseUrl` has already
- * rejected the inputs whose only answer would be a guessed realm.
+ * Calls lib/domain-utils rather than keeping a private copy: the canonical
+ * function derives `computers.<host>` for a host it does not recognise, so an
+ * account on any non-`api.` hostname is never handed a production URL for a
+ * realm it has nothing to do with. `resolveClientBaseUrl` has already rejected
+ * the inputs whose only answer would be a guessed realm.
  */
-function containersDomain(baseUrl) {
-    return deriveSiblingDomain(baseUrl, 'containers');
+function computersDomain(baseUrl) {
+    return deriveSiblingDomain(baseUrl, 'computers');
 }
 /** Query the platform's IP service, optionally through the proxy, and normalize the payload. */
 async function readIpService(ipService, dispatcherUrl) {
     // Bounded. Without a deadline this call is the one unbounded await in startup:
-    // a stalled connection leaves the container relaying publicly while the caller
+    // a stalled connection leaves the computer relaying publicly while the caller
     // still has no handle to stop it with.
     const init = {
         headers: { accept: 'application/json' },
@@ -256,34 +264,38 @@ async function readIpService(ipService, dispatcherUrl) {
  * answer. Teardown reverses it.
  */
 export async function startLocalExit(opts) {
-    const { client, container } = opts;
-    const containerId = containerIdOf(container);
-    const projectId = projectIdOf(container);
-    const server = serverNameOf(container);
+    const { client, computer } = opts;
+    const computerId = computerIdOf(computer);
+    const projectId = projectIdOf(computer);
+    const server = serverNameOf(computer);
     const baseUrl = resolveClientBaseUrl(client);
-    const domain = containersDomain(baseUrl);
+    const domain = computersDomain(baseUrl);
     const ipService = ipServiceUrl(client, baseUrl);
-    const tunnelWs = `wss://${projectId}-${containerId}-tunnel-1.${server}.${domain}/api/v1/tunnel/connect`;
+    const tunnelWs = `wss://${projectId}-${computerId}-tunnel-1.${server}.${domain}/api/v1/tunnel/connect`;
     // Unsuffixed, matching `getKitUrl('egress', …)`, the CLI's getKitBaseUrl and
     // the docs. The edge normalizes a missing index to 1, so this IS index 1 —
     // including for proxy permissions, which are evaluated per index. Emitting
     // `-egress-1` here instead would route identically but break the parity
     // between the SDK, the CLI and the docs, which a rename once already split.
-    const egressBase = `https://${projectId}-${containerId}-egress.${server}.${domain}`;
-    const token = await client.getAuthToken();
-    if (!token)
+    const egressBase = `https://${projectId}-${computerId}-egress.${server}.${domain}`;
+    // The account token signs the API calls below (computer lookup, alias). It is
+    // never sent on the tunnel: the proxy authenticates the upgrade with kitAuth.
+    if (!(await client.getAuthToken()))
         throw new Error('local exit: client is not authenticated');
-    // Container-local SOCKS5 credentials. The loopback port is reachable by every
-    // process in the container, so it is never anonymous.
+    // Computer-local SOCKS5 credentials. The loopback port is reachable by every
+    // process in the computer, so it is never anonymous.
     const auth = {
         username: `hoody-${randomBytes(6).toString('hex')}`,
         password: randomBytes(24).toString('base64url'),
     };
     const errors = [];
     let tunnel;
-    // Container-scoped client: every egress call below goes through the generated
+    // Computer-scoped client: every egress call below goes through the generated
     // kit methods, so URL templating and auth stay in one place.
-    const box = await client.withContainer(container);
+    const box = await client.withComputer(computer, opts.kitAuth !== undefined ? { kitAuth: opts.kitAuth } : undefined);
+    // The tunnel upgrade carries the same kit credential as the egress calls: the
+    // explicit one, else the one the scoped client inherited from `client`.
+    const kitAuth = opts.kitAuth ?? box?.kitAuth;
     // Refuse to clobber an upstream somebody else configured. Teardown DELETES the
     // upstream, and the kit never returns credentials, so a third-party proxy
     // replaced here could not be restored afterwards — the user would simply lose
@@ -297,7 +309,7 @@ export async function startLocalExit(opts) {
          * `enabled: true` covers a slot that is configured but unusable, and when
          * the governing text never parsed the service reports no scheme, host or
          * port at all. Interpolating them anyway produced `?://?:?`, which reads
-         * like a bug in this command rather than a statement about the container,
+         * like a bug in this command rather than a statement about the computer,
          * and it is the exact case a user meets when a stored upstream stops being
          * accepted. Say which of the two situations it is instead.
          */
@@ -306,15 +318,15 @@ export async function startLocalExit(opts) {
             ? `${existing.scheme ?? '?'}://${existing.host}:${existing.port ?? '?'}`
             : undefined;
         const what = where !== undefined
-            ? `this container already has an upstream (${where})`
+            ? `this computer already has an upstream (${where})`
             : existing.state === 'unavailable'
                 // State the observation and stop. Three different causes produce this same
                 // addressless payload: a config file that could not be read at all, a line
                 // in it that is not a URL, and a start-up value that is not a URL. Nothing
                 // on the wire distinguishes them, so any cause named here would be a guess
                 // that is wrong for the other two.
-                ? 'this container reports an upstream it cannot use, and no address for it'
-                : 'this container already has an upstream configured, though the service reported no address for it';
+                ? 'this computer reports an upstream it cannot use, and no address for it'
+                : 'this computer already has an upstream configured, though the service reported no address for it';
         throw new Error(`local exit: ${what}. ` +
             `Stopping this exit would clear it, and its credentials cannot be read back to restore it. ` +
             `Clear it first, or pass replaceExistingUpstream/--replace-upstream to take it over.`);
@@ -322,21 +334,22 @@ export async function startLocalExit(opts) {
     /**
      * True once this run has tried to install its own upstream.
      *
-     * The unwind below used to clear unconditionally. With
-     * `replaceExistingUpstream` the container may already have had a working
-     * third-party upstream, so a failure BEFORE `setUpstream` — a tunnel that
-     * would not bind, say — made the unwind delete a configuration this run never
-     * replaced and cannot restore, because the kit never returns credentials.
+     * The unwind below clears only when this is set. With
+     * `replaceExistingUpstream` the computer may already have had a working
+     * third-party upstream, so after a failure BEFORE `setUpstream` (a tunnel that
+     * would not bind, say) an unconditional clear would delete a configuration
+     * this run never replaced and cannot restore, because the kit never returns
+     * credentials.
      */
     let upstreamAttempted = false;
     let aliasId;
     let aliasUrl;
     try {
         // 1. Tunnel first: bind and start serving before anything points at it.
-        tunnel = await tunnelSocks5({
+        tunnel = await startTunnelSocks5({
             url: tunnelWs,
-            token,
-            containerPort: opts.containerPort ?? 0,
+            ...(kitAuth ? { kitAuth } : {}),
+            computerPort: opts.computerPort ?? 0,
             host: LOCAL_EXIT_HOST,
             auth,
             ...(opts.policy !== undefined && { policy: opts.policy }),
@@ -346,9 +359,9 @@ export async function startLocalExit(opts) {
             ...(opts.onConnect !== undefined && { onConnect: opts.onConnect }),
         });
         // 2. Point egress at it. socks5h so DNS resolves on THIS machine too;
-        //    with plain socks5 the container would leak destination lookups.
+        //    with plain socks5 the computer would leak destination lookups.
         const upstream = `${LOCAL_EXIT_SCHEME}://${encodeURIComponent(auth.username)}:${encodeURIComponent(auth.password)}` +
-            `@${LOCAL_EXIT_HOST}:${tunnel.containerPort}`;
+            `@${LOCAL_EXIT_HOST}:${tunnel.computerPort}`;
         // Recorded BEFORE the call, not after: a setUpstream that fails ambiguously
         // may still have committed, and the unwind has to consider it ours.
         upstreamAttempted = true;
@@ -365,7 +378,7 @@ export async function startLocalExit(opts) {
          * is configured" and nothing more. `state` adds what the service decided
          * about it: `active` means an address was approved and pinned, NOT that
          * anything answers there — the spec is explicit that a permitted address
-         * with nothing listening stays active. So this check rules out a container
+         * with nothing listening stays active. So this check rules out a computer
          * that cannot even try; checking whether the exit IP a request comes out of
          * matches this machine's is what
          * the verification step below does.
@@ -394,7 +407,7 @@ export async function startLocalExit(opts) {
          *     carried credentials. Those checks never look at the scheme, so a
          *     CREDENTIALLED upstream on this exit's own loopback port with an `http`
          *     scheme — refused, because the loopback exception is for SOCKS only —
-         *     matches on all three while the container is refusing forwarded
+         *     matches on all three while the computer is refusing forwarded
          *     requests. It is reached through the config file or a restart, never
          *     through the management API, which classifies before it stores and
          *     answers 400.
@@ -412,19 +425,19 @@ export async function startLocalExit(opts) {
          *
          * Absence is not evidence, for the same reason it is not in
          * `upstreamIsForeign`: `state` does not exist on egress builds from before
-         * the fail-closed change, and the CLI talks to whatever version a container
+         * the fail-closed change, and the CLI talks to whatever version a computer
          * happens to be running. A bare `state.state !== 'active'` would therefore
-         * refuse to start an exit on every container that has not been updated yet.
+         * refuse to start an exit on every computer that has not been updated yet.
          * Only a field that is present, string-valued and disagreeing is allowed to
          * fail the start; a malformed value of any other type is a broken answer,
          * not a verdict, and the checks below still apply to it.
          *
          * The consequence is stated per value and never guessed. Saying "the
-         * container answers 502" for all of them would be false in the case that
-         * matters most: `direct` means the upstream is gone and the container is
+         * computer answers 502" for all of them would be false in the case that
+         * matters most: `direct` means the upstream is gone and the computer is
          * making its own outbound connections again, subject to the destination
          * rules — the opposite failure, and the one a caller must not be told is a
-         * silent container.
+         * silent computer.
          *
          * The gate on each consequence is agreement between `state` and `enabled`
          * SPECIFICALLY, not a check that the whole payload is coherent. Those two
@@ -449,28 +462,28 @@ export async function startLocalExit(opts) {
             // snapshot, so a contradiction means the answer cannot be trusted, not
             // that some third behaviour is in effect.
             const consequence = state.state === 'unavailable' && state.enabled === true
-                ? '; the container answers forwarded requests with 502 rather than routing them through this exit'
+                ? '; the computer answers forwarded requests with 502 rather than routing them through this exit'
                 : state.state === 'direct' && state.enabled === false
-                    ? '; no upstream is configured any more, so requests are dialled from the container itself ' +
+                    ? '; no upstream is configured any more, so requests are dialled from the computer itself ' +
                         'rather than through this exit, and something cleared it between the write and this read'
                     : '';
             throw new Error(`egress upstream read-back reports state="${state.state}", not "active", so this exit is ` +
                 `not confirmed as the upstream in force${consequence} (${JSON.stringify(state)})`);
         }
-        if (state?.enabled !== true || state?.port !== tunnel.containerPort) {
+        if (state?.enabled !== true || state?.port !== tunnel.computerPort) {
             throw new Error(`egress upstream read-back mismatch: ${JSON.stringify(state)} ` +
-                `(expected enabled=true port=${tunnel.containerPort})`);
+                `(expected enabled=true port=${tunnel.computerPort})`);
         }
         if (state?.auth !== true) {
             throw new Error('egress upstream read-back reports auth=false; credentials were lost');
         }
-        // 4. Optional alias so the handed-out URL carries no container id.
+        // 4. Optional alias so the handed-out URL carries no computer id.
         if (opts.alias) {
             const name = opts.alias === true
                 ? `exit-${randomBytes(4).toString('hex')}`
                 : opts.alias;
             const created = await client.api.proxy.aliases.create({
-                container_id: containerId,
+                computer_id: computerId,
                 program: 'egress',
                 alias: name,
             });
@@ -478,7 +491,7 @@ export async function startLocalExit(opts) {
             aliasUrl = created?.data?.url ?? `https://${name}.${server}.${domain}`;
             if (!aliasId) {
                 // Removal is by id, so without one the alias outlives this process and
-                // keeps resolving to a container whose exit is gone. Surface it rather
+                // keeps resolving to a computer whose exit is gone. Surface it rather
                 // than leaving an orphan nobody knows about.
                 errors.push({
                     step: 'createAlias',
@@ -489,9 +502,14 @@ export async function startLocalExit(opts) {
         const proxyUrl = aliasUrl ?? egressBase;
         const verifyExit = async () => {
             const local = await readIpService(ipService);
-            // Route the probe through the proxy itself by asking the container's egress
+            // Route the probe through the proxy itself by asking the computer's egress
             // to fetch it: a CONNECT through proxyUrl is what a real consumer does.
-            const exit = await fetchThroughProxy(proxyUrl, ipService);
+            // The egress permission check reads the CONNECT's own headers, so the
+            // probe carries the egress credential the same way the tunnel does. A
+            // token rule that reads a query parameter cannot be met on a CONNECT;
+            // pass verify: false for it.
+            const connectHeaders = kitAuthWebSocketParts(proxyUrl, kitAuthForNamespace(kitAuth, 'egress'), 'local exit', false).headers;
+            const exit = await fetchThroughProxy(proxyUrl, ipService, connectHeaders);
             const data = exit?.data ?? exit;
             return {
                 exitIp: data?.ip,
@@ -501,18 +519,18 @@ export async function startLocalExit(opts) {
                 asn: data?.ip_info?.asn?.name,
             };
         };
-        // A dropped WebSocket takes the bind with it, leaving the container
+        // A dropped WebSocket takes the bind with it, leaving the computer
         // configured for a loopback port that no longer answers — every request
         // through its egress then fails, and nothing was watching for it. Unwire
-        // the container as soon as the session is gone.
+        // the computer as soon as the session is gone.
         /**
          * Deliver the session-lost notification without letting the listener steer us.
          *
-         * The call used to sit INSIDE the ownership try/catch, so a listener that
-         * threw was indistinguishable from a failed ownership read — and the catch's
-         * documented response to that is "fall through and clear", which would have
-         * deleted the upstream of the OTHER exit that had just taken the container
-         * over. The IIFE below is also detached with `void`, so an async listener
+         * The call sits OUTSIDE the ownership try/catch: inside it, a listener that
+         * threw would be indistinguishable from a failed ownership read, and the
+         * catch's documented response to that is "fall through and clear", which
+         * would delete the upstream of the OTHER exit that had just taken the
+         * computer over. The IIFE below is also detached with `void`, so an async listener
          * that rejects would otherwise surface as an unhandled rejection.
          */
         /**
@@ -520,7 +538,7 @@ export async function startLocalExit(opts) {
          * upstream is gone.
          *
          * Without it, the session-lost path could clear and verify the upstream,
-         * the container's tunnel could then release the loopback port, a NEW exit
+         * the computer's tunnel could then release the loopback port, a NEW exit
          * could bind that same port and install its own upstream — and a later
          * `stop()` on this stale handle would read a status object identical to the
          * one it wrote (same scheme, host, port, and `auth: true`, because the kit
@@ -540,12 +558,12 @@ export async function startLocalExit(opts) {
         tunnel.onSessionLost(() => {
             void (async () => {
                 // Same ownership rule as stop(): if the upstream now points somewhere
-                // else, another exit owns the container and clearing it would take down
+                // else, another exit owns the computer and clearing it would take down
                 // a working proxy that is not ours.
                 let foreign = false;
                 try {
                     const owned = unwrap(await box.egress.upstream.get(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
-                    foreign = upstreamIsForeign(owned, tunnel.containerPort);
+                    foreign = upstreamIsForeign(owned, tunnel.computerPort);
                 }
                 catch { /* fall through and clear: our dead port is the worse state */ }
                 if (foreign) {
@@ -578,7 +596,7 @@ export async function startLocalExit(opts) {
                 if (!ok) {
                     errors.push({
                         step: 'sessionLost',
-                        message: 'tunnel died and the upstream could not be cleared; run `hoody --container <id> egress upstream disable`',
+                        message: 'tunnel died and the upstream could not be cleared; run `hoody --computer <id> egress upstream disable`',
                     });
                 }
                 notifySessionLost({ upstreamCleared: ok });
@@ -621,28 +639,28 @@ export async function startLocalExit(opts) {
             }
             // Do not clear an upstream that is no longer ours.
             //
-            // The upstream is one container-wide setting, so a second exit started
-            // against the same container overwrites it. Clearing unconditionally then
+            // The upstream is one computer-wide setting, so a second exit started
+            // against the same computer overwrites it. Clearing unconditionally then
             // means this handle's teardown silently disables the OTHER exit — and the
             // same happens when a caller deliberately took over with
             // --replace-upstream. Check that the port still matches ours first.
             try {
                 const owned = unwrap(await box.egress.upstream.get(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
-                if (upstreamIsForeign(owned, tunnel.containerPort)) {
+                if (upstreamIsForeign(owned, tunnel.computerPort)) {
                     report.upstreamCleared = false;
                     // NOT `upstreamVerified = true`. The upstream is still enabled — it
                     // just is not ours. Saying "verified" here made the CLI print
-                    // "Container restored (upstream cleared)." over a container that is
+                    // "Computer restored (upstream cleared)." over a computer that is
                     // still proxying through somebody else.
                     report.upstreamVerified = false;
                     report.upstreamHandedOver = true;
                     report.errors.push({
                         step: 'checkOwnership',
-                        message: `left the upstream alone: the container now points at ` +
+                        message: `left the upstream alone: the computer now points at ` +
                             `${owned.scheme ?? '?'}://${owned.host ?? '?'}:${owned.port ?? '?'}` +
                             `${owned.auth === false ? ' (unauthenticated)' : ''}, not this exit's ` +
-                            `${LOCAL_EXIT_SCHEME}://${LOCAL_EXIT_HOST}:${tunnel.containerPort}. ` +
-                            'Something else took the container over.',
+                            `${LOCAL_EXIT_SCHEME}://${LOCAL_EXIT_HOST}:${tunnel.computerPort}. ` +
+                            'Something else took the computer over.',
                     });
                     if (aliasId) {
                         try {
@@ -699,10 +717,10 @@ export async function startLocalExit(opts) {
             }
             // Keep the tunnel up when the upstream could not be cleared.
             //
-            // Closing it in that state is the worst outcome available: the container
+            // Closing it in that state is the worst outcome available: the computer
             // stays configured for a loopback port that no longer answers, so EVERY
             // request through its egress fails until a human intervenes. Holding the
-            // tunnel keeps the container working while the caller retries.
+            // tunnel keeps the computer working while the caller retries.
             //
             // Honest limit: this only helps a caller that stays alive. The CLI exits
             // straight after stop(), which drops the WebSocket anyway — there the
@@ -722,7 +740,7 @@ export async function startLocalExit(opts) {
                 report.errors.push({
                     step: 'closeTunnel',
                     message: 'skipped: the upstream is still set, so the tunnel was left open to keep the ' +
-                        'container working. Disable it with `hoody --container <id> egress upstream disable`, then stop again.',
+                        'computer working. Disable it with `hoody --computer <id> egress upstream disable`, then stop again.',
                 });
             }
             if (aliasId) {
@@ -740,16 +758,16 @@ export async function startLocalExit(opts) {
             }
             return report;
         };
-        // Teardown runs at most once. A second stop() repeated every API call: with
-        // an alias, one delete succeeded and the other returned not-found, so the
-        // second report contradicted the first. Concurrent callers now await the
+        // Teardown runs at most once. A second stop() repeating every API call would,
+        // with an alias, see one delete succeed and the other return not-found, so
+        // the second report would contradict the first. Concurrent callers await the
         // same result instead of racing.
         let stopPromise;
         const stop = () => {
             // Memoized while IN FLIGHT, and kept only if it worked.
             //
-            // Memoizing unconditionally meant a teardown that failed to clear the
-            // upstream could never be retried: every later stop() handed back the
+            // Memoizing unconditionally would mean a teardown that failed to clear the
+            // upstream could never be retried: every later stop() would hand back the
             // same failed report without making a single call, so the documented
             // recovery ("clear it, then stop again") could not work from the SDK.
             // A handover counts as done — there is nothing left of ours to retry.
@@ -775,8 +793,8 @@ export async function startLocalExit(opts) {
                         report.errors[idx] = {
                             step: 'closeTunnel',
                             message: 'forced: the upstream could not be verified as cleared, and the tunnel was ' +
-                                'closed anyway. The container may point at a dead port — run ' +
-                                '`hoody --container <id> egress upstream disable`.',
+                                'closed anyway. The computer may point at a dead port — run ' +
+                                '`hoody --computer <id> egress upstream disable`.',
                         };
                     }
                 }
@@ -786,21 +804,20 @@ export async function startLocalExit(opts) {
             }
             return report;
         };
-        return {
+        return withAsyncDispose({
             proxyUrl,
             aliasUrl,
-            containerPort: tunnel.containerPort,
+            computerPort: tunnel.computerPort,
             verification,
-            activeStreams: () => tunnel.activeStreams(),
+            getActiveStreamCount: () => tunnel.getActiveStreamCount(),
             verifyExit,
             stop,
             forceStop,
-            [Symbol.asyncDispose]: async () => { await stop(); },
-        };
+        }, async () => { await stop(); });
     }
     catch (err) {
         // Unwind in reverse. The tunnel is dropped only once the upstream is
-        // confirmed gone, for the same reason as in stop(): a container left
+        // confirmed gone, for the same reason as in stop(): a computer left
         // pointing at a dead port is worse than a tunnel that lingers until the
         // process exits.
         if (aliasId) {
@@ -828,16 +845,16 @@ export async function startLocalExit(opts) {
         if (tunnel) {
             // Same rule as stop(): do NOT drop the tunnel while the upstream still
             // points at its port. Closing here would guarantee the dead-port state
-            // this unwind exists to avoid. The caller needs to know the container was
+            // this unwind exists to avoid. The caller needs to know the computer was
             // left dirty — AND needs to be able to release the tunnel, which a bare
             // Error did not give them.
             const stranded = tunnel;
             let closed = false;
-            throw new LocalExitStartupError(`${err.message}. The container's egress upstream could NOT be cleared — ` +
-                `run \`hoody --container <id> egress upstream disable\` against it before using its proxy again. ` +
+            throw new LocalExitStartupError(`${err.message}. The computer's egress upstream could NOT be cleared — ` +
+                `run \`hoody --computer <id> egress upstream disable\` against it before using its proxy again. ` +
                 `The tunnel is still open; call \`error.closeTunnel()\` to release it.`, {
                 cause: err,
-                containerPort: stranded.containerPort,
+                computerPort: stranded.computerPort,
                 closeTunnel: async () => {
                     if (closed)
                         return;
@@ -927,6 +944,16 @@ export function decodeChunked(payload) {
     }
     return Buffer.concat(parts).toString('utf8');
 }
+/**
+ * Decide whether a proxied HTTP response is complete, and read its body.
+ *
+ * Reads one HTTP/1.x response from `body`, the bytes received so far: `pending` until the headers and the whole
+ * body are in, `complete` with the status and the decoded text, or `error` for a response that cannot be trusted
+ * (malformed status line, conflicting or invalid Content-Length). Interim 1xx responses other than 101 are
+ * skipped, and Transfer-Encoding wins over Content-Length.
+ *
+ * Pure and synchronous, and separate from the socket reader so the framing rules can be tested directly.
+ */
 export function readProxiedResponse(body) {
     // Skip 1xx interim responses (100-continue, 103 Early Hints). They are
     // complete header blocks with no body, so treating the first block as the
@@ -1020,8 +1047,16 @@ export function readProxiedResponse(body) {
  * it to the origin. That is exactly what a browser does, and it keeps the SDK
  * dependency-free.
  */
-export async function fetchThroughProxy(proxyUrl, targetUrl) {
+export async function fetchThroughProxy(proxyUrl, targetUrl, connectHeaders = {}) {
     const tls = await import('node:tls');
+    // Extra headers go on the CONNECT to the proxy only, never to the origin.
+    let extraHead = '';
+    for (const [name, value] of Object.entries(connectHeaders)) {
+        if (!/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(name) || /[\r\n\0]/.test(String(value))) {
+            throw new Error(`fetchThroughProxy: invalid CONNECT header ${JSON.stringify(name)}`);
+        }
+        extraHead += `${name}: ${value}\r\n`;
+    }
     const proxy = new URL(proxyUrl);
     const target = new URL(targetUrl);
     const proxyPort = proxy.port ? Number(proxy.port) : 443;
@@ -1058,7 +1093,7 @@ export async function fetchThroughProxy(proxyUrl, targetUrl) {
         };
         outer = tls.connect({ host: proxy.hostname, port: proxyPort, servername: proxy.hostname }, () => {
             outer.write(`CONNECT ${target.hostname}:${targetPort} HTTP/1.1\r\n` +
-                `Host: ${target.hostname}:${targetPort}\r\n\r\n`);
+                `Host: ${target.hostname}:${targetPort}\r\n` + extraHead + '\r\n');
         });
         outer.on('error', (e) => settle(() => reject(e)));
         let head = Buffer.alloc(0);

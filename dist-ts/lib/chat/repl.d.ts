@@ -34,4 +34,11 @@ export interface ReplOptions {
     /** For tests: feed the SIGINT signal via this controller. */
     sigintSignal?: AbortSignal;
 }
+/**
+ * Run the interactive `hoody chat` loop on `opts.input` / `opts.output` (stdin / stdout by default)
+ * until the user leaves or the input ends. Each line is a question or a slash command; answers are
+ * rendered as they stream unless `opts.stream` is false. Session files are written only when
+ * `opts.persist` is set (or after `/save`), and never in private mode. A failed disk write is
+ * reported once and the loop continues in memory.
+ */
 export declare function runRepl(opts: ReplOptions): Promise<void>;

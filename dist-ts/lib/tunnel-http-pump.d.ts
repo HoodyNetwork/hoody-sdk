@@ -7,7 +7,14 @@ export interface LocalTarget {
     host: string;
     port: number;
 }
+/** Destroy every keep-alive HTTP agent this module holds for local targets, closing their idle sockets, and forget them. */
 export declare function destroyAllLocalAgents(): void;
+/**
+ * Serve one HTTP request that arrived on tunnel stream `streamId`: forward the request described by
+ * `openPayload` to the local `target` and write the response back on the stream. The returned
+ * promise resolves as soon as forwarding has started, not when the response is complete; a failure
+ * resets the stream and never rejects here.
+ */
 export declare function handleHttpStream(session: TunnelSession, streamId: number, openPayload: any, target: LocalTarget): Promise<void>;
 /**
  * Handle an incoming TCP STREAM_OPEN by forwarding to a local TCP server.

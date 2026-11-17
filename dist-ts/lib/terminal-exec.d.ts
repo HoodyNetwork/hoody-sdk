@@ -12,7 +12,7 @@
  *   - `shell(options?)` — open an interactive PTY session (like opening
  *     a remote terminal). Uses WebSocket duplex stream via TerminalClient.
  *
- *   Both methods require a container-scoped client (via `withContainer()`).
+ *   Both methods require a computer-scoped client (via `withComputer()`).
  *   `shell` is attached to HoodyClient.prototype via module augmentation and
  *   runtime prototype patching, following the same pattern as exec-scripts.ts;
  *   `terminal.run` is installed on each client's terminal namespace object
@@ -33,21 +33,22 @@ export interface TerminalShellOptions {
     /** Terminal rows (default: 24) */
     rows?: number;
     /**
-     * Join the terminal session with this id (1-65535) instead of opening a
-     * fresh one. Everyone who joins the same id shares one shell: its input,
+     * Join the terminal session with this id instead of opening a
+     * fresh one. New sessions take 1-9999; pin your own in 1-1600 (1601-5000
+     * back desktops and agents, 5001-7999 is the ephemeral pool, 8001-9999 is
+     * Hoody Run and the Hub). Everyone who joins the same id shares one shell: its input,
      * its output and its state. `1` is the terminal the web UI opens by default.
      * A session opened this way outlives the connection.
      *
      * Omitted (the default), every `shell()` call gets a session of its own: the
-     * kit assigns it an id in 40000-65535 (`shell.terminalId`) and cleans it up
+     * kit assigns it an id in 5001-7999 (`shell.getTerminalId()`) and cleans it up
      * after the connection closes.
+     *
+     * `serviceIndex` and `terminal_id` are retired spellings and are refused.
+     * A caller that passed `serviceIndex: 0` omits `terminalId` for a fresh
+     * session; any other `serviceIndex: N` is `terminalId: N`.
      */
     terminalId?: number | string;
-    /**
-     * Older spelling of `terminalId`: the terminal host index. `0` (the default)
-     * is "no terminal id", a fresh session; any other value joins that session.
-     */
-    serviceIndex?: number;
     /** Connection timeout in ms (default: 30000) */
     timeout?: number;
     /**
@@ -72,15 +73,15 @@ export interface TerminalShellOptions {
 export interface TerminalShell extends Duplex {
     /**
      * Resolves when the WebSocket connection is established and the kit has
-     * named the session, so `terminalId` is set. A kit that does not name the
+     * named the session, so `getTerminalId()` is set. A kit that does not name the
      * session within a few seconds does not hold `ready` back: it resolves
-     * with `terminalId` still ''.
+     * with `getTerminalId()` still ''.
      */
     readonly ready: Promise<void>;
     /** Whether the underlying WebSocket is connected */
-    readonly connected: boolean;
-    /** Server-assigned terminal session ID */
-    readonly terminalId: string;
+    isConnected(): boolean;
+    /** Server-assigned terminal session ID ('' until the kit names the session) */
+    getTerminalId(): string;
     /**
      * Resize the PTY. While a reconnected fresh session is still being
      * confirmed, the size is only recorded; it is sent once the session is
@@ -98,29 +99,6 @@ export interface TerminalShell extends Duplex {
     kill(signal?: string): void;
     /** Disconnect and clean up */
     destroy(error?: Error): this;
-}
-declare module './hoody-client.js' {
-    interface HoodyClient {
-        /**
-         * Open an interactive PTY shell session to the container.
-         *
-         * Each call opens a fresh session of its own; pass `terminalId` to join a
-         * shared one instead (see TerminalShellOptions.terminalId).
-         *
-         * Returns a Duplex stream that supports `.pipe()`.
-         * Requires a container-scoped client (call `withContainer()` first).
-         *
-         * @example
-         * ```ts
-         * const scoped = await client.withContainer(container);
-         * const sh = scoped.shell();
-         * await sh.ready;
-         * sh.write('echo hello\n');
-         * sh.pipe(process.stdout);
-         * ```
-         */
-        shell(options?: TerminalShellOptions): TerminalShell;
-    }
 }
 /**
  * Attach `shell()` to HoodyClient.prototype.

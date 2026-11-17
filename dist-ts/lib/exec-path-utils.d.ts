@@ -24,6 +24,7 @@ export declare const MAX_URL_DECODE_PASSES = 8;
  * to `%25` before decoding so the function does not throw on partially-encoded input.
  */
 export declare const LONE_PERCENT: RegExp;
+/** Replace every `%` that does not start a two-digit hex escape with `%25`, so `decodeURIComponent` cannot throw on it. */
 export declare function escapeLonePercents(path: string): string;
 /**
  * Iteratively decode a URL-encoded path until it reaches a fixed point

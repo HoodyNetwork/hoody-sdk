@@ -22,12 +22,14 @@ import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+/** No domain is configured: no flag value, no `HOODY_DOMAIN`, and no domain config file. */
 export class DomainNotConfiguredError extends Error {
     constructor(message) {
         super(message);
         this.name = 'DomainNotConfiguredError';
     }
 }
+/** A configured domain is not a valid host name. */
 export class DomainInvalidError extends Error {
     constructor(message) {
         super(message);
@@ -104,9 +106,40 @@ function readConfigFile(filePath) {
         return null;
     return validateDomain(trimmed);
 }
+/** The fingerprint of a public key: SHA-256 of its decoded bytes, as lower-case hex. */
 export function fingerprintForPubkey(pubkeyBase64) {
     return crypto.createHash('sha256').update(Buffer.from(pubkeyBase64.trim(), 'base64')).digest('hex');
 }
+/** Verify install-time pubkey-fingerprint matches the binary's
+ *  baked pubkey for the resolved domain. Defends against the install.sh ↔
+ *  binary trust desync — an attacker compromising only the CDN that serves
+ *  install.sh (without touching admin) could ship an installer pinning
+ *  __DOMAIN__=hoody.com while the binary trusts a different domain's
+ *  rotated previous-key.
+ *
+ *  install.sh writes the fingerprint file beside `domainConfigPath`
+ *  (`<path>.fingerprint`) with the SHA-256 hex fingerprint of the pubkey it
+ *  pinned at install time; this compares it to the fingerprint of
+ *  `bakedPubkeyBase64` at every check. The fingerprint file is ADJACENT to
+ *  (not embedded in) the domain file so a binary that reads only the domain
+ *  file still parses it correctly.
+ *
+ *  Never throws. Returns the status with the expected and the stored value:
+ *   - 'ok'           fingerprint file exists AND matches baked pubkey
+ *   - 'absent'       fingerprint file does not exist or is empty (an
+ *                    install without one, or a user who edited the domain
+ *                    file by hand) — caller decides whether to warn or fail
+ *   - 'mismatch'     fingerprint file disagrees with baked pubkey, is too
+ *                    large or is not 64 hex characters — must fail-closed;
+ *                    this is the attack signal
+ *   - 'unreadable'   fingerprint file open or read failed for a reason
+ *                    other than ENOENT (EACCES, EISDIR, ELOOP, etc.); a
+ *                    warning goes to stderr. It is kept apart from
+ *                    'absent' so that making the file unreadable cannot
+ *                    turn a 'mismatch' (fail-closed) into a
+ *                    warn-and-continue. Callers should at least surface a
+ *                    louder notice; ideally exit non-zero from the update path.
+ */
 export function verifyConfigFingerprint(domainConfigPath, bakedPubkeyBase64) {
     const fpPath = `${domainConfigPath}.fingerprint`;
     const expected = fingerprintForPubkey(bakedPubkeyBase64);
@@ -142,7 +175,7 @@ export function verifyConfigFingerprint(domainConfigPath, bakedPubkeyBase64) {
         actualRaw = buf.toString('utf-8');
     }
     catch (e) {
-        // v10 tests: catch readSync/fstatSync failures (EISDIR when fd is a
+        // Catch readSync/fstatSync failures (EISDIR when fd is a
         // directory, EIO under disk corruption, etc.) and bucket as
         // 'unreadable' rather than letting them propagate as uncaught
         // exceptions that would crash the binary on every CLI invocation.

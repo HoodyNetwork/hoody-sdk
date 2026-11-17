@@ -1,8 +1,8 @@
 /**
  * Exec Dynamic Discovery — SDK-side runtime discovery of user scripts on exec
- * containers. Fetches the script inventory via `openapi.listScripts()` and parses
+ * computers. Fetches the script inventory via `openapi.listScripts()` and parses
  * each entry's metadata (HTTP method, parameters, tags) into
- * `DiscoveredScript` objects consumed by SDK callers and agent surfaces.
+ * `CallableScript` objects consumed by SDK callers and agent surfaces.
  *
  * Security:
  *   - Script names sanitized to [a-z0-9-], max 64 chars
@@ -15,7 +15,7 @@ import type { ScriptsService } from '../generated/exec/scripts.service.js';
 export declare const MAX_PARAMS_PER_SCRIPT = 20;
 export declare const MAX_SCHEMA_SIZE_BYTES = 10240;
 export declare const MAX_TOOL_NAME_LENGTH = 64;
-export interface DiscoveredScript {
+export interface CallableScript {
     name: string;
     path: string;
     label?: string | undefined;
@@ -23,7 +23,7 @@ export interface DiscoveredScript {
     tags?: string[] | undefined;
     httpMethod: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
     scriptPath: string;
-    parameters: DiscoveredParam[];
+    parameters: CallableScriptParam[];
     hasRequestBody: boolean;
     requestBodySchema?: Record<string, unknown> | undefined;
     responseSchema?: Record<string, unknown> | undefined;
@@ -34,7 +34,7 @@ export interface DiscoveredScript {
         width?: number;
     }> | undefined;
 }
-export interface DiscoveredParam {
+export interface CallableScriptParam {
     name: string;
     flag: string;
     type: 'string' | 'number' | 'boolean';
@@ -46,16 +46,16 @@ export interface DiscoveredParam {
     isQueryParam: boolean;
     isBodyParam: boolean;
 }
-export interface DiscoveryCache {
+export interface CallableScriptsCache {
     version: number;
-    containerId: string;
+    computerId: string;
     fetchedAt: string;
     ttlMs: number;
-    scripts: DiscoveredScript[];
+    scripts: CallableScript[];
 }
-export interface DiscoverOptions {
+export interface ListCallableScriptsOptions {
     signal?: AbortSignal | undefined;
-    /** Template vars for exec container URL resolution */
+    /** Template vars for exec computer URL resolution */
     templateVars?: Record<string, string | number> | undefined;
 }
 /**
@@ -74,12 +74,12 @@ export declare function isValidToolName(name: string): boolean;
  * Extract parameters from a JSON Schema `properties` object.
  * Respects the MAX_PARAMS_PER_SCRIPT limit.
  */
-export declare function extractParamsFromSchema(schema: Record<string, unknown> | undefined, httpMethod: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'): DiscoveredParam[];
+export declare function extractParamsFromSchema(schema: Record<string, unknown> | undefined, httpMethod: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'): CallableScriptParam[];
 /**
  * Extract path parameters from file-based routing patterns.
  * Example: "api/users/[id].ts" yields a path param "id".
  */
-export declare function extractPathParams(scriptPath: string): DiscoveredParam[];
+export declare function extractPathParams(scriptPath: string): CallableScriptParam[];
 /**
  * Sanitize text for use in tool descriptions.
  * Strips control characters, escape sequences, and HTML tags.
@@ -87,7 +87,7 @@ export declare function extractPathParams(scriptPath: string): DiscoveredParam[]
  */
 export declare function sanitizeDescription(text: string | undefined): string | undefined;
 /**
- * Discover user scripts from an exec container.
+ * Discover user scripts from an exec computer.
  *
  * Calls `openapi.listScripts()` to get the script inventory, then enriches
  * each entry with schema information where available.
@@ -99,4 +99,4 @@ export declare function sanitizeDescription(text: string | undefined): string | 
  * `openapi.listScripts` response is available (no ScriptsService handle) and
  * therefore skips this enrichment step.
  */
-export declare function discoverScripts(openapiService: OpenapiService, scriptsService: ScriptsService | undefined, options?: DiscoverOptions): Promise<DiscoveredScript[]>;
+export declare function listCallableScripts(openapiService: OpenapiService, scriptsService: ScriptsService | undefined, options?: ListCallableScriptsOptions): Promise<CallableScript[]>;

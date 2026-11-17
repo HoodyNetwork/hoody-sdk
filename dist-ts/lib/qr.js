@@ -4,7 +4,7 @@
  * `qrMatrix(text)` encodes text (UTF-8, byte mode) at the smallest version
  * 1-40, raising the error correction to the highest level that fits that
  * version. It is the encoder of the pipe kit's pages
- * (hoody-pipe/src/pages/common.ts, checked there against qrcode@1.5.4 for
+ * (checked there against qrcode@1.5.4 for
  * every version and level), ported to TypeScript. It follows Project Nayuki's
  * QR Code generator (MIT License, Copyright (c) Project Nayuki,
  * https://www.nayuki.io/page/qr-code-generator-library), condensed.

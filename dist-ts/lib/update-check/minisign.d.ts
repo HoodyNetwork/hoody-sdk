@@ -34,6 +34,7 @@
  */
 /** Clock-skew tolerance when validating `issued_at` against local time. */
 export declare const ISSUED_AT_FUTURE_SKEW_SECONDS = 300;
+/** A signature, public key or signed payload failed verification. The message starts with `minisign verification: `. */
 export declare class MinisignVerificationError extends Error {
     constructor(message: string);
 }

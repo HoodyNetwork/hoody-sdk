@@ -11,5 +11,12 @@ export type Relation = 'up-to-date' | 'behind' | 'ahead' | 'unparseable';
  * should surface this as an error (not a banner state).
  */
 export declare function compareVersions(installed: string, latest: string): Relation;
+/** Whether `latest` is a higher MAJOR version than `installed` (a breaking update). False when either does not parse. */
+export declare function isMajorUpdate(installed: string, latest: string): boolean;
+/**
+ * The majors an update from `installed` to `latest` crosses, ascending: `1.9.0` to `3.1.0` crosses 2 and 3, `2.3.0` to
+ * `2.9.0` crosses none. Empty when either side does not parse or `latest` is not a higher major.
+ */
+export declare function crossedMajors(installed: string, latest: string): number[];
 /** Validate a version string parses under strict semver. */
 export declare function isValidSemver(v: string): boolean;

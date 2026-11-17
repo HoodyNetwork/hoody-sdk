@@ -1,15 +1,15 @@
 /**
- * Events stream error taxonomy: the C5 code map and the error classes the
+ * Events stream error taxonomy: the code-to-action map and the error classes the
  * events runtime raises.
  *
- * hoody-api refuses or ends an events socket with a code, sent on the
+ * The API refuses or ends an events socket with a code, sent on the
  * `message` channel as `{type:'error', error}` or `{type:'revoked', reason}`
  * (and, for one release, also on the socket `error` event). History reads
  * (`GET /api/v1/events`) fail with an HTTP status and an `error` code. The
  * SDK reacts to each code in exactly one way, and this file is the only
  * place that decides which. The table mirrors the server's error contract; a contract test
  * on the server checks every code its socket files emit against it, and
- * `tests/unit/events-errors.test.ts` pins it here.
+ * a unit test pins it here.
  */
 /** What the runtime does when the server sends a code on the socket. */
 export type EventsSocketAction = 
@@ -23,16 +23,22 @@ export type EventsSocketAction =
  | 'backoff'
 /** Report it and keep the connection. */
  | 'nonfatal';
-/** C5 "refresh + reconnect". */
+/** Action "refresh + reconnect". */
 export declare const EVENTS_REFRESH_CODES: readonly ["JWT_EXPIRED", "AUTH_TOKEN_EXPIRED"];
-/** C5 "re-admit once" (an unknown code is treated the same way). */
+/** Action "re-admit once" (an unknown code is treated the same way). */
 export declare const EVENTS_READMIT_CODES: readonly ["TOKEN_AUTH_CHANGED", "AUTH_FAILED"];
-/** C5 "terminal". */
+/** Action "terminal". */
 export declare const EVENTS_TERMINAL_CODES: readonly ["TOKEN_DELETED", "AUTH_TOKEN_DELETED", "TOKEN_DISABLED", "AUTH_TOKEN_DISABLED", "EVENT_ACCESS_REVOKED", "EVENT_ACCESS_DENIED", "JWT_REVOKED", "AUTH_TOKEN_LINEAGE_REVOKED", "USER_BANNED", "USER_NOT_FOUND", "IP_NOT_ALLOWED", "IP_RESTRICTED", "REALM_SELECTION_CONFLICT", "REALM_FORBIDDEN", "REALM_REQUIRED", "REALM_CONFIG_MALFORMED", "INVALID_TOKEN", "MISSING_TOKEN", "JWT_REQUIRED"];
-/** C5 "backoff". */
+/** Action "backoff". */
 export declare const EVENTS_BACKOFF_CODES: readonly ["CONNECTION_LIMIT_EXCEEDED"];
-/** C5 "non-fatal": the socket stays up. */
-export declare const EVENTS_NONFATAL_CODES: readonly ["INVALID_SUBSCRIPTION", "SUBSCRIPTION_NOT_ALLOWED", "SUBSCRIPTION_LIMIT_EXCEEDED", "INVALID_PROJECT_ID", "INVALID_CONTAINER_ID", "CONNECTION_NOT_FOUND"];
+/** Action "non-fatal": the socket stays up. */
+export declare const EVENTS_NONFATAL_CODES: readonly ["INVALID_SUBSCRIPTION", "SUBSCRIPTION_NOT_ALLOWED", "SUBSCRIPTION_LIMIT_EXCEEDED", "INVALID_PROJECT_ID", "INVALID_COMPUTER_ID", "CONNECTION_NOT_FOUND", "UPGRADE_REQUIRED"];
+/**
+ * The pre-rename spelling of INVALID_COMPUTER_ID, accepted beside it. A server still on the old
+ * names answers with it during deploy skew; the socket stays up exactly as for the new code. It is
+ * not part of the vendored catalog's code_map, so it lives apart from EVENTS_NONFATAL_CODES.
+ */
+export declare const EVENTS_NONFATAL_LEGACY_CODES: readonly ["INVALID_CONTAINER_ID"];
 /** History error codes. */
 export declare const EVENTS_CURSOR_INVALID = "EVENTS_CURSOR_INVALID";
 export declare const EVENTS_QUERY_CONFLICT = "EVENTS_QUERY_CONFLICT";
@@ -40,7 +46,7 @@ export declare const EVENTS_CURSOR_EXPIRED = "EVENTS_CURSOR_EXPIRED";
 export declare const EVENTS_HISTORY_RESET = "EVENTS_HISTORY_RESET";
 /**
  * The action for a socket code. An unknown code (a server newer than this
- * SDK, or the legacy `UNAUTHORIZED` fallback) re-admits once: C5 puts
+ * SDK, or the legacy `UNAUTHORIZED` fallback) re-admits once: the map puts
  * "unknown" in that row, so a code the SDK has never seen neither kills a
  * watcher outright nor loops forever.
  */
@@ -80,6 +86,7 @@ export declare function historyActionFor(status: number | undefined, code: strin
 export declare class EventsError extends Error {
     /** The server code, or an SDK code (`EVENTS_CLOSED`, `EVENTS_TIMEOUT`, …). */
     readonly code: string;
+    /** `code` is the server or SDK code; `options.cause`, when given, is kept as the error's `cause`. */
     constructor(code: string, message: string, options?: {
         cause?: unknown;
     });
@@ -90,12 +97,14 @@ export declare class EventsError extends Error {
  * (login, adoptSession, setToken).
  */
 export declare class EventsAuthError extends EventsError {
+    /** `code` is the terminal code; without `message` the text is `Events stream refused: <code>`. */
     constructor(code: string, message?: string, options?: {
         cause?: unknown;
     });
 }
 /** `close()` was called, or the stream ended for good; pending waits reject with this. */
 export declare class EventsClosedError extends EventsError {
+    /** The code is always `EVENTS_CLOSED`. */
     constructor(message?: string);
 }
 /**
@@ -105,10 +114,12 @@ export declare class EventsClosedError extends EventsError {
  * another.
  */
 export declare class EventsSessionChangedError extends EventsError {
+    /** The code is always `EVENTS_SESSION_CHANGED`. */
     constructor(message?: string);
 }
 /** A `waitFor`, `ready` or `prepareWait` deadline passed. */
 export declare class EventsTimeoutError extends EventsError {
+    /** The code is always `EVENTS_TIMEOUT`. */
     constructor(message?: string);
 }
 /**
@@ -117,6 +128,8 @@ export declare class EventsTimeoutError extends EventsError {
  * overflowed with the `'error'` policy.
  */
 export declare class EventsGapError extends EventsError {
+    /** Why continuity was lost. */
     readonly reason: EventsGapReason;
+    /** `reason` says why continuity was lost; the code is always `EVENTS_GAP`. */
     constructor(reason: EventsGapReason, message?: string);
 }

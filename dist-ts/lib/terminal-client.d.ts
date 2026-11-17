@@ -5,7 +5,7 @@
  * stream-based and event-based APIs.
  *
  * Internally wraps the typed WebSocket client emitted from the AsyncAPI
- * spec ({@link TerminalConnectTerminalWebSocketWebSocket}). The wire
+ * spec ({@link TerminalSessionsConnectWebSocket}). The wire
  * protocol (byte-prefix framing, `tty` subprotocol, init JSON_DATA replay
  * on reconnect, FIFO frame ordering, generation-guarded close handling)
  * is owned by the typed client. This file is the stream adapter — it
@@ -40,6 +40,25 @@ export interface TerminalClientOptions extends DuplexOptions {
     cols?: number;
     /** Terminal rows (default: 24) */
     rows?: number;
+    /**
+     * Bound, in bytes, on the client's queue of unread output (a whole
+     * number, default 8 MiB). Once a reader has asked for output, up to
+     * `readableHighWaterMark` bytes (64 KiB by default; one piece of at most
+     * 64 KiB when it is 0) more sits in the stream's own buffer and is never
+     * dropped. After `setEncoding()` that allowance is counted at the most
+     * bytes a character can take (3 for utf8), so it holds fewer bytes, never
+     * more. Past the bound the oldest queued bytes are dropped after each
+     * chunk's `'output'` event, and an `'output-dropped'` event reports how
+     * many bytes went; a reader then gets the stream-buffer prefix, the gap,
+     * then the newest output. The `'output'` event gets every chunk whatever
+     * this is. A `read()` inside an `'output'` handler gets the current chunk
+     * whole, even with a bound of 0: it moves everything still queued into
+     * the stream's buffer, past the allowance, as before the bound existed;
+     * a handler that reads less than it is given leaves the rest there,
+     * outside this bound.
+     * `Infinity` keeps everything (unbounded).
+     */
+    maxBufferedOutputBytes?: number;
     /** Auth token for the terminal service itself (sent in handshake) */
     token?: string;
     /**
@@ -49,7 +68,7 @@ export interface TerminalClientOptions extends DuplexOptions {
      *   - `jwt` / `token` → Authorization: Bearer <value> (or custom header)
      *   - `token` with `param` → `?<param>=<value>` on the socket URL, in
      *     Node and browsers (the proxy rule reads only that parameter)
-     *   - `containerClaim` → X-Hoody-Container-Claim + X-Hoody-Token headers
+     *   - `computerClaim` → X-Hoody-Computer-Claim + X-Hoody-Token headers
      *   - `ip` → no-op (proxy verifies client IP)
      */
     kitAuth?: ProxyAuth;
@@ -78,7 +97,11 @@ export interface TerminalClientOptions extends DuplexOptions {
     autoConnect?: boolean;
     /** Reconnect on disconnect */
     reconnect?: boolean;
-    /** Max reconnect attempts */
+    /**
+     * Max automatic reconnect attempts in one run of drops. A connection that
+     * stays open for 10 seconds ends the run: the next drop starts from the
+     * first attempt and the base `reconnectDelay` again.
+     */
     maxReconnectAttempts?: number;
     /** Reconnect delay in ms */
     reconnectDelay?: number;
@@ -122,8 +145,8 @@ export interface TerminalClientOptions extends DuplexOptions {
     refusalProbeAfter?: number;
     /** Debug mode */
     debug?: boolean;
-    /** Read-only mode — prevents input (optional) */
-    readonly?: boolean;
+    /** Read-only mode — prevents input (optional). The earlier key `readonly` is refused. */
+    readOnly?: boolean;
     /** Working directory to start in (optional) */
     cwd?: string;
     /** Shell type: bash, zsh, fish, tmux, etc. (optional) */
@@ -137,7 +160,7 @@ export interface TerminalClientOptions extends DuplexOptions {
     /**
      * Throwaway session (optional). Maps to the terminal kit's `?ephemeral=true`
      * query param: a connection with no terminal id gets a fresh session of its
-     * own (id 40000-65535, reported by the 'terminal-id' event) instead of
+     * own (id 5001-7999, reported by the 'terminal-id' event) instead of
      * joining the shared terminal "1", and the kit cleans the session up once
      * it is idle. Ignored by the kit together with `agent`.
      */
@@ -218,22 +241,8 @@ export interface TerminalPreferences {
  *  autocompletion; `(string & {})` admits every other server value without
  *  an unsound cast. */
 export type ShellType = 'bash' | 'zsh' | 'fish' | 'sh' | 'ssh' | 'tmux' | (string & {});
-/**
- * The server refused the WebSocket upgrade for good: automatic reconnect has
- * stopped. `status` is the HTTP status; `code` the server's error code when
- * its answer named one, else "HTTP_<status>"; `via` says how it was learned:
- * "upgrade" (the transport showed the status) or "probe" (a plain GET after
- * repeated failures, see refusalProbeAfter). The same shape as the error of
- * the generated WebSocket clients.
- */
-export interface WebSocketUpgradeRefusedError extends Error {
-    name: 'WebSocketUpgradeRefusedError';
-    status: number;
-    code: string;
-    via: 'upgrade' | 'probe';
-}
-/** The generated client's refusal (via 'upgrade' on the `ws` transport), or ours. */
-export declare function isWebSocketUpgradeRefusedError(error: unknown): error is WebSocketUpgradeRefusedError;
+export type { WebSocketUpgradeRefusedError } from './websocket-errors.js';
+export { isWebSocketUpgradeRefusedError } from './websocket-errors.js';
 /** Terminal client connection state */
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
 /**
@@ -259,6 +268,18 @@ export declare class TerminalClient extends Duplex {
     private _reconnectDelay;
     private _timeout;
     private _livenessTimeout;
+    /**
+     * Output not yet handed to the readable side, oldest first. `_read()`
+     * moves it over as the reader asks; past `_maxBufferedOutputBytes` the
+     * oldest is dropped (see `queueOutput`).
+     */
+    private _outputQueue;
+    private _outputQueueBytes;
+    private _maxBufferedOutputBytes;
+    /** `_read()` asked for more and nothing was there yet: the next chunk goes straight through. */
+    private _readPending;
+    /** The chunk now being delivered to 'output' listeners (a read() then takes all queued output). */
+    private _deliveringOutput;
     /** Stops the liveness check of the current socket; null when none runs. */
     private _stopLiveness;
     /** Set when the liveness check tore the socket down, until its close is reported. */
@@ -273,7 +294,7 @@ export declare class TerminalClient extends Duplex {
      * A PAUSE went out on the current connection and no RESUME after it.
      * disconnect() sends the RESUME before closing: on a kit where a pause
      * outlives its client, a viewer that left paused froze the session's
-     * program until someone attached again (BT2-TERM-007).
+     * program until someone attached again.
      */
     private _remotePaused;
     /** Sends the handshake of the current, held connection; null when none is owed. */
@@ -328,31 +349,39 @@ export declare class TerminalClient extends Duplex {
      * + destroy() yields exactly one 'close'.
      */
     private _closeEmitted;
+    /**
+     * Create a client for the terminal WebSocket at `url`. Nothing is sent until `connect()`,
+     * unless `options.autoConnect` is set; a failed auto-connect is emitted as `'error'` only when
+     * a listener is attached. `options` is copied, so later changes to the caller's object have no
+     * effect. Throws `RangeError` for a `maxBufferedOutputBytes` that is not a whole number of
+     * bytes (0 or more, or `Infinity`), `TypeError` when `agent` and `cmd` are both set, and refuses
+     * the retired `readonly` option (it is spelled `readOnly`).
+     */
     constructor(url: string, options?: TerminalClientOptions);
     /** Current connection state */
-    get state(): ConnectionState;
+    getState(): ConnectionState;
     /** Whether connected to server */
-    get connected(): boolean;
+    isConnected(): boolean;
     /** Terminal ID assigned by server */
-    get terminalId(): string;
+    getTerminalId(): string;
     /** Shell type (bash, zsh, etc.) */
-    get shellType(): ShellType;
+    getShellType(): ShellType;
     /** Window title */
-    get windowTitle(): string;
+    getWindowTitle(): string;
     /** Server preferences */
-    get preferences(): TerminalPreferences;
+    getPreferences(): TerminalPreferences;
     /** Terminal columns */
-    get cols(): number;
+    getCols(): number;
     /** Terminal rows */
-    get rows(): number;
+    getRows(): number;
     /** WebSocket URL */
-    get url(): string;
+    getUrl(): string;
     /**
      * When the server was last heard on the current connection (ms since the
      * epoch; 0 before the first connect): the open, any frame, and, where the
      * transport reports them, pings and pongs.
      */
-    get lastActivityAt(): number;
+    getLastActivityAt(): number;
     /**
      * Connect to the terminal server.
      *
@@ -408,7 +437,7 @@ export declare class TerminalClient extends Duplex {
      */
     releaseSends(): void;
     /** Whether the current connection is held (see holdSends). */
-    get sendsHeld(): boolean;
+    isHoldingSends(): boolean;
     /**
      * Force reconnect.
      */
@@ -461,8 +490,38 @@ export declare class TerminalClient extends Duplex {
     private releaseHeldWrite;
     /** No connection is coming for the held write: refuse it. */
     private refuseHeldWrite;
-    /** Readable: data is pushed from onOutput / onUnknownFrame handlers. */
+    /**
+     * Readable: hand queued output over while the reader wants more. What is
+     * left waits in the queue, bounded by `maxBufferedOutputBytes`.
+     */
+    read(size?: number): any;
+    /** Move every queued chunk into the stream buffer, whatever its allowance. */
+    private flushAllOutput;
     _read(_size: number): void;
+    /**
+     * Push queued output while the readable side takes it, and never more
+     * than its remaining `readableHighWaterMark` allowance: the rest of a
+     * large chunk stays in the queue, where the bound applies to it. With an
+     * empty stream buffer and no allowance (a high-water mark of 0) one piece
+     * of at most 64 KiB goes over, so a reader that asked still gets bytes. With a full
+     * buffer (Node asks from read() before it takes the bytes read() returns)
+     * an empty push answers the request without adding bytes, and Node asks
+     * again once the buffer has room.
+     */
+    private flushOutputQueue;
+    /**
+     * One output chunk: into the queue (and on to a reader that is waiting),
+     * then 'output', then the bound. The chunk is readable while 'output'
+     * runs, so a handler that calls read() gets it whatever the bound (0
+     * included); only what is still unread afterwards is trimmed, oldest
+     * bytes first, and the trim runs even when a listener throws. An empty
+     * chunk only goes to 'output': the queue never holds one. Nothing here
+     * depends on which listeners exist, and nothing pauses the terminal: a
+     * PAUSE left standing freezes the session's program for every viewer.
+     */
+    private queueOutput;
+    /** Drop the oldest unread output past `maxBufferedOutputBytes`; report how much. */
+    private trimOutputQueue;
     /** Clean up on destroy. */
     _destroy(error: Error | null, callback: (error?: Error | null) => void): void;
     /**
@@ -496,7 +555,13 @@ export declare class TerminalClient extends Duplex {
  * - 'connecting': when a connection attempt starts
  * - 'disconnect' (code, reason): when disconnected from the wire; a dead
  *   link found by the liveness check is (1006, 'liveness timeout')
- * - 'output' (Buffer): terminal output data
+ * - 'output' (Buffer): terminal output data; every chunk, never held back
+ * - 'output-dropped' (bytes: number): unread output past the client's
+ *   queue limit `maxBufferedOutputBytes` (default 8 MiB) was dropped, oldest
+ *   queued first. Up to `readableHighWaterMark` (64 KiB by default) already
+ *   in the stream's buffer is extra and kept, so a reader can get that
+ *   prefix, then the gap, then the newest output, possibly resuming inside
+ *   an escape sequence. The 'output' event had every byte
  * - 'title' (string): window title changed
  * - 'preferences' (TerminalPreferences): server-pushed preferences
  * - 'terminal-id' (string): terminal session ID assigned
@@ -507,7 +572,10 @@ export declare class TerminalClient extends Duplex {
  * - 'reconnect-failed': max reconnect attempts reached
  *
  * Standard Duplex Events:
- * - 'data' (Buffer): readable data available — same payload as 'output'
+ * - 'data' (Buffer): readable data available — same payload as 'output'.
+ *   Unread output is kept for a reader that comes later: up to
+ *   `maxBufferedOutputBytes` (default 8 MiB) in the client's queue, plus up
+ *   to `readableHighWaterMark` in the stream's buffer
  * - 'close': stream closed (deduplicated; fires once per cycle)
  * - 'error' (Error): error occurred (gated on listenerCount)
  * - 'end': no more data will be written
@@ -515,4 +583,4 @@ export declare class TerminalClient extends Duplex {
  * - 'drain': writable buffer drained
  * - 'pipe' / 'unpipe' (Readable): piped to / unpiped from another stream
  */
-export { TerminalConnectTerminalWebSocketWebSocket as TerminalWebSocketTyped, type ITerminalConnectTerminalWebSocketWebSocket as ITerminalWebSocketTyped, type IWebSocketConnectionOptions as ITerminalWebSocketOptions, } from '../generated/terminal/terminal_connect-terminal-web-socket.websocket.js';
+export { type IWebSocketConnectionOptions as ITerminalWebSocketOptions, } from '../generated/terminal/terminal_connect-terminal-web-socket.websocket.js';

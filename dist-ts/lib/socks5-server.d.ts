@@ -2,7 +2,7 @@
  * SOCKS5 server (RFC 1928 + RFC 1929), terminated in-process.
  *
  * This is the engine behind the local exit proxy: hoody-egress inside the
- * container chains to `socks5h://127.0.0.1:<port>`, that port is a hoody-tunnel
+ * computer chains to `socks5h://127.0.0.1:<port>`, that port is a hoody-tunnel
  * PULL bind, and every accepted connection arrives here as a stream. We speak
  * SOCKS5 on it and dial the destination from THIS machine, so the exit IP is the
  * local one.
@@ -61,8 +61,7 @@ export interface Socks5ConnectEvent {
      *
      * `unreachable` is the catch-all arm of the errno mapping, so on its own it
      * covers everything from a TLS-less ECONNRESET to a send failure on the
-     * tunnel. Operators debugging a proxy need the distinction, and so did the
-     * first live run of this code.
+     * tunnel. Operators debugging a proxy need the distinction.
      */
     detail?: string | undefined;
     bytesUp?: number | undefined;
@@ -72,7 +71,7 @@ export interface Socks5ConnectEvent {
 export interface Socks5ServerOptions {
     /**
      * REQUIRED. There is no anonymous mode: the loopback port is reachable by every
-     * process inside the container, so an unauthenticated listener would hand the
+     * process inside the computer, so an unauthenticated listener would hand the
      * user's home connection to anything running there.
      */
     auth: Socks5Credentials;
@@ -94,7 +93,7 @@ export interface Socks5ServerOptions {
      *
      * Without it a stream that connects and then says nothing lives forever: the
      * idle timer only starts at relay, so a peer that stalls mid-greeting is never
-     * collected. Every process inside the container can reach the loopback port,
+     * collected. Every process inside the computer can reach the loopback port,
      * so that is a cheap way to pin the operator's proxy.
      */
     handshakeTimeoutMs?: number;
@@ -105,6 +104,7 @@ export interface Socks5ServerOptions {
 export interface Socks5ServerState {
     active: number;
 }
+/** A fresh state for one SOCKS5 server, with no active conversations. Pass the same object to every stream of that server. */
 export declare function createServerState(): Socks5ServerState;
 /**
  * Drive one SOCKS5 conversation on `stream`.

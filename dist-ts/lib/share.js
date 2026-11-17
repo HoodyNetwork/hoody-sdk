@@ -1,6 +1,6 @@
 /**
  * `hoody-sdk/share` — make a folder on this machine appear inside a
- * container, at `/hoody/mounts/permanent/<name>` (plans/share-local-folder.md).
+ * computer, at `/hoody/mounts/permanent/<name>`.
  * It is the reverse of `hoody mount` (lib/mount.ts).
  *
  * The chain: `rclone serve webdav <dir>` on 127.0.0.1 with a per-share user
@@ -10,9 +10,9 @@
  * and rclone: it rewrites WebDAV `Destination` so renames work, and counts
  * the requests stop waits for.
  *
- * The container mount caches writes (`cache_mode: "writes"`): a write lands
- * in the container and is uploaded here within seconds. While this machine is
- * away (or the tunnel is down), reads and writes in the container fail at once
+ * The computer mount caches writes (`cache_mode: "writes"`): a write lands
+ * in the computer and is uploaded here within seconds. While this machine is
+ * away (or the tunnel is down), reads and writes in the computer fail at once
  * with an I/O error: with no listing cache every lookup needs this machine.
  * Writes accepted before that may still be uploading, so stop drains: it waits until the
  * mount reports nothing left to upload, then deletes the mount with
@@ -51,11 +51,11 @@ export const SHARE_TIMINGS = {
     repairVerifyMs: 20_000,
     // A laptop that froze or slept leaves its session open, and the tunnel kit
     // only notices on PONG timeouts: a PING after 30 s idle, then two missed
-    // PONGs of `pong_timeout` 60 s each (hoody-tunnel src/base/connect_ws.rs:
-    // 555-577, src/config.rs:49-51), ~150 s. It then parks the session for
-    // `takeover_grace` 60 s (src/config.rs:53-55), and the port answers
-    // ALREADY_BOUND throughout (connect_ws.rs:1488-1492). Measured live
-    // 2026-10-05: ~215 s held by our own old session; 300 s leaves margin.
+    // PONGs of `pong_timeout` 60 s each (the tunnel kit's own
+    // defaults), ~150 s. It then parks the session for
+    // `takeover_grace` 60 s, and the port answers
+    // ALREADY_BOUND throughout. Measured live
+    // ~215 s held by our own old session; 300 s leaves margin.
     portInUseMs: 300_000,
     backoffMinMs: 1000,
     backoffMaxMs: 30_000,
@@ -66,8 +66,13 @@ export const SHARE_TIMINGS = {
     settleMs: 10_000,
     cleanupWaitMs: 10_000,
 };
-/** How long stop waits by default for the container to upload what it holds (`--drain-timeout`). */
+/** How long stop waits by default for the computer to upload what it holds (`--drain-timeout`). */
 export const SHARE_DRAIN_TIMEOUT_MS = 300_000;
+/**
+ * Thrown when a share could not start. The message can be shown as it is; when cleanup did not finish it names
+ * what is left and the command that finishes it. `result` is the outcome of the stop that followed the failure,
+ * when one ran.
+ */
 export class ShareError extends Error {
     result;
     constructor(message, result) {
@@ -76,12 +81,16 @@ export class ShareError extends Error {
         this.name = 'ShareError';
     }
 }
+/**
+ * Thrown when a share name matches shares to more than one computer and none was picked. `choices` lists them; the
+ * message shows the stop command for each.
+ */
 export class AmbiguousShareError extends Error {
     shareName;
     choices;
     constructor(shareName, choices) {
-        super(`"${shareName}" is shared to more than one container; pass --container with one of:\n` +
-            choices.map((c) => `  hoody share stop ${shareName} --container ${c.containerId}   (${c.apiOrigin})`).join('\n'));
+        super(`"${shareName}" is shared to more than one computer; pass --computer with one of:\n` +
+            choices.map((c) => `  hoody share stop ${shareName} --computer ${c.computerId}   (${c.apiOrigin})`).join('\n'));
         this.shareName = shareName;
         this.choices = choices;
         this.name = 'AmbiguousShareError';
@@ -123,6 +132,10 @@ export async function resolveShareDir(input, platform = process.platform) {
         throw new Error(`${input} is not a folder`);
     return real;
 }
+/**
+ * The origin (scheme, host, port) of `apiOrigin`, dropping any path, query or trailing slash. Throws when it is
+ * not a URL.
+ */
 export function normalizeApiOrigin(apiOrigin) {
     try {
         return new URL(apiOrigin).origin;
@@ -142,14 +155,14 @@ export function rcloneServeArgs(localPath, readOnly, platform = process.platform
         '--links=false',
         '--copy-links=false',
         // Uncached on this side, and no listing cache: a file created here is seen
-        // by the container's next lookup, never shadowed by a stale "not found".
+        // by the computer's next lookup, never shadowed by a stale "not found".
         '--vfs-cache-mode', 'off',
         '--dir-cache-time', '0s',
         ...(readOnly ? ['--read-only'] : []),
     ];
 }
 /**
- * The container mount's own settings, the one place they are decided. Create,
+ * The computer mount's own settings, the one place they are decided. Create,
  * the restart repair's PATCH and its check all use what this builds, and the
  * journal records it:
  *   - `writes`: in-place edits work; a write is uploaded within seconds,
@@ -165,6 +178,7 @@ export const SHARE_VFS_CONFIG = {
     contimeout: 5,
     low_level_retries: 1,
 };
+/** A copy of `SHARE_VFS_CONFIG` for one share, with `read_only: true` added for a read-only share. */
 export function shareVfsConfig(readOnly) {
     return readOnly ? { ...SHARE_VFS_CONFIG, read_only: true } : { ...SHARE_VFS_CONFIG };
 }
@@ -218,7 +232,7 @@ export function vfsConfigMatches(want, got, readOnly) {
 }
 /**
  * A ShareKit over fetch, for the files kit at `baseUrl`
- * (`https://<project>-<container>-files-1.<server>.containers.hoody.com`).
+ * (`https://<project>-<computer>-files-1.<server>.computers.hoody.com`).
  * Redirects are refused, so kit credentials go only to that origin.
  */
 export function fetchShareKit(baseUrl, opts = {}) {
@@ -326,40 +340,40 @@ async function readUploads(kit, mountId) {
 /** What a busy or unknown mount holds, for a stop without an owner. */
 function undeliveredText(u) {
     if (u.state === 'unknown' && u.dirty === null) {
-        return 'the container could not say how many files it holds that never reached this machine';
+        return 'the computer could not say how many files it holds that never reached this machine';
     }
     const files = u.dirty === null ? 'an unknown number of files' : u.dirty === 1 ? '1 file' : `${u.dirty} files`;
     const open = u.openHandles ? ` (${u.openHandles} still open there)` : '';
-    return `the container holds ${files} that never reached this machine${open}`;
+    return `the computer holds ${files} that never reached this machine${open}`;
 }
 /** "3 files not yet on this machine" (with what is still open), for a mount that is not idle. */
 export function pendingText(u) {
     const files = u.dirty === null ? 'an unknown number of files' : u.dirty === 1 ? '1 file' : `${u.dirty} files`;
-    const open = u.openHandles ? `, ${u.openHandles} still open in the container` : '';
+    const open = u.openHandles ? `, ${u.openHandles} still open in the computer` : '';
     return `${files} not yet on this machine${open}`;
 }
 // ─── Mount removal (files kit `DELETE /mounts/{id}?uploads=`) ────────────
 /** The files-kit feature a share's stop needs (`GET /api/v1/version` `features`). */
 export const SHARE_KIT_FEATURE = 'mount_delete_uploads';
-/** The longest `wait_seconds` the files kit takes (hoody-files src/api/mount_delete.rs `MAX_WAIT_SECS`). */
+/** The longest `wait_seconds` the files kit takes (its own limit). */
 const MOUNT_DELETE_MAX_WAIT_S = 600;
 function waitSecondsFor(ms) {
     return Math.min(MOUNT_DELETE_MAX_WAIT_S, Math.max(1, Math.ceil(ms / 1000)));
 }
 /** Refuse a files kit whose mount DELETE cannot wait for, or discard, the mount's uploads. */
-async function requireKitFeature(kit, containerId) {
+async function requireKitFeature(kit, computerId) {
     let res;
     try {
         res = await kit.request('GET', '/api/v1/version');
     }
     catch (err) {
-        throw new Error(`could not reach the files kit of container ${containerId}: ${err.message}`);
+        throw new Error(`could not reach the files kit of computer ${computerId}: ${err.message}`);
     }
     const features = okStatus(res) ? dataOf(res.body).features : undefined;
     if (!Array.isArray(features) || !features.includes(SHARE_KIT_FEATURE)) {
         throw new Error(okStatus(res)
-            ? `the files kit of container ${containerId} is too old for hoody share: its mount DELETE cannot wait for the mount's uploads. Update the container's files kit, then share again`
-            : `could not read the version of the files kit of container ${containerId}: ${describeKitAnswer(res)}`);
+            ? `the files kit of computer ${computerId} is too old for hoody share: its mount DELETE cannot wait for the mount's uploads. Update the computer's files kit, then share again`
+            : `could not read the version of the files kit of computer ${computerId}: ${describeKitAnswer(res)}`);
     }
 }
 function removeMount(kit, mountId, mode, signal) {
@@ -376,7 +390,7 @@ async function discardMount(kit, mountId, j) {
 }
 /** A discard answered 404: the files kit cannot discard by id what a removed mount or backend left. */
 function kitTooOldText(j) {
-    return `the files kit of container ${j.target.containerId} is too old to discard what a removed mount or backend left; update it, then run \`hoody share stop ${j.name} --force\` again`;
+    return `the files kit of computer ${j.target.computerId} is too old to discard what a removed mount or backend left; update it, then run \`hoody share stop ${j.name} --force\` again`;
 }
 /**
  * DELETE a backend with `?uploads=discard`: the kit stops and drops every
@@ -426,7 +440,7 @@ function backendDiscardFailure(r, j) {
     // The kit's discard finds what a backend left even once it is gone: a 404 is a kit without it.
     if (r.outcome === 'gone')
         return kitTooOldText(j);
-    return 'the files kit could not confirm it discarded everything the container had not sent here';
+    return 'the files kit could not confirm it discarded everything the computer had not sent here';
 }
 /**
  * A backend discard the kit confirmed in full: a count, not `null`, and the
@@ -437,7 +451,7 @@ function discardConfirmed(r) {
     return r.outcome === 'discarded' && r.discarded !== null && r.removed === true;
 }
 /** For a refusal: a removed mount whose writes were never confirmed delivered (journal `undelivered`). */
-const RETIRED_UNDELIVERED_TEXT = 'a mount of the share was removed before the container confirmed it had sent everything, so it may still hold writes that never reached this machine';
+const RETIRED_UNDELIVERED_TEXT = 'a mount of the share was removed before the computer confirmed it had sent everything, so it may still hold writes that never reached this machine';
 // ─── Processes ───────────────────────────────────────────────────────────
 async function waitProcessGone(pid, identity, ms) {
     const deadline = Date.now() + ms;
@@ -513,7 +527,7 @@ const defaultDeps = {
         return expose({
             url: opts.url,
             ...(opts.kitAuth ? { kitAuth: opts.kitAuth } : {}),
-            containerPort: opts.containerPort,
+            computerPort: opts.computerPort,
             to: opts.to,
         });
     },
@@ -534,10 +548,10 @@ const defaultDeps = {
     sleep: abortableSleep,
     now: () => Date.now(),
 };
-/** The files kit's errors for a restored mount (hoody-files `server.rs`). */
+/** The files kit's errors for a restored mount. */
 export const BACKEND_UNAVAILABLE = 'backend unavailable';
 export const OWN_SETTINGS_NOT_STARTED = 'the mount has settings of its own and was not started after the restart; update it to start it';
-/** Bind answers for a container port that is still bound (`BIND_ERR: <code> — …`). */
+/** Bind answers for a computer port that is still bound (`BIND_ERR: <code> — …`). */
 const PORT_HELD = /\b(PORT_IN_USE|ALREADY_BOUND)\b/;
 class StopRequested extends Error {
     constructor() {
@@ -562,10 +576,10 @@ class ShareOwner {
     /** The hop's port: what the tunnel forwards to. */
     localPort = 0;
     hop = null;
-    /** During a stop: keep the tunnel (reconnecting if it drops) while the container drains. */
+    /** During a stop: keep the tunnel (reconnecting if it drops) while the computer drains. */
     serveWhileStopping = false;
     forced = false;
-    /** `hoody share stop --force`: the mount's DELETE discards what the container has not sent. */
+    /** `hoody share stop --force`: the mount's DELETE discards what the computer has not sent. */
     discard = false;
     tunnel = null;
     /** The current (or last dropped) session's id and our bind's id, for a resume. */
@@ -675,12 +689,12 @@ class ShareOwner {
         return {
             id: this.j.id,
             name: this.j.name,
-            containerId: this.j.target.containerId,
+            computerId: this.j.target.computerId,
             localPath: this.j.localPath,
             mountPath: this.j.mountPath,
             publicUrl: this.j.publicUrl,
             readOnly: this.j.readOnly,
-            state: () => this.state,
+            getState: () => this.state,
             stop: (reason, stopOpts) => {
                 const p = this.stop(reason ?? 'stopped', 'requested');
                 if (stopOpts?.force)
@@ -701,7 +715,7 @@ class ShareOwner {
         await deps.requireVersion(rclonePath);
         check();
         // Before anything is made: a kit whose mount DELETE cannot wait for the uploads could not be stopped safely.
-        await requireKitFeature(opts.kit, this.j.target.containerId);
+        await requireKitFeature(opts.kit, this.j.target.computerId);
         check();
         // Its own process group (detached), so a terminal Ctrl+C reaches only the owner.
         const child = deps.spawn(rclonePath, rcloneServeArgs(this.j.localPath, this.j.readOnly), {
@@ -731,7 +745,7 @@ class ShareOwner {
         const { port, reader } = await ready;
         this.stderr = reader;
         check();
-        // The tunnel and the probe both go through the hop, so the probe checks the path the container uses.
+        // The tunnel and the probe both go through the hop, so the probe checks the path the computer uses.
         const hop = await deps.startHop(port, deps.now);
         if (this.gen !== g || this.state !== 'starting') {
             // The stop ran while the hop was starting, and did not see it.
@@ -752,11 +766,11 @@ class ShareOwner {
         const tunnel = await this.exposeOnce(0, () => this.gen === g && this.state === 'starting');
         if (!tunnel.publicUrl) {
             this.closeTunnel(tunnel);
-            throw new Error('the tunnel kit gave no public URL for the share, and none follows from its address: it is not a `<project>-<container>-tunnel-<n>.<server>.<domain>` host');
+            throw new Error('the tunnel kit gave no public URL for the share, and none follows from its address: it is not a `<project>-<computer>-tunnel-<n>.<server>.<domain>` host');
         }
         this.watchTunnel(tunnel);
         this.j.publicUrl = tunnel.publicUrl;
-        this.j.containerPort = tunnel.bind.containerPort;
+        this.j.computerPort = tunnel.bind.computerPort;
         this.j.user = this.ctx.user;
         this.j.stage = 'exposed';
         await this.save();
@@ -866,12 +880,12 @@ class ShareOwner {
         await this.save();
     }
     /** `expose()` without takeover. A tunnel that arrives once `live()` is false is closed. */
-    async exposeOnce(containerPort, live) {
+    async exposeOnce(computerPort, live) {
         const { opts, deps } = this.ctx;
         const tunnel = await deps.expose({
             url: opts.tunnelUrl,
             ...(opts.kitAuth ? { kitAuth: opts.kitAuth } : {}),
-            containerPort,
+            computerPort,
             to: { host: '127.0.0.1', port: this.localPort },
         });
         if (!live()) {
@@ -884,7 +898,7 @@ class ShareOwner {
      * One resume of the dropped session. `refused`: HELLO_OK without resuming.
      * The kit resumes only a parked session, and answers the same for one it
      * has not yet noticed is dead (a silent drop, see `portInUseMs`) as for one
-     * it never had (hoody-tunnel src/session/handshake.rs:73-83), so the id is
+     * it never had (its handshake), so the id is
      * asked again every tick until a fresh bind replaces it. `gone`: resumed,
      * but our binding changed hands (do not ask again). `failed`: no HELLO_OK
      * (unreachable, or the grace ran out mid-handshake). In each case the
@@ -906,14 +920,14 @@ class ShareOwner {
         }
         if (!resumed)
             return 'refused';
-        const port = this.j.containerPort;
-        const ours = resumed.resumedBinds.find((b) => b.containerPort === port && b.mode === 'expose' && (this.bindId === undefined || b.bindId === this.bindId));
+        const port = this.j.computerPort;
+        const ours = resumed.resumedBinds.find((b) => b.computerPort === port && b.mode === 'expose' && (this.bindId === undefined || b.bindId === this.bindId));
         // The binding is the one BIND_OK gave the recorded URL for: same port, same
         // bind id. HELLO_OK names no URL, so the recorded one is kept, never re-derived.
         const r = resumed;
         const tunnel = {
             publicUrl: this.j.publicUrl,
-            bind: { containerPort: port, ...(ours ? { bindId: ours.bindId } : {}) },
+            bind: { computerPort: port, ...(ours ? { bindId: ours.bindId } : {}) },
             session: r.session,
             close: () => r.close(),
         };
@@ -937,8 +951,9 @@ class ShareOwner {
     watchTunnel(tunnel) {
         this.tunnel = tunnel;
         // Read now: the session forgets its id once it closes, and a reconnect resumes by it.
-        if (tunnel.session.id)
-            this.resumeId = tunnel.session.id;
+        const sessionId = tunnel.session.getId();
+        if (sessionId)
+            this.resumeId = sessionId;
         if (tunnel.bind.bindId !== undefined)
             this.bindId = tunnel.bind.bindId;
         // onClose listeners fire once per session; every new session registers again.
@@ -959,12 +974,12 @@ class ShareOwner {
     }
     beginReconnect() {
         this.setState('reconnecting');
-        this.emit('warn', 'the tunnel dropped; reconnecting (reads and writes in the container fail with an I/O error until it is back)');
+        this.emit('warn', 'the tunnel dropped; reconnecting (reads and writes in the computer fail with an I/O error until it is back)');
         void this.reconnectLoop('serving');
     }
     /** While a stop drains, the tunnel is reconnected without leaving `stopping`. */
     beginDrainReconnect() {
-        this.emit('warn', 'the tunnel dropped while the container was still sending; reconnecting');
+        this.emit('warn', 'the tunnel dropped while the computer was still sending; reconnecting');
         void this.reconnectLoop('draining');
     }
     async reconnectLoop(mode) {
@@ -973,7 +988,7 @@ class ShareOwner {
         const live = mode === 'serving'
             ? () => this.gen === g && this.state === 'reconnecting'
             : () => this.gen === g && this.state === 'stopping' && this.serveWhileStopping && !this.tunnel;
-        const port = this.j.containerPort;
+        const port = this.j.computerPort;
         let heldSince = null;
         let delay = timings.backoffMinMs;
         for (;;) {
@@ -1018,7 +1033,7 @@ class ShareOwner {
             if (PORT_HELD.test(error))
                 heldSince ??= deps.now();
             if (heldSince !== null && PORT_HELD.test(error) && deps.now() - heldSince >= timings.portInUseMs) {
-                const why = `conflict: container port ${port} has been held by another tunnel binding for ${Math.round(timings.portInUseMs / 1000)} s; the share does not evict it`;
+                const why = `conflict: computer port ${port} has been held by another tunnel binding for ${Math.round(timings.portInUseMs / 1000)} s; the share does not evict it`;
                 if (mode === 'serving')
                     void this.stop(why, 'conflict');
                 else
@@ -1052,7 +1067,7 @@ class ShareOwner {
         return vfsConfigMatches(this.j.vfsConfig, v, this.j.readOnly);
     }
     /**
-     * One restart check. After a files-kit or container restart the mount comes
+     * One restart check. After a files-kit or computer restart the mount comes
      * back as a placeholder with one of two errors, and only those two are
      * repaired: `backend unavailable` (re-post the same backend, then PATCH) and
      * the own-settings error (PATCH with the recorded vfs_config). Anything
@@ -1073,7 +1088,7 @@ class ShareOwner {
         if (!live())
             return;
         if (res.status === 404) {
-            this.report(`the container mount ${this.j.mountPath} was removed by someone else; stop this share with Ctrl+C`);
+            this.report(`the computer mount ${this.j.mountPath} was removed by someone else; stop this share with Ctrl+C`);
             return;
         }
         if (!okStatus(res))
@@ -1101,7 +1116,7 @@ class ShareOwner {
             }
         }
         else if (mount.error !== OWN_SETTINGS_NOT_STARTED) {
-            this.report(`the container mount reports an error: ${String(mount.error ?? mount.status_message ?? 'unknown')}`);
+            this.report(`the computer mount reports an error: ${String(mount.error ?? mount.status_message ?? 'unknown')}`);
             return;
         }
         else {
@@ -1112,13 +1127,13 @@ class ShareOwner {
             patched = await opts.kit.request('PATCH', mountUrl, { vfs_config: this.j.vfsConfig });
         }
         catch (err) {
-            this.report(`restarting the container mount got no answer: ${err.message}`);
+            this.report(`restarting the computer mount got no answer: ${err.message}`);
             return;
         }
         if (!live())
             return;
         if (!okStatus(patched)) {
-            this.report(`restarting the container mount failed: ${describeKitAnswer(patched)}`);
+            this.report(`restarting the computer mount failed: ${describeKitAnswer(patched)}`);
             return;
         }
         const deadline = deps.now() + timings.repairVerifyMs;
@@ -1139,7 +1154,7 @@ class ShareOwner {
                 return;
             }
             if (deps.now() >= deadline) {
-                this.report(`the container mount did not come back as it was: ${m ? `${String(m.status)} ${String(m.error ?? '')}`.trim() : 'no answer'}`);
+                this.report(`the computer mount did not come back as it was: ${m ? `${String(m.status)} ${String(m.error ?? '')}`.trim() : 'no answer'}`);
                 return;
             }
             try {
@@ -1170,7 +1185,7 @@ class ShareOwner {
                 ok: true,
                 state: this.state,
                 name: this.j.name,
-                containerId: this.j.target.containerId,
+                computerId: this.j.target.computerId,
                 mountPath: this.j.mountPath ?? null,
                 publicUrl: this.j.publicUrl ?? null,
             });
@@ -1201,7 +1216,7 @@ class ShareOwner {
         }
         return this.finalizing;
     }
-    /** A second Ctrl+C: the stop no longer waits for the container. Starts a stop if none runs. */
+    /** A second Ctrl+C: the stop no longer waits for the computer. Starts a stop if none runs. */
     force() {
         if (this.crashed)
             return;
@@ -1214,7 +1229,7 @@ class ShareOwner {
      * Stop step 1: poll the mount, still serving, until its
      * `uploads.state` is `idle` on two polls `drainPollMs` apart. Bounded by the
      * drain timeout and a forced stop. When this machine cannot serve (rclone
-     * exited, or the tunnel conflicts) the container cannot deliver anything,
+     * exited, or the tunnel conflicts) the computer cannot deliver anything,
      * so it only looks (two polls) and does not wait.
      */
     async drain(canServe) {
@@ -1255,7 +1270,7 @@ class ShareOwner {
         }
     }
     /**
-     * After `delivered`: the container holds nothing more, so this only lets
+     * After `delivered`: the computer holds nothing more, so this only lets
      * the hop finish what it is serving (a read, a listing), at most `settleMs`.
      * Delivery never rests on it.
      */
@@ -1343,7 +1358,7 @@ class ShareOwner {
         if (this.j.mountId) {
             const mountId = this.j.mountId;
             const where = `mount ${mountId} (${this.j.mountPath ?? this.j.requestedMountPath})`;
-            const canServe = !this.childGone && this.hop !== null && this.j.containerPort !== undefined && this.stopKind !== 'conflict';
+            const canServe = !this.childGone && this.hop !== null && this.j.computerPort !== undefined && this.stopKind !== 'conflict';
             this.serveWhileStopping = canServe;
             if (canServe && !this.tunnel)
                 this.beginDrainReconnect();
@@ -1355,14 +1370,14 @@ class ShareOwner {
                 }
                 else if (view.confirmed) {
                     const waitSeconds = waitSecondsFor(view.deadline - deps.now());
-                    this.emit('info', `removing the mount once the container has sent what it still holds (up to ${waitSeconds} s)`);
+                    this.emit('info', `removing the mount once the computer has sent what it still holds (up to ${waitSeconds} s)`);
                     removal = await this.removeMountRecorded(mountId, { uploads: 'wait', waitSeconds }, this.timers.signal);
                 }
                 else if (!this.discard) {
-                    // What the container still holds stays there with its mount:
+                    // What the computer still holds stays there with its mount:
                     // deleting it now would drop writes this machine has not got.
-                    const held = view.state === 'idle' ? 'writes the container has not confirmed it sent' : pendingText(view);
-                    this.emit('warn', `stopping with ${held}; they stay in the container (\`hoody share stop ${this.j.name} --force\` discards them)`);
+                    const held = view.state === 'idle' ? 'writes the computer has not confirmed it sent' : pendingText(view);
+                    this.emit('warn', `stopping with ${held}; they stay in the computer (\`hoody share stop ${this.j.name} --force\` discards them)`);
                     leftovers.push(`${where} is kept: it holds ${held}`);
                     backendKept = 'kept for the mount';
                     drained = false;
@@ -1396,18 +1411,18 @@ class ShareOwner {
                     await this.settleHop();
                 }
                 else if (removal.outcome === 'gone') {
-                    this.emit('warn', `${where} was already gone, so the container never confirmed it had sent everything here`);
+                    this.emit('warn', `${where} was already gone, so the computer never confirmed it had sent everything here`);
                 }
                 else if (removal.outcome === 'discarded' && removal.discarded !== null) {
                     // `undelivered` stays recorded: the backend's discard below confirms nothing else is left.
                     discarded = true;
                     if (removal.discarded)
-                        this.emit('warn', `discarded ${filesText(removal.discarded)} the container had not sent here`);
+                        this.emit('warn', `discarded ${filesText(removal.discarded)} the computer had not sent here`);
                 }
                 else if (removal.outcome === 'undelivered') {
                     const held = pendingText(removal.view);
-                    this.emit('warn', `the container did not send everything in time: it still holds ${held}`);
-                    undeliveredKept = `kept: the container still held ${held} when ${where} was removed`;
+                    this.emit('warn', `the computer did not send everything in time: it still holds ${held}`);
+                    undeliveredKept = `kept: the computer still held ${held} when ${where} was removed`;
                 }
                 // A `discarded: null`: what the kit could not stop goes on as `keep`, and the backend's discard below drops it.
             }
@@ -1427,7 +1442,7 @@ class ShareOwner {
                 if (discardConfirmed(r)) {
                     discarded = true;
                     if (r.discarded)
-                        this.emit('warn', `discarded ${filesText(r.discarded)} the container had not sent here`);
+                        this.emit('warn', `discarded ${filesText(r.discarded)} the computer had not sent here`);
                     delete this.j.backendId;
                     delete this.j.undelivered;
                 }
@@ -1494,8 +1509,8 @@ function withDefaults(opts) {
     return { timings: { ...SHARE_TIMINGS, ...opts.timings }, deps: { ...defaultDeps, ...opts.deps } };
 }
 /**
- * Share `localPath` into the container. Resolves once the folder is mounted
- * in the container (`handle.mountPath`); the share then runs until
+ * Share `localPath` into the computer. Resolves once the folder is mounted
+ * in the computer (`handle.mountPath`); the share then runs until
  * `handle.stop()`, `opts.signal`, `stopShare()` from another process, rclone
  * exiting, or a reconnect conflict. A failed start cleans up what it made and
  * throws a ShareError.
@@ -1507,20 +1522,20 @@ export async function share(opts) {
     if (problem) {
         throw new Error(`${problem}. Example: --name ${suggestName(name)}`);
     }
-    if (!opts.target.containerId)
-        throw new Error('target.containerId is required');
+    if (!opts.target.computerId)
+        throw new Error('target.computerId is required');
     const apiOrigin = normalizeApiOrigin(opts.target.apiOrigin);
     const { timings, deps } = withDefaults(opts);
     const dir = sharesDir(opts.home);
     await ensureSharesDir(dir);
-    const id = computeShareId(apiOrigin, opts.target.containerId, name);
+    const id = computeShareId(apiOrigin, opts.target.computerId, name);
     const runToken = newRunToken();
     const flavor = opts.lockFlavor ?? defaultLockFlavor();
     const acquired = await acquireOwnerLock({ dir, id, flavor, token: runToken });
     if (!acquired.won) {
         throw new Error(acquired.reason === 'reclaim-busy'
             ? `another hoody share of "${name}" is starting or stopping on this machine; try again in a moment`
-            : `"${name}" is already shared to container ${opts.target.containerId} by a running hoody share; stop it with \`hoody share stop ${name}\``);
+            : `"${name}" is already shared to computer ${opts.target.computerId} by a running hoody share; stop it with \`hoody share stop ${name}\``);
     }
     const lock = acquired.lock;
     try {
@@ -1538,7 +1553,7 @@ export async function share(opts) {
     const now = new Date().toISOString();
     const target = {
         apiOrigin,
-        containerId: opts.target.containerId,
+        computerId: opts.target.computerId,
         ...(opts.target.server ? { server: opts.target.server } : {}),
         ...(opts.target.projectId ? { projectId: opts.target.projectId } : {}),
     };
@@ -1581,7 +1596,7 @@ export async function listShares(opts = {}) {
         out.push({
             id: j.id,
             name: j.name,
-            containerId: j.target.containerId,
+            computerId: j.target.computerId,
             apiOrigin: j.target.apiOrigin,
             localPath: j.localPath,
             mountPath: j.mountPath,
@@ -1594,7 +1609,7 @@ export async function listShares(opts = {}) {
     }
     return out;
 }
-/** `stopShare` without an owner, refused: the container holds writes that stopping would discard. */
+/** `stopShare` without an owner, refused: the computer holds writes that stopping would discard. */
 export class UndeliveredWritesError extends Error {
     constructor(message) {
         super(message);
@@ -1617,21 +1632,21 @@ export async function stopShare(opts) {
     const apiOrigin = opts.apiOrigin ? normalizeApiOrigin(opts.apiOrigin) : undefined;
     const emit = (level, message) => opts.onEvent?.({ level, message });
     const matches = (await listJournals(dir)).filter((j) => j.name === opts.name &&
-        (!opts.containerId || j.target.containerId === opts.containerId) &&
+        (!opts.computerId || j.target.computerId === opts.computerId) &&
         (!apiOrigin || j.target.apiOrigin === apiOrigin));
     const ids = [...new Set(matches.map((j) => j.id))];
     if (ids.length === 0) {
-        throw new Error(`no share named "${opts.name}"${opts.containerId ? ` on container ${opts.containerId}` : ''}`);
+        throw new Error(`no share named "${opts.name}"${opts.computerId ? ` on computer ${opts.computerId}` : ''}`);
     }
     if (ids.length > 1) {
         const choices = ids.map((id) => {
             const j = matches.find((m) => m.id === id);
-            return { containerId: j.target.containerId, apiOrigin: j.target.apiOrigin };
+            return { computerId: j.target.computerId, apiOrigin: j.target.apiOrigin };
         });
         throw new AmbiguousShareError(opts.name, choices);
     }
     const id = ids[0];
-    const containerId = matches[0].target.containerId;
+    const computerId = matches[0].target.computerId;
     for (let attempt = 0; attempt < 5; attempt++) {
         const asked = await requestOwner({ dir, id, flavor }, 'stop', {
             onReply: (r) => {
@@ -1647,7 +1662,7 @@ export async function stopShare(opts) {
                 continue;
             }
             if (!final) {
-                return { ok: false, name: opts.name, containerId, via: 'owner', leftovers: [], message: 'the owner ended the connection without a result' };
+                return { ok: false, name: opts.name, computerId, via: 'owner', leftovers: [], message: 'the owner ended the connection without a result' };
             }
             const leftovers = Array.isArray(final.leftovers) ? final.leftovers : [];
             const cleaned = final.ok === true;
@@ -1661,9 +1676,9 @@ export async function stopShare(opts) {
                     : drained
                         ? 'stopped'
                         : discarded
-                            ? 'stopped; what the container had not sent here was discarded'
-                            : 'stopped, but the container never confirmed it had sent everything here; a recent write may not have reached this machine';
-            return { ok: cleaned && (drained || discarded), name: opts.name, containerId, via: 'owner', leftovers, message };
+                            ? 'stopped; what the computer had not sent here was discarded'
+                            : 'stopped, but the computer never confirmed it had sent everything here; a recent write may not have reached this machine';
+            return { ok: cleaned && (drained || discarded), name: opts.name, computerId, via: 'owner', leftovers, message };
         }
         if (asked.reason === 'no-token') {
             throw new Error(`share "${opts.name}" has a running owner whose run token this user cannot read`);
@@ -1691,7 +1706,7 @@ export async function stopShare(opts) {
 }
 async function cleanupWithoutOwner(dir, id, opts, timings, emit) {
     const journals = await listJournals(dir, id);
-    const containerId = journals[0]?.target.containerId ?? opts.containerId ?? '';
+    const computerId = journals[0]?.target.computerId ?? opts.computerId ?? '';
     const leftovers = [];
     const kits = new Map();
     const kitOf = (j) => {
@@ -1733,7 +1748,7 @@ async function cleanupWithoutOwner(dir, id, opts, timings, emit) {
     }
     // 2. Before anything is stopped or deleted: what would be discarded. Without
     // an owner nothing serves the folder (and the password is gone), so the
-    // container's unsent writes can never be delivered.
+    // computer's unsent writes can never be delivered.
     const views = new Map();
     const undelivered = [];
     for (const j of journals) {
@@ -1784,7 +1799,7 @@ async function cleanupWithoutOwner(dir, id, opts, timings, emit) {
                 kit = await kitOf(j);
             }
             catch (err) {
-                left.push(`container ${j.target.containerId} could not be reached: ${err.message}`);
+                left.push(`computer ${j.target.computerId} could not be reached: ${err.message}`);
             }
         }
         if (kit) {
@@ -1817,11 +1832,11 @@ async function cleanupWithoutOwner(dir, id, opts, timings, emit) {
                         delete j.undelivered;
                     // Otherwise `undelivered` stays until the backend's discard below confirms nothing is left.
                     if (removal.outcome === 'discarded' && removal.discarded)
-                        emit('info', `discarded ${filesText(removal.discarded)} the container had not sent here`);
+                        emit('info', `discarded ${filesText(removal.discarded)} the computer had not sent here`);
                     if (removal.outcome === 'undelivered') {
                         const held = pendingText(removal.view);
-                        emit('warn', `${where} was removed while the container still held ${held}`);
-                        backendKept = `kept: the container still held ${held} when ${where} was removed`;
+                        emit('warn', `${where} was removed while the computer still held ${held}`);
+                        backendKept = `kept: the computer still held ${held} when ${where} was removed`;
                     }
                     await writeJournal(dir, j);
                 }
@@ -1835,7 +1850,7 @@ async function cleanupWithoutOwner(dir, id, opts, timings, emit) {
                     const r = await discardBackend(kit, j.backendId);
                     if (discardConfirmed(r)) {
                         if (r.discarded)
-                            emit('info', `discarded ${filesText(r.discarded)} the container had not sent here`);
+                            emit('info', `discarded ${filesText(r.discarded)} the computer had not sent here`);
                         delete j.backendId;
                         delete j.undelivered;
                     }
@@ -1870,7 +1885,7 @@ async function cleanupWithoutOwner(dir, id, opts, timings, emit) {
     return {
         ok,
         name: opts.name,
-        containerId,
+        computerId,
         via: 'cleanup',
         leftovers,
         message: ok ? 'cleaned up' : `cleanup is pending: ${leftovers.join('; ')}`,

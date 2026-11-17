@@ -1,8 +1,8 @@
 /**
  * Exec Dynamic Discovery — SDK-side runtime discovery of user scripts on exec
- * containers. Fetches the script inventory via `openapi.listScripts()` and parses
+ * computers. Fetches the script inventory via `openapi.listScripts()` and parses
  * each entry's metadata (HTTP method, parameters, tags) into
- * `DiscoveredScript` objects consumed by SDK callers and agent surfaces.
+ * `CallableScript` objects consumed by SDK callers and agent surfaces.
  *
  * Security:
  *   - Script names sanitized to [a-z0-9-], max 64 chars
@@ -143,7 +143,7 @@ export function sanitizeDescription(text) {
 }
 // ─── Discovery ───────────────────────────────────────────────────────────────
 /**
- * Discover user scripts from an exec container.
+ * Discover user scripts from an exec computer.
  *
  * Calls `openapi.listScripts()` to get the script inventory, then enriches
  * each entry with schema information where available.
@@ -155,7 +155,7 @@ export function sanitizeDescription(text) {
  * `openapi.listScripts` response is available (no ScriptsService handle) and
  * therefore skips this enrichment step.
  */
-export async function discoverScripts(openapiService, scriptsService, options) {
+export async function listCallableScripts(openapiService, scriptsService, options) {
     const templateVars = options?.templateVars;
     // listScripts is not paginated; call it directly and extract the array
     // from the response.
@@ -176,9 +176,9 @@ export async function discoverScripts(openapiService, scriptsService, options) {
                 continue;
             try {
                 // Same endpoint as listScripts above: the caller's templateVars
-                // override (another container / execId) and signal. Without them the
+                // override (another computer / execId) and signal. Without them the
                 // companion schema was read from the service's DEFAULT endpoint — a
-                // different container's file, or none — while the list came from the
+                // different computer's file, or none — while the list came from the
                 // override.
                 const schemaResponse = await scriptsService.readFile(scriptPath.replace(/\.(ts|js|mjs|cjs)$/i, ''), { kind: 'schema', ...(options?.signal ? { signal: options.signal } : {}) }, templateVars);
                 const content = schemaResponse?.data;

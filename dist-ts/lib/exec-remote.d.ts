@@ -1,6 +1,6 @@
 /**
- * Remote control of a live hoody-exec script (MonoRepoStorage #674, cut V9):
- * `exec.connect(url, { token })`.
+ * Remote control of a live hoody-exec script:
+ * `exec.remote(url, { token })`.
  *
  * The remote channel lives on the script's OWN URL. A marker picks the op:
  *  - one-shot ops: `X-Hoody-Remote: send|call|eval|capabilities` on a POST/GET;
@@ -10,7 +10,7 @@
  * The default transport is SSE events + one-shot requests, the same pattern as
  * hoody-agent's prompt stream. `ws: true` moves send, call and events onto one
  * attach socket. `eval` is ALWAYS a one-shot POST: the server refuses it on
- * attach, so a future proxy rule can single it out by its header.
+ * attach.
  *
  * The script token travels only as `X-Token` (recorded as a credential header,
  * so the HTTP client redacts it in ApiError and confines it on redirects) or,
@@ -43,15 +43,15 @@ export declare const EXEC_REMOTE_MAX_FRAME_BYTES: number;
 export declare const EXEC_REMOTE_MAX_PENDING = 1024;
 /** Client wait for a one-shot answer when the call names no timeoutMs. */
 export declare const EXEC_REMOTE_DEFAULT_TIMEOUT_MS = 60000;
-/** Options of `exec.connect`. */
-export interface ExecRemoteConnectOptions {
+/** Options of `exec.remote`. */
+export interface ExecRemoteOptions {
     /** The script token: a `@remote-token` secret, or the script's `@token` when it declares no remote token. */
     token?: string | undefined;
     /** Carry send, call and events over one attach socket. `eval` stays a one-shot POST. Default false. */
     ws?: boolean | undefined;
     /** Default client wait for one-shot answers, and the most an attach socket or an events stream takes to open, in ms (default 60 000). */
     timeoutMs?: number | undefined;
-    /** URL template variables for a path (projectId/containerId/serviceIndex/server), as for `exec.run`. */
+    /** URL template variables for a path (projectId/computerId/serviceIndex/server), as for `exec.run`. */
     templateVars?: ExecExecutionTemplateVars;
 }
 /** Per-op options. */
@@ -61,8 +61,8 @@ export interface ExecRemoteOpOptions {
     /** Cancels the op. */
     signal?: AbortSignal | undefined;
 }
-/** Options of `eval` / `evaluate`. */
-export interface ExecRemoteEvalOptions extends ExecRemoteOpOptions {
+/** Options of `evaluate`. */
+export interface ExecRemoteEvaluateOptions extends ExecRemoteOpOptions {
     /** `latest` (default): the in-flight or last run's scope. `globals`: the worker context (worker mode only). */
     target?: 'latest' | 'globals' | undefined;
     /** Run the script once first when it has no run yet (otherwise 409 REMOTE_NO_RUN). */
@@ -74,7 +74,7 @@ export type ExecRemoteRunKind = 'http' | 'remote' | 'cron' | 'remote_init' | 'we
  * The first argument the script passes to an `evaluate()` function (a frozen object): the op, a
  * signal that aborts on the op's deadline or when the caller disconnects, and the run it evaluates in.
  */
-export interface ExecRemoteEvalContext {
+export interface ExecRemoteEvaluateContext {
     readonly op: 'eval';
     readonly signal: AbortSignal;
     readonly run: {
@@ -91,10 +91,10 @@ export interface ExecRemoteEvalContext {
     readonly params?: unknown;
     readonly [key: string]: unknown;
 }
-/** A console level for `events({ tail })`. */
+/** A console level for `streamEvents({ tail })`. */
 export type ExecRemoteTailLevel = 'error' | 'warn' | 'info' | 'debug';
-/** Options of `events()`. */
-export interface ExecRemoteEventsOptions {
+/** Options of `streamEvents()`. */
+export interface ExecRemoteStreamEventsOptions {
     /** Also stream the script's console lines at this level as `{event:'console'}` frames. Absent: none. */
     tail?: ExecRemoteTailLevel | undefined;
     /** Ends the iteration. */
@@ -124,8 +124,8 @@ export interface ExecRemoteLogLine {
     args: unknown[];
     [key: string]: unknown;
 }
-/** Answer of `eval` / `evaluate`. Read the value as `(await conn.eval('x')).result`. */
-export interface ExecRemoteEvalResult {
+/** Answer of `evaluate`. Read the value as `(await conn.evaluate('x')).result`. */
+export interface ExecRemoteEvaluateResult {
     ok: true;
     result: unknown;
     logs: ExecRemoteLogLine[];
@@ -138,7 +138,7 @@ export interface ExecRemoteEvalResult {
     durationMs: number;
     [key: string]: unknown;
 }
-/** Answer of `capabilities`. Without a valid token only `token_required` and `token_names` are set. */
+/** Answer of `getCapabilities`. Without a valid token only `token_required` and `token_names` are set. */
 export interface ExecRemoteCapabilities {
     token_required?: boolean;
     token_names?: string[];
@@ -212,7 +212,7 @@ export interface ExecRemoteCloseInfo {
     /** The error that ended it, when it did not end normally. */
     error?: ExecRemoteError;
 }
-/** An explicit attach socket (`conn.attach()`): send, call and events on one socket, never eval. */
+/** An explicit attach socket (`conn.connect()`): send, call and events on one socket, never eval. */
 export interface ExecRemoteSession {
     send(message: unknown, options?: ExecRemoteOpOptions): Promise<ExecRemoteSendResult>;
     call(name: string, args?: unknown[], options?: ExecRemoteOpOptions): Promise<ExecRemoteCallResult>;
@@ -221,7 +221,7 @@ export interface ExecRemoteSession {
      * that arrived since then (the latest, up to 1000 frames and 8 MiB). One reader at a time;
      * otherwise frames that arrive while nobody iterates are dropped.
      */
-    frames(options?: {
+    streamEvents(options?: {
         signal?: AbortSignal | undefined;
     }): AsyncIterable<ExecRemoteFrame>;
     /** Close the socket. `code` is sent when a client may send it (1000, 3000-4999); any other closes with none. */
@@ -231,27 +231,27 @@ export interface ExecRemoteSession {
     /** The server's first frame, `{ event: 'attached', v: 1, generation, path }`. */
     readonly attached: ExecRemoteFrame;
 }
-/** A connection to one live script (`exec.connect(url, { token })`). */
+/** A connection to one live script (`exec.remote(url, { token })`). */
 export interface ExecRemoteConnection {
     /** The script URL (or path) this connection targets. */
     readonly url: string;
     /** What the script enables, its token names, its latest run; disabled ops carry `fix`. */
-    capabilities(options?: ExecRemoteOpOptions): Promise<ExecRemoteCapabilities>;
+    getCapabilities(options?: ExecRemoteOpOptions): Promise<ExecRemoteCapabilities>;
     /** Deliver a message to the script's `remote.on('message')` handler (`@remote-messages`). */
     send(message: unknown, options?: ExecRemoteOpOptions): Promise<ExecRemoteSendResult>;
     /** Call a function the script exposed with `remote.expose(name, fn)` (`@remote-call`). */
     call(name: string, args?: unknown[], options?: ExecRemoteOpOptions): Promise<ExecRemoteCallResult>;
     /**
      * Evaluate an expression inside the script's live scope (`@remote-eval` + an eval-scoped token).
-     * Always a one-shot POST, also with `ws: true`. The value is `(await conn.eval('x')).result`.
+     * Always a one-shot POST, also with `ws: true`. The value is `(await conn.evaluate('x')).result`.
      */
-    eval(expression: string, options?: ExecRemoteEvalOptions): Promise<ExecRemoteEvalResult>;
+    evaluate(expression: string, options?: ExecRemoteEvaluateOptions): Promise<ExecRemoteEvaluateResult>;
     /**
      * Evaluate a function's source in the script's scope: sends `{ function: fn.toString(), args }`,
      * and the script calls it as `fn(ctx, ...args)`. Only the source travels, so `fn` must not close
      * over local variables of the caller; `args` are JSON.
      */
-    evaluate(fn: (ctx: ExecRemoteEvalContext, ...args: never[]) => unknown, args?: unknown[], options?: ExecRemoteEvalOptions): Promise<ExecRemoteEvalResult>;
+    evaluate(fn: (ctx: ExecRemoteEvaluateContext, ...args: never[]) => unknown, args?: unknown[], options?: ExecRemoteEvaluateOptions): Promise<ExecRemoteEvaluateResult>;
     /**
      * Event frames: SSE by default, the attach socket with `ws: true`. The server's first frame
      * (`attached`) is checked and not yielded; a stream without it is ExecRemoteUnsupportedError.
@@ -259,14 +259,14 @@ export interface ExecRemoteConnection {
      * iteration opens an attach socket of its own (the server sets a socket's tail when it opens),
      * closed when the iteration ends.
      */
-    events(options?: ExecRemoteEventsOptions): AsyncIterable<ExecRemoteFrame>;
+    streamEvents(options?: ExecRemoteStreamEventsOptions): AsyncIterable<ExecRemoteFrame>;
     /** Open a new attach socket. Resolves on the server's `attached` frame; rejects with a refusal, or Unsupported without one. */
-    attach(): Promise<ExecRemoteSession>;
+    connect(): Promise<ExecRemoteSession>;
     /** Abort every stream and request of this connection and close its socket. */
     close(): void;
 }
-/** The `exec.connect` function. */
-export type ExecRemoteConnect = (urlOrPath: string, options?: ExecRemoteConnectOptions) => ExecRemoteConnection;
+/** The `exec.remote` function. */
+export type ExecRemoteFactory = (urlOrPath: string, options?: ExecRemoteOptions) => ExecRemoteConnection;
 /**
  * A refused or failed remote op. `code` is the server's `details.code`
  * (`REMOTE_EVAL_DISABLED`, …) or a client code; `fix` is what to change.
@@ -285,6 +285,10 @@ export declare class ExecRemoteError extends Error {
     readonly details: Record<string, unknown>;
     /** The script URL, without query or credentials. */
     readonly url: string | undefined;
+    /**
+     * `params.message` is extended with the lines of `params.fix`, when there is one; `details`
+     * defaults to an empty object.
+     */
     constructor(params: {
         message: string;
         status: number;
@@ -308,6 +312,7 @@ export declare class ExecRemotePermissionError extends ExecRemoteError {
 }
 /** The script's own code threw (422 REMOTE_THREW). `remote` is the script-side error. */
 export declare class ExecRemoteThrewError extends ExecRemoteError {
+    /** The error the script threw, read from `details.error`: `name` defaults to `Error`, `message` to an empty string. */
     readonly remote: {
         name: string;
         message: string;
@@ -395,20 +400,21 @@ export declare function createExecRemoteConnection(transport: ExecRemoteTranspor
 declare module '../generated/exec/exec.service.js' {
     interface ExecService {
         /**
-         * Connect to a live script's remote channel (#674).
+         * A handle on a live script's remote channel; nothing is sent until an op is called.
          *
          * `urlOrPath` is the script's full URL (as `scripts/write` reports it) or
          * a script path on this box's exec kit. `token` is a `@remote-token`
          * secret (or the script's `@token` when it declares none); eval always
          * needs an eval-scoped `@remote-token`.
          *
-         *   const conn = box.exec.connect(url, { token });
-         *   await conn.capabilities();
+         *   const conn = box.exec.remote(url, { token });
+         *   await conn.getCapabilities();
          *   await conn.send({ type: 'ping' });            // { ok, reply, … }
-         *   (await conn.eval('Object.keys(shared)')).result;
-         *   for await (const f of conn.events()) { … }
+         *   (await conn.evaluate('Object.keys(shared)')).result;
+         *   for await (const f of conn.streamEvents()) { … }
          */
-        connect(urlOrPath: string, options?: ExecRemoteConnectOptions): ExecRemoteConnection;
+        remote(urlOrPath: string, options?: ExecRemoteOptions): ExecRemoteConnection;
     }
 }
+/** Installs `remote()` on the generated exec service. Runs once: a second call does nothing; importing this module already runs it. */
 export declare function patchExecRemotePrototype(): void;

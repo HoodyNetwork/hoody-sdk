@@ -14,8 +14,8 @@ import { isEphemeralEventType, } from './events-catalog.js';
 /**
  * Normalise the server's wire-format into the legacy consumer-facing shape.
  *
- * A frame that carries the C1 top-level `resource_type`/`resource_id` is
- * taken at its word. Only a frame from an older hoody-api without them falls
+ * A frame that carries the top-level `resource_type`/`resource_id` is
+ * taken at its word. Only a frame from an older API without them falls
  * back to guessing from the payload shape.
  */
 export function normalizeServerMessage(m) {
@@ -29,27 +29,27 @@ export function normalizeServerMessage(m) {
         };
     }
     const payload = (m.data ?? {});
-    // hoody-api container broadcasts send `data: { container: { id, … } }`
-    // without a top-level resource_id. Read nested `container.id` /
-    // `project.id` so `onContainerEvents()` and similar resource-id filters
-    // don't silently drop every container event.
-    const nestedContainer = (payload.container && typeof payload.container === 'object')
-        ? payload.container
+    // The API's computer broadcasts send `data: { computer: { id, … } }`
+    // without a top-level resource_id. Read nested `computer.id` /
+    // `project.id` so `onComputerEvents()` and similar resource-id filters
+    // don't silently drop every computer event.
+    const nestedComputer = (payload.computer && typeof payload.computer === 'object')
+        ? payload.computer
         : undefined;
     const nestedProject = (payload.project && typeof payload.project === 'object')
         ? payload.project
         : undefined;
     const resourceId = payload.resource_id ??
         payload.resourceId ??
-        payload.container_id ??
+        payload.computer_id ??
         payload.project_id ??
-        nestedContainer?.id ??
+        nestedComputer?.id ??
         nestedProject?.id ??
         payload.id ??
         '';
     const resourceType = payload.resource_type ??
         payload.resourceType ??
-        (payload.container ? 'container' : payload.project ? 'project' : undefined);
+        (payload.computer ? 'computer' : payload.project ? 'project' : undefined);
     return {
         event_type: m.event,
         resource_id: String(resourceId),
@@ -86,7 +86,7 @@ export function toHoodyEvent(item, replayed) {
         resource_type: typeof item.resource_type === 'string' ? item.resource_type : (legacy.resource_type ?? ''),
         resource_id: legacy.resource_id,
         project_id: nullableString(item.project_id),
-        container_id: nullableString(item.container_id),
+        computer_id: nullableString(item.computer_id),
         realm_ids: Array.isArray(item.realm_ids) ? item.realm_ids.filter((r) => typeof r === 'string') : [],
         all_realms: item.all_realms === true,
         visibility: item.visibility === 'removed' || item.visibility === 'nameless' ? item.visibility : 'full',
@@ -163,22 +163,35 @@ function parseEventsUrl(url) {
     }
     return { source: parsed.source, namespace: parsed.path || '/', query: parsed.query || '', queryKey: parsed.queryKey || {} };
 }
-export class ApiConnecteventstreamWebSocket {
+/**
+ * The Socket.IO connection of the events stream: one socket on its own Manager, never shared
+ * with another `io()` call in the process. The namespace is the path of `url`.
+ *
+ * It opens with WebSocket first and does not reconnect by itself (`reconnection: false`):
+ * the events runtime that owns it decides when to connect again.
+ */
+export class EventsSocketTransport {
+    /** True between the socket's `connect` and `disconnect`. */
     connected = false;
     url;
     defaultOptions;
     /** This wrapper's own Manager: never shared, never replaced. */
     manager;
     socket;
+    /**
+     * Builds the socket without connecting; call {@link connect}. `url` must be absolute outside a
+     * browser page; a URL with no host throws a ValidationError. `options` are socket.io-client
+     * options: `autoConnect` is always off, `reconnection` is off unless set, and `transports`
+     * defaults to WebSocket first.
+     */
     constructor(url, options = {}) {
         this.url = url;
         // Normalise: we own `autoConnect` so `connect()` can return a real promise.
         //
-        // WebSocket first, by default. hoody-api's cluster (Bun) path refuses engine.io long-polling
-        // at the request boundary (400) because polling cannot survive `reusePort` worker hashing,
-        // and socket.io-client does NOT fall back from a failed polling handshake to websocket
-        // unless `tryAllTransports` is set — so a polling-first client never connects there.
-        // A caller who fronts the API with a sid-affine proxy can still pass `transports` explicitly.
+        // WebSocket first, by default. The API may refuse a long-polling handshake (400), and
+        // socket.io-client does NOT fall back from a failed polling handshake to websocket
+        // unless `tryAllTransports` is set — so a polling-first client would never connect.
+        // A caller whose own proxy in front of the API supports polling can still pass `transports` explicitly.
         //
         // Outside a browser the list is normalised to transport classes, with the SDK's own
         // WebSocket transport in the websocket slot (socketio-node-transport.ts).
@@ -280,25 +293,30 @@ export class ApiConnecteventstreamWebSocket {
             this.socket.auth = auth;
         }
     }
+    /** Close the socket. The argument is accepted and not used. */
     disconnect(_reason) {
         this.connected = false;
         this.socket.disconnect();
     }
+    /** Listen to a raw socket event, control frames included. */
     on(event, callback) {
         this.socket.on(event, callback);
     }
+    /** Send `event` to the server, with `data` when it is not `undefined`. */
     emit(event, data) {
         if (data === undefined)
             this.socket.emit(event);
         else
             this.socket.emit(event, data);
     }
+    /** Remove `callback` from `event`; with no callback, every listener of `event`. */
     off(event, callback) {
         if (callback === undefined)
             this.socket.off(event);
         else
             this.socket.off(event, callback);
     }
+    /** Remove every listener from the socket, this wrapper's own `connected` tracking included. */
     removeAllListeners() {
         this.socket.removeAllListeners();
     }
@@ -307,11 +325,17 @@ export class ApiConnecteventstreamWebSocket {
     // EventsManager.cleanupWsListeners iterates the returned unsubscribers
     // on disconnect — they MUST be real functions (not no-ops) so listeners
     // detach when the manager tears down.
+    /** Call `callback` on every `connect`. Returns the function that removes it. */
     onConnect(callback) {
         const handler = () => callback();
         this.socket.on('connect', handler);
         return () => this.socket.off('connect', handler);
     }
+    /**
+     * Call `callback` on every `disconnect`. Returns the function that removes it. `reason` is
+     * socket.io's reason; `code` is made up to fit the signature: 1000 for a disconnect the
+     * server asked for, 1006 for anything else.
+     */
     onDisconnect(callback) {
         const handler = (reason) => {
             // socket.io gives a reason string; there's no protocol close code at
@@ -322,16 +346,19 @@ export class ApiConnecteventstreamWebSocket {
         this.socket.on('disconnect', handler);
         return () => this.socket.off('disconnect', handler);
     }
+    /** Call `callback` on each reconnection attempt of the Manager (none happen unless `reconnection` was turned on). Returns the function that removes it. */
     onReconnectAttempt(callback) {
         const handler = (attempt) => callback(attempt);
         this.manager.on('reconnect_attempt', handler);
         return () => this.manager.off('reconnect_attempt', handler);
     }
+    /** Call `callback` when the Manager's own reconnection succeeds (only with `reconnection` turned on). Returns the function that removes it. */
     onReconnect(callback) {
         const handler = (attempt) => callback(attempt);
         this.manager.on('reconnect', handler);
         return () => this.manager.off('reconnect', handler);
     }
+    /** Call `callback` on a failed handshake (`connect_error`) and on a Manager `error`, always with an Error. Returns the function that removes it. */
     onError(callback) {
         const handler = (err) => {
             callback(err instanceof Error ? err : new Error(String(err)));
@@ -375,7 +402,7 @@ export class ApiConnecteventstreamWebSocket {
         return () => this.socket.off('message', handler);
     }
     /**
-     * The socket-level `error` event. hoody-api sends some refusals there
+     * The socket-level `error` event. The API sends some refusals there
      * (`{type:'error', error}`), REALM_SELECTION_CONFLICT among them; for one
      * release they are sent on `message` too. `error` is not a reserved
      * socket.io client event, so only a listener on it sees them.

@@ -6,6 +6,8 @@
 //   createFetch        → createCurlFetch
 //   ChannelFetch       → CurlFetch
 //   CreateFetchOptions → CurlFetchOptions
+// and two methods: the static Channel.open() → CurlChannel.connect(),
+// ChannelStream.body() → CurlChannelStream.readBytes().
 //
 // Internal cross-module imports are stripped — every reference resolves
 // within this single file.
@@ -85,12 +87,12 @@ export const nodeBuiltinWebSocketUnsafe =
         return !ge(7, 28, 0);
     if (a === 8)
         return !ge(8, 5, 0);
-    return a < 6; // ≥ 9: ASSUMED fixed (a later major carries the fix); T1 row
+    return a < 6; // ≥ 9: ASSUMED fixed (a later major carries the fix)
 };
 /**
  * Maximum inbound WS frame size the SDK will JSON.parse. Frames larger than this drop the connection.
  * On a `ws` socket it is a byte limit on the whole message (`maxPayload`); the SDK's own check on
- * the global WebSocket path counts decoded characters. A the upstream curl kit server never sends a message
+ * the global WebSocket path counts decoded characters. A curl kit server never sends a message
  * near either (its frames are bounded by hello `limits.max_frame_bytes`, 1 MiB by default).
  */
 export const MAX_INBOUND_FRAME_BYTES = 16 * 1024 * 1024;
@@ -222,6 +224,13 @@ export async function openWebSocket(url, headers) {
 // `request.cancel` on the wire.
 /** Maximum buffered SSE events per stream before the SDK cancels the upstream and emits a `dropped` synthetic event. Protects against memory-DoS from hostile/fast upstreams. */
 export const SSE_EVENT_QUEUE_CAP = 4096;
+/**
+ * Default cap on response body bytes received but not yet read, per stream
+ * (64 MiB). The channel protocol has no flow control, so a consumer that stops
+ * reading would otherwise buffer the whole transfer in memory. Past the cap the
+ * SDK cancels the stream; see `ChannelOptions.maxBufferedBodyBytes`.
+ */
+export const DEFAULT_MAX_BUFFERED_BODY_BYTES = 64 * 1024 * 1024;
 // ---- binary frame format (negotiated via the `binary` channel option) -----
 //
 // Mirrors the Rust relay's framing in the upstream curl protocol. A binary
@@ -275,13 +284,17 @@ export class CurlChannelStream {
     end;
     /**
      * ReadableStream of body bytes for non-SSE responses (chunked). Only ONE of
-     * `bodyStream` or `body()` may be consumed — they share the same underlying
-     * source. Calling `body()` locks/drains the stream.
+     * `bodyStream` or `readBytes()` may be consumed — they share the same underlying
+     * source. Calling `readBytes()` locks/drains the stream.
      */
     bodyStream;
     /** Async iterable of typed SSE events (only meaningful when start.is_sse). */
     events;
-    /** Trigger server-side cancellation. */
+    /**
+     * Cancel the request: the stream settles at once with an `AbortError` and is
+     * forgotten locally; `request.cancel` goes on the wire only if the request
+     * was already sent. A no-op once the stream has finished.
+     */
     cancel;
     // ---- internal plumbing -----------------------------------------------
     /** @internal */ _streamId;
@@ -295,8 +308,19 @@ export class CurlChannelStream {
     /** @internal */ _errorBody;
     /** @internal */ _closeEvents;
     /** @internal */ _errorEvents;
-    constructor(streamId, sendCancel) {
+    /**
+     * @param sendCancel puts `request.cancel` on the wire (used on SSE queue
+     *   overflow, where buffered events must still reach the consumer).
+     * @param options internal wiring from `CurlChannel.request()`: `cancel` settles
+     *   the stream locally (defaults to `sendCancel`), `failWith` ends it with an
+     *   error (body buffer overflow), `maxBufferedBodyBytes` caps unread bytes.
+     */
+    constructor(streamId, sendCancel, options = {}) {
         this._streamId = streamId;
+        const cancel = options.cancel ?? sendCancel;
+        const maxBodyBytes = typeof options.maxBufferedBodyBytes === "number" && options.maxBufferedBodyBytes > 0
+            ? options.maxBufferedBodyBytes
+            : Infinity;
         let startResolve;
         let startReject;
         this.start = new Promise((res, rej) => {
@@ -326,19 +350,36 @@ export class CurlChannelStream {
                 bodyController = c;
             },
             cancel: () => {
-                // Caller dropped the stream; signal server-side cancel as well.
-                sendCancel();
+                // Caller dropped the stream; cancel the request as well.
+                cancel();
             },
         }, 
-        // CountQueuingStrategy with highWaterMark caps the internal buffer
-        // depth so a slow consumer doesn't accumulate unbounded chunks. When
-        // the buffer fills, the stream's `desiredSize` goes negative — the
-        // SDK's enqueue path doesn't observe this (no WS-level backpressure
-        // to the server), so this is a defense-in-depth limit, not a true
-        // backpressure handshake.
-        { highWaterMark: 64 });
+        // Byte-sized queue: `desiredSize` is the budget minus the unread bytes.
+        // The relay has no flow control, so the enqueue path below enforces the
+        // budget itself (cancel + error) instead of waiting for demand.
+        { highWaterMark: maxBodyBytes, size: (chunk) => chunk.byteLength });
         this.bodyStream = bodyStream;
-        this._enqueueBodyChunk = (chunk) => bodyController.enqueue(chunk);
+        let bodyOverflowed = false;
+        this._enqueueBodyChunk = (chunk) => {
+            if (bodyOverflowed)
+                return;
+            // A pending read() takes the chunk directly, so only bytes nobody is
+            // reading count against the budget.
+            bodyController.enqueue(chunk);
+            const room = bodyController.desiredSize;
+            if (room === null || room >= 0)
+                return;
+            bodyOverflowed = true;
+            const err = new ChannelError(`response body exceeded ${maxBodyBytes} unread bytes ` +
+                "(maxBufferedBodyBytes); the request was cancelled", "body_buffer_full", streamId);
+            if (options.failWith) {
+                options.failWith(err);
+            }
+            else {
+                this._errorBody(err);
+                sendCancel();
+            }
+        };
         this._closeBody = () => {
             try {
                 bodyController.close();
@@ -355,7 +396,7 @@ export class CurlChannelStream {
                 /* already closed */
             }
         };
-        // (body() is a lazy method, see below — defining as a method avoids
+        // (readBytes() is a lazy method, see below — defining as a method avoids
         // eagerly locking the stream at construction time.)
         // ----- typed SSE events queue (BOUNDED — see SSE_EVENT_QUEUE_CAP) -----
         // A slow consumer combined with a fast upstream would otherwise grow this
@@ -440,14 +481,14 @@ export class CurlChannelStream {
                 };
             },
         };
-        this.cancel = sendCancel;
+        this.cancel = cancel;
     }
     /**
      * Drain `bodyStream` into a single `Uint8Array`. Convenience for callers
      * that don't need streaming. Locks the stream — incompatible with
      * `bodyStream` direct consumption.
      */
-    async body() {
+    async readBytes() {
         // The server's `response.start.body_bytes` is the exact buffered body
         // length, so pre-allocate once and write chunks straight in — no
         // intermediate chunk array and no second concat pass in the common case.
@@ -503,7 +544,7 @@ export class CurlChannel {
     streams = new Map();
     // `helloPromise` settles EXACTLY ONCE: resolves on the first-ever successful
     // hello, rejects if the channel permanently closes before ever connecting.
-    // `CurlChannel.open()` / `ready()` await this — it is NEVER replaced, so a
+    // `CurlChannel.connect()` / `ready()` await this — it is NEVER replaced, so a
     // reconnect during the initial connect can't strand the original awaiter
     // `connectionReady` is the per-connection signal request()'s
     // deferred send waits on; it's renewed each (re)connect cycle so a request
@@ -544,6 +585,8 @@ export class CurlChannel {
     /** True once the server's `hello` confirmed `features.binary_frames`. */
     binaryNegotiated = false;
     warnedBinaryFrame = false;
+    /** Per-stream cap on unread body bytes (see `ChannelOptions.maxBufferedBodyBytes`). */
+    maxBufferedBodyBytes;
     constructor(options) {
         this.options = options;
         this.hooks = options.hooks ?? {};
@@ -563,6 +606,9 @@ export class CurlChannel {
         this.isInsecureTransport = options.url.startsWith("ws://");
         this.silenceInsecureWarning = options.silenceInsecureTransportWarning === true;
         this.wantBinary = options.binary !== false;
+        const maxBody = options.maxBufferedBodyBytes;
+        this.maxBufferedBodyBytes =
+            typeof maxBody === "number" && maxBody > 0 ? maxBody : DEFAULT_MAX_BUFFERED_BODY_BYTES;
         this.connectUrl = this.wantBinary
             ? options.url + (options.url.includes("?") ? "&" : "?") + "binary=true"
             : options.url;
@@ -583,7 +629,7 @@ export class CurlChannel {
         }
         catch (e) {
             // eslint-disable-next-line no-console
-            console.warn(`[the upstream curl kit SDK] channel hook '${String(name)}' threw; ignoring. ` +
+            console.warn(`[hoody-sdk] channel hook '${String(name)}' threw; ignoring. ` +
                 `${e instanceof Error ? e.message : String(e)}`);
         }
     }
@@ -725,14 +771,14 @@ export class CurlChannel {
         if (hasCredential) {
             this.warnedInsecure = true;
             // eslint-disable-next-line no-console
-            console.warn("[the upstream curl kit SDK] CurlChannel URL uses ws:// (plaintext). Credential fields " +
+            console.warn("[hoody-sdk] CurlChannel URL uses ws:// (plaintext). Credential fields " +
                 "(bearer_token / auth_password / cookie / session_id / Authorization header) " +
                 "are about to be sent in cleartext. Use wss:// in production. " +
                 "Pass `silenceInsecureTransportWarning: true` to suppress this warning.");
         }
     }
     /** Static opener; awaits the WebSocket open + `hello` frame before resolving. */
-    static async open(options) {
+    static async connect(options) {
         const ch = new CurlChannel(options);
         await ch.helloPromise;
         return ch;
@@ -751,17 +797,43 @@ export class CurlChannel {
             throw this.closeError ?? new ChannelError("channel closed by client", "cancelled");
         }
         const streamId = this.nextStreamId++;
+        // Set once `request.start` is on the wire. Before that the server knows
+        // nothing of this stream: a cancel frame would only earn an unknown-stream
+        // error, and the deferred send must simply not happen.
+        let dispatched = false;
         const sendCancel = () => {
-            if (this.ws.readyState === WS_OPEN) {
-                try {
-                    this.ws.send(JSON.stringify({ type: "request.cancel", stream_id: streamId }));
-                }
-                catch {
-                    /* ignore */
-                }
+            if (!dispatched)
+                return;
+            // `this.ws` is unset until the first socket opens.
+            const ws = this.ws;
+            if (ws === undefined || ws.readyState !== WS_OPEN)
+                return;
+            try {
+                ws.send(JSON.stringify({ type: "request.cancel", stream_id: streamId }));
+            }
+            catch {
+                /* ignore */
             }
         };
-        const stream = new CurlChannelStream(streamId, sendCancel);
+        // The one local cancellation routine (explicit cancel, AbortSignal,
+        // timeout, body overflow). It settles and forgets the stream FIRST, so no
+        // transport state can leave the caller waiting or let the deferred send
+        // fire, and only then tells the server.
+        const cancelWith = (err) => {
+            if (this.streams.get(streamId) !== stream)
+                return; // already finished
+            this.streams.delete(streamId);
+            stream._rejectStart(err);
+            stream._rejectEnd(err);
+            stream._errorBody(err);
+            stream._errorEvents(err);
+            sendCancel();
+        };
+        const stream = new CurlChannelStream(streamId, sendCancel, {
+            cancel: () => cancelWith(createAbortError("The operation was cancelled")),
+            failWith: cancelWith,
+            maxBufferedBodyBytes: this.maxBufferedBodyBytes,
+        });
         this.streams.set(streamId, stream);
         this.maybeWarnInsecureTransport(req);
         this.callHook("onRequestStart", {
@@ -774,13 +846,7 @@ export class CurlChannel {
         // window. Cleared once stream.start resolves.
         if (opts.timeoutMs !== undefined && opts.timeoutMs > 0) {
             const timer = setTimeout(() => {
-                const err = createAbortError(`request timed out after ${opts.timeoutMs}ms`);
-                sendCancel();
-                stream._rejectStart(err);
-                stream._rejectEnd(err);
-                stream._errorBody(err);
-                stream._errorEvents(err);
-                this.streams.delete(streamId);
+                cancelWith(createAbortError(`request timed out after ${opts.timeoutMs}ms`));
             }, opts.timeoutMs);
             stream.start.then(() => clearTimeout(timer), () => clearTimeout(timer));
         }
@@ -790,13 +856,7 @@ export class CurlChannel {
                 // Fire on next tick so caller has the stream object first.
                 const reason = opts.signal.reason;
                 queueMicrotask(() => {
-                    sendCancel();
-                    const err = createAbortError("The operation was aborted", reason);
-                    stream._rejectStart(err);
-                    stream._rejectEnd(err);
-                    stream._errorBody(err);
-                    stream._errorEvents(err);
-                    this.streams.delete(streamId);
+                    cancelWith(createAbortError("The operation was aborted", reason));
                 });
             }
             else {
@@ -809,13 +869,7 @@ export class CurlChannel {
                     // `await stream.start` would hang forever. Spec says fetch should
                     // reject with AbortError on signal abort regardless of network.
                     const reason = signal.reason;
-                    sendCancel();
-                    const err = createAbortError("The operation was aborted", reason);
-                    stream._rejectStart(err);
-                    stream._rejectEnd(err);
-                    stream._errorBody(err);
-                    stream._errorEvents(err);
-                    this.streams.delete(streamId);
+                    cancelWith(createAbortError("The operation was aborted", reason));
                 };
                 signal.addEventListener("abort", onAbort, { once: true });
                 // `end` settles on every terminal path. Without this a signal reused
@@ -856,6 +910,7 @@ export class CurlChannel {
                 return;
             }
             try {
+                dispatched = true;
                 this.ws.send(JSON.stringify(binBody
                     ? { type: "request.start", stream_id: streamId, request: jsonReq, binary_body: true }
                     : { type: "request.start", stream_id: streamId, request: jsonReq }));
@@ -916,7 +971,7 @@ export class CurlChannel {
             s._errorEvents(err);
         }
         this.streams.clear();
-        // Settle both readiness promises so anything awaiting open()/ready() or a
+        // Settle both readiness promises so anything awaiting connect()/ready() or a
         // deferred request send rejects instead of hanging.
         if (!this.helloSettled) {
             this.helloSettled = true;
@@ -1300,7 +1355,7 @@ export class CurlChannel {
             return;
         this.warnedBinaryFrame = true;
         // eslint-disable-next-line no-console
-        console.warn(`[the upstream curl kit SDK] ${reason}; binary frame ignored.`);
+        console.warn(`[hoody-sdk] ${reason}; binary frame ignored.`);
     }
     /** Normalize an inbound binary WS payload to bytes, then route it.
      *
@@ -1362,7 +1417,7 @@ export class CurlChannel {
                 // additions within v2 (we already handle unknown JSON fields).
                 if (msg.version !== 2) {
                     // eslint-disable-next-line no-console
-                    console.warn(`[the upstream curl kit SDK] CurlChannel hello version ${msg.version} is not the ` +
+                    console.warn(`[hoody-sdk] CurlChannel hello version ${msg.version} is not the ` +
                         `version this SDK was built against (2). Behavior may diverge.`);
                 }
                 const hello = {
@@ -1503,7 +1558,7 @@ export class CurlChannel {
                 if (!this.warnedUnknownTypes.has(String(unknownType))) {
                     this.warnedUnknownTypes.add(String(unknownType));
                     // eslint-disable-next-line no-console
-                    console.warn(`[the upstream curl kit SDK] Unknown channel message type: ${String(unknownType)}. ` +
+                    console.warn(`[hoody-sdk] Unknown channel message type: ${String(unknownType)}. ` +
                         `Server may be on a newer protocol version. Frame ignored.`);
                 }
                 return;
@@ -1526,36 +1581,82 @@ function base64Decode(s) {
         out[i] = bin.charCodeAt(i);
     return out;
 }
-/** Build a fetch-shaped function bound to a the upstream curl kit channel. */
+/** Build a fetch-shaped function bound to a curl kit channel. */
 export function createCurlFetch(options) {
     let channel = options.channel ?? null;
-    let openPromise = null;
+    let openStarted = false;
+    let openError = undefined;
+    let openFailed = false;
     const sseMode = options.sseMode ?? "stream";
     const defaults = options.defaults ?? {};
     const requestEncoding = options.requestEncoding ?? "none";
-    const getChannel = async () => {
-        if (channel)
-            return channel;
-        if (!openPromise)
-            openPromise = CurlChannel.open(options);
-        channel = await openPromise;
-        return channel;
+    const openWaiters = new Set();
+    const startOpen = () => {
+        if (openStarted)
+            return;
+        openStarted = true;
+        CurlChannel.connect(options).then((ch) => {
+            channel = ch;
+            for (const w of [...openWaiters])
+                w.resolve(ch);
+            openWaiters.clear();
+        }, (e) => {
+            // As before: a failed open is final for this fetch function.
+            openFailed = true;
+            openError = e;
+            for (const w of [...openWaiters])
+                w.reject(e);
+            openWaiters.clear();
+        });
     };
-    return async function fetch(input, init = {}) {
-        // Build (and validate) first: an invalid request is a TypeError whether
-        // or not a channel can be opened, as with WHATWG fetch.
-        const req = await buildCurlRequest(input, init, defaults);
-        const ch = await getChannel();
-        if (requestEncoding === "gzip") {
-            await applyRequestGzip(req);
-        }
+    /** Wait for the shared channel; an abort ends only this caller's wait. */
+    const getChannel = (signal) => {
+        if (channel)
+            return Promise.resolve(channel);
+        if (openFailed)
+            return Promise.reject(openError);
+        if (signal?.aborted)
+            return Promise.reject(abortErrorFor(signal));
+        startOpen();
+        return new Promise((resolve, reject) => {
+            const onAbort = () => {
+                openWaiters.delete(waiter);
+                reject(abortErrorFor(signal));
+            };
+            const waiter = {
+                resolve: (ch) => {
+                    signal?.removeEventListener("abort", onAbort);
+                    resolve(ch);
+                },
+                reject: (e) => {
+                    signal?.removeEventListener("abort", onAbort);
+                    reject(e);
+                },
+            };
+            openWaiters.add(waiter);
+            signal?.addEventListener("abort", onAbort, { once: true });
+        });
+    };
+    const fetch = async function fetch(input, init = {}) {
         // Precedence per fetch spec: init.signal overrides input.signal when
         // input is a Request. If neither is set, no abort signal is wired.
-        const requestOpts = {};
+        // Resolved first so every wait below (body collection, channel opening,
+        // compression) honours it.
         const inputSignal = typeof input === "object" && input !== null && "signal" in input && input instanceof Request
             ? input.signal
             : undefined;
-        const signal = init.signal ?? inputSignal;
+        const signal = init.signal ?? inputSignal ?? undefined;
+        // Build (and validate) first: an invalid request is a TypeError whether
+        // or not a channel can be opened, and whether or not the signal is
+        // already aborted, as with WHATWG fetch.
+        const req = await buildCurlRequest(input, init, defaults, signal);
+        // The channel may be shared and still opening: an abort ends only this
+        // caller's wait, never the shared open.
+        const ch = await getChannel(signal);
+        if (requestEncoding === "gzip") {
+            await raceAbort(applyRequestGzip(req), signal);
+        }
+        const requestOpts = {};
         if (signal)
             requestOpts.signal = signal;
         const stream = ch.request(req, requestOpts);
@@ -1571,7 +1672,7 @@ export function createCurlFetch(options) {
                 stream.cancel();
                 throw new TypeError(`fetch: redirect: 'error' but upstream returned ${start.status_code}`);
             }
-            return buildResponse(start, stream, sseMode);
+            return buildResponse(start, stream, sseMode, req.method ?? "GET", req.url);
         }
         catch (e) {
             // start failed → map to a useful Error.
@@ -1581,8 +1682,14 @@ export function createCurlFetch(options) {
             throw e;
         }
     };
+    // @internal test hook: callers still waiting for the shared channel open.
+    Object.defineProperty(fetch, "_pendingOpenWaiters", {
+        get: () => openWaiters.size,
+        enumerable: false,
+    });
+    return fetch;
 }
-async function buildCurlRequest(input, init, defaults) {
+async function buildCurlRequest(input, init, defaults, signal) {
     // Resolve URL + extract any prebuilt headers/method/body from `input` when
     // it's a `Request`. Per-call `init` overrides `input` per fetch spec.
     let url;
@@ -1666,8 +1773,11 @@ async function buildCurlRequest(input, init, defaults) {
         req.follow_redirects = false;
         req.max_redirects = 0;
     }
+    // Validation is done; from here on an aborted signal wins (WHATWG fetch
+    // rejects a pre-aborted call before reading the body).
+    throwIfAborted(signal);
     if (body !== null && body !== undefined) {
-        const resolved = await bodyToData(body);
+        const resolved = await bodyToData(body, signal);
         if ("data" in resolved) {
             req.data = resolved.data;
         }
@@ -1750,7 +1860,7 @@ async function gzipBytes(bytes) {
  * Rejected with TypeError: FormData containing File entries (cannot be
  * represented over `CurlRequest`); any non-standard BodyInit.
  */
-async function bodyToData(body) {
+async function bodyToData(body, signal) {
     if (typeof body === "string")
         return { data: body };
     if (body instanceof URLSearchParams)
@@ -1784,17 +1894,25 @@ async function bodyToData(body) {
         bytes = new Uint8Array(body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength));
     }
     else if (body instanceof Blob) {
-        bytes = new Uint8Array(await body.arrayBuffer());
+        bytes = new Uint8Array(await raceAbort(body.arrayBuffer(), signal));
     }
     else if (body instanceof ReadableStream) {
         const reader = body.getReader();
         const chunks = [];
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done)
-                break;
-            chunks.push(value);
+        try {
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                // A body stream may never end: each read gives way to an abort.
+                const { done, value } = await raceAbort(reader.read(), signal);
+                if (done)
+                    break;
+                chunks.push(value);
+            }
+        }
+        catch (e) {
+            // Release the caller's body source on abort or read failure.
+            reader.cancel(e).catch(() => { });
+            throw e;
         }
         bytes = concat(chunks);
     }
@@ -1811,14 +1929,49 @@ async function bodyToData(body) {
     const asText = tryDecodeUtf8(bytes);
     return asText !== null ? { data: asText } : { data_binary: bytes };
 }
-/** Strict UTF-8 decode; returns `null` on any invalid byte sequence. */
+/** Strict UTF-8 decode; returns `null` on any invalid byte sequence. A
+ * leading BOM is kept (`ignoreBOM`), so re-encoding the text gives back the
+ * exact original bytes. */
 function tryDecodeUtf8(bytes) {
     try {
-        return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+        return new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
     }
     catch {
         return null;
     }
+}
+/** The error a call aborted through `signal` rejects with (same shape as
+ * `CurlChannel.request()` uses for an abort). */
+function abortErrorFor(signal) {
+    return createAbortError("The operation was aborted", signal.reason);
+}
+function throwIfAborted(signal) {
+    if (signal?.aborted)
+        throw abortErrorFor(signal);
+}
+/**
+ * Wait for `p`, but reject with an AbortError as soon as `signal` aborts. `p`
+ * itself keeps running (it may be shared, like a channel being opened); its
+ * later rejection is swallowed here.
+ */
+function raceAbort(p, signal) {
+    if (!signal)
+        return p;
+    if (signal.aborted) {
+        p.catch(() => { });
+        return Promise.reject(abortErrorFor(signal));
+    }
+    return new Promise((resolve, reject) => {
+        const onAbort = () => reject(abortErrorFor(signal));
+        signal.addEventListener("abort", onAbort, { once: true });
+        p.then((v) => {
+            signal.removeEventListener("abort", onAbort);
+            resolve(v);
+        }, (e) => {
+            signal.removeEventListener("abort", onAbort);
+            reject(e);
+        });
+    });
 }
 function concat(chunks) {
     const total = chunks.reduce((n, c) => n + c.length, 0);
@@ -1858,7 +2011,35 @@ const HTTP_STATUS_TEXT = {
     507: "Insufficient Storage", 508: "Loop Detected", 510: "Not Extended",
     511: "Network Authentication Required",
 };
-function buildResponse(start, stream, sseMode) {
+/** Statuses whose Response must have a null body (WHATWG fetch "null body
+ * status"); `new Response(stream, { status })` throws for them. */
+const NULL_BODY_STATUSES = new Set([101, 103, 204, 205, 304]);
+/**
+ * `Response.url`: the relay's `effective_url` (the post-redirect URL) when it
+ * is an absolute http(s) URL, else the request URL. An empty or unusable value
+ * comes from an older relay that copied it from an upstream header on
+ * streamed and SSE responses; the request URL is the best known answer then.
+ * The fragment is dropped, as fetch does.
+ */
+function responseUrl(effectiveUrl, requestUrl) {
+    const absolute = (s) => {
+        if (!s)
+            return null;
+        try {
+            const u = new URL(s);
+            return u.protocol === "http:" || u.protocol === "https:" ? u : null;
+        }
+        catch {
+            return null;
+        }
+    };
+    const u = absolute(effectiveUrl) ?? absolute(requestUrl);
+    if (!u)
+        return requestUrl;
+    u.hash = "";
+    return u.href;
+}
+function buildResponse(start, stream, sseMode, method, requestUrl) {
     const headers = new Headers();
     for (const h of start.raw_headers) {
         try {
@@ -1880,7 +2061,7 @@ function buildResponse(start, stream, sseMode) {
     let warnedSealedResponse = false;
     const finalize = (r) => {
         const fields = [
-            ["url", start.effective_url || ""],
+            ["url", responseUrl(start.effective_url, requestUrl)],
             ["type", "basic"],
         ];
         for (const [name, value] of fields) {
@@ -1895,7 +2076,7 @@ function buildResponse(start, stream, sseMode) {
                 if (!warnedSealedResponse) {
                     warnedSealedResponse = true;
                     // eslint-disable-next-line no-console
-                    console.warn(`[the upstream curl kit SDK] Response.${name} cannot be set on this runtime ` +
+                    console.warn(`[hoody-sdk] Response.${name} cannot be set on this runtime ` +
                         `(sealed Response: ${e instanceof Error ? e.message : String(e)}). ` +
                         "Some Response getters will return runtime defaults. Read " +
                         "start.effective_url via the low-level CurlChannel.request() API if " +
@@ -1905,6 +2086,11 @@ function buildResponse(start, stream, sseMode) {
         }
         return r;
     };
+    // HEAD and null-body statuses (204/205/304) have no body per fetch. The
+    // relay sends none for them; the channel stream still ends on its own.
+    if (method.toUpperCase() === "HEAD" || NULL_BODY_STATUSES.has(start.status_code)) {
+        return finalize(new Response(null, { status: start.status_code, statusText, headers }));
+    }
     // For SSE-promoted responses in "stream" mode, synthesize a body that
     // serializes the typed events back to standards-compliant SSE wire bytes.
     // For "buffered", drain all events first.
@@ -1912,19 +2098,22 @@ function buildResponse(start, stream, sseMode) {
         headers.set("Content-Type", "text/event-stream");
         headers.set("Cache-Control", "no-cache, no-transform");
         if (sseMode === "stream") {
+            // Pull one event per demand. Draining `stream.events` eagerly would
+            // move every event into this body's unbounded queue and bypass the
+            // event queue's SSE_EVENT_QUEUE_CAP overflow protection.
+            const events = stream.events[Symbol.asyncIterator]();
             const body = new ReadableStream({
-                start(controller) {
-                    (async () => {
-                        try {
-                            for await (const ev of stream.events) {
-                                controller.enqueue(serializeSseEvent(ev));
-                            }
+                async pull(controller) {
+                    try {
+                        const r = await events.next();
+                        if (r.done)
                             controller.close();
-                        }
-                        catch (e) {
-                            controller.error(e);
-                        }
-                    })();
+                        else
+                            controller.enqueue(serializeSseEvent(r.value));
+                    }
+                    catch (e) {
+                        controller.error(e);
+                    }
                 },
                 cancel: () => stream.cancel(),
             });
@@ -2020,3 +2209,10 @@ function serializeSseEvent(ev) {
     lines.push("", "");
     return SSE_ENCODER.encode(lines.join("\n"));
 }
+// ════════════════════════════════════════════════════════════════════════
+// hoody-sdk: retired method names
+// ════════════════════════════════════════════════════════════════════════
+// Renamed in the naming freeze; each refuses, naming the new method.
+import { retireMethods } from "./retired-accessor.js";
+retireMethods(CurlChannel, "CurlChannel", { open: "CurlChannel.connect()" });
+retireMethods(CurlChannelStream.prototype, "CurlChannelStream", { body: "readBytes()" });

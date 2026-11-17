@@ -9,16 +9,21 @@ import { setupAutoForwarding } from "./tunnel-http-pump.js";
 import { FrameType } from "./tunnel-protocol-types.js";
 import { decodeFrames } from "./tunnel-protocol-codec.js";
 import { handleTcpStream } from "./tunnel-http-pump.js";
+import { withAsyncDispose } from "./async-dispose.js";
+import { retireAccessors } from "./retired-accessor.js";
+import { refuseRetiredOptions } from "../generated/errors.js";
+/** The `token` option is refused; the proxy credential is `kitAuth`. */
+const RETIRED_TUNNEL_OPTIONS = [["token", "kitAuth"]];
 export { TunnelSessionError } from "./tunnel-session.js";
 const CONNECT_PATH = "/api/v1/tunnel/connect";
 /**
- * The tunnel WebSocket URL for a `container` option: a hostname, or an
+ * The tunnel WebSocket URL for a `computer` option: a hostname, or an
  * http(s)/ws(s) URL of the tunnel kit. A DNS name gets `wss://`, since the
  * public edge serves TLS only. Loopback, IP literals and single-label hosts
  * (a kit reached directly on a private network) keep plain `ws://`.
  */
-export function tunnelConnectUrl(container) {
-    const raw = container.trim();
+export function tunnelConnectUrl(computer) {
+    const raw = computer.trim();
     if (/^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) {
         const u = new URL(raw);
         if (u.protocol === "https:")
@@ -26,7 +31,7 @@ export function tunnelConnectUrl(container) {
         else if (u.protocol === "http:")
             u.protocol = "ws:";
         else if (u.protocol !== "wss:" && u.protocol !== "ws:") {
-            throw new Error(`tunnel: unsupported URL scheme "${u.protocol}" in \`container\``);
+            throw new Error(`tunnel: unsupported URL scheme "${u.protocol}" in \`computer\``);
         }
         const path = u.pathname.replace(/\/+$/, "");
         u.pathname = path.endsWith(CONNECT_PATH) ? path : path + CONNECT_PATH;
@@ -42,16 +47,16 @@ export function tunnelConnectUrl(container) {
     return `${direct ? "ws" : "wss"}://${host}${CONNECT_PATH}`;
 }
 /**
- * The public URL of a container port exposed through the tunnel kit at
- * `kitUrl` (any form `container` or `url` accepts): the kit's host
- * `<project>-<container>-tunnel-<n>.<server>.<domain>` gives
- * `https://<project>-<container>-http-<port>.<server>.<domain>`, the proxy's
+ * The public URL of a computer port exposed through the tunnel kit at
+ * `kitUrl` (any form `computer` or `url` accepts): the kit's host
+ * `<project>-<computer>-tunnel-<n>.<server>.<domain>` gives
+ * `https://<project>-<computer>-http-<port>.<server>.<domain>`, the proxy's
  * route to that port (kit catalog `http-{port}`). For the BIND_OK of a kit
  * run without HOODY_TUNNEL_PUBLIC_URL_PATTERN, whose `publicUrl` is null.
  * Undefined for a host of any other shape (a kit reached directly).
  */
-export function exposedPortUrl(kitUrl, containerPort) {
-    if (!Number.isInteger(containerPort) || containerPort < 1 || containerPort > 65535)
+export function exposedPortUrl(kitUrl, computerPort) {
+    if (!Number.isInteger(computerPort) || computerPort < 1 || computerPort > 65535)
         return undefined;
     const raw = kitUrl.trim();
     let hostname;
@@ -69,19 +74,20 @@ export function exposedPortUrl(kitUrl, containerPort) {
     const rest = hostname.slice(dot + 1);
     if (!label || !rest.includes("."))
         return undefined;
-    return `https://${label[1]}-http-${containerPort}.${rest}`;
+    return `https://${label[1]}-http-${computerPort}.${rest}`;
 }
 /**
  * High-level convenience: connect + expose in one call.
  *
- * Use `containerPort: 0` for auto-assigned random port.
+ * Use `computerPort: 0` for auto-assigned random port.
  * Returns the public URL in `handle.publicUrl`.
  */
 export async function expose(opts) {
-    if (!opts.url && !opts.container) {
-        throw new Error("tunnelExpose: either `url` or `container` is required");
+    refuseRetiredOptions(opts, "exposeTunnel", RETIRED_TUNNEL_OPTIONS);
+    if (!opts.url && !opts.computer) {
+        throw new Error("exposeTunnel: either `url` or `computer` is required");
     }
-    const url = opts.url ?? tunnelConnectUrl(opts.container);
+    const url = opts.url ?? tunnelConnectUrl(opts.computer);
     const session = new TunnelSession({ url, ...(opts.kitAuth ? { kitAuth: opts.kitAuth } : {}) });
     // Install forwarding BEFORE connect() and bind(): a STREAM_OPEN batched
     // with (or arriving immediately after) BIND_OK would otherwise reach the
@@ -93,20 +99,17 @@ export async function expose(opts) {
         const bind = await session.bind({
             kind: "http",
             mode: "expose",
-            containerPort: opts.containerPort,
+            computerPort: opts.computerPort,
             ...(opts.takeover !== undefined && { takeover: opts.takeover }),
         });
-        const handle = {
+        const handle = withAsyncDispose({
             session,
             bind,
-            publicUrl: bind.publicUrl || exposedPortUrl(url, bind.containerPort),
+            publicUrl: bind.publicUrl || exposedPortUrl(url, bind.computerPort),
             async close() {
                 await session.close();
             },
-            async [Symbol.asyncDispose]() {
-                await session.close();
-            },
-        };
+        }, () => session.close());
         return handle;
     }
     catch (err) {
@@ -184,10 +187,11 @@ async function connectResume(session, control) {
  * when there was no HELLO_OK (unreachable, or "resume grace expired").
  */
 export async function resumeExpose(opts) {
-    if (!opts.url && !opts.container) {
-        throw new Error("tunnelResume: either `url` or `container` is required");
+    refuseRetiredOptions(opts, "resumeTunnelExpose", RETIRED_TUNNEL_OPTIONS);
+    if (!opts.url && !opts.computer) {
+        throw new Error("tunnelResume: either `url` or `computer` is required");
     }
-    const url = opts.url ?? tunnelConnectUrl(opts.container);
+    const url = opts.url ?? tunnelConnectUrl(opts.computer);
     const session = new TunnelSession({
         url,
         ...(opts.kitAuth ? { kitAuth: opts.kitAuth } : {}),
@@ -199,23 +203,20 @@ export async function resumeExpose(opts) {
     setupAutoForwarding(session, opts.to);
     try {
         await connectResume(session, opts);
-        const hello = session.hello;
+        const hello = session.getHello();
         if (!hello?.resumed) {
             await session.close().catch(() => { });
             return null;
         }
-        const binds = hello.resumedBinds.map((b) => b.mode === "expose" ? { ...b, publicUrl: exposedPortUrl(url, b.containerPort) } : { ...b });
-        return {
+        const binds = hello.resumedBinds.map((b) => b.mode === "expose" ? { ...b, publicUrl: exposedPortUrl(url, b.computerPort) } : { ...b });
+        return withAsyncDispose({
             session,
             hello,
             binds,
             async close() {
                 await session.close();
             },
-            async [Symbol.asyncDispose]() {
-                await session.close();
-            },
-        };
+        }, () => session.close());
     }
     catch (err) {
         await session.close().catch(() => { });
@@ -226,10 +227,11 @@ export async function resumeExpose(opts) {
  * High-level convenience: connect + pull in one call.
  */
 export async function pull(opts) {
-    if (!opts.url && !opts.container) {
-        throw new Error("tunnelPull: either `url` or `container` is required");
+    refuseRetiredOptions(opts, "pullTunnel", RETIRED_TUNNEL_OPTIONS);
+    if (!opts.url && !opts.computer) {
+        throw new Error("pullTunnel: either `url` or `computer` is required");
     }
-    const url = opts.url ?? tunnelConnectUrl(opts.container);
+    const url = opts.url ?? tunnelConnectUrl(opts.computer);
     const session = new TunnelSession({ url, ...(opts.kitAuth ? { kitAuth: opts.kitAuth } : {}) });
     try {
         await session.connect();
@@ -283,10 +285,10 @@ export async function pull(opts) {
         const bind = await session.bind({
             kind: "tcp",
             mode: "pull",
-            containerPort: opts.containerPort,
+            computerPort: opts.computerPort,
             ...(opts.host !== undefined && { host: opts.host }),
         });
-        return {
+        return withAsyncDispose({
             session,
             bind,
             // Propagate bind.publicUrl (parity with expose()). Without this,
@@ -294,8 +296,7 @@ export async function pull(opts) {
             // result carries a public URL.
             publicUrl: bind.publicUrl,
             async close() { await session.close(); },
-            async [Symbol.asyncDispose]() { await session.close(); },
-        };
+        }, () => session.close());
     }
     catch (err) {
         await session.close().catch(() => { });
@@ -331,10 +332,11 @@ function pullRouter(session, to) {
  * was no HELLO_OK.
  */
 export async function resumePull(opts) {
-    if (!opts.url && !opts.container) {
-        throw new Error("tunnelResume: either `url` or `container` is required");
+    refuseRetiredOptions(opts, "resumeTunnelPull", RETIRED_TUNNEL_OPTIONS);
+    if (!opts.url && !opts.computer) {
+        throw new Error("tunnelResume: either `url` or `computer` is required");
     }
-    const url = opts.url ?? tunnelConnectUrl(opts.container);
+    const url = opts.url ?? tunnelConnectUrl(opts.computer);
     const session = new TunnelSession({
         url,
         ...(opts.kitAuth ? { kitAuth: opts.kitAuth } : {}),
@@ -345,18 +347,17 @@ export async function resumePull(opts) {
     session.setInboundRouter(pullRouter(session, opts.to));
     try {
         await connectResume(session, opts);
-        const hello = session.hello;
+        const hello = session.getHello();
         if (!hello?.resumed) {
             await session.close().catch(() => { });
             return null;
         }
-        return {
+        return withAsyncDispose({
             session,
             hello,
             binds: hello.resumedBinds.map((b) => ({ ...b })),
             async close() { await session.close(); },
-            async [Symbol.asyncDispose]() { await session.close(); },
-        };
+        }, () => session.close());
     }
     catch (err) {
         await session.close().catch(() => { });
@@ -373,14 +374,14 @@ export const TUNNEL_RESUME_WINDOW_MS = 60_000;
  * a deliberate close, or a drop that could not be resumed in time.
  */
 export function keepTunnelAlive(handle, opts) {
-    if (!opts.url && !opts.container) {
-        throw new Error("keepTunnelAlive: either `url` or `container` is required");
+    if (!opts.url && !opts.computer) {
+        throw new Error("keepTunnelAlive: either `url` or `computer` is required");
     }
-    const url = opts.url ?? tunnelConnectUrl(opts.container);
+    const url = opts.url ?? tunnelConnectUrl(opts.computer);
     const windowMs = opts.resumeWindowMs ?? TUNNEL_RESUME_WINDOW_MS;
     const maxDelay = opts.maxRetryDelayMs ?? 5_000;
     let current = handle;
-    let sessionId = handle.session.id;
+    let sessionId = handle.session.getId();
     let closedByCaller = false;
     let over = false;
     let wake = null;
@@ -437,7 +438,7 @@ export function keepTunnelAlive(handle, opts) {
                         return;
                     }
                     current = resumed;
-                    sessionId = resumed.session.id;
+                    sessionId = resumed.session.getId();
                     watch(resumed.session);
                     try {
                         opts.onResumed?.(resumed.session);
@@ -497,7 +498,7 @@ export function keepTunnelAlive(handle, opts) {
     const watch = (session) => {
         // A session that ended before this point already told its listeners; one
         // registered now would wait forever. Its recorded end is acted on instead.
-        const already = session.closeInfo;
+        const already = session.getCloseInfo();
         if (already) {
             closed(session, already);
             return;
@@ -505,8 +506,9 @@ export function keepTunnelAlive(handle, opts) {
         session.onClose((info) => closed(session, info));
     };
     watch(handle.session);
-    return {
-        get session() { return current.session; },
+    // The getter `getSession()` replaced refuses, naming the method.
+    return retireAccessors({
+        getSession() { return current.session; },
         ended,
         async close() {
             closedByCaller = true;
@@ -523,13 +525,14 @@ export function keepTunnelAlive(handle, opts) {
                 end({ deliberate: true, reason: "closed by client" });
             }
         },
-    };
+    }, "KeptTunnel", { session: "getSession()" });
 }
 /**
  * High-level convenience: start a local Bun.serve + connect + expose.
  * Bun only: it runs the handler with `Bun.serve`.
  */
 export async function serve(opts) {
+    refuseRetiredOptions(opts, "serveTunnel", RETIRED_TUNNEL_OPTIONS);
     if (typeof Bun === "undefined") {
         throw new Error("tunnel.serve() requires Bun (it runs the handler with Bun.serve). "
             + "On Node, start your own server with http.createServer() and pass its port to expose().");
@@ -545,21 +548,18 @@ export async function serve(opts) {
             ...opts,
             to: { host: "127.0.0.1", port: localPort },
         });
-        return {
+        const close = async () => {
+            server.stop(true);
+            await handle.close();
+        };
+        return withAsyncDispose({
             ...handle,
             // If the kit assigned a public URL (tunnel is exposed externally),
             // use that. Otherwise fall back to the local server URL — NOT
-            // opts.containerPort (which is the *container* port, not local).
+            // opts.computerPort (which is the *computer* port, not local).
             url: handle.publicUrl ?? `http://127.0.0.1:${localPort}`,
-            async close() {
-                server.stop(true);
-                await handle.close();
-            },
-            async [Symbol.asyncDispose]() {
-                server.stop(true);
-                await handle.close();
-            },
-        };
+            close,
+        }, close);
     }
     catch (err) {
         server.stop(true);

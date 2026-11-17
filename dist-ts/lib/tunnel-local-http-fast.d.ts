@@ -82,6 +82,8 @@ declare class TargetPool {
     }>;
     destroy(): void;
 }
+/** The connection pool for the local target `host`:`port`, created on first use and shared by every later call for that pair. */
 export declare function getFastPool(host: string, port: number): TargetPool;
+/** Destroy every pool `getFastPool()` created, closing their sockets, and forget them. */
 export declare function destroyAllFastPools(): void;
 export {};

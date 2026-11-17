@@ -50,13 +50,18 @@ export interface NotificationPresenter {
     initialize(): Promise<boolean>;
     show(notification: ParsedNotification): Promise<void>;
     dispose(): void;
-    readonly ready: boolean;
+    isReady(): boolean;
 }
 export type NotificationServerMessage = {
     type: 'notification';
     display: string;
     data: unknown;
 };
+/**
+ * Turn one notification stream message into a `ParsedNotification`, keeping only fields of the expected type.
+ * `iconUrl` is set only when the message says it has an icon: an absolute `icon_url` as it is, a relative one
+ * joined to `baseUrl` when one is given. Throws a ValidationError when the message has no integer `id`.
+ */
 export declare function parseNotificationData(message: NotificationServerMessage, baseUrl?: string): ParsedNotification;
 /**
  * Create a notification presenter for browser environments.

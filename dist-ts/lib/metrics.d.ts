@@ -7,9 +7,9 @@
  *   Object.defineProperty -> return modified clone (original response untouched).
  *
  * Why this exists:
- * Some container CPU payloads expose a cumulative CPU time ratio as
+ * Some computer CPU payloads expose a cumulative CPU time ratio as
  * `usage_percent`, which can grow far beyond sane percentage ranges (e.g. 50000%).
- * These helpers detect such broken formulas, normalize them using delta-sampling
+ * These helpers detect such cumulative values, normalize them using delta-sampling
  * or uptime-based fallbacks, and attach friendly `metrics_human` / `metrics_human_summary`
  * fields while preserving raw values for debugging.
  *
@@ -21,18 +21,18 @@
  *   server schemas can drift, so every field access is guarded.
  */
 /**
- * Entry point for single-container stats API responses.
+ * Entry point for single-computer stats API responses.
  *
  * Orchestration: clones the response, extracts the best server/client reference
  * timestamp, normalizes CPU + memory, attaches lazy `metrics_human` getter,
  * returns the modified clone. The original response object is never mutated.
  */
-export declare function normalizeContainerStatsResponse<T>(response: T): T;
+export declare function normalizeComputerStatsResponse<T>(response: T): T;
 /**
- * Entry point for project-level (multi-container) stats API responses.
+ * Entry point for project-level (multi-computer) stats API responses.
  *
- * Orchestration: clones the response, normalizes each container in `data.stats[]`,
+ * Orchestration: clones the response, normalizes each computer in `data.stats[]`,
  * then attaches a lazy `metrics_human_summary` getter on `data` that aggregates
- * totals/averages across all containers (CPU avg, memory sum, disk sum, network sum).
+ * totals/averages across all computers (CPU avg, memory sum, disk sum, network sum).
  */
 export declare function normalizeProjectStatsResponse<T>(response: T): T;

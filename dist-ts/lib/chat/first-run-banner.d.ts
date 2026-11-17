@@ -10,6 +10,7 @@
  * again for this user. The marker is a UX gate, NOT a privacy guarantee
  * — privacy is enforced by `--private` / `HOODY_CHAT_PRIVATE=1` / `/private`.
  */
+/** True when the first-run banner's marker file exists, so the banner has already been shown to this user. */
 export declare function hasSeenBanner(): boolean;
 export interface ShowBannerOptions {
     /** Writable stream to emit to (defaults to process.stdout). */

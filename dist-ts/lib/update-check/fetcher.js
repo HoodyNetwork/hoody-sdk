@@ -11,6 +11,7 @@
  * jittered. Neither retries on: DNS NXDOMAIN, HTTP 401/403/404, an exhausted
  * rate-limit quota, or 2xx with a malformed body.
  */
+import { retireAccessors } from '../retired-accessor.js';
 /** Retry-After header floor (seconds). */
 export const RETRY_AFTER_MIN_SECONDS = 1;
 /** Retry-After header ceiling (seconds) — prevents server-induced long waits. */
@@ -33,6 +34,7 @@ export const BACKGROUND_TOTAL_TIMEOUT_MS = 30_000;
  * must be rejected before we allocate a huge buffer.
  */
 export const MAX_RESPONSE_BYTES = 256 * 1024;
+/** A failed update-check request. `kind` tells a network failure, a non-2xx answer, a timeout and a caller abort apart. */
 export class FetchError extends Error {
     /**
      * Machine-readable class:
@@ -73,12 +75,14 @@ export class FetchError extends Error {
      * transient error. Such a failure must NOT be retried against the same
      * source — the caller should fall through to the next one.
      */
-    get isRateLimited() {
+    isRateLimitExhausted() {
         return this.kind === 'http'
             && (this.status === 403 || this.status === 429)
             && this.rateLimitRemaining === 0;
     }
 }
+// `isRateLimited` shipped as a getter; it refuses now, naming the method.
+retireAccessors(FetchError.prototype, 'FetchError', { isRateLimited: 'isRateLimitExhausted()' });
 /**
  * Fetch `url` once with a hard timeout. Throws FetchError on any failure.
  * Success: returns `{body, contentType}` with fully-drained body bytes.
@@ -210,7 +214,7 @@ export function isRetryable(err) {
     // An exhausted rate-limit quota is NOT transient — retrying against the same
     // host burns more quota and, on GitHub's secondary limits, extends the block.
     // The caller falls through to the next source instead (see the oracle chain).
-    if (err.isRateLimited)
+    if (err.isRateLimitExhausted())
         return false;
     if (err.status === 408 || err.status === 429)
         return true;

@@ -11,6 +11,11 @@ import { mkdir, chmod } from 'node:fs/promises';
 import { join } from 'node:path';
 import { hoodyHomeDir } from './home-dir.js';
 let cached;
+/**
+ * Create `~/.hoody/chats` (mode 0700) when it is missing and return its path. The result is cached
+ * for the process, so later calls touch no disk. A failed `chmod` (Windows, non-POSIX filesystems)
+ * is ignored; a failed `mkdir` rejects.
+ */
 export async function prepareChatsDir() {
     if (cached)
         return cached;

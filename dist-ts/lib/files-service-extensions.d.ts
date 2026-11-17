@@ -23,7 +23,7 @@ import type { FilesServiceBase } from '../generated/files/files.service.generate
 import type { FilesUiGetPageResponse } from '../generated/types.js';
 type TemplateVars = {
     projectId?: string;
-    containerId?: string;
+    computerId?: string;
     serviceIndex?: string | number;
     server?: string;
 };
@@ -98,5 +98,10 @@ declare module '../generated/files/images.service.js' {
         }, templateVars?: TemplateVars): string;
     }
 }
+/**
+ * Installs every helper of this module on the generated files, images and notes services,
+ * the notes upload and export helpers included. Safe to call again; importing this module
+ * already runs it.
+ */
 export declare function patchFilesServiceExtensions(): void;
 export {};

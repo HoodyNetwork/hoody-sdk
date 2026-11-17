@@ -16,6 +16,7 @@ import { NodeWebSocket } from 'engine.io-client';
 type WsOptions = Record<string, any>;
 /** engine.io's Node WebSocket transport, opened with the SDK's `ws` and its receive caps. */
 export declare class SdkNodeWebSocket extends NodeWebSocket {
+    /** Open the WebSocket with the SDK's `ws` and its receive caps, sending the cookies engine.io holds for the connection. */
     createSocket(uri: string, protocols: string | string[] | undefined, opts: WsOptions): any;
 }
 /**

@@ -21,12 +21,18 @@
  * when a WINDOW arrives). Successful local sends do NOT release credit —
  * the peer owns the bytes and will replenish when it consumes them.
  */
+/**
+ * Flow-control credit for one tunnel session or stream, counted in bytes. A sender calls
+ * `acquire(n)` before it sends and waits until the peer has granted that much; `release(n)` adds
+ * what a WINDOW frame from the peer grants. Waiters are served strictly first in, first out.
+ */
 export class CreditGate {
     available;
     waiters = [];
     closed = false;
     closeError = null;
     closing = null;
+    /** Start with `initial` bytes of credit. Throws when `initial` is negative. */
     constructor(initial) {
         if (initial < 0)
             throw new Error(`CreditGate initial must be >= 0, got ${initial}`);
@@ -135,7 +141,9 @@ export class CreditGate {
     }
     /** Observability. */
     get availablePermits() { return this.available; }
+    /** How many `acquire()` calls are waiting for credit. */
     get waiterCount() { return this.waiters.length; }
+    /** True once `close()` has been called. */
     get isClosed() { return this.closed; }
 }
 function cancelled(signal) {

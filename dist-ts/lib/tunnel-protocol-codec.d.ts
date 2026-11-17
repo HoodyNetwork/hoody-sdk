@@ -5,6 +5,7 @@ import { type Frame } from "./tunnel-protocol-types.js";
 /** v3 wire-format constants. */
 export declare const MAX_MESSAGE_SIZE = 262144;
 export declare const MAX_FRAMES_PER_MESSAGE = 64;
+/** A tunnel frame or message could not be encoded or decoded. `code` says why. */
 export declare class CodecError extends Error {
     readonly code: "TOO_SHORT" | "PAYLOAD_TOO_LARGE" | "TRUNCATED" | "UNKNOWN_MANDATORY_TYPE" | "UNKNOWN_TYPE" | "EMPTY_MESSAGE" | "MESSAGE_TOO_LARGE" | "TOO_MANY_FRAMES";
     constructor(message: string, code: "TOO_SHORT" | "PAYLOAD_TOO_LARGE" | "TRUNCATED" | "UNKNOWN_MANDATORY_TYPE" | "UNKNOWN_TYPE" | "EMPTY_MESSAGE" | "MESSAGE_TOO_LARGE" | "TOO_MANY_FRAMES");

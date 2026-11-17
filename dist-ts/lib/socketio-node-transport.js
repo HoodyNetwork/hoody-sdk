@@ -17,6 +17,7 @@ import { WebSocket as SdkWebSocket } from 'ws';
 import { SDK_WS_CAPS } from './kit-ws-auth.js';
 /** engine.io's Node WebSocket transport, opened with the SDK's `ws` and its receive caps. */
 export class SdkNodeWebSocket extends NodeWebSocket {
+    /** Open the WebSocket with the SDK's `ws` and its receive caps, sending the cookies engine.io holds for the connection. */
     createSocket(uri, protocols, opts) {
         // The cookie-jar merge of engine.io-client's own createSocket (websocket.node.js).
         const jar = this.socket?._cookieJar;

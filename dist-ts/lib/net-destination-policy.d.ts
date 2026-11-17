@@ -43,6 +43,10 @@ export interface ResolvedDestination {
 export type DenyReason = 'private-destination-blocked' | 'port-not-allowed' | 'dns-failed' | 'ipv6-unsupported'
 /** The policy itself is unusable, so nothing can be authorized against it. */
  | 'policy-invalid';
+/**
+ * Thrown when the destination policy refuses a host or port, or cannot resolve it. `reason` says which rule
+ * refused; the message is safe to show.
+ */
 export declare class DestinationDeniedError extends Error {
     readonly reason: DenyReason;
     constructor(reason: DenyReason, message: string);

@@ -30,15 +30,9 @@ export declare class TunnelSessionError extends Error {
 export interface ConnectOptions {
     url: string;
     /**
-     * @deprecated Ignored and never sent. The tunnel kit does not read the
-     * HELLO `auth` field (Hoody Proxy enforces access upstream), and sending
-     * the account token there leaked it to the container. Use `kitAuth`.
-     */
-    token?: string;
-    /**
      * Kit credential for the proxy's permission rule on the tunnel service,
      * carried on the WebSocket upgrade: headers in Node / Bun, `?token=` in a
-     * browser (a containerClaim credential is Node-only). A policy selects
+     * browser (a computerClaim credential is Node-only). A policy selects
      * `services.tunnel`, then `default`. Never the account token.
      */
     kitAuth?: ProxyAuth | ProxyAuthPolicy;
@@ -60,7 +54,7 @@ export interface ResumedBind {
     bindId: number;
     kind: string;
     mode: string;
-    containerPort: number;
+    computerPort: number;
 }
 export interface HelloResult {
     sessionId: string;
@@ -80,10 +74,10 @@ export interface BindOptions {
     kind: "http" | "tcp";
     mode: "expose" | "pull";
     /**
-     * Container port to bind. Pass `0`, `undefined`, or `null` to let the kit
+     * Computer port to bind. Pass `0`, `undefined`, or `null` to let the kit
      * pick a random available port (PULL: kernel ephemeral; EXPOSE: random in 20000-65534).
      */
-    containerPort?: number | null;
+    computerPort?: number | null;
     label?: string;
     /** For EXPOSE: evict any existing binding on the same port. PULL: not supported in v1. */
     takeover?: boolean;
@@ -92,7 +86,7 @@ export interface BindOptions {
 }
 export interface BindResult {
     bindId: number;
-    containerPort: number;
+    computerPort: number;
     publicUrl?: string;
 }
 type FrameHandler = (frame: Frame) => void | Promise<void>;
@@ -160,7 +154,7 @@ export declare class TunnelSession {
      *  closure; handlers (HELLO_OK, JOIN_OK, Promise.all catch) check the
      *  live counter before touching shared state so a late message from a
      *  superseded socket cannot clobber the new session's `this.ws`,
-     *  `sessionId`, or `wsAll`. Mirrors upstream's `connectEpoch`. */
+     *  `sessionId`, or `wsAll`. */
     private connectGeneration;
     /** External close listeners — fired once from `close()` so consumers
      *  (e.g. the upgrade forwarder that owns an upstream TCP socket) can tear
@@ -180,6 +174,10 @@ export declare class TunnelSession {
     /** Set by setInboundRouter(). Configuration, not session state: connect()
      *  and close() keep it. */
     private inboundRouter;
+    /**
+     * Create a session for the tunnel WebSocket at `options.url`. Nothing is opened until
+     * `connect()`. Throws when `options` carries the retired `token` option (use `kitAuth`).
+     */
     constructor(options: ConnectOptions);
     /**
      * Route every frame received after HELLO_OK / JOIN_OK, on every socket of
@@ -192,26 +190,34 @@ export declare class TunnelSession {
      */
     setInboundRouter(router: InboundRouter | null): void;
     private routeInbound;
-    /** Register a listener fired exactly once on session close. Returns an
-     *  unsubscribe function. Use for resources whose lifecycle is tied to the
-     *  session itself (e.g. an upgrade socket forwarded through a stream that
-     *  may never receive an EOF frame if the peer aborts). The listener is
-     *  told why: `info.deliberate` is false for a drop or a kit-side end. */
     /**
      * Why this session ended, or null while it has not (never connected, or
      * connected and up). `onClose` listeners registered after the end are never
      * called: read this first when attaching to a session someone else opened.
      */
-    get closeInfo(): TunnelCloseInfo | null;
+    getCloseInfo(): TunnelCloseInfo | null;
+    /** Register a listener fired exactly once on session close. Returns an
+     *  unsubscribe function. Use for resources whose lifecycle is tied to the
+     *  session itself (e.g. an upgrade socket forwarded through a stream that
+     *  may never receive an EOF frame if the peer aborts). The listener is
+     *  told why: `info.deliberate` is false for a drop or a kit-side end. */
     onClose(fn: (info: TunnelCloseInfo) => void): () => void;
     /** Session id assigned by the kit in HELLO_OK. Available after `connect()` resolves. */
-    get id(): string;
+    getId(): string;
     /** Full HELLO_OK result including `resumed` and `resumedBinds`. Null before connect(). */
-    get hello(): HelloResult | null;
+    getHello(): HelloResult | null;
     /** Open one tunnel WebSocket with the kit credential on its upgrade. */
     private openSocket;
     /** Resolve an openSocket() result; a supersede during the wait closes it. */
     private settleSocket;
+    /**
+     * Open the tunnel WebSocket, send HELLO and wait for the kit's HELLO_OK; with
+     * `maxConnections` above 1 it also opens the extra sockets the kit grants. Resolves with the
+     * session id. Rejects with `TunnelSessionError` when the kit refuses the handshake or the socket
+     * closes first, and with a plain `Error` for a malformed HELLO_OK or when no HELLO_OK arrives
+     * within 30 seconds. Calling it on a session that is already up replaces that session: its
+     * streams and pending binds end.
+     */
     connect(): Promise<string>;
     private openSecondary;
     /** Dispatch an already-decoded frame (public for setupAutoForwarding to avoid double-decode). */
@@ -225,9 +231,9 @@ export declare class TunnelSession {
      *  gone the flow is already dead. */
     private sendWindow;
     /**
-     * Bind a port. If `containerPort` is omitted, `null`, or `0`, the kit picks
+     * Bind a port. If `computerPort` is omitted, `null`, or `0`, the kit picks
      * a random available port (PULL: kernel-assigned ephemeral; EXPOSE: random
-     * in 20000-65534 range). The assigned port is returned in `BindResult.containerPort`.
+     * in 20000-65534 range). The assigned port is returned in `BindResult.computerPort`.
      */
     bind(opts: BindOptions): Promise<BindResult>;
     /** Register a handler for frames on a specific stream ID */
@@ -243,7 +249,7 @@ export declare class TunnelSession {
      * Something started on one connection does nothing to the next (see tunnel-http-pump's
      * `streamEnd`).
      */
-    get generation(): number;
+    getGeneration(): number;
     /** Send a raw frame. v3 batching: frames enqueued in the same event-loop
      * tick are coalesced into one WS message, cutting ws.send calls ~3-4×.
      * PING/PONG/GOAWAY flush pending first and ship immediately.
@@ -252,8 +258,15 @@ export declare class TunnelSession {
      * safe/tolerant variant used by RESET / EOF / echo-PONG paths where
      * throwing would cascade errors across unrelated code paths.
      * For credit-tracked DATA frames, use `_sendFrameStrict` which throws
-     * so `sendData` can release permits. */
+     * so `sendData` can release permits.
+     *
+     * Our own EOF or RESET ends our side of the stream: it is queued on the
+     * pinned WS, then the pin is dropped, so no pin outlives a stream we end
+     * (the peer sends no EOF/RESET for a stream we refused). What we may still
+     * send for it (WINDOW refills, or a RESET that aborts it anyway) needs no
+     * particular WS. */
     sendFrame(frame: Frame): void;
+    private sendFrameOn;
     /** Add one encoded frame to `target`'s batch, flushed at the end of this tick. */
     private enqueue;
     /** Strict variant of sendFrame — THROWS if the target WS is closed OR

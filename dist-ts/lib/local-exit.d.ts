@@ -1,31 +1,32 @@
 /**
- * Local exit proxy: publish a container's HTTPS proxy, exit from this machine.
+ * Local exit proxy: publish a computer's HTTPS proxy, exit from this machine.
  *
  * Chain, outermost first:
  *
- *   client ──HTTPS proxy──> <container>-egress.<server>.containers.hoody.com
+ *   client ──HTTPS proxy──> <computer>-egress.<server>.computers.hoody.com
  *          └─ hoody-egress, upstream = socks5h://127.0.0.1:<port>
- *                └─ hoody-tunnel PULL bind on container loopback
+ *                └─ hoody-tunnel PULL bind on computer loopback
  *                      └─ WebSocket to this process
  *                            └─ SOCKS5 terminated here, destination dialled locally
  *
  * Nothing listens on this machine. The only local sockets are outbound: one
  * WebSocket to the kit, and one TCP connection per proxied request.
  *
- * The container URL is the credential, per Hoody's capability-URL model. Anyone
+ * The computer URL is the credential, per Hoody's capability-URL model. Anyone
  * holding it can relay through this machine, so treat it like a password and set
  * proxy permissions when it is going somewhere untrusted.
  */
 import type { DestinationPolicy } from './net-destination-policy.js';
 import type { Socks5ConnectEvent } from './socks5-server.js';
+import type { ProxyAuth, ProxyAuthPolicy } from './proxy-auth.js';
 /**
- * The container to exit through: one of the SDK's own container responses (containers.get /
- * create / a containers.list item) unchanged, or a hand-built object. Every field is optional
+ * The computer to exit through: one of the SDK's own computer responses (computers.get /
+ * create / a computers.list item) unchanged, or a hand-built object. Every field is optional
  * in the type because the responses declare them so (`id?: string`, `project_id?: string`,
  * `server_name?: string | null`, `server` a server-details object or null); id, a project id
  * and a server name are required at runtime and their absence is refused before anything is wired.
  */
-export interface LocalExitContainerLike {
+export interface LocalExitComputerLike {
     id?: string;
     project_id?: string;
     projectId?: string;
@@ -37,16 +38,21 @@ export interface LocalExitContainerLike {
 export interface LocalExitOptions {
     /** Authenticated account client. */
     client: any;
-    container: LocalExitContainerLike;
-    /** Loopback port inside the container. 0 or omitted = kernel-assigned. */
-    containerPort?: number;
+    computer: LocalExitComputerLike;
+    /**
+     * Kit credential for a computer whose proxy permission rules require one, used
+     * for the tunnel and the egress calls. Defaults to the client's own `kitAuth`.
+     */
+    kitAuth?: ProxyAuth | ProxyAuthPolicy;
+    /** Loopback port inside the computer. 0 or omitted = kernel-assigned. */
+    computerPort?: number;
     policy?: DestinationPolicy;
-    /** Create a proxy alias so the handed-out URL carries no container id. */
+    /** Create a proxy alias so the handed-out URL carries no computer id. */
     alias?: string | true;
     /** Confirm the exit IP through the platform's IP service (the client's getIpUrl()) after wiring. Default true. */
     verify?: boolean;
     /**
-     * Take over a container that already has an upstream configured.
+     * Take over a computer that already has an upstream configured.
      *
      * Off by default: teardown clears the upstream, and the kit never returns
      * credentials, so an upstream replaced here cannot be put back.
@@ -81,10 +87,10 @@ export interface LocalExitTeardownReport {
      * Teardown deliberately left the upstream in place: it belongs to another
      * exit now.
      *
-     * A separate field because it cannot be derived. `upstreamVerified` used to
-     * carry it, meaning "nothing of OURS is set" in this case and "the upstream
-     * is off" everywhere else, and the CLI read the second meaning and announced
-     * "Container restored (upstream cleared)." for a container it had knowingly
+     * A separate field because it cannot be derived. `upstreamVerified` cannot
+     * carry it: it would mean "nothing of OURS is set" in this case and "the
+     * upstream is off" everywhere else, and a reader of the second meaning would
+     * announce "Computer restored (upstream cleared)." for a computer knowingly
      * left running someone else's proxy. Inferring it from
      * `upstreamVerified && !upstreamCleared` is also wrong: that pair occurs when
      * every clear attempt threw but the read-back independently showed the
@@ -99,7 +105,7 @@ export interface LocalExitTeardownReport {
     }>;
 }
 /**
- * Thrown when startup fails AND the container was left with this run's upstream
+ * Thrown when startup fails AND the computer was left with this run's upstream
  * still set.
  *
  * The unwind deliberately does not drop the tunnel in that state: closing it
@@ -112,18 +118,18 @@ export interface LocalExitTeardownReport {
 export declare class LocalExitStartupError extends Error {
     /** Always false: this error exists precisely for the not-cleared case. */
     readonly upstreamCleared = false;
-    /** The loopback port the container is still pointing at. */
-    readonly containerPort: number | undefined;
+    /** The loopback port the computer is still pointing at. */
+    readonly computerPort: number | undefined;
     /**
      * Close the tunnel this failed start left open. Idempotent, and never throws.
      *
-     * Doing so leaves the container pointing at a port that no longer answers, so
+     * Doing so leaves the computer pointing at a port that no longer answers, so
      * clear the upstream first if you can.
      */
     readonly closeTunnel: () => Promise<void>;
     constructor(message: string, opts: {
         cause?: unknown;
-        containerPort?: number | undefined;
+        computerPort?: number | undefined;
         closeTunnel: () => Promise<void>;
     });
 }
@@ -132,27 +138,28 @@ export interface LocalExitHandle {
     proxyUrl: string;
     /** Alias hostname when one was created. */
     aliasUrl?: string | undefined;
-    containerPort: number;
+    computerPort: number;
     verification?: LocalExitVerification | undefined;
-    activeStreams(): number;
+    getActiveStreamCount(): number;
     verifyExit(): Promise<LocalExitVerification>;
     stop(): Promise<LocalExitTeardownReport>;
     /**
      * Close the tunnel even if the upstream could not be cleared.
      *
-     * `stop()` deliberately holds the tunnel open in that case so the container
+     * `stop()` deliberately holds the tunnel open in that case so the computer
      * keeps working. That would otherwise pin a long-lived caller's event loop
      * forever when clearing keeps failing; this is the escape hatch. The returned
-     * report still says whether the container was left dirty.
+     * report still says whether the computer was left dirty.
      */
     forceStop(): Promise<LocalExitTeardownReport>;
+    /** `await using` support; attached only where the runtime has `Symbol.asyncDispose` (Node 20.4+, Bun). */
     [Symbol.asyncDispose](): Promise<void>;
 }
 /**
  * The IP service of the client's own platform: `https://ip.<platform domain>`.
  *
  * It was one fixed host, so an account on any other platform confirmed its exit against
- * a different platform's service, from this machine and through the container. The client's own
+ * a different platform's service, from this machine and through the computer. The client's own
  * getIpUrl() is the answer when it has one (HoodyClient derives it from its base URL); a client
  * without it gets the same derivation from the base URL every other URL here comes from.
  * Exported for the unit test; not part of the package entry.
@@ -182,19 +189,7 @@ export declare function chunkedBodyComplete(payload: Buffer): boolean;
  * the failure mode is a hang rather than an error.
  */
 export declare function decodeChunked(payload: Buffer): string;
-/**
- * Decide whether a proxied HTTP response is complete, and read its body.
- *
- * Extracted from the reader so the framing rules can be tested directly.
- * Before the extraction, the only tests over this code covered the
- * two chunk helpers, leaving the state machine itself — interim responses,
- * Content-Length validation, bodyless statuses, status parsing — with no
- * coverage at all, on the argument that live verification exercised it. Live
- * verification does not run in CI, and does not cover a hostile peer.
- *
- * Pure and synchronous: give it everything received so far, get back one of
- * `pending` (keep reading), `complete` (body in hand), or `error`.
- */
+/** What {@link readProxiedResponse} found: `pending` (keep reading), `complete` (body in hand) or `error`. */
 export type ProxiedResponse = {
     kind: 'pending';
 } | {
@@ -205,6 +200,16 @@ export type ProxiedResponse = {
     kind: 'error';
     message: string;
 };
+/**
+ * Decide whether a proxied HTTP response is complete, and read its body.
+ *
+ * Reads one HTTP/1.x response from `body`, the bytes received so far: `pending` until the headers and the whole
+ * body are in, `complete` with the status and the decoded text, or `error` for a response that cannot be trusted
+ * (malformed status line, conflicting or invalid Content-Length). Interim 1xx responses other than 101 are
+ * skipped, and Transfer-Encoding wins over Content-Length.
+ *
+ * Pure and synchronous, and separate from the socket reader so the framing rules can be tested directly.
+ */
 export declare function readProxiedResponse(body: Buffer): ProxiedResponse;
 /**
  * Issue a request through an HTTPS proxy using only Node builtins.
@@ -215,4 +220,4 @@ export declare function readProxiedResponse(body: Buffer): ProxiedResponse;
  * it to the origin. That is exactly what a browser does, and it keeps the SDK
  * dependency-free.
  */
-export declare function fetchThroughProxy(proxyUrl: string, targetUrl: string): Promise<any>;
+export declare function fetchThroughProxy(proxyUrl: string, targetUrl: string, connectHeaders?: Record<string, string>): Promise<any>;
