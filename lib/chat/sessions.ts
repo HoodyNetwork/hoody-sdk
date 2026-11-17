@@ -180,6 +180,11 @@ function buildMeta(
 // ===== appendTurn =====
 // ---------------------------------------------------------------------------
 
+/**
+ * Append one turn to the session file at `filePath` as a JSON line, with secrets in `turn.content`
+ * redacted first. Rejects with `ENOENT` when the file no longer exists: a deleted session is never
+ * recreated as a file without its meta line.
+ */
 export async function appendTurn(
   filePath: string,
   turn: Omit<SessionTurn, 'type'>,
@@ -454,6 +459,11 @@ export async function truncateSessionTurns(
   }
 }
 
+/**
+ * Delete every session file in the chats directory, including ones whose content cannot be parsed.
+ * Returns how many were deleted (a file already gone counts) and how many could not be removed.
+ * Never throws for a single file; an unreadable directory answers zero for both.
+ */
 export async function wipeAllSessions(): Promise<{ deleted: number; failed: number }> {
   // Enumerate the DIRECTORY, not listSessions(): that helper skips any file
   // whose meta line will not parse, so a corrupt or unreadable transcript was

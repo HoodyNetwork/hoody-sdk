@@ -22,6 +22,26 @@ export function compareVersions(installed: string, latest: string): Relation {
   return i.compare(l) > 0 ? 'ahead' : 'behind';
 }
 
+/** Whether `latest` is a higher MAJOR version than `installed` (a breaking update). False when either does not parse. */
+export function isMajorUpdate(installed: string, latest: string): boolean {
+  const i = semver.parse(installed);
+  const l = semver.parse(latest);
+  return !!i && !!l && l.major > i.major;
+}
+
+/**
+ * The majors an update from `installed` to `latest` crosses, ascending: `1.9.0` to `3.1.0` crosses 2 and 3, `2.3.0` to
+ * `2.9.0` crosses none. Empty when either side does not parse or `latest` is not a higher major.
+ */
+export function crossedMajors(installed: string, latest: string): number[] {
+  const i = semver.parse(installed);
+  const l = semver.parse(latest);
+  if (!i || !l || l.major <= i.major) return [];
+  const out: number[] = [];
+  for (let m = i.major + 1; m <= l.major; m++) out.push(m);
+  return out;
+}
+
 /** Validate a version string parses under strict semver. */
 export function isValidSemver(v: string): boolean {
   return semver.valid(v) !== null;

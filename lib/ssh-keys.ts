@@ -25,12 +25,14 @@ import nacl from 'tweetnacl';
 const SSH_ED25519_ALGORITHM = 'ssh-ed25519';
 const ED25519_PUBLIC_KEY_BYTES = 32;
 const ED25519_SECRET_KEY_BYTES = 64;
+/** A line break inside a key line: authorized_keys reads what follows it as another entry. */
+const LINE_BREAK = /[\r\n]/;
 
 export type SshPublicKeyInput = Uint8Array | ArrayBuffer | ArrayBufferView | string;
 export type Ed25519SeedInput = Uint8Array | ArrayBuffer | ArrayBufferView | string;
 
 export interface GenerateEd25519SshKeyPairOptions {
-  /** Optional comment appended to the public key line */
+  /** Optional comment appended to the public key line; one line (a line break inside it is refused) */
   comment?: string;
   /**
    * Optional deterministic 32-byte seed.
@@ -224,7 +226,8 @@ function parseEd25519KeyBlob(keyBlob: Uint8Array): Uint8Array {
  * Normalize any supported Ed25519 public key representation into raw 32 bytes.
  *
  * Detection order for string inputs:
- *  1. Full OpenSSH line format: starts with "ssh-ed25519 " -> parse the SSH blob
+ *  1. Full OpenSSH line format: the first field is "ssh-ed25519" -> parseEd25519SshPublicKey (so format and parse
+ *     refuse the same line with the same message)
  *  2. Other SSH algorithm prefixes (e.g. "ssh-rsa"): reject with descriptive error
  *  3. Base64 string: decode and check length
  *     a. If decoded length == 32: treat as raw key bytes
@@ -246,13 +249,14 @@ function normalizeEd25519PublicKey(input: SshPublicKeyInput): Uint8Array {
     throw new Error('Public key input cannot be empty');
   }
 
-  if (trimmed.startsWith(`${SSH_ED25519_ALGORITHM} `)) {
+  const firstField = trimmed.split(/\s+/, 1)[0];
+  if (firstField === SSH_ED25519_ALGORITHM) {
     return parseEd25519SshPublicKey(trimmed).publicKeyRaw;
   }
 
   if (trimmed.startsWith('ssh-')) {
     throw new Error(
-      `Unsupported SSH key format "${trimmed.split(/\s+/, 1)[0]}". Expected "${SSH_ED25519_ALGORITHM}".`
+      `Unsupported SSH key format "${firstField}". Expected "${SSH_ED25519_ALGORITHM}".`
     );
   }
 
@@ -340,12 +344,15 @@ function createEd25519KeyPair(options: GenerateEd25519SshKeyPairOptions): {
  * This function is crypto-free and works in non-HTTPS/plain HTML contexts.
  *
  * @param publicKey - Raw 32-byte key, base64 raw key, base64 SSH key blob, or full `ssh-ed25519 ...` line
- * @param comment - Optional comment appended to output
+ * @param comment - Optional comment appended to output; one line (a line break inside it is refused)
  */
 export function formatEd25519SshPublicKey(publicKey: SshPublicKeyInput, comment?: string): string {
   const publicKeyRaw = normalizeEd25519PublicKey(publicKey);
   const keyBlob = buildEd25519KeyBlob(publicKeyRaw);
   const normalizedComment = comment?.trim();
+  if (normalizedComment && LINE_BREAK.test(normalizedComment)) {
+    throw new Error('SSH public key comment must be one line');
+  }
 
   return normalizedComment
     ? `${SSH_ED25519_ALGORITHM} ${toBase64(keyBlob)} ${normalizedComment}`
@@ -353,10 +360,13 @@ export function formatEd25519SshPublicKey(publicKey: SshPublicKeyInput, comment?
 }
 
 /**
- * Parse an OpenSSH Ed25519 public key line.
+ * Parse an OpenSSH Ed25519 public key line. A line break inside it (a second entry) is refused.
  */
 export function parseEd25519SshPublicKey(publicKey: string): ParsedEd25519SshPublicKey {
   const trimmed = publicKey.trim();
+  if (LINE_BREAK.test(trimmed)) {
+    throw new Error('SSH public key must be one line');
+  }
   const match = trimmed.match(/^(\S+)\s+(\S+)(?:\s+(.+))?$/);
 
   if (!match) {

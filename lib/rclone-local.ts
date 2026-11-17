@@ -23,12 +23,12 @@ export type RcloneVersion = readonly [number, number, number];
  * refused. 1.61.0 is where `serve webdav` moved to lib/http and began logging
  * `WebDav Server started on [<urls>]`, a list built from the bound listener
  * (so `--addr 127.0.0.1:0` reports the real port); 1.60.1 logged a bare URL
- * (cmd/serve/webdav/webdav.go at v1.60.1 vs v1.61.0; changelog v1.61.0
+ * (rclone's own WebDAV server at v1.60.1 vs v1.61.0; changelog v1.61.0
  * "serve webdav: Refactor to use lib/http"). Every flag `rcloneServeArgs`
  * passes exists there: `--links`/`--copy-links` (local backend, no prefix,
  * since 1.46/1.36), `--rc`, `--config`, `--log-level`, `--dir-cache-time`,
  * `--vfs-cache-mode`, `--read-only`, and `--user`/`--pass` read from
- * RCLONE_USER/RCLONE_PASS (lib/http/auth.go). Checked on 2026-10-05 by
+ * RCLONE_USER/RCLONE_PASS (rclone's own HTTP auth source). Checked by
  * running the release binaries through the share's chain: 1.61.0 passes
  * readiness, the 401/207 probe, PUT, MOVE and a fresh listing; 1.60.1 never
  * reports ready.
@@ -60,10 +60,15 @@ export function isVersionAtLeast(v: RcloneVersion | null, target: readonly numbe
   return true;
 }
 
+/** A version's components joined with dots: `[1, 75, 1]` gives `1.75.1`. */
 export function formatVersion(v: readonly number[]): string {
   return v.join('.');
 }
 
+/**
+ * Run `<rclonePath> version` (5 s limit) and return the parsed version. Null when rclone cannot be run, times out,
+ * or prints no version.
+ */
 export async function detectRcloneVersion(rclonePath: string): Promise<RcloneVersion | null> {
   try {
     const { stdout } = await execFile(rclonePath, ['version'], { timeout: 5000 });
@@ -73,6 +78,10 @@ export async function detectRcloneVersion(rclonePath: string): Promise<RcloneVer
   }
 }
 
+/**
+ * Throw an Error with install instructions unless `<rclonePath> version` runs and exits cleanly within 5 s. The
+ * version itself is not checked.
+ */
 export async function assertRcloneInstalled(rclonePath: string): Promise<void> {
   try {
     await execFile(rclonePath, ['version'], { timeout: 5000 });
@@ -158,11 +167,16 @@ export class BoundedLineReader {
   private readonly tailLines: string[] = [];
   private tailBytes = 0;
 
+  /**
+   * `onLine` receives each complete line, without its line ending. `capBytes` bounds both one partial line and the
+   * kept tail.
+   */
   constructor(
     private readonly onLine: (line: string) => void,
     private readonly capBytes = LINE_READER_CAP_BYTES,
   ) {}
 
+  /** Feed the next chunk; every line it completes is delivered before this returns. */
   push(chunk: Buffer | string): void {
     this.partial += typeof chunk === 'string' ? chunk : chunk.toString('utf8');
     let nl: number;

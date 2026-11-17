@@ -1,5 +1,5 @@
 /**
- * `terminal.run(command, options?)`: run a command in the container and wait for the result.
+ * `terminal.run(command, options?)`: run a command in the computer and wait for the result.
  *
  * Kept apart from terminal-exec.ts on purpose: this file is plain HTTP run+poll and uses no Node
  * builtin, so the browser bundle ships it as is. terminal-exec.ts (the `shell()` PTY stream) needs
@@ -7,7 +7,7 @@
  */
 
 import type { HoodyClient } from './hoody-client.js';
-import { ApiError, isApiError } from '../generated/errors.js';
+import { ApiError, isApiError, refuseRetiredOptions } from '../generated/errors.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -16,32 +16,56 @@ import { ApiError, isApiError } from '../generated/errors.js';
 export interface TerminalExecOptions {
   /** Working directory for command execution */
   cwd?: string;
-  /** Shell to use (bash, zsh, fish, sh) */
+  /** Shell to use (bash, zsh, fish, sh). 'tmux' is refused: run tmux itself as the command. */
   shell?: string;
   /** System user to run as */
   user?: string;
-  /** Timeout in seconds (default: 0 = no timeout) */
+  /**
+   * Timeout in seconds. 0 or omitted: the kit's default, 600 seconds for the default run (and
+   * on an ephemeral terminal), none in a named terminal (terminalId N).
+   */
   timeout?: number;
   /** Environment variables */
   env?: Record<string, string>;
   /** AbortSignal for cancellation */
   signal?: AbortSignal;
-  /** Polling interval in ms (default: 250, min: 100) */
+  /** Polling interval in ms (default: 250, min: 100). Only a named terminal (terminalId N) is polled. */
   pollIntervalMs?: number;
   /**
-   * The terminal to run in. 0 (the default) is a fresh ephemeral session on the terminal-0
-   * host, cleaned up after the run. N >= 1 runs the command in terminal N itself (created
-   * when it does not exist yet), as a plain execute: its display and environment stay.
+   * The terminal to run in. 0 (the default) runs the command as a process of its own on the
+   * terminal-0 host, with no terminal: stdout and stderr come back apart and byte for byte.
+   * N >= 1 runs it in terminal N itself (created when it does not exist yet), as a plain
+   * execute: its display and environment stay, and the output is terminal text (stderr merged
+   * into stdout, CRLF line endings, escape sequences removed, leading and trailing whitespace
+   * trimmed).
+   *
+   * `serviceIndex` and `terminal_id` are retired spellings and are refused: pass the same
+   * number as `terminalId` (a caller that passed `serviceIndex: 0` omits it).
    */
-  serviceIndex?: number;
+  terminalId?: number;
 }
 
 export interface TerminalExecResult {
-  /** Standard output */
+  /** Standard output, as UTF-8 text (the exact bytes are in stdoutBytes) */
   stdout: string;
-  /** Standard error */
+  /** Standard error, as UTF-8 text (always empty in a named terminal, which merges it into stdout) */
   stderr: string;
-  /** Process exit code (null if unknown) */
+  /**
+   * The exact bytes the command wrote to stdout and stderr (binary data, bare LF, escape
+   * sequences). Present for the default run; absent for a named terminal (terminalId N),
+   * whose output is terminal text.
+   */
+  stdoutBytes?: Uint8Array;
+  stderrBytes?: Uint8Array;
+  /**
+   * The output was cut at the kit's capture limit. run() then rejects (code OUTPUT_TRUNCATED)
+   * and this result, incomplete, is the error's `result`; a resolved run is never cut.
+   */
+  stdoutTruncated?: boolean;
+  stderrTruncated?: boolean;
+  /** The signal that ended the command (SIGKILL, ...); null when it exited by itself. Default run only. */
+  signal?: string | null;
+  /** Process exit code (null if unknown, or when a signal ended the command) */
   exitCode: number | null;
   /** Whether the command timed out */
   timedOut: boolean;
@@ -57,29 +81,27 @@ export interface TerminalExecResult {
 // ---------------------------------------------------------------------------
 
 /**
- * Validate that the client is container-scoped (has terminal urlTemplates).
+ * Validate that the client is computer-scoped (has terminal urlTemplates).
  */
-export function assertContainerScoped(client: any): void {
+export function assertComputerScoped(client: any): void {
   const t = client.urlTemplates?.['terminal'];
   if (!t) {
     throw new Error(
-      'terminal.run()/shell() require a container-scoped client. Call withContainer() first.',
+      'terminal.run()/shell() require a computer-scoped client. Call withComputer() first.',
     );
   }
   // Validate template completeness to give clear errors early
-  if (!t.projectId || !t.containerId || !t.server) {
+  if (!t.projectId || !t.computerId || !t.server) {
     throw new Error(
-      'Container-scoped client has incomplete terminal URL templates (missing projectId, containerId, or server).',
+      'Computer-scoped client has incomplete terminal URL templates (missing projectId, computerId, or server).',
     );
   }
 }
 
 /**
-
-/**
  * Sleep with AbortSignal support. Rejects with AbortError if signal fires.
  *
- * FIX: setTimeout captures the resolve callback at bind time.
+ * setTimeout captures the resolve callback at bind time.
  * Reassigning the `resolve` variable afterward does nothing — the original
  * reference is still what setTimeout invokes. We wrap the timer callback
  * properly so that removeEventListener is always called on normal completion.
@@ -118,12 +140,12 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
 const TERMINAL_REFUSAL_HINTS: Readonly<Record<string, (index: number) => string>> = {
   PERSISTENT_SESSION: (index) =>
     `terminal ${index} has a display and is not turned into an ephemeral session. `
-    + 'Omit serviceIndex for a fresh ephemeral session',
+    + 'Omit terminalId for a fresh ephemeral session',
   EPHEMERAL_SESSION: (index) =>
-    `terminal ${index} is an ephemeral session. Omit serviceIndex for a fresh one, `
+    `terminal ${index} is an ephemeral session. Omit terminalId for a fresh one, `
     + `or delete it (terminal.sessions.delete('${index}')) and run again`,
   TERMINAL_ID_MISMATCH: (index) =>
-    `the request named another terminal than the terminal-${index} host. Use serviceIndex alone to pick the terminal`,
+    `the request named another terminal than the terminal-${index} host. Use terminalId alone to pick the terminal`,
 };
 
 function explainTerminalRefusal(err: unknown, index: number): unknown {
@@ -143,9 +165,96 @@ function explainTerminalRefusal(err: unknown, index: number): unknown {
 }
 
 /** Maximum number of poll iterations before giving up (safety valve).
- * With adaptive backoff (250ms → 500ms → 1000ms), 2400 iterations
- * allows approximately 30-40 minutes of polling. */
+ * Adaptive backoff caps each wait at 500 ms after 2 s and at 1 s after 10 s,
+ * so 2400 iterations wait roughly 40 minutes in total; the time each poll
+ * request takes comes on top. */
 const MAX_POLL_ITERATIONS = 2400;
+
+/** POSIX single-quote an argument for `sh -c` (every character literal but `'`); a plain word stays as it is. */
+export function shellQuote(arg: string): string {
+  if (/^[A-Za-z0-9_\-./=:@%+,]+$/.test(arg)) return arg;
+  return `'${arg.replace(/'/g, "'\\''")}'`;
+}
+
+/** Base64 to bytes with no Node builtin (this file ships in the browser bundle). */
+function decodeBase64(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+/**
+ * The default run (no terminalId) in the kit's raw mode. A PTY turns LF into
+ * CRLF, merges stderr into stdout, strips escapes and whitespace and stops at a NUL byte; raw
+ * mode runs `bash -c` as a process on pipes and returns the exact bytes. It answers once the
+ * command has ended (wait=true; raw mode has no /result or /abort), so cancelling is closing
+ * the request: the kit then stops the command's process group.
+ */
+async function runRaw(
+  terminalApi: any,
+  command: string,
+  o: Pick<TerminalExecOptions, 'cwd' | 'shell' | 'user' | 'timeout' | 'env' | 'signal'>,
+  templateVars: { serviceIndex: number },
+): Promise<TerminalExecResult> {
+  const startTime = Date.now();
+  // Raw mode always starts bash (or /bin/sh); another shell is started from there.
+  const cmd = o.shell && o.shell !== 'bash' ? `exec ${shellQuote(o.shell)} -c ${shellQuote(command)}` : command;
+  // The answer comes at the command's timeout at the latest (the given one, else the kit's
+  // default of 600 s) plus the kit's SIGTERM-to-SIGKILL grace: the request must outlast it
+  // rather than end at the client's default request timeout while the command runs on.
+  const timeoutMs = ((o.timeout || 600) + 30) * 1000;
+  let response: unknown;
+  try {
+    response = await terminalApi.commands.run(
+      {
+        command: cmd,
+        mode: 'raw',
+        wait: true,
+        timeout: o.timeout || undefined,
+        cwd: o.cwd || undefined,
+        env: o.env || undefined,
+      } as any,
+      { terminal_id: '0', user: o.user || undefined, signal: o.signal, timeoutMs },
+      templateVars,
+    );
+  } catch (err) {
+    if (o.signal?.aborted) throw new DOMException('The operation was aborted.', 'AbortError');
+    throw explainTerminalRefusal(err, 0);
+  }
+  const data = (response as any)?.data ?? response;
+  if (typeof data?.stdout_b64 !== 'string' || typeof data.stderr_b64 !== 'string') {
+    throw new Error(
+      'terminal.run(): the computer\'s terminal kit did not return the command\'s exact output; update the terminal kit in the computer',
+    );
+  }
+  const stdoutBytes = decodeBase64(data.stdout_b64);
+  const stderrBytes = decodeBase64(data.stderr_b64);
+  const text = new TextDecoder();
+  const result: TerminalExecResult = {
+    stdout: text.decode(stdoutBytes),
+    stderr: text.decode(stderrBytes),
+    stdoutBytes,
+    stderrBytes,
+    stdoutTruncated: data.stdout_truncated === true,
+    stderrTruncated: data.stderr_truncated === true,
+    signal: typeof data.signal === 'string' ? data.signal : null,
+    exitCode: typeof data.exit_code === 'number' ? data.exit_code : null,
+    timedOut: data.timed_out === true || data.status === 'timed_out',
+    duration: Date.now() - startTime,
+    commandId: typeof data.command_id === 'string' ? data.command_id : '',
+  };
+  // Cut output must not pass for a complete run (exit 0 with half a file): like Node's exec()
+  // past maxBuffer, reject, with what was read and the command's own status on the error.
+  if (result.stdoutTruncated || result.stderrTruncated) {
+    const cut = [result.stdoutTruncated ? 'stdout' : '', result.stderrTruncated ? 'stderr' : ''].filter(Boolean).join(' and ');
+    throw Object.assign(
+      new Error(`terminal.run(): ${cut} passed the terminal kit's capture limit; the output is incomplete (error.result holds it)`),
+      { code: 'OUTPUT_TRUNCATED', result },
+    );
+  }
+  return result;
+}
 
 // ---------------------------------------------------------------------------
 // exec() implementation
@@ -156,7 +265,8 @@ async function execImpl(
   command: string,
   options?: TerminalExecOptions,
 ): Promise<TerminalExecResult> {
-  assertContainerScoped(this);
+  assertComputerScoped(this);
+  refuseRetiredOptions(options, 'terminal.run', [['serviceIndex', 'terminalId'], ['terminal_id', 'terminalId']]);
 
   const {
     cwd,
@@ -166,7 +276,7 @@ async function execImpl(
     env,
     signal,
     pollIntervalMs: userPollInterval = 250,
-    serviceIndex = 0,
+    terminalId: serviceIndex = 0,
   } = options || {};
 
   const pollInterval = Math.max(100, userPollInterval);
@@ -184,19 +294,24 @@ async function execImpl(
     throw new Error('Terminal commands service not available');
   }
 
-  if (!Number.isInteger(serviceIndex) || serviceIndex < 0 || serviceIndex > 65535) {
-    throw new TypeError(`terminal.run(): serviceIndex must be an integer from 0 to 65535, got ${JSON.stringify(serviceIndex)}`);
+  // tmux swallows the completion marker, so a run inside it never ends and leaks a tmux session.
+  if (shellType === 'tmux') {
+    throw new TypeError("terminal.run(): shell 'tmux' is not supported for a one-shot command; run tmux itself, for example terminal.run(\"tmux new -d -s work 'make build'\")");
   }
-  // The host picks the terminal: the containers proxy sets terminal_id from its index.
-  // terminal-0 is the only host where the kit makes a fresh ephemeral session; on
+  if (!Number.isInteger(serviceIndex) || serviceIndex < 0 || serviceIndex > 65535) {
+    throw new TypeError(`terminal.run(): terminalId must be an integer from 0 to 65535, got ${JSON.stringify(serviceIndex)}`);
+  }
+  // The host picks the terminal: the computers proxy sets terminal_id from its index.
+  // terminal-0 (the default) runs the command in raw mode, with no terminal session; on
   // terminal-N the command runs in terminal N as a plain execute. ephemeral=true there
   // would ask the kit to turn terminal N ephemeral (refused when it has a display).
   // The default urlTemplates set serviceIndex=1 (for interactive terminals), so the
   // index is always passed.
   const templateVars = { serviceIndex };
-  const sessionQuery = serviceIndex === 0
-    ? { terminal_id: '0', ephemeral: true, skip_display_wait: true }
-    : { terminal_id: String(serviceIndex) };
+  if (serviceIndex === 0) {
+    return runRaw(terminalApi, command, options ?? {}, templateVars);
+  }
+  const sessionQuery = { terminal_id: String(serviceIndex) };
 
   // Remote cancellation: POST /api/v1/terminal/execute/{command_id}/abort
   // (`terminal.commands.cancel`) on the SAME terminal host the command runs on
@@ -296,7 +411,7 @@ async function execImpl(
     }
 
     // 2. Adaptive polling loop
-    // FIX: Grace period measured from AFTER executeCommand
+    // Grace period measured from AFTER executeCommand
     // returns, not from startTime which includes the HTTP request latency.
     const pollStartTime = Date.now();
     const GRACE_PERIOD_MS = 2000; // tolerate 404 for first 2 seconds of polling
@@ -306,8 +421,8 @@ async function execImpl(
     while (true) {
       iterations++;
 
-      // FIX: Safety valve — prevent infinite polling on
-      // unknown statuses. Max ~10 minutes of polling.
+      // Safety valve: prevent infinite polling on unknown statuses
+      // (roughly 40 minutes of waits plus request time, see MAX_POLL_ITERATIONS).
       if (iterations > MAX_POLL_ITERATIONS) {
         throw new Error(
           `terminal.run() exceeded maximum poll iterations (${MAX_POLL_ITERATIONS}). ` +
@@ -335,8 +450,8 @@ async function execImpl(
           { signal },
         );
       } catch (err: any) {
-        // FIX: Use status code checks only — remove over-broad
-        // message substring matching that could false-positive.
+        // Status code checks only: a message substring could match by
+        // accident.
         const is404 =
           err?.statusCode === 404 ||
           err?.status === 404;
@@ -374,14 +489,13 @@ async function execImpl(
       }
 
       // Known in-progress statuses: keep polling
-      // FIX: Do NOT whitelist empty string — a missing
-      // `status` field (coerced to '') likely means a malformed response,
-      // which should be treated as terminal rather than hanging for 10 min.
+      // Do NOT accept an empty string: a missing `status` field (coerced
+      // to '') likely means a malformed response, which is treated as
+      // terminal rather than polled until the safety valve.
       if (status === 'running' || status === 'pending') {
         continue;
       }
 
-      // Unknown terminal status — treat as terminal to avoid infinite loop
       // Unknown terminal status — treat as terminal to avoid infinite loop
       return {
         stdout,
@@ -399,7 +513,7 @@ async function execImpl(
 
 /**
  * Install `client.terminal.run` on this client's terminal namespace object. The object is
- * per instance (withContainer and withRealm build their own), so this runs for each client
+ * per instance (withComputer and withRealm build their own), so this runs for each client
  * from patchHoodyClientMetrics. Idempotent.
  */
 export function installTerminalRun(client: object): void {

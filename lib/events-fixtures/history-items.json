@@ -7,16 +7,16 @@
     "all_realms": false,
     "cause_event_id": null,
     "change_id": "<id:2>",
-    "container_id": "<id:3>",
+    "computer_id": "<id:3>",
     "created_at": "<iso>",
     "cursor": "<cursor>",
     "data": {
-      "container": {
+      "computer": {
         "ai": false,
         "autostart": false,
         "color": null,
         "comment": null,
-        "container_image": null,
+        "computer_image": null,
         "created_at": null,
         "dev_kit": false,
         "hoody_kit": false,
@@ -24,15 +24,14 @@
         "is_default": false,
         "kvm": false,
         "name": "new",
-        "prespawn": false,
         "project_id": "<id:4>",
         "ramdisk": false,
-        "ramdisk_scope": "container",
+        "ramdisk_scope": "computer",
         "server_expired": false,
         "server_expired_at": null,
         "server_expired_reason": null,
         "server_id": null,
-        "source_container_id": null,
+        "source_computer_id": null,
         "status": "running",
         "updated_at": null
       },
@@ -41,18 +40,18 @@
       }
     },
     "ephemeral": false,
-    "event": "container.renamed",
+    "event": "computer.renamed",
     "eventId": "<id:5>",
-    "event_type": "container.renamed",
+    "event_type": "computer.renamed",
     "id": "<id:5>",
     "operation_id": null,
     "payload": {
-      "container": {
+      "computer": {
         "ai": false,
         "autostart": false,
         "color": null,
         "comment": null,
-        "container_image": null,
+        "computer_image": null,
         "created_at": null,
         "dev_kit": false,
         "hoody_kit": false,
@@ -60,15 +59,14 @@
         "is_default": false,
         "kvm": false,
         "name": "new",
-        "prespawn": false,
         "project_id": "<id:4>",
         "ramdisk": false,
-        "ramdisk_scope": "container",
+        "ramdisk_scope": "computer",
         "server_expired": false,
         "server_expired_at": null,
         "server_expired_reason": null,
         "server_id": null,
-        "source_container_id": null,
+        "source_computer_id": null,
         "status": "running",
         "updated_at": null
       },
@@ -81,7 +79,7 @@
       "<id:7>"
     ],
     "resource_id": "<id:3>",
-    "resource_type": "container",
+    "resource_type": "computer",
     "schema_version": 1,
     "timestamp": "<iso>",
     "user_id": "<id:1>",
@@ -94,11 +92,11 @@
     "all_realms": false,
     "cause_event_id": null,
     "change_id": "<id:8>",
-    "container_id": "<id:3>",
+    "computer_id": "<id:3>",
     "created_at": "<iso>",
     "cursor": "<cursor>",
     "data": {
-      "container": {
+      "computer": {
         "id": "<id:3>"
       },
       "network": {
@@ -108,13 +106,13 @@
       }
     },
     "ephemeral": false,
-    "event": "container.network.updated",
+    "event": "computer.network.updated",
     "eventId": "<id:10>",
-    "event_type": "container.network.updated",
+    "event_type": "computer.network.updated",
     "id": "<id:10>",
     "operation_id": null,
     "payload": {
-      "container": {
+      "computer": {
         "id": "<id:3>"
       },
       "network": {
@@ -128,7 +126,7 @@
       "<id:7>"
     ],
     "resource_id": "<id:9>",
-    "resource_type": "container_network",
+    "resource_type": "computer_network",
     "schema_version": 1,
     "timestamp": "<iso>",
     "user_id": "<id:11>",
@@ -149,29 +147,29 @@
     "all_realms": false,
     "cause_event_id": null,
     "change_id": "<id:12>",
-    "container_id": "<id:3>",
+    "computer_id": "<id:3>",
     "created_at": "<iso>",
     "cursor": "<cursor>",
     "data": {
       "changes": [
         "realm_ids"
       ],
-      "container": {
+      "computer": {
         "id": "<id:3>"
       },
       "visibility": "removed"
     },
     "ephemeral": false,
-    "event": "container.updated",
+    "event": "computer.updated",
     "eventId": "<id:13>",
-    "event_type": "container.updated",
+    "event_type": "computer.updated",
     "id": "<id:13>",
     "operation_id": null,
     "payload": {
       "changes": [
         "realm_ids"
       ],
-      "container": {
+      "computer": {
         "id": "<id:3>"
       },
       "visibility": "removed"
@@ -181,7 +179,7 @@
       "<id:7>"
     ],
     "resource_id": "<id:3>",
-    "resource_type": "container",
+    "resource_type": "computer",
     "schema_version": 1,
     "timestamp": "<iso>",
     "user_id": "<id:1>",

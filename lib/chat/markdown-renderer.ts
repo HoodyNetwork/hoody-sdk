@@ -29,6 +29,7 @@ import {
   parseExtraPatterns,
   type ClassificationResult,
 } from './paste-safety.js';
+import { redactBotKeys } from './redact.js';
 
 /** 4KB buffered inside an open fence triggers a defensive flush. */
 const FENCE_MAX_BUF_BYTES = 4096;
@@ -54,7 +55,7 @@ export interface StreamingRenderer {
 }
 
 /**
- * Factory. Pass to streamCompletion's onDelta: (d) => r.write(d.content ?? '').
+ * Factory. Write the answer's text to it as it streams (`renderer.write(chunk)`), then call end().
  *
  * TTY / color detection:
  *   - out not TTY → raw mode regardless of noMarkdown flag.
@@ -72,9 +73,43 @@ export function createRenderer(opts: RendererOptions = {}): StreamingRenderer {
   // chalk's own ANSI emission decisions.
   const raw = opts.noMarkdown === true || noColor || (!isTty && !forceColor);
 
-  if (raw) return new RawRenderer(out);
+  if (raw) return new BotKeyRedactingRenderer(new RawRenderer(out));
   const extraDanger = parseExtraPatterns(opts.extraDangerPatternsEnv ?? process.env.HOODY_CHAT_EXTRA_DESTRUCTIVE_PATTERNS);
-  return new AnsiRenderer(out, extraDanger);
+  return new BotKeyRedactingRenderer(new AnsiRenderer(out, extraDanger));
+}
+
+// ---------------------------------------------------------------------------
+// Bot URL key redaction (both renderers)
+// ---------------------------------------------------------------------------
+
+/** A trailing piece that a later delta could complete into a Bot URL key (`hbk_` + 43). */
+const BOT_KEY_STEM_AT_END = /h(?:b(?:k(?:_[A-Za-z0-9]{0,42})?)?)?$/;
+
+/**
+ * Removes Bot URL key secrets from an answer before it reaches the terminal,
+ * keeping the 12-character prefix. A key can arrive split across deltas, so a
+ * trailing piece that could still grow into one is held back until the next
+ * delta (or end()) decides it. Held text is at most 46 characters.
+ */
+class BotKeyRedactingRenderer implements StreamingRenderer {
+  private held = '';
+
+  constructor(private inner: StreamingRenderer) {}
+
+  write(delta: string): void {
+    if (!delta) return;
+    const text = redactBotKeys(this.held + delta);
+    const stem = BOT_KEY_STEM_AT_END.exec(text);
+    const cut = stem ? stem.index : text.length;
+    this.held = text.slice(cut);
+    if (cut > 0) this.inner.write(text.slice(0, cut));
+  }
+
+  end(): void {
+    if (this.held) this.inner.write(this.held);
+    this.held = '';
+    this.inner.end();
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -472,6 +507,12 @@ export interface RenderFenceExtras {
 const GUTTER = '│';
 const FOOTER_TEXT = 'Review before pasting. hoody chat cannot execute commands.';
 
+/**
+ * Write one fenced code block to `out`: a header line with the language (and, for a block cut short,
+ * `extras.partialReason`), then the `body` lines behind a gutter. For a shell block the gutter colour
+ * and a warning line follow `classification.severity`, the lines listed in `dangerLines` /
+ * `reviewLines` get a warning mark, and a footer reminds the reader that nothing is executed.
+ */
 export function renderFenceBlock(
   out: NodeJS.WritableStream,
   lang: string,

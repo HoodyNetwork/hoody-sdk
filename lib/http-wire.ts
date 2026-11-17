@@ -16,6 +16,12 @@ export const RETRY_SAFE_CODES: readonly string[] = ['FILE_PATH_BUSY', 'PATH_BUSY
 export const IDEMPOTENT_METHODS: readonly string[] = ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE'];
 
 /**
+ * Methods that change nothing: the only ones the retry rule sends again after the server
+ * answered with success and the client then failed (see shouldRetryFailure, rule 2).
+ */
+export const READ_METHODS: readonly string[] = ['GET', 'HEAD', 'OPTIONS'];
+
+/**
  * True when the request carries a non-empty value under the idempotency-key header its
  * operation declares (IRequestData.declaredIdempotencyKeyHeader). Header names are compared ignoring
  * case. A header the operation does not declare counts for nothing: the server would not
@@ -35,6 +41,8 @@ export interface IKeyedReplay {
   value: string;
   /** The body as it went on the wire, sent unchanged by every attempt. */
   body: unknown;
+  /** The multipart Content-Type, boundary included, of a form encoded once (encodedFormOf). */
+  contentType?: string;
 }
 
 /**
@@ -46,11 +54,14 @@ export interface IKeyedReplay {
  * attempt.
  *
  * The body is fixed here: bytes are copied (the caller may reuse its buffer), a Blob is
- * immutable, a string is itself, and a value the transport would JSON-encode is encoded once with
+ * immutable, a string is itself, a FormData was encoded once by encodedFormOf (its bytes and
+ * contentType, the boundary in it, go out on every attempt), and a value the transport would
+ * JSON-encode is encoded once with
  * `encode`, the transport's own encoder, so every attempt carries the same text. Returns
  * undefined when the body cannot be sent twice byte for byte: a stream or an async iterable (read
- * once), FormData (fetch writes a new multipart boundary each time), or a value `encode` refuses.
- * Such a request is not retried. Also undefined when the request sends no key.
+ * once), a FormData not encoded first (fetch writes a new multipart boundary each time), or a
+ * value `encode` refuses. Such a request is not retried. Also undefined when the request sends no
+ * key.
  *
  * `headers` are the ones applyRequestMiddleware returned, folded by case (one spelling per name,
  * the last value set), so the key found here is the only key fetch sends.
@@ -60,24 +71,26 @@ export function keyedReplayOf(
   declared: string | undefined,
   wire: unknown,
   encode: (value: unknown) => string,
+  contentType?: string,
 ): IKeyedReplay | undefined {
   if (typeof declared !== 'string' || declared.length === 0) return undefined;
   const wanted = declared.toLowerCase();
   const name = Object.keys(headers).find((key) => key.toLowerCase() === wanted && typeof headers[key] === 'string' && headers[key]!.trim().length > 0);
   if (name === undefined) return undefined;
   const value = headers[name]!;
-  if (wire === undefined || wire === null || typeof wire === 'string') return { name, value, body: wire };
+  const replay = (body: unknown): IKeyedReplay => (contentType === undefined ? { name, value, body } : { name, value, body, contentType });
+  if (wire === undefined || wire === null || typeof wire === 'string') return replay(wire);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const g: any = globalThis as any;
   if (typeof g.FormData !== 'undefined' && wire instanceof g.FormData) return undefined;
   if (typeof g.ReadableStream !== 'undefined' && wire instanceof g.ReadableStream) return undefined;
   if (typeof (wire as { [Symbol.asyncIterator]?: unknown })[Symbol.asyncIterator] === 'function') return undefined;
-  if (typeof g.Blob !== 'undefined' && wire instanceof g.Blob) return { name, value, body: wire };
-  if (wire instanceof Uint8Array) return { name, value, body: new Uint8Array(wire) };
-  if (wire instanceof ArrayBuffer) return { name, value, body: wire.slice(0) };
+  if (typeof g.Blob !== 'undefined' && wire instanceof g.Blob) return replay(wire);
+  if (wire instanceof Uint8Array) return replay(new Uint8Array(wire));
+  if (wire instanceof ArrayBuffer) return replay(wire.slice(0));
   try {
     const text = encode(wire);
-    return typeof text === 'string' ? { name, value, body: text } : undefined;
+    return typeof text === 'string' ? replay(text) : undefined;
   } catch {
     return undefined;
   }
@@ -85,14 +98,43 @@ export function keyedReplayOf(
 
 /**
  * The headers of a later attempt of a keyed request: every spelling of the declared header is
- * removed and the first keyed attempt's name and value put back (keyedReplayOf).
+ * removed and the first keyed attempt's name and value put back (keyedReplayOf). A form
+ * encoded once goes out under its own multipart Content-Type (every other spelling removed),
+ * the boundary its bytes were written with.
  */
 export function withKeyedReplayHeader(headers: Record<string, string>, declared: string, replay: IKeyedReplay): Record<string, string> {
   const wanted = declared.toLowerCase();
   const out: Record<string, string> = {};
-  for (const [name, value] of Object.entries(headers)) if (name.toLowerCase() !== wanted) out[name] = value;
+  for (const [name, value] of Object.entries(headers)) {
+    const lower = name.toLowerCase();
+    if (lower !== wanted && !(replay.contentType !== undefined && lower === 'content-type')) out[name] = value;
+  }
   out[replay.name] = replay.value;
+  if (replay.contentType !== undefined) out['Content-Type'] = replay.contentType;
   return out;
+}
+
+/**
+ * A keyed FormData body, encoded once: its bytes (a Blob) and the multipart Content-Type with the
+ * boundary they were written with. fetch writes a new boundary for every send of a FormData, so
+ * a retry of the form itself is other bytes under the same key; these bytes, sent again under
+ * this Content-Type, are the same request. Every entry of a FormData is a string or a Blob (a
+ * File), and the platform's own Response encodes it, in Node and in a browser. undefined for any
+ * other body, or when encoding fails: the request then keeps its old rule (a keyed form is not
+ * retried).
+ */
+export async function encodedFormOf(wire: unknown): Promise<{ body: Blob; contentType: string } | undefined> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const g: any = globalThis as any;
+  if (typeof g.FormData === 'undefined' || !(wire instanceof g.FormData) || typeof g.Response !== 'function') return undefined;
+  try {
+    const encoded = new g.Response(wire);
+    const contentType = encoded.headers.get('content-type');
+    if (typeof contentType !== 'string' || !/^multipart\/form-data;/i.test(contentType)) return undefined;
+    return { body: await encoded.blob(), contentType };
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -137,7 +179,7 @@ export function withIdempotencyKey(
  * The default retry policy, used when neither the request nor the client sets `retries`: up to
  * DEFAULT_RETRIES more attempts (none for a responseIsFinal request), spent as
  * shouldRetryFailure(..., byDefault = true) allows, DEFAULT_RETRY_DELAY_MS as the backoff base
- * (about 2 s, then 4 s, plus jitter) unless `retryDelayMs` is set, and at most
+ * (1-2 s, then 2-4 s: retryDelay) unless `retryDelayMs` is set, and at most
  * DEFAULT_RETRY_WAIT_CAP_MS of waiting in all: a wait that would pass it (a long Retry-After)
  * ends the retries instead of being cut short.
  */
@@ -145,9 +187,85 @@ export const DEFAULT_RETRIES = 2;
 export const DEFAULT_RETRY_DELAY_MS = 2000;
 export const DEFAULT_RETRY_WAIT_CAP_MS = 10_000;
 
+/** The longest single retry wait, whatever the policy. */
+export const MAX_RETRY_DELAY_MS = 30_000;
+
 /**
- * A kit of a container that has just come up answers 502 BACKEND_GATEWAY_ERROR until it is
- * listening, about 10 s after the container reports `running`. Under the default policy a failure
+ * The wait before retry `attempt` (1-based), or undefined: do not retry.
+ *
+ * A server's Retry-After (`retryAfterMs`) is honoured as sent, 0 included (RFC 9110 §10.2.3 allows
+ * "now"); one asking for more than MAX_RETRY_DELAY_MS ends the retries, because sending sooner than
+ * the server asked is not honouring it. Otherwise the step is `baseDelayMs` doubled per attempt,
+ * capped at MAX_RETRY_DELAY_MS, and the wait is drawn with equal jitter: at least half the step,
+ * at most all of it, so clients that failed together do not come back together.
+ */
+export function retryDelay(baseDelayMs: number, attempt: number, retryAfterMs?: number, random: () => number = Math.random): number | undefined {
+  if (typeof retryAfterMs === 'number' && Number.isFinite(retryAfterMs) && retryAfterMs >= 0) {
+    return retryAfterMs <= MAX_RETRY_DELAY_MS ? retryAfterMs : undefined;
+  }
+  const step = Math.min(baseDelayMs * Math.pow(2, Math.max(0, attempt - 1)), MAX_RETRY_DELAY_MS);
+  return Math.round(step / 2 + random() * (step / 2));
+}
+
+/**
+ * A keyed request whose key the server is still working on (its first request has not finished)
+ * is answered 409 IDEMPOTENCY_REQUEST_IN_PROGRESS with a Retry-After. The client asks again with
+ * the same key and body after that wait (KEYED_IN_PROGRESS_DEFAULT_WAIT_MS when absent, at most
+ * KEYED_IN_PROGRESS_MAX_WAIT_MS), and the answer it gets is the first request's. These waits spend
+ * no retry; they stop once the call's own deadline (its timeoutMs; KEYED_IN_PROGRESS_MAX_TOTAL_MS
+ * when it has none) would pass, and the 409 is then the call's answer. That deadline runs from the
+ * first attempt: once the call has waited, each later attempt gets only what is left of it
+ * (keyedAttemptTimeoutMs), and no attempt or retry wait of any kind runs past it (keyedDeadlinePassed). A request that must not go twice (responseIsFinal) never waits, and an
+ * abort ends a wait at once (sleepUnlessAborted).
+ */
+export const KEYED_IN_PROGRESS = 'IDEMPOTENCY_REQUEST_IN_PROGRESS';
+export const KEYED_IN_PROGRESS_DEFAULT_WAIT_MS = 5_000;
+export const KEYED_IN_PROGRESS_MAX_WAIT_MS = 30_000;
+export const KEYED_IN_PROGRESS_MAX_TOTAL_MS = 420_000;
+
+/** The deadline keyedInProgressWaitMs measures against: the call's timeout, or the 7 min cap without one. */
+export function keyedInProgressLimitMs(timeoutMs: number): number {
+  return Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : KEYED_IN_PROGRESS_MAX_TOTAL_MS;
+}
+
+/** How long to wait before asking again, or undefined: not that answer, or the deadline would pass. */
+export function keyedInProgressWaitMs(
+  error: { status?: number | undefined; code?: string | undefined },
+  retryAfterMs: number | undefined,
+  elapsedMs: number,
+  deadlineMs: number,
+): number | undefined {
+  if (error.status !== 409 || error.code !== KEYED_IN_PROGRESS) return undefined;
+  const asked = typeof retryAfterMs === 'number' && Number.isFinite(retryAfterMs) && retryAfterMs >= 0 ? retryAfterMs : KEYED_IN_PROGRESS_DEFAULT_WAIT_MS;
+  const waitMs = Math.min(asked, KEYED_IN_PROGRESS_MAX_WAIT_MS);
+  return elapsedMs + waitMs <= keyedInProgressLimitMs(deadlineMs) ? waitMs : undefined;
+}
+
+/** The timeout of an attempt: `timeoutMs`, or, once the call has waited, what is left until `deadlineAt`. */
+export function keyedAttemptTimeoutMs(timeoutMs: number, deadlineAt: number | undefined, now: number): number {
+  if (deadlineAt === undefined) return timeoutMs;
+  const leftMs = Math.max(1, deadlineAt - now);
+  return Number.isFinite(timeoutMs) && timeoutMs > 0 ? Math.min(timeoutMs, leftMs) : leftMs;
+}
+
+/** Whether a call whose deadline is fixed (it has waited on IN_PROGRESS) would be past it after `delayMs`. */
+export function keyedDeadlinePassed(deadlineAt: number | undefined, now: number, delayMs = 0): boolean {
+  return deadlineAt !== undefined && now + delayMs >= deadlineAt;
+}
+
+/** Wait `ms`, or less when `signal` aborts first (the next attempt then fails as an aborted request). */
+export function sleepUnlessAborted(ms: number, signal?: AbortSignal): Promise<void> {
+  if (signal?.aborted) return Promise.resolve();
+  return new Promise((resolve) => {
+    const done = () => { clearTimeout(timer); signal?.removeEventListener('abort', done); resolve(); };
+    const timer = setTimeout(done, ms);
+    signal?.addEventListener('abort', done, { once: true });
+  });
+}
+
+/**
+ * A kit of a computer that has just come up answers 502 BACKEND_GATEWAY_ERROR until it is
+ * listening, about 10 s after the computer reports `running`. Under the default policy a failure
  * isKitStarting() accepts may go again, at most KIT_STARTING_MAX_DELAY_MS apart (a Retry-After is
  * honoured as sent), within the client's `kitStartingWaitMs` of waiting in all
  * (KIT_STARTING_WAIT_MS unless set; 0 turns the wait off). Which requests may go again is still
@@ -158,6 +276,15 @@ export const KIT_STARTING_MAX_DELAY_MS = 5000;
 export const KIT_STARTING_WAIT_MS = 20_000;
 export const KIT_NOT_READY = 'KIT_NOT_READY';
 
+/**
+ * The code of a request a request middleware (or a finalizer) refused by throwing: status 0,
+ * `outcome` `not_sent`, the thrown value as `cause`. It is final: the request is not sent again and
+ * the middleware is not asked a second time. An ApiError the middleware throws is the answer as it
+ * is (also final).
+ */
+export const REQUEST_REFUSED = 'REQUEST_REFUSED';
+
+/** True for the answer a kit gives while it is still starting: a 502 with code `BACKEND_GATEWAY_ERROR`. */
 export function isKitStarting(error: RetryableFailure): boolean {
   return error.status === 502 && error.code === 'BACKEND_GATEWAY_ERROR';
 }
@@ -176,6 +303,7 @@ export function kitStartingRetries(waitMs: number): number {
   return waitMs > 0 ? Math.ceil(waitMs / KIT_STARTING_MAX_DELAY_MS) + 1 : 0;
 }
 
+/** The message of a `KIT_NOT_READY` failure, naming how long the client waited (in whole seconds). */
 export function kitNotReadyMessage(waitedMs: number): string {
   return `The kit did not answer within ${Math.round(waitedMs / 1000)} s; it may still be starting, stopped or not installed.`;
 }
@@ -227,16 +355,19 @@ function isAbortError(error: unknown): boolean {
   return typeof error === 'object' && error !== null && (error as { code?: unknown }).code === 'ABORT_ERR';
 }
 
-/**
- * The reason a client's deadline aborts a request with. fetch rejects with the signal's reason, so
- * toApiError can tell its own timeout from a caller abort that landed after the timer fired.
- */
+/** Every reason {@link deadlineReason} has made. */
 const DEADLINE_REASONS = new WeakSet<object>();
+/**
+ * The reason a client's deadline aborts a request with: a new one per call, which {@link isDeadlineReason}
+ * recognises later. fetch rejects with the signal's reason, so toApiError can tell its own timeout from a
+ * caller abort that landed after the timer fired.
+ */
 export function deadlineReason(): Error {
   const reason = new DOMException('The operation timed out', 'AbortError');
   DEADLINE_REASONS.add(reason);
   return reason;
 }
+/** True when `error` is a reason {@link deadlineReason} made, that is, the client's own timeout and not a caller's abort. */
 export function isDeadlineReason(error: unknown): boolean {
   return typeof error === 'object' && error !== null && DEADLINE_REASONS.has(error);
 }
@@ -249,6 +380,88 @@ export function callerAbortMessage(reason: unknown): string {
   return detail ? `Request aborted by the caller: ${detail}` : 'Request aborted by the caller';
 }
 
+/**
+ * A change the server answered with success (`answeredOk`: a 2xx status), that then failed in
+ * the client (its body could not be read or parsed, a response middleware threw, whatever the
+ * status of the error it threw): it is never sent again, by the retry rule or by an onError hook
+ * that asks for a replay. The server did the work. An answer with an error status whose body
+ * then failed to read is not one of these: the server said the change failed. GET, HEAD and
+ * OPTIONS change nothing, and a `keyed` request (it sends the idempotency key its server
+ * honours) is answered from the server's record of the first, so those may go again.
+ */
+export function answeredWriteIsFinal(method: string, answeredOk: boolean, keyed: boolean): boolean {
+  return answeredOk && !keyed && !READ_METHODS.includes(method.toUpperCase());
+}
+
+/**
+ * fetch options the client forwards when the caller asks for them (IHttpClientConfig.fetchCredentials,
+ * fetchCache). Only these values are passed on; anything else is ignored, so a typo cannot reach
+ * fetch (which throws a TypeError on an unknown mode). `only-if-cached` is left out: fetch accepts
+ * it only for same-origin requests.
+ */
+export type FetchCredentialsMode = 'omit' | 'same-origin' | 'include';
+export type FetchCacheMode = 'default' | 'no-store' | 'reload' | 'no-cache' | 'force-cache';
+export const FETCH_CREDENTIALS_MODES: readonly string[] = ['omit', 'same-origin', 'include'];
+export const FETCH_CACHE_MODES: readonly string[] = ['default', 'no-store', 'reload', 'no-cache', 'force-cache'];
+
+/** The fetch `credentials` policy of a client: one mode for every request, or one per namespace. */
+export type FetchCredentialsPolicy = FetchCredentialsMode | Readonly<Record<string, FetchCredentialsMode | undefined>>;
+
+/** The mode `value` names, or undefined. */
+export function fetchCredentialsMode(value: unknown): FetchCredentialsMode | undefined {
+  return typeof value === 'string' && FETCH_CREDENTIALS_MODES.includes(value) ? value as FetchCredentialsMode : undefined;
+}
+
+/** The mode `value` names, or undefined. */
+export function fetchCacheMode(value: unknown): FetchCacheMode | undefined {
+  return typeof value === 'string' && FETCH_CACHE_MODES.includes(value) ? value as FetchCacheMode : undefined;
+}
+
+/**
+ * The `credentials` a request goes out with. A call's own value wins; else the client's policy: a
+ * mode applies to every request, a map applies its entry for the request's namespace (the kit's
+ * name: `agent`, `terminal`, ...; `api` for the account API and for a request made on the
+ * transport directly), else its `'*'` entry. Undefined: the request sets none and fetch uses its
+ * own default (`same-origin`).
+ */
+export function resolveFetchCredentials(
+  own: unknown,
+  policy: FetchCredentialsPolicy | undefined,
+  namespace: unknown,
+): FetchCredentialsMode | undefined {
+  const call = fetchCredentialsMode(own);
+  if (call !== undefined) return call;
+  if (policy === undefined || policy === null) return undefined;
+  if (typeof policy === 'string') return fetchCredentialsMode(policy);
+  const name = typeof namespace === 'string' && namespace.length > 0 ? namespace : 'api';
+  const table = policy as Readonly<Record<string, unknown>>;
+  return fetchCredentialsMode(Object.prototype.hasOwnProperty.call(table, name) ? table[name] : undefined)
+    ?? fetchCredentialsMode(Object.prototype.hasOwnProperty.call(table, '*') ? table['*'] : undefined);
+}
+
+/**
+ * A byte limit: the first of `values` that is set (not undefined), which must be a whole number
+ * above 0, else `invalid` is called with a message for `name` (the clients pass a function that
+ * throws their ValidationError). No set value gives undefined (no limit). A bad value is an error,
+ * never a cap that quietly turns itself off: 0, negatives, fractions, NaN, Infinity, strings.
+ */
+export function byteLimit(name: string, invalid: (message: string) => never, ...values: unknown[]): number | undefined {
+  for (const value of values) {
+    if (value === undefined) continue;
+    if (typeof value === 'number' && Number.isFinite(value) && Number.isInteger(value) && value > 0) return value;
+    return invalid(name + ' must be a whole number of bytes above 0');
+  }
+  return undefined;
+}
+
+/**
+ * The code of a response whose body outgrew the call's `maxResponseBytes`, and of an event stream
+ * that outgrew `maxStreamBytes`. Status 0 with `outcome` `answered`: the server answered, the
+ * client stopped reading. Neither is sent again (shouldRetryFailure).
+ */
+export const RESPONSE_TOO_LARGE = 'RESPONSE_TOO_LARGE';
+export const STREAM_TOO_LARGE = 'STREAM_TOO_LARGE';
+
 /** The fields of a failed attempt that shouldRetry() reads. */
 export interface RetryableFailure {
   status: number;
@@ -260,7 +473,12 @@ export interface RetryableFailure {
  * Whether a failed attempt may be sent again. One rule, in this order:
  *   1. The caller's abort, this client's own timeout, a refused redirect and a missing fetch are final.
  *   2. A request that never reached a server (the connection could not be opened) ran
- *      nothing: any method goes again.
+ *      nothing: any method goes again. A request the server answered with a 2xx, that then
+ *      failed in the client (its body could not be read or parsed, a response middleware threw,
+ *      whatever status that error has), is final for every method but GET, HEAD and OPTIONS
+ *      (answeredWriteIsFinal): the server did the work, and a repeat would do it again or answer
+ *      differently (a DELETE that worked answers 404). A `keyed` request is the exception: the
+ *      server answers its repeat from the record of the first, so it goes by the rules below.
  *   3. A refusal whose code says nothing was done (RETRY_SAFE_CODES): any method goes again.
  *   4. A request marked responseIsFinal stops here: its handler is arbitrary code, so a status
  *      it returned is an answer, and a lost connection may have followed a run.
@@ -271,6 +489,8 @@ export interface RetryableFailure {
  * `keyed`: the request sends the idempotency key its server honours (the header its operation declares),
  * so any method counts as idempotent in rule 5 and under `byDefault`: a repeat is answered from the
  * server's record.
+ * `answered`: the attempt had an answer, so a status-0 failure after it is never "not sent" (rule 2).
+ * `answeredOk`: that answer had a 2xx status, so a failure after it is final for a change (rule 2).
  */
 export function shouldRetryFailure(
   error: RetryableFailure,
@@ -279,15 +499,20 @@ export function shouldRetryFailure(
   responseIsFinal = false,
   byDefault = false,
   keyed = false,
+  answered = false,
+  answeredOk = false,
 ): boolean {
   // The caller's abort (ABORTED) and this client's own deadline (ETIMEDOUT from its timer's
   // AbortError) are final; a body stall is ETIMEDOUT too, and goes by the rules below.
   if (error.status === 0 && error.code === 'ABORTED') return false;
   if (error.status === 0 && error.code === 'ETIMEDOUT' && isAbortError(error.cause)) return false;
   if (error.code === 'REDIRECT_REFUSED') return false;
+  // The body outgrew the limit the caller set: a second download would outgrow it again.
+  if (error.code === RESPONSE_TOO_LARGE || error.code === REQUEST_REFUSED) return false;
   // A runtime with no fetch: the same answer on every attempt.
   if (error.status === 0 && (error.cause as { code?: unknown } | undefined)?.code === 'FETCH_UNAVAILABLE') return false;
-  if (error.status === 0 && neverDispatched(error)) return true;
+  if (error.status === 0 && !answered && neverDispatched(error)) return true;
+  if (answeredWriteIsFinal(method, answeredOk, keyed)) return false;
   const idempotentMethod = keyed || IDEMPOTENT_METHODS.includes(method);
   if (byDefault && !idempotentMethod) return false;
   if (error.status > 0 && !responseIsFinal && typeof error.code === 'string' && RETRY_SAFE_CODES.includes(error.code)) return true;

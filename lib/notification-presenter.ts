@@ -16,6 +16,7 @@
 
 import type { Notification as NotificationData } from '../generated/types.js';
 import { ValidationError } from '../generated/errors.js';
+import { retireAccessors } from './retired-accessor.js';
 import type { NotificationServerMessage } from
   '../generated/notifications/notifications_connect-notification-stream.websocket.js';
 import { spawn as cpSpawn, execFileSync } from 'node:child_process';
@@ -68,7 +69,7 @@ export interface NotificationPresenter {
   /** Clean up resources */
   dispose(): void;
   /** Whether the presenter is ready to show notifications */
-  readonly ready: boolean;
+  isReady(): boolean;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -88,8 +89,8 @@ export function parseNotificationData(
 ): ParsedNotification {
   const raw = (message.data ?? {}) as Record<string, unknown>;
 
-  // The kit serves only notifications with an integer id (hoody-notifications: the spec requires
-  // Notification.id, and history entries without one are dropped by transform_notification). A message
+  // The kit serves only notifications with an integer id (the notification spec requires an id, and
+  // the kit drops history entries without one). A message
   // without one is refused, never given an invented id; the WebSocket emitter catches a listener's
   // throw, so a live stream drops it and goes on.
   if (typeof raw.id !== 'number' || !Number.isInteger(raw.id)) {
@@ -241,9 +242,8 @@ function buildArgs(
       else args.push('-message', ' '); // terminal-notifier requires -message
       if (data.appname) args.push('-subtitle', data.appname);
       if (urgency === 'CRITICAL') args.push('-sound', 'default');
-      // Honour showIcons on macOS too. terminal-notifier accepts
-      // -contentImage for a custom icon; without this the option was silently
-      // no-ops on macOS despite the config being exposed.
+      // Honour showIcons on macOS too: terminal-notifier takes -contentImage
+      // for a custom icon.
       if (showIcons && notification.iconUrl) args.push('-contentImage', notification.iconUrl);
       return args;
     }
@@ -319,8 +319,9 @@ export function createNotificationPresenter(
   const spawnFn = config?.spawn ?? defaultSpawn;
   const tempIconPaths: string[] = [];
 
-  return {
-    get ready() {
+  // The getter `isReady()` replaced refuses, naming the method.
+  return retireAccessors<NotificationPresenter>({
+    isReady(): boolean {
       return _ready;
     },
 
@@ -342,11 +343,8 @@ export function createNotificationPresenter(
     },
 
     async show(notification: ParsedNotification): Promise<void> {
-      // Every failure path invokes `config.onError` (if
-      // provided) before rethrowing. Pre-fix the callback was documented in
-      // NotificationPresenterConfig but never called — direct consumers of
-      // createNotificationPresenter() silently lost every error. The rethrow
-      // preserves existing behavior for callers that don't provide the hook.
+      // Every failure path invokes `config.onError` (if provided), then
+      // rethrows, so callers without the hook still see the error.
       const reportError = (err: Error) => {
         try { config?.onError?.(notification, err); } catch { /* hook errors must not mask the real one */ }
       };
@@ -385,5 +383,5 @@ export function createNotificationPresenter(
       }
       tempIconPaths.length = 0;
     },
-  };
+  }, 'NotificationPresenter', { ready: 'isReady()' });
 }

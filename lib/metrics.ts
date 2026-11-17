@@ -7,9 +7,9 @@
  *   Object.defineProperty -> return modified clone (original response untouched).
  *
  * Why this exists:
- * Some container CPU payloads expose a cumulative CPU time ratio as
+ * Some computer CPU payloads expose a cumulative CPU time ratio as
  * `usage_percent`, which can grow far beyond sane percentage ranges (e.g. 50000%).
- * These helpers detect such broken formulas, normalize them using delta-sampling
+ * These helpers detect such cumulative values, normalize them using delta-sampling
  * or uptime-based fallbacks, and attach friendly `metrics_human` / `metrics_human_summary`
  * fields while preserving raw values for debugging.
  *
@@ -31,8 +31,8 @@ const NS_PER_MS = 1_000_000;
 /** Nanoseconds per second — used for duration formatting. */
 const NS_PER_SECOND = 1_000_000_000;
 /**
- * Maximum number of entries in the per-container CPU delta sample cache.
- * Prevents unbounded memory growth when monitoring many containers over time.
+ * Maximum number of entries in the per-computer CPU delta sample cache.
+ * Prevents unbounded memory growth when monitoring many computers over time.
  * FIFO eviction: when exceeded, the oldest (first-inserted) entries are deleted.
  */
 const MAX_CPU_SAMPLE_CACHE = 5_000;
@@ -50,19 +50,19 @@ interface ICpuUsageSample {
 }
 
 /**
- * Module-level singleton cache: maps container ID -> most recent CPU usage sample.
+ * Module-level singleton cache: maps computer ID -> most recent CPU usage sample.
  * Used by normalizeCpuInPlace to compute CPU % via delta sampling (current - previous).
  * FIFO eviction via pruneCpuUsageSampleCache keeps size <= MAX_CPU_SAMPLE_CACHE.
  * Map insertion order is used as the eviction key (oldest first).
  */
-const cpuUsageSamplesByContainerId = new Map<string, ICpuUsageSample>();
+const cpuUsageSamplesByComputerId = new Map<string, ICpuUsageSample>();
 
 /** Evict oldest entries when cache exceeds MAX_CPU_SAMPLE_CACHE to prevent memory leaks. */
 function pruneCpuUsageSampleCache(): void {
-  while (cpuUsageSamplesByContainerId.size > MAX_CPU_SAMPLE_CACHE) {
-    const oldest = cpuUsageSamplesByContainerId.keys().next();
+  while (cpuUsageSamplesByComputerId.size > MAX_CPU_SAMPLE_CACHE) {
+    const oldest = cpuUsageSamplesByComputerId.keys().next();
     if (oldest.done) break;
-    cpuUsageSamplesByContainerId.delete(oldest.value);
+    cpuUsageSamplesByComputerId.delete(oldest.value);
   }
 }
 
@@ -271,7 +271,7 @@ function defineCachedGetter(
  * with source='client'.
  *
  * The clock source distinction matters for CPU normalization: when computing
- * container uptime (now - started_at), mixing a server-generated `started_at`
+ * computer uptime (now - started_at), mixing a server-generated `started_at`
  * with a client-generated `now` introduces clock skew. The `source` field lets
  * downstream code tag the normalization reason accordingly.
  */
@@ -346,19 +346,19 @@ function extractNetworkCounters(networkValue: unknown): {
 /**
  * CRITICAL FUNCTION — Normalize CPU usage_percent in place.
  *
- * Problem: some container runtimes expose `usage_percent` computed as
+ * Problem: some computer runtimes expose `usage_percent` computed as
  * `(cumulative_cpu_ns / allocated_time_ns) * 100`. Because cumulative CPU time
  * grows monotonically, this "percent" can reach 50,000%+ and is useless as a
  * current utilization metric.
  *
  * Detection: the function checks whether `rawPercent > 1000` AND approximately
  * equals `(usage / allocated_time) * 100` using almostEqual. This fingerprints
- * the broken cumulative formula.
+ * the cumulative formula.
  *
  * Three normalization strategies (tried in order):
  *
  * 1. **Delta sampling (primary)**: compare current CPU ns to the previous sample
- *    for this container ID (stored in cpuUsageSamplesByContainerId). Compute
+ *    for this computer ID (stored in cpuUsageSamplesByComputerId). Compute
  *    `deltaUsageNs / elapsedNs * 100`. This gives true instantaneous CPU % and
  *    avoids clock-origin mismatch between server and client.
  *    Reason tag: 'delta_usage_over_elapsed_time'
@@ -377,10 +377,10 @@ function extractNetworkCounters(networkValue: unknown): {
  * and the strategy used is recorded in `cpu.usage_percent_normalization`.
  */
 function normalizeCpuInPlace(
-  containerStats: UnknownRecord,
+  computerStats: UnknownRecord,
   referenceNow: IReferenceNow,
 ): void {
-  const cpu = asRecord(containerStats.cpu);
+  const cpu = asRecord(computerStats.cpu);
   if (!cpu) return;
 
   const rawPercent = asFiniteNumber(cpu.usage_percent);
@@ -392,7 +392,7 @@ function normalizeCpuInPlace(
   let normalizedPercent = rawPercent;
   let normalizationReason: string | undefined;
 
-  // Detect the broken cumulative formula: rawPercent > 1000 AND ≈ (usage/allocated_time)*100
+  // Detect the cumulative formula: rawPercent > 1000 AND ≈ (usage/allocated_time)*100
   const looksLikeBrokenCumulativeFormula =
     usageNs !== undefined
     && allocatedNs !== undefined
@@ -401,16 +401,16 @@ function normalizeCpuInPlace(
     && almostEqual(rawPercent, (usageNs / allocatedNs) * 100, 0.002, 1);
 
   if (looksLikeBrokenCumulativeFormula && usageNs !== undefined) {
-    const containerId =
-      typeof containerStats.id === 'string' && containerStats.id.trim() !== ''
-        ? containerStats.id
+    const computerId =
+      typeof computerStats.id === 'string' && computerStats.id.trim() !== ''
+        ? computerStats.id
         : undefined;
 
     // Primary normalization path: use local delta samples to avoid clock-origin mismatch.
-    if (containerId) {
+    if (computerId) {
       const observedAtMs = Date.now();
-      const previous = cpuUsageSamplesByContainerId.get(containerId);
-      cpuUsageSamplesByContainerId.set(containerId, { usageNs, observedAtMs });
+      const previous = cpuUsageSamplesByComputerId.get(computerId);
+      cpuUsageSamplesByComputerId.set(computerId, { usageNs, observedAtMs });
       pruneCpuUsageSampleCache();
 
       if (
@@ -434,7 +434,7 @@ function normalizeCpuInPlace(
 
     // Secondary fallback: estimate average since start, using explicit clock source marker.
     if (!normalizationReason) {
-      const startedAtMs = parseTimestampMs(containerStats.started_at);
+      const startedAtMs = parseTimestampMs(computerStats.started_at);
       if (startedAtMs !== undefined && referenceNow.nowMs > startedAtMs) {
         const uptimeNs = (referenceNow.nowMs - startedAtMs) * NS_PER_MS;
         if (uptimeNs > 0) {
@@ -471,10 +471,10 @@ function normalizeCpuInPlace(
  * by checking whether it approximately equals `usage / total`. If confirmed,
  * multiplies by 100 and records the normalization reason.
  * Only converts when usage/total ratio corroborates the fraction hypothesis —
- * this prevents false positives on containers that genuinely use <1% memory.
+ * this prevents false positives on computers that genuinely use <1% memory.
  */
-function normalizeMemoryInPlace(containerStats: UnknownRecord): void {
-  const memory = asRecord(containerStats.memory);
+function normalizeMemoryInPlace(computerStats: UnknownRecord): void {
+  const memory = asRecord(computerStats.memory);
   if (!memory) return;
 
   const rawPercent = asFiniteNumber(memory.usage_percent);
@@ -509,7 +509,7 @@ function normalizeMemoryInPlace(containerStats: UnknownRecord): void {
 }
 
 /**
- * Build the human-readable metrics object for a single container.
+ * Build the human-readable metrics object for a single computer.
  *
  * Orchestration role: reads the already-normalized CPU/memory fields plus raw
  * disk and network data, and produces a flat `metrics_human` object with
@@ -517,15 +517,15 @@ function normalizeMemoryInPlace(containerStats: UnknownRecord): void {
  * interface breakdowns, and timing information including uptime.
  *
  * This function is called lazily via defineCachedGetter — it only runs
- * when a consumer accesses `containerStats.metrics_human`.
+ * when a consumer accesses `computerStats.metrics_human`.
  */
-function buildContainerHumanMetrics(
-  containerStats: UnknownRecord,
+function buildComputerHumanMetrics(
+  computerStats: UnknownRecord,
   referenceNow: IReferenceNow,
 ): UnknownRecord {
-  const cpu = asRecord(containerStats.cpu);
-  const memory = asRecord(containerStats.memory);
-  const disk = asRecord(containerStats.disk);
+  const cpu = asRecord(computerStats.cpu);
+  const memory = asRecord(computerStats.memory);
+  const disk = asRecord(computerStats.disk);
   const rootDisk = asRecord(disk?.root);
 
   const cpuUsageNs = cpu ? asFiniteNumber(cpu.usage) : undefined;
@@ -546,13 +546,13 @@ function buildContainerHumanMetrics(
       ? (rootUsageBytes / rootTotalBytes) * 100
       : undefined;
 
-  const startedAtMs = parseTimestampMs(containerStats.started_at);
+  const startedAtMs = parseTimestampMs(computerStats.started_at);
   const uptimeSeconds =
     startedAtMs !== undefined && referenceNow.nowMs > startedAtMs
       ? (referenceNow.nowMs - startedAtMs) / 1000
       : undefined;
 
-  const network = extractNetworkCounters(containerStats.network);
+  const network = extractNetworkCounters(computerStats.network);
   const cpuNormalizationReason = cpu && typeof cpu.usage_percent_normalization === 'string'
     ? cpu.usage_percent_normalization
     : undefined;
@@ -604,9 +604,9 @@ function buildContainerHumanMetrics(
   }
 
   const timingHuman: UnknownRecord = {
-    started_at: typeof containerStats.started_at === 'string' ? containerStats.started_at : null,
+    started_at: typeof computerStats.started_at === 'string' ? computerStats.started_at : null,
     processing_time:
-      typeof containerStats.processing_time === 'string' ? containerStats.processing_time : null,
+      typeof computerStats.processing_time === 'string' ? computerStats.processing_time : null,
     uptime_seconds: uptimeSeconds ?? null,
     uptime_text: uptimeSeconds !== undefined ? formatDurationSeconds(uptimeSeconds) : null,
     reference_clock: referenceNow.source,
@@ -630,18 +630,18 @@ function buildContainerHumanMetrics(
 }
 
 /**
- * Orchestration: normalize CPU and memory on a single container stats object,
+ * Orchestration: normalize CPU and memory on a single computer stats object,
  * then attach a lazy `metrics_human` getter.
  */
-function normalizeContainerStatsDataInPlace(
-  containerStats: UnknownRecord,
+function normalizeComputerStatsDataInPlace(
+  computerStats: UnknownRecord,
   referenceNow: IReferenceNow,
 ): void {
-  normalizeCpuInPlace(containerStats, referenceNow);
-  normalizeMemoryInPlace(containerStats);
+  normalizeCpuInPlace(computerStats, referenceNow);
+  normalizeMemoryInPlace(computerStats);
 
-  defineCachedGetter(containerStats, 'metrics_human', () =>
-    buildContainerHumanMetrics(containerStats, referenceNow),
+  defineCachedGetter(computerStats, 'metrics_human', () =>
+    buildComputerHumanMetrics(computerStats, referenceNow),
   );
 }
 
@@ -696,8 +696,8 @@ function buildProjectHumanSummary(stats: UnknownRecord[]): UnknownRecord {
     diskTotalBytes > 0 ? (diskUsageTotalBytes / diskTotalBytes) * 100 : undefined;
 
   return {
-    container_count: stats.length,
-    running_container_count: runningCount,
+    computer_count: stats.length,
+    running_computer_count: runningCount,
     cpu_usage_percent_total: roundTo(cpuTotalPercent, 4),
     cpu_usage_percent_average:
       cpuAveragePercent !== undefined ? roundTo(cpuAveragePercent, 4) : null,
@@ -724,13 +724,13 @@ function buildProjectHumanSummary(stats: UnknownRecord[]): UnknownRecord {
 }
 
 /**
- * Entry point for single-container stats API responses.
+ * Entry point for single-computer stats API responses.
  *
  * Orchestration: clones the response, extracts the best server/client reference
  * timestamp, normalizes CPU + memory, attaches lazy `metrics_human` getter,
  * returns the modified clone. The original response object is never mutated.
  */
-export function normalizeContainerStatsResponse<T>(response: T): T {
+export function normalizeComputerStatsResponse<T>(response: T): T {
   const envelope = asRecord(response);
   if (!envelope) return response;
 
@@ -745,16 +745,16 @@ export function normalizeContainerStatsResponse<T>(response: T): T {
   if (!data) return response;
 
   const referenceNow = extractReferenceNowMs(clonedEnvelope, data, Date.now());
-  normalizeContainerStatsDataInPlace(data, referenceNow);
+  normalizeComputerStatsDataInPlace(data, referenceNow);
   return clonedResponse;
 }
 
 /**
- * Entry point for project-level (multi-container) stats API responses.
+ * Entry point for project-level (multi-computer) stats API responses.
  *
- * Orchestration: clones the response, normalizes each container in `data.stats[]`,
+ * Orchestration: clones the response, normalizes each computer in `data.stats[]`,
  * then attaches a lazy `metrics_human_summary` getter on `data` that aggregates
- * totals/averages across all containers (CPU avg, memory sum, disk sum, network sum).
+ * totals/averages across all computers (CPU avg, memory sum, disk sum, network sum).
  */
 export function normalizeProjectStatsResponse<T>(response: T): T {
   const envelope = asRecord(response);
@@ -782,7 +782,7 @@ export function normalizeProjectStatsResponse<T>(response: T): T {
   for (const item of statsValue) {
     const stat = asRecord(item);
     if (!stat) continue;
-    normalizeContainerStatsDataInPlace(stat, referenceNow);
+    normalizeComputerStatsDataInPlace(stat, referenceNow);
     normalizedStats.push(stat);
   }
 

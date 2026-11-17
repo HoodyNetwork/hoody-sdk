@@ -1,6 +1,6 @@
 /**
- * Remote control of a live hoody-exec script (MonoRepoStorage #674, cut V9):
- * `exec.connect(url, { token })`.
+ * Remote control of a live hoody-exec script:
+ * `exec.remote(url, { token })`.
  *
  * The remote channel lives on the script's OWN URL. A marker picks the op:
  *  - one-shot ops: `X-Hoody-Remote: send|call|eval|capabilities` on a POST/GET;
@@ -10,7 +10,7 @@
  * The default transport is SSE events + one-shot requests, the same pattern as
  * hoody-agent's prompt stream. `ws: true` moves send, call and events onto one
  * attach socket. `eval` is ALWAYS a one-shot POST: the server refuses it on
- * attach, so a future proxy rule can single it out by its header.
+ * attach.
  *
  * The script token travels only as `X-Token` (recorded as a credential header,
  * so the HTTP client redacts it in ApiError and confines it on redirects) or,
@@ -29,9 +29,10 @@ import { ExecService } from '../generated/exec/exec.service.js';
 import { encodeExecScriptPath, type ExecExecutionTemplateVars } from './exec-script-execution.js';
 import { recordCredentialHeader } from './redact.js';
 import { builtinWebSocketProhibited, SDK_WS_CAPS, unsafeBuiltinWebSocketMessage } from './kit-ws-auth.js';
+import { retireMethods } from './retired-accessor.js';
 
 // ---------------------------------------------------------------------------
-// Wire constants (#674)
+// Wire constants
 // ---------------------------------------------------------------------------
 
 /** Request header naming the remote op. */
@@ -64,15 +65,15 @@ const TIMEOUT_GRACE_MS = 5_000;
 // Types
 // ---------------------------------------------------------------------------
 
-/** Options of `exec.connect`. */
-export interface ExecRemoteConnectOptions {
+/** Options of `exec.remote`. */
+export interface ExecRemoteOptions {
   /** The script token: a `@remote-token` secret, or the script's `@token` when it declares no remote token. */
   token?: string | undefined;
   /** Carry send, call and events over one attach socket. `eval` stays a one-shot POST. Default false. */
   ws?: boolean | undefined;
   /** Default client wait for one-shot answers, and the most an attach socket or an events stream takes to open, in ms (default 60 000). */
   timeoutMs?: number | undefined;
-  /** URL template variables for a path (projectId/containerId/serviceIndex/server), as for `exec.run`. */
+  /** URL template variables for a path (projectId/computerId/serviceIndex/server), as for `exec.run`. */
   templateVars?: ExecExecutionTemplateVars;
 }
 
@@ -84,8 +85,8 @@ export interface ExecRemoteOpOptions {
   signal?: AbortSignal | undefined;
 }
 
-/** Options of `eval` / `evaluate`. */
-export interface ExecRemoteEvalOptions extends ExecRemoteOpOptions {
+/** Options of `evaluate`. */
+export interface ExecRemoteEvaluateOptions extends ExecRemoteOpOptions {
   /** `latest` (default): the in-flight or last run's scope. `globals`: the worker context (worker mode only). */
   target?: 'latest' | 'globals' | undefined;
   /** Run the script once first when it has no run yet (otherwise 409 REMOTE_NO_RUN). */
@@ -99,7 +100,7 @@ export type ExecRemoteRunKind = 'http' | 'remote' | 'cron' | 'remote_init' | 'we
  * The first argument the script passes to an `evaluate()` function (a frozen object): the op, a
  * signal that aborts on the op's deadline or when the caller disconnects, and the run it evaluates in.
  */
-export interface ExecRemoteEvalContext {
+export interface ExecRemoteEvaluateContext {
   readonly op: 'eval';
   readonly signal: AbortSignal;
   readonly run: { readonly kind: ExecRemoteRunKind; readonly state?: unknown; readonly startedAt: string; readonly [key: string]: unknown };
@@ -112,11 +113,11 @@ export interface ExecRemoteEvalContext {
   readonly [key: string]: unknown;
 }
 
-/** A console level for `events({ tail })`. */
+/** A console level for `streamEvents({ tail })`. */
 export type ExecRemoteTailLevel = 'error' | 'warn' | 'info' | 'debug';
 
-/** Options of `events()`. */
-export interface ExecRemoteEventsOptions {
+/** Options of `streamEvents()`. */
+export interface ExecRemoteStreamEventsOptions {
   /** Also stream the script's console lines at this level as `{event:'console'}` frames. Absent: none. */
   tail?: ExecRemoteTailLevel | undefined;
   /** Ends the iteration. */
@@ -150,8 +151,8 @@ export interface ExecRemoteLogLine {
   [key: string]: unknown;
 }
 
-/** Answer of `eval` / `evaluate`. Read the value as `(await conn.eval('x')).result`. */
-export interface ExecRemoteEvalResult {
+/** Answer of `evaluate`. Read the value as `(await conn.evaluate('x')).result`. */
+export interface ExecRemoteEvaluateResult {
   ok: true;
   result: unknown;
   logs: ExecRemoteLogLine[];
@@ -160,7 +161,7 @@ export interface ExecRemoteEvalResult {
   [key: string]: unknown;
 }
 
-/** Answer of `capabilities`. Without a valid token only `token_required` and `token_names` are set. */
+/** Answer of `getCapabilities`. Without a valid token only `token_required` and `token_names` are set. */
 export interface ExecRemoteCapabilities {
   token_required?: boolean;
   token_names?: string[];
@@ -210,7 +211,7 @@ export interface ExecRemoteCloseInfo {
   error?: ExecRemoteError;
 }
 
-/** An explicit attach socket (`conn.attach()`): send, call and events on one socket, never eval. */
+/** An explicit attach socket (`conn.connect()`): send, call and events on one socket, never eval. */
 export interface ExecRemoteSession {
   send(message: unknown, options?: ExecRemoteOpOptions): Promise<ExecRemoteSendResult>;
   call(name: string, args?: unknown[], options?: ExecRemoteOpOptions): Promise<ExecRemoteCallResult>;
@@ -219,7 +220,7 @@ export interface ExecRemoteSession {
    * that arrived since then (the latest, up to 1000 frames and 8 MiB). One reader at a time;
    * otherwise frames that arrive while nobody iterates are dropped.
    */
-  frames(options?: { signal?: AbortSignal | undefined }): AsyncIterable<ExecRemoteFrame>;
+  streamEvents(options?: { signal?: AbortSignal | undefined }): AsyncIterable<ExecRemoteFrame>;
   /** Close the socket. `code` is sent when a client may send it (1000, 3000-4999); any other closes with none. */
   close(code?: number, reason?: string): void;
   /** Settles when the socket has closed. */
@@ -228,27 +229,27 @@ export interface ExecRemoteSession {
   readonly attached: ExecRemoteFrame;
 }
 
-/** A connection to one live script (`exec.connect(url, { token })`). */
+/** A connection to one live script (`exec.remote(url, { token })`). */
 export interface ExecRemoteConnection {
   /** The script URL (or path) this connection targets. */
   readonly url: string;
   /** What the script enables, its token names, its latest run; disabled ops carry `fix`. */
-  capabilities(options?: ExecRemoteOpOptions): Promise<ExecRemoteCapabilities>;
+  getCapabilities(options?: ExecRemoteOpOptions): Promise<ExecRemoteCapabilities>;
   /** Deliver a message to the script's `remote.on('message')` handler (`@remote-messages`). */
   send(message: unknown, options?: ExecRemoteOpOptions): Promise<ExecRemoteSendResult>;
   /** Call a function the script exposed with `remote.expose(name, fn)` (`@remote-call`). */
   call(name: string, args?: unknown[], options?: ExecRemoteOpOptions): Promise<ExecRemoteCallResult>;
   /**
    * Evaluate an expression inside the script's live scope (`@remote-eval` + an eval-scoped token).
-   * Always a one-shot POST, also with `ws: true`. The value is `(await conn.eval('x')).result`.
+   * Always a one-shot POST, also with `ws: true`. The value is `(await conn.evaluate('x')).result`.
    */
-  eval(expression: string, options?: ExecRemoteEvalOptions): Promise<ExecRemoteEvalResult>;
+  evaluate(expression: string, options?: ExecRemoteEvaluateOptions): Promise<ExecRemoteEvaluateResult>;
   /**
    * Evaluate a function's source in the script's scope: sends `{ function: fn.toString(), args }`,
    * and the script calls it as `fn(ctx, ...args)`. Only the source travels, so `fn` must not close
    * over local variables of the caller; `args` are JSON.
    */
-  evaluate(fn: (ctx: ExecRemoteEvalContext, ...args: never[]) => unknown, args?: unknown[], options?: ExecRemoteEvalOptions): Promise<ExecRemoteEvalResult>;
+  evaluate(fn: (ctx: ExecRemoteEvaluateContext, ...args: never[]) => unknown, args?: unknown[], options?: ExecRemoteEvaluateOptions): Promise<ExecRemoteEvaluateResult>;
   /**
    * Event frames: SSE by default, the attach socket with `ws: true`. The server's first frame
    * (`attached`) is checked and not yielded; a stream without it is ExecRemoteUnsupportedError.
@@ -256,15 +257,15 @@ export interface ExecRemoteConnection {
    * iteration opens an attach socket of its own (the server sets a socket's tail when it opens),
    * closed when the iteration ends.
    */
-  events(options?: ExecRemoteEventsOptions): AsyncIterable<ExecRemoteFrame>;
+  streamEvents(options?: ExecRemoteStreamEventsOptions): AsyncIterable<ExecRemoteFrame>;
   /** Open a new attach socket. Resolves on the server's `attached` frame; rejects with a refusal, or Unsupported without one. */
-  attach(): Promise<ExecRemoteSession>;
+  connect(): Promise<ExecRemoteSession>;
   /** Abort every stream and request of this connection and close its socket. */
   close(): void;
 }
 
-/** The `exec.connect` function. */
-export type ExecRemoteConnect = (urlOrPath: string, options?: ExecRemoteConnectOptions) => ExecRemoteConnection;
+/** The `exec.remote` function. */
+export type ExecRemoteFactory = (urlOrPath: string, options?: ExecRemoteOptions) => ExecRemoteConnection;
 
 // ---------------------------------------------------------------------------
 // Errors
@@ -289,6 +290,10 @@ export class ExecRemoteError extends Error {
   /** The script URL, without query or credentials. */
   readonly url: string | undefined;
 
+  /**
+   * `params.message` is extended with the lines of `params.fix`, when there is one; `details`
+   * defaults to an empty object.
+   */
   constructor(params: {
     message: string;
     status: number;
@@ -332,6 +337,7 @@ export class ExecRemotePermissionError extends ExecRemoteError {
 
 /** The script's own code threw (422 REMOTE_THREW). `remote` is the script-side error. */
 export class ExecRemoteThrewError extends ExecRemoteError {
+  /** The error the script threw, read from `details.error`: `name` defaults to `Error`, `message` to an empty string. */
   readonly remote: { name: string; message: string; stack?: string | undefined };
   constructor(params: ConstructorParameters<typeof ExecRemoteError>[0]) {
     super(params);
@@ -496,8 +502,9 @@ export function execRemoteHttpTransport(http: unknown): ExecRemoteTransport {
     stream: (method: string, url: string, data: Record<string, unknown>) => Promise<Response>;
     prepareUpgrade: (url: string, data: Record<string, unknown>) => Promise<{ url: string; headers: Record<string, string> }>;
   };
-  // X-Token does not match the client's secret-header pattern: record it, so
-  // ApiError redacts it and a cross-origin redirect drops it.
+  // Record X-Token as this request's credential header as well, so ApiError
+  // redacts it and a cross-origin redirect drops it whatever the shared
+  // secret-header pattern holds.
   const credentialContext = (): Record<string, unknown> => recordCredentialHeader({}, TOKEN_HEADER);
   // The client's own headers (config headers, kitAuth) must not already use
   // X-Token: they would replace the script token on the wire. Learned once per
@@ -853,7 +860,7 @@ async function openRemoteSocket(
     const credential = Object.keys(headers).find((h) => !NON_CREDENTIAL_UPGRADE_HEADERS.has(h.toLowerCase()));
     if (credential !== undefined) {
       // A browser socket cannot send headers; dropping the kit credential
-      // would reach the container without it.
+      // would reach the computer without it.
       throw new ExecRemoteConnectionError({
         message: 'This client\'s kit credential is a header (' + credential + '), which a browser WebSocket cannot send. '
           + 'Use the default transport (ws: false), or a kitAuth token with a query `param`.',
@@ -993,10 +1000,10 @@ class AttachSession implements ExecRemoteSession {
   attached!: ExecRemoteFrame;
   private readonly hello: Promise<void>;
   private helloPending: { resolve: () => void; reject: (error: unknown) => void } | undefined;
-  /** The server sent its final `end` frame: the close that follows ends frames() normally, as on SSE. */
+  /** The server sent its final `end` frame: the close that follows ends streamEvents() normally, as on SSE. */
   private sawEnd = false;
   /**
-   * Frames that arrived before the first frames() reader: the frames right after `attached` can
+   * Frames that arrived before the first streamEvents() reader: the frames right after `attached` can
    * arrive in the same read, before any reader could register. Only the latest are kept (at most
    * EXEC_REMOTE_FRAME_QUEUE_CAP frames and EXEC_REMOTE_EARLY_MAX_BYTES of UTF-8), and only
    * for EXEC_REMOTE_EARLY_WINDOW_MS after `attached`, so a send/call-only socket keeps nothing.
@@ -1249,7 +1256,7 @@ class AttachSession implements ExecRemoteSession {
     return (await this.request({ op: 'call', name, args }, options)) as ExecRemoteCallResult;
   }
 
-  frames(options?: { signal?: AbortSignal | undefined }): AsyncIterable<ExecRemoteFrame> {
+  streamEvents(options?: { signal?: AbortSignal | undefined }): AsyncIterable<ExecRemoteFrame> {
     const session = this;
     return {
       [Symbol.asyncIterator](): AsyncIterator<ExecRemoteFrame> {
@@ -1261,7 +1268,7 @@ class AttachSession implements ExecRemoteSession {
   private async *iterate(signal: AbortSignal | undefined): AsyncGenerator<ExecRemoteFrame, void, undefined> {
     if (this.consumer) {
       throw new ExecRemoteError({
-        message: 'This socket already has a frames() consumer; one at a time.',
+        message: 'This socket already has a streamEvents() consumer; one at a time.',
         status: 0,
         code: 'REMOTE_FRAMES_BUSY',
         url: publicUrl(this.url),
@@ -1475,9 +1482,9 @@ function assertCallArgs(name: unknown, args: unknown): void {
  */
 function assertToken(token: unknown): void {
   if (token === undefined) return;
-  if (typeof token !== 'string' || token.length === 0) throw new TypeError('connect: token must be a non-empty string');
+  if (typeof token !== 'string' || token.length === 0) throw new TypeError('remote: token must be a non-empty string');
   if (!/^[\x21-\x7e\xa1-\xff]+$/.test(token)) {
-    throw new TypeError('connect: the token may hold only printable Latin-1 characters (no spaces, control characters or characters above U+00FF)');
+    throw new TypeError('remote: the token may hold only printable Latin-1 characters (no spaces, control characters or characters above U+00FF)');
   }
 }
 
@@ -1634,7 +1641,7 @@ class RemoteConnection implements ExecRemoteConnection {
     return session;
   }
 
-  capabilities(options?: ExecRemoteOpOptions): Promise<ExecRemoteCapabilities> {
+  getCapabilities(options?: ExecRemoteOpOptions): Promise<ExecRemoteCapabilities> {
     return this.oneShot<ExecRemoteCapabilities>('GET', 'capabilities', undefined, options);
   }
 
@@ -1649,31 +1656,41 @@ class RemoteConnection implements ExecRemoteConnection {
     return this.oneShot<ExecRemoteCallResult>('POST', 'call', { name, args }, options);
   }
 
-  eval(expression: string, options?: ExecRemoteEvalOptions): Promise<ExecRemoteEvalResult> {
-    let target: Record<string, unknown>;
-    try {
-      if (typeof expression !== 'string' || expression.length === 0) throw new TypeError('eval: expression must be a non-empty string');
-      target = evalTarget(options);
-    } catch (error) {
-      return Promise.reject(error);
+  evaluate(expression: string, options?: ExecRemoteEvaluateOptions): Promise<ExecRemoteEvaluateResult>;
+  evaluate(fn: (ctx: ExecRemoteEvaluateContext, ...args: never[]) => unknown, args?: unknown[], options?: ExecRemoteEvaluateOptions): Promise<ExecRemoteEvaluateResult>;
+  evaluate(
+    expressionOrFn: string | ((ctx: ExecRemoteEvaluateContext, ...args: never[]) => unknown),
+    argsOrOptions?: unknown[] | ExecRemoteEvaluateOptions,
+    maybeOptions?: ExecRemoteEvaluateOptions,
+  ): Promise<ExecRemoteEvaluateResult> {
+    // An expression takes (expression, options); a function takes (fn, args, options).
+    if (typeof expressionOrFn === 'string') {
+      const options = argsOrOptions as ExecRemoteEvaluateOptions | undefined;
+      let target: Record<string, unknown>;
+      try {
+        if (expressionOrFn.length === 0) throw new TypeError('evaluate: expression must be a non-empty string');
+        if (Array.isArray(options)) throw new TypeError('evaluate: an expression takes no args; pass (expression, options)');
+        target = evalTarget(options);
+      } catch (error) {
+        return Promise.reject(error);
+      }
+      return this.oneShot<ExecRemoteEvaluateResult>('POST', 'eval', { expression: expressionOrFn, ...target }, options);
     }
-    return this.oneShot<ExecRemoteEvalResult>('POST', 'eval', { expression, ...target }, options);
-  }
-
-  evaluate(fn: (ctx: ExecRemoteEvalContext, ...args: never[]) => unknown, args: unknown[] = [], options?: ExecRemoteEvalOptions): Promise<ExecRemoteEvalResult> {
+    const args = argsOrOptions === undefined ? [] : argsOrOptions;
+    const options = maybeOptions;
     let source: string;
     let target: Record<string, unknown>;
     try {
-      source = functionSource(fn);
+      source = functionSource(expressionOrFn);
       if (!Array.isArray(args)) throw new TypeError('evaluate: args must be an array');
       target = evalTarget(options);
     } catch (error) {
       return Promise.reject(error);
     }
-    return this.oneShot<ExecRemoteEvalResult>('POST', 'eval', { function: source, args, ...target }, options);
+    return this.oneShot<ExecRemoteEvaluateResult>('POST', 'eval', { function: source, args, ...target }, options);
   }
 
-  events(options?: ExecRemoteEventsOptions): AsyncIterable<ExecRemoteFrame> {
+  streamEvents(options?: ExecRemoteStreamEventsOptions): AsyncIterable<ExecRemoteFrame> {
     const connection = this;
     return {
       [Symbol.asyncIterator](): AsyncIterator<ExecRemoteFrame> {
@@ -1682,7 +1699,7 @@ class RemoteConnection implements ExecRemoteConnection {
     };
   }
 
-  private async *wsEvents(options: ExecRemoteEventsOptions | undefined): AsyncGenerator<ExecRemoteFrame, void, undefined> {
+  private async *wsEvents(options: ExecRemoteStreamEventsOptions | undefined): AsyncGenerator<ExecRemoteFrame, void, undefined> {
     // The server subscribes a socket to console lines when it opens (`?tail=`), so a tail gets a
     // socket of its own, closed with the iteration; without one the shared socket carries the frames.
     const own = options?.tail !== undefined ? await this.openTracked(options.signal, options.tail) : undefined;
@@ -1693,7 +1710,7 @@ class RemoteConnection implements ExecRemoteConnection {
       const session = own ?? await untilAborted(this.attachShared(), options?.signal);
       const { controller, unlink } = linkedController(options?.signal, this.controller.signal);
       try {
-        yield* session.frames({ signal: controller.signal });
+        yield* session.streamEvents({ signal: controller.signal });
       } catch (error) {
         throw controller.signal.aborted && error === controller.signal.reason ? this.publicReason(error) : error;
       } finally {
@@ -1705,7 +1722,7 @@ class RemoteConnection implements ExecRemoteConnection {
     }
   }
 
-  private async *sseEvents(options: ExecRemoteEventsOptions | undefined): AsyncGenerator<ExecRemoteFrame, void, undefined> {
+  private async *sseEvents(options: ExecRemoteStreamEventsOptions | undefined): AsyncGenerator<ExecRemoteFrame, void, undefined> {
     this.assertOpen();
     const { controller, unlink } = linkedController(options?.signal, this.controller.signal);
     try {
@@ -1754,7 +1771,7 @@ class RemoteConnection implements ExecRemoteConnection {
     }
   }
 
-  attach(): Promise<ExecRemoteSession> {
+  connect(): Promise<ExecRemoteSession> {
     try {
       this.assertOpen();
     } catch (error) {
@@ -1771,11 +1788,11 @@ class RemoteConnection implements ExecRemoteConnection {
   }
 }
 
-function evalTarget(options: ExecRemoteEvalOptions | undefined): Record<string, unknown> {
+function evalTarget(options: ExecRemoteEvaluateOptions | undefined): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   if (options?.target !== undefined) {
     if (options.target !== 'latest' && options.target !== 'globals') {
-      throw new TypeError("eval: target must be 'latest' or 'globals'");
+      throw new TypeError("evaluate: target must be 'latest' or 'globals'");
     }
     out.target = options.target;
   }
@@ -1792,12 +1809,12 @@ export function assertScriptUrl(url: string): void {
   try {
     parsed = new URL(url);
   } catch {
-    throw new TypeError('connect: not a valid URL');
+    throw new TypeError('remote: not a valid URL');
   }
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new TypeError('connect: the URL must be http(s)');
-  if (parsed.username !== '' || parsed.password !== '') throw new TypeError('connect: the URL must not carry credentials; pass { token }');
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new TypeError('remote: the URL must be http(s)');
+  if (parsed.username !== '' || parsed.password !== '') throw new TypeError('remote: the URL must not carry credentials; pass { token }');
   if (parsed.search !== '' || parsed.hash !== '' || /[?#]/.test(url)) {
-    throw new TypeError('connect: the URL must not carry a query or fragment');
+    throw new TypeError('remote: the URL must not carry a query or fragment');
   }
 }
 
@@ -1811,7 +1828,7 @@ export function createExecRemoteConnection(
   options: { token?: string | undefined; ws?: boolean | undefined; timeoutMs?: number | undefined } = {},
 ): ExecRemoteConnection {
   assertToken(options.token);
-  assertTimeout(options.timeoutMs, 'connect: timeoutMs');
+  assertTimeout(options.timeoutMs, 'remote: timeoutMs');
   return new RemoteConnection(
     transport,
     url,
@@ -1822,41 +1839,42 @@ export function createExecRemoteConnection(
 }
 
 // ---------------------------------------------------------------------------
-// SDK wiring: ExecService.prototype.connect (= `exec.connect`)
+// SDK wiring: ExecService.prototype.remote (= `exec.remote`)
 // ---------------------------------------------------------------------------
 
 declare module '../generated/exec/exec.service.js' {
   interface ExecService {
     /**
-     * Connect to a live script's remote channel (#674).
+     * A handle on a live script's remote channel; nothing is sent until an op is called.
      *
      * `urlOrPath` is the script's full URL (as `scripts/write` reports it) or
      * a script path on this box's exec kit. `token` is a `@remote-token`
      * secret (or the script's `@token` when it declares none); eval always
      * needs an eval-scoped `@remote-token`.
      *
-     *   const conn = box.exec.connect(url, { token });
-     *   await conn.capabilities();
+     *   const conn = box.exec.remote(url, { token });
+     *   await conn.getCapabilities();
      *   await conn.send({ type: 'ping' });            // { ok, reply, … }
-     *   (await conn.eval('Object.keys(shared)')).result;
-     *   for await (const f of conn.events()) { … }
+     *   (await conn.evaluate('Object.keys(shared)')).result;
+     *   for await (const f of conn.streamEvents()) { … }
      */
-    connect(urlOrPath: string, options?: ExecRemoteConnectOptions): ExecRemoteConnection;
+    remote(urlOrPath: string, options?: ExecRemoteOptions): ExecRemoteConnection;
   }
 }
 
 const EXEC_REMOTE_PATCH_MARKER = Symbol.for('hoody.sdk.exec.remote.patch');
 
+/** Installs `remote()` on the generated exec service. Runs once: a second call does nothing; importing this module already runs it. */
 export function patchExecRemotePrototype(): void {
   const prototype = ExecService.prototype as unknown as Record<string | symbol, unknown>;
   if (prototype[EXEC_REMOTE_PATCH_MARKER]) return;
 
-  prototype['connect'] = function connect(
+  prototype['remote'] = function remote(
     this: ExecService,
     urlOrPath: string,
-    options: ExecRemoteConnectOptions = {},
+    options: ExecRemoteOptions = {},
   ): ExecRemoteConnection {
-    if (typeof urlOrPath !== 'string' || urlOrPath.length === 0) throw new TypeError('connect: a script URL or path is required');
+    if (typeof urlOrPath !== 'string' || urlOrPath.length === 0) throw new TypeError('remote: a script URL or path is required');
     const internals = this as unknown as {
       http: unknown;
       buildTemplateUrl: (p: string, v: Record<string, unknown>) => string;
@@ -1866,7 +1884,7 @@ export function patchExecRemotePrototype(): void {
       assertScriptUrl(urlOrPath);
       url = urlOrPath;
     } else {
-      const encoded = encodeExecScriptPath(urlOrPath.replace(/^\/+/, ''), 'connect');
+      const encoded = encodeExecScriptPath(urlOrPath.replace(/^\/+/, ''), 'remote');
       url = internals.buildTemplateUrl('/' + encoded, (options.templateVars ?? {}) as Record<string, unknown>);
     }
     return createExecRemoteConnection(execRemoteHttpTransport(internals.http), url, {
@@ -1880,3 +1898,13 @@ export function patchExecRemotePrototype(): void {
 }
 
 patchExecRemotePrototype();
+
+// Renamed; each old name refuses, naming the new method.
+retireMethods(ExecService.prototype, 'exec', { connect: 'exec.remote()' });
+retireMethods(RemoteConnection.prototype, 'ExecRemoteConnection', {
+  capabilities: 'getCapabilities()',
+  events: 'streamEvents()',
+  attach: 'connect()',
+  eval: 'evaluate()',
+});
+retireMethods(AttachSession.prototype, 'ExecRemoteSession', { frames: 'streamEvents()' });

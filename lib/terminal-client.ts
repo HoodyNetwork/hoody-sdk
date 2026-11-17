@@ -5,7 +5,7 @@
  * stream-based and event-based APIs.
  *
  * Internally wraps the typed WebSocket client emitted from the AsyncAPI
- * spec ({@link TerminalConnectTerminalWebSocketWebSocket}). The wire
+ * spec ({@link TerminalSessionsConnectWebSocket}). The wire
  * protocol (byte-prefix framing, `tty` subprotocol, init JSON_DATA replay
  * on reconnect, FIFO frame ordering, generation-guarded close handling)
  * is owned by the typed client. This file is the stream adapter — it
@@ -33,10 +33,13 @@
 
 import { Duplex, type DuplexOptions } from 'stream';
 import {
-    TerminalConnectTerminalWebSocketWebSocket,
+    TerminalSessionsConnectWebSocket,
     type IWebSocketConnectionOptions,
 } from '../generated/terminal/terminal_connect-terminal-web-socket.websocket.js';
-import { type ProxyAuth, base64Encode } from './proxy-auth.js';
+import { type ProxyAuth, base64Encode, credentialHeaderValue } from './proxy-auth.js';
+import { isWebSocketUpgradeRefusedError, type WebSocketUpgradeRefusedError } from './websocket-errors.js';
+import { retireAccessors } from './retired-accessor.js';
+import { RetiredOptionError } from '../generated/errors.js';
 
 /**
  * Terminal client options
@@ -46,6 +49,25 @@ export interface TerminalClientOptions extends DuplexOptions {
     cols?: number;
     /** Terminal rows (default: 24) */
     rows?: number;
+    /**
+     * Bound, in bytes, on the client's queue of unread output (a whole
+     * number, default 8 MiB). Once a reader has asked for output, up to
+     * `readableHighWaterMark` bytes (64 KiB by default; one piece of at most
+     * 64 KiB when it is 0) more sits in the stream's own buffer and is never
+     * dropped. After `setEncoding()` that allowance is counted at the most
+     * bytes a character can take (3 for utf8), so it holds fewer bytes, never
+     * more. Past the bound the oldest queued bytes are dropped after each
+     * chunk's `'output'` event, and an `'output-dropped'` event reports how
+     * many bytes went; a reader then gets the stream-buffer prefix, the gap,
+     * then the newest output. The `'output'` event gets every chunk whatever
+     * this is. A `read()` inside an `'output'` handler gets the current chunk
+     * whole, even with a bound of 0: it moves everything still queued into
+     * the stream's buffer, past the allowance, as before the bound existed;
+     * a handler that reads less than it is given leaves the rest there,
+     * outside this bound.
+     * `Infinity` keeps everything (unbounded).
+     */
+    maxBufferedOutputBytes?: number;
     /** Auth token for the terminal service itself (sent in handshake) */
     token?: string;
     /**
@@ -55,7 +77,7 @@ export interface TerminalClientOptions extends DuplexOptions {
      *   - `jwt` / `token` → Authorization: Bearer <value> (or custom header)
      *   - `token` with `param` → `?<param>=<value>` on the socket URL, in
      *     Node and browsers (the proxy rule reads only that parameter)
-     *   - `containerClaim` → X-Hoody-Container-Claim + X-Hoody-Token headers
+     *   - `computerClaim` → X-Hoody-Computer-Claim + X-Hoody-Token headers
      *   - `ip` → no-op (proxy verifies client IP)
      */
     kitAuth?: ProxyAuth;
@@ -84,7 +106,11 @@ export interface TerminalClientOptions extends DuplexOptions {
     autoConnect?: boolean;
     /** Reconnect on disconnect */
     reconnect?: boolean;
-    /** Max reconnect attempts */
+    /**
+     * Max automatic reconnect attempts in one run of drops. A connection that
+     * stays open for 10 seconds ends the run: the next drop starts from the
+     * first attempt and the base `reconnectDelay` again.
+     */
     maxReconnectAttempts?: number;
     /** Reconnect delay in ms */
     reconnectDelay?: number;
@@ -130,8 +156,8 @@ export interface TerminalClientOptions extends DuplexOptions {
     debug?: boolean;
 
     // Terminal Session Configuration (via query parameters)
-    /** Read-only mode — prevents input (optional) */
-    readonly?: boolean;
+    /** Read-only mode — prevents input (optional). The earlier key `readonly` is refused. */
+    readOnly?: boolean;
     /** Working directory to start in (optional) */
     cwd?: string;
     /** Shell type: bash, zsh, fish, tmux, etc. (optional) */
@@ -145,7 +171,7 @@ export interface TerminalClientOptions extends DuplexOptions {
     /**
      * Throwaway session (optional). Maps to the terminal kit's `?ephemeral=true`
      * query param: a connection with no terminal id gets a fresh session of its
-     * own (id 40000-65535, reported by the 'terminal-id' event) instead of
+     * own (id 5001-7999, reported by the 'terminal-id' event) instead of
      * joining the shared terminal "1", and the kit cleans the session up once
      * it is idle. Ignored by the kit together with `agent`.
      */
@@ -231,20 +257,10 @@ export interface TerminalPreferences {
  *  an unsound cast. */
 export type ShellType = 'bash' | 'zsh' | 'fish' | 'sh' | 'ssh' | 'tmux' | (string & {});
 
-/**
- * The server refused the WebSocket upgrade for good: automatic reconnect has
- * stopped. `status` is the HTTP status; `code` the server's error code when
- * its answer named one, else "HTTP_<status>"; `via` says how it was learned:
- * "upgrade" (the transport showed the status) or "probe" (a plain GET after
- * repeated failures, see refusalProbeAfter). The same shape as the error of
- * the generated WebSocket clients.
- */
-export interface WebSocketUpgradeRefusedError extends Error {
-    name: 'WebSocketUpgradeRefusedError';
-    status: number;
-    code: string;
-    via: 'upgrade' | 'probe';
-}
+// The refused-upgrade error type and its guard live in websocket-errors.ts, shared
+// with the generated WebSocket clients; they stay exported from here too.
+export type { WebSocketUpgradeRefusedError } from './websocket-errors.js';
+export { isWebSocketUpgradeRefusedError } from './websocket-errors.js';
 
 function upgradeRefusedError(status: number, code: string | undefined, via: 'upgrade' | 'probe'): WebSocketUpgradeRefusedError {
     const error = new Error(`WebSocket upgrade refused: HTTP ${status}`) as WebSocketUpgradeRefusedError;
@@ -253,12 +269,6 @@ function upgradeRefusedError(status: number, code: string | undefined, via: 'upg
     error.code = code ?? `HTTP_${status}`;
     error.via = via;
     return error;
-}
-
-/** The generated client's refusal (via 'upgrade' on the `ws` transport), or ours. */
-export function isWebSocketUpgradeRefusedError(error: unknown): error is WebSocketUpgradeRefusedError {
-    return error instanceof Error && error.name === 'WebSocketUpgradeRefusedError'
-        && typeof (error as { status?: unknown }).status === 'number';
 }
 
 /** Terminal client connection state */
@@ -291,6 +301,11 @@ function asLivenessSocket(socket: unknown): LivenessSocket | null {
 }
 
 function assertAgentCmdExclusive(options: TerminalClientOptions): void {
+    // `readonly` is spelled `readOnly`. An old key would be dropped without a word and the
+    // terminal would open WRITABLE, so it is refused by name.
+    if ((options as { readonly?: unknown }).readonly !== undefined) {
+        throw new RetiredOptionError('TerminalClient', 'readonly', 'readOnly');
+    }
     if (options.agent && options.cmd) {
         throw new TypeError(
             'TerminalClient: options.agent and options.cmd are mutually exclusive — '
@@ -300,13 +315,58 @@ function assertAgentCmdExclusive(options: TerminalClientOptions): void {
 }
 
 /**
+ * How long a connection must stay open before a later drop starts a new run
+ * of reconnect attempts (count and backoff from the start).
+ */
+const RECONNECT_STABLE_MS = 10_000;
+
+/** Answers a `_read()` without adding bytes (see `flushOutputQueue`). */
+const EMPTY_CHUNK = Buffer.alloc(0);
+
+/** Largest piece handed to a reader whose stream has a high-water mark of 0. */
+const ZERO_WATERMARK_PIECE_BYTES = 64 * 1024;
+
+/**
+ * A slice kept from a larger chunk, copied when it is under half of the
+ * memory it would keep alive, so a few retained bytes never hold a dropped
+ * frame's whole allocation.
+ */
+function detach(part: Buffer): Buffer {
+    // Node's 8 KiB pool slabs are shared and small: never worth a copy.
+    if (part.length * 2 >= part.buffer.byteLength || part.buffer.byteLength <= Buffer.poolSize) return part;
+    const copy = Buffer.allocUnsafeSlow(part.length);
+    part.copy(copy);
+    return copy;
+}
+
+/**
+ * Most source bytes one unit of `readableLength` can stand for once
+ * `setEncoding()` is on (it then counts string length, not bytes): utf8 is up
+ * to 3 bytes per UTF-16 unit, utf16le 2, the rest at most 1.
+ */
+function bytesPerReadableUnit(encoding: string | null): number {
+    if (encoding === null) return 1;
+    switch (encoding) {
+        case 'latin1': case 'binary': case 'ascii': case 'hex': case 'base64': case 'base64url':
+            return 1;
+        case 'utf16le': case 'ucs2': case 'ucs-2': case 'utf-16le':
+            return 2;
+        default:
+            return 3;
+    }
+}
+
+/** Default `maxBufferedOutputBytes`: the same 8 MiB as the events stream. */
+const DEFAULT_MAX_BUFFERED_OUTPUT_BYTES = 8 * 1024 * 1024;
+
+/**
  * TerminalClient — Duplex stream for terminal I/O
  *
  * Implements Node.js Duplex stream interface plus terminal-specific events.
  * Internally delegates wire protocol handling to the generated typed WebSocket client.
  */
 export class TerminalClient extends Duplex {
-    private client: TerminalConnectTerminalWebSocketWebSocket | null = null;
+    private client: TerminalSessionsConnectWebSocket | null = null;
     private _url: string;
     private _state: ConnectionState = 'disconnected';
     private _terminalId: string = '';
@@ -322,6 +382,18 @@ export class TerminalClient extends Duplex {
     private _reconnectDelay: number;
     private _timeout: number;
     private _livenessTimeout: number;
+    /**
+     * Output not yet handed to the readable side, oldest first. `_read()`
+     * moves it over as the reader asks; past `_maxBufferedOutputBytes` the
+     * oldest is dropped (see `queueOutput`).
+     */
+    private _outputQueue: Buffer[] = [];
+    private _outputQueueBytes: number = 0;
+    private _maxBufferedOutputBytes: number;
+    /** `_read()` asked for more and nothing was there yet: the next chunk goes straight through. */
+    private _readPending: boolean = false;
+    /** The chunk now being delivered to 'output' listeners (a read() then takes all queued output). */
+    private _deliveringOutput: boolean = false;
     /** Stops the liveness check of the current socket; null when none runs. */
     private _stopLiveness: (() => void) | null = null;
     /** Set when the liveness check tore the socket down, until its close is reported. */
@@ -336,7 +408,7 @@ export class TerminalClient extends Duplex {
      * A PAUSE went out on the current connection and no RESUME after it.
      * disconnect() sends the RESUME before closing: on a kit where a pause
      * outlives its client, a viewer that left paused froze the session's
-     * program until someone attached again (BT2-TERM-007).
+     * program until someone attached again.
      */
     private _remotePaused: boolean = false;
     /** Sends the handshake of the current, held connection; null when none is owed. */
@@ -396,10 +468,19 @@ export class TerminalClient extends Duplex {
      */
     private _closeEmitted: boolean = false;
 
+    /**
+     * Create a client for the terminal WebSocket at `url`. Nothing is sent until `connect()`,
+     * unless `options.autoConnect` is set; a failed auto-connect is emitted as `'error'` only when
+     * a listener is attached. `options` is copied, so later changes to the caller's object have no
+     * effect. Throws `RangeError` for a `maxBufferedOutputBytes` that is not a whole number of
+     * bytes (0 or more, or `Infinity`), `TypeError` when `agent` and `cmd` are both set, and refuses
+     * the retired `readonly` option (it is spelled `readOnly`).
+     */
     constructor(url: string, options: TerminalClientOptions = {}) {
         super({
             ...options,
             objectMode: false,
+            readableObjectMode: false,
             readableHighWaterMark: options.readableHighWaterMark ?? 64 * 1024,
             writableHighWaterMark: options.writableHighWaterMark ?? 64 * 1024,
         });
@@ -412,6 +493,11 @@ export class TerminalClient extends Duplex {
         this._url = url;
         this._cols = options.cols ?? 80;
         this._rows = options.rows ?? 24;
+        const maxBuffered = options.maxBufferedOutputBytes ?? DEFAULT_MAX_BUFFERED_OUTPUT_BYTES;
+        if (typeof maxBuffered !== 'number' || maxBuffered < 0 || !(Number.isInteger(maxBuffered) || maxBuffered === Infinity)) {
+            throw new RangeError('maxBufferedOutputBytes must be a whole number of bytes, 0 or more (Infinity for no bound)');
+        }
+        this._maxBufferedOutputBytes = maxBuffered;
         this._token = options.token;
         this._debug = options.debug ?? false;
         this._reconnect = options.reconnect ?? true;
@@ -430,42 +516,42 @@ export class TerminalClient extends Duplex {
     }
 
     // ===========================================================================
-    // Public Properties
+    // Public Reads (methods, never getters)
     // ===========================================================================
 
     /** Current connection state */
-    get state(): ConnectionState { return this._state; }
+    getState(): ConnectionState { return this._state; }
 
     /** Whether connected to server */
-    get connected(): boolean { return this._state === 'connected'; }
+    isConnected(): boolean { return this._state === 'connected'; }
 
     /** Terminal ID assigned by server */
-    get terminalId(): string { return this._terminalId; }
+    getTerminalId(): string { return this._terminalId; }
 
     /** Shell type (bash, zsh, etc.) */
-    get shellType(): ShellType { return this._shellType; }
+    getShellType(): ShellType { return this._shellType; }
 
     /** Window title */
-    get windowTitle(): string { return this._windowTitle; }
+    getWindowTitle(): string { return this._windowTitle; }
 
     /** Server preferences */
-    get preferences(): TerminalPreferences { return { ...this._preferences }; }
+    getPreferences(): TerminalPreferences { return { ...this._preferences }; }
 
     /** Terminal columns */
-    get cols(): number { return this._cols; }
+    getCols(): number { return this._cols; }
 
     /** Terminal rows */
-    get rows(): number { return this._rows; }
+    getRows(): number { return this._rows; }
 
     /** WebSocket URL */
-    get url(): string { return this._url; }
+    getUrl(): string { return this._url; }
 
     /**
      * When the server was last heard on the current connection (ms since the
      * epoch; 0 before the first connect): the open, any frame, and, where the
      * transport reports them, pings and pongs.
      */
-    get lastActivityAt(): number { return this._lastActivityAt; }
+    getLastActivityAt(): number { return this._lastActivityAt; }
 
     // ===========================================================================
     // Connection Management
@@ -616,8 +702,8 @@ export class TerminalClient extends Duplex {
                 }
             } else if (kitAuth.type === 'token' && kitAuth.param !== undefined) {
                 // A proxy TokenAuth rule with `param` reads ONLY that query
-                // parameter (hoody-containers-reverse-proxy-endpoints
-                // matrix.service.ts case 'token'), in Node and browsers alike:
+                // parameter (the proxy's own
+                // token rule), in Node and browsers alike:
                 // no header, and not the legacy `?token=` name.
                 if (!urlObj) {
                     throw new Error('TerminalClient: cannot add the kitAuth token parameter to an unparseable WebSocket URL');
@@ -631,11 +717,11 @@ export class TerminalClient extends Duplex {
                 if (isBrowser && urlObj) {
                     urlObj.searchParams.set('token', value);
                 } else {
-                    headers[hdr] = hdr.toLowerCase() === 'authorization' ? `Bearer ${value}` : value;
+                    headers[hdr] = credentialHeaderValue(kitAuth, hdr);
                 }
-            } else if (kitAuth.type === 'containerClaim') {
-                // Container claim auth uses two custom headers
-                // (X-Hoody-Container-Claim, X-Hoody-Token). Browser
+            } else if (kitAuth.type === 'computerClaim') {
+                // Computer claim auth uses two custom headers
+                // (X-Hoody-Computer-Claim, X-Hoody-Token). Browser
                 // WebSockets can't send custom headers, so claim auth is
                 // Node-only — we throw a loud error instead of silently
                 // dropping the credentials, which would otherwise produce
@@ -643,12 +729,12 @@ export class TerminalClient extends Duplex {
                 // a Node integration to a browser deployment.
                 if (isBrowser) {
                     throw new Error(
-                        'TerminalClient: containerClaim kitAuth is Node-only. ' +
+                        'TerminalClient: computerClaim kitAuth is Node-only. ' +
                         'Browser WebSocket cannot send custom headers; use a ' +
                         '`token` or `jwt` kitAuth type for browser deployments.',
                     );
                 }
-                headers['X-Hoody-Container-Claim'] = kitAuth.claim;
+                headers['X-Hoody-Computer-Claim'] = kitAuth.claim;
                 headers['X-Hoody-Token'] = kitAuth.token;
             } else if (kitAuth.type === 'ip') {
                 // IP auth — proxy verifies client IP, no credentials sent.
@@ -692,7 +778,7 @@ export class TerminalClient extends Duplex {
         this._handshakeSent = false;
 
         this._lastAttempt = { url: wsUrl, headers: { ...headers }, browser: isBrowser };
-        const client = new TerminalConnectTerminalWebSocketWebSocket(wsUrl, typedOptions);
+        const client = new TerminalSessionsConnectWebSocket(wsUrl, typedOptions);
         this.client = client;
         this.attachClient(client, handshakeToken);
 
@@ -742,7 +828,7 @@ export class TerminalClient extends Duplex {
         this.client = null;
 
         if (client) {
-            if (this._remotePaused && client.connected && !this._sendsHeld) {
+            if (this._remotePaused && client.isConnected() && !this._sendsHeld) {
                 try { client.sendResume(); } catch { /* best effort, the close follows */ }
             }
             try { client.disconnect(reason ?? 'Normal closure'); } catch { /* ignore */ }
@@ -827,7 +913,7 @@ export class TerminalClient extends Duplex {
     }
 
     /** Whether the current connection is held (see holdSends). */
-    get sendsHeld(): boolean { return this._sendsHeld; }
+    isHoldingSends(): boolean { return this._sendsHeld; }
 
     /**
      * Force reconnect.
@@ -1018,7 +1104,7 @@ export class TerminalClient extends Duplex {
         this._cols = cols;
         this._rows = rows;
 
-        if (this.connected && this.client && !this._sendsHeld) {
+        if (this.isConnected() && this.client && !this._sendsHeld) {
             try {
                 this.client.sendResize({ command: '1', columns: cols, rows });
                 if (this._debug) {
@@ -1036,7 +1122,7 @@ export class TerminalClient extends Duplex {
 
     /** Pause terminal output (flow control). */
     override pause(): this {
-        if (this.connected && this.client && !this._sendsHeld) {
+        if (this.isConnected() && this.client && !this._sendsHeld) {
             try { this.client.sendPause(); this._remotePaused = true; } catch { /* swallow — best effort */ }
         }
         return super.pause();
@@ -1044,7 +1130,7 @@ export class TerminalClient extends Duplex {
 
     /** Resume terminal output (flow control). */
     override resume(): this {
-        if (this.connected && this.client && !this._sendsHeld) {
+        if (this.isConnected() && this.client && !this._sendsHeld) {
             try { this.client.sendResume(); this._remotePaused = false; } catch { /* swallow — best effort */ }
         }
         return super.resume();
@@ -1082,7 +1168,7 @@ export class TerminalClient extends Duplex {
 
     /** A connection is up, open on the wire, and allowed to send. */
     private canSendNow(): boolean {
-        return this._state === 'connected' && this.client !== null && this.client.connected && !this._sendsHeld;
+        return this._state === 'connected' && this.client !== null && this.client.isConnected() && !this._sendsHeld;
     }
 
     /**
@@ -1091,7 +1177,7 @@ export class TerminalClient extends Duplex {
      * automatic reconnect on), or an automatic reconnect is under way.
      */
     private connectionComing(): boolean {
-        if (this._state === 'connected' && this.client !== null && this.client.connected) return this._sendsHeld;
+        if (this._state === 'connected' && this.client !== null && this.client.isConnected()) return this._sendsHeld;
         if (this._state === 'connected') return this._wrapperShouldReconnect && this._reconnect;
         return this._autoReconnecting && this._wrapperShouldReconnect;
     }
@@ -1117,11 +1203,127 @@ export class TerminalClient extends Duplex {
         held.callback(new Error('Not connected'));
     }
 
-    /** Readable: data is pushed from onOutput / onUnknownFrame handlers. */
-    override _read(_size: number): void { /* noop */ }
+    /**
+     * Readable: hand queued output over while the reader wants more. What is
+     * left waits in the queue, bounded by `maxBufferedOutputBytes`.
+     */
+    override read(size?: number): any {
+        if (!this._deliveringOutput) return super.read(size);
+        // Inside an 'output' handler a read() gets the current chunk whole,
+        // as before the queue: everything still queued moves to the stream
+        // buffer, and a read() with no size returns all of it at once, even
+        // where Node would return only the first buffered piece.
+        this.flushAllOutput();
+        if (size !== undefined) return super.read(size);
+        const first = super.read();
+        if (first === null || this.readableLength === 0) return first;
+        const parts = [first];
+        for (let part = super.read(); part !== null; part = super.read()) parts.push(part);
+        return typeof first === 'string' ? parts.join('') : Buffer.concat(parts);
+    }
+
+    /** Move every queued chunk into the stream buffer, whatever its allowance. */
+    private flushAllOutput(): void {
+        while (this._outputQueue.length > 0 && !this.destroyed) {
+            const chunk = this._outputQueue.shift()!;
+            this._outputQueueBytes -= chunk.length;
+            this.push(chunk);
+        }
+    }
+
+    override _read(_size: number): void {
+        this._readPending = true;
+        this.flushOutputQueue();
+    }
+
+    /**
+     * Push queued output while the readable side takes it, and never more
+     * than its remaining `readableHighWaterMark` allowance: the rest of a
+     * large chunk stays in the queue, where the bound applies to it. With an
+     * empty stream buffer and no allowance (a high-water mark of 0) one piece
+     * of at most 64 KiB goes over, so a reader that asked still gets bytes. With a full
+     * buffer (Node asks from read() before it takes the bytes read() returns)
+     * an empty push answers the request without adding bytes, and Node asks
+     * again once the buffer has room.
+     */
+    private flushOutputQueue(): void {
+        while (this._readPending && this._outputQueue.length > 0) {
+            let chunk = this._outputQueue[0]!;
+            // With an encoding, up to 3 bytes of a partial character also wait in the decoder.
+            const encoding = this.readableEncoding;
+            const held = this.readableLength * bytesPerReadableUnit(encoding) + (encoding === null ? 0 : 3);
+            const room = this.readableHighWaterMark - held;
+            if (room <= 0 && this.readableLength > 0) {
+                this._readPending = false;
+                this.push(EMPTY_CHUNK);
+                return;
+            }
+            const limit = room > 0 ? room : this.readableHighWaterMark > 0 ? this.readableHighWaterMark : ZERO_WATERMARK_PIECE_BYTES;
+            if (chunk.length > limit) {
+                this._outputQueue[0] = detach(chunk.subarray(limit));
+                chunk = detach(chunk.subarray(0, limit));
+            } else {
+                this._outputQueue.shift();
+            }
+            this._outputQueueBytes -= chunk.length;
+            if (!this.push(chunk)) this._readPending = false;
+        }
+    }
+
+    /**
+     * One output chunk: into the queue (and on to a reader that is waiting),
+     * then 'output', then the bound. The chunk is readable while 'output'
+     * runs, so a handler that calls read() gets it whatever the bound (0
+     * included); only what is still unread afterwards is trimmed, oldest
+     * bytes first, and the trim runs even when a listener throws. An empty
+     * chunk only goes to 'output': the queue never holds one. Nothing here
+     * depends on which listeners exist, and nothing pauses the terminal: a
+     * PAUSE left standing freezes the session's program for every viewer.
+     */
+    private queueOutput(out: Buffer): void {
+        if (out.length === 0) {
+            this.emit('output', out);
+            return;
+        }
+        this._outputQueue.push(detach(out));
+        this._outputQueueBytes += out.length;
+        try {
+            this.flushOutputQueue();
+        } finally {
+            const outer = this._deliveringOutput;
+            this._deliveringOutput = true;
+            try {
+                this.emit('output', out);
+            } finally {
+                this._deliveringOutput = outer;
+                this.trimOutputQueue();
+            }
+        }
+    }
+
+    /** Drop the oldest unread output past `maxBufferedOutputBytes`; report how much. */
+    private trimOutputQueue(): void {
+        let dropped = 0;
+        while (this._outputQueueBytes > this._maxBufferedOutputBytes && this._outputQueue.length > 0) {
+            const head = this._outputQueue[0]!;
+            const excess = this._outputQueueBytes - this._maxBufferedOutputBytes;
+            if (head.length <= excess) {
+                this._outputQueue.shift();
+                this._outputQueueBytes -= head.length;
+                dropped += head.length;
+            } else {
+                this._outputQueue[0] = detach(head.subarray(excess));
+                this._outputQueueBytes -= excess;
+                dropped += excess;
+            }
+        }
+        if (dropped > 0) this.emit('output-dropped', dropped);
+    }
 
     /** Clean up on destroy. */
     override _destroy(error: Error | null, callback: (error?: Error | null) => void): void {
+        this._outputQueue = [];
+        this._outputQueueBytes = 0;
         this.disconnect('Stream destroyed');
         callback(error);
     }
@@ -1136,7 +1338,7 @@ export class TerminalClient extends Duplex {
      * every listener cleanly when the underlying socket is replaced.
      */
     private attachClient(
-        client: TerminalConnectTerminalWebSocketWebSocket,
+        client: TerminalSessionsConnectWebSocket,
         handshakeToken: string | undefined,
     ): void {
         const subs: Array<() => void> = [];
@@ -1152,10 +1354,12 @@ export class TerminalClient extends Duplex {
         // close must not start a second reconnect beside the one that
         // rejection drives.
         let opened = false;
+        let openedAt = 0;
 
         subs.push(client.onConnect(() => {
             if (isStale()) return;
             opened = true;
+            openedAt = Date.now();
             // A pause belongs to the connection that sent it.
             this._remotePaused = false;
             this._unopenedFailures = 0;
@@ -1230,6 +1434,15 @@ export class TerminalClient extends Duplex {
             const isTerminal = code === 1008 || code === 1003
                 || code === 1002 || (code >= 4000 && code < 5000);
             if (this._wrapperShouldReconnect && this._reconnect && !isTerminal) {
+                // The cap and the backoff count drops that follow one another.
+                // A connection that held for the stable window ends that run,
+                // so this drop starts from the first attempt and the base
+                // delay. One that opened and dropped sooner keeps the count:
+                // a server that accepts and drops at once still meets the
+                // growing delay and the cap.
+                if (Date.now() - openedAt >= RECONNECT_STABLE_MS) {
+                    this._wrapperReconnectAttempts = 0;
+                }
                 this.scheduleWrapperReconnect();
             } else {
                 this._autoReconnecting = false;
@@ -1244,8 +1457,7 @@ export class TerminalClient extends Duplex {
             // sharing memory via Buffer.from(buf.buffer, ...) is safe and
             // zero-copy.
             const out = Buffer.from(buf.buffer, buf.byteOffset, buf.byteLength);
-            this.push(out);
-            this.emit('output', out);
+            this.queueOutput(out);
         }));
 
         subs.push(client.onSetWindowTitle((title) => {
@@ -1292,8 +1504,7 @@ export class TerminalClient extends Duplex {
             if (this._debug) {
                 console.error('[TerminalClient] Unknown command byte:', buf[0]);
             }
-            this.push(out);
-            this.emit('output', out);
+            this.queueOutput(out);
         }));
 
         // NOTE: typed-client `reconnect` is forced OFF (so providers run on
@@ -1317,16 +1528,16 @@ export class TerminalClient extends Duplex {
      * TerminalClientOptions.livenessTimeout). A no-op when the check is off or
      * the transport exposes no ping/pong.
      */
-    private startLiveness(client: TerminalConnectTerminalWebSocketWebSocket, isStale: () => boolean): void {
+    private startLiveness(client: TerminalSessionsConnectWebSocket, isStale: () => boolean): void {
         this.stopLiveness();
         const timeout = this._livenessTimeout;
         if (!(timeout > 0)) return;
         // The typed client keeps its socket private and has no liveness hook of
         // its own; the check needs the socket's ping/pong, so read it here.
-        // `rawSocket` is the generated client's public accessor; `ws` is the
+        // `getRawSocket()` is the generated client's public accessor; `ws` is the
         // private field of clients generated before it existed.
-        const typed = client as unknown as { rawSocket?: unknown; ws?: unknown };
-        const socket = asLivenessSocket(typed.rawSocket ?? typed.ws);
+        const typed = client as unknown as { getRawSocket?: () => unknown; ws?: unknown };
+        const socket = asLivenessSocket(typeof typed.getRawSocket === 'function' ? typed.getRawSocket() : typed.ws);
         if (!socket) return;
 
         const interval = Math.max(1, Math.floor(timeout / 2));
@@ -1404,8 +1615,8 @@ export class TerminalClient extends Duplex {
         assertAgentCmdExclusive(options); // second checkpoint — see the helper's doc
         const params = new URLSearchParams();
 
-        if (options.readonly !== undefined) {
-            params.append('readonly', options.readonly ? 'true' : 'false');
+        if (options.readOnly !== undefined) {
+            params.append('readonly', options.readOnly ? 'true' : 'false');
         }
         if (options.cwd) params.append('cwd', options.cwd);
         if (options.cwd_auto_create !== undefined) {
@@ -1477,8 +1688,9 @@ export class TerminalClient extends Duplex {
                 const distinct = [...new Set(baseParams.getAll(key))];
                 if (distinct.length > 1) {
                     throw new TypeError(
-                        `TerminalClient: the base URL carries conflicting '${key}' values `
-                        + `(${distinct.join(', ')}); the kit honors the first occurrence — remove the duplicates.`,
+                        // The key only: a value here can be a credential, and this text is logged and shown.
+                        `TerminalClient: the base URL carries conflicting '${key}' values; `
+                        + 'the kit honors the first occurrence — remove the duplicates.',
                     );
                 }
             }
@@ -1487,7 +1699,8 @@ export class TerminalClient extends Duplex {
                 const existing = baseParams.get(key);
                 if (existing !== null && existing !== value) {
                     throw new TypeError(
-                        `TerminalClient: query param '${key}' is '${existing}' on the base URL but '${value}' in options — `
+                        // The key only, for the same reason as above.
+                        `TerminalClient: query param '${key}' differs between the base URL and options — `
                         + 'remove one; the kit honors the first occurrence, so the base value would silently win.',
                     );
                 }
@@ -1516,6 +1729,21 @@ export class TerminalClient extends Duplex {
     }
 }
 
+// The getters these reads replaced refuse, naming the method.
+retireAccessors(TerminalClient.prototype, 'TerminalClient', {
+    state: 'getState()',
+    connected: 'isConnected()',
+    terminalId: 'getTerminalId()',
+    shellType: 'getShellType()',
+    windowTitle: 'getWindowTitle()',
+    preferences: 'getPreferences()',
+    cols: 'getCols()',
+    rows: 'getRows()',
+    url: 'getUrl()',
+    lastActivityAt: 'getLastActivityAt()',
+    sendsHeld: 'isHoldingSends()',
+});
+
 /**
  * Extended event types for TerminalClient.
  *
@@ -1527,7 +1755,13 @@ export class TerminalClient extends Duplex {
  * - 'connecting': when a connection attempt starts
  * - 'disconnect' (code, reason): when disconnected from the wire; a dead
  *   link found by the liveness check is (1006, 'liveness timeout')
- * - 'output' (Buffer): terminal output data
+ * - 'output' (Buffer): terminal output data; every chunk, never held back
+ * - 'output-dropped' (bytes: number): unread output past the client's
+ *   queue limit `maxBufferedOutputBytes` (default 8 MiB) was dropped, oldest
+ *   queued first. Up to `readableHighWaterMark` (64 KiB by default) already
+ *   in the stream's buffer is extra and kept, so a reader can get that
+ *   prefix, then the gap, then the newest output, possibly resuming inside
+ *   an escape sequence. The 'output' event had every byte
  * - 'title' (string): window title changed
  * - 'preferences' (TerminalPreferences): server-pushed preferences
  * - 'terminal-id' (string): terminal session ID assigned
@@ -1538,7 +1772,10 @@ export class TerminalClient extends Duplex {
  * - 'reconnect-failed': max reconnect attempts reached
  *
  * Standard Duplex Events:
- * - 'data' (Buffer): readable data available — same payload as 'output'
+ * - 'data' (Buffer): readable data available — same payload as 'output'.
+ *   Unread output is kept for a reader that comes later: up to
+ *   `maxBufferedOutputBytes` (default 8 MiB) in the client's queue, plus up
+ *   to `readableHighWaterMark` in the stream's buffer
  * - 'close': stream closed (deduplicated; fires once per cycle)
  * - 'error' (Error): error occurred (gated on listenerCount)
  * - 'end': no more data will be written
@@ -1547,11 +1784,9 @@ export class TerminalClient extends Duplex {
  * - 'pipe' / 'unpipe' (Readable): piped to / unpiped from another stream
  */
 
-// Re-export the typed client + its options type for consumers that want
-// raw access without the Node Duplex shim — useful in browser code or
-// for unit tests that stub the WebSocket layer directly.
+// Re-export the typed client's options type for consumers that want raw access without the Node
+// Duplex shim. The typed client itself is the generated `TerminalSessionsConnectWebSocket` (there is
+// no second name for it).
 export {
-    TerminalConnectTerminalWebSocketWebSocket as TerminalWebSocketTyped,
-    type ITerminalConnectTerminalWebSocketWebSocket as ITerminalWebSocketTyped,
     type IWebSocketConnectionOptions as ITerminalWebSocketOptions,
 } from '../generated/terminal/terminal_connect-terminal-web-socket.websocket.js';

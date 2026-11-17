@@ -29,6 +29,11 @@ interface Waiter {
   reject: (e: Error) => void;
 }
 
+/**
+ * Flow-control credit for one tunnel session or stream, counted in bytes. A sender calls
+ * `acquire(n)` before it sends and waits until the peer has granted that much; `release(n)` adds
+ * what a WINDOW frame from the peer grants. Waiters are served strictly first in, first out.
+ */
 export class CreditGate {
   private available: number;
   private waiters: Waiter[] = [];
@@ -36,6 +41,7 @@ export class CreditGate {
   private closeError: Error | null = null;
   private closing: AbortController | null = null;
 
+  /** Start with `initial` bytes of credit. Throws when `initial` is negative. */
   constructor(initial: number) {
     if (initial < 0) throw new Error(`CreditGate initial must be >= 0, got ${initial}`);
     this.available = initial;
@@ -136,7 +142,9 @@ export class CreditGate {
 
   /** Observability. */
   get availablePermits(): number { return this.available; }
+  /** How many `acquire()` calls are waiting for credit. */
   get waiterCount(): number { return this.waiters.length; }
+  /** True once `close()` has been called. */
   get isClosed(): boolean { return this.closed; }
 }
 

@@ -8,14 +8,14 @@
  * capture) remain the responsibility of the generated HttpClient surface.
  *
  * Patches applied on each client instance:
- *  - Metrics: wraps getStats (containers/projects) to normalize/humanize
+ *  - Metrics: wraps getStats (computers/projects) to normalize/humanize
  *    raw stats (see lib/metrics.ts).
  *  - ExecScriptsService prototype: Markdown/file helpers + defaults.
  *  - ExecService prototype: `run` with method/body/query, `call`, `listCallableScripts`, `connect`.
  *  - TerminalExec / TerminalSsh / ExecDynamicClient / Files prototypes.
  *  - sqlite.sql.query / run: SqlService prototype (lib/sqlite-helpers.ts).
  *
- * The HoodyClient subclass also overrides withContainer/withRealm so scoped
+ * The HoodyClient subclass also overrides withComputer/withRealm so scoped
  * client instances inherit the same patches via prototype swap in asWrapped.
  */
 
@@ -23,14 +23,15 @@ import {
   HoodyClient as GeneratedHoodyClient,
   type HoodyClientConfig,
   type HoodyCredentials,
-  type ContainerLike,
+  type ComputerLike,
 } from '../generated/client.js';
-import { ApiError } from '../generated/errors.js';
-import type { TerminalConnectTerminalWebSocketWebSocket } from '../generated/terminal/terminal_connect-terminal-web-socket.websocket.js';
+import { ApiError, RetiredOptionError, refuseRetiredOptions } from '../generated/errors.js';
+import type { TerminalSessionsConnectWebSocket } from '../generated/terminal/terminal_connect-terminal-web-socket.websocket.js';
 import {
-  normalizeContainerStatsResponse,
+  normalizeComputerStatsResponse,
   normalizeProjectStatsResponse,
 } from './metrics.js';
+import { retireMethods } from './retired-accessor.js';
 import { patchExecScriptsServicePrototype } from './exec-scripts.js';
 import { patchExecScriptExecutionPrototype } from './exec-script-execution.js';
 import { patchTerminalExecPrototype } from './terminal-exec.js';
@@ -38,7 +39,7 @@ import { installTerminalRun, type TerminalExecOptions, type TerminalExecResult }
 import { patchTerminalSshPrototype } from './terminal-ssh.js';
 import { patchExecDynamicClientPrototype } from './exec-dynamic-client.js';
 import { patchFilesServiceExtensions } from './files-service-extensions.js';
-import { patchExecRemotePrototype, type ExecRemoteConnect } from './exec-remote.js';
+import { patchExecRemotePrototype, type ExecRemoteFactory } from './exec-remote.js';
 import { patchSqliteHelpersPrototype } from './sqlite-helpers.js';
 import { patchKvHelpersPrototype, type SqliteKvStore } from './kv-helpers.js';
 import { patchPipeServiceHelpers } from './pipe-service-helpers.js';
@@ -58,7 +59,7 @@ import {
 
 /**
  * `client.events`, one per client instance. A WeakMap rather than a field:
- * withRealm/withContainer promote base-class instances by prototype swap
+ * withRealm/withComputer promote base-class instances by prototype swap
  * (asWrapped), so no constructor of this class runs for them.
  */
 const EVENTS_BY_CLIENT = new WeakMap<object, EventsClient>();
@@ -94,7 +95,7 @@ function hookEventsLogout(client: GeneratedHoodyClient): void {
  * in a page, the location in a worker, or only its origin (a blob: or data:
  * worker). It is the rule of the generated transports (_transportBase in
  * generated/client.ts and both HTTP clients), which are generator-emitted and
- * module-private; default-base-url.test.ts checks the two agree.
+ * module-private; a unit test checks the two agree.
  */
 function hasPage(): boolean {
   const g = globalThis as { document?: { baseURI?: unknown }; location?: { href?: unknown; origin?: unknown } };
@@ -104,8 +105,7 @@ function hasPage(): boolean {
 
 /**
  * The public account API, used when no baseURL was given, there is no page and
- * the environment names none. The domain is rewritten at deploy, like the
- * containers domain the generated client defaults to.
+ * the environment names none.
  */
 const DEFAULT_BASE_URL = 'https://api.hoody.com';
 
@@ -114,12 +114,15 @@ const DEFAULT_BASE_URL = 'https://api.hoody.com';
  * when no baseURL was given and there is no page: HOODY_BASE_URL, else
  * HOODY_API_URL (the variables the CLI reads), else the public API. It is read
  * as the account API unless the caller set target; a kit client gets no
- * built-in host, since no public kit URL exists without a container. Before
+ * built-in host, since no public kit URL exists without a computer. Before
  * this an omitted base was '' and every account call failed with "fetch() URL
- * is invalid": nothing in a Hoody container or an exec script sets either
+ * is invalid": nothing in a Hoody computer or an exec script sets either
  * variable. On a page, and for any given baseURL, nothing changes.
  */
 function withDefaultBaseURL(config: HoodyClientConfig): HoodyClientConfig {
+  // Refuse retired keys on the caller's own object, before the spread below
+  // copies it: the error then names what the caller passed.
+  refuseRetiredOptions(config, 'HoodyClient', [['forceIPv4', 'forceIpv4'], ['forceIPv4Cache', 'forceIpv4Cache']]);
   if (config.baseURL || hasPage()) return config;
   const env = typeof process !== 'undefined' ? process.env : undefined;
   const fromEnv = env?.HOODY_BASE_URL || env?.HOODY_API_URL;
@@ -128,9 +131,9 @@ function withDefaultBaseURL(config: HoodyClientConfig): HoodyClientConfig {
 }
 
 /**
- * The promise withContainer() returns, with each namespace of the client it
+ * The promise withComputer() returns, with each namespace of the client it
  * resolves to (`sqlite`, `files`, `exec`, ...) as a getter that throws: a
- * script that forgot `await` and read `hoody.withContainer(c).sqlite` got
+ * script that forgot `await` and read `hoody.withComputer(c).sqlite` got
  * `undefined` and failed further down the chain ("undefined is not an object").
  * Only names the client has and a Promise does not are guarded, as
  * non-enumerable properties of this one promise, so `await`, `then`, `catch`
@@ -145,7 +148,7 @@ function guardPendingClient(pending: Promise<HoodyClient>, client: object): Prom
       configurable: true,
       get() {
         throw new Error(
-          `withContainer() returns a Promise: write \`const box = await hoody.withContainer(...)\`, then read box.${name}`,
+          `withComputer() returns a Promise: write \`const box = await hoody.withComputer(...)\`, then read box.${name}`,
         );
       },
     });
@@ -159,11 +162,11 @@ function guardPendingClient(pending: Promise<HoodyClient>, client: object): Prom
  */
 export type DaemonProgramRef = number | { id: number } | { name: string };
 
-export interface ProgramTerminalAttachOptions {
-  /** Watch only: hoody-terminal drops this connection's input. Per connection, not a permission. */
-  readonly?: boolean;
-  /** Size sent in the JSON_DATA handshake (default 80x24). The smallest writable client sets the program's size (read-only clients only when none is writable). */
-  columns?: number;
+export interface ProgramTerminalConnectOptions {
+  /** Watch only: hoody-terminal drops this connection's input. Per connection, not a permission. (The earlier key `readonly` is refused.) */
+  readOnly?: boolean;
+  /** Size sent in the JSON_DATA handshake (default 80x24). The smallest writable client sets the program's size (read-only clients only when none is writable). (The earlier key `columns` is refused.) */
+  cols?: number;
   rows?: number;
   /**
    * Installed before the socket opens, so it receives every output byte. A
@@ -175,11 +178,11 @@ export interface ProgramTerminalAttachOptions {
   onDisconnect?: (code: number, reason: string) => void;
 }
 
-export interface ProgramTerminalAttachment {
-  /** The program's terminal id: terminal N of the container. */
+export interface ProgramTerminalConnection {
+  /** The program's terminal id: terminal N of the computer. */
   terminalId: number;
   /** The connected socket, after its first server frame. Send keys with `ws.sendInput()`. */
-  ws: TerminalConnectTerminalWebSocketWebSocket;
+  ws: TerminalSessionsConnectWebSocket;
 }
 
 /** The program a ref names, read through the daemon kit the programs service talks to. */
@@ -267,7 +270,7 @@ function wrapAsyncMethod(
  *  2. Stamp each service that hosts a helper with its owner (lib/service-owner.ts) and install
  *     `terminal.run` on this instance's terminal object
  *  3. Check METRICS_PATCH_MARKER on this instance; if already set, return early
- *  4. Wrap client.api.containers.getStats with normalizeContainerStatsResponse
+ *  4. Wrap client.api.computers.getStats with normalizeComputerStatsResponse
  *  5. Wrap client.api.projects.getStats with normalizeProjectStatsResponse
  *  6. Set METRICS_PATCH_MARKER to prevent re-patching this instance
  */
@@ -299,31 +302,36 @@ export function patchHoodyClientMetrics<T extends GeneratedHoodyClient>(client: 
   if (markerHost[METRICS_PATCH_MARKER]) return client;
 
   const api = (client as unknown as { api?: MethodTarget }).api;
-  const containers = api ? (api.containers as MethodTarget | undefined) : undefined;
+  const computers = api ? (api.computers as MethodTarget | undefined) : undefined;
   const projects = api ? (api.projects as MethodTarget | undefined) : undefined;
 
-  wrapAsyncMethod(containers, 'getStats', normalizeContainerStatsResponse);
+  wrapAsyncMethod(computers, 'getStats', normalizeComputerStatsResponse);
   wrapAsyncMethod(projects, 'getStats', normalizeProjectStatsResponse);
 
   markerHost[METRICS_PATCH_MARKER] = true;
   return client;
 }
 
-/** Attach to a daemon program's terminal (see `daemon.programs.attachTerminal`). */
-async function attachProgramTerminalImpl(
+/** Connect to a daemon program's terminal (see `daemon.programs.connectTerminal`). */
+async function connectProgramTerminalImpl(
   scoped: GeneratedHoodyClient,
   program: DaemonProgramRef,
-  options: ProgramTerminalAttachOptions = {},
-): Promise<ProgramTerminalAttachment> {
+  options: ProgramTerminalConnectOptions = {},
+): Promise<ProgramTerminalConnection> {
+  // The hand-written keys follow the generated words (readOnly, cols). An old key would be dropped without a
+  // word: `readonly` would open a WRITABLE connection, so both are refused by name.
+  const legacy = options as { readonly?: unknown; columns?: unknown };
+  if (legacy.readonly !== undefined) throw new RetiredOptionError('daemon.programs.connectTerminal', 'readonly', 'readOnly');
+  if (legacy.columns !== undefined) throw new RetiredOptionError('daemon.programs.connectTerminal', 'columns', 'cols');
   const terminalId = await programTerminalIdOf(scoped.daemon.programs, program);
-  // The terminal is chosen by the HOST index: the containers proxy
+  // The terminal is chosen by the HOST index: the computers proxy
   // overwrites a `terminal_id` query parameter from it.
   const ws = await scoped.terminal.sessions.connect(
-    options.readonly !== undefined ? { readonly: options.readonly } : undefined,
+    options.readOnly !== undefined ? { readonly: options.readOnly } : undefined,
     { serviceIndex: terminalId },
   );
 
-  return new Promise<ProgramTerminalAttachment>((resolve, reject) => {
+  return new Promise<ProgramTerminalConnection>((resolve, reject) => {
     let state: 'pending' | 'attached' | 'failed' = 'pending';
     const firstFrameSubs: Array<() => void> = [];
     const fail = (code: number, reason: string) => {
@@ -367,7 +375,7 @@ async function attachProgramTerminalImpl(
     const offConnect = ws.onConnect(() => {
       offConnect();
       try {
-        ws.sendJsonData({ command: '{', columns: options.columns ?? 80, rows: options.rows ?? 24 });
+        ws.sendJsonData({ command: '{', columns: options.cols ?? 80, rows: options.rows ?? 24 });
       } catch { /* closing: the disconnect handler reports it */ }
     });
     ws.connect().catch((err: unknown) => fail(1006, err instanceof Error ? err.message : String(err)));
@@ -378,13 +386,13 @@ declare module '../generated/daemon/programs.service.js' {
   interface ProgramsService {
   /**
    * The terminal id of a daemon program (`terminal_id`), read from the
-   * container's daemon (the one this service talks to). Its browser URL is `getKitUrl('terminal', container, id)`.
+   * computer's daemon (the one this service talks to). Its browser URL is `getKitUrl('terminal', computer, id)`.
    * Rejects when the program does not exist or has no terminal.
    */
     getTerminalId(program: DaemonProgramRef): Promise<number>;
 
   /**
-   * Attach to a daemon program's terminal: the program's screen, its input,
+   * Connect to a daemon program's terminal: the program's screen, its input,
    * its size. The socket is terminal N's (`terminal-N` host, N being the
    * program's `terminal_id`) and carries no spawn parameters: the terminal
    * belongs to the running program, so they would be ignored. The program
@@ -403,21 +411,21 @@ declare module '../generated/daemon/programs.service.js' {
    * running.
    *
    * Authentication is the scoped client's kit authentication (`kitAuth` on
-   * this client or `withContainer`); the account token never goes into the
-   * socket URL. A `containerClaim` kitAuth travels in headers, which only Node
+   * this client or `withComputer`); the account token never goes into the
+   * socket URL. A `computerClaim` kitAuth travels in headers, which only Node
    * can put on a WebSocket upgrade. In a browser, use a `token` kitAuth with
    * `param` (the proxy reads it from the query string) or a cookie on the
    * kit host.
    */
-    attachTerminal(program: DaemonProgramRef, options?: ProgramTerminalAttachOptions): Promise<ProgramTerminalAttachment>;
+    connectTerminal(program: DaemonProgramRef, options?: ProgramTerminalConnectOptions): Promise<ProgramTerminalConnection>;
   }
 }
 
 const DAEMON_PROGRAMS_PATCH_MARKER = Symbol.for('hoody.sdk.daemon.programs.extensions');
 
 /**
- * Attach `getTerminalId` and `attachTerminal` to ProgramsService.prototype (idempotent).
- * Both need a container-scoped client: its daemon kit for the lookup, its terminal kit for the socket.
+ * Attach `getTerminalId` and `connectTerminal` to ProgramsService.prototype (idempotent).
+ * Both need a computer-scoped client: its daemon kit for the lookup, its terminal kit for the socket.
  */
 export function patchDaemonProgramsPrototype(): void {
   const proto = ProgramsService.prototype as unknown as Record<string | symbol, unknown>;
@@ -425,19 +433,32 @@ export function patchDaemonProgramsPrototype(): void {
   proto['getTerminalId'] = function getTerminalId(this: ProgramsService, program: DaemonProgramRef): Promise<number> {
     return programTerminalIdOf(this, program);
   };
-  proto['attachTerminal'] = function attachTerminal(
+  proto['connectTerminal'] = function connectTerminal(
     this: ProgramsService,
     program: DaemonProgramRef,
-    options?: ProgramTerminalAttachOptions,
-  ): Promise<ProgramTerminalAttachment> {
-    return attachProgramTerminalImpl(ownerOf<GeneratedHoodyClient>(this, 'daemon.programs.attachTerminal'), program, options);
+    options?: ProgramTerminalConnectOptions,
+  ): Promise<ProgramTerminalConnection> {
+    return connectProgramTerminalImpl(ownerOf<GeneratedHoodyClient>(this, 'daemon.programs.connectTerminal'), program, options);
   };
+  retireMethods(ProgramsService.prototype, 'daemon.programs', { attachTerminal: 'daemon.programs.connectTerminal()' });
   proto[DAEMON_PROGRAMS_PATCH_MARKER] = true;
 }
 
+/**
+ * The SDK entry point. One client holds the account session and reaches the
+ * account API (`client.api`), the live account events (`client.events`) and,
+ * once scoped with `await client.withComputer(...)`, the programs of one
+ * computer (`files`, `terminal`, `exec`, `sqlite` and the other namespaces).
+ *
+ * Construct it with a config (`token`, or `credentials` that log in on first
+ * use), or use `HoodyClient.login()` to get a logged-in client. Clients
+ * derived with `withComputer()` or `withRealm()` share the session of the
+ * client they came from: a refresh, logout or `setSessionToken()` on one
+ * applies to all of them.
+ */
 export class HoodyClient extends GeneratedHoodyClient {
-  /** The exec namespace, plus `exec.connect(url, { token })`: the remote channel of a live script (lib/exec-remote.ts). */
-  declare readonly exec: GeneratedHoodyClient['exec'] & { connect: ExecRemoteConnect };
+  /** The exec namespace, plus `exec.remote(url, { token })`: the remote channel of a live script (lib/exec-remote.ts). */
+  declare readonly exec: GeneratedHoodyClient['exec'] & { remote: ExecRemoteFactory };
 
   /** The sqlite namespace, with the object form of the KV key calls in `kv`'s type (lib/kv-helpers.ts). */
   declare readonly sqlite: Omit<GeneratedHoodyClient['sqlite'], 'kv'> & { kv: SqliteKvStore };
@@ -450,7 +471,7 @@ export class HoodyClient extends GeneratedHoodyClient {
   /**
    * Promote a GeneratedHoodyClient instance into a fully-patched HoodyClient.
    *
-   * The base class methods withContainer/withRealm return a GeneratedHoodyClient.
+   * The base class methods withComputer/withRealm return a GeneratedHoodyClient.
    * This helper swaps its prototype to HoodyClient.prototype so that the scoped
    * instance gains all HoodyClient overrides, then applies the metrics patches.
    * The prototype swap is a standard pattern for re-typing objects returned by
@@ -464,6 +485,13 @@ export class HoodyClient extends GeneratedHoodyClient {
     return patchHoodyClientMetrics(client) as unknown as HoodyClient;
   }
 
+  /**
+   * Create a client from `config`. With no `baseURL` outside a web page, the
+   * account API is taken from `HOODY_BASE_URL`, else `HOODY_API_URL`, else the
+   * public Hoody API (a client whose `target` is `'kit'` gets no default).
+   * Makes no request. Throws `RetiredOptionError` when the config carries a
+   * retired option name.
+   */
   constructor(config: HoodyClientConfig) {
     super(withDefaultBaseURL(config));
     hookEventsLogout(this);
@@ -520,13 +548,13 @@ export class HoodyClient extends GeneratedHoodyClient {
   }
 
   /**
-   * Build a desktop URL for a container. `desktop-{N}` is a public reverse-proxy
+   * Build a desktop URL for a computer. `desktop-{N}` is a public reverse-proxy
    * alias: the proxy injects the desktop/redirect query params and the terminal
    * kit 302s the browser to display-{N+OFFSET} (default OFFSET=1600 server-side).
    *
    * Net browser-visible navigation: `desktop-{N}` → `display-{N+OFFSET}`.
    *
-   * @param container - Container object with project_id, id, and server fields.
+   * @param computer - Computer object with project_id, id, and server fields.
    * @param options.serviceIndex - Desktop instance index (default: 1). Distinct
    *   from regular terminal indices — the proxy offsets internally.
    * @param options.desktopEnv - Desktop environment string (default: server-side
@@ -534,10 +562,10 @@ export class HoodyClient extends GeneratedHoodyClient {
    *   default kicks in otherwise.
    */
   getDesktopUrl(
-    container: ContainerLike,
+    computer: ComputerLike,
     options?: { serviceIndex?: number; desktopEnv?: string },
   ): string {
-    const baseUrl = this.getKitUrl('desktop', container, options?.serviceIndex ?? 1);
+    const baseUrl = this.getKitUrl('desktop', computer, options?.serviceIndex ?? 1);
     const env = options?.desktopEnv;
     // Suppress when env matches the proxy default (xfce) — keeps the URL clean
     // and consistent with the CLI/workspaces helpers.
@@ -545,8 +573,19 @@ export class HoodyClient extends GeneratedHoodyClient {
     return `${baseUrl}/?desktop_env=${encodeURIComponent(env)}`;
   }
 
-  override withContainer(
-    containerOrId: string | ContainerLike,
+  /**
+   * Derive a client scoped to one computer: its namespaces (`files`,
+   * `terminal`, `exec`, ...) talk to that computer's programs. Pass a computer
+   * object, or an id to have it looked up through the account API; a failed
+   * lookup rejects with the API's error. `options.kitAuth` sets the credential
+   * sent to the computer's programs, and `options.onKitAuthExpired` is asked
+   * for a new one when a program refuses it.
+   *
+   * Returns a Promise: `const box = await client.withComputer(id)`. Reading a
+   * namespace on the un-awaited promise throws an Error that says so.
+   */
+  override withComputer(
+    computerOrId: string | ComputerLike,
     // Mirror the generated base signature so callers can type-check
     // `onKitAuthExpired` without a cast. A narrower `{ kitAuth? }` type
     // would surface an excess-property error on the callback.
@@ -555,10 +594,17 @@ export class HoodyClient extends GeneratedHoodyClient {
       onKitAuthExpired?: (namespace: string, error: ApiError) => Promise<ProxyAuth | undefined>;
     },
   ): Promise<HoodyClient> {
-    const pending = super.withContainer(containerOrId, options).then((scoped) => HoodyClient.asWrapped(scoped));
+    const pending = super.withComputer(computerOrId, options).then((scoped) => HoodyClient.asWrapped(scoped));
     return guardPendingClient(pending, this);
   }
 
+  /**
+   * Derive a client scoped to a realm: its account API requests go to that
+   * realm's host. `realmId` is 24 hexadecimal characters; `'all'`, `'default'`
+   * or `'*'` clears the scope, and anything else throws `ValidationError`. The
+   * derived client shares this client's session, and its `events` stream
+   * carries that realm's events.
+   */
   override withRealm(realmId?: string): HoodyClient {
     const scoped = super.withRealm(realmId);
     return HoodyClient.asWrapped(scoped);
@@ -578,7 +624,7 @@ export class HoodyClient extends GeneratedHoodyClient {
         session: eventsSessionOf(this),
         // A client constructed with credentials logs in on first use.
         prepareCredential: () => this.getAuthToken(),
-        // C5 scope_changed: a project's access changed, so cached GETs may
+        // scope_changed: a project's access changed, so cached GETs may
         // show what this account can no longer read.
         onScopeChanged: () => {
           try { http.clearCache?.(); } catch { /* the cache is an optimisation */ }
@@ -594,6 +640,14 @@ export class HoodyClient extends GeneratedHoodyClient {
   // The bump runs after `super`, so the stream reconnects (when it still has
   // handlers) with the new session's token.
 
+  /**
+   * Log this client's session out locally: the access token, refresh token,
+   * stored credentials and `kitAuth` are dropped for this client and every
+   * client sharing its session. No session is revoked on the server; use
+   * `logoutAll()` for that. The events stream's session ends with it: its
+   * socket closes and the buffers and cursors of the old session are dropped.
+   * Other streams and sockets the caller opened stay open.
+   */
   override async logout(): Promise<void> {
     IN_CLIENT_LOGOUT.add(this);
     try {
@@ -606,6 +660,12 @@ export class HoodyClient extends GeneratedHoodyClient {
 
   // The generated logoutAll() clears the credentials even when the request fails, so the events
   // session ends either way. The endpoint hook bumps only after a successful revoke.
+  /**
+   * Revoke every session of the account on the server (all devices and apps),
+   * then clear this session as `logout()` does. The local session, and the
+   * events stream's session with it, is cleared even when the request fails;
+   * the failure is then rethrown.
+   */
   override async logoutAll(): Promise<void> {
     IN_CLIENT_LOGOUT.add(this);
     try {
@@ -616,12 +676,24 @@ export class HoodyClient extends GeneratedHoodyClient {
     }
   }
 
+  /**
+   * Set the access token of the whole session: this client and every client
+   * sharing its session send it from now on. The refresh token and stored
+   * credentials are kept. The events stream's old session ends, and the stream
+   * reconnects with the new token when it still has handlers.
+   */
   override setSessionToken(token: string): void {
     // The whole shared session changes token.
     super.setSessionToken(token);
     bumpEventsSession(this, 'shared');
   }
 
+  /**
+   * Log this client in with credentials, starting a new session, and resolve
+   * with the API's login response. The answer of an account with two-factor
+   * authentication is a challenge, not a session. The events stream's old
+   * session ends whether or not the login succeeds.
+   */
   override async login(
     ...args: Parameters<GeneratedHoodyClient['login']>
   ): ReturnType<GeneratedHoodyClient['login']> {
@@ -632,12 +704,25 @@ export class HoodyClient extends GeneratedHoodyClient {
     }
   }
 
+  /**
+   * Take over a session obtained elsewhere (a login, two-factor or device-flow
+   * response, or tokens saved earlier): the access token becomes the bearer of
+   * this client's session and the refresh token is kept for automatic refresh.
+   * Returns the access token. Throws `ValidationError` when the value holds a
+   * challenge and no session. The events stream moves to the new session.
+   */
   override adoptSession(...args: Parameters<GeneratedHoodyClient['adoptSession']>): string {
     const token = super.adoptSession(...args);
     bumpEventsSession(this, 'shared');
     return token;
   }
 
+  /**
+   * Set the access token of this client only. The client leaves the session it
+   * shared and starts one of its own, with no refresh token; other clients
+   * keep theirs. Its events stream follows it to the new session. To change
+   * the token of the whole session, use `setSessionToken()`.
+   */
   override setToken(token: string): void {
     // setToken moves only this client to a session of its own.
     detachEventsSession(this);

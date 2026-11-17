@@ -4,48 +4,53 @@
  *
  * Provides automatic connection management - users just add listeners!
  *
- * Complete coverage: 65/65 event types (100%)
+ * `on()` takes any event type of the catalog (`lib/events-catalog.json`) or a pattern over them;
+ * the typed `on<Event>()` methods cover the common ones.
  *
  * Three subscription styles are supported:
  *
- *  1. Resource-specific listeners (onContainerEvents, onProjectEvents):
+ *  1. Resource-specific listeners (onComputerEvents, onProjectEvents):
  *     Register with eventType "*" (wildcard) plus an EventFilter containing
  *     the target resourceId/resourceType. The EventsManager routes every
  *     incoming event through the wildcard bucket, and the filter narrows
  *     delivery to events matching that resource.
  *
- *  2. Lifecycle listeners (onLifecycle):
- *     Observe the WebSocket connection state itself (connected, disconnected,
- *     reconnecting, reconnected, error). These are distinct from data events
- *     and are delivered via EventsManager.addLifecycleListener, not through
- *     the data-event routing path.
+ *  2. Connection listeners (onConnection):
+ *     Observe the transport events of the WebSocket itself (connected,
+ *     disconnected, reconnecting, reconnected, error). These are distinct from
+ *     data events and are delivered via EventsManager.addConnectionListener,
+ *     not through the data-event routing path. The lifecycle state (idle,
+ *     connecting, live, recovering, offline, closed) is getLifecycleState()
+ *     and onState().
  *
- *  3. Raw / typed event listeners (onContainerRunning, onAnyEvent, etc.):
+ *  3. Raw / typed event listeners (onComputerRunning, onAnyEvent, etc.):
  *     Each registers a listener on the exact event_type string (e.g.
- *     "container.running") or on "*" for all data events.
+ *     "computer.running") or on "*" for all data events.
  */
 
 import type { EventsService } from '../generated/api/events.service.js';
 import { ApiError } from '../generated/errors.js';
 import {
     EventsManager,
+    listenByType,
     type EventFilter,
-    type EventsConnectionState,
+    type EventsLifecycleState,
     type EventsStateEvent,
 } from './events-manager.js';
 import type { EventHistoryItem, EventServerMessage, HoodyEvent, HoodyStreamEvent } from './events-types.js';
-import { ApiConnecteventstreamWebSocket } from './events-types.js';
+import { EventsSocketTransport } from './events-types.js';
 import { EventsError } from './events-errors.js';
+import { retireAccessors, retireMethods } from './retired-accessor.js';
 import type { EventsHistoryPage, EventsHistoryReader } from './events-replay.js';
 import type { EventsSession } from './events-session.js';
 import { isEventPattern, type EventPattern, type EventTypesMatching } from './events-catalog.js';
 
-/** Options of the §5 runtime behind an EventsClient. */
+/** Options of the runtime behind an EventsClient. */
 export interface EventsClientOptions {
     /** The client session the stream is bound to; `client.events` passes it. */
     session?: EventsSession;
     /**
-     * C5 "refresh + reconnect". Defaults to the service HTTP client's own
+     * The "refresh + reconnect" action. Defaults to the service HTTP client's own
      * single-flight 401 refresh, so the socket and REST refresh the same way.
      */
     refreshToken?: () => Promise<string | undefined>;
@@ -117,7 +122,7 @@ function toPatterns(pattern: string | readonly string[]): string[] {
     return list;
 }
 
-/** Parse a C4 cursor-mode (or bootstrap) success body; anything else is not a cursor-capable server. */
+/** Parse a cursor-mode (or bootstrap) success body; anything else is not a cursor-capable server. */
 function parseHistoryPage(body: unknown): EventsHistoryPage {
     const data = (body as { data?: unknown } | null)?.data as { events?: unknown; pagination?: Record<string, unknown> } | undefined;
     const pagination = data?.pagination;
@@ -134,6 +139,20 @@ function parseHistoryPage(body: unknown): EventsHistoryPage {
     };
 }
 
+/**
+ * The live event stream of an account, or of one realm on a realm-scoped
+ * client. Reach it as `client.events`. It connects when the first handler,
+ * stream or wait is registered and closes the socket when the last one is
+ * gone; after a disconnect it reconnects and recovers the events it missed
+ * from history.
+ *
+ * Use `on()` or the typed `on<Event>()` methods for handlers, `stream()` for
+ * an async iterator that can resume from a saved point, `waitFor()` to await
+ * one event around an action, and `bootstrap()` to load a starting state that
+ * stays consistent with the stream. `onState()` and `onConnection()` report
+ * the stream's own state. Past events are read with the REST history
+ * (`client.api.events`), not here.
+ */
 export class EventsClient {
     private manager: EventsManager;
     private baseURL: string;
@@ -161,7 +180,7 @@ export class EventsClient {
         // A service from `client.withRealm(id).api.events` carries its realm
         // as `defaultRealmId` and applies it per request as a host label, while
         // its HTTP client holds the account base URL. Reading only that base
-        // URL subscribed account-wide (hoody-api joins the user room when the
+        // URL subscribed account-wide (the API joins the user room when the
         // handshake names no realm) and mixed every realm's events into a
         // realm-scoped view. So: the realm host, resolved by the service's own
         // realm routing, plus `?realm_id=` (the server's documented base-domain
@@ -225,7 +244,7 @@ export class EventsClient {
             },
         };
 
-        // C5 "refresh + reconnect" rides the HTTP client's own single-flight
+        // The "refresh + reconnect" action rides the HTTP client's own single-flight
         // 401 refresh (and, under HoodyClient, its session recovery), with the
         // same acceptance check the transport applies before installing a token.
         const refreshToken = options.refreshToken ?? (async (): Promise<string | undefined> => {
@@ -262,7 +281,7 @@ export class EventsClient {
                 // installs lifecycle + message listeners before calling
                 // `connect()` itself, so no early events can be lost to a
                 // socket that handshakes before listeners attach.
-                return new ApiConnecteventstreamWebSocket(wsUrl, socketOptions);
+                return new EventsSocketTransport(wsUrl, socketOptions);
             },
             {
                 autoConnect: true,
@@ -290,8 +309,8 @@ export class EventsClient {
     // ============================================================================
 
     /**
-     * Handle events of one or more types or patterns (`'container.running'`,
-     * `['container.running', 'container.stopped']`, `'container.*'`, `'*'`).
+     * Handle events of one or more types or patterns (`'computer.running'`,
+     * `['computer.running', 'computer.stopped']`, `'computer.*'`, `'*'`).
      * Resolves with the unsubscribe function once the stream is admitted.
      *
      * Wildcards leave out live-only types unless `includeEphemeral` is set.
@@ -345,15 +364,15 @@ export class EventsClient {
      * waitFor/prepareWait/bootstrap, which hold the connection themselves.
      */
     ready(options: { signal?: AbortSignal; timeoutMs?: number } = {}): Promise<void> {
-        return this.manager.whenReady(options);
+        return this.manager.ready(options);
     }
 
     /**
      * Wait for the first matching event. With `action`, the action runs only
      * after `ready()`, so its event cannot be missed, even on a cold start:
      *
-     *     const running = await client.events.waitFor('container.running',
-     *         { resourceId: id }, () => client.api.containers.start(id));
+     *     const running = await client.events.waitFor('computer.running',
+     *         { resourceId: id }, () => client.api.computers.start(id));
      */
     waitFor<P extends EventPattern>(
         pattern: P | readonly P[],
@@ -392,14 +411,17 @@ export class EventsClient {
         return this.manager.bootstrap(readFn, options);
     }
 
-    /** Observe connection state, gaps, `scope_changed` and non-fatal notices. Returns an unsubscribe function. */
+    /**
+     * Observe lifecycle state changes, gaps, `scope_changed` and non-fatal notices. A `state` event's
+     * `state` and `previous` are the values `getLifecycleState()` returns. Returns an unsubscribe function.
+     */
     onState(listener: (event: EventsStateEvent) => void): () => void {
         return this.manager.onState(listener);
     }
 
-    /** The §5 connection state. */
-    get state(): EventsConnectionState {
-        return this.manager.connectionState;
+    /** The lifecycle state: idle, connecting, live, recovering, offline or closed. */
+    getLifecycleState(): EventsLifecycleState {
+        return this.manager.getLifecycleState();
     }
 
     /**
@@ -422,7 +444,7 @@ export class EventsClient {
     async onActivityLogged(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('activity.logged', callback);
+        return this.manager[listenByType]('activity.logged', callback);
     }
 
     // ============================================================================
@@ -437,7 +459,7 @@ export class EventsClient {
     async onAuthTokenCreated(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('auth.token.created', callback);
+        return this.manager[listenByType]('auth.token.created', callback);
     }
 
     /**
@@ -448,7 +470,7 @@ export class EventsClient {
     async onAuthTokenDeleted(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('auth.token.deleted', callback);
+        return this.manager[listenByType]('auth.token.deleted', callback);
     }
 
     /**
@@ -459,7 +481,7 @@ export class EventsClient {
     async onAuthTokenDisabled(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('auth.token.disabled', callback);
+        return this.manager[listenByType]('auth.token.disabled', callback);
     }
 
     /**
@@ -470,7 +492,7 @@ export class EventsClient {
     async onAuthTokenEnabled(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('auth.token.enabled', callback);
+        return this.manager[listenByType]('auth.token.enabled', callback);
     }
 
     /**
@@ -481,198 +503,198 @@ export class EventsClient {
     async onAuthTokenUpdated(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('auth.token.updated', callback);
+        return this.manager[listenByType]('auth.token.updated', callback);
     }
 
     // ============================================================================
-    // Container Events (17 events)
+    // Computer Events (17 events)
     // ============================================================================
 
     /**
-     * Listen for container.autostart_disabled events
+     * Listen for computer.autostart_disabled events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerAutostartDisabled(
+    async onComputerAutostartDisabled(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('container.autostart_disabled', callback);
+        return this.manager[listenByType]('computer.autostart_disabled', callback);
     }
 
     /**
-     * Listen for container.autostart_enabled events
+     * Listen for computer.autostart_enabled events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerAutostartEnabled(
+    async onComputerAutostartEnabled(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('container.autostart_enabled', callback);
+        return this.manager[listenByType]('computer.autostart_enabled', callback);
     }
 
     /**
-     * Listen for container.creating events
+     * Listen for computer.creating events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerCreating(
+    async onComputerCreating(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('container.creating', callback);
+        return this.manager[listenByType]('computer.creating', callback);
     }
 
     /**
-     * Listen for container.deleted events
+     * Listen for computer.deleted events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerDeleted(
+    async onComputerDeleted(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('container.deleted', callback);
+        return this.manager[listenByType]('computer.deleted', callback);
     }
 
     /**
-     * Listen for container.deleting events
+     * Listen for computer.deleting events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerDeleting(
+    async onComputerDeleting(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('container.deleting', callback);
+        return this.manager[listenByType]('computer.deleting', callback);
     }
 
     /**
-     * Listen for container.display.enabled events
+     * Listen for computer.display.enabled events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerDisplayEnabled(
+    async onComputerDisplayEnabled(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('container.display.enabled', callback);
+        return this.manager[listenByType]('computer.display.enabled', callback);
     }
 
     /**
-     * Listen for container.failed events
+     * Listen for computer.failed events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerFailed(
+    async onComputerFailed(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('container.failed', callback);
+        return this.manager[listenByType]('computer.failed', callback);
     }
 
     /**
-     * Listen for container.renamed events
+     * Listen for computer.renamed events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerRenamed(
+    async onComputerRenamed(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('container.renamed', callback);
+        return this.manager[listenByType]('computer.renamed', callback);
     }
 
     /**
-     * Listen for container.resource_updated events
+     * Listen for computer.resource_updated events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerResourceUpdated(
+    async onComputerResourceUpdated(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('container.resource_updated', callback);
+        return this.manager[listenByType]('computer.resource_updated', callback);
     }
 
     /**
-     * Listen for container.running events
+     * Listen for computer.running events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerRunning(
+    async onComputerRunning(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('container.running', callback);
+        return this.manager[listenByType]('computer.running', callback);
     }
 
     /**
-     * Listen for container.snapshot.created events
+     * Listen for computer.snapshot.created events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerSnapshotCreated(
+    async onComputerSnapshotCreated(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('container.snapshot.created', callback);
+        return this.manager[listenByType]('computer.snapshot.created', callback);
     }
 
     /**
-     * Listen for container.snapshot.deleted events
+     * Listen for computer.snapshot.deleted events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerSnapshotDeleted(
+    async onComputerSnapshotDeleted(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('container.snapshot.deleted', callback);
+        return this.manager[listenByType]('computer.snapshot.deleted', callback);
     }
 
     /**
-     * Listen for container.snapshot.renamed events
+     * Listen for computer.snapshot.renamed events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerSnapshotRenamed(
+    async onComputerSnapshotRenamed(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('container.snapshot.renamed', callback);
+        return this.manager[listenByType]('computer.snapshot.renamed', callback);
     }
 
     /**
-     * Listen for container.snapshot.restored events
+     * Listen for computer.snapshot.restored events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerSnapshotRestored(
+    async onComputerSnapshotRestored(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('container.snapshot.restored', callback);
+        return this.manager[listenByType]('computer.snapshot.restored', callback);
     }
 
     /**
-     * Listen for container.ssh_key.added events
+     * Listen for computer.ssh_key.added events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerSshKeyAdded(
+    async onComputerSshKeyAdded(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('container.ssh_key.added', callback);
+        return this.manager[listenByType]('computer.ssh_key.added', callback);
     }
 
     /**
-     * Listen for container.ssh_key.removed events
+     * Listen for computer.ssh_key.removed events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerSshKeyRemoved(
+    async onComputerSshKeyRemoved(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('container.ssh_key.removed', callback);
+        return this.manager[listenByType]('computer.ssh_key.removed', callback);
     }
 
     /**
-     * Listen for container.stopped events
+     * Listen for computer.stopped events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerStopped(
+    async onComputerStopped(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('container.stopped', callback);
+        return this.manager[listenByType]('computer.stopped', callback);
     }
 
     // ============================================================================
@@ -687,7 +709,7 @@ export class EventsClient {
     async onFirewallRuleAdded(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('firewall.rule.added', callback);
+        return this.manager[listenByType]('firewall.rule.added', callback);
     }
 
     /**
@@ -698,7 +720,7 @@ export class EventsClient {
     async onFirewallRuleDisabled(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('firewall.rule.disabled', callback);
+        return this.manager[listenByType]('firewall.rule.disabled', callback);
     }
 
     /**
@@ -709,7 +731,7 @@ export class EventsClient {
     async onFirewallRuleEnabled(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('firewall.rule.enabled', callback);
+        return this.manager[listenByType]('firewall.rule.enabled', callback);
     }
 
     /**
@@ -720,7 +742,7 @@ export class EventsClient {
     async onFirewallRuleRemoved(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('firewall.rule.removed', callback);
+        return this.manager[listenByType]('firewall.rule.removed', callback);
     }
 
     /**
@@ -731,7 +753,7 @@ export class EventsClient {
     async onFirewallRuleUpdated(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('firewall.rule.updated', callback);
+        return this.manager[listenByType]('firewall.rule.updated', callback);
     }
 
     // ============================================================================
@@ -746,7 +768,7 @@ export class EventsClient {
     async onNotificationCreated(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('notification.created', callback);
+        return this.manager[listenByType]('notification.created', callback);
     }
 
     /**
@@ -757,7 +779,7 @@ export class EventsClient {
     async onNotificationDeleted(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('notification.deleted', callback);
+        return this.manager[listenByType]('notification.deleted', callback);
     }
 
     /**
@@ -768,7 +790,7 @@ export class EventsClient {
     async onNotificationRead(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('notification.read', callback);
+        return this.manager[listenByType]('notification.read', callback);
     }
 
     // ============================================================================
@@ -783,7 +805,7 @@ export class EventsClient {
     async onPoolInvitationRevoked(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('pool.invitation_revoked', callback);
+        return this.manager[listenByType]('pool.invitation_revoked', callback);
     }
 
     /**
@@ -794,7 +816,7 @@ export class EventsClient {
     async onPoolInvited(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('pool.invited', callback);
+        return this.manager[listenByType]('pool.invited', callback);
     }
 
     /**
@@ -805,7 +827,7 @@ export class EventsClient {
     async onPoolMemberJoined(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('pool.member.joined', callback);
+        return this.manager[listenByType]('pool.member.joined', callback);
     }
 
     /**
@@ -816,7 +838,7 @@ export class EventsClient {
     async onPoolMemberLeft(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('pool.member.left', callback);
+        return this.manager[listenByType]('pool.member.left', callback);
     }
 
     /**
@@ -827,7 +849,7 @@ export class EventsClient {
     async onPoolMemberRoleChanged(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('pool.member.role_changed', callback);
+        return this.manager[listenByType]('pool.member.role_changed', callback);
     }
 
     // ============================================================================
@@ -842,7 +864,7 @@ export class EventsClient {
     async onProjectCreated(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('project.created', callback);
+        return this.manager[listenByType]('project.created', callback);
     }
 
     /**
@@ -853,7 +875,7 @@ export class EventsClient {
     async onProjectDeleted(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('project.deleted', callback);
+        return this.manager[listenByType]('project.deleted', callback);
     }
 
     /**
@@ -864,7 +886,7 @@ export class EventsClient {
     async onProjectUpdated(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('project.updated', callback);
+        return this.manager[listenByType]('project.updated', callback);
     }
 
     // ============================================================================
@@ -879,7 +901,7 @@ export class EventsClient {
     async onProxyAliasCreated(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('proxy.alias.created', callback);
+        return this.manager[listenByType]('proxy.alias.created', callback);
     }
 
     /**
@@ -890,7 +912,7 @@ export class EventsClient {
     async onProxyAliasDeleted(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('proxy.alias.deleted', callback);
+        return this.manager[listenByType]('proxy.alias.deleted', callback);
     }
 
     /**
@@ -901,7 +923,7 @@ export class EventsClient {
     async onProxyAliasDisabled(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('proxy.alias.disabled', callback);
+        return this.manager[listenByType]('proxy.alias.disabled', callback);
     }
 
     /**
@@ -912,7 +934,7 @@ export class EventsClient {
     async onProxyAliasEnabled(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('proxy.alias.enabled', callback);
+        return this.manager[listenByType]('proxy.alias.enabled', callback);
     }
 
     /**
@@ -923,7 +945,7 @@ export class EventsClient {
     async onProxyAliasExpired(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('proxy.alias.expired', callback);
+        return this.manager[listenByType]('proxy.alias.expired', callback);
     }
 
     /**
@@ -934,7 +956,7 @@ export class EventsClient {
     async onProxyAliasExpiringSoon(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('proxy.alias.expiring_soon', callback);
+        return this.manager[listenByType]('proxy.alias.expiring_soon', callback);
     }
 
     /**
@@ -945,7 +967,7 @@ export class EventsClient {
     async onProxyAliasUpdated(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('proxy.alias.updated', callback);
+        return this.manager[listenByType]('proxy.alias.updated', callback);
     }
 
     /**
@@ -956,7 +978,7 @@ export class EventsClient {
     async onProxyPermissionsDefaultChanged(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('proxy.permissions.default_changed', callback);
+        return this.manager[listenByType]('proxy.permissions.default_changed', callback);
     }
 
     /**
@@ -967,7 +989,7 @@ export class EventsClient {
     async onProxyPermissionsGroupAdded(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('proxy.permissions.group_added', callback);
+        return this.manager[listenByType]('proxy.permissions.group_added', callback);
     }
 
     /**
@@ -978,7 +1000,7 @@ export class EventsClient {
     async onProxyPermissionsGroupRemoved(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('proxy.permissions.group_removed', callback);
+        return this.manager[listenByType]('proxy.permissions.group_removed', callback);
     }
 
     /**
@@ -989,7 +1011,7 @@ export class EventsClient {
     async onProxyPermissionsGroupUpdated(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('proxy.permissions.group_updated', callback);
+        return this.manager[listenByType]('proxy.permissions.group_updated', callback);
     }
 
     /**
@@ -1000,7 +1022,7 @@ export class EventsClient {
     async onProxyPermissionsUpdated(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('proxy.permissions.updated', callback);
+        return this.manager[listenByType]('proxy.permissions.updated', callback);
     }
 
     // ============================================================================
@@ -1015,7 +1037,7 @@ export class EventsClient {
     async onServerHealthChanged(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('server.health_changed', callback);
+        return this.manager[listenByType]('server.health_changed', callback);
     }
 
     /**
@@ -1026,7 +1048,7 @@ export class EventsClient {
     async onServerRentalExpiring(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('server.rental_expiring', callback);
+        return this.manager[listenByType]('server.rental_expiring', callback);
     }
 
     // ============================================================================
@@ -1041,7 +1063,7 @@ export class EventsClient {
     async onStorageShareCreated(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('storage.share.created', callback);
+        return this.manager[listenByType]('storage.share.created', callback);
     }
 
     /**
@@ -1052,7 +1074,7 @@ export class EventsClient {
     async onStorageShareDeleted(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('storage.share.deleted', callback);
+        return this.manager[listenByType]('storage.share.deleted', callback);
     }
 
     /**
@@ -1063,7 +1085,7 @@ export class EventsClient {
     async onStorageShareDisabled(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('storage.share.disabled', callback);
+        return this.manager[listenByType]('storage.share.disabled', callback);
     }
 
     /**
@@ -1074,7 +1096,7 @@ export class EventsClient {
     async onStorageShareEnabled(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('storage.share.enabled', callback);
+        return this.manager[listenByType]('storage.share.enabled', callback);
     }
 
     /**
@@ -1085,7 +1107,7 @@ export class EventsClient {
     async onStorageShareExpired(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('storage.share.expired', callback);
+        return this.manager[listenByType]('storage.share.expired', callback);
     }
 
     /**
@@ -1096,7 +1118,7 @@ export class EventsClient {
     async onStorageShareExpiringSoon(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('storage.share.expiring_soon', callback);
+        return this.manager[listenByType]('storage.share.expiring_soon', callback);
     }
 
     /**
@@ -1107,7 +1129,7 @@ export class EventsClient {
     async onStorageShareMountChanged(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('storage.share.mount_changed', callback);
+        return this.manager[listenByType]('storage.share.mount_changed', callback);
     }
 
     /**
@@ -1118,7 +1140,7 @@ export class EventsClient {
     async onStorageShareUpdated(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('storage.share.updated', callback);
+        return this.manager[listenByType]('storage.share.updated', callback);
     }
 
     // ============================================================================
@@ -1129,19 +1151,19 @@ export class EventsClient {
     // and resource_type match the filter, regardless of event_type.
 
     /**
-     * Listen to all events for a specific container.
+     * Listen to all events for a specific computer.
      * Uses wildcard "*" event type with a filter on resourceId + resourceType.
-     * @param containerId Container ID to filter events
+     * @param computerId Computer ID to filter events
      * @param callback Function to call when event occurs
      * @returns Unsubscribe function
      */
-    async onContainerEvents(
-        containerId: string,
+    async onComputerEvents(
+        computerId: string,
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('*', callback, {
-            resourceId: containerId,
-            resourceType: 'container',
+        return this.manager[listenByType]('*', callback, {
+            resourceId: computerId,
+            resourceType: 'computer',
         });
     }
 
@@ -1155,7 +1177,7 @@ export class EventsClient {
         projectId: string,
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('*', callback, {
+        return this.manager[listenByType]('*', callback, {
             resourceId: projectId,
             resourceType: 'project',
         });
@@ -1169,7 +1191,7 @@ export class EventsClient {
     async onAnyEvent(
         callback: (event: EventServerMessage) => void
     ): Promise<() => void> {
-        return this.manager.addEventListener('*', callback);
+        return this.manager[listenByType]('*', callback);
     }
 
     // ============================================================================
@@ -1194,9 +1216,8 @@ export class EventsClient {
 
         // Wrap every await in a single try so a partial-failure
         // (e.g. WebSocket drop mid-batch) unwinds already-registered listeners
-        // before rethrowing. Pre-fix the first N successful registrations were
-        // trapped in a local array the caller never received, leading to a
-        // permanent listener leak and forever-on connection.
+        // before rethrowing: the caller never receives the partial list, so a
+        // listener left registered here could never be removed.
         try {
 
         // Special handlers
@@ -1204,30 +1225,30 @@ export class EventsClient {
             unsubscribers.push(await this.onAnyEvent(handlers.onAnyEvent));
         }
 
-        // All 65 event types
+        // Every typed event
         if (handlers.onActivityLogged) unsubscribers.push(await this.onActivityLogged(handlers.onActivityLogged));
         if (handlers.onAuthTokenCreated) unsubscribers.push(await this.onAuthTokenCreated(handlers.onAuthTokenCreated));
         if (handlers.onAuthTokenDeleted) unsubscribers.push(await this.onAuthTokenDeleted(handlers.onAuthTokenDeleted));
         if (handlers.onAuthTokenDisabled) unsubscribers.push(await this.onAuthTokenDisabled(handlers.onAuthTokenDisabled));
         if (handlers.onAuthTokenEnabled) unsubscribers.push(await this.onAuthTokenEnabled(handlers.onAuthTokenEnabled));
         if (handlers.onAuthTokenUpdated) unsubscribers.push(await this.onAuthTokenUpdated(handlers.onAuthTokenUpdated));
-        if (handlers.onContainerAutostartDisabled) unsubscribers.push(await this.onContainerAutostartDisabled(handlers.onContainerAutostartDisabled));
-        if (handlers.onContainerAutostartEnabled) unsubscribers.push(await this.onContainerAutostartEnabled(handlers.onContainerAutostartEnabled));
-        if (handlers.onContainerCreating) unsubscribers.push(await this.onContainerCreating(handlers.onContainerCreating));
-        if (handlers.onContainerDeleted) unsubscribers.push(await this.onContainerDeleted(handlers.onContainerDeleted));
-        if (handlers.onContainerDeleting) unsubscribers.push(await this.onContainerDeleting(handlers.onContainerDeleting));
-        if (handlers.onContainerDisplayEnabled) unsubscribers.push(await this.onContainerDisplayEnabled(handlers.onContainerDisplayEnabled));
-        if (handlers.onContainerFailed) unsubscribers.push(await this.onContainerFailed(handlers.onContainerFailed));
-        if (handlers.onContainerRenamed) unsubscribers.push(await this.onContainerRenamed(handlers.onContainerRenamed));
-        if (handlers.onContainerResourceUpdated) unsubscribers.push(await this.onContainerResourceUpdated(handlers.onContainerResourceUpdated));
-        if (handlers.onContainerRunning) unsubscribers.push(await this.onContainerRunning(handlers.onContainerRunning));
-        if (handlers.onContainerSnapshotCreated) unsubscribers.push(await this.onContainerSnapshotCreated(handlers.onContainerSnapshotCreated));
-        if (handlers.onContainerSnapshotDeleted) unsubscribers.push(await this.onContainerSnapshotDeleted(handlers.onContainerSnapshotDeleted));
-        if (handlers.onContainerSnapshotRenamed) unsubscribers.push(await this.onContainerSnapshotRenamed(handlers.onContainerSnapshotRenamed));
-        if (handlers.onContainerSnapshotRestored) unsubscribers.push(await this.onContainerSnapshotRestored(handlers.onContainerSnapshotRestored));
-        if (handlers.onContainerSshKeyAdded) unsubscribers.push(await this.onContainerSshKeyAdded(handlers.onContainerSshKeyAdded));
-        if (handlers.onContainerSshKeyRemoved) unsubscribers.push(await this.onContainerSshKeyRemoved(handlers.onContainerSshKeyRemoved));
-        if (handlers.onContainerStopped) unsubscribers.push(await this.onContainerStopped(handlers.onContainerStopped));
+        if (handlers.onComputerAutostartDisabled) unsubscribers.push(await this.onComputerAutostartDisabled(handlers.onComputerAutostartDisabled));
+        if (handlers.onComputerAutostartEnabled) unsubscribers.push(await this.onComputerAutostartEnabled(handlers.onComputerAutostartEnabled));
+        if (handlers.onComputerCreating) unsubscribers.push(await this.onComputerCreating(handlers.onComputerCreating));
+        if (handlers.onComputerDeleted) unsubscribers.push(await this.onComputerDeleted(handlers.onComputerDeleted));
+        if (handlers.onComputerDeleting) unsubscribers.push(await this.onComputerDeleting(handlers.onComputerDeleting));
+        if (handlers.onComputerDisplayEnabled) unsubscribers.push(await this.onComputerDisplayEnabled(handlers.onComputerDisplayEnabled));
+        if (handlers.onComputerFailed) unsubscribers.push(await this.onComputerFailed(handlers.onComputerFailed));
+        if (handlers.onComputerRenamed) unsubscribers.push(await this.onComputerRenamed(handlers.onComputerRenamed));
+        if (handlers.onComputerResourceUpdated) unsubscribers.push(await this.onComputerResourceUpdated(handlers.onComputerResourceUpdated));
+        if (handlers.onComputerRunning) unsubscribers.push(await this.onComputerRunning(handlers.onComputerRunning));
+        if (handlers.onComputerSnapshotCreated) unsubscribers.push(await this.onComputerSnapshotCreated(handlers.onComputerSnapshotCreated));
+        if (handlers.onComputerSnapshotDeleted) unsubscribers.push(await this.onComputerSnapshotDeleted(handlers.onComputerSnapshotDeleted));
+        if (handlers.onComputerSnapshotRenamed) unsubscribers.push(await this.onComputerSnapshotRenamed(handlers.onComputerSnapshotRenamed));
+        if (handlers.onComputerSnapshotRestored) unsubscribers.push(await this.onComputerSnapshotRestored(handlers.onComputerSnapshotRestored));
+        if (handlers.onComputerSshKeyAdded) unsubscribers.push(await this.onComputerSshKeyAdded(handlers.onComputerSshKeyAdded));
+        if (handlers.onComputerSshKeyRemoved) unsubscribers.push(await this.onComputerSshKeyRemoved(handlers.onComputerSshKeyRemoved));
+        if (handlers.onComputerStopped) unsubscribers.push(await this.onComputerStopped(handlers.onComputerStopped));
         if (handlers.onFirewallRuleAdded) unsubscribers.push(await this.onFirewallRuleAdded(handlers.onFirewallRuleAdded));
         if (handlers.onFirewallRuleDisabled) unsubscribers.push(await this.onFirewallRuleDisabled(handlers.onFirewallRuleDisabled));
         if (handlers.onFirewallRuleEnabled) unsubscribers.push(await this.onFirewallRuleEnabled(handlers.onFirewallRuleEnabled));
@@ -1287,23 +1308,23 @@ export class EventsClient {
     }
 
     // ============================================================================
-    // Lifecycle Monitoring (optional)
+    // Connection Monitoring (optional)
     // ============================================================================
 
     /**
-     * Register listeners for WebSocket connection state changes.
+     * Register listeners for the transport events of the WebSocket connection.
      *
-     * These are distinct from data events: lifecycle events report on the
+     * These are distinct from data events: connection events report on the
      * transport layer (connected, disconnected, reconnecting, reconnected,
      * error), not on server-pushed domain events. They are delivered through
-     * EventsManager.addLifecycleListener, which is a separate Map from the
-     * data-event listeners Map.
+     * EventsManager.addConnectionListener, which is a separate Map from the
+     * data-event listeners Map. For the lifecycle state, use onState().
      *
      * Returns an array of individual unsubscribe functions (one per handler
      * registered), unlike `subscribe()` which returns a single composite
      * unsubscribe.
      */
-    onLifecycle(handlers: {
+    onConnection(handlers: {
         onConnected?: () => void;
         onDisconnected?: (code: number, reason: string) => void;
         onReconnecting?: (attempt: number) => void;
@@ -1313,19 +1334,19 @@ export class EventsClient {
         const unsubscribers: Array<() => void> = [];
 
         if (handlers.onConnected) {
-            unsubscribers.push(this.manager.addLifecycleListener('connected', handlers.onConnected));
+            unsubscribers.push(this.manager.addConnectionListener('connected', handlers.onConnected));
         }
         if (handlers.onDisconnected) {
-            unsubscribers.push(this.manager.addLifecycleListener('disconnected', handlers.onDisconnected));
+            unsubscribers.push(this.manager.addConnectionListener('disconnected', handlers.onDisconnected));
         }
         if (handlers.onReconnecting) {
-            unsubscribers.push(this.manager.addLifecycleListener('reconnecting', handlers.onReconnecting));
+            unsubscribers.push(this.manager.addConnectionListener('reconnecting', handlers.onReconnecting));
         }
         if (handlers.onReconnected) {
-            unsubscribers.push(this.manager.addLifecycleListener('reconnected', handlers.onReconnected));
+            unsubscribers.push(this.manager.addConnectionListener('reconnected', handlers.onReconnected));
         }
         if (handlers.onError) {
-            unsubscribers.push(this.manager.addLifecycleListener('error', handlers.onError));
+            unsubscribers.push(this.manager.addConnectionListener('error', handlers.onError));
         }
 
         return unsubscribers;
@@ -1335,6 +1356,14 @@ export class EventsClient {
     // Configuration
     // ============================================================================
 
+    /**
+     * Change connection behaviour. `autoConnect: false` makes handler
+     * registration resolve without waiting for the connection to be admitted;
+     * `autoReconnect: false` stops reconnecting after a lost connection (the
+     * stream goes idle and callers waiting for a connection get the error);
+     * `debug` logs connection steps to the console. Omitted keys keep their
+     * value.
+     */
     configure(options: {
         autoConnect?: boolean;
         autoReconnect?: boolean;
@@ -1343,22 +1372,29 @@ export class EventsClient {
         this.manager.configure(options);
     }
 
-    getConnectionState(): string {
-        return this.manager.getState();
-    }
-
+    /** How many subscriptions are registered: handlers, open streams and pending waits. */
     getListenerCount(): number {
         return this.manager.getListenerCount();
     }
 
+    /** True while the socket is connected and the server has admitted it. False while connecting, recovering a lost connection or closed. */
     isConnected(): boolean {
         return this.manager.isConnected();
     }
-
-    disconnect(): void {
-        this.manager.disconnect();
-    }
 }
+
+// The getter this read replaced refuses, naming the method.
+retireAccessors(EventsClient.prototype, 'EventsClient', { state: 'getLifecycleState()' });
+// getConnectionState() returned idle/connecting/connected/reconnecting; one read is left, with the six
+// lifecycle values. getState() is the name EventsManager shipped for that read; both classes refuse it the same way.
+retireMethods(EventsClient.prototype, 'EventsClient', {
+    getConnectionState: 'getLifecycleState()',
+    getState: 'getLifecycleState()',
+});
+// The transport-event listener is onConnection(); "lifecycle" names the six lifecycle states only.
+retireMethods(EventsClient.prototype, 'EventsClient', { onLifecycle: 'onConnection()' });
+// Removed; the old name refuses, naming close().
+retireMethods(EventsClient.prototype, 'EventsClient', { disconnect: 'close()' });
 
 // `await using events = …` closes the stream where the runtime has explicit
 // resource management; the symbol is not in this package's ES2022 lib, so it
@@ -1378,7 +1414,7 @@ if (typeof asyncDispose === 'symbol') {
 
 /**
  * Interface for batch event subscription
- * Supports all 65 event types from the Hoody Events API
+ * Typed listeners for the Hoody Events API event types; onAnyEvent receives every event
  */
 export interface EventListeners {
     /** Listen to all events */
@@ -1394,24 +1430,24 @@ export interface EventListeners {
     onAuthTokenEnabled?: (event: EventServerMessage) => void;
     onAuthTokenUpdated?: (event: EventServerMessage) => void;
 
-    // Container Events (17)
-    onContainerAutostartDisabled?: (event: EventServerMessage) => void;
-    onContainerAutostartEnabled?: (event: EventServerMessage) => void;
-    onContainerCreating?: (event: EventServerMessage) => void;
-    onContainerDeleted?: (event: EventServerMessage) => void;
-    onContainerDeleting?: (event: EventServerMessage) => void;
-    onContainerDisplayEnabled?: (event: EventServerMessage) => void;
-    onContainerFailed?: (event: EventServerMessage) => void;
-    onContainerRenamed?: (event: EventServerMessage) => void;
-    onContainerResourceUpdated?: (event: EventServerMessage) => void;
-    onContainerRunning?: (event: EventServerMessage) => void;
-    onContainerSnapshotCreated?: (event: EventServerMessage) => void;
-    onContainerSnapshotDeleted?: (event: EventServerMessage) => void;
-    onContainerSnapshotRenamed?: (event: EventServerMessage) => void;
-    onContainerSnapshotRestored?: (event: EventServerMessage) => void;
-    onContainerSshKeyAdded?: (event: EventServerMessage) => void;
-    onContainerSshKeyRemoved?: (event: EventServerMessage) => void;
-    onContainerStopped?: (event: EventServerMessage) => void;
+    // Computer Events (17)
+    onComputerAutostartDisabled?: (event: EventServerMessage) => void;
+    onComputerAutostartEnabled?: (event: EventServerMessage) => void;
+    onComputerCreating?: (event: EventServerMessage) => void;
+    onComputerDeleted?: (event: EventServerMessage) => void;
+    onComputerDeleting?: (event: EventServerMessage) => void;
+    onComputerDisplayEnabled?: (event: EventServerMessage) => void;
+    onComputerFailed?: (event: EventServerMessage) => void;
+    onComputerRenamed?: (event: EventServerMessage) => void;
+    onComputerResourceUpdated?: (event: EventServerMessage) => void;
+    onComputerRunning?: (event: EventServerMessage) => void;
+    onComputerSnapshotCreated?: (event: EventServerMessage) => void;
+    onComputerSnapshotDeleted?: (event: EventServerMessage) => void;
+    onComputerSnapshotRenamed?: (event: EventServerMessage) => void;
+    onComputerSnapshotRestored?: (event: EventServerMessage) => void;
+    onComputerSshKeyAdded?: (event: EventServerMessage) => void;
+    onComputerSshKeyRemoved?: (event: EventServerMessage) => void;
+    onComputerStopped?: (event: EventServerMessage) => void;
 
     // Firewall Events (5)
     onFirewallRuleAdded?: (event: EventServerMessage) => void;

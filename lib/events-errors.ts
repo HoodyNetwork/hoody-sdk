@@ -1,15 +1,15 @@
 /**
- * Events stream error taxonomy: the C5 code map and the error classes the
+ * Events stream error taxonomy: the code-to-action map and the error classes the
  * events runtime raises.
  *
- * hoody-api refuses or ends an events socket with a code, sent on the
+ * The API refuses or ends an events socket with a code, sent on the
  * `message` channel as `{type:'error', error}` or `{type:'revoked', reason}`
  * (and, for one release, also on the socket `error` event). History reads
  * (`GET /api/v1/events`) fail with an HTTP status and an `error` code. The
  * SDK reacts to each code in exactly one way, and this file is the only
  * place that decides which. The table mirrors the server's error contract; a contract test
  * on the server checks every code its socket files emit against it, and
- * `tests/unit/events-errors.test.ts` pins it here.
+ * a unit test pins it here.
  */
 
 /** What the runtime does when the server sends a code on the socket. */
@@ -25,13 +25,13 @@ export type EventsSocketAction =
     /** Report it and keep the connection. */
     | 'nonfatal';
 
-/** C5 "refresh + reconnect". */
+/** Action "refresh + reconnect". */
 export const EVENTS_REFRESH_CODES = ['JWT_EXPIRED', 'AUTH_TOKEN_EXPIRED'] as const;
 
-/** C5 "re-admit once" (an unknown code is treated the same way). */
+/** Action "re-admit once" (an unknown code is treated the same way). */
 export const EVENTS_READMIT_CODES = ['TOKEN_AUTH_CHANGED', 'AUTH_FAILED'] as const;
 
-/** C5 "terminal". */
+/** Action "terminal". */
 export const EVENTS_TERMINAL_CODES = [
     'TOKEN_DELETED',
     'AUTH_TOKEN_DELETED',
@@ -54,18 +54,28 @@ export const EVENTS_TERMINAL_CODES = [
     'JWT_REQUIRED',
 ] as const;
 
-/** C5 "backoff". */
+/** Action "backoff". */
 export const EVENTS_BACKOFF_CODES = ['CONNECTION_LIMIT_EXCEEDED'] as const;
 
-/** C5 "non-fatal": the socket stays up. */
+/** Action "non-fatal": the socket stays up. */
 export const EVENTS_NONFATAL_CODES = [
     'INVALID_SUBSCRIPTION',
     'SUBSCRIPTION_NOT_ALLOWED',
     'SUBSCRIPTION_LIMIT_EXCEEDED',
     'INVALID_PROJECT_ID',
-    'INVALID_CONTAINER_ID',
+    'INVALID_COMPUTER_ID',
     'CONNECTION_NOT_FOUND',
+    // A subscribe/unsubscribe message that still carries the retired `containerId` is refused with this
+    // code; the socket stays up (it is the server's answer to one message, not to the connection).
+    'UPGRADE_REQUIRED',
 ] as const;
+
+/**
+ * The pre-rename spelling of INVALID_COMPUTER_ID, accepted beside it. A server still on the old
+ * names answers with it during deploy skew; the socket stays up exactly as for the new code. It is
+ * not part of the vendored catalog's code_map, so it lives apart from EVENTS_NONFATAL_CODES.
+ */
+export const EVENTS_NONFATAL_LEGACY_CODES = ['INVALID_CONTAINER_ID'] as const;
 
 /** History error codes. */
 export const EVENTS_CURSOR_INVALID = 'EVENTS_CURSOR_INVALID';
@@ -79,11 +89,12 @@ const SOCKET_ACTIONS: ReadonlyMap<string, EventsSocketAction> = new Map<string, 
     ...EVENTS_TERMINAL_CODES.map((c) => [c, 'terminal'] as const),
     ...EVENTS_BACKOFF_CODES.map((c) => [c, 'backoff'] as const),
     ...EVENTS_NONFATAL_CODES.map((c) => [c, 'nonfatal'] as const),
+    ...EVENTS_NONFATAL_LEGACY_CODES.map((c) => [c, 'nonfatal'] as const),
 ]);
 
 /**
  * The action for a socket code. An unknown code (a server newer than this
- * SDK, or the legacy `UNAUTHORIZED` fallback) re-admits once: C5 puts
+ * SDK, or the legacy `UNAUTHORIZED` fallback) re-admits once: the map puts
  * "unknown" in that row, so a code the SDK has never seen neither kills a
  * watcher outright nor loops forever.
  */
@@ -133,6 +144,7 @@ export class EventsError extends Error {
     /** The server code, or an SDK code (`EVENTS_CLOSED`, `EVENTS_TIMEOUT`, …). */
     readonly code: string;
 
+    /** `code` is the server or SDK code; `options.cause`, when given, is kept as the error's `cause`. */
     constructor(code: string, message: string, options?: { cause?: unknown }) {
         super(message);
         this.name = 'EventsError';
@@ -149,6 +161,7 @@ export class EventsError extends Error {
  * (login, adoptSession, setToken).
  */
 export class EventsAuthError extends EventsError {
+    /** `code` is the terminal code; without `message` the text is `Events stream refused: <code>`. */
     constructor(code: string, message?: string, options?: { cause?: unknown }) {
         super(code, message || `Events stream refused: ${code}`, options);
         this.name = 'EventsAuthError';
@@ -157,6 +170,7 @@ export class EventsAuthError extends EventsError {
 
 /** `close()` was called, or the stream ended for good; pending waits reject with this. */
 export class EventsClosedError extends EventsError {
+    /** The code is always `EVENTS_CLOSED`. */
     constructor(message = 'Events stream closed') {
         super('EVENTS_CLOSED', message);
         this.name = 'EventsClosedError';
@@ -170,6 +184,7 @@ export class EventsClosedError extends EventsError {
  * another.
  */
 export class EventsSessionChangedError extends EventsError {
+    /** The code is always `EVENTS_SESSION_CHANGED`. */
     constructor(message = 'The client session changed; events state of the previous session was dropped') {
         super('EVENTS_SESSION_CHANGED', message);
         this.name = 'EventsSessionChangedError';
@@ -178,6 +193,7 @@ export class EventsSessionChangedError extends EventsError {
 
 /** A `waitFor`, `ready` or `prepareWait` deadline passed. */
 export class EventsTimeoutError extends EventsError {
+    /** The code is always `EVENTS_TIMEOUT`. */
     constructor(message = 'Timed out waiting for events') {
         super('EVENTS_TIMEOUT', message);
         this.name = 'EventsTimeoutError';
@@ -190,8 +206,10 @@ export class EventsTimeoutError extends EventsError {
  * overflowed with the `'error'` policy.
  */
 export class EventsGapError extends EventsError {
+    /** Why continuity was lost. */
     readonly reason: EventsGapReason;
 
+    /** `reason` says why continuity was lost; the code is always `EVENTS_GAP`. */
     constructor(reason: EventsGapReason, message?: string) {
         super('EVENTS_GAP', message || `Event continuity lost (${reason})`);
         this.name = 'EventsGapError';

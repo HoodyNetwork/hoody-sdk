@@ -23,6 +23,7 @@ export function docsInstallUrlFor(domain: string): string {
   return `https://${domain}/install`;
 }
 
+/** Map a Node platform name to the family the update instructions are written for: `posix` (Linux, macOS), `windows`, or `other`. */
 export function detectPlatform(p: NodeJS.Platform = process.platform): Platform {
   if (p === 'linux' || p === 'darwin') return 'posix';
   if (p === 'win32') return 'windows';

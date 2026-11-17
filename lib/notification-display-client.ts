@@ -13,14 +13,14 @@
  *     displays: 'all'
  *   });
  *   const display = new NotificationDisplayClient(ws, {
- *     baseUrl: 'https://proj-ctr-n-1.server.containers.hoody.com'
+ *     baseUrl: 'https://proj-ctr-n-1.server.computers.hoody.com'
  *   });
  *   await display.start();
  *   // → notifications now appear as OS/browser notifications
  *   display.stop();
  */
 
-import type { INotificationsConnectNotificationStreamWebSocket } from
+import type { INotificationsConnectWebSocket } from
   '../generated/notifications/notifications_connect-notification-stream.websocket.js';
 import type { NotificationServerMessage } from
   '../generated/notifications/notifications_connect-notification-stream.websocket.js';
@@ -33,6 +33,7 @@ import type {
   NotificationPresenterConfig,
   ParsedNotification,
 } from './notification-presenter.js';
+import { retireAccessors, retireMethods } from './retired-accessor.js';
 
 export interface NotificationDisplayClientConfig extends NotificationPresenterConfig {
   /**
@@ -70,6 +71,14 @@ export interface NotificationDisplayClientConfig extends NotificationPresenterCo
   onDropped?: (dropped: ParsedNotification, queueLength: number) => void;
 }
 
+/**
+ * Shows a computer's notifications on this machine: it listens on a notification stream and hands each message to
+ * a presenter (the operating system's or the browser's notifications by default), one at a time.
+ *
+ * Nothing is shown until `start()` resolves true. Pending notifications wait in a bounded queue: when it is full
+ * the oldest is dropped (`onDropped`), and `minInterval` spaces out what is shown. `stop()` stops listening,
+ * empties the queue and disposes the presenter; it does not close the stream.
+ */
 export class NotificationDisplayClient {
   private presenter: NotificationPresenter;
   private unsubscribe: (() => void) | null = null;
@@ -80,10 +89,15 @@ export class NotificationDisplayClient {
   private minInterval: number;
   private maxQueueLength: number;
   private config: NotificationDisplayClientConfig;
-  private ws: INotificationsConnectNotificationStreamWebSocket;
+  private ws: INotificationsConnectWebSocket;
 
+  /**
+   * `ws` is an open notification stream (`connectNotificationStream()`). `config` sets the presenter (or the
+   * built-in one's settings), a `filter`, the spacing between notifications and the queue size; a `maxQueueLength`
+   * below 1 is read as 1.
+   */
   constructor(
-    ws: INotificationsConnectNotificationStreamWebSocket,
+    ws: INotificationsConnectWebSocket,
     config?: NotificationDisplayClientConfig,
   ) {
     this.ws = ws;
@@ -104,7 +118,7 @@ export class NotificationDisplayClient {
    */
   async start(): Promise<boolean> {
     // Guard: if already started, return current state
-    if (this.unsubscribe) return this.presenter.ready;
+    if (this.unsubscribe) return this.presenter.isReady();
 
     // Guard: if start() is already in-flight (concurrent call), return same promise
     if (this.startPromise) return this.startPromise;
@@ -148,16 +162,16 @@ export class NotificationDisplayClient {
   }
 
   /**
-   * Whether the client is actively listening and the presenter is ready.
+   * Whether the client is running: started, not stopped, and the presenter is ready.
    */
-  get isActive(): boolean {
-    return this.unsubscribe !== null && this.presenter.ready;
+  isRunning(): boolean {
+    return this.unsubscribe !== null && this.presenter.isReady();
   }
 
   /**
-   * Manually show a single notification (for testing or manual triggering).
+   * Show a single notification now (for testing or manual triggering).
    */
-  async showManual(message: NotificationServerMessage): Promise<void> {
+  async show(message: NotificationServerMessage): Promise<void> {
     const parsed = parseNotificationData(message, this.config.baseUrl);
     await this.presenter.show(parsed);
   }
@@ -208,3 +222,9 @@ export class NotificationDisplayClient {
     }
   }
 }
+
+// `isActive` shipped as a getter; a method of the same name would read as a truthy function, so it
+// refuses instead, naming the method.
+retireAccessors(NotificationDisplayClient.prototype, 'NotificationDisplayClient', { isActive: 'isRunning()' });
+// Renamed; the old name refuses, naming show().
+retireMethods(NotificationDisplayClient.prototype, 'NotificationDisplayClient', { showManual: 'show()' });

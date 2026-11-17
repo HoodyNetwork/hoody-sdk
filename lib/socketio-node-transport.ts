@@ -21,6 +21,7 @@ type WsConstructor = new (uri: string, protocols: string | string[] | undefined,
 
 /** engine.io's Node WebSocket transport, opened with the SDK's `ws` and its receive caps. */
 export class SdkNodeWebSocket extends NodeWebSocket {
+    /** Open the WebSocket with the SDK's `ws` and its receive caps, sending the cookies engine.io holds for the connection. */
     override createSocket(uri: string, protocols: string | string[] | undefined, opts: WsOptions): any {
         // The cookie-jar merge of engine.io-client's own createSocket (websocket.node.js).
         const jar = (this.socket as unknown as { _cookieJar?: { cookies: Iterable<[string, { value: string }]> } } | undefined)?._cookieJar;

@@ -17,6 +17,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { ValidationError } from '../generated/errors.js';
+import { retireAccessors } from './retired-accessor.js';
 
 // NOTE: We cannot import from './notification-presenter.js' here because
 // that file imports node:child_process. Instead, we duplicate the shared
@@ -56,7 +57,7 @@ export interface NotificationPresenter {
   initialize(): Promise<boolean>;
   show(notification: ParsedNotification): Promise<void>;
   dispose(): void;
-  readonly ready: boolean;
+  isReady(): boolean;
 }
 
 // Re-export NotificationServerMessage shape for the display client
@@ -70,14 +71,19 @@ export type NotificationServerMessage = {
 // Pure Parser (same logic as Node version)
 // ═══════════════════════════════════════════════════════════════════
 
+/**
+ * Turn one notification stream message into a `ParsedNotification`, keeping only fields of the expected type.
+ * `iconUrl` is set only when the message says it has an icon: an absolute `icon_url` as it is, a relative one
+ * joined to `baseUrl` when one is given. Throws a ValidationError when the message has no integer `id`.
+ */
 export function parseNotificationData(
   message: NotificationServerMessage,
   baseUrl?: string,
 ): ParsedNotification {
   const raw = (message.data ?? {}) as Record<string, unknown>;
 
-  // The kit serves only notifications with an integer id (hoody-notifications: the spec requires
-  // Notification.id, and history entries without one are dropped by transform_notification). A message
+  // The kit serves only notifications with an integer id (the notification spec requires
+  // an id, and the kit drops history entries without one). A message
   // without one is refused, never given an invented id; the WebSocket emitter catches a listener's
   // throw, so a live stream drops it and goes on.
   if (typeof raw.id !== 'number' || !Number.isInteger(raw.id)) {
@@ -128,8 +134,9 @@ export function createNotificationPresenter(
 ): NotificationPresenter {
   let _ready = false;
 
-  return {
-    get ready() {
+  // The getter `isReady()` replaced refuses, naming the method.
+  return retireAccessors<NotificationPresenter>({
+    isReady(): boolean {
       return _ready;
     },
 
@@ -162,12 +169,9 @@ export function createNotificationPresenter(
     },
 
     async show(notification: ParsedNotification): Promise<void> {
-      // Every failure path invokes `config.onError` (if
-      // provided) before rethrowing. Pre-fix the browser presenter threw
-      // directly, so standalone consumers of createNotificationPresenter()
-      // who wired up onError never received any events (parity with the
-      // Node-side presenter). NotificationDisplayClient already wraps
-      // show() in its own try/catch, so the display-client path is unaffected.
+      // Every failure path invokes `config.onError` (if provided) before
+      // rethrowing, as the Node-side presenter does. NotificationDisplayClient
+      // wraps show() in its own try/catch as well.
       const reportError = (err: Error) => {
         try { config?.onError?.(notification, err); } catch { /* hook errors must not mask original */ }
       };
@@ -209,5 +213,5 @@ export function createNotificationPresenter(
     dispose() {
       // No resources to clean up in browser
     },
-  };
+  }, 'NotificationPresenter', { ready: 'isReady()' });
 }

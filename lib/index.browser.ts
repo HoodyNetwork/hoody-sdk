@@ -26,8 +26,8 @@ export {
 } from './hoody-client.js';
 export type {
   DaemonProgramRef,
-  ProgramTerminalAttachOptions,
-  ProgramTerminalAttachment,
+  ProgramTerminalConnectOptions,
+  ProgramTerminalConnection,
 } from './hoody-client.js';
 
 // EventsClient + EventsManager use socket.io-client and are
@@ -46,9 +46,11 @@ export {
   isApiError,
   isRetryableApiError,
   ValidationError,
+  RetiredOptionError,
   isApiErrorCode,
 } from '../generated/errors.js';
 export type {
+  ApiErrorOutcome,
   ApiErrorRequestContext,
   ApiErrorResponseDetails,
   RetryableApiError,
@@ -71,7 +73,7 @@ export type {
   KitCatalogOptions,
 } from './kit-catalog.js';
 export {
-  normalizeContainerStatsResponse,
+  normalizeComputerStatsResponse,
   normalizeProjectStatsResponse,
 } from './metrics.js';
 // Types of the helpers the browser bundle installs on the exec and terminal services. Naming a module
@@ -101,6 +103,18 @@ export type {
   TerminalCreateResult,
   SshExecResult,
 } from './terminal-ssh.js';
+// Errors of a WebSocket upgrade the server answered with an HTTP status
+// (generated WebSocket clients and TerminalClient).
+export {
+  isWebSocketUpgradeRefusedError,
+  isWebSocketUpgradeFailedError,
+  isWebSocketCredentialNotSentError,
+} from './websocket-errors.js';
+export type {
+  WebSocketUpgradeRefusedError,
+  WebSocketUpgradeFailedError,
+  WebSocketCredentialNotSentError,
+} from './websocket-errors.js';
 export { encrypt, decrypt, isEncrypted, parseEnvelope, VaultCryptoError } from './vault-crypto.js';
 export type { EncryptedEnvelope } from './vault-crypto.js';
 // Streamed agent prompt. Browser-safe since its SSE parser moved out of the
@@ -139,7 +153,7 @@ export type {
 
 // -- Exec dynamic discovery & skills --
 export {
-  discoverScripts,
+  listCallableScripts,
   scriptPathToName,
   isValidToolName,
   sanitizeDescription,
@@ -147,13 +161,13 @@ export {
   extractPathParams,
 } from './exec-dynamic-discovery.js';
 export type {
-  DiscoveredScript,
-  DiscoveredParam,
-  DiscoveryCache,
-  DiscoverOptions,
+  CallableScript,
+  CallableScriptParam,
+  CallableScriptsCache,
+  ListCallableScriptsOptions,
 } from './exec-dynamic-discovery.js';
 export {
-  clearDiscoveryCache,
+  clearCallableScriptsCache,
 } from './exec-dynamic-client.js';
 export type {
   CallScriptOptions,
@@ -170,7 +184,7 @@ export type {
   RawScriptEntry,
 } from './exec-dynamic-parse.js';
 
-// -- Remote control of a live exec script (#674): `exec.connect(url, { token })` --
+// -- Remote control of a live exec script: `exec.remote(url, { token })` --
 export {
   ExecRemoteError,
   ExecRemoteTokenError,
@@ -184,18 +198,18 @@ export {
   createExecRemoteConnection,
 } from './exec-remote.js';
 export type {
-  ExecRemoteConnect,
+  ExecRemoteFactory,
   ExecRemoteConnection,
-  ExecRemoteConnectOptions,
+  ExecRemoteOptions,
   ExecRemoteOpOptions,
-  ExecRemoteEvalOptions,
-  ExecRemoteEvalContext,
+  ExecRemoteEvaluateOptions,
+  ExecRemoteEvaluateContext,
   ExecRemoteRunKind,
-  ExecRemoteEventsOptions,
+  ExecRemoteStreamEventsOptions,
   ExecRemoteTailLevel,
   ExecRemoteSendResult,
   ExecRemoteCallResult,
-  ExecRemoteEvalResult,
+  ExecRemoteEvaluateResult,
   ExecRemoteLogLine,
   ExecRemoteCapabilities,
   ExecRemoteFrame,
@@ -228,7 +242,7 @@ export type {
   ProxyAuthJwt,
   ProxyAuthPassword,
   ProxyAuthToken,
-  ProxyAuthContainerClaim,
+  ProxyAuthComputerClaim,
   ProxyAuthIp,
 } from './proxy-auth.js';
 export { isProxyAuthPolicy, withTokenQueryParam } from './proxy-auth.js';
@@ -254,9 +268,9 @@ export type {
   ScopeChangedFrame,
   ServerFrame,
 } from './events-types.js';
-export { ApiConnecteventstreamWebSocket } from './events-types.js';
+export { EventsSocketTransport } from './events-types.js';
 export type { EventsClientOptions, EventsOnOptions, EventsWaitOptions, EventsStreamOptions, EventsWaitFilter } from './events-client.js';
-export type { EventFilter, EventsConnectionState, EventsStateEvent, EventsManagerOptions, EventsTransport } from './events-manager.js';
+export type { EventFilter, EventsLifecycleState, EventsConnectionEvent, EventsStateEvent, EventsManagerOptions, EventsTransport } from './events-manager.js';
 export {
   EventsError,
   EventsAuthError,
@@ -310,7 +324,7 @@ export type {
   SqliteQueryResult,
   SqliteRunResult,
 } from './sqlite-helpers.js';
-export type { KvReadOptions, KvExistsOptions, KvSetTextOptions, KvReadArgs, KvKeyArgs, KvKeyValueArgs, KvKeyMethod, KvKeyValueMethod, KvStoreObjectForms, SqliteKvStore } from './kv-helpers.js';
+export type { KvReadOptions, KvExistsOptions, KvSetTextOptions, KvReadArgs, KvKeyArgs, KvKeyValueArgs, KvKeyMethod, KvKeyValueMethod, KvStoreObjectForms, SqliteKvStore, KvArraysKeyMethod, KvArraysKeyValueMethod, KvArraysKeyArgs, KvArraysKeyValueArgs, KvArraysObjectForms, SqliteKvArraysStore } from './kv-helpers.js';
 
 // -- Notes TUS upload (box.notes.files.upload / resumeUpload / …) --
 export {
@@ -327,16 +341,64 @@ export type {
   NotesUploadFileResult,
 } from './notes-upload.js';
 
-// -- Bot chat (box.agent.bots.ask / follow) --
+// -- Notes ZIP export (box.notes.notebooks.exportStream) --
+export { exportStream as notesExportStream } from './notes-export.js';
+export type { NotesExportQuery, NotesExportOptions } from './notes-export.js';
+
+// -- Bot chat (box.agent.bots.ask / followLogs) --
 export { BOT_MESSAGE_IDEMPOTENCY_CAPABILITY } from './bot-chat.js';
 export type {
   BotAskOptions,
   BotAskResult,
-  BotFollowOptions,
+  BotFollowLogsOptions,
   BotLogRow,
   BotMessageReceipt,
   BotStreamFrame,
 } from './bot-chat.js';
+
+// -- Open an app (box.run.open / status / watch / findOpen / canOpen / close): the shared core is lib/run-open-core.js --
+export { runOpenCore } from './run-open.js';
+export type {
+  RunOpenCanOpenResult,
+  RunOpenCatalogEntry,
+  RunOpenCloseOptions,
+  RunOpenFailure,
+  RunOpenFindOptions,
+  RunOpenFindResult,
+  RunOpenHandle,
+  RunOpenOptions,
+  RunOpenRequest,
+  RunOpenResult,
+  RunOpenState,
+  RunOpenGetStatusOptions,
+  RunOpenWaitOptions,
+  RunOpenWaitResult,
+  RunOpenWhere,
+} from './run-open.js';
+
+// -- Bot URLs, caller side (`new BotUrlClient({ url, key })`): a Bot's public doors, by named key --
+export { BotUrlClient, BotUrlError, isBotUrlError, isGateHandle, BOT_URL_ERRORS } from './bot-url-client.js';
+export { isValidBotLabel, isValidBotZone, botLabelOfHost, botLabelOfUrl, botZoneFor, botUrlZones, BOT_URL_ZONE } from './bot-label.js';
+export type { BotLabelOfUrlOptions } from './bot-label.js';
+export type {
+  BotUrlAnswer,
+  BotUrlAskOptions,
+  BotUrlChatMessage,
+  BotUrlChatOptions,
+  BotUrlChatResult,
+  BotUrlErrorInfo,
+  BotUrlEvent,
+  BotUrlStreamEventsOptions,
+  BotUrlEventStream,
+  BotUrlGateAnswer,
+  BotUrlLocalCode,
+  BotUrlModel,
+  BotUrlClientOptions,
+  BotUrlRetryOptions,
+  BotUrlStatus,
+  BotUrlUpdate,
+  BotUrlUpdates,
+} from './bot-url-client.js';
 
 // -- Pipe media streaming helpers (browser-only) --
 export { PipeMedia, mediaStreamToReadableStream } from './pipe-media.js';
@@ -346,7 +408,7 @@ export type {
   PipePage, PipePageOptionsMap, PipeOpenPageOptions, PipeSendPageOptions, PipeSharePageOptions,
   PipeReceivePageOptions, PipeVideoPageOptions, PipeNoscriptPageOptions,
 } from './pipe-media.js';
-// -- Pipe browser data transfer: sendFile / receive / download / subscribeProgress --
+// -- Pipe browser data transfer: sendFile / receive / download / streamProgress --
 export { PipeBrowser, PipeTransferError } from './pipe-browser.js';
 export type {
   PipeBrowserConfig, PipeSendData, PipeSendFileOptions, PipeSendFileResult, PipeUploadProgress,
@@ -387,20 +449,20 @@ export type {
 } from './curl-channel-client.js';
 export type { CurlChannelHelperOptions } from './curl-channel-helper.js';
 
-// -- Embed URLs for every kit UI: `client.embeds.<kit>.<view>(container, opts)` --
+// -- Embed URLs for every kit UI: `client.embeds.<kit>.<view>(computer, opts)` --
 // Same block as the Node entry; browser-safe (no Node APIs).
 export {
   buildEmbedUrl,
   getEmbedCatalog,
   listEmbedViews,
-  deriveContainersDomain,
+  deriveComputersDomain,
   EmbedValidationError,
 } from './embeds/runtime.js';
 export type {
   EmbedErrorCode,
   EmbedParamValue,
   EmbedQuery,
-  EmbedContainerTarget,
+  EmbedComputerTarget,
   EmbedAliasTarget,
   EmbedTarget,
   EmbedBuildOptions,

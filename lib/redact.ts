@@ -16,8 +16,12 @@
 
 // Covers non-X-prefixed secret headers (Api-Key, Access-Token, Refresh-Token,
 // Secret-Key, Bearer, Session-Token, Id-Token, etc.) so they don't leak into
-// ApiError.request.headers and any middleware/onError log paths.
-const SECRET_HEADER_RE = /^(authorization|cookie|proxy-authorization|x-.*-token|x-.*-key|x-.*-secret|x-.*-credential(?:s)?|x-.*-lease|x-auth(?:-.*)?|api[-_]?key|apikey|bearer|access[-_]?token|refresh[-_]?token|id[-_]?token|session[-_]?token|bearer[-_]?token|secret[-_]?key|client[-_]?secret|private[-_]?key|proxy[-_]?authorization|set[-_]?cookie)$/i;
+// ApiError.request.headers and any middleware/onError log paths. The X- arms take
+// the bare form too (X-Token, X-Key, X-Secret, X-Credentials) as well as X-<name>-Token,
+// and the plural (X-Tokens, X-Api-Keys, X-Secrets).
+// Exported for the SDK generator, which writes this same expression into the Node client
+// (generated/http-client.ts cannot import this module), so the rule is written once.
+export const SECRET_HEADER_RE = /^(x-hoody-(?:computer|container)-claim|authorization|cookie|proxy-authorization|x-(?:.*-)?tokens?|x-(?:.*-)?keys?|x-(?:.*-)?secrets?|x-(?:.*-)?credential(?:s)?|x-.*-lease|x-auth(?:-.*)?|api[-_]?key|apikey|bearer|access[-_]?token|refresh[-_]?token|id[-_]?token|session[-_]?token|bearer[-_]?token|secret[-_]?key|client[-_]?secret|private[-_]?key|proxy[-_]?authorization|set[-_]?cookie)$/i;
 
 /**
  * Secret query-param / body-field key matcher. Anchored word list — does
@@ -29,7 +33,7 @@ const SECRET_HEADER_RE = /^(authorization|cookie|proxy-authorization|x-.*-token|
  *   secret_access_key, aws_secret, bearer_token, id_token, session_token,
  *   credential, ssh_pass*, socks5_pass*, proxy_password, db_password.
  */
-const SECRET_FIELD_RE = /^(token|hdy[-_]?token|api[-_]?key|apikey|password|passwd|pwd|secret|auth|access[-_]?token|refresh[-_]?token|id[-_]?token|bearer[-_]?token|session[-_]?token|temp[-_]?token|kit[-_]?token|otp|device[-_]?code|code[-_]?verifier|code[-_]?challenge|authorization|cookie|private[-_]?key|client[-_]?secret|secret[-_]?access[-_]?key|aws[-_]?secret|ssh[-_]?pass(?:word)?|socks5[-_]?pass(?:word)?|proxy[-_]?pass(?:word)?|db[-_]?pass(?:word)?|kit[-_]?pass(?:word)?|local[-_]?pass(?:word)?|auth[-_]?pass(?:word)?|cur[-_]?pass(?:word)?|credential|credentials|key|jwt)$/i;
+const SECRET_FIELD_RE = /^((?:computer|container)[-_]?claim(?:[-_]?signed[-_]?data)?|token|hdy[-_]?token|api[-_]?key|apikey|password|passwd|pwd|secret|auth|access[-_]?token|refresh[-_]?token|id[-_]?token|bearer[-_]?token|session[-_]?token|temp[-_]?token|kit[-_]?token|otp|device[-_]?code|code[-_]?verifier|code[-_]?challenge|authorization|cookie|private[-_]?key|client[-_]?secret|secret[-_]?access[-_]?key|aws[-_]?secret|ssh[-_]?pass(?:word)?|socks5[-_]?pass(?:word)?|proxy[-_]?pass(?:word)?|db[-_]?pass(?:word)?|kit[-_]?pass(?:word)?|local[-_]?pass(?:word)?|auth[-_]?pass(?:word)?|cur[-_]?pass(?:word)?|credential|credentials|key|jwt)$/i;
 
 // SECRET_FIELD_RE is a list of whole names, so it knows only the names someone
 // wrote down. The specs name credentials in many more ways (current_password,
@@ -45,6 +49,8 @@ const CURSOR_QUALIFIERS: readonly string[] = ['page', 'next', 'prev', 'previous'
 const PLAIN_KEY_QUALIFIERS: readonly string[] = ['public', 'idempotency', 'cache', 'logical', 'action', 'sort', 'partition', 'primary', 'foreign', 'host'];
 // "..._code" that is a one-time credential (a bare `code` is an error code; see isOauthCodeContext).
 const SECRET_CODE_QUALIFIERS: readonly string[] = ['otp', 'totp', 'mfa', 'auth', 'authorization', 'device', 'verification', 'recovery', 'backup'];
+// "..._seed" that is key material (private_key_seed, privateKeySeedBase64); a bare or random seed is not.
+const KEY_SEED_QUALIFIERS: readonly string[] = ['private', 'key'];
 // A trailing encoding says how the value is written, not what it is (sse_customer_key_base64, key_pem).
 const ENCODING_SUFFIXES: readonly string[] = ['base64', 'b64', 'b64url', 'hex', 'pem'];
 // Keys that sit beside an OAuth authorization `code`.
@@ -59,7 +65,7 @@ function nameWords(name: string): string[] {
  * True for a body field or query parameter name that carries a credential:
  * a name in SECRET_FIELD_RE, or one whose last word is a secret noun
  * (`current_password`, `key_file_pass`, `client_credentials`, `confirm_token`,
- * `sse_customer_key`, `otp_code`, `approver_lease`). Names that only mention a
+ * `sse_customer_key`, `otp_code`, `approver_lease`, `private_key_seed`). Names that only mention a
  * secret are not (`has_password`, `token_url`, `max_tokens`, `public_key`,
  * `idempotency_key`, `next_page_token`).
  */
@@ -77,6 +83,7 @@ export function isSecretFieldName(name: string): boolean {
   if (noun === 'key') return !qualifiers.some((word) => PLAIN_KEY_QUALIFIERS.includes(word));
   if (noun === 'code') return qualifiers.some((word) => SECRET_CODE_QUALIFIERS.includes(word));
   if (noun === 'lease') return qualifiers.includes('approver');
+  if (noun === 'seed') return qualifiers.some((word) => KEY_SEED_QUALIFIERS.includes(word));
   return false;
 }
 
@@ -100,9 +107,11 @@ function isOauthCodeContext(keys: readonly string[]): boolean {
 
 /**
  * An absolute URL too long to parse cheaply: its userinfo and its whole query
- * string go, the rest stays. One pass over the text.
+ * string go, the rest stays. One pass over the text. Exported for its own test:
+ * callers reach it through redactSensitiveValue, whose earlier scrubs would hide
+ * a missing one here.
  */
-function scrubLongUrl(text: string): string {
+export function scrubLongUrl(text: string): string {
   const authorityStart = text.indexOf('//') + 2;
   let authorityEnd = authorityStart;
   while (authorityEnd < text.length && text[authorityEnd] !== '/' && text[authorityEnd] !== '?' && text[authorityEnd] !== '#') authorityEnd++;
@@ -111,13 +120,13 @@ function scrubLongUrl(text: string): string {
   const queryAt = text.indexOf('?', authorityEnd);
   const hashAt = text.indexOf('#', authorityEnd);
   const hasQuery = queryAt >= 0 && (hashAt < 0 || queryAt < hashAt);
-  if (!userinfo && !hasQuery) return text.replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER);
+  if (!userinfo && !hasQuery) return redactBotKeys(text.replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER));
   const head = text.slice(0, authorityStart) + (userinfo ? PLACEHOLDER + '@' + text.slice(at + 1, authorityEnd) : text.slice(authorityStart, authorityEnd));
   const pathEnd = hasQuery ? queryAt : hashAt >= 0 ? hashAt : text.length;
   const path = text.slice(authorityEnd, pathEnd);
   const query = hasQuery ? '?' + encodeURIComponent(PLACEHOLDER) : '';
   const fragment = hashAt >= 0 ? text.slice(hashAt) : '';
-  return (head + path + query + fragment).replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER);
+  return redactBotKeys((head + path + query + fragment).replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER));
 }
 
 /**
@@ -151,8 +160,42 @@ function scrubUrlValue(text: string, extra: readonly string[] | undefined): stri
 // `hdy_` SECRET_PATTERN in lib/chat/redact.ts.
 const HDY_TOKEN_VALUE_RE = /hdy_[A-Za-z0-9_-]{20,}/g;
 
+// Value shape of a Bot URL key secret: `hbk_` + 43 alphanumerics (the API's
+// own pattern). Group 1 is the first 12 characters, the same prefix the
+// service stores and lists as `key_prefix`, so a redacted key stays identifiable.
+// No word boundaries: a key glued to other text is still a key, and scrubbing a
+// lookalike costs nothing. lib/chat/redact.ts reuses this recognizer.
+export const BOT_KEY_VALUE_RE = /(hbk_[A-Za-z0-9]{8})[A-Za-z0-9]{35}/g;
+
+/** Replace every Bot URL key secret in `text`, keeping its 12-character prefix. */
+export function redactBotKeys(text: string, placeholder: string = '[REDACTED]'): string {
+  if (typeof text !== 'string' || !text.includes('hbk_')) return text;
+  return text.replace(BOT_KEY_VALUE_RE, (_m, prefix: string) => prefix + placeholder);
+}
+
 const PLACEHOLDER = '[REDACTED]';
 const MAX_DEPTH = 6;
+
+// A signup check link (`<API>/auth/challenge#<token>.<browser secret>`, the form the API issues): its
+// fragment opens the check for whoever holds it. The CLI shows the link to the person on purpose; in a diagnostic
+// (a --debug response body, an error record) the fragment is masked.
+const CHALLENGE_LINK_RE = /(\/auth\/challenge#)[A-Za-z0-9_-]{8,4000}\.[A-Za-z0-9_-]{8,512}/g;
+
+/** Mask the fragment of every signup check link in `text` (the chat log's redaction uses it too). */
+export function maskChallengeLinks(text: string): string {
+  return typeof text === 'string' && text.includes('/auth/challenge#') ? text.replace(CHALLENGE_LINK_RE, `$1${PLACEHOLDER}`) : text;
+}
+
+/**
+ * Scrub credential values out of free diagnostic text by shape: Hoody tokens
+ * and Bot URL key secrets (prefix kept). For an output sink that prints text
+ * assembled from several sources (headings, messages, stacks, inspected
+ * objects): one call over the whole text covers every part.
+ */
+export function scrubDiagnosticText(text: string): string {
+  if (typeof text !== 'string') return text;
+  return redactBotKeys(text.replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER));
+}
 
 /**
  * True for a header name in the secret set above. Exported so the browser
@@ -325,17 +368,19 @@ export function redactUrl(url: string, extraParamNames?: readonly string[]): str
     // Belt-and-suspenders: scrub any hdy_-shaped value by shape (path segments,
     // or a token carried under a non-secret param name). `_`/`-` are URL-
     // unreserved so the shape survives URL.toString() encoding.
-    return u.toString().replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER);
+    return redactBotKeys(u.toString().replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER));
   } catch {
     // Fallback for relative URLs / non-parseable strings: scrub query string textually.
     const qIdx = url.indexOf('?');
-    if (qIdx < 0) return url;
+    // Every return scrubs the token and Bot key shapes: a key pasted where an id goes
+    // (`/bot-urls/<key>`, `…/<key>?`, `/p?#key=<key>`) has no query value to catch it.
+    if (qIdx < 0) return redactBotKeys(url.replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER));
     const hashIdx = url.indexOf('#', qIdx);
     const base = url.slice(0, qIdx + 1);
     const queryEnd = hashIdx >= 0 ? hashIdx : url.length;
     const queryRaw = url.slice(qIdx + 1, queryEnd);
     const tail = hashIdx >= 0 ? url.slice(hashIdx) : '';
-    if (queryRaw.length === 0) return url;
+    if (queryRaw.length === 0) return redactBotKeys(url.replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER));
     const pairs = queryRaw.split('&');
     // The same OAuth-context rule as the absolute branch: a code beside state, redirect_uri, ...
     // is a one-time credential.
@@ -355,14 +400,14 @@ export function redactUrl(url: string, extraParamNames?: readonly string[]): str
       } catch { /* leave as-is on decode failure */ }
       return pair;
     });
-    return (base + parts.join('&') + tail).replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER);
+    return redactBotKeys((base + parts.join('&') + tail).replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER));
   }
 }
 
 /**
  * A byte or stream value is never walked: Object.entries gives a typed array
- * one key per byte, and an error answer to a 4 MiB upload ran the process out
- * of memory. Only its type and size are kept (the Node http-client template
+ * one key per byte, so walking an error answer to a 4 MiB upload would exhaust
+ * memory. Only its type and size are kept (the Node http-client template
  * inlines the same check as `_binaryPlaceholder`). Type and size come from
  * the built-in getters, which check the value's internal slots, so a
  * shadowed `byteLength` or `Symbol.toStringTag` cannot put text in the
@@ -417,7 +462,7 @@ function binaryPlaceholder(v: object): string | undefined {
  * pattern (the request's recorded credential query parameters). They redact
  * an object key of that name (e.g. a `query` record) and a `name=value` pair
  * inside any string value (e.g. a URL under a non-secret key).
- * `redactSensitiveValue(v)` behaves exactly as before.
+ * Without `extraFieldNames` only the built-in pattern applies.
  */
 export function redactSensitiveValue(
   v: unknown,
@@ -433,7 +478,7 @@ export function redactSensitiveValue(
   // suspenders HDY_TOKEN_VALUE_RE pass (token value-shape).
   // A credential inside a URL VALUE (`?token=`, `access_token=`, `X-Amz-Signature=`, userinfo)
   // gets the scrub redactUrl gives the request URL.
-  if (typeof v === 'string') return scrubNamedParams(scrubUrlValue(v.replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER), extraFieldNames), extraFieldNames);
+  if (typeof v === 'string') return scrubNamedParams(scrubUrlValue(redactBotKeys(maskChallengeLinks(v.replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER))), extraFieldNames), extraFieldNames);
   if (typeof v !== 'object') return v;
   try {
     const binary = binaryPlaceholder(v);
@@ -444,7 +489,8 @@ export function redactSensitiveValue(
     const out: Record<string, unknown> = {};
     const oauth = isOauthCodeContext(Object.keys(v as Record<string, unknown>));
     for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
-      out[k] = isSecretFieldName(k) || isExtraName(k, extraFieldNames) || (oauth && k.toLowerCase() === 'code')
+      // A key used as a property name is printed too: the name is scrubbed like a value.
+      out[typeof k === 'string' ? redactBotKeys(k) : k] = isSecretFieldName(k) || isExtraName(k, extraFieldNames) || (oauth && k.toLowerCase() === 'code')
         ? PLACEHOLDER
         : redactSensitiveValue(val, _depth + 1, seen, extraFieldNames);
     }

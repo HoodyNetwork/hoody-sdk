@@ -4,8 +4,8 @@
     "account",
     "activity_log",
     "auth_token",
-    "container",
-    "container_network",
+    "computer",
+    "computer_network",
     "firewall",
     "invoice",
     "notification",
@@ -63,8 +63,9 @@
         "SUBSCRIPTION_NOT_ALLOWED",
         "SUBSCRIPTION_LIMIT_EXCEEDED",
         "INVALID_PROJECT_ID",
-        "INVALID_CONTAINER_ID",
-        "CONNECTION_NOT_FOUND"
+        "INVALID_COMPUTER_ID",
+        "CONNECTION_NOT_FOUND",
+        "UPGRADE_REQUIRED"
       ]
     },
     "history": {
@@ -1332,17 +1333,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.access_restored",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.access_restored",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id"
+        "route": "GET /api/v1/computers/:id"
       },
       "event_only_fields": [
         "previous_status",
@@ -1363,7 +1364,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -1401,7 +1402,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "access",
           "reason_code"
         ]
@@ -1410,17 +1411,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.access_suspended",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.access_suspended",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id"
+        "route": "GET /api/v1/computers/:id"
       },
       "event_only_fields": [
         "previous_status",
@@ -1441,7 +1442,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -1479,7 +1480,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "access",
           "reason_code"
         ]
@@ -1488,17 +1489,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.autostart_disabled",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.autostart_disabled",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id"
+        "route": "GET /api/v1/computers/:id"
       },
       "event_only_fields": [
         "previous_status",
@@ -1519,7 +1520,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -1554,7 +1555,7 @@
                   "null"
                 ]
               },
-              "container_image": {
+              "computer_image": {
                 "type": [
                   "string",
                   "null"
@@ -1573,7 +1574,8 @@
                       "deleted",
                       "copying",
                       "deleting",
-                      "claiming"
+                      "claiming",
+                      "host_reinstalled"
                     ]
                   },
                   {
@@ -1602,12 +1604,9 @@
               "ramdisk_scope": {
                 "type": "string",
                 "enum": [
-                  "container",
+                  "computer",
                   "project"
                 ]
-              },
-              "prespawn": {
-                "type": "boolean"
               },
               "is_default": {
                 "type": "boolean"
@@ -1618,7 +1617,7 @@
                   "null"
                 ]
               },
-              "source_container_id": {
+              "source_computer_id": {
                 "anyOf": [
                   {
                     "type": "string",
@@ -1666,7 +1665,7 @@
               "server_id",
               "name",
               "color",
-              "container_image",
+              "computer_image",
               "status",
               "ai",
               "hoody_kit",
@@ -1675,10 +1674,9 @@
               "autostart",
               "ramdisk",
               "ramdisk_scope",
-              "prespawn",
               "is_default",
               "comment",
-              "source_container_id",
+              "source_computer_id",
               "server_expired",
               "server_expired_at",
               "server_expired_reason",
@@ -1692,24 +1690,24 @@
           }
         },
         "required": [
-          "container"
+          "computer"
         ]
       },
       "schema_version": 1,
       "since": "2026-09-27"
     },
     {
-      "type": "container.autostart_enabled",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.autostart_enabled",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id"
+        "route": "GET /api/v1/computers/:id"
       },
       "event_only_fields": [
         "previous_status",
@@ -1730,7 +1728,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -1765,7 +1763,7 @@
                   "null"
                 ]
               },
-              "container_image": {
+              "computer_image": {
                 "type": [
                   "string",
                   "null"
@@ -1784,7 +1782,8 @@
                       "deleted",
                       "copying",
                       "deleting",
-                      "claiming"
+                      "claiming",
+                      "host_reinstalled"
                     ]
                   },
                   {
@@ -1813,12 +1812,9 @@
               "ramdisk_scope": {
                 "type": "string",
                 "enum": [
-                  "container",
+                  "computer",
                   "project"
                 ]
-              },
-              "prespawn": {
-                "type": "boolean"
               },
               "is_default": {
                 "type": "boolean"
@@ -1829,7 +1825,7 @@
                   "null"
                 ]
               },
-              "source_container_id": {
+              "source_computer_id": {
                 "anyOf": [
                   {
                     "type": "string",
@@ -1877,7 +1873,7 @@
               "server_id",
               "name",
               "color",
-              "container_image",
+              "computer_image",
               "status",
               "ai",
               "hoody_kit",
@@ -1886,10 +1882,9 @@
               "autostart",
               "ramdisk",
               "ramdisk_scope",
-              "prespawn",
               "is_default",
               "comment",
-              "source_container_id",
+              "source_computer_id",
               "server_expired",
               "server_expired_at",
               "server_expired_reason",
@@ -1903,24 +1898,24 @@
           }
         },
         "required": [
-          "container"
+          "computer"
         ]
       },
       "schema_version": 1,
       "since": "2026-09-27"
     },
     {
-      "type": "container.copying",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.copying",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id"
+        "route": "GET /api/v1/computers/:id"
       },
       "event_only_fields": [
         "previous_status",
@@ -1941,7 +1936,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -1960,7 +1955,8 @@
                   "deleted",
                   "copying",
                   "deleting",
-                  "claiming"
+                  "claiming",
+                  "host_reinstalled"
                 ]
               }
             },
@@ -1986,7 +1982,8 @@
                       "deleted",
                       "copying",
                       "deleting",
-                      "claiming"
+                      "claiming",
+                      "host_reinstalled"
                     ]
                   },
                   {
@@ -2001,7 +1998,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "previous"
         ]
       },
@@ -2009,17 +2006,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.creating",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.creating",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id"
+        "route": "GET /api/v1/computers/:id"
       },
       "event_only_fields": [
         "previous_status",
@@ -2040,7 +2037,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -2075,7 +2072,7 @@
                   "null"
                 ]
               },
-              "container_image": {
+              "computer_image": {
                 "type": [
                   "string",
                   "null"
@@ -2094,7 +2091,8 @@
                       "deleted",
                       "copying",
                       "deleting",
-                      "claiming"
+                      "claiming",
+                      "host_reinstalled"
                     ]
                   },
                   {
@@ -2123,12 +2121,9 @@
               "ramdisk_scope": {
                 "type": "string",
                 "enum": [
-                  "container",
+                  "computer",
                   "project"
                 ]
-              },
-              "prespawn": {
-                "type": "boolean"
               },
               "is_default": {
                 "type": "boolean"
@@ -2139,7 +2134,7 @@
                   "null"
                 ]
               },
-              "source_container_id": {
+              "source_computer_id": {
                 "anyOf": [
                   {
                     "type": "string",
@@ -2187,7 +2182,7 @@
               "server_id",
               "name",
               "color",
-              "container_image",
+              "computer_image",
               "status",
               "ai",
               "hoody_kit",
@@ -2196,10 +2191,9 @@
               "autostart",
               "ramdisk",
               "ramdisk_scope",
-              "prespawn",
               "is_default",
               "comment",
-              "source_container_id",
+              "source_computer_id",
               "server_expired",
               "server_expired_at",
               "server_expired_reason",
@@ -2213,22 +2207,22 @@
           }
         },
         "required": [
-          "container"
+          "computer"
         ]
       },
       "schema_version": 1,
       "since": "2026-09-27"
     },
     {
-      "type": "container.deleted",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.deleted",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": null,
       "event_only_fields": [
         "previous_status",
@@ -2249,7 +2243,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -2284,7 +2278,7 @@
                   "null"
                 ]
               },
-              "container_image": {
+              "computer_image": {
                 "type": [
                   "string",
                   "null"
@@ -2303,7 +2297,8 @@
                       "deleted",
                       "copying",
                       "deleting",
-                      "claiming"
+                      "claiming",
+                      "host_reinstalled"
                     ]
                   },
                   {
@@ -2332,12 +2327,9 @@
               "ramdisk_scope": {
                 "type": "string",
                 "enum": [
-                  "container",
+                  "computer",
                   "project"
                 ]
-              },
-              "prespawn": {
-                "type": "boolean"
               },
               "is_default": {
                 "type": "boolean"
@@ -2348,7 +2340,7 @@
                   "null"
                 ]
               },
-              "source_container_id": {
+              "source_computer_id": {
                 "anyOf": [
                   {
                     "type": "string",
@@ -2396,7 +2388,7 @@
               "server_id",
               "name",
               "color",
-              "container_image",
+              "computer_image",
               "status",
               "ai",
               "hoody_kit",
@@ -2405,10 +2397,9 @@
               "autostart",
               "ramdisk",
               "ramdisk_scope",
-              "prespawn",
               "is_default",
               "comment",
-              "source_container_id",
+              "source_computer_id",
               "server_expired",
               "server_expired_at",
               "server_expired_reason",
@@ -2422,16 +2413,16 @@
           }
         },
         "required": [
-          "container"
+          "computer"
         ]
       },
       "schema_version": 1,
       "since": "2026-09-27"
     },
     {
-      "type": "container.deleting",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.deleting",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "reserved",
       "persisted": true,
@@ -2452,9 +2443,9 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.display.enabled",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.display.enabled",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "reserved",
       "persisted": true,
@@ -2475,17 +2466,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.env.applied",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.env.applied",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/env"
+        "route": "GET /api/v1/computers/:id/env"
       },
       "event_only_fields": [
         "keys",
@@ -2500,7 +2491,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -2543,7 +2534,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "env"
         ]
       },
@@ -2551,17 +2542,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.env.failed",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.env.failed",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/env"
+        "route": "GET /api/v1/computers/:id/env"
       },
       "event_only_fields": [
         "keys",
@@ -2576,7 +2567,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -2619,7 +2610,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "env"
         ]
       },
@@ -2627,17 +2618,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.env.updated",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.env.updated",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/env"
+        "route": "GET /api/v1/computers/:id/env"
       },
       "event_only_fields": [
         "keys",
@@ -2652,7 +2643,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -2695,7 +2686,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "env"
         ]
       },
@@ -2703,17 +2694,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.failed",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.failed",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id"
+        "route": "GET /api/v1/computers/:id"
       },
       "event_only_fields": [
         "previous_status",
@@ -2734,7 +2725,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -2769,7 +2760,7 @@
                   "null"
                 ]
               },
-              "container_image": {
+              "computer_image": {
                 "type": [
                   "string",
                   "null"
@@ -2788,7 +2779,8 @@
                       "deleted",
                       "copying",
                       "deleting",
-                      "claiming"
+                      "claiming",
+                      "host_reinstalled"
                     ]
                   },
                   {
@@ -2817,12 +2809,9 @@
               "ramdisk_scope": {
                 "type": "string",
                 "enum": [
-                  "container",
+                  "computer",
                   "project"
                 ]
-              },
-              "prespawn": {
-                "type": "boolean"
               },
               "is_default": {
                 "type": "boolean"
@@ -2833,7 +2822,7 @@
                   "null"
                 ]
               },
-              "source_container_id": {
+              "source_computer_id": {
                 "anyOf": [
                   {
                     "type": "string",
@@ -2881,7 +2870,7 @@
               "server_id",
               "name",
               "color",
-              "container_image",
+              "computer_image",
               "status",
               "ai",
               "hoody_kit",
@@ -2890,10 +2879,9 @@
               "autostart",
               "ramdisk",
               "ramdisk_scope",
-              "prespawn",
               "is_default",
               "comment",
-              "source_container_id",
+              "source_computer_id",
               "server_expired",
               "server_expired_at",
               "server_expired_reason",
@@ -2914,7 +2902,8 @@
                   "deleted",
                   "copying",
                   "deleting",
-                  "claiming"
+                  "claiming",
+                  "host_reinstalled"
                 ]
               },
               {
@@ -2933,7 +2922,8 @@
               "deleted",
               "copying",
               "deleting",
-              "claiming"
+              "claiming",
+              "host_reinstalled"
             ]
           },
           "reason": {
@@ -2946,7 +2936,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "previous_status",
           "current_status"
         ]
@@ -2955,17 +2945,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.network.created",
-      "group": "container",
-      "resource_type": "container_network",
+      "type": "computer.network.created",
+      "group": "computer",
+      "resource_type": "computer_network",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "read",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/network"
+        "route": "GET /api/v1/computers/:id/network"
       },
       "event_only_fields": [
         "changes",
@@ -2989,7 +2979,7 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "container": {
+              "computer": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
@@ -3046,7 +3036,7 @@
               }
             },
             "required": [
-              "container",
+              "computer",
               "network"
             ]
           },
@@ -3054,7 +3044,7 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "container": {
+              "computer": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
@@ -3113,7 +3103,7 @@
               }
             },
             "required": [
-              "container",
+              "computer",
               "network"
             ]
           }
@@ -3123,15 +3113,15 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.network.deleted",
-      "group": "container",
-      "resource_type": "container_network",
+      "type": "computer.network.deleted",
+      "group": "computer",
+      "resource_type": "computer_network",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "read",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": null,
       "event_only_fields": [
         "changes",
@@ -3155,7 +3145,7 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "container": {
+              "computer": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
@@ -3212,7 +3202,7 @@
               }
             },
             "required": [
-              "container",
+              "computer",
               "network"
             ]
           },
@@ -3220,7 +3210,7 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "container": {
+              "computer": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
@@ -3279,7 +3269,7 @@
               }
             },
             "required": [
-              "container",
+              "computer",
               "network"
             ]
           }
@@ -3289,17 +3279,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.network.failed",
-      "group": "container",
-      "resource_type": "container_network",
+      "type": "computer.network.failed",
+      "group": "computer",
+      "resource_type": "computer_network",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "read",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/network"
+        "route": "GET /api/v1/computers/:id/network"
       },
       "event_only_fields": [
         "changes",
@@ -3323,7 +3313,7 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "container": {
+              "computer": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
@@ -3380,7 +3370,7 @@
               }
             },
             "required": [
-              "container",
+              "computer",
               "network"
             ]
           },
@@ -3388,7 +3378,7 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "container": {
+              "computer": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
@@ -3447,7 +3437,7 @@
               }
             },
             "required": [
-              "container",
+              "computer",
               "network"
             ]
           }
@@ -3457,17 +3447,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.network.running",
-      "group": "container",
-      "resource_type": "container_network",
+      "type": "computer.network.running",
+      "group": "computer",
+      "resource_type": "computer_network",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "read",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/network"
+        "route": "GET /api/v1/computers/:id/network"
       },
       "event_only_fields": [
         "changes",
@@ -3491,7 +3481,7 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "container": {
+              "computer": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
@@ -3548,7 +3538,7 @@
               }
             },
             "required": [
-              "container",
+              "computer",
               "network"
             ]
           },
@@ -3556,7 +3546,7 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "container": {
+              "computer": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
@@ -3615,7 +3605,7 @@
               }
             },
             "required": [
-              "container",
+              "computer",
               "network"
             ]
           }
@@ -3625,17 +3615,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.network.stopped",
-      "group": "container",
-      "resource_type": "container_network",
+      "type": "computer.network.stopped",
+      "group": "computer",
+      "resource_type": "computer_network",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "read",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/network"
+        "route": "GET /api/v1/computers/:id/network"
       },
       "event_only_fields": [
         "changes",
@@ -3659,7 +3649,7 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "container": {
+              "computer": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
@@ -3716,7 +3706,7 @@
               }
             },
             "required": [
-              "container",
+              "computer",
               "network"
             ]
           },
@@ -3724,7 +3714,7 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "container": {
+              "computer": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
@@ -3783,7 +3773,7 @@
               }
             },
             "required": [
-              "container",
+              "computer",
               "network"
             ]
           }
@@ -3793,17 +3783,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.network.updated",
-      "group": "container",
-      "resource_type": "container_network",
+      "type": "computer.network.updated",
+      "group": "computer",
+      "resource_type": "computer_network",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "read",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/network"
+        "route": "GET /api/v1/computers/:id/network"
       },
       "event_only_fields": [
         "changes",
@@ -3827,7 +3817,7 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "container": {
+              "computer": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
@@ -3884,7 +3874,7 @@
               }
             },
             "required": [
-              "container",
+              "computer",
               "network"
             ]
           },
@@ -3892,7 +3882,7 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "container": {
+              "computer": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
@@ -3951,7 +3941,7 @@
               }
             },
             "required": [
-              "container",
+              "computer",
               "network"
             ]
           }
@@ -3961,17 +3951,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.operation.completed",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.operation.completed",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id"
+        "route": "GET /api/v1/computers/:id"
       },
       "event_only_fields": [
         "operation"
@@ -3985,7 +3975,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -4008,7 +3998,7 @@
               },
               "kind": {
                 "type": "string",
-                "pattern": "^container\\.[a-z_-]+$"
+                "pattern": "^computer\\.[a-z_-]+$"
               },
               "status": {
                 "type": "string",
@@ -4053,7 +4043,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "operation"
         ]
       },
@@ -4061,17 +4051,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.operation.failed",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.operation.failed",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id"
+        "route": "GET /api/v1/computers/:id"
       },
       "event_only_fields": [
         "operation"
@@ -4085,7 +4075,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -4108,7 +4098,7 @@
               },
               "kind": {
                 "type": "string",
-                "pattern": "^container\\.[a-z_-]+$"
+                "pattern": "^computer\\.[a-z_-]+$"
               },
               "status": {
                 "type": "string",
@@ -4153,7 +4143,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "operation"
         ]
       },
@@ -4161,17 +4151,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.paused",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.paused",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id"
+        "route": "GET /api/v1/computers/:id"
       },
       "event_only_fields": [
         "previous_status",
@@ -4192,7 +4182,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -4211,7 +4201,8 @@
                   "deleted",
                   "copying",
                   "deleting",
-                  "claiming"
+                  "claiming",
+                  "host_reinstalled"
                 ]
               }
             },
@@ -4237,7 +4228,8 @@
                       "deleted",
                       "copying",
                       "deleting",
-                      "claiming"
+                      "claiming",
+                      "host_reinstalled"
                     ]
                   },
                   {
@@ -4252,7 +4244,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "previous"
         ]
       },
@@ -4260,17 +4252,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.renamed",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.renamed",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id"
+        "route": "GET /api/v1/computers/:id"
       },
       "event_only_fields": [
         "previous_status",
@@ -4291,7 +4283,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -4326,7 +4318,7 @@
                   "null"
                 ]
               },
-              "container_image": {
+              "computer_image": {
                 "type": [
                   "string",
                   "null"
@@ -4345,7 +4337,8 @@
                       "deleted",
                       "copying",
                       "deleting",
-                      "claiming"
+                      "claiming",
+                      "host_reinstalled"
                     ]
                   },
                   {
@@ -4374,12 +4367,9 @@
               "ramdisk_scope": {
                 "type": "string",
                 "enum": [
-                  "container",
+                  "computer",
                   "project"
                 ]
-              },
-              "prespawn": {
-                "type": "boolean"
               },
               "is_default": {
                 "type": "boolean"
@@ -4390,7 +4380,7 @@
                   "null"
                 ]
               },
-              "source_container_id": {
+              "source_computer_id": {
                 "anyOf": [
                   {
                     "type": "string",
@@ -4438,7 +4428,7 @@
               "server_id",
               "name",
               "color",
-              "container_image",
+              "computer_image",
               "status",
               "ai",
               "hoody_kit",
@@ -4447,10 +4437,9 @@
               "autostart",
               "ramdisk",
               "ramdisk_scope",
-              "prespawn",
               "is_default",
               "comment",
-              "source_container_id",
+              "source_computer_id",
               "server_expired",
               "server_expired_at",
               "server_expired_reason",
@@ -4479,7 +4468,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "previous"
         ]
       },
@@ -4487,17 +4476,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.resource_updated",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.resource_updated",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id"
+        "route": "GET /api/v1/computers/:id"
       },
       "event_only_fields": [
         "previous_status",
@@ -4518,7 +4507,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -4553,7 +4542,7 @@
                   "null"
                 ]
               },
-              "container_image": {
+              "computer_image": {
                 "type": [
                   "string",
                   "null"
@@ -4572,7 +4561,8 @@
                       "deleted",
                       "copying",
                       "deleting",
-                      "claiming"
+                      "claiming",
+                      "host_reinstalled"
                     ]
                   },
                   {
@@ -4601,12 +4591,9 @@
               "ramdisk_scope": {
                 "type": "string",
                 "enum": [
-                  "container",
+                  "computer",
                   "project"
                 ]
-              },
-              "prespawn": {
-                "type": "boolean"
               },
               "is_default": {
                 "type": "boolean"
@@ -4617,7 +4604,7 @@
                   "null"
                 ]
               },
-              "source_container_id": {
+              "source_computer_id": {
                 "anyOf": [
                   {
                     "type": "string",
@@ -4665,7 +4652,7 @@
               "server_id",
               "name",
               "color",
-              "container_image",
+              "computer_image",
               "status",
               "ai",
               "hoody_kit",
@@ -4674,10 +4661,9 @@
               "autostart",
               "ramdisk",
               "ramdisk_scope",
-              "prespawn",
               "is_default",
               "comment",
-              "source_container_id",
+              "source_computer_id",
               "server_expired",
               "server_expired_at",
               "server_expired_reason",
@@ -4703,7 +4689,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "changes"
         ]
       },
@@ -4711,17 +4697,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.running",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.running",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id"
+        "route": "GET /api/v1/computers/:id"
       },
       "event_only_fields": [
         "previous_status",
@@ -4742,7 +4728,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -4777,7 +4763,7 @@
                   "null"
                 ]
               },
-              "container_image": {
+              "computer_image": {
                 "type": [
                   "string",
                   "null"
@@ -4796,7 +4782,8 @@
                       "deleted",
                       "copying",
                       "deleting",
-                      "claiming"
+                      "claiming",
+                      "host_reinstalled"
                     ]
                   },
                   {
@@ -4825,12 +4812,9 @@
               "ramdisk_scope": {
                 "type": "string",
                 "enum": [
-                  "container",
+                  "computer",
                   "project"
                 ]
-              },
-              "prespawn": {
-                "type": "boolean"
               },
               "is_default": {
                 "type": "boolean"
@@ -4841,7 +4825,7 @@
                   "null"
                 ]
               },
-              "source_container_id": {
+              "source_computer_id": {
                 "anyOf": [
                   {
                     "type": "string",
@@ -4889,7 +4873,7 @@
               "server_id",
               "name",
               "color",
-              "container_image",
+              "computer_image",
               "status",
               "ai",
               "hoody_kit",
@@ -4898,10 +4882,9 @@
               "autostart",
               "ramdisk",
               "ramdisk_scope",
-              "prespawn",
               "is_default",
               "comment",
-              "source_container_id",
+              "source_computer_id",
               "server_expired",
               "server_expired_at",
               "server_expired_reason",
@@ -4922,7 +4905,8 @@
                   "deleted",
                   "copying",
                   "deleting",
-                  "claiming"
+                  "claiming",
+                  "host_reinstalled"
                 ]
               },
               {
@@ -4941,7 +4925,8 @@
               "deleted",
               "copying",
               "deleting",
-              "claiming"
+              "claiming",
+              "host_reinstalled"
             ]
           },
           "reason": {
@@ -4954,7 +4939,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "previous_status",
           "current_status"
         ]
@@ -4963,17 +4948,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.snapshot.created",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.snapshot.created",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "read",
-      "required_token_permission": "containers.features.snapshots",
+      "required_token_permission": "computers.features.snapshots",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/snapshots"
+        "route": "GET /api/v1/computers/:id/snapshots"
       },
       "event_only_fields": [
         "previous",
@@ -4988,7 +4973,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -5037,7 +5022,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "snapshot"
         ]
       },
@@ -5045,15 +5030,15 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.snapshot.deleted",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.snapshot.deleted",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "read",
-      "required_token_permission": "containers.features.snapshots",
+      "required_token_permission": "computers.features.snapshots",
       "get_parity": null,
       "event_only_fields": [
         "previous",
@@ -5068,7 +5053,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -5117,7 +5102,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "snapshot"
         ]
       },
@@ -5125,17 +5110,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.snapshot.renamed",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.snapshot.renamed",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "read",
-      "required_token_permission": "containers.features.snapshots",
+      "required_token_permission": "computers.features.snapshots",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/snapshots"
+        "route": "GET /api/v1/computers/:id/snapshots"
       },
       "event_only_fields": [
         "previous",
@@ -5150,7 +5135,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -5199,7 +5184,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "snapshot"
         ]
       },
@@ -5207,17 +5192,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.snapshot.restored",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.snapshot.restored",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "read",
-      "required_token_permission": "containers.features.snapshots",
+      "required_token_permission": "computers.features.snapshots",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/snapshots"
+        "route": "GET /api/v1/computers/:id/snapshots"
       },
       "event_only_fields": [
         "previous",
@@ -5232,7 +5217,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -5281,7 +5266,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "snapshot"
         ]
       },
@@ -5289,15 +5274,15 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.ssh_key.added",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.ssh_key.added",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": null,
       "event_only_fields": [
         "reason_code"
@@ -5311,7 +5296,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -5348,7 +5333,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "ssh_key"
         ]
       },
@@ -5356,15 +5341,15 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.ssh_key.removed",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.ssh_key.removed",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": null,
       "event_only_fields": [
         "reason_code"
@@ -5378,7 +5363,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -5415,7 +5400,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "ssh_key"
         ]
       },
@@ -5423,17 +5408,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.stopped",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.stopped",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id"
+        "route": "GET /api/v1/computers/:id"
       },
       "event_only_fields": [
         "previous_status",
@@ -5454,7 +5439,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -5489,7 +5474,7 @@
                   "null"
                 ]
               },
-              "container_image": {
+              "computer_image": {
                 "type": [
                   "string",
                   "null"
@@ -5508,7 +5493,8 @@
                       "deleted",
                       "copying",
                       "deleting",
-                      "claiming"
+                      "claiming",
+                      "host_reinstalled"
                     ]
                   },
                   {
@@ -5537,12 +5523,9 @@
               "ramdisk_scope": {
                 "type": "string",
                 "enum": [
-                  "container",
+                  "computer",
                   "project"
                 ]
-              },
-              "prespawn": {
-                "type": "boolean"
               },
               "is_default": {
                 "type": "boolean"
@@ -5553,7 +5536,7 @@
                   "null"
                 ]
               },
-              "source_container_id": {
+              "source_computer_id": {
                 "anyOf": [
                   {
                     "type": "string",
@@ -5601,7 +5584,7 @@
               "server_id",
               "name",
               "color",
-              "container_image",
+              "computer_image",
               "status",
               "ai",
               "hoody_kit",
@@ -5610,10 +5593,9 @@
               "autostart",
               "ramdisk",
               "ramdisk_scope",
-              "prespawn",
               "is_default",
               "comment",
-              "source_container_id",
+              "source_computer_id",
               "server_expired",
               "server_expired_at",
               "server_expired_reason",
@@ -5634,7 +5616,8 @@
                   "deleted",
                   "copying",
                   "deleting",
-                  "claiming"
+                  "claiming",
+                  "host_reinstalled"
                 ]
               },
               {
@@ -5653,7 +5636,8 @@
               "deleted",
               "copying",
               "deleting",
-              "claiming"
+              "claiming",
+              "host_reinstalled"
             ]
           },
           "reason": {
@@ -5666,7 +5650,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "previous_status",
           "current_status"
         ]
@@ -5675,17 +5659,17 @@
       "since": "2026-09-27"
     },
     {
-      "type": "container.updated",
-      "group": "container",
-      "resource_type": "container",
+      "type": "computer.updated",
+      "group": "computer",
+      "resource_type": "computer",
       "audience": "user",
       "status": "emitted",
       "persisted": true,
       "realm_scoped": true,
       "required_level": "owner",
-      "required_token_permission": "containers.read",
+      "required_token_permission": "computers.read",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id"
+        "route": "GET /api/v1/computers/:id"
       },
       "event_only_fields": [
         "previous_status",
@@ -5709,7 +5693,7 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "container": {
+              "computer": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
@@ -5744,7 +5728,7 @@
                       "null"
                     ]
                   },
-                  "container_image": {
+                  "computer_image": {
                     "type": [
                       "string",
                       "null"
@@ -5763,7 +5747,8 @@
                           "deleted",
                           "copying",
                           "deleting",
-                          "claiming"
+                          "claiming",
+                          "host_reinstalled"
                         ]
                       },
                       {
@@ -5792,12 +5777,9 @@
                   "ramdisk_scope": {
                     "type": "string",
                     "enum": [
-                      "container",
+                      "computer",
                       "project"
                     ]
-                  },
-                  "prespawn": {
-                    "type": "boolean"
                   },
                   "is_default": {
                     "type": "boolean"
@@ -5808,7 +5790,7 @@
                       "null"
                     ]
                   },
-                  "source_container_id": {
+                  "source_computer_id": {
                     "anyOf": [
                       {
                         "type": "string",
@@ -5856,7 +5838,7 @@
                   "server_id",
                   "name",
                   "color",
-                  "container_image",
+                  "computer_image",
                   "status",
                   "ai",
                   "hoody_kit",
@@ -5865,10 +5847,9 @@
                   "autostart",
                   "ramdisk",
                   "ramdisk_scope",
-                  "prespawn",
                   "is_default",
                   "comment",
-                  "source_container_id",
+                  "source_computer_id",
                   "server_expired",
                   "server_expired_at",
                   "server_expired_reason",
@@ -5903,7 +5884,7 @@
               }
             },
             "required": [
-              "container",
+              "computer",
               "changes"
             ]
           },
@@ -5911,7 +5892,7 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "container": {
+              "computer": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
@@ -5937,7 +5918,7 @@
               }
             },
             "required": [
-              "container",
+              "computer",
               "visibility",
               "changes"
             ]
@@ -5970,7 +5951,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -6031,7 +6012,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "rule"
         ]
       },
@@ -6061,7 +6042,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -6122,7 +6103,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "rule"
         ]
       },
@@ -6152,7 +6133,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -6213,7 +6194,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "rule"
         ]
       },
@@ -6243,7 +6224,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "container": {
+          "computer": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -6304,7 +6285,7 @@
           }
         },
         "required": [
-          "container",
+          "computer",
           "rule"
         ]
       },
@@ -7400,7 +7381,7 @@
                 "type": "string",
                 "format": "date-time"
               },
-              "max_containers": {
+              "max_computers": {
                 "type": [
                   "number",
                   "null"
@@ -7425,7 +7406,7 @@
               "color",
               "created_at",
               "updated_at",
-              "max_containers",
+              "max_computers",
               "is_default",
               "realm_ids"
             ]
@@ -7485,7 +7466,7 @@
                 "type": "string",
                 "format": "date-time"
               },
-              "max_containers": {
+              "max_computers": {
                 "type": [
                   "number",
                   "null"
@@ -7510,7 +7491,7 @@
               "color",
               "created_at",
               "updated_at",
-              "max_containers",
+              "max_computers",
               "is_default",
               "realm_ids"
             ]
@@ -7894,7 +7875,7 @@
                     "type": "string",
                     "format": "date-time"
                   },
-                  "max_containers": {
+                  "max_computers": {
                     "type": [
                       "number",
                       "null"
@@ -7919,7 +7900,7 @@
                   "color",
                   "created_at",
                   "updated_at",
-                  "max_containers",
+                  "max_computers",
                   "is_default",
                   "realm_ids"
                 ]
@@ -7932,7 +7913,7 @@
                   "enum": [
                     "alias",
                     "color",
-                    "max_containers",
+                    "max_computers",
                     "realm_ids",
                     "provisioning_status"
                   ]
@@ -7948,7 +7929,7 @@
                   "color": {
                     "type": "string"
                   },
-                  "max_containers": {
+                  "max_computers": {
                     "type": [
                       "number",
                       "null"
@@ -8051,7 +8032,7 @@
                 "type": "string",
                 "pattern": "^[0-9a-f]{24}$"
               },
-              "container_id": {
+              "computer_id": {
                 "type": "string",
                 "pattern": "^[0-9a-f]{24}$"
               },
@@ -8155,7 +8136,7 @@
                 "type": "string",
                 "pattern": "^[0-9a-f]{24}$"
               },
-              "container_id": {
+              "computer_id": {
                 "type": "string",
                 "pattern": "^[0-9a-f]{24}$"
               },
@@ -8259,7 +8240,7 @@
                 "type": "string",
                 "pattern": "^[0-9a-f]{24}$"
               },
-              "container_id": {
+              "computer_id": {
                 "type": "string",
                 "pattern": "^[0-9a-f]{24}$"
               },
@@ -8363,7 +8344,7 @@
                 "type": "string",
                 "pattern": "^[0-9a-f]{24}$"
               },
-              "container_id": {
+              "computer_id": {
                 "type": "string",
                 "pattern": "^[0-9a-f]{24}$"
               },
@@ -8467,7 +8448,7 @@
                 "type": "string",
                 "pattern": "^[0-9a-f]{24}$"
               },
-              "container_id": {
+              "computer_id": {
                 "type": "string",
                 "pattern": "^[0-9a-f]{24}$"
               },
@@ -8571,7 +8552,7 @@
                 "type": "string",
                 "pattern": "^[0-9a-f]{24}$"
               },
-              "container_id": {
+              "computer_id": {
                 "type": "string",
                 "pattern": "^[0-9a-f]{24}$"
               },
@@ -8676,7 +8657,7 @@
                 "type": "string",
                 "pattern": "^[0-9a-f]{24}$"
               },
-              "container_id": {
+              "computer_id": {
                 "type": "string",
                 "pattern": "^[0-9a-f]{24}$"
               },
@@ -8743,7 +8724,7 @@
       "required_level": "delete",
       "required_token_permission": "resources.proxy_aliases",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/proxy/permissions"
+        "route": "GET /api/v1/computers/:id/proxy/permissions"
       },
       "event_only_fields": [
         "changes",
@@ -8775,14 +8756,15 @@
                   "null"
                 ]
               },
-              "container": {
+              "computer": {
                 "type": "string"
               },
               "default": {
                 "type": "string",
                 "enum": [
                   "allow",
-                  "deny"
+                  "deny",
+                  "inherit"
                 ]
               },
               "enable_proxy": {
@@ -8810,7 +8792,8 @@
                 "type": "string",
                 "enum": [
                   "allow",
-                  "deny"
+                  "deny",
+                  "inherit"
                 ]
               }
             }
@@ -8856,7 +8839,7 @@
       "required_level": "delete",
       "required_token_permission": "resources.proxy_aliases",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/proxy/permissions"
+        "route": "GET /api/v1/computers/:id/proxy/permissions"
       },
       "event_only_fields": [
         "changes",
@@ -8888,14 +8871,15 @@
                   "null"
                 ]
               },
-              "container": {
+              "computer": {
                 "type": "string"
               },
               "default": {
                 "type": "string",
                 "enum": [
                   "allow",
-                  "deny"
+                  "deny",
+                  "inherit"
                 ]
               },
               "enable_proxy": {
@@ -8923,7 +8907,8 @@
                 "type": "string",
                 "enum": [
                   "allow",
-                  "deny"
+                  "deny",
+                  "inherit"
                 ]
               }
             }
@@ -8969,7 +8954,7 @@
       "required_level": "delete",
       "required_token_permission": "resources.proxy_aliases",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/proxy/permissions"
+        "route": "GET /api/v1/computers/:id/proxy/permissions"
       },
       "event_only_fields": [
         "changes",
@@ -9001,14 +8986,15 @@
                   "null"
                 ]
               },
-              "container": {
+              "computer": {
                 "type": "string"
               },
               "default": {
                 "type": "string",
                 "enum": [
                   "allow",
-                  "deny"
+                  "deny",
+                  "inherit"
                 ]
               },
               "enable_proxy": {
@@ -9036,7 +9022,8 @@
                 "type": "string",
                 "enum": [
                   "allow",
-                  "deny"
+                  "deny",
+                  "inherit"
                 ]
               }
             }
@@ -9082,7 +9069,7 @@
       "required_level": "delete",
       "required_token_permission": "resources.proxy_aliases",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/proxy/permissions"
+        "route": "GET /api/v1/computers/:id/proxy/permissions"
       },
       "event_only_fields": [
         "changes",
@@ -9114,14 +9101,15 @@
                   "null"
                 ]
               },
-              "container": {
+              "computer": {
                 "type": "string"
               },
               "default": {
                 "type": "string",
                 "enum": [
                   "allow",
-                  "deny"
+                  "deny",
+                  "inherit"
                 ]
               },
               "enable_proxy": {
@@ -9149,7 +9137,8 @@
                 "type": "string",
                 "enum": [
                   "allow",
-                  "deny"
+                  "deny",
+                  "inherit"
                 ]
               }
             }
@@ -9195,7 +9184,7 @@
       "required_level": "delete",
       "required_token_permission": "resources.proxy_aliases",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/proxy/permissions"
+        "route": "GET /api/v1/computers/:id/proxy/permissions"
       },
       "event_only_fields": [
         "changes",
@@ -9227,14 +9216,15 @@
                   "null"
                 ]
               },
-              "container": {
+              "computer": {
                 "type": "string"
               },
               "default": {
                 "type": "string",
                 "enum": [
                   "allow",
-                  "deny"
+                  "deny",
+                  "inherit"
                 ]
               },
               "enable_proxy": {
@@ -9262,7 +9252,8 @@
                 "type": "string",
                 "enum": [
                   "allow",
-                  "deny"
+                  "deny",
+                  "inherit"
                 ]
               }
             }
@@ -9985,6 +9976,42 @@
                   "number",
                   "null"
                 ]
+              },
+              "list_pricing_rules": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "number"
+                }
+              },
+              "discount": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": false,
+                "required": [
+                  "percent_off",
+                  "label",
+                  "label_locale",
+                  "ends_at"
+                ],
+                "properties": {
+                  "percent_off": {
+                    "type": "integer"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "label_locale": {
+                    "type": "string"
+                  },
+                  "ends_at": {
+                    "type": "string"
+                  }
+                }
               }
             },
             "required": [
@@ -10175,6 +10202,42 @@
                   "number",
                   "null"
                 ]
+              },
+              "list_pricing_rules": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "number"
+                }
+              },
+              "discount": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": false,
+                "required": [
+                  "percent_off",
+                  "label",
+                  "label_locale",
+                  "ends_at"
+                ],
+                "properties": {
+                  "percent_off": {
+                    "type": "integer"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "label_locale": {
+                    "type": "string"
+                  },
+                  "ends_at": {
+                    "type": "string"
+                  }
+                }
               }
             },
             "required": [
@@ -10374,6 +10437,42 @@
                   "number",
                   "null"
                 ]
+              },
+              "list_pricing_rules": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "number"
+                }
+              },
+              "discount": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": false,
+                "required": [
+                  "percent_off",
+                  "label",
+                  "label_locale",
+                  "ends_at"
+                ],
+                "properties": {
+                  "percent_off": {
+                    "type": "integer"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "label_locale": {
+                    "type": "string"
+                  },
+                  "ends_at": {
+                    "type": "string"
+                  }
+                }
               }
             },
             "required": [
@@ -11168,7 +11267,7 @@
       "persisted": true,
       "realm_scoped": false,
       "required_level": null,
-      "required_token_permission": null,
+      "required_token_permission": "financial.billing.read",
       "get_parity": {
         "route": "GET /api/v1/reservations/:id"
       },
@@ -11236,7 +11335,7 @@
       "persisted": true,
       "realm_scoped": false,
       "required_level": null,
-      "required_token_permission": null,
+      "required_token_permission": "financial.billing.read",
       "get_parity": {
         "route": "GET /api/v1/reservations/:id"
       },
@@ -11304,7 +11403,7 @@
       "persisted": true,
       "realm_scoped": false,
       "required_level": null,
-      "required_token_permission": null,
+      "required_token_permission": "financial.billing.read",
       "get_parity": {
         "route": "GET /api/v1/reservations/:id"
       },
@@ -11525,7 +11624,7 @@
       "required_level": "owner",
       "required_token_permission": "resources.storage_shares",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/storage/shares/:shareId"
+        "route": "GET /api/v1/computers/:id/storage/shares/:shareId"
       },
       "event_only_fields": [
         "changes",
@@ -11591,7 +11690,7 @@
       "required_level": "owner",
       "required_token_permission": "resources.storage_shares",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/storage/shares/:shareId"
+        "route": "GET /api/v1/computers/:id/storage/shares/:shareId"
       },
       "event_only_fields": [
         "changes",
@@ -11657,7 +11756,7 @@
       "required_level": "owner",
       "required_token_permission": "resources.storage_shares",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/storage/shares/:shareId"
+        "route": "GET /api/v1/computers/:id/storage/shares/:shareId"
       },
       "event_only_fields": [
         "changes",
@@ -11723,7 +11822,7 @@
       "required_level": "owner",
       "required_token_permission": "resources.storage_shares",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/storage/shares/:shareId"
+        "route": "GET /api/v1/computers/:id/storage/shares/:shareId"
       },
       "event_only_fields": [
         "changes",
@@ -11789,7 +11888,7 @@
       "required_level": "owner",
       "required_token_permission": "resources.storage_shares",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/storage/shares/:shareId"
+        "route": "GET /api/v1/computers/:id/storage/shares/:shareId"
       },
       "event_only_fields": [
         "changes",
@@ -11855,7 +11954,7 @@
       "required_level": "owner",
       "required_token_permission": "resources.storage_shares",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/storage/shares/:shareId"
+        "route": "GET /api/v1/computers/:id/storage/shares/:shareId"
       },
       "event_only_fields": [
         "changes",
@@ -11921,7 +12020,7 @@
       "required_level": "owner",
       "required_token_permission": "resources.storage_shares",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/storage/shares/:shareId"
+        "route": "GET /api/v1/computers/:id/storage/shares/:shareId"
       },
       "event_only_fields": [
         "changes",
@@ -11975,11 +12074,11 @@
           "mount": {
             "type": "object",
             "required": [
-              "container_id",
+              "computer_id",
               "mount"
             ],
             "properties": {
-              "container_id": {
+              "computer_id": {
                 "type": "string",
                 "pattern": "^[0-9a-f]{24}$"
               },
@@ -12004,7 +12103,7 @@
       "required_level": "owner",
       "required_token_permission": "resources.storage_shares",
       "get_parity": {
-        "route": "GET /api/v1/containers/:id/storage/shares/:shareId"
+        "route": "GET /api/v1/computers/:id/storage/shares/:shareId"
       },
       "event_only_fields": [
         "changes",

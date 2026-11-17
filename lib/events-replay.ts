@@ -23,6 +23,7 @@ import {
     type EventsGapReason,
 } from './events-errors.js';
 import { toHoodyEvent, type EventHistoryItem, type HoodyEvent } from './events-types.js';
+import { retireAccessors } from './retired-accessor.js';
 
 /** One cursor-mode page (success envelope, `data`). */
 export interface EventsHistoryPage {
@@ -44,6 +45,7 @@ export interface EventsHistoryReader {
 export class EventIdLru {
     private readonly ids = new Map<string, true>();
 
+    /** `capacity` is the most ids kept; adding one more forgets the oldest. */
     constructor(readonly capacity: number) {}
 
     /** Record `id`. Returns true when it was not already present. */
@@ -62,18 +64,24 @@ export class EventIdLru {
         return true;
     }
 
+    /** True when `id` is still remembered. Does not refresh its recency. */
     has(id: string): boolean {
         return this.ids.has(id);
     }
 
+    /** Forget every id. */
     clear(): void {
         this.ids.clear();
     }
 
-    get size(): number {
+    /** How many ids are remembered now. */
+    getSize(): number {
         return this.ids.size;
     }
 }
+
+// The getter this read replaced refuses, naming the method.
+retireAccessors(EventIdLru.prototype, 'EventIdLru', { size: 'getSize()' });
 
 export interface EventsRecoveryOptions {
     reader: EventsHistoryReader;
@@ -130,6 +138,10 @@ export class EventsRecovery {
     private retryAttempt = 0;
     private stopped = false;
 
+    /**
+     * `opts.reader` makes the history reads and the callbacks receive the outcome. `maxReplayPages`
+     * (default 20) is floored to at least 1; `pageLimit` is kept between 1 and 500.
+     */
     constructor(opts: EventsRecoveryOptions) {
         this.opts = opts;
         this.maxReplayPages = Math.max(1, Math.floor(opts.maxReplayPages ?? DEFAULT_MAX_REPLAY_PAGES));
@@ -138,7 +150,7 @@ export class EventsRecovery {
     }
 
     /** True while a catch-up is reading history. */
-    get busy(): boolean {
+    isBusy(): boolean {
         return this.running !== null;
     }
 
@@ -172,7 +184,7 @@ export class EventsRecovery {
 
     /**
      * Drop every cursor and every remembered id, and abandon a run in flight
-     * (F16: nothing of one session carries into another).
+     * (nothing of one session carries into another).
      */
     reset(): void {
         this.epoch++;
@@ -292,7 +304,7 @@ export class EventsRecovery {
     }
 
     /**
-     * Apply the C5 HTTP row for a failed read. 'continue' means a gap was
+     * Apply the HTTP row of the code map for a failed read. 'continue' means a gap was
      * raised and the boundary re-read, so the run reads on from it.
      */
     private async handleFailure(
@@ -315,7 +327,7 @@ export class EventsRecovery {
                     this.scheduleRetry(epoch, 0);
                     return 'stop';
                 }
-                // C5: 410/400 cursor codes → gap{reason} + rebootstrap.
+                // 410/400 cursor codes → gap{reason} + rebootstrap.
                 this.opts.onGap(action.reason);
                 if (epoch !== this.epoch || this.stopped) return 'stop';
                 this.confirmed = null;
@@ -340,3 +352,6 @@ export class EventsRecovery {
         }
     }
 }
+
+// The getter this read replaced refuses, naming the method.
+retireAccessors(EventsRecovery.prototype, 'EventsRecovery', { busy: 'isBusy()' });

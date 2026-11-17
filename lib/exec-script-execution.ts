@@ -45,7 +45,7 @@ export type ExecScriptCallOptions = ExecExecutionRequestOptions & {
   query?: Record<string, unknown> | undefined;
   /** Request body (ignored for GET/HEAD). Objects are sent as JSON. */
   body?: unknown;
-  /** Per-call URL template variables (projectId/containerId/serviceIndex/server). */
+  /** Per-call URL template variables (projectId/computerId/serviceIndex/server). */
   templateVars?: ExecExecutionTemplateVars;
 };
 
@@ -82,9 +82,11 @@ export function encodeExecScriptPath(path: string, helperName: string): string {
   return normalized.split('/').map((segment) => encodeURIComponent(segment)).join('/');
 }
 
+// Every request option ExecExecutionRequestOptions declares, but responseIsFinal (always set below).
 const REQUEST_OPTION_KEYS = [
   'signal', 'timeoutMs', 'retries', 'retryDelayMs', 'retryOnStatuses',
-  'middlewareContext', 'authRetry', 'rawResponse', 'responseType', 'headers',
+  'middlewareContext', 'authRetry', 'cache', 'rawResponse', 'responseType', 'headers',
+  'keyedInProgressWait', 'redactBodyKeys', 'maxResponseBytes',
 ] as const;
 
 /**
@@ -122,8 +124,10 @@ export function dispatchExecScript<TResponse = unknown>(
   }
   // A script is arbitrary code: a status it returned cannot be told from a
   // platform failure, and a retry would run it again. Its answer is final;
-  // `retries` covers only a request that never reached the container.
+  // `retries` covers only a request that never reached the computer.
   requestData.responseIsFinal = true;
+  // A script's answer is its body as sent, never read as a response envelope.
+  requestData.bodyAsData = true;
   return internals.http.request(method, requestUrl, requestData) as Promise<ApiResponse<TResponse>>;
 }
 
@@ -131,6 +135,7 @@ export function dispatchExecScript<TResponse = unknown>(
 // Symbol.for ensures a single shared key even if the module is loaded multiple times.
 const EXEC_SCRIPT_EXECUTION_PATCH_MARKER = Symbol.for('hoody.sdk.exec.run.patch');
 
+/** Replaces `run()` on the generated exec service with the any-method form described above. Runs once: a second call does nothing. */
 export function patchExecScriptExecutionPrototype(): void {
   const prototype = ExecService.prototype as unknown as Record<string | symbol, unknown>;
   if (prototype[EXEC_SCRIPT_EXECUTION_PATCH_MARKER]) return;

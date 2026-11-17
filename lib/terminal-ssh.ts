@@ -9,13 +9,13 @@
  *   - `terminal.sessions.createDesktop(options)` — create a desktop terminal with X11 display
  *   - `terminal.commands.runSsh(options)` — run a command on a remote SSH server
  *
- *   All methods require a container-scoped client (via `withContainer()`).
+ *   All methods require a computer-scoped client (via `withComputer()`).
  *   They are attached to SessionsService.prototype / CommandsService.prototype via module
  *   augmentation and runtime prototype patching, following the same pattern as exec-scripts.ts.
- *   The owning client (for the container URL templates) is read back from the service
+ *   The owning client (for the computer URL templates) is read back from the service
  *   (lib/service-owner.ts).
  *
- *   Each method returns `terminal_url` built from the container's URL templates.
+ *   Each method returns `terminal_url` built from the computer's URL templates.
  */
 
 import type { HoodyClient } from './hoody-client.js';
@@ -122,7 +122,7 @@ declare module '../generated/terminal/sessions.service.js' {
      *
      * @example
      * ```ts
-     * const scoped = await client.withContainer(container);
+     * const scoped = await client.withComputer(computer);
      * const result = await scoped.terminal.sessions.createSsh({
      *   host: '192.168.1.100',
      *   user: 'admin',
@@ -138,7 +138,7 @@ declare module '../generated/terminal/sessions.service.js' {
      *
      * @example
      * ```ts
-     * const scoped = await client.withContainer(container);
+     * const scoped = await client.withComputer(computer);
      * const result = await scoped.terminal.sessions.createLocal({ shell: 'bash' });
      * console.log(result.terminal_url);
      * ```
@@ -151,7 +151,7 @@ declare module '../generated/terminal/sessions.service.js' {
      *
      * @example
      * ```ts
-     * const scoped = await client.withContainer(container);
+     * const scoped = await client.withComputer(computer);
      * const result = await scoped.terminal.sessions.createDesktop({
      *   terminal_id: '5',
      *   desktop_env: 'xfce',
@@ -170,7 +170,7 @@ declare module '../generated/terminal/commands.service.js' {
      *
      * @example
      * ```ts
-     * const scoped = await client.withContainer(container);
+     * const scoped = await client.withComputer(computer);
      * const result = await scoped.terminal.commands.runSsh({
      *   command: 'ls -la /var/log',
      *   host: '192.168.1.100',
@@ -188,41 +188,42 @@ declare module '../generated/terminal/commands.service.js' {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function assertContainerScoped(client: any): void {
+function assertComputerScoped(client: any): void {
   const t = client.urlTemplates?.['terminal'];
   if (!t) {
     throw new Error(
-      'SSH terminal methods require a container-scoped client. Call withContainer() first.',
+      'SSH terminal methods require a computer-scoped client. Call withComputer() first.',
     );
   }
-  if (!t.projectId || !t.containerId || !t.server) {
+  if (!t.projectId || !t.computerId || !t.server) {
     throw new Error(
-      'Container-scoped client has incomplete terminal URL templates (missing projectId, containerId, or server).',
+      'Computer-scoped client has incomplete terminal URL templates (missing projectId, computerId, or server).',
     );
   }
 }
 
 function getTerminalBaseUrl(client: any, serviceIndex = 0): string {
   const t = client.urlTemplates?.['terminal'];
-  if (!t?.projectId || !t?.containerId || !t?.server) {
+  if (!t?.projectId || !t?.computerId || !t?.server) {
     throw new Error('SSH terminal methods require complete terminal URL templates');
   }
   const domain: string =
-    typeof client.resolveContainersDomain === 'function'
-      ? client.resolveContainersDomain()
-      : 'containers.hoody.com';
-  // terminalHostLabel: an index of 10000 or more (every ephemeral session) does
-  // not fit `terminal-<N>` in a DNS label; it gets the proxy's short `t-<N>`.
-  return `https://${terminalHostLabel(t.projectId, t.containerId, serviceIndex)}.${t.server}.${domain}`;
+    typeof client.resolveComputersDomain === 'function'
+      ? client.resolveComputersDomain()
+      : 'computers.hoody.com';
+  // terminalHostLabel: an index of 10000 or more (only an older kit's
+  // ephemeral session) does not fit `terminal-<N>` in a DNS label; it gets
+  // the proxy's short `t-<N>`.
+  return `https://${terminalHostLabel(t.projectId, t.computerId, serviceIndex)}.${t.server}.${domain}`;
 }
 
 /**
- * Host index for a terminal request. The containers proxy injects
+ * Host index for a terminal request. The computers proxy injects
  * `terminal_id` from the SNI index and force-overwrites any client-sent
  * value, so an explicit terminal id only takes effect when it IS the index —
  * `terminal-7` *is* `terminal_id=7`. With no id the index is 0, the kit's
  * "no terminal id" sentinel these helpers pair with `ephemeral: true` to get
- * an auto-generated session (40000-65535).
+ * an auto-generated session (5001-7999).
  */
 function terminalServiceIndex(explicit: number | undefined, terminalId?: string): number {
   if (explicit !== undefined) return explicit;
@@ -232,13 +233,13 @@ function terminalServiceIndex(explicit: number | undefined, terminalId?: string)
 
 /**
  * Connect URL for a session that was just created. The terminal id belongs in
- * the HOST (`…-terminal-<id>.…`), not the query: the containers proxy injects
+ * the HOST (`…-terminal-<id>.…`), not the query: the computers proxy injects
  * `terminal_id` from the SNI index and force-overwrites whatever the client
  * sent, so an appended `?terminal_id=` never reached the kit — the URL
  * resolved to `terminal-<serviceIndex>` instead (index 0 = the kit's "no
  * terminal id" sentinel, which spawns a fresh ephemeral session rather than
  * attaching to the one just created). `serviceIndex` remains the fallback for
- * a non-numeric id. Ids of 10000 and up (every ephemeral session) use the
+ * a non-numeric id. Ids of 10000 and up (made only by an older kit) use the
  * proxy's short `t-<id>` label, because `terminal-<id>` is then one character
  * too long for DNS (lib/terminal-host.ts).
  */
@@ -272,7 +273,7 @@ async function createSshTerminalImpl(
   this: HoodyClient,
   options: SshTerminalOptions,
 ): Promise<TerminalCreateResult> {
-  assertContainerScoped(this);
+  assertComputerScoped(this);
   const api = getTerminalApi(this);
   const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
 
@@ -310,7 +311,7 @@ async function createLocalTerminalImpl(
   this: HoodyClient,
   options?: LocalTerminalOptions,
 ): Promise<TerminalCreateResult> {
-  assertContainerScoped(this);
+  assertComputerScoped(this);
   const api = getTerminalApi(this);
   const o = options || {};
   const si = terminalServiceIndex(o.serviceIndex, o.terminal_id);
@@ -342,7 +343,7 @@ async function createDesktopTerminalImpl(
   this: HoodyClient,
   options: DesktopTerminalOptions,
 ): Promise<TerminalCreateResult> {
-  assertContainerScoped(this);
+  assertComputerScoped(this);
   const api = getTerminalApi(this);
   const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
 
@@ -377,7 +378,7 @@ async function executeSshCommandImpl(
   this: HoodyClient,
   options: SshExecOptions,
 ): Promise<SshExecResult> {
-  assertContainerScoped(this);
+  assertComputerScoped(this);
   const api = getTerminalApi(this);
   const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
 
@@ -426,6 +427,11 @@ async function executeSshCommandImpl(
 
 const TERMINAL_SSH_PATCH_MARKER = Symbol.for('hoody.sdk.terminal.ssh.patch');
 
+/**
+ * Install `terminal.sessions.createSsh()`, `createLocal()` and `createDesktop()` and
+ * `terminal.commands.runSsh()` on the generated terminal services. Runs once when this module
+ * loads; calling it again does nothing.
+ */
 export function patchTerminalSshPrototype(): void {
   const sessions = SessionsService.prototype as unknown as Record<string | symbol, unknown>;
   if (sessions[TERMINAL_SSH_PATCH_MARKER]) return;

@@ -1,18 +1,21 @@
 /**
  * SOCKS5 over a hoody-tunnel PULL bind.
  *
- * Binds a loopback port inside the container and terminates SOCKS5 on every
+ * Binds a loopback port inside the computer and terminates SOCKS5 on every
  * connection that arrives there. Nothing listens on the local machine: the
  * tunnel WebSocket is the only transport, so there is no port to firewall and no
  * local listener to secure.
  *
- * Pair this with hoody-egress (`upstream = socks5h://127.0.0.1:<containerPort>`)
+ * Pair this with hoody-egress (`upstream = socks5h://127.0.0.1:<computerPort>`)
  * to get a public HTTPS proxy whose exit IP is this machine.
  */
 
+import type { ProxyAuth, ProxyAuthPolicy } from './proxy-auth.js';
 import { TunnelSession, type BindResult } from './tunnel-session.js';
 import { FrameType, type Frame } from './tunnel-protocol-types.js';
 import { decodeFrames } from './tunnel-protocol-codec.js';
+import { withAsyncDispose } from './async-dispose.js';
+import { refuseRetiredOptions } from '../generated/errors.js';
 import {
   handleSocks5Stream,
   createServerState,
@@ -21,12 +24,13 @@ import {
   type Socks5ServerState,
 } from './socks5-server.js';
 
-export interface TunnelSocks5Options extends Socks5ServerOptions {
+export interface StartTunnelSocks5Options extends Socks5ServerOptions {
   /** Full `wss://…/api/v1/tunnel/connect` URL. */
   url: string;
-  token: string;
-  /** Loopback port to bind inside the container. 0 or omitted = kernel-assigned. */
-  containerPort?: number;
+  /** Kit credential for the proxy's tunnel permission rule (see ConnectOptions.kitAuth). */
+  kitAuth?: ProxyAuth | ProxyAuthPolicy;
+  /** Loopback port to bind inside the computer. 0 or omitted = kernel-assigned. */
+  computerPort?: number;
   /** Loopback host. The kit rejects anything non-loopback. Default 127.0.0.1. */
   host?: string;
   /** Resume a prior session after a disconnect. */
@@ -37,20 +41,21 @@ export interface TunnelSocks5Handle {
   session: TunnelSession;
   bind: BindResult;
   /** The loopback port the kit actually bound. Feed this to the egress upstream. */
-  containerPort: number;
+  computerPort: number;
   /**
    * Live conversations on the exit, counted from stream creation rather than
    * from the dial, so streams still handshaking are included. That is what
    * `maxConcurrent` caps.
    */
-  activeStreams(): number;
+  getActiveStreamCount(): number;
   /**
    * Fires once if the session ends on its own (WebSocket drop, kit restart),
    * as opposed to a caller-initiated close(). The bind is gone at that point,
-   * so anything pointing at the container port must be unwired.
+   * so anything pointing at the computer port must be unwired.
    */
   onSessionLost(cb: () => void): () => void;
   close(): Promise<void>;
+  /** `await using` support; attached only where the runtime has `Symbol.asyncDispose` (Node 20.4+, Bun). */
   [Symbol.asyncDispose](): Promise<void>;
 }
 
@@ -138,12 +143,14 @@ function makeStream(
 /**
  * Connect, bind a loopback PULL port, and serve SOCKS5 on it.
  */
-export async function tunnelSocks5(opts: TunnelSocks5Options): Promise<TunnelSocks5Handle> {
-  if (!opts.url) throw new Error('tunnelSocks5: `url` is required');
+export async function startTunnelSocks5(opts: StartTunnelSocks5Options): Promise<TunnelSocks5Handle> {
+  // The `token` option is refused; the proxy credential is `kitAuth`.
+  refuseRetiredOptions(opts, 'startTunnelSocks5', [['token', 'kitAuth']]);
+  if (!opts.url) throw new Error('startTunnelSocks5: `url` is required');
   if (!opts.auth?.username || !opts.auth?.password) {
     // Refuse rather than default to anonymous: this port is reachable by every
-    // process in the container.
-    throw new Error('tunnelSocks5: `auth` with username and password is required');
+    // process in the computer.
+    throw new Error('startTunnelSocks5: `auth` with username and password is required');
   }
 
   // Validate BEFORE connecting. `handleSocks5Stream` throws on a bad
@@ -154,13 +161,13 @@ export async function tunnelSocks5(opts: TunnelSocks5Options): Promise<TunnelSoc
   if (opts.maxConcurrent !== undefined
       && (!Number.isInteger(opts.maxConcurrent) || opts.maxConcurrent < 1)) {
     throw new Error(
-      `tunnelSocks5: maxConcurrent must be a positive integer, got ${String(opts.maxConcurrent)}`,
+      `startTunnelSocks5: maxConcurrent must be a positive integer, got ${String(opts.maxConcurrent)}`,
     );
   }
 
   const session = new TunnelSession({
     url: opts.url,
-    token: opts.token,
+    ...(opts.kitAuth ? { kitAuth: opts.kitAuth } : {}),
     ...(opts.resumeSessionId !== undefined && { resumeSessionId: opts.resumeSessionId }),
   });
   const state: Socks5ServerState = createServerState();
@@ -232,15 +239,15 @@ export async function tunnelSocks5(opts: TunnelSocks5Options): Promise<TunnelSoc
     const bind = await session.bind({
       kind: 'tcp',
       mode: 'pull',
-      containerPort: opts.containerPort ?? 0,
+      computerPort: opts.computerPort ?? 0,
       ...(opts.host !== undefined && { host: opts.host }),
     });
 
     let closingByCaller = false;
     // Remember that the session was lost. startLocalExit subscribes only
-    // after several awaited calls, and a drop inside that window used to fire
-    // into an empty listener set and be forgotten — leaving a dead exit that
-    // reported itself healthy.
+    // after several awaited calls, and a drop inside that window would otherwise
+    // fire into an empty listener set and be forgotten, leaving a dead exit that
+    // reports itself healthy.
     let sessionLost = false;
     const lostListeners = new Set<() => void>();
     const announceLost = () => {
@@ -262,19 +269,18 @@ export async function tunnelSocks5(opts: TunnelSocks5Options): Promise<TunnelSoc
       await session.close();
     };
 
-    return {
+    return withAsyncDispose({
       session,
       bind,
-      containerPort: bind.containerPort,
-      activeStreams: () => state.active,
+      computerPort: bind.computerPort,
+      getActiveStreamCount: () => state.active,
       onSessionLost(cb: () => void) {
         if (sessionLost) { queueMicrotask(() => { try { cb(); } catch { /* listener's problem */ } }); return () => {}; }
         lostListeners.add(cb);
         return () => { lostListeners.delete(cb); };
       },
       close,
-      [Symbol.asyncDispose]: close,
-    };
+    }, close);
   } catch (err) {
     await session.close().catch(() => {});
     throw err;

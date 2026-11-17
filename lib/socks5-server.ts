@@ -2,7 +2,7 @@
  * SOCKS5 server (RFC 1928 + RFC 1929), terminated in-process.
  *
  * This is the engine behind the local exit proxy: hoody-egress inside the
- * container chains to `socks5h://127.0.0.1:<port>`, that port is a hoody-tunnel
+ * computer chains to `socks5h://127.0.0.1:<port>`, that port is a hoody-tunnel
  * PULL bind, and every accepted connection arrives here as a stream. We speak
  * SOCKS5 on it and dial the destination from THIS machine, so the exit IP is the
  * local one.
@@ -120,8 +120,7 @@ export interface Socks5ConnectEvent {
    *
    * `unreachable` is the catch-all arm of the errno mapping, so on its own it
    * covers everything from a TLS-less ECONNRESET to a send failure on the
-   * tunnel. Operators debugging a proxy need the distinction, and so did the
-   * first live run of this code.
+   * tunnel. Operators debugging a proxy need the distinction.
    */
   detail?: string | undefined;
   bytesUp?: number | undefined;
@@ -132,7 +131,7 @@ export interface Socks5ConnectEvent {
 export interface Socks5ServerOptions {
   /**
    * REQUIRED. There is no anonymous mode: the loopback port is reachable by every
-   * process inside the container, so an unauthenticated listener would hand the
+   * process inside the computer, so an unauthenticated listener would hand the
    * user's home connection to anything running there.
    */
   auth: Socks5Credentials;
@@ -154,7 +153,7 @@ export interface Socks5ServerOptions {
    *
    * Without it a stream that connects and then says nothing lives forever: the
    * idle timer only starts at relay, so a peer that stalls mid-greeting is never
-   * collected. Every process inside the container can reach the loopback port,
+   * collected. Every process inside the computer can reach the loopback port,
    * so that is a cheap way to pin the operator's proxy.
    */
   handshakeTimeoutMs?: number;
@@ -167,6 +166,7 @@ export interface Socks5ServerState {
   active: number;
 }
 
+/** A fresh state for one SOCKS5 server, with no active conversations. Pass the same object to every stream of that server. */
 export function createServerState(): Socks5ServerState {
   return { active: 0 };
 }
@@ -240,7 +240,7 @@ export function handleSocks5Stream(
 
   // There is no anonymous mode, and an empty configured credential is exactly
   // that: `credentialsMatch('', '')` is true, so a client sending ULEN=0/PLEN=0
-  // would authenticate. `tunnelSocks5` already refuses empty credentials, but
+  // would authenticate. `startTunnelSocks5` already refuses empty credentials, but
   // this function is exported on its own, so the guard belongs here too.
   if (!opts.auth || !opts.auth.username || !opts.auth.password) {
     throw new Error(
@@ -279,8 +279,8 @@ export function handleSocks5Stream(
     if (reported) return;
     reported = true;
     // A caller's telemetry callback is not allowed to break the protocol: an
-    // exception here used to skip the reset/end that follows, leaving the
-    // container-side stream open forever.
+    // exception here would skip the reset/end that follows, leaving the
+    // computer-side stream open forever.
     try {
       opts.onConnect?.({
       host: target.host,
@@ -659,11 +659,11 @@ export function handleSocks5Stream(
    * Serialize handshake parsing.
    *
    * `pumpOnce` awaits on every reply it sends, and data arriving during one of
-   * those awaits used to start a SECOND loop over the same `buf`: two parsers
-   * racing on one buffer, each consuming bytes the other had already read. The
-   * 'dialing' phase closed the dangerous CONNECT case, but greeting and auth
-   * were still exposed. Only one loop runs at a time; work that arrives while it
-   * is running is picked up by the re-check instead of a parallel loop.
+   * those awaits would otherwise start a SECOND loop over the same `buf`: two
+   * parsers racing on one buffer, each consuming bytes the other had already
+   * read (the 'dialing' phase covers CONNECT, not greeting and auth). Only one
+   * loop runs at a time; work that arrives while it is running is picked up by
+   * the re-check instead of a parallel loop.
    */
   let pumping = false;
   let pumpQueued = false;
@@ -754,17 +754,12 @@ export function handleSocks5Stream(
     // `if (pumping)` without ever reaching the cap inside its loop. The peer
     // chooses that precondition — it advertises the initial window in HELLO, and
     // a 1-byte window blocks the 2-byte method-selection reply indefinitely.
-    // Measured: 16 MiB accepted on one unauthenticated stream, no deny, no reset.
     //
     // Checked before the concat so an oversized frame is refused rather than
     // copied, and so repeated concatenation cannot go quadratic on the way up.
     //
-    // This is the SINGLE enforcement point. `pump()` used to carry a copy, but
-    // once the bound moved here `buf` can never exceed it by the time pump runs
-    // — the copy was unreachable by construction, and a mutation gate confirmed
-    // no test could tell it apart from a no-op. An inert guard that reads as a
-    // live one is worse than no guard, so it is gone rather than kept "for
-    // defence in depth".
+    // This is the SINGLE enforcement point: by the time pump() runs, `buf`
+    // cannot exceed the bound, so pump() carries no copy of the check.
     if (buf.length + bytes.byteLength > MAX_HANDSHAKE_BYTES) {
       die('handshake-too-large', 'handshake too large');
       return;

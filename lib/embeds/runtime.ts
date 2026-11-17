@@ -11,6 +11,7 @@
  */
 import { ValidationError } from '../../generated/errors.js';
 import { EMBEDS_CATALOG } from '../../generated/embeds.generated.js';
+import { computersDomainFor, isIpDomain, IP_BASE_URL_MESSAGE } from '../domain-utils.js';
 
 export type EmbedErrorCode =
   | 'KIT_UNKNOWN'
@@ -40,6 +41,10 @@ export type EmbedErrorCode =
   | 'PATH_INVALID'
   | 'HOST_LABEL_TOO_LONG';
 
+/**
+ * Thrown when an embed request cannot be turned into a URL. `code` names the rule that refused it; the message
+ * starts with the same code, and `field` names the offending parameter when there is one.
+ */
 export class EmbedValidationError extends ValidationError {
   readonly code: EmbedErrorCode;
   constructor(code: EmbedErrorCode, message: string, field?: string) {
@@ -54,11 +59,13 @@ export type EmbedParamValue = Scalar | ReadonlyArray<string | number> | Record<s
 export type EmbedQuery = Record<string, Scalar | ReadonlyArray<string>>;
 
 /**
- * A container as hoody-api returns it, or hand-built. The server name is `server_name`, else `server`: a string
- * when hand-built, the server-details object (`{ name, country, … }`) in a `containers.list` item.
+ * A computer as the API returns it, or hand-built. The server name is `server_name`, else a string `server` a
+ * caller built by hand. `server_name` is the routing host (for a computer on a subserver, its PARENT server). The
+ * server-details object (`{ name, country, … }`) of a `computers.list` item names the slice, which the proxy does
+ * not serve, so its `name` is never a host: a target with no `server_name` and no string `server` is refused.
  */
-export interface EmbedContainerTarget {
-  // Optional in the type because the SDK's own container responses declare them so (containers.get / create:
+export interface EmbedComputerTarget {
+  // Optional in the type because the SDK's own computer responses declare them so (computers.get / create:
   // `id?: string; project_id?: string`); a response is a target unchanged. Both are required at runtime: a target
   // without either is refused with TARGET_INVALID before any URL is built.
   id?: string;
@@ -67,7 +74,7 @@ export interface EmbedContainerTarget {
   server?: string | { name?: string | null } | null;
 }
 
-/** A ProxyAlias as hoody-api returns it. The alias `url` is the origin; hoody-api computes it. */
+/** A ProxyAlias as the API returns it. The alias `url` is the origin; the API computes it. */
 export interface EmbedAliasTarget {
   alias: string;
   program: string;
@@ -76,7 +83,7 @@ export interface EmbedAliasTarget {
   target_path?: string | null;
 }
 
-export type EmbedTarget = EmbedContainerTarget | EmbedAliasTarget;
+export type EmbedTarget = EmbedComputerTarget | EmbedAliasTarget;
 
 export interface EmbedBuildOptions {
   /** View name within the kit (`session`), or omitted for the kit's default view. */
@@ -94,16 +101,16 @@ export interface EmbedBuildOptions {
 }
 
 export interface EmbedBuildContext {
-  /** The containers domain. When omitted it is derived from `baseUrl` (see deriveContainersDomain). */
-  containersDomain?: string;
-  /** The API base URL the containers domain is derived from. */
+  /** The computers domain. When omitted it is derived from `baseUrl` (see deriveComputersDomain). */
+  computersDomain?: string;
+  /** The API base URL the computers domain is derived from. */
   baseUrl?: string;
   /**
-   * The SDK's `getKitUrl`. When given, the host of a container target comes from it, so a client's own
+   * The SDK's `getKitUrl`. When given, the host of a computer target comes from it, so a client's own
    * domain configuration applies. It returns a bare origin, `scheme://host[:port]` (http or https, a trailing / is
    * allowed); a user name or password, a path, a query or a fragment is refused (TARGET_INVALID).
    */
-  getKitUrl?: (kit: string, container: EmbedContainerTarget, opts: { serviceIndex?: number; port?: number }) => string;
+  getKitUrl?: (kit: string, computer: EmbedComputerTarget, opts: { serviceIndex?: number; port?: number }) => string;
 }
 
 type CatalogT = typeof EMBEDS_CATALOG;
@@ -165,49 +172,20 @@ export function getEmbedCatalog(): CatalogT {
 }
 
 /**
- * The containers domain for an API base URL, by the same ordered branches as the SDK client: IPv4, IPv6,
- * `localhost` and `*.localhost` hosts are kept; `containers.*` is kept; a 24-hex realm label before `.api.`
- * is replaced; `api.` becomes `containers.`; the first `.api.` becomes `.containers.`; otherwise
- * `containers.` is prepended. No or an unparseable base URL gives `containers.hoody.com`.
+ * The computers domain for an API base URL: lib/domain-utils.ts computersDomainFor(), the one derivation the SDK
+ * client, the CLI client and the kitAuth middleware share (its doc lists the ordered branches). An IP address
+ * base URL gives the address itself, and buildEmbedUrl refuses it; pass `computersDomain` instead.
  */
-export function deriveContainersDomain(baseUrl?: string): string {
-  const fallback = 'containers.hoody.com';
-  if (baseUrl === undefined || baseUrl === '') return fallback;
-  let host: string;
-  try {
-    host = new URL(baseUrl).hostname;
-  } catch {
-    return fallback;
-  }
-  if (!host) return fallback;
-  if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host) || host.includes(':') || host === 'localhost' || host.endsWith('.localhost')) return host;
-  if (host.startsWith('containers.')) return host;
-  const realm = /^[a-f0-9]{24}\.api\./i;
-  if (realm.test(host)) return host.replace(realm, 'containers.');
-  if (host.startsWith('api.')) return `containers.${host.slice(4)}`;
-  const replaced = host.replace('.api.', '.containers.');
-  if (replaced !== host) return replaced;
-  return `containers.${host}`;
+export function deriveComputersDomain(baseUrl?: string): string {
+  return computersDomainFor(baseUrl);
 }
 
 function fail(code: EmbedErrorCode, message: string, field?: string): never {
   throw new EmbedValidationError(code, message, field);
 }
 
-/** One DNS label: letters, digits and inner hyphens. A container's project_id, id and server name are each one. */
+/** One DNS label: letters, digits and inner hyphens. A computer's project_id, id and server name are each one. */
 const DNS_LABEL = /^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/;
-
-/**
- * True when no subdomain can be put in front of the domain: a bracketed IPv6 literal, or a last label the URL parser
- * reads as an IPv4 number (decimal or 0x), so `…sg-sin-1.127.0.0.1` is parsed as an address and refused. A domain
- * with ':' outside brackets never gets here: a given one is refused first, a parsed hostname has none.
- */
-function isIpDomain(domain: string): boolean {
-  if (domain.startsWith('[')) return true;
-  const labels = domain.split('.');
-  if (labels.length > 1 && labels[labels.length - 1] === '') labels.pop();
-  return /^(?:\d+|0x[0-9a-f]*)$/i.test(labels[labels.length - 1]!);
-}
 
 /**
  * For a clearer refusal only: the host of a URL that did not parse, when that host is or ends in an IP address. It
@@ -375,9 +353,9 @@ function resolveView(kit: string, name: string | undefined): RtView {
  * Build the URL of one kit UI view.
  *
  * @param kit    kit slug, e.g. `terminal`, `files`, `notifications`
- * @param target a container (`id`, `project_id`, `server_name`) or a ProxyAlias
+ * @param target a computer (`id`, `project_id`, `server_name`) or a ProxyAlias
  * @param opts   view, index, typed params and passthrough query
- * @param ctx    containers domain, API base URL, or the SDK's getKitUrl
+ * @param ctx    computers domain, API base URL, or the SDK's getKitUrl
  */
 export function buildEmbedUrl(kit: string, target: EmbedTarget, opts: EmbedBuildOptions = {}, ctx: EmbedBuildContext = {}): string {
   const view = resolveView(kit, opts.view);
@@ -482,11 +460,11 @@ export function buildEmbedUrl(kit: string, target: EmbedTarget, opts: EmbedBuild
       values.set(view.aliasSelector, [String(index)]);
     }
   } else {
-    const c = target as EmbedContainerTarget;
+    const c = target as EmbedComputerTarget;
     const given = c?.server_name ?? c?.server;
-    const server = typeof given === 'object' && given !== null ? given.name : given;
+    const server = typeof given === 'object' ? undefined : given;
     if (!c || typeof c.id !== 'string' || c.id === '' || typeof c.project_id !== 'string' || c.project_id === '' || typeof server !== 'string' || server === '') {
-      fail('TARGET_INVALID', 'a container target needs id, project_id and server_name', 'target');
+      fail('TARGET_INVALID', 'a computer target needs id, project_id and server_name', 'target');
     }
     // Each is interpolated into the host, so each must be exactly one DNS label: 'evil.test/' or 'u@evil.test/' in
     // server_name would otherwise move the host.
@@ -495,38 +473,46 @@ export function buildEmbedUrl(kit: string, target: EmbedTarget, opts: EmbedBuild
     if (!DNS_LABEL.test(server)) fail('TARGET_INVALID', 'server_name must be one DNS label: letters, digits and inner hyphens', 'server_name');
     if (ctx.getKitUrl !== undefined) {
       const kitUrlOpts = port !== undefined ? { port } : { serviceIndex: index };
-      // The hook gets the resolved name as server_name: a client that reads server_name ?? server as a string would
-      // otherwise put a server-details object in the host.
+      // The hook gets the resolved node in server_name (a hand-built string `server` is normalized into it), so a
+      // hook that reads only server_name sees the same node this function validated.
       const hookTarget = c.server_name === server ? c : { ...c, server_name: server };
-      origin = ctx.getKitUrl(view.service, hookTarget, kitUrlOpts).replace(/\/+$/, '');
+      try {
+        origin = ctx.getKitUrl(view.service, hookTarget, kitUrlOpts).replace(/\/+$/, '');
+      } catch (error) {
+        // The client refuses an IP-address base (it has no kit host): the embed refusal says the same, with its code.
+        if (error instanceof Error && error.message === IP_BASE_URL_MESSAGE) {
+          fail('TARGET_INVALID', 'an IP-address base URL has no computers domain; pass computersDomain', 'target');
+        }
+        throw error;
+      }
       fromHook = true;
     } else {
-      const given = ctx.containersDomain;
+      const given = ctx.computersDomain;
       // ':' outside brackets is a port or garbage, never an IP address, and so is anything but ':port' after a bracketed
       // literal. A port on good labels says so; on bad ones the message says both. None repeats the value.
       const stray = given === undefined ? false : given.startsWith('[') ? given.replace(/^\[[^\]]*\](?::\d+)?/, '') !== '' : given.includes(':');
       if (given !== undefined && stray) {
         const beforePort = /^([^:]+):\d+$/.exec(given)?.[1];
         const labels = beforePort !== undefined && beforePort.split('.').every((l) => DNS_LABEL.test(l));
-        fail('TARGET_INVALID', labels ? 'containersDomain must not include a port'
-          : beforePort !== undefined ? 'containersDomain must be DNS labels joined by dots, with no port'
-          : 'containersDomain must be DNS labels joined by dots', 'containersDomain');
+        fail('TARGET_INVALID', labels ? 'computersDomain must not include a port'
+          : beforePort !== undefined ? 'computersDomain must be DNS labels joined by dots, with no port'
+          : 'computersDomain must be DNS labels joined by dots', 'computersDomain');
       }
-      const domain = given ?? deriveContainersDomain(ctx.baseUrl);
+      const domain = given ?? deriveComputersDomain(ctx.baseUrl);
       if (isIpDomain(domain)) {
         if (given !== undefined) {
           // Repeated only when it is plainly a host: a value with '@' or other punctuation may hold a user name or
           // password ('bob@10.0.0.1').
-          const shown = /^[a-z0-9.-]+$/i.test(given) || /^\[[0-9a-f:.]*\]$/i.test(given) ? `containersDomain ${given}` : 'containersDomain';
-          fail('TARGET_INVALID', `${shown} is not a DNS name (it ends in an IP address or a numeric label)`, 'containersDomain');
+          const shown = /^[a-z0-9.-]+$/i.test(given) || /^\[[0-9a-f:.]*\]$/i.test(given) ? `computersDomain ${given}` : 'computersDomain';
+          fail('TARGET_INVALID', `${shown} is not a DNS name (it ends in an IP address or a numeric label)`, 'computersDomain');
         }
-        fail('TARGET_INVALID', 'an IP-address base URL has no containers domain; pass containersDomain', 'target');
+        fail('TARGET_INVALID', 'an IP-address base URL has no computers domain; pass computersDomain', 'target');
       }
       // Given or derived, the domain is labels: a derived one comes from a parsed hostname, which may still hold '_'
       // or end in a dot.
       if (!domain.split('.').every((l) => DNS_LABEL.test(l))) {
-        if (ctx.containersDomain !== undefined) fail('TARGET_INVALID', 'containersDomain must be DNS labels joined by dots', 'containersDomain');
-        fail('TARGET_INVALID', `the containers domain ${domain} derived from baseUrl must be DNS labels joined by dots`, 'target');
+        if (ctx.computersDomain !== undefined) fail('TARGET_INVALID', 'computersDomain must be DNS labels joined by dots', 'computersDomain');
+        fail('TARGET_INVALID', `the computers domain ${domain} derived from baseUrl must be DNS labels joined by dots`, 'target');
       }
       let segment: string;
       if (port !== undefined) segment = svc.segment.replace('{port}', String(port));
@@ -556,10 +542,11 @@ export function buildEmbedUrl(kit: string, target: EmbedTarget, opts: EmbedBuild
   if (builtHost !== undefined && host !== builtHost.toLowerCase()) fail('TARGET_INVALID', `the host ${builtHost} parses as ${host}`, 'target');
   // Every source (template, hook, alias) meets the same rules on the host the browser will use.
   if (isIpDomain(host)) fail('TARGET_INVALID', ipHostMessage(host), 'target');
-  // A DNS label is at most 63 octets (RFC 1035 2.3.4), whoever made the host: a 24-hex project and container id
-  // with terminal index 10000 or more make a 64-character label that no resolver or certificate can carry. It is
-  // measured on the hostname the browser resolves, as the reference interpreter does: userinfo is not the host, an
-  // IDN label counts in punycode, a percent-escape counts decoded.
+  // A DNS label is at most 63 octets (RFC 1035 2.3.4), whoever made the host: no resolver or certificate can carry a
+  // longer one. With 24-hex project and computer ids the longest template label, terminal-9999, is exactly 63; longer
+  // ids, a hook host or an alias host can go past it. It is measured on the hostname the browser resolves, as the
+  // reference interpreter does: userinfo is not the host, an IDN label counts in punycode, a percent-escape counts
+  // decoded.
   const longLabel = host.split('.').find((l) => l.length > 63);
   if (longLabel !== undefined) fail('HOST_LABEL_TOO_LONG', `the host label ${longLabel} is ${longLabel.length} characters; a DNS label holds at most 63`, 'target');
   if (!host.split('.').every((l) => DNS_LABEL.test(l))) {

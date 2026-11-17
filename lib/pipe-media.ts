@@ -6,7 +6,7 @@
  * HTTP-based: POST to send, GET to receive, zero server-side storage.
  *
  * Usage:
- *   const pm = PipeMedia.fromClient(client, container);
+ *   const pm = PipeMedia.fromClient(client, computer);
  *   const session = await pm.shareScreen();
  *   console.log('Share this URL:', session.url);
  *   // ... later
@@ -24,13 +24,14 @@
 import { globalFetchPipeTransport, pipeTransportFromClient, type PipeTransport } from './pipe-transport.js';
 import { PipeTransferError, StatusLines, errorText, reservedPipePath } from './pipe-status.js';
 import { parseSseStream } from './sse-stream.js';
+import { retireAccessors } from './retired-accessor.js';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export interface PipeMediaConfig {
-  /** Full pipe kit base URL (e.g. https://proj-ctr-pipe-1.srv.containers.hoody.com) */
+  /** Full pipe kit base URL (e.g. https://proj-ctr-pipe-1.srv.computers.hoody.com) */
   pipeBaseUrl: string;
   /** Path prefix for pipe endpoints (default: '/api/v1/pipe') */
   basePath?: string;
@@ -162,7 +163,7 @@ export interface ShareAudioOptions {
 export interface ReceiveMediaOptions {
   /** Expected MIME type from sender. Auto-detected from X-Hoody-Pipe header if omitted. */
   mimeType?: string;
-  /** Playback mode. 'mse' for MediaSource Extensions (live), 'direct' to set video.src to pipe URL. Auto-selects MSE when supported. */
+  /** Playback mode. 'mse' for MediaSource Extensions (live), 'direct' to set video.src to pipe URL. Default: 'mse'; there is no automatic fallback to 'direct'. */
   mode?: 'mse' | 'direct';
   /** Number of receivers (default: 1) */
   n?: number;
@@ -182,9 +183,9 @@ export interface MediaSession {
   /** Actual MIME type used by the recorder */
   readonly mimeType: string;
   /** Whether the session is still active (not stopped) */
-  readonly active: boolean;
+  isActive(): boolean;
   /** Whether recording is currently paused */
-  readonly paused: boolean;
+  isPaused(): boolean;
   /** This share's transfer id (sent as `?transfer=`): `?status&transfer=<id>` on the name is this transfer. */
   readonly transferId: string;
   /**
@@ -215,7 +216,7 @@ export interface MediaSession {
 
 export interface ReceiveSession {
   /** Whether the session is still active */
-  readonly active: boolean;
+  isActive(): boolean;
   /** Resolves when playback/stream ends */
   readonly done: Promise<void>;
   /** Stop receiving and release resources */
@@ -326,7 +327,7 @@ export interface MediaStreamConversion {
    */
   hold(paused: boolean): void;
   /** Why the stream failed when it outgrew its bound (16 MiB waiting); undefined otherwise. */
-  readonly failure: Error | undefined;
+  getFailure(): Error | undefined;
 }
 
 /** Recorded bytes waiting for the reader (queued, or still Blobs being converted) at which the recorder pauses. */
@@ -443,7 +444,8 @@ export function mediaStreamToReadableStream(
     },
   }, { highWaterMark: CAPTURE_PAUSE_BYTES, size: (chunk) => chunk.byteLength });
 
-  return {
+  // The getter `getFailure()` replaced refuses, naming the method.
+  return retireAccessors<MediaStreamConversion>({
     stream,
     recorder,
     mimeType: recorder.mimeType || resolvedMime,
@@ -455,14 +457,22 @@ export function mediaStreamToReadableStream(
         resumeIfWanted();
       }
     },
-    get failure() { return failure; },
-  };
+    getFailure() { return failure; },
+  }, 'MediaStreamConversion', { failure: 'getFailure()' });
 }
 
 // ---------------------------------------------------------------------------
 // PipeMedia class
 // ---------------------------------------------------------------------------
 
+/**
+ * Streams live media through a computer's pipe from a browser page: `shareScreen()`, `shareWebcam()` and
+ * `shareAudio()` record and upload, `receiveMedia()` plays a stream in a `<video>` element, and `sendStream()` /
+ * `receiveStream()` move raw bytes. `getPageUrl()` and `openPage()` link to the pipe's own browser pages.
+ *
+ * Browser only (it needs MediaRecorder and the capture APIs; see `PipeMedia.isSupported()`). Build one with
+ * `PipeMedia.fromClient(client, computer)` so the client's credentials apply.
+ */
 export class PipeMedia {
   private readonly baseUrl: string;
   private readonly basePath: string;
@@ -471,6 +481,10 @@ export class PipeMedia {
   /** A given transport may not honour `cache`, so its receive URLs get a unique `_=`. */
   private readonly bustCache: boolean;
 
+  /**
+   * Build a PipeMedia on an explicit pipe base URL. Without `config.transport` requests go through the global
+   * `fetch` with no credential; prefer `PipeMedia.fromClient()`.
+   */
   constructor(config: PipeMediaConfig) {
     this.baseUrl = config.pipeBaseUrl.replace(/\/+$/, '');
     this.basePath = (config.basePath ?? '/api/v1/pipe').replace(/\/+$/, '');
@@ -480,13 +494,13 @@ export class PipeMedia {
   }
 
   /**
-   * Create a PipeMedia instance from a HoodyClient + container.
+   * Create a PipeMedia instance from a HoodyClient + computer.
    * Automatically resolves the pipe kit URL, and sends through `client.http`
    * so the client's injected transport and kitAuth apply
    * (lib/pipe-transport.ts).
    */
-  static fromClient(client: any, container: any, serviceIndex = 1): PipeMedia {
-    const pipeBaseUrl = client.getKitUrl('pipe', container, serviceIndex);
+  static fromClient(client: any, computer: any, serviceIndex = 1): PipeMedia {
+    const pipeBaseUrl = client.getKitUrl('pipe', computer, serviceIndex);
     const transport = pipeTransportFromClient(client);
     return new PipeMedia({ pipeBaseUrl, ...(transport ? { transport } : {}) });
   }
@@ -616,8 +630,8 @@ export class PipeMedia {
    *   noscript  `/noscript?path={encoded name}&mode=&wait=&sha256=1` (name optional)
    *
    * Pages live under the base path (`/api/v1/pipe`), like the kit's own links.
-   * The name is encoded per segment (`/` stays a separator, a leading `/` is
-   * kept). The noscript page puts its `path` into the form's URL as it is, so
+   * The name is encoded per segment (`/` stays a separator, leading `/`s are
+   * dropped). The noscript page puts its `path` into the form's URL as it is, so
    * it gets the encoded name, and the form posts to the pipe the SDK uses;
    * its single path field takes no `/`. `n` is written only above 1,
    * `autostart`, `sha256` and `live` only when true. A reserved name, a
@@ -648,6 +662,14 @@ export class PipeMedia {
   // Share screen
   // -------------------------------------------------------------------------
 
+  /**
+   * Ask the user for a screen, window or tab, record it and upload the recording to a pipe. Resolves with the
+   * session once the capture is granted: `session.url` is the link viewers open, `session.stop()` ends the share
+   * and releases the capture. The link opens the pipe's video player unless `viewer` is false.
+   *
+   * Rejects when the user dismisses the picker or the browser refuses the capture. A bad `path`, `live` with `n`
+   * above 1, or `live` with a non-WebM `mimeType` throws before the picker is shown. Call it from a user gesture.
+   */
   async shareScreen(opts?: ShareScreenOptions): Promise<MediaSession> {
     this.checkSharePath(opts?.path, opts);
     const displayOpts: DisplayMediaStreamOptions = opts?.displayMediaOptions
@@ -663,6 +685,11 @@ export class PipeMedia {
   // Share webcam
   // -------------------------------------------------------------------------
 
+  /**
+   * Record the camera and microphone and upload the recording to a pipe. `video` and `audio` default to true and
+   * also accept MediaTrackConstraints. Returns the same session as `shareScreen()`; rejects when the user or the
+   * browser refuses the devices, and refuses a bad `path` or `live` combination before asking for them.
+   */
   async shareWebcam(opts?: ShareWebcamOptions): Promise<MediaSession> {
     this.checkSharePath(opts?.path, opts);
     const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -764,6 +791,14 @@ export class PipeMedia {
   // Low-level: send any ReadableStream
   // -------------------------------------------------------------------------
 
+  /**
+   * POST any `ReadableStream` to the pipe `path` and return the sender's `Response`. `contentType` defaults to
+   * `application/octet-stream`; `n` is the number of receivers to wait for, `live` makes it a live stream (not
+   * with `n` above 1: RangeError).
+   *
+   * The response arrives as soon as the upload is accepted, so a later failure shows only in its body of status
+   * lines, not in the HTTP status. A streamed request body needs a transport that supports one.
+   */
   async sendStream(
     path: string,
     stream: ReadableStream,
@@ -787,6 +822,11 @@ export class PipeMedia {
   // Low-level: receive raw stream
   // -------------------------------------------------------------------------
 
+  /**
+   * GET the pipe `path` and return the raw `Response`; its body is the sender's bytes. `n` must match the
+   * sender's; `live` joins a live stream from now on (not with `n` above 1: RangeError). The response is not
+   * checked: read `ok` and `status` yourself.
+   */
   async receiveStream(path: string, opts?: { n?: number; live?: boolean; signal?: AbortSignal }): Promise<Response> {
     let url = this.getUrl(path);
     if (opts?.live === true) url += liveQuery('receiveStream', opts.n);
@@ -811,6 +851,11 @@ export class PipeMedia {
   // Receive media into a <video> element
   // -------------------------------------------------------------------------
 
+  /**
+   * Play the media stream of pipe `path` in `videoElement`. `mode: 'mse'` (the default) feeds the stream through
+   * Media Source Extensions; `'direct'` sets the pipe URL as the element's source. Returns a session whose `done`
+   * settles when the stream ends and whose `stop()` ends playback and releases what it holds.
+   */
   async receiveMedia(
     path: string,
     videoElement: HTMLVideoElement,
@@ -832,11 +877,16 @@ export class PipeMedia {
   // -------------------------------------------------------------------------
 
   /**
-   * Throw for a bad `path`, or `live` with `n` above 1 or a non-WebM `mimeType`,
-   * before any capture starts, so a refused share never turns a camera on.
+   * Throw for a bad `path` (reserved, dot segment, control character, backslash or
+   * over the length cap: what the kit refuses only after the upload starts), or
+   * `live` with `n` above 1 or a non-WebM `mimeType`, before any capture starts,
+   * so a refused share never turns a camera on.
    */
   private checkSharePath(path: string | undefined, live?: { live?: boolean; n?: number; mimeType?: string }): void {
-    if (path !== undefined) this.getUrl(path);
+    if (path !== undefined) {
+      this.getUrl(path);
+      checkedPipeName(path, 'share');
+    }
     if (live?.live === true) {
       liveQuery('share', live.n);
       if (live.mimeType !== undefined && !isWebmMime(live.mimeType)) {
@@ -960,7 +1010,7 @@ export class PipeMedia {
         } catch (err) {
           // Our own abort (the stop() fallback) is not a failure.
           if (!abortController.signal.aborted) {
-            fail(new PipeTransferError(`pipe share failed: ${errorText(conversion.failure ?? err)}`, res.status, status.messages));
+            fail(new PipeTransferError(`pipe share failed: ${errorText(conversion.getFailure() ?? err)}`, res.status, status.messages));
           }
         } finally {
           if (!ended) void reader.cancel().catch(() => undefined);
@@ -979,7 +1029,7 @@ export class PipeMedia {
       // Abort errors are expected on manual stop() — swallow them
       if (abortController.signal.aborted) return;
       // Real network failure (or a recording that outgrew its bound) — auto-stop to release camera/screen
-      fail(new PipeTransferError(`pipe share failed: ${errorText(conversion.failure ?? err)}`, 0));
+      fail(new PipeTransferError(`pipe share failed: ${errorText(conversion.getFailure() ?? err)}`, 0));
     });
 
     // A browser hands over the upload's response only once the upload ends
@@ -1002,15 +1052,16 @@ export class PipeMedia {
       }, { once: true });
     }
 
-    const session: MediaSession = {
+    // The getters these reads replaced refuse, naming the methods.
+    const session: MediaSession = retireAccessors<MediaSession>({
       url: shareUrl,
       path: pipePath,
       mediaStream,
       recorder,
       mimeType,
       transferId,
-      get active() { return !stopped; },
-      get paused() { return recorder.state === 'paused'; },
+      isActive() { return !stopped; },
+      isPaused() { return recorder.state === 'paused'; },
       done,
 
       stop() {
@@ -1079,7 +1130,7 @@ export class PipeMedia {
         }
         endedCallbacks.push(callback);
       },
-    };
+    }, 'MediaSession', { active: 'isActive()', paused: 'isPaused()' });
 
     return session;
   }
@@ -1185,8 +1236,10 @@ export class PipeMedia {
       }
       const body = parseJsonObject(await res.text());
       return { status: 200, body: signal.aborted ? null : body };
-    } catch {
-      return { status: 0, body: null };
+    } catch (err) {
+      // fromClient()'s transport throws ApiError on a non-2xx; keep its status (a 404 is "gone").
+      const status = (err as { status?: unknown } | null)?.status;
+      return { status: typeof status === 'number' ? status : 0, body: null };
     }
   }
 
@@ -1269,8 +1322,8 @@ export class PipeMedia {
       videoElement.addEventListener('error', onError, { once: true });
     });
 
-    return {
-      get active() { return !stopped; },
+    return retireAccessors<ReceiveSession>({
+      isActive() { return !stopped; },
       done,
       stop() {
         if (stopped) return;
@@ -1279,7 +1332,7 @@ export class PipeMedia {
         videoElement.removeAttribute('src');
         videoElement.load();
       },
-    };
+    }, 'ReceiveSession', { active: 'isActive()' });
   }
 
   // -------------------------------------------------------------------------
@@ -1575,8 +1628,8 @@ export class PipeMedia {
       }, { once: true });
     });
 
-    return {
-      get active() { return !stopped; },
+    return retireAccessors<ReceiveSession>({
+      isActive() { return !stopped; },
       done,
       stop() {
         if (stopped) return;
@@ -1585,7 +1638,7 @@ export class PipeMedia {
         videoElement.removeAttribute('src');
         videoElement.load();
       },
-    };
+    }, 'ReceiveSession', { active: 'isActive()' });
   }
 }
 
@@ -1884,11 +1937,14 @@ export function withCacheBuster(url: string): string {
 
 /**
  * Encode a pipe name for a URL path: each `/`-separated segment is
- * percent-encoded on its own, so `/` stays a separator and a leading `/` is
- * kept. A `.` or `..` segment (also as `%2e`) throws: see PipeMedia.getUrl.
+ * percent-encoded on its own, so `/` stays a separator. Leading `/`s are
+ * dropped, as in encodePipePath and the generated pipe methods (`/name` and
+ * `name` are one pipe). A `.` or `..` segment (also as `%2e`) throws: see
+ * PipeMedia.getUrl.
  */
 export function encodePipeName(path: string): string {
   return String(path)
+    .replace(/^\/+/, '')
     .split('/')
     .map(segment => {
       let decoded = segment;
@@ -2021,7 +2077,8 @@ export function buildPipePageUrl<P extends PipePage>(
     path = '/';
     if (name !== undefined) {
       checkedPipeName(name, page);
-      query.push(`name=${encodeURIComponent(name)}`);
+      // The page keeps a leading `/` ("/x" is its pipe "//x"); every client drops it.
+      query.push(`name=${encodeURIComponent(name.replace(/^\/+/, ''))}`);
     }
   } else if (page === 'noscript') {
     path = '/noscript';

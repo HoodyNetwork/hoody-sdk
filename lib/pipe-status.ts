@@ -120,14 +120,14 @@ export function checkTransferId(id: unknown): string {
   return id;
 }
 
-/** What the kit serves itself under its prefix instead of a pipe: the pages of its reserved-paths.ts, and its health and metrics endpoints. */
+/** What the kit serves itself under its prefix instead of a pipe: its own pages, and its health and metrics endpoints. */
 const RESERVED_PIPE_PATHS: ReadonlySet<string> = new Set([
   '/', '/noscript', '/help', '/favicon.ico', '/robots.txt', '/health', '/metrics',
 ]);
 
 /**
  * The kit path a pipe name lands on when the kit answers it itself, or null
- * for an ordinary name. The kit's own rule (normalizeReservedPath): compared
+ * for an ordinary name. The kit's own rule: compared
  * case-insensitively after one trailing `/`, then one trailing `.`, is
  * dropped. So `Metrics`, `help/`, `noscript.` and `/` are reserved, while
  * `metrics..` is a pipe. Runs of `/` count as one first: the kit itself
@@ -162,6 +162,7 @@ export function pipeContentDisposition(filename: string): string {
   return `attachment; filename="${ascii}"; filename*=UTF-8''${encoded}`;
 }
 
+/** The message of an Error, else the value as a string. */
 export function errorText(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }

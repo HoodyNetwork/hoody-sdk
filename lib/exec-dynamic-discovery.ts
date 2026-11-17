@@ -1,8 +1,8 @@
 /**
  * Exec Dynamic Discovery — SDK-side runtime discovery of user scripts on exec
- * containers. Fetches the script inventory via `openapi.listScripts()` and parses
+ * computers. Fetches the script inventory via `openapi.listScripts()` and parses
  * each entry's metadata (HTTP method, parameters, tags) into
- * `DiscoveredScript` objects consumed by SDK callers and agent surfaces.
+ * `CallableScript` objects consumed by SDK callers and agent surfaces.
  *
  * Security:
  *   - Script names sanitized to [a-z0-9-], max 64 chars
@@ -24,7 +24,7 @@ const TOOL_NAME_RE = /^[a-z0-9-]+$/;
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
-export interface DiscoveredScript {
+export interface CallableScript {
   name: string;
   path: string;
   label?: string | undefined;
@@ -34,7 +34,7 @@ export interface DiscoveredScript {
   httpMethod: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   scriptPath: string;
 
-  parameters: DiscoveredParam[];
+  parameters: CallableScriptParam[];
   hasRequestBody: boolean;
   requestBodySchema?: Record<string, unknown> | undefined;
   responseSchema?: Record<string, unknown> | undefined;
@@ -43,7 +43,7 @@ export interface DiscoveredScript {
   tableColumns?: Array<{ field: string; header: string; width?: number }> | undefined;
 }
 
-export interface DiscoveredParam {
+export interface CallableScriptParam {
   name: string;
   flag: string;
   type: 'string' | 'number' | 'boolean';
@@ -56,17 +56,17 @@ export interface DiscoveredParam {
   isBodyParam: boolean;
 }
 
-export interface DiscoveryCache {
+export interface CallableScriptsCache {
   version: number;
-  containerId: string;
+  computerId: string;
   fetchedAt: string;
   ttlMs: number;
-  scripts: DiscoveredScript[];
+  scripts: CallableScript[];
 }
 
-export interface DiscoverOptions {
+export interface ListCallableScriptsOptions {
   signal?: AbortSignal | undefined;
-  /** Template vars for exec container URL resolution */
+  /** Template vars for exec computer URL resolution */
   templateVars?: Record<string, string | number> | undefined;
 }
 
@@ -127,7 +127,7 @@ function camelToKebab(str: string): string {
 export function extractParamsFromSchema(
   schema: Record<string, unknown> | undefined,
   httpMethod: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
-): DiscoveredParam[] {
+): CallableScriptParam[] {
   if (!schema) return [];
 
   // Check schema size
@@ -141,7 +141,7 @@ export function extractParamsFromSchema(
     Array.isArray(schema.required) ? (schema.required as string[]) : [],
   );
 
-  const params: DiscoveredParam[] = [];
+  const params: CallableScriptParam[] = [];
   const entries = Object.entries(properties);
 
   for (const [propName, propSchema] of entries) {
@@ -174,9 +174,9 @@ export function extractParamsFromSchema(
  * Extract path parameters from file-based routing patterns.
  * Example: "api/users/[id].ts" yields a path param "id".
  */
-export function extractPathParams(scriptPath: string): DiscoveredParam[] {
+export function extractPathParams(scriptPath: string): CallableScriptParam[] {
   const matches = scriptPath.matchAll(/\[([^\]]+)\]/g);
-  const params: DiscoveredParam[] = [];
+  const params: CallableScriptParam[] = [];
 
   for (const match of matches) {
     const paramName = match[1]!;
@@ -220,7 +220,7 @@ export function sanitizeDescription(text: string | undefined): string | undefine
 // ─── Discovery ───────────────────────────────────────────────────────────────
 
 /**
- * Discover user scripts from an exec container.
+ * Discover user scripts from an exec computer.
  *
  * Calls `openapi.listScripts()` to get the script inventory, then enriches
  * each entry with schema information where available.
@@ -232,11 +232,11 @@ export function sanitizeDescription(text: string | undefined): string | undefine
  * `openapi.listScripts` response is available (no ScriptsService handle) and
  * therefore skips this enrichment step.
  */
-export async function discoverScripts(
+export async function listCallableScripts(
   openapiService: OpenapiService,
   scriptsService: ScriptsService | undefined,
-  options?: DiscoverOptions,
-): Promise<DiscoveredScript[]> {
+  options?: ListCallableScriptsOptions,
+): Promise<CallableScript[]> {
   const templateVars = options?.templateVars as Parameters<OpenapiService['listScripts']>[1];
 
   // listScripts is not paginated; call it directly and extract the array
@@ -258,9 +258,9 @@ export async function discoverScripts(
 
       try {
         // Same endpoint as listScripts above: the caller's templateVars
-        // override (another container / execId) and signal. Without them the
+        // override (another computer / execId) and signal. Without them the
         // companion schema was read from the service's DEFAULT endpoint — a
-        // different container's file, or none — while the list came from the
+        // different computer's file, or none — while the list came from the
         // override.
         const schemaResponse = await scriptsService.readFile(
           scriptPath.replace(/\.(ts|js|mjs|cjs)$/i, ''),

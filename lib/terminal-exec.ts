@@ -12,7 +12,7 @@
  *   - `shell(options?)` — open an interactive PTY session (like opening
  *     a remote terminal). Uses WebSocket duplex stream via TerminalClient.
  *
- *   Both methods require a container-scoped client (via `withContainer()`).
+ *   Both methods require a computer-scoped client (via `withComputer()`).
  *   `shell` is attached to HoodyClient.prototype via module augmentation and
  *   runtime prototype patching, following the same pattern as exec-scripts.ts;
  *   `terminal.run` is installed on each client's terminal namespace object
@@ -22,9 +22,11 @@
 import { Duplex } from 'stream';
 import { HoodyClient } from './hoody-client.js';
 import { TerminalClient, type TerminalClientOptions } from './terminal-client.js';
-import { assertContainerScoped, type TerminalExecOptions, type TerminalExecResult } from './terminal-run.js';
+import { assertComputerScoped, type TerminalExecOptions, type TerminalExecResult } from './terminal-run.js';
 import { type ProxyAuth, type ProxyAuthPolicy, isProxyAuthPolicy } from './proxy-auth.js';
 import { terminalHostLabel } from './terminal-host.js';
+import { retireAccessors } from './retired-accessor.js';
+import { refuseRetiredOptions } from '../generated/errors.js';
 
 export interface TerminalShellOptions {
   /** Working directory */
@@ -40,21 +42,22 @@ export interface TerminalShellOptions {
   /** Terminal rows (default: 24) */
   rows?: number;
   /**
-   * Join the terminal session with this id (1-65535) instead of opening a
-   * fresh one. Everyone who joins the same id shares one shell: its input,
+   * Join the terminal session with this id instead of opening a
+   * fresh one. New sessions take 1-9999; pin your own in 1-1600 (1601-5000
+   * back desktops and agents, 5001-7999 is the ephemeral pool, 8001-9999 is
+   * Hoody Run and the Hub). Everyone who joins the same id shares one shell: its input,
    * its output and its state. `1` is the terminal the web UI opens by default.
    * A session opened this way outlives the connection.
    *
    * Omitted (the default), every `shell()` call gets a session of its own: the
-   * kit assigns it an id in 40000-65535 (`shell.terminalId`) and cleans it up
+   * kit assigns it an id in 5001-7999 (`shell.getTerminalId()`) and cleans it up
    * after the connection closes.
+   *
+   * `serviceIndex` and `terminal_id` are retired spellings and are refused.
+   * A caller that passed `serviceIndex: 0` omits `terminalId` for a fresh
+   * session; any other `serviceIndex: N` is `terminalId: N`.
    */
   terminalId?: number | string;
-  /**
-   * Older spelling of `terminalId`: the terminal host index. `0` (the default)
-   * is "no terminal id", a fresh session; any other value joins that session.
-   */
-  serviceIndex?: number;
   /** Connection timeout in ms (default: 30000) */
   timeout?: number;
   /**
@@ -80,15 +83,15 @@ export interface TerminalShellOptions {
 export interface TerminalShell extends Duplex {
   /**
    * Resolves when the WebSocket connection is established and the kit has
-   * named the session, so `terminalId` is set. A kit that does not name the
+   * named the session, so `getTerminalId()` is set. A kit that does not name the
    * session within a few seconds does not hold `ready` back: it resolves
-   * with `terminalId` still ''.
+   * with `getTerminalId()` still ''.
    */
   readonly ready: Promise<void>;
   /** Whether the underlying WebSocket is connected */
-  readonly connected: boolean;
-  /** Server-assigned terminal session ID */
-  readonly terminalId: string;
+  isConnected(): boolean;
+  /** Server-assigned terminal session ID ('' until the kit names the session) */
+  getTerminalId(): string;
   /**
    * Resize the PTY. While a reconnected fresh session is still being
    * confirmed, the size is only recorded; it is sent once the session is
@@ -108,33 +111,8 @@ export interface TerminalShell extends Duplex {
   destroy(error?: Error): this;
 }
 
-// ---------------------------------------------------------------------------
-// Module augmentation
-// ---------------------------------------------------------------------------
-
-declare module './hoody-client.js' {
-  interface HoodyClient {
-    /**
-     * Open an interactive PTY shell session to the container.
-     *
-     * Each call opens a fresh session of its own; pass `terminalId` to join a
-     * shared one instead (see TerminalShellOptions.terminalId).
-     *
-     * Returns a Duplex stream that supports `.pipe()`.
-     * Requires a container-scoped client (call `withContainer()` first).
-     *
-     * @example
-     * ```ts
-     * const scoped = await client.withContainer(container);
-     * const sh = scoped.shell();
-     * await sh.ready;
-     * sh.write('echo hello\n');
-     * sh.pipe(process.stdout);
-     * ```
-     */
-    shell(options?: TerminalShellOptions): TerminalShell;
-  }
-}
+// The `client.shell()` declaration lives in lib/index.ts (the Node entry), so the browser
+// entry's types never reach this file's Node `stream` import.
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -144,21 +122,22 @@ declare module './hoody-client.js' {
  * Build a WebSocket URL for terminal from urlTemplates directly.
  *
  * We cannot use `getKitUrl('terminal', null, index)` because it throws
- * when container is null. Instead we build from the urlTemplates set by
- * `withContainer()`.
+ * when computer is null. Instead we build from the urlTemplates set by
+ * `withComputer()`.
  */
 function getTerminalWsUrl(client: any, serviceIndex = 0): string {
   const t = client.urlTemplates?.['terminal'];
-  if (!t?.projectId || !t?.containerId || !t?.server) {
-    throw new Error('shell() requires a container-scoped client with terminal URL templates');
+  if (!t?.projectId || !t?.computerId || !t?.server) {
+    throw new Error('shell() requires a computer-scoped client with terminal URL templates');
   }
   const domain: string =
-    typeof client.resolveContainersDomain === 'function'
-      ? client.resolveContainersDomain()
-      : 'containers.hoody.com';
-  // terminalHostLabel: an id of 10000 or more does not fit `terminal-<N>` in a
-  // DNS label; it gets the proxy's short `t-<N>` (lib/terminal-host.ts).
-  return `wss://${terminalHostLabel(t.projectId, t.containerId, serviceIndex)}.${t.server}.${domain}`;
+    typeof client.resolveComputersDomain === 'function'
+      ? client.resolveComputersDomain()
+      : 'computers.hoody.com';
+  // terminalHostLabel: an id of 10000 or more (only an older kit makes one)
+  // does not fit `terminal-<N>` in a DNS label; it gets the proxy's short
+  // `t-<N>` (lib/terminal-host.ts).
+  return `wss://${terminalHostLabel(t.projectId, t.computerId, serviceIndex)}.${t.server}.${domain}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -201,7 +180,8 @@ function sessionBirth(row: SessionRow | undefined): number | string | undefined 
 
 class TerminalShellImpl extends Duplex implements TerminalShell {
   private _terminal: TerminalClient;
-  private _ready: Promise<void>;
+  /** A Promise property (a field, not a getter), like a WHATWG stream writer's `ready`. */
+  readonly ready: Promise<void>;
   private _writeQueue: Array<{
     chunk: Buffer | string;
     encoding: BufferEncoding;
@@ -263,14 +243,14 @@ class TerminalShellImpl extends Duplex implements TerminalShell {
       }
     });
 
-    // FIX: Do NOT manually emit 'close' here.
+    // Do NOT manually emit 'close' here.
     // Node.js Duplex streams automatically emit 'close' after _destroy()
     // completes. Manual emission causes a duplicate 'close' event.
     this._terminal.on('close', () => {
       this._pushEof();
     });
 
-    // FIX: When reconnect is enabled, transient errors
+    // When reconnect is enabled, transient errors
     // (e.g. WebSocket connect failures) should NOT destroy the wrapper —
     // TerminalClient will attempt reconnection. Destroying here defeats
     // the reconnect behavior. Only destroy when reconnect is disabled.
@@ -278,9 +258,9 @@ class TerminalShellImpl extends Duplex implements TerminalShell {
       if (!terminalOptions.reconnect) {
         // A transport error on an open connection comes just before its
         // close. Ending the shell at the error reported a lost link as a
-        // normal close (1000 "Stream destroyed", BT2-TERM-004): end it at
+        // normal close (1000 "Stream destroyed"): end it at
         // the close instead, so 'disconnect' carries the close's own code.
-        if (this._terminal.connected && !this.destroyed) {
+        if (this._terminal.isConnected() && !this.destroyed) {
           if (!this._lostError) {
             this._lostError = err;
             // The close follows the error at once (the transport's frame
@@ -330,14 +310,14 @@ class TerminalShellImpl extends Duplex implements TerminalShell {
         return;
       }
       this._everConnected = true;
-      // FIX: Reset _connectFailed on successful
+      // Reset _connectFailed on successful
       // reconnect so writes are not permanently rejected.
       this._connectFailed = false;
       this.emit('connect');
       this._flushQueue();
     });
 
-    // FIX: On disconnect, only
+    // On disconnect, only
     // push EOF and drain writes when reconnect is disabled. If reconnect
     // is enabled, a temporary disconnect will reconnect — pushing EOF
     // would permanently end the readable side, causing ERR_STREAM_PUSH_AFTER_EOF
@@ -353,7 +333,7 @@ class TerminalShellImpl extends Duplex implements TerminalShell {
       }
       if (!terminalOptions.reconnect) {
         this._pushEof();
-        // FIX: Set _connectFailed so future writes
+        // Set _connectFailed so future writes
         // are immediately rejected instead of silently queuing forever.
         this._connectFailed = true;
         this._drainQueueWithError(new Error(`Disconnected (code: ${code}, reason: ${reason})`));
@@ -368,7 +348,7 @@ class TerminalShellImpl extends Duplex implements TerminalShell {
       }
     });
 
-    // FIX: Handle reconnect exhaustion. TerminalClient
+    // Handle reconnect exhaustion. TerminalClient
     // emits 'reconnect-failed' when all retry attempts are used up. Without
     // this handler, the wrapper stays in limbo — not closed, not errored,
     // writes stall forever.
@@ -384,36 +364,32 @@ class TerminalShellImpl extends Duplex implements TerminalShell {
     // Connect and expose as a promise. `ready` also waits for the kit's
     // SET_TERMINAL_ID frame, which follows the upgrade: without the wait
     // `terminalId` was still '' right after `await shell.ready`.
-    this._ready = this._terminal.connect().then(() => this._waitForTerminalId(
+    this.ready = this._terminal.connect().then(() => this._waitForTerminalId(
       Math.min(TERMINAL_ID_WAIT_MS, terminalOptions.timeout ?? 30000),
     )).catch((err: Error) => {
-      // FIX: If connection fails, drain queued writes
+      // If connection fails, drain queued writes
       // with error so callers don't hang indefinitely.
       this._connectFailed = true;
       this._drainQueueWithError(err);
-      // FIX: Destroy the stream so consumers
+      // Destroy the stream so consumers
       // using event listeners (not await) receive the error properly.
       this.destroy(err);
       throw err;
     });
 
-    // FIX: Prevent unhandled Promise
+    // Prevent unhandled Promise
     // rejection if consumer uses event listeners instead of awaiting
     // `shell.ready`. The error is already propagated via stream 'error'
     // event above; this just silences the unhandled rejection warning.
-    this._ready.catch(() => {});
+    this.ready.catch(() => {});
   }
 
-  get ready(): Promise<void> {
-    return this._ready;
+  isConnected(): boolean {
+    return this._terminal.isConnected();
   }
 
-  get connected(): boolean {
-    return this._terminal.connected;
-  }
-
-  get terminalId(): string {
-    return this._terminal.terminalId;
+  getTerminalId(): string {
+    return this._terminal.getTerminalId();
   }
 
   resize(cols: number, rows: number): void {
@@ -426,7 +402,7 @@ class TerminalShellImpl extends Duplex implements TerminalShell {
       // that is not confirmed yet (or behind input that is still queued) it
       // waits in the queue, so it can never reach a shell before the input
       // typed ahead of it, or a shell that is not this one.
-      if (this._terminal.connected) {
+      if (this._terminal.isConnected()) {
         if (this._verifying || this._lostError || this._writeQueue.length > 0 || this._flushing) {
           this._writeQueue.push({ chunk: '\x03', encoding: 'utf8', callback: () => undefined });
         } else {
@@ -434,16 +410,16 @@ class TerminalShellImpl extends Duplex implements TerminalShell {
         }
       }
     } else {
-      // FIX: Mark wrapper as permanently failed so
+      // Mark wrapper as permanently failed so
       // subsequent writes are rejected immediately. kill() with non-SIGINT
       // intentionally terminates the session — it should not be recoverable
       // via reconnect.
       this._connectFailed = true;
-      // FIX: Drain queued writes immediately so
+      // Drain queued writes immediately so
       // callbacks don't hang. The disconnect handler only drains when
       // reconnect=false, but kill() is intentional — always drain.
       this._drainQueueWithError(new Error(`Shell killed with ${signal}`));
-      // FIX: Push EOF so the readable side ends. Without
+      // Push EOF so the readable side ends. Without
       // this, reconnect:true shells would never emit 'end' after kill(),
       // leaving consumers (pipe, await) hanging indefinitely.
       this._pushEof();
@@ -464,12 +440,12 @@ class TerminalShellImpl extends Duplex implements TerminalShell {
       return;
     }
 
-    // FIX: Check queue state to prevent out-of-order
+    // Check queue state to prevent out-of-order
     // writes. If the queue is non-empty or currently flushing, new writes
     // must go through the queue to preserve ordering.
     // A lost connection (_lostError) still reads as connected until its close
     // is reported: a write sent into it would fail and end the shell first.
-    if (this._terminal.connected && !this._verifying && !this._lostError && this._writeQueue.length === 0 && !this._flushing) {
+    if (this._terminal.isConnected() && !this._verifying && !this._lostError && this._writeQueue.length === 0 && !this._flushing) {
       this._terminal.write(chunk, encoding, callback);
     } else {
       // Queue writes until connected and queue is drained
@@ -484,7 +460,7 @@ class TerminalShellImpl extends Duplex implements TerminalShell {
     }
   }
 
-  // FIX: Implement _final so that shell.end() properly tears
+  // Implement _final so that shell.end() properly tears
   // down the remote PTY session instead of leaving it orphaned.
   override _final(callback: (error?: Error | null) => void): void {
     this._terminal.disconnect('stream ended');
@@ -573,7 +549,7 @@ class TerminalShellImpl extends Duplex implements TerminalShell {
     const cause = this._lostError;
     this._lostError = null;
     if (!cause || this.destroyed) return;
-    const id = this._terminal.terminalId;
+    const id = this._terminal.getTerminalId();
     this._connectFailed = true;
     this._pushEof();
     this.destroy(Object.assign(new Error(
@@ -596,7 +572,7 @@ class TerminalShellImpl extends Duplex implements TerminalShell {
    * resolve (the connection itself is up; `terminalId` is then still '').
    */
   private _waitForTerminalId(timeoutMs: number): Promise<void> {
-    if (this._terminal.terminalId || !this._terminal.connected) return Promise.resolve();
+    if (this._terminal.getTerminalId() || !this._terminal.isConnected()) return Promise.resolve();
     return new Promise<void>((resolve) => {
       const done = () => {
         clearTimeout(timer);
@@ -614,7 +590,7 @@ class TerminalShellImpl extends Duplex implements TerminalShell {
 
   /**
    * Push EOF (null) to the readable side exactly once.
-   * FIX: Both 'close' and 'disconnect' can fire in
+   * Both 'close' and 'disconnect' can fire in
    * sequence. Without this guard, push(null) would be called twice, which
    * is a stream state error.
    */
@@ -627,7 +603,7 @@ class TerminalShellImpl extends Duplex implements TerminalShell {
 
   /**
    * Drain all queued writes with an error. Called on destroy or connection failure.
-   * FIX: Ensures all pending write callbacks are invoked.
+   * Ensures all pending write callbacks are invoked.
    */
   private _drainQueueWithError(error: Error): void {
     const pending = this._writeQueue.splice(0);
@@ -636,23 +612,23 @@ class TerminalShellImpl extends Duplex implements TerminalShell {
     }
   }
 
-  // FIX: Use queueMicrotask to prevent deep recursion
+  // Use queueMicrotask to prevent deep recursion
   // if TerminalClient.write() invokes callbacks synchronously. This turns
   // the recursive flush into a trampolined iteration.
   private _flushQueue(): void {
-    if (this._flushing || this._verifying || this._lostError || !this._terminal.connected) return;
+    if (this._flushing || this._verifying || this._lostError || !this._terminal.isConnected()) return;
     this._flushing = true;
 
     const flush = () => {
-      // FIX: Re-check connection state between microtasks.
+      // Re-check connection state between microtasks.
       // The queueMicrotask trampoline yields to the event loop, allowing
       // disconnect events to fire mid-flush. Without this guard, flush()
       // would write to a disconnected socket, causing errors that drain
       // the remaining queue (destroying queued writes that should be
       // preserved for reconnection).
-      // FIX: Also check destroyed state — if consumer's write
+      // Also check destroyed state — if consumer's write
       // callback called destroy(), the scheduled microtask should bail out.
-      if (!this._terminal.connected || this.destroyed || this._lostError) {
+      if (!this._terminal.isConnected() || this.destroyed || this._lostError) {
         this._flushing = false;
         return;
       }
@@ -678,11 +654,18 @@ class TerminalShellImpl extends Duplex implements TerminalShell {
   }
 }
 
+// The getters these reads replaced refuse, naming the method.
+retireAccessors(TerminalShellImpl.prototype, 'TerminalShell', {
+  connected: 'isConnected()',
+  terminalId: 'getTerminalId()',
+});
+
 function shellImpl(
   this: HoodyClient,
   options?: TerminalShellOptions,
 ): TerminalShell {
-  assertContainerScoped(this);
+  assertComputerScoped(this);
+  refuseRetiredOptions(options, 'shell', [['serviceIndex', 'terminalId'], ['terminal_id', 'terminalId']]);
 
   const {
     cwd,
@@ -692,27 +675,18 @@ function shellImpl(
     cols = 80,
     rows = 24,
     terminalId,
-    serviceIndex = 0,
     timeout = 30000,
     reconnect = false,
   } = options || {};
 
-  // The host index picks the session: the containers proxy takes terminal_id
+  // The terminal id is the host index: the computers proxy takes terminal_id
   // from it and overwrites the query. Index 0 is "no terminal id"; the kit
   // serves it only with `ephemeral=true`, which is what gives each shell()
   // call its own session.
-  const index = terminalId !== undefined && terminalId !== '' ? Number(terminalId) : serviceIndex;
-  if (!Number.isInteger(index) || index < 0 || index > 65535 || (terminalId !== undefined && terminalId !== '' && index === 0)) {
-    throw new TypeError(
-      `shell(): ${terminalId !== undefined && terminalId !== '' ? `terminalId must be an integer from 1 to 65535, got ${JSON.stringify(terminalId)}` : `serviceIndex must be an integer from 0 to 65535, got ${JSON.stringify(serviceIndex)}`}`,
-    );
-  }
-  // Both given and different: refused, as a per-call serviceIndex that
-  // disagrees with terminal_id is everywhere else, never one silently picked.
-  if (terminalId !== undefined && terminalId !== '' && options?.serviceIndex !== undefined && options.serviceIndex !== index) {
-    throw new TypeError(
-      `shell(): serviceIndex ${JSON.stringify(options.serviceIndex)} conflicts with terminalId ${JSON.stringify(terminalId)}; pass terminalId alone`,
-    );
+  const given = terminalId !== undefined && terminalId !== '';
+  const index = given ? Number(terminalId) : 0;
+  if (given && (!Number.isInteger(index) || index < 1 || index > 65535)) {
+    throw new TypeError(`shell(): terminalId must be an integer from 1 to 65535, got ${JSON.stringify(terminalId)}; omit terminalId for a fresh session`);
   }
 
   const wsUrl = getTerminalWsUrl(this, index);

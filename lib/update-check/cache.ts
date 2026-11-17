@@ -72,6 +72,7 @@ export function cacheDir(
   return path.join(homeDir(env), '.hoody');
 }
 
+/** The full path of the update-check cache file for `platform` and `env` (this process by default). */
 export function cachePath(
   platform: NodeJS.Platform = process.platform,
   env: NodeJS.ProcessEnv = process.env,

@@ -14,7 +14,7 @@
  *   and falls back to the alternative if the preferred one fails.
  *
  * Random number generation:
- *   fillRandomBytes() cascades through four CSPRNG sources:
+ *   fillRandomBytes() cascades through three CSPRNG sources, then a pseudo-random fallback:
  *   globalThis.crypto -> node:crypto.webcrypto -> node:crypto.randomFillSync/randomBytes
  *   -> pseudo-random fallback (ChaCha20 seeded from best-effort entropy).
  *   The `RandomSource` field on the envelope records which source was used
@@ -29,8 +29,7 @@ import { pbkdf2 } from '@noble/hashes/pbkdf2.js';
 import { sha512 } from '@noble/hashes/sha2.js';
 
 /**
- * Typed error class for vault-crypto failures. Parity with
- * LockCryptoError in cli/local-lock/crypto.ts so consumers can branch on
+ * Typed error class for vault-crypto failures, so consumers can branch on
  * `err instanceof VaultCryptoError` (or the stable `.name` string) instead
  * of duck-typing against plain `Error` message strings.
  *
@@ -38,7 +37,9 @@ import { sha512 } from '@noble/hashes/sha2.js';
  * available for diagnostics without embedding it in the user-facing message.
  */
 export class VaultCryptoError extends Error {
+  /** Which check failed: a malformed envelope, an unknown version, bad key-derivation parameters, or a failed decryption. */
   public readonly kind: 'invalid-envelope' | 'unsupported-version' | 'invalid-kdf' | 'decrypt-failed';
+  /** `kind` is the failure class to branch on; `options.cause` keeps the underlying error. */
   constructor(kind: VaultCryptoError['kind'], message: string, options?: { cause?: unknown }) {
     super(message, options);
     this.name = 'VaultCryptoError';
@@ -50,13 +51,13 @@ const ALGORITHM = 'AES-GCM';
 const ALGORITHM_LABEL = 'AES-GCM-256';
 const KEY_BITS = 256;
 const KEY_BYTES = KEY_BITS / 8;
-/** 96-bit IV/nonce — NIST SP 800-38D mandates exactly 96 bits for GCM to avoid internal length-block hashing. */
+/** 96-bit IV/nonce: the length NIST SP 800-38D recommends for GCM (an IV of any other length is hashed into the counter block). */
 const IV_BYTES = 12;
 /** 256-bit salt — ensures KDF output is unique even for identical passwords. */
 const SALT_BYTES = 32;
 /**
- * PBKDF2 iteration count. 600,000 follows OWASP 2023 guidelines for SHA-512-based
- * PBKDF2 to resist offline brute-force on modern GPUs.
+ * PBKDF2 iteration count. 600,000 iterations of PBKDF2-HMAC-SHA512, above OWASP's 2023
+ * minimum of 210,000 for SHA-512, to resist offline brute-force on modern GPUs.
  */
 const KDF_ITERATIONS = 600_000;
 /**

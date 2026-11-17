@@ -1,5 +1,5 @@
 /**
- * Screenshot save — capture + save to container filesystem in one call.
+ * Screenshot save — capture + save to computer filesystem in one call.
  *
  * Architecture:
  *   This module extends HoodyClient with four convenience methods:
@@ -9,7 +9,7 @@
  *   - `browser.page.saveScreenshot(path?, options?)` — capture browser + save
  *   - `terminal.sessions.saveScreenshot(path?, options?)` — capture terminal + save
  *
- *   All methods require a container-scoped client (via `withContainer()`).
+ *   All methods require a computer-scoped client (via `withComputer()`).
  *   They compose: capture API call → decode → validate → putFile → chmod.
  *
  *   Data flow:
@@ -31,6 +31,7 @@ import type { HoodyClient } from './hoody-client.js';
 import { ScreenshotsService } from '../generated/display/screenshots.service.js';
 import { PageService } from '../generated/browser/page.service.js';
 import { SessionsService } from '../generated/terminal/sessions.service.js';
+import { RetiredOptionError } from '../generated/errors.js';
 import { ownerOf } from './service-owner.js';
 import { terminalHostLabel } from './terminal-host.js';
 
@@ -89,7 +90,8 @@ export interface TerminalScreenshotCaptureOptions {
   terminal_id?: string;
   foreground?: string;
   background?: string;
-  fontsize?: number;
+  /** Font size in pixels (the `fontsize` query of terminal.sessions.captureScreenshot). */
+  fontSize?: number;
 }
 
 export interface SaveScreenshotResult {
@@ -118,6 +120,10 @@ export type ScreenshotSaveErrorCode =
   | 'INVALID_IMAGE_DATA'
   | 'PAYLOAD_TOO_LARGE';
 
+/**
+ * Thrown when a screenshot could not be captured or saved. `code` says which step failed; `source` and `path` name
+ * the capture source and the target file when known, and `cause` holds the underlying error.
+ */
 export class ScreenshotSaveError extends Error {
   readonly code: ScreenshotSaveErrorCode;
   readonly source: ScreenshotSource | undefined;
@@ -427,16 +433,16 @@ function validateMagicBytes(buffer: Buffer, format: ScreenshotFormat): void {
 }
 
 // ---------------------------------------------------------------------------
-// Container-scoped assertion
+// Computer-scoped assertion
 // ---------------------------------------------------------------------------
 
-function assertContainerScoped(client: HoodyClient): void {
+function assertComputerScoped(client: HoodyClient): void {
   const c = client as any;
   const hasTemplates = c.urlTemplates && Object.keys(c.urlTemplates).length > 0;
   if (!hasTemplates) {
     throw new ScreenshotSaveError(
       'CAPTURE_FAILED',
-      'saveScreenshot requires a container-scoped client. Call withContainer() first.',
+      'saveScreenshot requires a computer-scoped client. Call withComputer() first.',
     );
   }
 }
@@ -505,7 +511,7 @@ async function captureBrowser(client: HoodyClient, format: ScreenshotFormat, opt
  * Resolve the URL template vars that put `terminal_id` where it is actually
  * read: the HOST segment (`…-terminal-<id>.…`).
  *
- * The containers proxy forces `?terminal_id=` from the SNI host index and
+ * The computers proxy forces `?terminal_id=` from the SNI host index and
  * overwrites whatever the client sent, so a capture that only passes the id as
  * a query param silently screenshots terminal 1 (the default template index).
  * Two ids cannot ride the host: a non-canonical one ("007", which the proxy
@@ -522,8 +528,8 @@ function terminalCaptureTemplateVars(client: any, terminalId: string): { service
     );
   }
   const t = client?.urlTemplates?.['terminal'];
-  const label = terminalHostLabel(t?.projectId ?? '', t?.containerId ?? '', terminalId);
-  if (t?.projectId && t?.containerId && label.length > 63) {
+  const label = terminalHostLabel(t?.projectId ?? '', t?.computerId ?? '', terminalId);
+  if (t?.projectId && t?.computerId && label.length > 63) {
     throw new ScreenshotSaveError(
       'CAPTURE_FAILED',
       `terminal_id ${terminalId} is unreachable: host label is ${label.length} bytes (DNS limit 63)`,
@@ -538,8 +544,14 @@ async function captureTerminal(client: HoodyClient, format: ScreenshotFormat, op
     options?.terminal_id !== undefined && options.terminal_id !== ''
       ? terminalCaptureTemplateVars(client, String(options.terminal_id))
       : undefined;
+  // `fontsize` was this bag's key before `fontSize`: refused by name, never passed through.
+  if (options !== undefined && (options as { fontsize?: unknown }).fontsize !== undefined) {
+    throw new RetiredOptionError('saveScreenshot terminalOptions', 'fontsize', 'fontSize');
+  }
+  const { fontSize, ...rest } = options ?? {};
   const response: any = await client.terminal.sessions.captureScreenshot({
-    ...options,
+    ...rest,
+    ...(fontSize !== undefined ? { fontsize: fontSize } : {}),
     // Wrapper-controlled fields always win (prevent caller override)
     save: false,
     format: format === 'jpeg' ? 'jpeg' : 'png',
@@ -581,7 +593,7 @@ async function saveScreenshotImpl(
   this: HoodyClient,
   options: SaveScreenshotOptions,
 ): Promise<SaveScreenshotResult> {
-  assertContainerScoped(this);
+  assertComputerScoped(this);
 
   const { source, displayOptions, browserOptions, terminalOptions } = options;
 
@@ -606,7 +618,7 @@ async function saveScreenshotImpl(
         throw new ScreenshotSaveError('CAPTURE_FAILED', `Unknown source: ${source as string}`);
     }
   } catch (err) {
-    if (err instanceof ScreenshotSaveError) throw err;
+    if (err instanceof ScreenshotSaveError || err instanceof RetiredOptionError) throw err;
     throw new ScreenshotSaveError('CAPTURE_FAILED', `Screenshot capture failed: ${(err as Error).message}`, {
       source,
       cause: err as Error,
@@ -617,9 +629,8 @@ async function saveScreenshotImpl(
   validateMagicBytes(buffer, resolvedFormat);
 
   // 3. Create directory if needed
-  // Typed calls on the generated FilesService (mkdir/upload/chmod/delete): the
-  // old untyped `(this as any).files.putFile` named methods that had been
-  // renamed, so every save failed and the chmod was silently skipped.
+  // Typed calls on the generated FilesService (mkdir/upload/chmod/delete), so a
+  // renamed method fails the typecheck instead of every save at run time.
   const filesService = this.files;
   if (needsMkdir) {
     try {
@@ -678,9 +689,9 @@ async function saveScreenshotImpl(
 declare module './hoody-client.js' {
   interface HoodyClient {
     /**
-     * Capture a screenshot and save it to the container filesystem.
+     * Capture a screenshot and save it to the computer filesystem.
      *
-     * Requires a container-scoped client (call `withContainer()` first).
+     * Requires a computer-scoped client (call `withComputer()` first).
      */
     saveScreenshot(options: SaveScreenshotOptions): Promise<SaveScreenshotResult>;
   }
@@ -689,7 +700,7 @@ declare module './hoody-client.js' {
 declare module '../generated/display/screenshots.service.js' {
   interface ScreenshotsService {
     /**
-     * Capture a display screenshot and save it to the container filesystem.
+     * Capture a display screenshot and save it to the computer filesystem.
      *
      * @param path - File path or filename. If omitted, auto-generates in /hoody/storage/hoody-sdk/screenshots/.
      *               Bare filenames (e.g. "foo.png") are placed in the default directory.
@@ -704,7 +715,7 @@ declare module '../generated/display/screenshots.service.js' {
 declare module '../generated/browser/page.service.js' {
   interface PageService {
     /**
-     * Capture a browser screenshot and save it to the container filesystem.
+     * Capture a browser screenshot and save it to the computer filesystem.
      *
      * @param path - File path or filename. If omitted, auto-generates in /hoody/storage/hoody-sdk/screenshots/.
      */
@@ -718,7 +729,7 @@ declare module '../generated/browser/page.service.js' {
 declare module '../generated/terminal/sessions.service.js' {
   interface SessionsService {
     /**
-     * Capture a terminal screenshot and save it to the container filesystem.
+     * Capture a terminal screenshot and save it to the computer filesystem.
      *
      * @param path - File path or filename. If omitted, auto-generates in /hoody/storage/hoody-sdk/screenshots/.
      */
@@ -735,6 +746,11 @@ declare module '../generated/terminal/sessions.service.js' {
 
 const SCREENSHOT_SAVE_PATCH_MARKER = Symbol.for('hoody.sdk.screenshot.save.patch');
 
+/**
+ * Install `saveScreenshot()` on the client class and the per-service helpers (`display.screenshots.save()`,
+ * `browser.page.saveScreenshot()`, `terminal.sessions.saveScreenshot()`). The SDK entry point calls it once; a
+ * second call does nothing.
+ */
 export function patchScreenshotSavePrototype(HoodyClientClass: { prototype: unknown }): void {
   const prototype = HoodyClientClass.prototype as Record<string | symbol, unknown>;
   if (prototype[SCREENSHOT_SAVE_PATCH_MARKER]) return;
@@ -742,7 +758,7 @@ export function patchScreenshotSavePrototype(HoodyClientClass: { prototype: unkn
   prototype.saveScreenshot = saveScreenshotImpl;
 
   // The per-kit helpers sit on their own services and reach the client through its owner stamp
-  // (lib/service-owner.ts): the capture and the write both go through the container-scoped client.
+  // (lib/service-owner.ts): the capture and the write both go through the computer-scoped client.
   const onService = (
     service: { prototype: unknown },
     name: string,

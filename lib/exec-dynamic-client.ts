@@ -4,11 +4,11 @@
  * Extends the generated ExecService with `listCallableScripts()` and
  * `call()` via prototype patching (same pattern as exec-scripts.ts). Both reach
  * the inventory through the `openapi` and `scripts` services that sit on the
- * same `exec` object, so a container-scoped client needs no wiring.
+ * same `exec` object, so a computer-scoped client needs no wiring.
  *
  * Usage:
- *   const scripts = await containerClient.exec.listCallableScripts();
- *   const result = await containerClient.exec.call('my-api', { name: 'foo' });
+ *   const scripts = await computerClient.exec.listCallableScripts();
+ *   const result = await computerClient.exec.call('my-api', { name: 'foo' });
  */
 
 import { ExecService } from '../generated/exec/exec.service.js';
@@ -16,15 +16,15 @@ import { ScriptsService } from '../generated/exec/scripts.service.js';
 import type { OpenapiService } from '../generated/exec/openapi.service.js';
 import type { ApiResponse } from '../generated/types.js';
 import {
-  discoverScripts as discoverScriptsCore,
-  type DiscoveredScript,
-  type DiscoverOptions,
+  listCallableScripts as listCallableScriptsCore,
+  type CallableScript,
+  type ListCallableScriptsOptions,
 } from './exec-dynamic-discovery.js';
 import { assertBasePath } from './exec-path-utils.js';
 import { dispatchExecScript, type ExecScriptCallOptions } from './exec-script-execution.js';
 
 // Re-export for consumers
-export type { DiscoveredScript, DiscoveredParam, DiscoverOptions, DiscoveryCache } from './exec-dynamic-discovery.js';
+export type { CallableScript, CallableScriptParam, ListCallableScriptsOptions, CallableScriptsCache } from './exec-dynamic-discovery.js';
 export { scriptPathToName, isValidToolName, sanitizeDescription } from './exec-dynamic-discovery.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ export interface CallScriptOptions {
   /**
    * Retry budget for the script call. A script is arbitrary code, so whatever
    * it answers is final (a 500, 502 or 429 included, for every method): only a
-   * call that never reached the container (the connection could not be opened)
+   * call that never reached the computer (the connection could not be opened)
    * is sent again. Sending it again after an answer would run the script again.
    */
   retries?: number | undefined;
@@ -61,8 +61,8 @@ export interface ExecDynamicServices {
 //
 // Partitioned by the discovery service instance (a WeakMap, so a dropped
 // client takes its cache with it) and, inside it, by the endpoint that
-// discovery resolves to. A container-scoped service carries its container in
-// its own default template variables, so two `withContainer()` boxes — or two
+// discovery resolves to. A computer-scoped service carries its computer in
+// its own default template variables, so two `withComputer()` boxes — or two
 // clients for different accounts — never share an entry. An explicit
 // `templateVars` override resolves to a different endpoint and so to a
 // different entry of the same service.
@@ -70,30 +70,30 @@ export interface ExecDynamicServices {
 const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 interface CacheEntry {
-  scripts: DiscoveredScript[];
+  scripts: CallableScript[];
   fetchedAt: number;
   ttlMs: number;
   /** Sequence number at write time; compared against clear markers. */
   seq: number;
-  /** `${containerId}:${serviceIndex}` of the resolved endpoint. */
-  containerKey: string;
+  /** `${computerId}:${serviceIndex}` of the resolved endpoint. */
+  computerKey: string;
 }
 
 const memoryCache = new WeakMap<object, Map<string, CacheEntry>>();
 let cacheSeq = 0;
 let clearedAllAt = 0;
-const clearedContainerAt = new Map<string, number>();
+const clearedComputerAt = new Map<string, number>();
 
-function containerKeyOf(vars: Record<string, unknown>): string {
-  const containerId = vars.containerId ?? vars.container_id ?? '';
+function computerKeyOf(vars: Record<string, unknown>): string {
+  const computerId = vars.computerId ?? vars.computer_id ?? '';
   const serviceIndex = vars.serviceIndex ?? vars.service_index ?? '1';
-  return `${String(containerId)}:${String(serviceIndex)}`;
+  return `${String(computerId)}:${String(serviceIndex)}`;
 }
 
 function resolveCachePartition(
   services: ExecDynamicServices,
   templateVars: Record<string, string | number> | undefined,
-): { owner: object; key: string; containerKey: string } {
+): { owner: object; key: string; computerKey: string } {
   const owner = services.openapi as unknown as object;
   const internals = owner as {
     buildTemplateUrl?: (p: string, v: Record<string, unknown>) => string;
@@ -112,15 +112,15 @@ function resolveCachePartition(
   return {
     owner,
     key: `${endpoint}|${services.scripts ? 'schemas' : 'no-schemas'}`,
-    containerKey: containerKeyOf(merged),
+    computerKey: computerKeyOf(merged),
   };
 }
 
-function getFromMemoryCache(owner: object, key: string): DiscoveredScript[] | undefined {
+function getFromMemoryCache(owner: object, key: string): CallableScript[] | undefined {
   const partition = memoryCache.get(owner);
   const entry = partition?.get(key);
   if (!partition || !entry) return undefined;
-  const clearedAt = Math.max(clearedAllAt, clearedContainerAt.get(entry.containerKey) ?? 0);
+  const clearedAt = Math.max(clearedAllAt, clearedComputerAt.get(entry.computerKey) ?? 0);
   if (entry.seq <= clearedAt || Date.now() - entry.fetchedAt > entry.ttlMs) {
     partition.delete(key);
     return undefined;
@@ -131,8 +131,8 @@ function getFromMemoryCache(owner: object, key: string): DiscoveredScript[] | un
 function setMemoryCache(
   owner: object,
   key: string,
-  containerKey: string,
-  scripts: DiscoveredScript[],
+  computerKey: string,
+  scripts: CallableScript[],
   ttlMs = DEFAULT_TTL_MS,
 ): void {
   let partition = memoryCache.get(owner);
@@ -140,21 +140,21 @@ function setMemoryCache(
     partition = new Map();
     memoryCache.set(owner, partition);
   }
-  partition.set(key, { scripts, fetchedAt: Date.now(), ttlMs, seq: ++cacheSeq, containerKey });
+  partition.set(key, { scripts, fetchedAt: Date.now(), ttlMs, seq: ++cacheSeq, computerKey });
 }
 
 /**
  * Clear the in-memory discovery cache (useful after script writes/deletes).
- * With `templateVars`, only entries for that container (+ serviceIndex) are
+ * With `templateVars`, only entries for that computer (+ serviceIndex) are
  * dropped, for every client; without, everything is.
  */
-export function clearDiscoveryCache(templateVars?: Record<string, string | number>): void {
+export function clearCallableScriptsCache(templateVars?: Record<string, string | number>): void {
   const marker = ++cacheSeq;
   if (templateVars) {
-    clearedContainerAt.set(containerKeyOf(templateVars), marker);
+    clearedComputerAt.set(computerKeyOf(templateVars), marker);
   } else {
     clearedAllAt = marker;
-    clearedContainerAt.clear();
+    clearedComputerAt.clear();
   }
 }
 
@@ -163,15 +163,15 @@ export function clearDiscoveryCache(templateVars?: Record<string, string | numbe
 declare module '../generated/exec/exec.service.js' {
   interface ExecService {
     /**
-     * List the user scripts the connected exec container can run by name.
+     * List the user scripts the connected exec computer can run by name.
      * Results are cached in-memory for 5 minutes.
      *
      * `services` is only for a caller that holds the discovery services apart from the
      * `exec` object; by default they are read from it.
      */
     listCallableScripts(
-      options?: DiscoverOptions & { forceRefresh?: boolean; services?: ExecDynamicServices },
-    ): Promise<DiscoveredScript[]>;
+      options?: ListCallableScriptsOptions & { forceRefresh?: boolean; services?: ExecDynamicServices },
+    ): Promise<CallableScript[]>;
 
     /**
      * Call a user script by name, using the discovered HTTP method.
@@ -199,29 +199,30 @@ function servicesOf(exec: ExecService, given?: ExecDynamicServices): ExecDynamic
 
 const EXEC_DYNAMIC_CLIENT_PATCH_MARKER = Symbol.for('hoody.sdk.exec.dynamic-client.patch');
 
+/** Installs `listCallableScripts()` and `call()` on the generated exec service. Runs once: a second call does nothing. */
 export function patchExecDynamicClientPrototype(): void {
   const prototype = ExecService.prototype as unknown as Record<string | symbol, unknown>;
   if (prototype[EXEC_DYNAMIC_CLIENT_PATCH_MARKER]) return;
 
   prototype['listCallableScripts'] = async function listCallableScripts(
     this: ExecService,
-    options?: DiscoverOptions & { forceRefresh?: boolean; services?: ExecDynamicServices },
-  ): Promise<DiscoveredScript[]> {
+    options?: ListCallableScriptsOptions & { forceRefresh?: boolean; services?: ExecDynamicServices },
+  ): Promise<CallableScript[]> {
     const services = servicesOf(this, options?.services);
-    const { owner, key, containerKey } = resolveCachePartition(services, options?.templateVars);
+    const { owner, key, computerKey } = resolveCachePartition(services, options?.templateVars);
 
     if (!options?.forceRefresh) {
       const cached = getFromMemoryCache(owner, key);
       if (cached) return cached;
     }
 
-    const scripts = await discoverScriptsCore(
+    const scripts = await listCallableScriptsCore(
       services.openapi,
       services.scripts,
       options,
     );
 
-    setMemoryCache(owner, key, containerKey, scripts);
+    setMemoryCache(owner, key, computerKey, scripts);
     return scripts;
   };
 
@@ -232,7 +233,7 @@ export function patchExecDynamicClientPrototype(): void {
     options?: CallScriptOptions & { services?: ExecDynamicServices },
   ): Promise<ApiResponse<TResponse>> {
     // Discover scripts to resolve name -> path + method
-    const discoverOpts: DiscoverOptions & { services?: ExecDynamicServices } = {};
+    const discoverOpts: ListCallableScriptsOptions & { services?: ExecDynamicServices } = {};
     if (options?.templateVars) discoverOpts.templateVars = options.templateVars;
     if (options?.signal) discoverOpts.signal = options.signal;
     if (options?.services) discoverOpts.services = options.services;
@@ -324,8 +325,8 @@ function patchScriptsServiceForInvalidation(): void {
     ...args: Parameters<ScriptsService['write']>
   ) {
     const result = await originalWrite.apply(this, args);
-    // Clear all in-memory caches — we don't know which container this belongs to
-    clearDiscoveryCache();
+    // Clear all in-memory caches — we don't know which computer this belongs to
+    clearCallableScriptsCache();
     return result;
   } as ScriptsService['write'];
 
@@ -334,7 +335,7 @@ function patchScriptsServiceForInvalidation(): void {
     ...args: Parameters<ScriptsService['delete']>
   ) {
     const result = await originalDelete.apply(this, args);
-    clearDiscoveryCache();
+    clearCallableScriptsCache();
     return result;
   } as ScriptsService['delete'];
 

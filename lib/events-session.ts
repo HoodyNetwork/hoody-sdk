@@ -11,10 +11,12 @@
  * The generated client already tracks a session `generation`, but privately,
  * so `lib/hoody-client.ts` overrides the four session methods and calls
  * {@link bumpEventsSession} around `super`. A session is shared by a client
- * and every client derived from it (withRealm/withContainer), and logout,
+ * and every client derived from it (withRealm/withComputer), and logout,
  * login and adoptSession end it for all of them; setToken moves only the one
  * client to a session of its own.
  */
+
+import { retireAccessors } from './retired-accessor.js';
 
 /** The session handle one events runtime listens to. */
 export class EventsSession {
@@ -22,7 +24,7 @@ export class EventsSession {
     private gen = 0;
 
     /** Increases on every bump. The runtime records it and discards work started under an older value. */
-    get generation(): number {
+    getGeneration(): number {
         return this.gen;
     }
 
@@ -38,6 +40,10 @@ export class EventsSession {
         }
     }
 
+    /**
+     * Call `listener` on every later {@link bump}. Returns a function that removes it.
+     * A listener that throws does not stop the others.
+     */
     onBump(listener: () => void): () => void {
         this.listeners.add(listener);
         return () => {
@@ -45,6 +51,9 @@ export class EventsSession {
         };
     }
 }
+
+// The getter this read replaced refuses, naming the method.
+retireAccessors(EventsSession.prototype, 'EventsSession', { generation: 'getGeneration()' });
 
 type WeakRefLike<T> = { deref(): T | undefined };
 

@@ -15,8 +15,8 @@ import {
   sanitizeDescription,
   MAX_PARAMS_PER_SCRIPT,
   MAX_TOOL_NAME_LENGTH,
-  type DiscoveredScript,
-  type DiscoveredParam,
+  type CallableScript,
+  type CallableScriptParam,
 } from './exec-dynamic-discovery.js';
 import { assertBasePath } from './exec-path-utils.js';
 
@@ -49,7 +49,7 @@ export interface RawScriptEntry {
  * `{statusCode, message, data: <body>}`, so the array sits two `data` levels
  * below the response. Each level is probed for an array, `scripts` or
  * `items` before stepping into its `data`; reading one fixed level found
- * nothing and discovery was always empty (BT2-EXEC-001).
+ * nothing and discovery was always empty.
  */
 export function extractRawScriptList(response: unknown): RawScriptEntry[] {
   let node: unknown = response;
@@ -66,13 +66,13 @@ export function extractRawScriptList(response: unknown): RawScriptEntry[] {
 // ─── Single-entry parser ─────────────────────────────────────────────────────
 
 /**
- * Parse a single raw script entry into zero or more DiscoveredScript objects.
+ * Parse a single raw script entry into zero or more CallableScript objects.
  *
  * Returns an empty array if the entry is invalid (missing path, invalid name,
  * path traversal detected, etc.). Returns multiple entries when the script
  * declares dual-method support (both GET and POST).
  */
-export function parseRawScriptEntry(raw: RawScriptEntry): DiscoveredScript[] {
+export function parseRawScriptEntry(raw: RawScriptEntry): CallableScript[] {
   if (!raw || typeof raw !== 'object') return [];
 
   const scriptPath = typeof raw.path === 'string' ? raw.path : '';
@@ -109,7 +109,7 @@ export function parseRawScriptEntry(raw: RawScriptEntry): DiscoveredScript[] {
 
   // Extract parameters from inline schema
   const schema = raw.schema;
-  let parameters: DiscoveredParam[] = [];
+  let parameters: CallableScriptParam[] = [];
   let requestBodySchema: Record<string, unknown> | undefined;
 
   // GET is query-only; POST/PUT/PATCH/DELETE carry a body. Same classification
@@ -154,7 +154,7 @@ export function parseRawScriptEntry(raw: RawScriptEntry): DiscoveredScript[] {
     typeof raw.description === 'string' ? raw.description : label,
   );
 
-  const results: DiscoveredScript[] = [];
+  const results: CallableScript[] = [];
 
   results.push({
     name,
@@ -225,8 +225,8 @@ export function parseRawScriptEntry(raw: RawScriptEntry): DiscoveredScript[] {
 /**
  * Parse an array of raw script entries, deduplicate by name (first wins).
  */
-export function parseRawScriptEntries(rawScripts: RawScriptEntry[]): DiscoveredScript[] {
-  const discovered: DiscoveredScript[] = [];
+export function parseRawScriptEntries(rawScripts: RawScriptEntry[]): CallableScript[] {
+  const discovered: CallableScript[] = [];
 
   for (const raw of rawScripts) {
     const entries = parseRawScriptEntry(raw);

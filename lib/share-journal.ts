@@ -1,12 +1,12 @@
 /**
- * Per-run journals of `hoody share` (plans/share-local-folder.md, "Journals").
+ * Per-run journals of `hoody share`.
  *
  * Layout, in `~/.hoody/sdk/shares/` (0700):
  *   <id>.<run token>.json   one journal per run (this module)
  *   <id>.owner              the owner's run token (lib/share-lock.ts)
  *   <id>.sock, <id>.reclaim macOS only (lib/share-lock.ts)
  *
- * `id` is `sha256(<api origin>\n<container id>\n<name>)` cut to 16 hex. A
+ * `id` is `sha256(<api origin>\n<computer id>\n<name>)` cut to 16 hex. A
  * journal is written atomically (temp file, fsync, rename) before every remote
  * mutation, and records what that mutation may leave behind. It never holds
  * the password. It is deleted only once every remote resource it records is
@@ -31,14 +31,14 @@ export type JournalStage =
   | 'cleanup-pending';
 
 export interface ShareTargetRecord {
-  /** Origin of the account API the container belongs to. */
+  /** Origin of the account API the computer belongs to. */
   apiOrigin: string;
-  containerId: string;
+  computerId: string;
   server?: string;
   projectId?: string;
 }
 
-/** The container mount's own settings, as sent in `vfs_config` (lib/share.ts `shareVfsConfig`). */
+/** The computer mount's own settings, as sent in `vfs_config` (lib/share.ts `shareVfsConfig`). */
 export type ShareVfsConfig = Readonly<Record<string, string | number | boolean>>;
 
 export interface ShareJournal {
@@ -58,7 +58,7 @@ export interface ShareJournal {
   publicUrl?: string;
   /** The per-share WebDAV user name. The password is never journaled. */
   user?: string;
-  containerPort?: number;
+  computerPort?: number;
   backendId?: string;
   mountId?: string;
   /** A create was sent and its answer is not recorded: it may have landed. */
@@ -78,20 +78,27 @@ export interface ShareJournal {
   updatedAt: string;
 }
 
+/** The directory holding share journals and lock files: `<home>/.hoody/sdk/shares`. */
 export function sharesDir(home: string = homedir()): string {
   return join(home, '.hoody', 'sdk', 'shares');
 }
 
-export function computeShareId(apiOrigin: string, containerId: string, name: string): string {
-  return createHash('sha256').update(`${apiOrigin}\n${containerId}\n${name}`).digest('hex').slice(0, 16);
+/**
+ * The 16-hex id of a share: a SHA-256 of the API origin, the computer id and the share name. The same name shared
+ * to two computers, or on two APIs, gets two ids.
+ */
+export function computeShareId(apiOrigin: string, computerId: string, name: string): string {
+  return createHash('sha256').update(`${apiOrigin}\n${computerId}\n${name}`).digest('hex').slice(0, 16);
 }
 
 const JOURNAL_FILE_RE = /^([0-9a-f]{16})\.([0-9a-f]{32})\.json$/;
 
+/** Path of the journal of one run of share `id`: `<dir>/<id>.<runToken>.json`. */
 export function journalPath(dir: string, id: string, runToken: string): string {
   return join(dir, `${id}.${runToken}.json`);
 }
 
+/** Create `dir` (and missing ancestors) with mode 0700. An existing directory keeps the mode it has. */
 export async function ensureSharesDir(dir: string): Promise<void> {
   await fs.mkdir(dir, { recursive: true, mode: 0o700 });
 }
@@ -124,11 +131,35 @@ export async function writeJournal(dir: string, journal: ShareJournal): Promise<
   }
 }
 
+/**
+ * A journal written before the computer rename names the computer `target.containerId` and the exposed
+ * port `containerPort`. They are read as the current names, so a share exposed by an older version still
+ * reaches `hoody share stop` and its recorded remote exposure is removed; the next write carries only the
+ * new names. The share id hashes the id VALUE, so it is the same under both.
+ */
+function withCurrentNames(j: ShareJournal): ShareJournal {
+  const old = j as unknown as { containerPort?: unknown; target?: { containerId?: unknown } };
+  const out: ShareJournal = { ...j };
+  if (j.target !== null && typeof j.target === 'object') {
+    const target = { ...j.target } as ShareTargetRecord & { containerId?: unknown };
+    if (typeof target.computerId !== 'string' && typeof target.containerId === 'string') target.computerId = target.containerId;
+    delete target.containerId;
+    out.target = target;
+  }
+  if (typeof out.computerPort !== 'number' && typeof old.containerPort === 'number') out.computerPort = old.containerPort;
+  delete (out as unknown as { containerPort?: unknown }).containerPort;
+  return out;
+}
+
+/**
+ * Read one journal file. Null when it is missing, is not JSON, or is not a version 1 journal with an id and a run
+ * token; never throws. A journal written under the older field names is returned with the current ones.
+ */
 export async function readJournalFile(path: string): Promise<ShareJournal | null> {
   try {
     const j = JSON.parse(await fs.readFile(path, 'utf8')) as ShareJournal;
     if (j?.version !== 1 || typeof j.id !== 'string' || typeof j.runToken !== 'string') return null;
-    return j;
+    return withCurrentNames(j);
   } catch {
     return null;
   }
@@ -153,6 +184,7 @@ export async function listJournals(dir: string, id?: string): Promise<ShareJourn
   return out;
 }
 
+/** Delete the file of `journal`. A file that is already gone is fine; any other failure throws. */
 export async function deleteJournal(dir: string, journal: Pick<ShareJournal, 'id' | 'runToken'>): Promise<void> {
   await fs.unlink(journalPath(dir, journal.id, journal.runToken)).catch((err: NodeJS.ErrnoException) => {
     if (err.code !== 'ENOENT') throw err;
@@ -287,11 +319,11 @@ export async function findLostCreate(kit: ShareKit, journal: ShareJournal, opts:
     await sleep(pollMs);
   }
   if (!answered) {
-    throw new Error(`could not reach the files kit of container ${journal.target.containerId} to look for a ${kind} whose create answer was lost`);
+    throw new Error(`could not reach the files kit of computer ${journal.target.computerId} to look for a ${kind} whose create answer was lost`);
   }
   if (!settled) {
     throw new Error(
-      `the files kit of container ${journal.target.containerId} stopped answering while this looked for a ${kind} whose create answer was lost; whether it exists is not known`,
+      `the files kit of computer ${journal.target.computerId} stopped answering while this looked for a ${kind} whose create answer was lost; whether it exists is not known`,
     );
   }
   return {};

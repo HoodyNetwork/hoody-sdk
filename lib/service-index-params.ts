@@ -2,8 +2,8 @@
  * Which request parameter names a kit's host index.
  *
  * A kit URL carries an instance index in its host
- * (`{projectId}-{containerId}-terminal-{serviceIndex}.{server}…`). For the kits
- * below the containers proxy treats that index as authoritative: it overwrites
+ * (`{projectId}-{computerId}-terminal-{serviceIndex}.{server}…`). For the kits
+ * below the computers proxy treats that index as authoritative: it overwrites
  * the matching query parameter (`?terminal_id=`, `?browser_id=`, `?id=`, the
  * display selectors) with the host's index on every request. A client that
  * sends `terminal_id=5` to the `-terminal-1` host therefore reaches terminal 1.
@@ -11,7 +11,7 @@
  * does that for which kit.
  *
  * One table for the SDK (the generated service base, `buildTemplateUrl`) and
- * the CLI (`cli/http-client.ts`, `extractServiceIndex`). Hand-maintained; it
+ * the CLI (`extractServiceIndex` in its HTTP client). Hand-maintained; it
  * has no template mirror and no Node-only import, so the browser bundle can
  * carry it.
  *
@@ -91,7 +91,7 @@ export const SERVICE_INDEX_BODY_PARAMS: Readonly<Record<string, readonly string[
 
 /**
  * The parameter that asks a kit for a FRESH instance, per kit. The terminal kit
- * generates a new terminal id (40000-65535) for `ephemeral=true` only when the
+ * generates a new terminal id (5001-7999) for `ephemeral=true` only when the
  * request names no terminal id; through the proxy that means the `-terminal-0`
  * host, since every other host forces `terminal_id=<its index>` and the call
  * then runs in that terminal (or is refused on it).

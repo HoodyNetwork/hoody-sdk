@@ -60,6 +60,7 @@ const SIG_ALGO_LEGACY_PURE = [0x45, 0x64] as const;
 /** Pubkey algo bytes: always 'E', 'd' — any other value is a hard error. */
 const PUBKEY_ALGO = [0x45, 0x64] as const;
 
+/** A signature, public key or signed payload failed verification. The message starts with `minisign verification: `. */
 export class MinisignVerificationError extends Error {
   constructor(message: string) {
     super(`minisign verification: ${message}`);

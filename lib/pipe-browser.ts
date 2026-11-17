@@ -4,11 +4,11 @@
  * The browser counterpart of PipeStream (lib/pipe-stream.ts, which is
  * Node-only):
  *
- *   const pipe = PipeBrowser.fromClient(client, container);
+ *   const pipe = PipeBrowser.fromClient(client, computer);
  *   await pipe.sendFile('report', file, { onProgress: (p) => show(p.loaded / p.total) });
  *   const { body } = await pipe.receive('report');        // a ReadableStream
  *   pipe.download('report');                               // the browser's download manager
- *   for await (const ev of pipe.subscribeProgress('report')) { ... }
+ *   for await (const ev of pipe.streamProgress('report')) { ... }
  *   pipe.openPage('receive', 'report', { autostart: true }); // the kit's own receive page
  *
  * sendFile uploads with XMLHttpRequest, for real upload progress. A
@@ -45,20 +45,20 @@ import {
 // ---------------------------------------------------------------------------
 
 export interface PipeBrowserConfig {
-  /** Full pipe kit base URL (e.g. https://proj-ctr-pipe-1.srv.containers.hoody.com) */
+  /** Full pipe kit base URL (e.g. https://proj-ctr-pipe-1.srv.computers.hoody.com) */
   pipeBaseUrl: string;
   /** Path prefix for pipe endpoints (default: '/api/v1/pipe') */
   basePath?: string;
   /**
    * Sends every request, sendFile's upload included. `fromClient()` supplies
    * the client's transport (injected fetch + kitAuth). Omitted, receive and
-   * subscribeProgress use the global `fetch` and sendFile uses XMLHttpRequest.
+   * streamProgress use the global `fetch` and sendFile uses XMLHttpRequest.
    */
   transport?: PipeTransport;
   /**
    * Kit credential for connect()'s WebSocket upgrade. A browser socket cannot
    * send headers: a token rule's `param` (or `?token=`) carries it; a
-   * containerClaim credential is refused. `fromClient()` takes the client's.
+   * computerClaim credential is refused. `fromClient()` takes the client's.
    */
   kitAuth?: ProxyAuth | ProxyAuthPolicy;
 }
@@ -137,7 +137,7 @@ export interface PipeDownload {
   remove(): void;
 }
 
-/** A `?progress` event: what PipeStream.subscribeProgress yields for the same stream, with every field set (the Node type leaves the fields added for #891 optional so older event literals still compile). */
+/** A `?progress` event: what PipeStream.streamProgress yields for the same stream, with every field set (the Node type leaves some fields optional so event literals of the earlier shape still compile). */
 export type PipeProgressEvent =
   | {
       kind: 'state';
@@ -181,6 +181,14 @@ export type PipeProgressEvent =
 // PipeBrowser class
 // ---------------------------------------------------------------------------
 
+/**
+ * Sends and receives data through a computer's pipe from a browser page: `sendFile()` with upload progress,
+ * `receive()` as a stream, `download()` through the browser's download manager, `streamProgress()` for a
+ * transfer's live progress, and `connect()` for a two-way WebSocket relay.
+ *
+ * A pipe stores nothing: a transfer runs only while a sender and its receivers are connected on the same name.
+ * Build one with `PipeBrowser.fromClient(client, computer)` so the client's credentials apply.
+ */
 export class PipeBrowser {
   private readonly baseUrl: string;
   private readonly basePath: string;
@@ -188,6 +196,10 @@ export class PipeBrowser {
   /** Whether a transport was supplied: sendFile then uses it, not XHR. */
   private readonly hasTransport: boolean;
 
+  /**
+   * Build a PipeBrowser on an explicit pipe base URL. Without `config.transport` requests carry no credential
+   * (global `fetch`, and XMLHttpRequest for `sendFile()`); prefer `PipeBrowser.fromClient()`.
+   */
   constructor(config: PipeBrowserConfig) {
     this.baseUrl = config.pipeBaseUrl.replace(/\/+$/, '');
     this.basePath = (config.basePath ?? '/api/v1/pipe').replace(/\/+$/, '');
@@ -222,12 +234,12 @@ export class PipeBrowser {
   }
 
   /**
-   * Create a PipeBrowser from a HoodyClient + container: resolves the pipe kit
+   * Create a PipeBrowser from a HoodyClient + computer: resolves the pipe kit
    * URL and sends through `client.http`, so the client's injected transport
    * and kitAuth apply (lib/pipe-transport.ts).
    */
-  static fromClient(client: any, container: any, serviceIndex = 1): PipeBrowser {
-    const pipeBaseUrl = client.getKitUrl('pipe', container, serviceIndex);
+  static fromClient(client: any, computer: any, serviceIndex = 1): PipeBrowser {
+    const pipeBaseUrl = client.getKitUrl('pipe', computer, serviceIndex);
     const transport = pipeTransportFromClient(client);
     const kitAuth = clientKitAuth(client);
     return new PipeBrowser({ pipeBaseUrl, ...(transport ? { transport } : {}), ...(kitAuth ? { kitAuth } : {}) });
@@ -348,7 +360,7 @@ export class PipeBrowser {
       const onProgress = opts.onProgress;
       void (async () => {
         try {
-          for await (const ev of this.subscribeProgress(path, { signal: watch.signal })) {
+          for await (const ev of this.streamProgress(path, { signal: watch.signal })) {
             if (ev.kind === 'progress') safeCall(onProgress, { loaded: Math.min(ev.bytesTransferred, blob.size), total: blob.size });
           }
         } catch {
@@ -420,7 +432,7 @@ export class PipeBrowser {
    * a `?sha256` transfer stays readable 10 minutes after it ends. Throws
    * PipeTransferError on a refused request (404 for an unknown or expired id).
    */
-  async status(path: string, opts: { transfer?: string; signal?: AbortSignal } = {}): Promise<PipeStatus> {
+  async getStatus(path: string, opts: { transfer?: string; signal?: AbortSignal } = {}): Promise<PipeStatus> {
     const q = opts.transfer !== undefined ? `?status&transfer=${encodeURIComponent(opts.transfer)}` : '?status';
     const res = await this.receiveGet(this.getUrl(path) + q, opts.signal);
     if (!res.ok) throw await responseError('pipe status', res);
@@ -483,7 +495,7 @@ export class PipeBrowser {
    * the path's transfer has just ended (the server answers 204). Breaking out
    * of the loop, or aborting `signal`, closes the connection.
    */
-  async *subscribeProgress(path: string, opts: { signal?: AbortSignal } = {}): AsyncIterable<PipeProgressEvent> {
+  async *streamProgress(path: string, opts: { signal?: AbortSignal } = {}): AsyncIterable<PipeProgressEvent> {
     const res = await this.receiveGet(`${this.getUrl(path)}?progress`, opts.signal, { Accept: 'text/event-stream' });
     if (!res.ok) throw await responseError('pipe progress', res);
     if (!res.body) return;

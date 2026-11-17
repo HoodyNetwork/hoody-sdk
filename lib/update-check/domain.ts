@@ -24,6 +24,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
+/** No domain is configured: no flag value, no `HOODY_DOMAIN`, and no domain config file. */
 export class DomainNotConfiguredError extends Error {
   constructor(message: string) {
     super(message);
@@ -31,6 +32,7 @@ export class DomainNotConfiguredError extends Error {
   }
 }
 
+/** A configured domain is not a valid host name. */
 export class DomainInvalidError extends Error {
   constructor(message: string) {
     super(message);
@@ -117,6 +119,14 @@ function readConfigFile(filePath: string): string | null {
   return validateDomain(trimmed);
 }
 
+/** The outcome of {@link verifyConfigFingerprint}; each value is described there. */
+export type FingerprintStatus = 'ok' | 'absent' | 'mismatch' | 'unreadable';
+
+/** The fingerprint of a public key: SHA-256 of its decoded bytes, as lower-case hex. */
+export function fingerprintForPubkey(pubkeyBase64: string): string {
+  return crypto.createHash('sha256').update(Buffer.from(pubkeyBase64.trim(), 'base64')).digest('hex');
+}
+
 /** Verify install-time pubkey-fingerprint matches the binary's
  *  baked pubkey for the resolved domain. Defends against the install.sh ↔
  *  binary trust desync — an attacker compromising only the CDN that serves
@@ -124,34 +134,29 @@ function readConfigFile(filePath: string): string | null {
  *  __DOMAIN__=hoody.com while the binary trusts a different domain's
  *  rotated previous-key.
  *
- *  install.sh writes `~/.config/hoody/domain.fingerprint` with the SHA-256
- *  hex fingerprint of the pubkey it pinned at install time; we compare to
- *  the SHA-256 of HOODY_PINNED_DOMAINS[domain].pubkey at every check. The
- *  fingerprint file is ADJACENT to (not embedded in) the legacy domain file
- *  so old binaries reading new config layouts still parse correctly.
+ *  install.sh writes the fingerprint file beside `domainConfigPath`
+ *  (`<path>.fingerprint`) with the SHA-256 hex fingerprint of the pubkey it
+ *  pinned at install time; this compares it to the fingerprint of
+ *  `bakedPubkeyBase64` at every check. The fingerprint file is ADJACENT to
+ *  (not embedded in) the domain file so a binary that reads only the domain
+ *  file still parses it correctly.
  *
- *  Returns:
+ *  Never throws. Returns the status with the expected and the stored value:
  *   - 'ok'           fingerprint file exists AND matches baked pubkey
- *   - 'absent'       fingerprint file does not exist (legacy install or
- *                    user manually edited domain file) — caller decides
- *                    whether to warn or fail
- *   - 'mismatch'     fingerprint file exists but disagrees with baked
- *                    pubkey — must fail-closed; this is the attack signal
+ *   - 'absent'       fingerprint file does not exist or is empty (an
+ *                    install without one, or a user who edited the domain
+ *                    file by hand) — caller decides whether to warn or fail
+ *   - 'mismatch'     fingerprint file disagrees with baked pubkey, is too
+ *                    large or is not 64 hex characters — must fail-closed;
+ *                    this is the attack signal
  *   - 'unreadable'   fingerprint file open or read failed for a reason
- *                    other than ENOENT (EACCES, EISDIR, ELOOP, etc.).
- *                    Previously collapsed into 'absent',
- *                    which let an attacker who could chmod 000 the file
- *                    silently downgrade a 'mismatch' (fail-closed) into a
- *                    warn-and-continue. Callers should treat 'unreadable'
- *                    distinct from 'absent' — at least surface a louder
- *                    notice; ideally exit non-zero from the update path.
+ *                    other than ENOENT (EACCES, EISDIR, ELOOP, etc.); a
+ *                    warning goes to stderr. It is kept apart from
+ *                    'absent' so that making the file unreadable cannot
+ *                    turn a 'mismatch' (fail-closed) into a
+ *                    warn-and-continue. Callers should at least surface a
+ *                    louder notice; ideally exit non-zero from the update path.
  */
-export type FingerprintStatus = 'ok' | 'absent' | 'mismatch' | 'unreadable';
-
-export function fingerprintForPubkey(pubkeyBase64: string): string {
-  return crypto.createHash('sha256').update(Buffer.from(pubkeyBase64.trim(), 'base64')).digest('hex');
-}
-
 export function verifyConfigFingerprint(
   domainConfigPath: string,
   bakedPubkeyBase64: string,
@@ -187,7 +192,7 @@ export function verifyConfigFingerprint(
     fs.readSync(fd, buf, 0, buf.length, 0);
     actualRaw = buf.toString('utf-8');
   } catch (e) {
-    // v10 tests: catch readSync/fstatSync failures (EISDIR when fd is a
+    // Catch readSync/fstatSync failures (EISDIR when fd is a
     // directory, EIO under disk corruption, etc.) and bucket as
     // 'unreadable' rather than letting them propagate as uncaught
     // exceptions that would crash the binary on every CLI invocation.

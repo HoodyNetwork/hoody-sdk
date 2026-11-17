@@ -45,11 +45,15 @@ const CANONICAL_SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-
 function strictSemver(v: string): string | null {
   return CANONICAL_SEMVER.test(v) && isValidSemver(v) ? v : null;
 }
-/** A media type is JSON only if its type/subtype (before `;`) is an
- *  `application/…json` form. Rejects a captive-portal `text/html` firmly. */
-function isJsonContentType(ct: string | null): boolean {
-  const mt = (ct ?? '').split(';')[0]?.trim().toLowerCase() ?? '';
-  return /^application\/([a-z0-9.+-]*\+)?json$/.test(mt) || mt === 'application/json';
+/** A media type is JSON only if its type/subtype (before `;`) is `application/json` or an
+ *  `application/<x>+json` structured-syntax type. Rejects a captive-portal `text/html` firmly.
+ *  Byte-for-byte the rule of the SDK's `isJsonContentType` (src/core/json-media.ts for the
+ *  generator, the emitted client for the SDK); this module stays free of imports from the
+ *  generated client, so it carries its own copy of the same text. */
+function isJsonContentType(ct: string | null | undefined): boolean {
+  if (!ct) return false;
+  const type = ct.split(';')[0]!.trim().toLowerCase();
+  return type === 'application/json' || /^application[/][a-z0-9_.+-]+[+]json$/.test(type);
 }
 
 /** npm registry base. Third-party host — never domain-substituted. */
@@ -207,7 +211,7 @@ export async function resolveLatestVersion(opts: OracleOptions): Promise<OracleR
 
 function describe(e: unknown): string {
   if (e instanceof FetchError) {
-    const rl = e.isRateLimited ? ' (rate-limited)' : '';
+    const rl = e.isRateLimitExhausted() ? ' (rate-limited)' : '';
     return `${e.kind}${e.status ? ` ${e.status}` : ''}${rl}: ${e.message}`;
   }
   return e instanceof Error ? e.message : String(e);

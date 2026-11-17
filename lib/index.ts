@@ -19,8 +19,12 @@
  *    protocol; full ProxyAuth + getKitAuth/getToken provider callbacks
  *    for credential rotation across reconnect) --
  *   TerminalClient + TerminalClientOptions / TerminalPreferences /
- *   ShellType / ConnectionState; plus TerminalWebSocketTyped for
- *   consumers who want the typed-only client without the Duplex shim
+ *   ShellType / ConnectionState (the typed-only client without the Duplex
+ *   shim is the generated TerminalSessionsConnectWebSocket)
+ *
+ * -- WebSocket upgrade errors (generated WebSocket clients, TerminalClient) --
+ *   WebSocketUpgradeRefusedError, WebSocketUpgradeFailedError, WebSocketCredentialNotSentError +
+ *   isWebSocketUpgradeRefusedError, isWebSocketUpgradeFailedError, isWebSocketCredentialNotSentError
  *
  * -- Vault crypto (encrypt/decrypt secrets) --
  *   encrypt, decrypt, isEncrypted, parseEnvelope, EncryptedEnvelope
@@ -34,13 +38,13 @@
  *   verifyHoodySignatureHeader, verifyHoodySignatureFrom
  *
  * -- Metrics normalisation --
- *   normalizeContainerStatsResponse, normalizeProjectStatsResponse
+ *   normalizeComputerStatsResponse, normalizeProjectStatsResponse
  *
  * -- Exec helpers (prototype augmentation + dynamic script support) --
  *   filterAgentScripts + types (the prototype patches run at import; they are not exported)
  *
  * -- Embed URLs for every kit UI (client.embeds) --
- *   buildEmbedUrl, getEmbedCatalog, listEmbedViews, deriveContainersDomain,
+ *   buildEmbedUrl, getEmbedCatalog, listEmbedViews, deriveComputersDomain,
  *   EmbedValidationError, createEmbeds + types
  *
  * Safe from regeneration — add new custom exports here.
@@ -52,15 +56,26 @@ export { EventsManager } from './events-manager.js';
 // entry (lib/index.browser.ts) so consumers that directly use Socket.IO
 // don't need a separate `socket.io-client` dependency import.
 export { io } from 'socket.io-client';
-export { TerminalClient, TerminalWebSocketTyped } from './terminal-client.js';
+export { TerminalClient } from './terminal-client.js';
 export type {
   TerminalClientOptions,
   TerminalPreferences,
   ShellType,
   ConnectionState,
-  ITerminalWebSocketTyped,
   ITerminalWebSocketOptions,
 } from './terminal-client.js';
+// Errors of a WebSocket upgrade the server answered with an HTTP status
+// (generated WebSocket clients and TerminalClient).
+export {
+  isWebSocketUpgradeRefusedError,
+  isWebSocketUpgradeFailedError,
+  isWebSocketCredentialNotSentError,
+} from './websocket-errors.js';
+export type {
+  WebSocketUpgradeRefusedError,
+  WebSocketUpgradeFailedError,
+  WebSocketCredentialNotSentError,
+} from './websocket-errors.js';
 export { encrypt, decrypt, isEncrypted, parseEnvelope, VaultCryptoError } from './vault-crypto.js';
 export type { EncryptedEnvelope } from './vault-crypto.js';
 export { streamAgentPrompt } from './agent-client.js';
@@ -104,8 +119,8 @@ export {
 } from './hoody-client.js';
 export type {
   DaemonProgramRef,
-  ProgramTerminalAttachOptions,
-  ProgramTerminalAttachment,
+  ProgramTerminalConnectOptions,
+  ProgramTerminalConnection,
 } from './hoody-client.js';
 // Public API surface: errors, config, middleware contract.
 export {
@@ -113,9 +128,11 @@ export {
   isApiError,
   isRetryableApiError,
   ValidationError,
+  RetiredOptionError,
   isApiErrorCode,
 } from '../generated/errors.js';
 export type {
+  ApiErrorOutcome,
   ApiErrorRequestContext,
   ApiErrorResponseDetails,
   RetryableApiError,
@@ -128,13 +145,13 @@ export type { HoodyCredentials } from '../generated/client.js';
 // Session lifecycle: the two-factor challenge HoodyClient.login() raises, the token
 // shape adoptSession() takes, and the enriched realm-scope 403.
 export { TwoFactorRequiredError, isRealmScopeError } from '../generated/client.js';
-export type { HoodySessionTokens, HoodySessionUpdate, RealmScopeApiError, ContainerLike } from '../generated/client.js';
+export type { HoodySessionTokens, HoodySessionUpdate, RealmScopeApiError, ComputerLike } from '../generated/client.js';
 // The transport class, for the same parity with the browser entry (which
 // re-exports the whole generated index).
 export { HttpClient } from '../generated/http-client.js';
 // Whether this process sends through the SDK's own undici transport (Node 22.19+), as the README describes.
 export { nodeTransportInUse } from '../generated/http-client.js';
-export type { HoodyFetch, IEventStream, IStreamEvent, ITypedStreamEvent, IStreamEventsOptions, IStreamResponse } from '../generated/http-client.js';
+export type { HoodyFetch, IEventStream, IStreamEvent, ITypedStreamEvent, IStreamEventsOptions, IStreamResponse, IStreamTurnEnd } from '../generated/http-client.js';
 // Every generated request/response/schema type, type-only so it adds nothing
 // at runtime: `import type { DaemonProgramsAddRequest } from 'hoody-sdk'`.
 // Names this entry exports itself take precedence over the star.
@@ -156,7 +173,7 @@ export type {
   KitCatalogOptions,
 } from './kit-catalog.js';
 export {
-  normalizeContainerStatsResponse,
+  normalizeComputerStatsResponse,
   normalizeProjectStatsResponse,
 } from './metrics.js';
 export type {
@@ -179,6 +196,32 @@ export type {
   TerminalShellOptions,
   TerminalShell,
 } from './terminal-exec.js';
+import type { TerminalShellOptions as _ShellOptions, TerminalShell as _Shell } from './terminal-exec.js';
+
+// Node only: the browser entry stubs shell(), so its types do not declare it.
+declare module './hoody-client.js' {
+  interface HoodyClient {
+    /**
+     * Open an interactive PTY shell session to the computer.
+     *
+     * Each call opens a fresh session of its own; pass `terminalId` to join a
+     * shared one instead (see TerminalShellOptions.terminalId).
+     *
+     * Returns a Duplex stream that supports `.pipe()`.
+     * Requires a computer-scoped client (call `withComputer()` first).
+     *
+     * @example
+     * ```ts
+     * const scoped = await client.withComputer(computer);
+     * const sh = scoped.shell();
+     * await sh.ready;
+     * sh.write('echo hello\n');
+     * sh.pipe(process.stdout);
+     * ```
+     */
+    shell(options?: _ShellOptions): _Shell;
+  }
+}
 export type {
   SshTerminalOptions,
   LocalTerminalOptions,
@@ -190,7 +233,7 @@ export type {
 
 // -- Exec dynamic discovery & skills --
 export {
-  discoverScripts,
+  listCallableScripts,
   scriptPathToName,
   isValidToolName,
   sanitizeDescription,
@@ -198,13 +241,13 @@ export {
   extractPathParams,
 } from './exec-dynamic-discovery.js';
 export type {
-  DiscoveredScript,
-  DiscoveredParam,
-  DiscoveryCache,
-  DiscoverOptions,
+  CallableScript,
+  CallableScriptParam,
+  CallableScriptsCache,
+  ListCallableScriptsOptions,
 } from './exec-dynamic-discovery.js';
 export {
-  clearDiscoveryCache,
+  clearCallableScriptsCache,
 } from './exec-dynamic-client.js';
 export type {
   CallScriptOptions,
@@ -255,7 +298,7 @@ export type {
 } from './sqlite-helpers.js';
 
 // -- SQLite KV helper (sqlite.kv.read) --
-export type { KvReadOptions, KvExistsOptions, KvSetTextOptions, KvReadArgs, KvKeyArgs, KvKeyValueArgs, KvKeyMethod, KvKeyValueMethod, KvStoreObjectForms, SqliteKvStore } from './kv-helpers.js';
+export type { KvReadOptions, KvExistsOptions, KvSetTextOptions, KvReadArgs, KvKeyArgs, KvKeyValueArgs, KvKeyMethod, KvKeyValueMethod, KvStoreObjectForms, SqliteKvStore, KvArraysKeyMethod, KvArraysKeyValueMethod, KvArraysKeyArgs, KvArraysKeyValueArgs, KvArraysObjectForms, SqliteKvArraysStore } from './kv-helpers.js';
 
 // -- Mount module (rclone+WebDAV filesystem mount) --
 export {
@@ -263,12 +306,14 @@ export {
   unmount,
   unmountById,
   unmountAll,
-  unmountByContainer,
+  unmountByComputer,
   listMounts,
   pruneStaleMounts,
   probeKit,
   resolveKitUrl,
   parseCliTarget,
+  UnmountError,
+  PendingUploadsError,
 } from './mount.js';
 export type {
   MountOptions,
@@ -277,10 +322,12 @@ export type {
   MountListEntry,
   ProbeResult,
   ParsedCliTarget,
-  ContainerLike as MountContainerLike,
+  ComputerLike as MountComputerLike,
+  UnmountOptions,
+  EarlierUnsent,
 } from './mount.js';
 
-// -- Share module (a local folder served into a container) --
+// -- Share module (a local folder served into a computer) --
 export {
   share,
   listShares,
@@ -321,7 +368,7 @@ export type {
   ProxyAuthJwt,
   ProxyAuthPassword,
   ProxyAuthToken,
-  ProxyAuthContainerClaim,
+  ProxyAuthComputerClaim,
   ProxyAuthIp,
 } from './proxy-auth.js';
 export { isProxyAuthPolicy } from './proxy-auth.js';
@@ -346,9 +393,9 @@ export type {
   ScopeChangedFrame,
   ServerFrame,
 } from './events-types.js';
-export { ApiConnecteventstreamWebSocket } from './events-types.js';
+export { EventsSocketTransport } from './events-types.js';
 export type { EventsClientOptions, EventsOnOptions, EventsWaitOptions, EventsStreamOptions, EventsWaitFilter } from './events-client.js';
-export type { EventFilter, EventsConnectionState, EventsStateEvent, EventsManagerOptions, EventsTransport } from './events-manager.js';
+export type { EventFilter, EventsLifecycleState, EventsConnectionEvent, EventsStateEvent, EventsManagerOptions, EventsTransport } from './events-manager.js';
 export {
   EventsError,
   EventsAuthError,
@@ -424,23 +471,22 @@ export type { PipeDuplex, PipeConnectOptions } from './pipe-ws.js';
 // -- Tunnel target parsing --
 export {
   parseLocalTarget as parseTunnelTarget,
-  parseContainerPort as parseTunnelPort,
+  parseComputerPort as parseTunnelPort,
 } from './tunnel-parse-target.js';
 
 // -- Tunnel client (WebSocket binary protocol + high-level expose/pull API) --
 export {
-  expose as tunnelExpose,
-  pull as tunnelPull,
-  serve as tunnelServe,
-  connect as tunnelConnect,
+  expose as exposeTunnel,
+  pull as pullTunnel,
+  serve as serveTunnel,
   tunnelConnectUrl,
   TunnelSession,
 } from './tunnel-client.js';
 // Keeping a tunnel up across drops, and resuming a dropped session by hand.
 export {
   keepTunnelAlive,
-  resumeExpose as tunnelResumeExpose,
-  resumePull as tunnelResumePull,
+  resumeExpose as resumeTunnelExpose,
+  resumePull as resumeTunnelPull,
   TunnelSessionError,
   TunnelResumeAbortedError,
 } from './tunnel-client.js';
@@ -450,8 +496,8 @@ export type {
   KeptTunnel,
   TunnelEnd,
   ResumeControl,
-  ResumeExposeOptions,
-  ResumePullOptions,
+  ResumeTunnelExposeOptions,
+  ResumeTunnelPullOptions,
   ResumedTunnel,
 } from './tunnel-client.js';
 export type {
@@ -460,9 +506,9 @@ export type {
   ScopedTunnelServeOptions,
 } from './tunnel-service-extensions.js';
 export type {
-  ExposeOptions as TunnelExposeOptions,
-  PullOptions as TunnelPullOptions,
-  ServeOptions as TunnelServeOptions,
+  ExposeOptions as ExposeTunnelOptions,
+  PullOptions as PullTunnelOptions,
+  ServeOptions as ServeTunnelOptions,
   TunnelHandle,
   LocalTarget as TunnelLocalTarget,
   ConnectOptions as TunnelConnectOptions,
@@ -512,7 +558,7 @@ export {
   destroyAllLocalAgents as destroyAllTunnelLocalAgents,
 } from './tunnel-http-pump.js';
 
-// -- Local exit proxy (publish a container's HTTPS proxy, exit from this machine) --
+// -- Local exit proxy (publish a computer's HTTPS proxy, exit from this machine) --
 // `startLocalExit` is the one-call entry point the CLI uses. The layers
 // below it are exported too, because the pieces are independently useful: the
 // SOCKS5 machine runs on any transport implementing `Socks5Stream`, and the
@@ -527,11 +573,11 @@ export type {
   LocalExitHandle,
   LocalExitVerification,
   LocalExitTeardownReport,
-  LocalExitContainerLike,
+  LocalExitComputerLike,
 } from './local-exit.js';
-export { tunnelSocks5 } from './tunnel-socks5.js';
+export { startTunnelSocks5 } from './tunnel-socks5.js';
 export type {
-  TunnelSocks5Options,
+  StartTunnelSocks5Options,
   TunnelSocks5Handle,
 } from './tunnel-socks5.js';
 export {
@@ -604,22 +650,68 @@ export type {
   NotesUploadResult,
   NotesUploadFileResult,
 } from './notes-upload.js';
+export { exportStream as notesExportStream } from './notes-export.js';
+export type { NotesExportQuery, NotesExportOptions } from './notes-export.js';
 
-// -- Bot chat (box.agent.bots.ask / follow) --
+// -- Bot chat (box.agent.bots.ask / followLogs) --
 export { BOT_MESSAGE_IDEMPOTENCY_CAPABILITY } from './bot-chat.js';
 export type {
   BotAskOptions,
   BotAskResult,
-  BotFollowOptions,
+  BotFollowLogsOptions,
   BotLogRow,
   BotMessageReceipt,
   BotStreamFrame,
 } from './bot-chat.js';
+
+// -- Open an app (box.run.open / status / watch / findOpen / canOpen / close): the shared core is lib/run-open-core.js --
+export { runOpenCore } from './run-open.js';
+export type {
+  RunOpenCanOpenResult,
+  RunOpenCatalogEntry,
+  RunOpenCloseOptions,
+  RunOpenFailure,
+  RunOpenFindOptions,
+  RunOpenFindResult,
+  RunOpenHandle,
+  RunOpenOptions,
+  RunOpenRequest,
+  RunOpenResult,
+  RunOpenState,
+  RunOpenGetStatusOptions,
+  RunOpenWaitOptions,
+  RunOpenWaitResult,
+  RunOpenWhere,
+} from './run-open.js';
+
+// -- Bot URLs, caller side (`new BotUrlClient({ url, key })`): a Bot's public doors, by named key --
+export { BotUrlClient, BotUrlError, isBotUrlError, isGateHandle, BOT_URL_ERRORS } from './bot-url-client.js';
+export { isValidBotLabel, isValidBotZone, botLabelOfHost, botLabelOfUrl, botZoneFor, botUrlZones, BOT_URL_ZONE } from './bot-label.js';
+export type { BotLabelOfUrlOptions } from './bot-label.js';
+export type {
+  BotUrlAnswer,
+  BotUrlAskOptions,
+  BotUrlChatMessage,
+  BotUrlChatOptions,
+  BotUrlChatResult,
+  BotUrlErrorInfo,
+  BotUrlEvent,
+  BotUrlStreamEventsOptions,
+  BotUrlEventStream,
+  BotUrlGateAnswer,
+  BotUrlLocalCode,
+  BotUrlModel,
+  BotUrlClientOptions,
+  BotUrlRetryOptions,
+  BotUrlStatus,
+  BotUrlUpdate,
+  BotUrlUpdates,
+} from './bot-url-client.js';
 export { pipeTransportFromClient } from './pipe-transport.js';
 export type { PipeTransport, PipeTransportRequest } from './pipe-transport.js';
 export type { ExecScriptCallOptions, ExecScriptMethod } from './exec-script-execution.js';
 
-// -- Remote control of a live exec script (#674): `exec.connect(url, { token })` --
+// -- Remote control of a live exec script: `exec.remote(url, { token })` --
 export {
   ExecRemoteError,
   ExecRemoteTokenError,
@@ -633,18 +725,18 @@ export {
   createExecRemoteConnection,
 } from './exec-remote.js';
 export type {
-  ExecRemoteConnect,
+  ExecRemoteFactory,
   ExecRemoteConnection,
-  ExecRemoteConnectOptions,
+  ExecRemoteOptions,
   ExecRemoteOpOptions,
-  ExecRemoteEvalOptions,
-  ExecRemoteEvalContext,
+  ExecRemoteEvaluateOptions,
+  ExecRemoteEvaluateContext,
   ExecRemoteRunKind,
-  ExecRemoteEventsOptions,
+  ExecRemoteStreamEventsOptions,
   ExecRemoteTailLevel,
   ExecRemoteSendResult,
   ExecRemoteCallResult,
-  ExecRemoteEvalResult,
+  ExecRemoteEvaluateResult,
   ExecRemoteLogLine,
   ExecRemoteCapabilities,
   ExecRemoteFrame,
@@ -657,20 +749,20 @@ export type {
 export type { CurlChannelLimits } from './curl-channel-helper.js';
 export { withTokenQueryParam } from './proxy-auth.js';
 
-// -- Embed URLs for every kit UI: `client.embeds.<kit>.<view>(container, opts)` --
+// -- Embed URLs for every kit UI: `client.embeds.<kit>.<view>(computer, opts)` --
 // Same block as the browser entry. `client.embeds` is installed below, never by hoody-client.ts.
 export {
   buildEmbedUrl,
   getEmbedCatalog,
   listEmbedViews,
-  deriveContainersDomain,
+  deriveComputersDomain,
   EmbedValidationError,
 } from './embeds/runtime.js';
 export type {
   EmbedErrorCode,
   EmbedParamValue,
   EmbedQuery,
-  EmbedContainerTarget,
+  EmbedComputerTarget,
   EmbedAliasTarget,
   EmbedTarget,
   EmbedBuildOptions,

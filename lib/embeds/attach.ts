@@ -3,12 +3,12 @@
  *
  * Every URL comes from the generic runtime (`./runtime.ts`), which interprets the generated embeds table.
  * This module only binds it to a client:
- *  - the host of a container target comes from the client's own `getKitUrl`, so `embeds` and `getKitUrl`
- *    cannot disagree on the host format or the containers domain;
- *  - on a `withContainer()` client the target may be omitted and the scoped container is used; an
+ *  - the host of a computer target comes from the client's own `getKitUrl`, so `embeds` and `getKitUrl`
+ *    cannot disagree on the host format or the computers domain;
+ *  - on a `withComputer()` client the target may be omitted and the scoped computer is used; an
  *    unscoped client refuses a missing target;
  *  - one typed function per view (`client.embeds.files.editor(target, opts)`), plus the untyped
- *    `client.embeds.url(kit, target, opts)`.
+ *    `client.embeds.getUrl(kit, target, opts)`.
  *
  * Browser-safe, like the runtime: no Node APIs, and no runtime import of the client class. The entry
  * points attach it with `patchEmbedsPrototype(HoodyClient)`.
@@ -20,7 +20,7 @@ import {
   listEmbedViews,
   EmbedValidationError,
   type EmbedBuildOptions,
-  type EmbedContainerTarget,
+  type EmbedComputerTarget,
   type EmbedTarget,
 } from './runtime.js';
 import {
@@ -31,49 +31,49 @@ import {
   type EmbedWrappers,
 } from '../../generated/embeds.generated.js';
 
-/** A container or ProxyAlias; omitted (or null) on a `withContainer()` client. */
+/** A computer or ProxyAlias; omitted (or null) on a `withComputer()` client. */
 export type EmbedTargetArg = EmbedTarget | null | undefined | void;
 
 /** The `client.embeds` object. */
 export type HoodyEmbeds = EmbedWrappers<EmbedTargetArg> & {
   /**
-   * Build the URL of any view by kit slug: `url('files', container, { view: 'editor', params: { path } })`.
+   * Build the URL of any view by kit slug: `getUrl('files', computer, { view: 'editor', params: { path } })`.
    * The view defaults to the kit's default view.
    */
-  url(kit: string, target?: EmbedTargetArg, opts?: EmbedBuildOptions): string;
+  getUrl(kit: string, target?: EmbedTargetArg, opts?: EmbedBuildOptions): string;
   /** A deep copy of the construction catalog. */
-  catalog(): EmbedsCatalog;
+  getCatalog(): EmbedsCatalog;
   /** The view ids of a kit, default first. */
-  views(kit: string): string[];
+  listViews(kit: string): string[];
 };
 
 /** What `createEmbeds` needs from a client: `getKitUrl` and, for scoping, its URL template variables. */
 export interface EmbedsHost {
-  getKitUrl(kit: string, container: EmbedContainerTarget, opts: { serviceIndex?: number; port?: number }): string;
+  getKitUrl(kit: string, computer: EmbedComputerTarget, opts: { serviceIndex?: number; port?: number }): string;
 }
 
 declare module '../hoody-client.js' {
   interface HoodyClient {
     /**
-     * Embed URLs for every Hoody kit UI view: `client.embeds.terminal.session(container, { params })`.
-     * On a `withContainer()` client the target may be omitted.
+     * Embed URLs for every Hoody kit UI view: `client.embeds.terminal.session(computer, { params })`.
+     * On a `withComputer()` client the target may be omitted.
      */
     readonly embeds: HoodyEmbeds;
   }
 }
 
 /**
- * The container a `withContainer()` client is scoped to. The generated client keeps it only as the URL
- * template variables it gives every kit namespace (all set from the one container), so it is read from
- * there. Several different identities, or none, mean the client is not scoped to one container.
+ * The computer a `withComputer()` client is scoped to. The generated client keeps it only as the URL
+ * template variables it gives every kit namespace (all set from the one computer), so it is read from
+ * there. Several different identities, or none, mean the client is not scoped to one computer.
  */
-function scopedContainer(host: EmbedsHost): EmbedContainerTarget | undefined {
+function scopedComputer(host: EmbedsHost): EmbedComputerTarget | undefined {
   const templates = (host as { urlTemplates?: Record<string, Record<string, unknown> | undefined> }).urlTemplates;
   if (templates === undefined || templates === null) return undefined;
-  let found: EmbedContainerTarget | undefined;
+  let found: EmbedComputerTarget | undefined;
   for (const vars of Object.values(templates)) {
     if (vars === undefined || vars === null) continue;
-    const id = vars.containerId;
+    const id = vars.computerId;
     const projectId = vars.projectId;
     const server = vars.serverName ?? vars.server;
     if (typeof id !== 'string' || typeof projectId !== 'string' || typeof server !== 'string') continue;
@@ -87,17 +87,17 @@ function scopedContainer(host: EmbedsHost): EmbedContainerTarget | undefined {
 /** Build the `embeds` object for one client. */
 export function createEmbeds(host: EmbedsHost): HoodyEmbeds {
   const ctx = {
-    getKitUrl: (kit: string, container: EmbedContainerTarget, opts: { serviceIndex?: number; port?: number }) =>
-      host.getKitUrl(kit, container, opts),
+    getKitUrl: (kit: string, computer: EmbedComputerTarget, opts: { serviceIndex?: number; port?: number }) =>
+      host.getKitUrl(kit, computer, opts),
   };
 
   const resolveTarget = (target: EmbedTargetArg): EmbedTarget => {
     if (target !== undefined && target !== null) return target;
-    const scoped = scopedContainer(host);
+    const scoped = scopedComputer(host);
     if (scoped === undefined) {
       throw new EmbedValidationError(
         'TARGET_INVALID',
-        'this client is not scoped to one container: pass a container or a ProxyAlias, or call withContainer() first',
+        'this client is not scoped to one computer: pass a computer or a ProxyAlias, or call withComputer() first',
         'target',
       );
     }
@@ -114,9 +114,9 @@ export function createEmbeds(host: EmbedsHost): HoodyEmbeds {
   };
 
   return Object.assign(makeEmbedWrappers<EmbedTargetArg>(build), {
-    url,
-    catalog: (): EmbedsCatalog => getEmbedCatalog(),
-    views: (kit: string): string[] => listEmbedViews(kit),
+    getUrl: url,
+    getCatalog: (): EmbedsCatalog => getEmbedCatalog(),
+    listViews: (kit: string): string[] => listEmbedViews(kit),
   });
 }
 
@@ -124,7 +124,7 @@ const EMBEDS_BY_CLIENT = new WeakMap<object, HoodyEmbeds>();
 
 /**
  * Define `embeds` on the HoodyClient prototype: a getter, built once per client instance. A getter
- * rather than a constructor field, because withContainer()/withRealm() promote instances by prototype
+ * rather than a constructor field, because withComputer()/withRealm() promote instances by prototype
  * swap and no constructor runs for them. Calling it again redefines the same getter over the same
  * per-instance cache, so both entry points may call it.
  */

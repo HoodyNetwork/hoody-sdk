@@ -9,7 +9,7 @@
  * lib/terminal-client.ts uses:
  *
  *   - Node / Bun: real upgrade headers (`Authorization: Basic|Bearer …`, a
- *     custom `header` if the credential names one, or the container-claim
+ *     custom `header` if the credential names one, or the computer-claim
  *     pair). Opened with the `ws` package (a dependency), which takes headers.
  *   - A `token` credential with `param` goes in that query parameter in every
  *     runtime: it is what a proxy TokenAuth rule with `param` reads, and the
@@ -18,12 +18,12 @@
  *     password / jwt / token credential is folded into the URL as
  *     `?token=…` — accepted by the proxy only where the operator's rule is
  *     a token rule with `param: 'token'` (the legacy TerminalClient
- *     browser form); a containerClaim credential is refused loudly rather than
+ *     browser form); a computerClaim credential is refused loudly rather than
  *     silently dropped.
  *
  * The account token is never involved: only an explicit kit credential is.
  */
-import { base64Encode, isProxyAuthPolicy, withTokenQueryParam, type ProxyAuth, type ProxyAuthPolicy } from './proxy-auth.js';
+import { base64Encode, credentialHeaderValue, isProxyAuthPolicy, withTokenQueryParam, type ProxyAuth, type ProxyAuthPolicy } from './proxy-auth.js';
 
 /** Pick the credential for one kit namespace: `services[ns]`, then `default`. */
 export function kitAuthForNamespace(
@@ -42,6 +42,7 @@ export function clientKitAuth(client: unknown): ProxyAuth | ProxyAuthPolicy | un
   return (client as { kitAuth?: ProxyAuth | ProxyAuthPolicy } | null | undefined)?.kitAuth;
 }
 
+/** True where both `window` and `document` exist (a browser page; not a worker, Node, Bun or Deno). */
 export function isBrowserRuntime(): boolean {
   return typeof (globalThis as { window?: unknown }).window !== 'undefined'
     && typeof (globalThis as { document?: unknown }).document !== 'undefined';
@@ -99,17 +100,17 @@ export function kitAuthWebSocketParts(
       if (browser) {
         u.searchParams.set('token', value);
         credentialQueryParams.push('token');
-      } else headers[header] = header.toLowerCase() === 'authorization' ? `Bearer ${value}` : value;
+      } else headers[header] = credentialHeaderValue(auth, header);
       break;
     }
-    case 'containerClaim': {
+    case 'computerClaim': {
       if (browser) {
         throw new Error(
-          `${label}: containerClaim kitAuth is Node-only. A browser WebSocket cannot ` +
+          `${label}: computerClaim kitAuth is Node-only. A browser WebSocket cannot ` +
             'send custom headers; use a `token` or `jwt` kitAuth for browser deployments.',
         );
       }
-      headers['X-Hoody-Container-Claim'] = auth.claim;
+      headers['X-Hoody-Computer-Claim'] = auth.claim;
       headers['X-Hoody-Token'] = auth.token;
       break;
     }
@@ -143,7 +144,7 @@ export const nodeBuiltinWebSocketUnsafe =
   if (a === 6) return !ge(6, 27, 0);
   if (a === 7) return !ge(7, 28, 0);
   if (a === 8) return !ge(8, 5, 0);
-  return a < 6;                                         // ≥ 9: ASSUMED fixed (a later major carries the fix); T1 row
+  return a < 6;                                         // ≥ 9: ASSUMED fixed (a later major carries the fix)
 }
 // </node-builtin-ws-unsafe>
 ;
@@ -260,12 +261,17 @@ export async function openWebSocketWithHeaders<T>(
     throw new Error(`${label}: the \`ws\` package has no WebSocket constructor`);
   }
   const socket = new Ctor(url, protocols, hasHeaders ? { headers, ...SDK_WS_CAPS } : { ...SDK_WS_CAPS });
-  // Under Bun only: Node's `ws` names the status in its error. With this listener neither emits
-  // `error` for the refusal (Bun still emits `close`), so callers must treat `close` as a refusal too.
+  // Under Bun only: Node's `ws` names the status in its error. With this listener attached, Bun
+  // 1.4.3 and earlier emit only `close`, and Bun 1.4.4 (like Node's `ws`) emits nothing at all and
+  // leaves the socket CONNECTING. So the listener ends the socket itself: `terminate()` makes it
+  // emit `close` (1006), plus `error` on 1.4.4. Callers treat either as the refusal and read the
+  // recorded status.
   const onEvent = (socket as { on?: (ev: string, fn: (req: unknown, res: { statusCode?: number }) => void) => unknown }).on;
   if (options.refusalStatus === true && typeof process !== 'undefined' && process.versions?.bun && typeof onEvent === 'function') {
     onEvent.call(socket, 'unexpected-response', (_req, res) => {
       if (typeof res?.statusCode === 'number') refusedStatuses.set(socket as object, res.statusCode);
+      const terminate = (socket as { terminate?: () => void }).terminate;
+      if (typeof terminate === 'function') terminate.call(socket);
     });
   }
   return socket;

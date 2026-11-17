@@ -15,19 +15,37 @@ export interface LocalTarget {
   port: number;
 }
 
+// Every message below is a constant: none repeats any part of the target, which may hold a credential.
+
+/** A target carrying userinfo, literal ('@') or percent-encoded ('%40'). */
+const TARGET_USERINFO_REFUSAL =
+  'Target must not contain userinfo (user@ or user:password@). Credentials in URLs are not supported. Give host:port only.';
+const TARGET_FORMAT_REFUSAL =
+  'Cannot parse target. A port is required. Examples: 8080, :8080, localhost:3000, 10.0.0.1:8080, [::1]:8080';
+const INVALID_PORT = 'Invalid port. Must be 1-65535.';
+
+/** Userinfo, literal or percent-encoded. */
+const USERINFO_RE = /@|%40/i;
+/** Whitespace or a control character inside the target (the ends are trimmed first). */
+const SPACE_OR_CONTROL_RE = /[\s\p{Cc}]/u;
+
+/**
+ * Parse a local tunnel target: `<port>`, `:<port>`, `<host>:<port>` or `[<ipv6>]:<port>`. A target
+ * with no host means `127.0.0.1`. Throws for an empty string, a target carrying `user@` (or `%40`),
+ * a scheme, whitespace, an invalid port, or anything else that does not fit one of those forms. No
+ * message repeats the input.
+ */
 export function parseLocalTarget(input: string): LocalTarget {
   const raw = input.trim();
   if (!raw) {
     throw new Error('Target is required. Examples: 8080, :8080, 127.0.0.1:8080, localhost:3000');
   }
 
-  // Reject URL-style userinfo "user:pass@host:port" — the last-colon split
-  // below would otherwise silently absorb the credentials into the host
-  // string and forward them downstream.
-  if (raw.includes('@')) {
-    throw new Error(
-      `Target must not contain userinfo. Credentials in URLs are not supported. Got: "${raw}"`,
-    );
+  // Reject URL-style userinfo "user:pass@host:port", literal or percent-encoded
+  // — the last-colon split below would otherwise silently absorb the
+  // credentials into the host string and forward them downstream.
+  if (USERINFO_RE.test(raw)) {
+    throw new Error(TARGET_USERINFO_REFUSAL);
   }
 
   // Pure number: "8080"
@@ -37,11 +55,21 @@ export function parseLocalTarget(input: string): LocalTarget {
     return { host: '127.0.0.1', port };
   }
 
-  // Leading colon: ":8080"
+  // Leading colon: ":8080" (digits only: ":8080junk" is refused, not read as 8080)
   if (raw.startsWith(':')) {
-    const port = parseInt(raw.slice(1), 10);
+    const portStr = raw.slice(1);
+    if (!/^\d+$/.test(portStr)) {
+      throw new Error(INVALID_PORT);
+    }
+    const port = parseInt(portStr, 10);
     validatePort(port);
     return { host: '127.0.0.1', port };
+  }
+
+  // The forms below carry a host: no accepted host holds a scheme ("http://host:80"
+  // is not a target here), whitespace or a control character.
+  if (raw.includes('://') || SPACE_OR_CONTROL_RE.test(raw)) {
+    throw new Error(TARGET_FORMAT_REFUSAL);
   }
 
   // IPv6 bracket notation: "[::1]:8080"
@@ -66,14 +94,12 @@ export function parseLocalTarget(input: string): LocalTarget {
   }
 
   // Bare hostname without port — not valid, port is required
-  throw new Error(
-    `Cannot parse target "${raw}". A port is required. Examples: 8080, localhost:3000, 10.0.0.1:8080`
-  );
+  throw new Error(TARGET_FORMAT_REFUSAL);
 }
 
 function validatePort(port: number): void {
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    throw new Error(`Invalid port: ${port}. Must be 1-65535.`);
+    throw new Error(INVALID_PORT);
   }
 }
 
@@ -81,13 +107,13 @@ function validatePort(port: number): void {
  * Parse --port flag for tunnel commands.
  * Accepts: number, "random", "0", undefined/empty → all return 0 for auto-assign.
  */
-export function parseContainerPort(input: string | undefined): number {
+export function parseComputerPort(input: string | undefined): number {
   if (input === undefined || input === '' || input === 'random' || input === 'auto') {
     return 0;
   }
   const port = parseInt(input, 10);
   if (!Number.isInteger(port) || port < 0 || port > 65535) {
-    throw new Error(`Invalid container port: ${input}. Use a number 0-65535 or "random".`);
+    throw new Error(`Invalid computer port: ${input}. Use a number 0-65535 or "random".`);
   }
   return port;
 }

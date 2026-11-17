@@ -5,12 +5,12 @@
  * tagged with `@tags agent` from the full discovery result.
  */
 
-import type { DiscoveredScript } from './exec-dynamic-discovery.js';
+import type { CallableScript } from './exec-dynamic-discovery.js';
 
 /**
  * Filter discovered scripts to only those with `@tags agent`.
  */
-export function filterAgentScripts(scripts: DiscoveredScript[]): DiscoveredScript[] {
+export function filterAgentScripts(scripts: CallableScript[]): CallableScript[] {
   return scripts.filter(
     (s) => s.tags && s.tags.some((t) => t.toLowerCase() === 'agent'),
   );

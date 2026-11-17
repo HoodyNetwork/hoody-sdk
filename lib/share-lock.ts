@@ -2,8 +2,7 @@
  * The owner lock of a `hoody share`, which is also its stop channel.
  *
  * The owner listens on a local channel for its whole life, and holding the
- * channel's name is ownership (plans/share-local-folder.md, "Ownership, lock
- * and journals"):
+ * channel's name is ownership:
  *
  *   - Linux: the abstract socket `\0hoody-share-<uid>-<id>`. A second bind
  *     fails while a process holds it, and the kernel frees it when the process
@@ -33,6 +32,7 @@ const execFile = promisify(execFileCb);
 
 export type LockFlavor = 'abstract' | 'pipe' | 'file';
 
+/** The lock flavour of a platform: `abstract` on Linux, `pipe` on Windows, `file` everywhere else. */
 export function defaultLockFlavor(platform: NodeJS.Platform = process.platform): LockFlavor {
   if (platform === 'linux') return 'abstract';
   if (platform === 'win32') return 'pipe';
@@ -60,14 +60,17 @@ export interface LockPaths {
   user?: string;
 }
 
+/** A fresh random run token: 32 hex characters. */
 export function newRunToken(): string {
   return randomBytes(16).toString('hex');
 }
 
+/** Path of the file holding the owner's run token for share `id`. */
 export function ownerTokenPath(dir: string, id: string): string {
   return join(dir, `${id}.owner`);
 }
 
+/** Path of the reclaim gate of share `id` (used by the `file` flavour only). */
 export function reclaimGatePath(dir: string, id: string): string {
   return join(dir, `${id}.reclaim`);
 }
@@ -169,6 +172,10 @@ async function writeOwnerToken(dir: string, id: string, token: string): Promise<
   await fs.rename(tmp, target);
 }
 
+/**
+ * The owner's run token for share `id`, or null when the file is missing, unreadable or does not hold 32 hex
+ * characters.
+ */
 export async function readOwnerToken(dir: string, id: string): Promise<string | null> {
   try {
     const v = (await fs.readFile(ownerTokenPath(dir, id), 'utf8')).trim();
@@ -192,7 +199,7 @@ function tokensEqual(a: string, b: string): boolean {
 
 // ─── Channel protocol ────────────────────────────────────────────────────
 
-/** `force` (stop only): discard what the container has not sent yet instead of waiting for it. */
+/** `force` (stop only): discard what the computer has not sent yet instead of waiting for it. */
 export type ChannelRequest = { op: 'stop' | 'status'; token: string; force?: boolean };
 
 export interface ChannelConnection {

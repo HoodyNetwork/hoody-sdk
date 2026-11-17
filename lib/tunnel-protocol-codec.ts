@@ -21,6 +21,7 @@ const KNOWN_FRAME_TYPES: Set<number> = new Set(
 export const MAX_MESSAGE_SIZE = 262_144;
 export const MAX_FRAMES_PER_MESSAGE = 64;
 
+/** A tunnel frame or message could not be encoded or decoded. `code` says why. */
 export class CodecError extends Error {
   constructor(
     message: string,

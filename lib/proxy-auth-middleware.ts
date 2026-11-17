@@ -7,8 +7,8 @@
  */
 
 import type { IHttpClientMiddleware, IHttpClientMiddlewareRequestContext } from '../generated/http-client.js';
-import { type ProxyAuth, type ProxyAuthPolicy, isProxyAuthPolicy, base64Encode, withTokenQueryParam } from './proxy-auth.js';
-import { deriveSiblingDomain } from './domain-utils.js';
+import { type ProxyAuth, type ProxyAuthPolicy, isProxyAuthPolicy, base64Encode, credentialHeaderValue, withTokenQueryParam } from './proxy-auth.js';
+import { deriveSiblingDomain, isComputersHost, isIpDomain, isLocalhostDomain } from './domain-utils.js';
 import { recordCredentialQueryParam, recordCredentialHeader } from './redact.js';
 
 /** Check if a URL matches the base URL's origin and path prefix (including its realm hosts). */
@@ -21,7 +21,7 @@ function isSameOriginAndPath(url: string, baseURL: string): boolean {
     }
     // Realm hosts ({realmId}.api.hoody.com: one realm-id label in front of the
     // base host) are same-origin for auth purposes. Any subdomain used to count,
-    // so under a base with no api. label (kit hosts are containers.<base host>)
+    // so under a base with no api. label (kit hosts are computers.<base host>)
     // every kit request was taken for an API one and got no kit credential.
     if (u.protocol === b.protocol
       && u.hostname.endsWith('.' + b.hostname)
@@ -49,20 +49,25 @@ export function createProxyAuthMiddleware(
   getAuth: () => ProxyAuth | ProxyAuthPolicy | undefined,
   baseURL: string
 ): IHttpClientMiddleware {
-  // Derive the containers domain from baseURL (domain-agnostic).
-  // e.g. api.custom.com -> containers.custom.com
-  const containersDomain = deriveSiblingDomain(baseURL, 'containers');
+  // Derive the computers domain from baseURL (domain-agnostic).
+  // e.g. api.custom.com -> computers.custom.com
+  const computersDomain = deriveSiblingDomain(baseURL, 'computers');
+  // A localhost or IP base keeps its own host as the domain, and that host is the API itself (or another
+  // service on the same machine, on another port). Only a host UNDER it is a kit host there, never the domain.
+  const hostKept = isLocalhostDomain(computersDomain) || isIpDomain(computersDomain);
 
   function isKitUrl(url: string): boolean {
     try {
+      // Exact suffix, either label spelling: a kit host saved before the rename still routes.
       const hostname = new URL(url).hostname;
-      return hostname.endsWith('.' + containersDomain) || hostname === containersDomain;
+      if (hostKept && hostname.toLowerCase() === computersDomain.toLowerCase()) return false;
+      return isComputersHost(hostname, computersDomain);
     } catch {
       return false;
     }
   }
 
-  // Tag the middleware so withContainer()'s override-strip filter can
+  // Tag the middleware so withComputer()'s override-strip filter can
   // identify and remove the parent's proxy-auth middleware when kitAuth is
   // overridden. Without this tag the filter never matches and stale headers
   // survive into the child client. Cast-through-unknown to carry the excess
@@ -79,7 +84,7 @@ export function createProxyAuthMiddleware(
       if (baseURL && isSameOriginAndPath(url, baseURL)) {
         return ctx;
       }
-      // Only inject for verified Kit URLs (derived containers domain)
+      // Only inject for verified Kit URLs (derived computers domain)
       if (!isKitUrl(url)) {
         return ctx;
       }
@@ -118,7 +123,7 @@ export function createProxyAuthMiddleware(
       };
 
       // A token rule configured with a query parameter reads only that
-      // parameter (proxy matrix.service.ts case 'token': param before
+      // parameter (the proxy's own token check: param before
       // cookie/header). Put the credential in the URL and send no header;
       // the URL is what HttpClient.prepareUpgrade() hands a WebSocket, so a
       // browser socket carries it too.
@@ -142,22 +147,15 @@ export function createProxyAuthMiddleware(
           set('Authorization', `Basic ${encoded}`);
           break;
         }
-        case 'jwt': {
-          const h = resolvedAuth.header || 'Authorization';
-          set(h, h.toLowerCase() === 'authorization'
-            ? `Bearer ${resolvedAuth.token}`
-            : resolvedAuth.token);
-          break;
-        }
+        case 'jwt':
         case 'token': {
+          // A JWT is `Bearer <jwt>` on any header; a token is raw off Authorization.
           const h = resolvedAuth.header || 'Authorization';
-          set(h, h.toLowerCase() === 'authorization'
-            ? `Bearer ${resolvedAuth.value}`
-            : resolvedAuth.value);
+          set(h, credentialHeaderValue(resolvedAuth, h));
           break;
         }
-        case 'containerClaim': {
-          set('X-Hoody-Container-Claim', resolvedAuth.claim);
+        case 'computerClaim': {
+          set('X-Hoody-Computer-Claim', resolvedAuth.claim);
           set('X-Hoody-Token', resolvedAuth.token);
           break;
         }

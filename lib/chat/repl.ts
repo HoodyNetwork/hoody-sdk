@@ -68,6 +68,13 @@ export interface ReplOptions {
 
 type ReplState = 'idle' | 'inflight' | 'confirm-exit';
 
+/**
+ * Run the interactive `hoody chat` loop on `opts.input` / `opts.output` (stdin / stdout by default)
+ * until the user leaves or the input ends. Each line is a question or a slash command; answers are
+ * rendered as they stream unless `opts.stream` is false. Session files are written only when
+ * `opts.persist` is set (or after `/save`), and never in private mode. A failed disk write is
+ * reported once and the loop continues in memory.
+ */
 export async function runRepl(opts: ReplOptions): Promise<void> {
   const input = opts.input ?? process.stdin;
   const output = opts.output ?? process.stdout;

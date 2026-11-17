@@ -1,7 +1,7 @@
 /**
  * Custom HTTP/1.1 client for the tunnel's local requests: body-less ones (`request`) and
  * ones whose body is streamed chunked (`requestStreaming`). Bypasses node:http entirely for
- * ~56% throughput improvement under sustained load.
+ * higher throughput under sustained load.
  */
 import * as net from "node:net";
 import { sdkLocalFdBudget } from "./tunnel-fd-budget.js";
@@ -734,6 +734,7 @@ class TargetPool {
 
 const pools = new Map<string, TargetPool>();
 
+/** The connection pool for the local target `host`:`port`, created on first use and shared by every later call for that pair. */
 export function getFastPool(host: string, port: number): TargetPool {
   const key = `${host}:${port}`;
   let pool = pools.get(key);
@@ -743,6 +744,7 @@ export function getFastPool(host: string, port: number): TargetPool {
   return pool;
 }
 
+/** Destroy every pool `getFastPool()` created, closing their sockets, and forget them. */
 export function destroyAllFastPools() {
   for (const p of pools.values()) p.destroy();
   pools.clear();

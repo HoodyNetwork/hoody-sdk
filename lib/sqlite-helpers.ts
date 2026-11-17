@@ -22,14 +22,14 @@
 
 import { SqlService } from '../generated/sqlite/sql.service.js';
 import type { SqlServiceBase } from '../generated/sqlite/sql.service.generated.js';
-import type { main_requestItem, main_responseItem } from '../generated/types.js';
+import type { requestItem, responseItem } from '../generated/types.js';
 import { ValidationError } from '../generated/errors.js';
 
 const SQLITE_HELPERS_PATCH_MARKER = Symbol.for('hoody.sdk.sqlite.sql.helpers');
 
 type TemplateVars = {
   projectId?: string;
-  containerId?: string;
+  computerId?: string;
   serviceIndex?: string | number;
   serverName?: string;
   server?: string;
@@ -136,7 +136,7 @@ function describeBinding(value: unknown): string {
  * null. The client writes a bigint in the JSON body as an integer, and
  * returns an INTEGER above 2^53-1 as one, so a value read back binds again.
  * The kit reads `values` as JSON
- * (hoody-sqlite raw2params), and JSON.stringify turns NaN and Infinity into
+ * (hoody-sqlite), and JSON.stringify turns NaN and Infinity into
  * null and drops an undefined key, so an INSERT would store NULL without an
  * error; a nested value or bytes would bind as a JSON array or map.
  */
@@ -168,7 +168,7 @@ async function sendOne(
   kind: ItemKind,
   request: SqliteSqlRequest,
   templateVars: TemplateVars | undefined,
-): Promise<main_responseItem> {
+): Promise<responseItem> {
   const label = `sqlite.sql.${method}`;
   if (request === null || typeof request !== 'object' || Array.isArray(request)) {
     throw new ValidationError(`${label} takes one object: ${label}({ db: 'app', sql: '…', params: [] })`);
@@ -195,14 +195,14 @@ async function sendOne(
     { transaction: [bind == null ? item : {
       ...item,
       // The generated type lists the JSON scalars; a bigint goes out as a JSON integer.
-      values: bind as NonNullable<main_requestItem['values']>,
+      values: bind as NonNullable<requestItem['values']>,
     }] },
     // Forced after the caller's options: the result is read from the envelope.
     { ...rest, rawResponse: false, responseType: 'json' },
     templateVars,
   );
   const results = (response as { data?: { results?: unknown } } | undefined)?.data?.results;
-  const first = Array.isArray(results) ? (results[0] as main_responseItem | undefined) : undefined;
+  const first = Array.isArray(results) ? (results[0] as responseItem | undefined) : undefined;
   if (!first || typeof first !== 'object') {
     throw new Error(`${label}: malformed response, no results[0] in the answer of POST /api/v1/sqlite/db`);
   }

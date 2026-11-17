@@ -4,26 +4,26 @@
  *
  * Usage:
  *
- *   const scoped = await client.withContainer({ project, container });
+ *   const scoped = await client.withComputer({ project, computer });
  *   const ch = await scoped.curl.channel.connect();
  *   const fetch = createCurlFetch({ url: ch.url, channel: ch });
  *   const res = await fetch('https://api.example.com/x');
  *
  * The helper:
- *   • derives `wss://<projectId>-<containerId>-curl-<idx>.<server>.<containersDomain>/api/v1/curl/channel`
- *     from `client.urlTemplates['curl']` (set by `withContainer()`).
+ *   • derives `wss://<projectId>-<computerId>-curl-<idx>.<server>.<computersDomain>/api/v1/curl/channel`
+ *     from `client.urlTemplates['curl']` (set by `withComputer()`).
  *   • or uses `opts.url` verbatim — the test escape hatch + custom-routing
  *     surface for non-Hoody-hosted curl bridges.
  *
  * The curl-channel WS route at `/api/v1/curl/channel` has no in-process auth
- * (verified in the upstream curl protocol). Where a Hoody Proxy permission
+ * (the curl kit's own protocol). Where a Hoody Proxy permission
  * rule guards the curl service, the kit credential is the client's `kitAuth`
  * (its `curl` entry for a policy) or `opts.kitAuth`, applied to the upgrade
  * the way lib/kit-ws-auth.ts describes: headers in Node/Bun, `?token=` in a
  * browser. The account token is never sent.
  *
  * Channel limits (`opts.limits`) are the server's own query parameters on the
- * channel URL (hoody-curl `ChannelQuery`); the server clamps each one.
+ * channel URL (the curl kit's channel query); the server clamps each one.
  */
 
 import type { HoodyClient } from './hoody-client.js';
@@ -48,11 +48,11 @@ export interface CurlChannelHelperOptions {
    */
   url?: string;
   /**
-   * Container scope. Omit when the client is already container-scoped via
-   * `client.withContainer({ project, container })` — the helper reads
+   * Computer scope. Omit when the client is already computer-scoped via
+   * `client.withComputer({ project, computer })` — the helper reads
    * `client.urlTemplates['curl']` in that case.
    */
-  containerId?: string;
+  computerId?: string;
   projectId?: string;
   /** Server slug, e.g. `code-example-1`. Required only with explicit ids. */
   server?: string;
@@ -80,7 +80,7 @@ export interface CurlChannelHelperOptions {
   limits?: CurlChannelLimits;
 }
 
-/** hoody-curl channel limits (`ChannelQuery`); the server clamps each value. */
+/** hoody-curl channel limits; the server clamps each value. */
 export interface CurlChannelLimits {
   /** Concurrent streams on this channel (`max_concurrent_streams`). */
   maxConcurrentStreams?: number;
@@ -151,42 +151,42 @@ export function assembleCurlChannelUrl(
   if (opts.url) return opts.url;
   const serviceIndex = opts.serviceIndex ?? 1;
 
-  // Prefer reading urlTemplates['curl'] set by `client.withContainer(...)` —
-  // the same path terminal-exec.ts:182 uses. This avoids round-tripping
-  // through `getKitUrl` (which throws on container===null and re-derives
+  // Prefer reading urlTemplates['curl'] set by `client.withComputer(...)` —
+  // the same path terminal-exec.ts uses. This avoids round-tripping
+  // through `getKitUrl` (which throws on computer===null and re-derives
   // pieces we already have in the template).
   const tpl = (client as unknown as {
-    urlTemplates?: Record<string, { projectId?: string; containerId?: string; server?: string; serverName?: string }>;
+    urlTemplates?: Record<string, { projectId?: string; computerId?: string; server?: string; serverName?: string }>;
   }).urlTemplates?.['curl'];
 
   const projectId = opts.projectId ?? tpl?.projectId;
-  const containerId = opts.containerId ?? tpl?.containerId;
+  const computerId = opts.computerId ?? tpl?.computerId;
   // Templates expose both `server` and `serverName`; the curl URL template
-  // uses `serverName` (verified at generated/client.ts:878). Accept either.
+  // uses `serverName`. Accept either.
   const server = opts.server ?? tpl?.serverName ?? tpl?.server;
 
-  if (!projectId || !containerId || !server) {
+  if (!projectId || !computerId || !server) {
     throw new Error(
-      'curl.channel.connect() requires either { url } or a container-scoped client ' +
-        '(call client.withContainer({ project, container }) first) or ' +
-        'explicit { projectId, containerId, server } in opts. Got: ' +
-        JSON.stringify({ projectId, containerId, server }),
+      'curl.channel.connect() requires either { url } or a computer-scoped client ' +
+        '(call client.withComputer({ project, computer }) first) or ' +
+        'explicit { projectId, computerId, server } in opts. Got: ' +
+        JSON.stringify({ projectId, computerId, server }),
     );
   }
 
   const domain: string =
-    typeof (client as unknown as { resolveContainersDomain?: () => string }).resolveContainersDomain ===
+    typeof (client as unknown as { resolveComputersDomain?: () => string }).resolveComputersDomain ===
     'function'
-      ? (client as unknown as { resolveContainersDomain: () => string }).resolveContainersDomain()
-      : 'containers.hoody.com';
+      ? (client as unknown as { resolveComputersDomain: () => string }).resolveComputersDomain()
+      : 'computers.hoody.com';
 
-  return `wss://${projectId}-${containerId}-curl-${serviceIndex}.${server}.${domain}/api/v1/curl/channel`;
+  return `wss://${projectId}-${computerId}-curl-${serviceIndex}.${server}.${domain}/api/v1/curl/channel`;
 }
 
 declare module '../generated/curl/channel.service.js' {
   interface ChannelService {
     /**
-     * Open a {@link CurlChannel} against this client's container kit. Returns
+     * Open a {@link CurlChannel} against this client's computer kit. Returns
      * a Promise that resolves once the hello frame has arrived (the channel
      * is ready to accept `request()` calls).
      *
@@ -196,6 +196,7 @@ declare module '../generated/curl/channel.service.js' {
   }
 }
 
+/** Installs `connect()` on the generated `curl.channel` service. Runs once: a second call does nothing. */
 export function patchCurlChannelPrototype(): void {
   const prototype = ChannelService.prototype as unknown as Record<string | symbol, unknown>;
   if (prototype[CURL_CHANNEL_PATCH_MARKER]) return;
@@ -225,7 +226,7 @@ export function patchCurlChannelPrototype(): void {
           }
         : {}),
     };
-    return CurlChannel.open(channelOptions);
+    return CurlChannel.connect(channelOptions);
   };
 
   prototype[CURL_CHANNEL_PATCH_MARKER] = true;

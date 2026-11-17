@@ -55,6 +55,10 @@ export type DenyReason =
   /** The policy itself is unusable, so nothing can be authorized against it. */
   | 'policy-invalid';
 
+/**
+ * Thrown when the destination policy refuses a host or port, or cannot resolve it. `reason` says which rule
+ * refused; the message is safe to show.
+ */
 export class DestinationDeniedError extends Error {
   readonly reason: DenyReason;
   constructor(reason: DenyReason, message: string) {
@@ -95,10 +99,9 @@ export function isPrivateAddress(ip: string): boolean {
   if (a >= 224) return true;                     // 224/4 multicast, 240/4 reserved, 255.255.255.255
 
   // The reserved documentation and protocol-assignment ranges are /24s, and the
-  // rest of each surrounding /16 is ordinary routable space. Matching on the
-  // first two octets blocked all of 192.0/16, 198.51/16 and 203.0/16, which
-  // quietly made real destinations unreachable through the proxy — a refusal
-  // this side, with nothing at the destination to explain it.
+  // rest of each surrounding /16 is ordinary routable space, so only the /24
+  // is refused: matching on the first two octets would make real destinations
+  // in 192.0/16, 198.51/16 and 203.0/16 unreachable through the proxy.
   // 192.0.0.0/24 is special-purpose, but IANA marks 192.0.0.9 (Port Control
   // Protocol anycast) and 192.0.0.10 (Traversal Using Relays anycast) as
   // globally reachable. Blocking the whole /24 refuses two real public
@@ -263,13 +266,11 @@ export async function resolveAndAuthorize(
       // no (resolvers, host) pair can be spelled two ways. With a printable
       // separator, ['a'] + 'b|c' and ['a|b'] + 'c' both key to 'a|b|c'.
       //
-      // Measured 2026-08-11: that collision is currently UNREACHABLE through the
-      // public API — a hostname containing '|' fails resolution with EBADNAME so
-      // it never reaches the cache, and a resolver entry containing '|' is
-      // rejected by setServers with ERR_INVALID_IP_ADDRESS. A mutation reverting
-      // this to '|' therefore survives the whole suite, and no test can pin it.
-      // Kept anyway: it costs one character and it stops being free the moment
-      // either validation loosens. Do not "simplify" it back.
+      // That collision is unreachable today: a hostname containing '|' fails
+      // resolution with EBADNAME so it never reaches the cache, and a resolver
+      // entry containing '|' is rejected by setServers with
+      // ERR_INVALID_IP_ADDRESS. NUL keeps it impossible if either validation
+      // loosens.
       ? `${policy.dnsServers.join(',')}\u0000${host}`
       : `\u0000${host}`;
     const cached = useCache ? cacheGet(cacheKey) : undefined;
@@ -332,7 +333,7 @@ export async function resolveAndAuthorize(
     // A deny rule that cannot be parsed must not quietly become an allow.
     // `inCidr` answers "not in range" for anything unparseable, so a typo like
     // `198.20.0.0/33`, or a whole comma-separated list passed as one element,
-    // used to disable exactly the range the operator was trying to exclude —
+    // would otherwise disable exactly the range the operator meant to exclude,
     // silently, with the destination then permitted because it is syntactically
     // public. Refuse instead: an over-broad refusal is visible and recoverable,
     // an inert security control is neither.

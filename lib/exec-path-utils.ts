@@ -27,6 +27,7 @@ export const MAX_URL_DECODE_PASSES = 8;
  */
 export const LONE_PERCENT = /%(?![0-9A-Fa-f]{2})/g;
 
+/** Replace every `%` that does not start a two-digit hex escape with `%25`, so `decodeURIComponent` cannot throw on it. */
 export function escapeLonePercents(path: string): string {
   return path.replace(LONE_PERCENT, '%25');
 }
@@ -82,12 +83,11 @@ export function validatePathCommon(normalized: string, decoded: string, helperNa
     throw new Error(`${helperName} path cannot resolve to null bytes`);
   }
 
-  // Reject BOTH `..` and `.`. Checking only `..` left a real gap: a bare `.`
-  // segment is removed by URL normalisation, so `.` as the whole path made the
-  // segment vanish and retargeted the request, and `foo/.` collapsed to `foo/`.
-  // Measured before this fix — `assertBasePath` accepted '.', 'foo/.', '%2e' and
-  // 'foo/%2e' while correctly rejecting every '..' form. `decoded` is the
-  // fixed-point decode, so the percent-spelled variants are covered by it.
+  // Reject BOTH `..` and `.`: URL normalisation removes a `.` segment as it
+  // does a `..` one, so `.` as the whole path would make the segment vanish and
+  // retarget the request, and `foo/.` would collapse to `foo/`. `decoded` is the
+  // fixed-point decode, so the percent-spelled variants ('%2e', 'foo/%2e') are
+  // covered by it.
   //
   // Only a WHOLE segment equal to `.`/`..` is refused; ordinary names that merely
   // contain dots (`.env`, `a.b`, `..hidden`) are untouched.

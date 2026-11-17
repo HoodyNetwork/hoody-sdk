@@ -20,9 +20,37 @@ import { open, rename, readFile, readdir, stat, lstat, unlink } from 'node:fs/pr
 import { randomBytes } from 'node:crypto';
 import { hoodyHomeDir, platformEnvHint } from './home-dir.js';
 import { join } from 'node:path';
-import { normalizeOrigin, isLocalOrigin } from '../ai/provider-resolve.js';
 import { platformUrl } from '../domain-utils.js';
 import { prepareChatsDir } from './prepare-dir.js';
+
+// Loopback and RFC 1918 hosts: local and LAN endpoints, accepted without a prompt.
+const LOCAL_ORIGIN_REGEX =
+  /^(https?):\/\/(localhost|127\.0\.0\.1|\[::1\]|10\.[0-9.]+|172\.(1[6-9]|2[0-9]|3[01])\.[0-9.]+|192\.168\.[0-9.]+)(:[0-9]+)?$/i;
+
+/**
+ * Normalize a URL to a canonical origin (scheme://host[:port]) for comparison.
+ * Lowercases host, strips default ports (80 for http, 443 for https),
+ * drops trailing slashes and any path component.
+ *
+ * Throws if the URL is invalid or uses a non-http(s) scheme.
+ */
+export function normalizeOrigin(raw: string): string {
+  const u = new URL(raw);
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+    throw new Error(`Only http(s) schemes supported, got ${u.protocol}`);
+  }
+  const host = u.hostname.toLowerCase();
+  const isDefaultPort =
+    (u.protocol === 'https:' && (u.port === '' || u.port === '443')) ||
+    (u.protocol === 'http:' && (u.port === '' || u.port === '80'));
+  const portSuffix = isDefaultPort ? '' : `:${u.port}`;
+  return `${u.protocol}//${host}${portSuffix}`;
+}
+
+/** True if the origin is a loopback or RFC 1918 address, which is accepted without a prompt. */
+export function isLocalOrigin(origin: string): boolean {
+  return LOCAL_ORIGIN_REGEX.test(origin);
+}
 
 /**
  * Built-in origins that never require user acceptance. Stored as already-normalized
