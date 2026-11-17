@@ -1,11 +1,75 @@
-# `api` — 303 methods
+# `api` — 351 methods
 
-**Version:** 1.0.0-beta.17
+**Version:** 1.0.1
 **Accessor:** `client.api`
 
 ```typescript
 import * as api from 'hoody-sdk/api';
 ```
+
+---
+
+## `client.api.abuseNotices` (3 methods)
+
+### `get`
+
+**GET** `/api/v1/abuse-notices/{id}`
+
+Read one notice with every message
+
+```typescript
+client.api.abuseNotices.get(id: string): Promise<ApiAbuseNoticesGetResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+
+**Returns:** `ApiAbuseNoticesGetResponse`
+
+**CLI:** `hoody abusenotices get`
+
+---
+
+### `list`
+
+**GET** `/api/v1/abuse-notices`
+
+List notices Hoody sent you about your servers
+
+```typescript
+client.api.abuseNotices.list(options?: { page?: number; limit?: number }): Promise<ApiAbuseNoticesListResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `page` | `number` | No | query |  |
+| `limit` | `number` | No | query |  |
+
+**Returns:** `ApiAbuseNoticesListResponse`
+
+**CLI:** `hoody abusenotices list`
+
+---
+
+### `reply`
+
+**POST** `/api/v1/abuse-notices/{id}/messages`
+
+Reply to a notice
+
+```typescript
+client.api.abuseNotices.reply(id: string, data: ApiAbuseNoticesReplyRequest): Promise<ApiAbuseNoticesReplyResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+| `data` | `ApiAbuseNoticesReplyRequest` | Yes | body |  |
+
+**Returns:** `ApiAbuseNoticesReplyResponse`
+
+**CLI:** `hoody abusenotices reply`
 
 ---
 
@@ -107,7 +171,23 @@ client.api.activity.listIterator(options?: { page?: number; limit?: number; star
 
 ---
 
-## `client.api.ai` (1 method)
+## `client.api.ai` (2 methods)
+
+### `getFreeUsage`
+
+**GET** `/api/v1/users/me/free-ai-usage`
+
+Get free AI usage for your servers
+
+```typescript
+client.api.ai.getFreeUsage(): Promise<ApiAiGetFreeUsageResponse>
+```
+
+**Returns:** `ApiAiGetFreeUsageResponse`
+
+**CLI:** `hoody ai freeusage get`
+
+---
 
 ### `listModels`
 
@@ -125,7 +205,7 @@ client.api.ai.listModels(): Promise<ApiAiListModelsResponse>
 
 ---
 
-## `client.api.auth` (11 methods)
+## `client.api.auth` (9 methods)
 
 ### `createIdentityClaim`
 
@@ -143,7 +223,7 @@ client.api.auth.createIdentityClaim(data: ApiAuthCreateIdentityClaimRequest): Pr
 
 **Returns:** `ApiAuthCreateIdentityClaimResponse`
 
-**CLI:** `hoody auth claims create`
+**CLI:** `hoody auth identityclaims create`
 
 ---
 
@@ -255,26 +335,6 @@ client.api.auth.resetPassword(data: ApiAuthResetPasswordRequest): Promise<ApiAut
 
 ---
 
-### `sendVerificationEmail`
-
-**POST** `/api/v1/auth/resend-verification`
-
-Resend verification email
-
-```typescript
-client.api.auth.sendVerificationEmail(data: ApiAuthSendVerificationEmailRequest): Promise<ApiAuthSendVerificationEmailResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `ApiAuthSendVerificationEmailRequest` | Yes | body |  |
-
-**Returns:** `ApiAuthSendVerificationEmailResponse`
-
-**CLI:** `hoody auth email verification send`
-
----
-
 ### `signup`
 
 **POST** `/api/v1/auth/signup`
@@ -290,26 +350,6 @@ client.api.auth.signup(data: ApiAuthSignupRequest): Promise<ApiAuthSignupRespons
 | `data` | `ApiAuthSignupRequest` | Yes | body |  |
 
 **Returns:** `ApiAuthSignupResponse`
-
----
-
-### `verifyEmail`
-
-**POST** `/api/v1/auth/verify-email`
-
-Verify email address
-
-```typescript
-client.api.auth.verifyEmail(data: ApiAuthVerifyEmailRequest): Promise<ApiAuthVerifyEmailResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `ApiAuthVerifyEmailRequest` | Yes | body |  |
-
-**Returns:** `ApiAuthVerifyEmailResponse`
-
-**CLI:** `hoody auth email verify`
 
 ---
 
@@ -425,6 +465,124 @@ client.api.auth.device.verifyCode(data: ApiAuthDeviceVerifyCodeRequest): Promise
 
 ---
 
+## `client.api.auth.email` (6 methods)
+
+### `cancelChange`
+
+**DELETE** `/api/v1/users/me/email-change`
+
+Cancel a pending email address change
+
+```typescript
+client.api.auth.email.cancelChange(): Promise<ApiResponse<unknown>>
+```
+
+**Returns:** `ApiResponse<unknown>`
+
+**CLI:** `hoody auth email change cancel`
+
+---
+
+### `confirmChange`
+
+**POST** `/api/v1/auth/email-change/confirm`
+
+Confirm an email address change
+
+```typescript
+client.api.auth.email.confirmChange(data: ApiAuthEmailConfirmChangeRequest): Promise<ApiAuthEmailConfirmChangeResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ApiAuthEmailConfirmChangeRequest` | Yes | body |  |
+
+**Returns:** `ApiAuthEmailConfirmChangeResponse`
+
+**CLI:** `hoody auth email change confirm`
+
+---
+
+### `sendVerification`
+
+**POST** `/api/v1/auth/resend-verification`
+
+Resend verification email
+
+```typescript
+client.api.auth.email.sendVerification(data: ApiAuthEmailSendVerificationRequest): Promise<ApiAuthEmailSendVerificationResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ApiAuthEmailSendVerificationRequest` | Yes | body |  |
+
+**Returns:** `ApiAuthEmailSendVerificationResponse`
+
+**CLI:** `hoody auth email verification send`
+
+---
+
+### `startChange`
+
+**POST** `/api/v1/users/me/email-change`
+
+Request an email address change
+
+```typescript
+client.api.auth.email.startChange(data: ApiAuthEmailStartChangeRequest): Promise<ApiAuthEmailStartChangeResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ApiAuthEmailStartChangeRequest` | Yes | body |  |
+
+**Returns:** `ApiAuthEmailStartChangeResponse`
+
+**CLI:** `hoody auth email change start`
+
+---
+
+### `undoChange`
+
+**POST** `/api/v1/auth/email-change/revert`
+
+Undo an email address change
+
+```typescript
+client.api.auth.email.undoChange(data: ApiAuthEmailUndoChangeRequest): Promise<ApiAuthEmailUndoChangeResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ApiAuthEmailUndoChangeRequest` | Yes | body |  |
+
+**Returns:** `ApiAuthEmailUndoChangeResponse`
+
+**CLI:** `hoody auth email change undo`
+
+---
+
+### `verify`
+
+**POST** `/api/v1/auth/verify-email`
+
+Verify email address
+
+```typescript
+client.api.auth.email.verify(data: ApiAuthEmailVerifyRequest): Promise<ApiAuthEmailVerifyResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ApiAuthEmailVerifyRequest` | Yes | body |  |
+
+**Returns:** `ApiAuthEmailVerifyResponse`
+
+**CLI:** `hoody auth email verify`
+
+---
+
 ## `client.api.auth.oauth` (4 methods)
 
 ### `authorize`
@@ -498,6 +656,106 @@ client.api.auth.oauth.startLaunch(data: ApiAuthOauthStartLaunchRequest): Promise
 | `data` | `ApiAuthOauthStartLaunchRequest` | Yes | body |  |
 
 **Returns:** `ApiAuthOauthStartLaunchResponse`
+
+---
+
+## `client.api.auth.sessions` (5 methods)
+
+### `list`
+
+**GET** `/api/v1/users/auth/sessions`
+
+List your sign-in sessions
+
+```typescript
+client.api.auth.sessions.list(options?: { state?: "active" | "ended"; limit?: number; cursor?: string }): Promise<ApiAuthSessionsListResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `state` | `"active" \| "ended"` | No | query | Open sessions, or sessions ended in the last 180 days |
+| `limit` | `number` | No | query | Sessions per page |
+| `cursor` | `string` | No | query | `next_cursor` of the previous page |
+
+**Returns:** `ApiAuthSessionsListResponse`
+
+**CLI:** `hoody auth sessions list`
+
+---
+
+### `listAll`
+
+**GET** `/api/v1/users/auth/sessions`
+
+List your sign-in sessions (collect all pages)
+
+```typescript
+client.api.auth.sessions.listAll(options?: { state?: "active" | "ended"; limit?: number; cursor?: string }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `state` | `"active" \| "ended"` | No | query | Open sessions, or sessions ended in the last 180 days |
+| `limit` | `number` | No | query | Sessions per page |
+| `cursor` | `string` | No | query | `next_cursor` of the previous page |
+
+**Returns:** `unknown[]`
+
+---
+
+### `listIterator`
+
+**GET** `/api/v1/users/auth/sessions`
+
+List your sign-in sessions (async iterator)
+
+```typescript
+client.api.auth.sessions.listIterator(options?: { state?: "active" | "ended"; limit?: number; cursor?: string }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `state` | `"active" \| "ended"` | No | query | Open sessions, or sessions ended in the last 180 days |
+| `limit` | `number` | No | query | Sessions per page |
+| `cursor` | `string` | No | query | `next_cursor` of the previous page |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+### `revoke`
+
+**DELETE** `/api/v1/users/auth/sessions/{id}`
+
+End one of your sign-in sessions
+
+```typescript
+client.api.auth.sessions.revoke(id: string): Promise<ApiAuthSessionsRevokeResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Session id, or `current` |
+
+**Returns:** `ApiAuthSessionsRevokeResponse`
+
+**CLI:** `hoody auth sessions revoke`
+
+---
+
+### `revokeOthers`
+
+**POST** `/api/v1/users/auth/sessions/revoke-others`
+
+End all your other sign-in sessions
+
+```typescript
+client.api.auth.sessions.revokeOthers(): Promise<ApiAuthSessionsRevokeOthersResponse>
+```
+
+**Returns:** `ApiAuthSessionsRevokeOthersResponse`
+
+**CLI:** `hoody auth sessions revoke`
 
 ---
 
@@ -637,7 +895,7 @@ client.api.auth.tokens.getPublicProfile(public_key: string): Promise<ApiAuthToke
 
 **Returns:** `ApiAuthTokensGetPublicProfileResponse`
 
-**CLI:** `hoody auth tokens profiles get`
+**CLI:** `hoody auth tokens publicprofiles get`
 
 ---
 
@@ -759,11 +1017,11 @@ client.api.auth.tokens.updatePublicProfile(data: ApiAuthTokensUpdatePublicProfil
 
 **Returns:** `ApiAuthTokensUpdatePublicProfileResponse`
 
-**CLI:** `hoody auth tokens profiles update`
+**CLI:** `hoody auth tokens publicprofiles update`
 
 ---
 
-## `client.api.auth.twoFactor` (8 methods)
+## `client.api.auth.twoFactor` (9 methods)
 
 ### `confirmSetup`
 
@@ -812,7 +1070,7 @@ client.api.auth.twoFactor.disable(data: ApiAuthTwoFactorDisableRequest): Promise
 Set 2FA token gate preference
 
 ```typescript
-client.api.auth.twoFactor.disableTokenGate(data?: object): Promise<any>
+client.api.auth.twoFactor.disableTokenGate(data?: object, options?: object): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -821,7 +1079,7 @@ client.api.auth.twoFactor.disableTokenGate(data?: object): Promise<any>
 
 **Returns:** `any`
 
-**CLI:** `hoody auth 2fa gate disable`
+**CLI:** `hoody auth 2fa tokengate disable`
 
 ---
 
@@ -832,7 +1090,7 @@ client.api.auth.twoFactor.disableTokenGate(data?: object): Promise<any>
 Set 2FA token gate preference
 
 ```typescript
-client.api.auth.twoFactor.enableTokenGate(data?: object): Promise<any>
+client.api.auth.twoFactor.enableTokenGate(data?: object, options?: object): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -841,7 +1099,7 @@ client.api.auth.twoFactor.enableTokenGate(data?: object): Promise<any>
 
 **Returns:** `any`
 
-**CLI:** `hoody auth 2fa gate enable`
+**CLI:** `hoody auth 2fa tokengate enable`
 
 ---
 
@@ -877,7 +1135,7 @@ client.api.auth.twoFactor.rotateBackupCodes(data: ApiAuthTwoFactorRotateBackupCo
 
 **Returns:** `ApiAuthTwoFactorRotateBackupCodesResponse`
 
-**CLI:** `hoody auth 2fa backup codes rotate`
+**CLI:** `hoody auth 2fa backupcodes rotate`
 
 ---
 
@@ -901,6 +1159,26 @@ client.api.auth.twoFactor.startSetup(data: ApiAuthTwoFactorStartSetupRequest): P
 
 ---
 
+### `undoEnrollment`
+
+**POST** `/api/v1/auth/two-factor/undo`
+
+Undo a two-factor enrollment ("this was not me")
+
+```typescript
+client.api.auth.twoFactor.undoEnrollment(data: ApiAuthTwoFactorUndoEnrollmentRequest): Promise<ApiAuthTwoFactorUndoEnrollmentResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ApiAuthTwoFactorUndoEnrollmentRequest` | Yes | body |  |
+
+**Returns:** `ApiAuthTwoFactorUndoEnrollmentResponse`
+
+**CLI:** `hoody auth 2fa enrollment undo`
+
+---
+
 ### `verify`
 
 **POST** `/api/v1/users/auth/2fa/verify`
@@ -921,246 +1199,538 @@ client.api.auth.twoFactor.verify(data: ApiAuthTwoFactorVerifyRequest): Promise<A
 
 ---
 
-## `client.api.containers` (23 methods)
-
-### `copy`
-
-**POST** `/api/v1/containers/{id}/copy`
-
-Copy a container
-
-```typescript
-client.api.containers.copy(id: string, data: ApiContainersCopyRequest): Promise<ApiContainersCopyResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the source container to copy |
-| `data` | `ApiContainersCopyRequest` | Yes | body |  |
-
-**Returns:** `ApiContainersCopyResponse`
-
-**CLI:** `hoody containers copy`
-
----
+## `client.api.botUrls` (10 methods)
 
 ### `create`
 
-**POST** `/api/v1/projects/{id}/containers`
+**POST** `/api/v1/bot-urls`
 
-Create a new container
+Create a Bot URL
 
 ```typescript
-client.api.containers.create(id: string, data: ApiContainersCreateRequest): Promise<ApiContainersCreateResponse>
+client.api.botUrls.create(data: ApiBotUrlsCreateRequest): Promise<ApiBotUrlsCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-| `data` | `ApiContainersCreateRequest` | Yes | body |  |
+| `data` | `ApiBotUrlsCreateRequest` | Yes | body |  |
 
-**Returns:** `ApiContainersCreateResponse`
+**Returns:** `ApiBotUrlsCreateResponse`
 
-**CLI:** `hoody containers create`
-
----
-
-### `createClaim`
-
-**POST** `/api/v1/containers/{id}/authorize`
-
-Authorize Container Access
-
-```typescript
-client.api.containers.createClaim(id: string): Promise<ApiContainersCreateClaimResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID (24-char hex) |
-
-**Returns:** `ApiContainersCreateClaimResponse`
-
-**CLI:** `hoody containers claims create`
+**CLI:** `hoody boturls create`
 
 ---
 
 ### `delete`
 
-**DELETE** `/api/v1/containers/{id}`
+**DELETE** `/api/v1/bot-urls/{id}`
 
-Delete a container
+Delete a Bot URL
 
 ```typescript
-client.api.containers.delete(id: string): Promise<ApiContainersDeleteResponse>
+client.api.botUrls.delete(id: string): Promise<ApiBotUrlsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to delete |
+| `id` | `string` | Yes | path | Bot URL id: `bu_` and 24 lowercase hexadecimal characters. A malformed id answers 404 BOT_URL_NOT_FOUND. |
 
-**Returns:** `ApiContainersDeleteResponse`
+**Returns:** `ApiBotUrlsDeleteResponse`
 
-**CLI:** `hoody containers delete`
-
----
-
-### `disableKvm`
-
-**PUT** `/api/v1/containers/{id}/kvm`
-
-Enable or disable /dev/kvm (run VMs in the container)
-
-```typescript
-client.api.containers.disableKvm(id: string): Promise<any>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container |
-
-**Returns:** `any`
-
-**CLI:** `hoody containers kvm disable`
-
----
-
-### `enableKvm`
-
-**PUT** `/api/v1/containers/{id}/kvm`
-
-Enable or disable /dev/kvm (run VMs in the container)
-
-```typescript
-client.api.containers.enableKvm(id: string): Promise<any>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container |
-
-**Returns:** `any`
-
-**CLI:** `hoody containers kvm enable`
+**CLI:** `hoody boturls delete`
 
 ---
 
 ### `get`
 
-**GET** `/api/v1/containers/{id}`
+**GET** `/api/v1/bot-urls/{id}`
 
-Get a container by ID
+Get a Bot URL
 
 ```typescript
-client.api.containers.get(id: string, options?: { runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean }): Promise<ApiContainersGetResponse>
+client.api.botUrls.get(id: string): Promise<ApiBotUrlsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to retrieve |
-| `runtime` | `string` | No | query | Include live runtime information. Accepts "true", "false", or a URL-encoded JSON string like `{"displays":true}`. An empty JSON object `{}` fetches all info. Runtime information may be up to 2 seconds old. |
-| `include_proxy_domains` | `boolean` | No | query | Include proxy domains (aliases) for this container. When true, adds a proxy_domains array to the container object. |
-| `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (container-level proxy_permissions and parent-project-level project_proxy_permissions) for each container. Returns proxy authentication group configuration including credentials — request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
+| `id` | `string` | Yes | path | Bot URL id: `bu_` and 24 lowercase hexadecimal characters. A malformed id answers 404 BOT_URL_NOT_FOUND. |
 
-**Returns:** `ApiContainersGetResponse`
+**Returns:** `ApiBotUrlsGetResponse`
 
-**CLI:** `hoody containers get`
-
----
-
-### `getProxyUsage`
-
-**GET** `/api/v1/containers/{id}/proxy-usage`
-
-Get proxied-usage documents for a container
-
-```typescript
-client.api.containers.getProxyUsage(id: string, options: { from: string; to: string }): Promise<ApiContainersGetProxyUsageResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container id |
-| `from` | `string` | Yes | query | First month, inclusive (YYYY-MM) |
-| `to` | `string` | Yes | query | Last month, inclusive (YYYY-MM). Max 12 months. |
-
-**Returns:** `ApiContainersGetProxyUsageResponse`
-
-**CLI:** `hoody containers proxy usage`
-
----
-
-### `getStats`
-
-**GET** `/api/v1/containers/{id}/stats`
-
-Get container resource statistics
-
-```typescript
-client.api.containers.getStats(id: string): Promise<ApiContainersGetStatsResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container |
-
-**Returns:** `ApiContainersGetStatsResponse`
-
-**CLI:** `hoody containers stats`
+**CLI:** `hoody boturls get`
 
 ---
 
 ### `list`
 
-**GET** `/api/v1/containers/`
+**GET** `/api/v1/bot-urls`
 
-Get all containers
+List your Bot URLs
 
 ```typescript
-client.api.containers.list(options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): Promise<ApiContainersListResponse>
+client.api.botUrls.list(options?: { project_id?: string; computer_id?: string; limit?: number; cursor?: string }): Promise<ApiBotUrlsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `page` | `number` | No | query | Page number for pagination - starts from 1 |
-| `limit` | `number` | No | query | Number of containers to return per page - maximum 100 items |
-| `sort_by` | `"id" \| "name" \| "status" \| "created_at" \| "updated_at"` | No | query | Field to sort containers by |
-| `sort_order` | `"asc" \| "desc"` | No | query | Sort direction - ascending or descending |
-| `realm_id` | `string` | No | query | Filter by realm ID. Only returns containers that belong to this realm. Alternative to using realm subdomain in URL. |
-| `runtime` | `string` | No | query | Include live runtime information. Accepts "true", "false", or a URL-encoded JSON string like `{"displays":true}`. An empty JSON object `{}` fetches all info. Runtime information may be up to 2 seconds old. |
-| `include_proxy_domains` | `boolean` | No | query | Include proxy domains (aliases) for each container. When true, adds a proxy_domains array to each container object. |
-| `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (container-level proxy_permissions and parent-project-level project_proxy_permissions) for each container. Returns proxy authentication group configuration including credentials — request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
-| `include_expired` | `boolean` | No | query | Include containers that have expired due to server termination. By default, expired containers are excluded from results. |
-| `include_deleting` | `boolean` | No | query | Include containers currently being deleted. By default, deleting containers are excluded from results. |
+| `project_id` | `string` | No | query |  |
+| `computer_id` | `string` | No | query |  |
+| `limit` | `number` | No | query | Bot URLs per page |
+| `cursor` | `string` | No | query | `next_cursor` of the previous page |
 
-**Returns:** `ApiContainersListResponse`
+**Returns:** `ApiBotUrlsListResponse`
 
-**CLI:** `hoody containers list`
+**CLI:** `hoody boturls list`
 
 ---
 
 ### `listAll`
 
-**GET** `/api/v1/containers/`
+**GET** `/api/v1/bot-urls`
 
-Get all containers (collect all pages)
+List your Bot URLs (collect all pages)
 
 ```typescript
-client.api.containers.listAll(options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): Promise<unknown[]>
+client.api.botUrls.listAll(options?: { project_id?: string; computer_id?: string; limit?: number; cursor?: string }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `project_id` | `string` | No | query |  |
+| `computer_id` | `string` | No | query |  |
+| `limit` | `number` | No | query | Bot URLs per page |
+| `cursor` | `string` | No | query | `next_cursor` of the previous page |
+
+**Returns:** `unknown[]`
+
+---
+
+### `listIterator`
+
+**GET** `/api/v1/bot-urls`
+
+List your Bot URLs (async iterator)
+
+```typescript
+client.api.botUrls.listIterator(options?: { project_id?: string; computer_id?: string; limit?: number; cursor?: string }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `project_id` | `string` | No | query |  |
+| `computer_id` | `string` | No | query |  |
+| `limit` | `number` | No | query | Bot URLs per page |
+| `cursor` | `string` | No | query | `next_cursor` of the previous page |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+### `panic`
+
+**POST** `/api/v1/bot-urls/{id}/panic`
+
+Panic: turn a Bot URL off and revoke every key
+
+```typescript
+client.api.botUrls.panic(id: string): Promise<ApiBotUrlsPanicResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Bot URL id: `bu_` and 24 lowercase hexadecimal characters. A malformed id answers 404 BOT_URL_NOT_FOUND. |
+
+**Returns:** `ApiBotUrlsPanicResponse`
+
+**CLI:** `hoody boturls panic`
+
+---
+
+### `repoint`
+
+**POST** `/api/v1/bot-urls/{id}/repoint`
+
+Point a Bot URL at another computer
+
+```typescript
+client.api.botUrls.repoint(id: string, data: ApiBotUrlsRepointRequest): Promise<ApiBotUrlsRepointResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Bot URL id: `bu_` and 24 lowercase hexadecimal characters. A malformed id answers 404 BOT_URL_NOT_FOUND. |
+| `data` | `ApiBotUrlsRepointRequest` | Yes | body |  |
+
+**Returns:** `ApiBotUrlsRepointResponse`
+
+**CLI:** `hoody boturls repoint`
+
+---
+
+### `suggestLabel`
+
+**GET** `/api/v1/bot-urls/suggest-label`
+
+Suggest a free Bot name
+
+```typescript
+client.api.botUrls.suggestLabel(): Promise<ApiBotUrlsSuggestLabelResponse>
+```
+
+**Returns:** `ApiBotUrlsSuggestLabelResponse`
+
+**CLI:** `hoody boturls label suggest`
+
+---
+
+### `update`
+
+**PATCH** `/api/v1/bot-urls/{id}`
+
+Change Bot URL settings
+
+```typescript
+client.api.botUrls.update(id: string, data: ApiBotUrlsUpdateRequest): Promise<ApiBotUrlsUpdateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Bot URL id: `bu_` and 24 lowercase hexadecimal characters. A malformed id answers 404 BOT_URL_NOT_FOUND. |
+| `data` | `ApiBotUrlsUpdateRequest` | Yes | body |  |
+
+**Returns:** `ApiBotUrlsUpdateResponse`
+
+**CLI:** `hoody boturls update`
+
+---
+
+## `client.api.botUrls.keys` (5 methods)
+
+### `create`
+
+**POST** `/api/v1/bot-urls/{id}/keys`
+
+Create a key
+
+```typescript
+client.api.botUrls.keys.create(id: string, data: ApiBotUrlsKeysCreateRequest): Promise<ApiBotUrlsKeysCreateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Bot URL id: `bu_` and 24 lowercase hexadecimal characters. A malformed id answers 404 BOT_URL_NOT_FOUND. |
+| `data` | `ApiBotUrlsKeysCreateRequest` | Yes | body |  |
+
+**Returns:** `ApiBotUrlsKeysCreateResponse`
+
+**CLI:** `hoody boturls keys create`
+
+---
+
+### `revoke`
+
+**DELETE** `/api/v1/bot-urls/{id}/keys/{keyId}`
+
+Revoke a key
+
+```typescript
+client.api.botUrls.keys.revoke(id: string, keyId: string): Promise<ApiBotUrlsKeysRevokeResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Bot URL id: `bu_` and 24 lowercase hexadecimal characters. A malformed id answers 404 BOT_URL_NOT_FOUND. |
+| `keyId` | `string` | Yes | path | Key id: `bk_` and 24 lowercase hexadecimal characters. A malformed id answers 404 BOT_KEY_NOT_FOUND. |
+
+**Returns:** `ApiBotUrlsKeysRevokeResponse`
+
+**CLI:** `hoody boturls keys revoke`
+
+---
+
+### `revokeAll`
+
+**POST** `/api/v1/bot-urls/{id}/keys/revoke-all`
+
+Revoke every key
+
+```typescript
+client.api.botUrls.keys.revokeAll(id: string): Promise<ApiBotUrlsKeysRevokeAllResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Bot URL id: `bu_` and 24 lowercase hexadecimal characters. A malformed id answers 404 BOT_URL_NOT_FOUND. |
+
+**Returns:** `ApiBotUrlsKeysRevokeAllResponse`
+
+**CLI:** `hoody boturls keys revoke`
+
+---
+
+### `rotate`
+
+**POST** `/api/v1/bot-urls/{id}/keys/{keyId}/rotate`
+
+Rotate a key
+
+```typescript
+client.api.botUrls.keys.rotate(id: string, keyId: string, data?: ApiBotUrlsKeysRotateRequest): Promise<ApiBotUrlsKeysRotateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Bot URL id: `bu_` and 24 lowercase hexadecimal characters. A malformed id answers 404 BOT_URL_NOT_FOUND. |
+| `keyId` | `string` | Yes | path | Key id: `bk_` and 24 lowercase hexadecimal characters. A malformed id answers 404 BOT_KEY_NOT_FOUND. |
+| `data` | `ApiBotUrlsKeysRotateRequest` | No | body |  |
+
+**Returns:** `ApiBotUrlsKeysRotateResponse`
+
+**CLI:** `hoody boturls keys rotate`
+
+---
+
+### `update`
+
+**PATCH** `/api/v1/bot-urls/{id}/keys/{keyId}`
+
+Change a key
+
+```typescript
+client.api.botUrls.keys.update(id: string, keyId: string, data: ApiBotUrlsKeysUpdateRequest): Promise<ApiBotUrlsKeysUpdateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Bot URL id: `bu_` and 24 lowercase hexadecimal characters. A malformed id answers 404 BOT_URL_NOT_FOUND. |
+| `keyId` | `string` | Yes | path | Key id: `bk_` and 24 lowercase hexadecimal characters. A malformed id answers 404 BOT_KEY_NOT_FOUND. |
+| `data` | `ApiBotUrlsKeysUpdateRequest` | Yes | body |  |
+
+**Returns:** `ApiBotUrlsKeysUpdateResponse`
+
+**CLI:** `hoody boturls keys update`
+
+---
+
+## `client.api.computers` (22 methods)
+
+### `copy`
+
+**POST** `/api/v1/computers/{id}/copy`
+
+Copy a computer
+
+```typescript
+client.api.computers.copy(id: string, data: ApiComputersCopyRequest): Promise<ApiComputersCopyResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Unique identifier of the source computer to copy |
+| `data` | `ApiComputersCopyRequest` | Yes | body |  |
+
+**Returns:** `ApiComputersCopyResponse`
+
+**CLI:** `hoody computers copy`
+
+---
+
+### `create`
+
+**POST** `/api/v1/projects/{id}/computers`
+
+Create a new computer
+
+```typescript
+client.api.computers.create(id: string, data: ApiComputersCreateRequest, options?: { idempotencyKey?: string }): Promise<ApiComputersCreateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+| `data` | `ApiComputersCreateRequest` | Yes | body |  |
+| `idempotencyKey` | `string` | No | header | Makes the create safe to retry. 1 to 128 printable characters, for example a UUID; use a new key for each new computer. A retry with the same key and the same body gets the first answer; the same key with a different body is refused with 422 IDEMPOTENCY_KEY_REUSED. |
+
+**Returns:** `ApiComputersCreateResponse`
+
+**CLI:** `hoody computers create`
+
+---
+
+### `createClaim`
+
+**POST** `/api/v1/computers/{id}/authorize`
+
+Authorize Computer Access
+
+```typescript
+client.api.computers.createClaim(id: string): Promise<ApiComputersCreateClaimResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID (24-char hex) |
+
+**Returns:** `ApiComputersCreateClaimResponse`
+
+**CLI:** `hoody computers claims create`
+
+---
+
+### `delete`
+
+**DELETE** `/api/v1/computers/{id}`
+
+Delete a computer
+
+```typescript
+client.api.computers.delete(id: string): Promise<ApiComputersDeleteResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Unique identifier of the computer to delete |
+
+**Returns:** `ApiComputersDeleteResponse`
+
+**CLI:** `hoody computers delete`
+
+---
+
+### `disableKvm`
+
+**PUT** `/api/v1/computers/{id}/kvm`
+
+Enable or disable /dev/kvm (run VMs in the computer)
+
+```typescript
+client.api.computers.disableKvm(id: string, options?: object): Promise<any>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Unique identifier of the computer |
+
+**Returns:** `any`
+
+**CLI:** `hoody computers kvm disable`
+
+---
+
+### `enableKvm`
+
+**PUT** `/api/v1/computers/{id}/kvm`
+
+Enable or disable /dev/kvm (run VMs in the computer)
+
+```typescript
+client.api.computers.enableKvm(id: string, options?: object): Promise<any>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Unique identifier of the computer |
+
+**Returns:** `any`
+
+**CLI:** `hoody computers kvm enable`
+
+---
+
+### `get`
+
+**GET** `/api/v1/computers/{id}`
+
+Get a computer by ID
+
+```typescript
+client.api.computers.get(id: string, options?: { runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean }): Promise<ApiComputersGetResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Unique identifier of the computer to retrieve |
+| `runtime` | `string` | No | query | Include live runtime information. Accepts "true", "false", or a URL-encoded JSON string like `{"displays":true}`. An empty JSON object `{}` fetches all info. Runtime information may be up to 2 seconds old. |
+| `include_proxy_domains` | `boolean` | No | query | Include proxy domains (aliases) for this computer. When true, adds a proxy_domains array to the computer object. |
+| `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (computer-level proxy_permissions and parent-project-level project_proxy_permissions) for each computer. Returns proxy authentication group configuration including credentials. Request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
+
+**Returns:** `ApiComputersGetResponse`
+
+**CLI:** `hoody computers get`
+
+---
+
+### `getStats`
+
+**GET** `/api/v1/computers/{id}/stats`
+
+Get computer resource statistics
+
+```typescript
+client.api.computers.getStats(id: string): Promise<ApiComputersGetStatsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Unique identifier of the computer |
+
+**Returns:** `ApiComputersGetStatsResponse`
+
+**CLI:** `hoody computers stats`
+
+---
+
+### `list`
+
+**GET** `/api/v1/computers/`
+
+Get all computers
+
+```typescript
+client.api.computers.list(options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): Promise<ApiComputersListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | Page number for pagination - starts from 1 |
-| `limit` | `number` | No | query | Number of containers to return per page - maximum 100 items |
-| `sort_by` | `"id" \| "name" \| "status" \| "created_at" \| "updated_at"` | No | query | Field to sort containers by |
+| `limit` | `number` | No | query | Number of computers to return per page - maximum 100 items |
+| `sort_by` | `"id" \| "name" \| "status" \| "created_at" \| "updated_at"` | No | query | Field to sort computers by |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction - ascending or descending |
-| `realm_id` | `string` | No | query | Filter by realm ID. Only returns containers that belong to this realm. Alternative to using realm subdomain in URL. |
+| `realm_id` | `string` | No | query | Filter by realm ID. Only returns computers that belong to this realm. Alternative to using realm subdomain in URL. |
 | `runtime` | `string` | No | query | Include live runtime information. Accepts "true", "false", or a URL-encoded JSON string like `{"displays":true}`. An empty JSON object `{}` fetches all info. Runtime information may be up to 2 seconds old. |
-| `include_proxy_domains` | `boolean` | No | query | Include proxy domains (aliases) for each container. When true, adds a proxy_domains array to each container object. |
-| `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (container-level proxy_permissions and parent-project-level project_proxy_permissions) for each container. Returns proxy authentication group configuration including credentials — request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
-| `include_expired` | `boolean` | No | query | Include containers that have expired due to server termination. By default, expired containers are excluded from results. |
-| `include_deleting` | `boolean` | No | query | Include containers currently being deleted. By default, deleting containers are excluded from results. |
+| `include_proxy_domains` | `boolean` | No | query | Include proxy domains (aliases) for each computer. When true, adds a proxy_domains array to each computer object. |
+| `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (computer-level proxy_permissions and parent-project-level project_proxy_permissions) for each computer. Returns proxy authentication group configuration including credentials. Request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
+| `include_expired` | `boolean` | No | query | Include computers that have expired due to server termination. By default, expired computers are excluded from results. |
+| `include_deleting` | `boolean` | No | query | Include computers currently being deleted. By default, deleting computers are excluded from results. |
+
+**Returns:** `ApiComputersListResponse`
+
+**CLI:** `hoody computers list`
+
+---
+
+### `listAll`
+
+**GET** `/api/v1/computers/`
+
+Get all computers (collect all pages)
+
+```typescript
+client.api.computers.listAll(options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `page` | `number` | No | query | Page number for pagination - starts from 1 |
+| `limit` | `number` | No | query | Number of computers to return per page - maximum 100 items |
+| `sort_by` | `"id" \| "name" \| "status" \| "created_at" \| "updated_at"` | No | query | Field to sort computers by |
+| `sort_order` | `"asc" \| "desc"` | No | query | Sort direction - ascending or descending |
+| `realm_id` | `string` | No | query | Filter by realm ID. Only returns computers that belong to this realm. Alternative to using realm subdomain in URL. |
+| `runtime` | `string` | No | query | Include live runtime information. Accepts "true", "false", or a URL-encoded JSON string like `{"displays":true}`. An empty JSON object `{}` fetches all info. Runtime information may be up to 2 seconds old. |
+| `include_proxy_domains` | `boolean` | No | query | Include proxy domains (aliases) for each computer. When true, adds a proxy_domains array to each computer object. |
+| `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (computer-level proxy_permissions and parent-project-level project_proxy_permissions) for each computer. Returns proxy authentication group configuration including credentials. Request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
+| `include_expired` | `boolean` | No | query | Include computers that have expired due to server termination. By default, expired computers are excluded from results. |
+| `include_deleting` | `boolean` | No | query | Include computers currently being deleted. By default, deleting computers are excluded from results. |
 
 **Returns:** `unknown[]`
 
@@ -1168,12 +1738,12 @@ client.api.containers.listAll(options?: { page?: number; limit?: number; sort_by
 
 ### `listByProject`
 
-**GET** `/api/v1/projects/{id}/containers`
+**GET** `/api/v1/projects/{id}/computers`
 
-Get all containers for a project
+Get all computers for a project
 
 ```typescript
-client.api.containers.listByProject(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): Promise<ApiContainersListByProjectResponse>
+client.api.computers.listByProject(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): Promise<ApiComputersListByProjectResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1184,23 +1754,23 @@ client.api.containers.listByProject(id: string, options?: { page?: number; limit
 | `sort_by` | `"id" \| "name" \| "status" \| "created_at" \| "updated_at"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
 | `runtime` | `string` | No | query | Include live runtime information. Accepts "true", "false", or a URL-encoded JSON string like `{"displays":true}`. An empty JSON object `{}` fetches all info. Runtime information may be up to 2 seconds old. |
-| `include_proxy_domains` | `boolean` | No | query | Include proxy domains (aliases) for each container. When true, adds a proxy_domains array to each container object. |
-| `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (container-level proxy_permissions and parent-project-level project_proxy_permissions) for each container. Returns proxy authentication group configuration including credentials — request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
-| `include_expired` | `boolean` | No | query | Include containers that have expired due to server termination. By default, expired containers are excluded from results. |
-| `include_deleting` | `boolean` | No | query | Include containers currently being deleted. By default, deleting containers are excluded from results. |
+| `include_proxy_domains` | `boolean` | No | query | Include proxy domains (aliases) for each computer. When true, adds a proxy_domains array to each computer object. |
+| `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (computer-level proxy_permissions and parent-project-level project_proxy_permissions) for each computer. Returns proxy authentication group configuration including credentials. Request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
+| `include_expired` | `boolean` | No | query | Include computers that have expired due to server termination. By default, expired computers are excluded from results. |
+| `include_deleting` | `boolean` | No | query | Include computers currently being deleted. By default, deleting computers are excluded from results. |
 
-**Returns:** `ApiContainersListByProjectResponse`
+**Returns:** `ApiComputersListByProjectResponse`
 
 ---
 
 ### `listByProjectAll`
 
-**GET** `/api/v1/projects/{id}/containers`
+**GET** `/api/v1/projects/{id}/computers`
 
-Get all containers for a project (collect all pages)
+Get all computers for a project (collect all pages)
 
 ```typescript
-client.api.containers.listByProjectAll(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): Promise<unknown[]>
+client.api.computers.listByProjectAll(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1211,10 +1781,10 @@ client.api.containers.listByProjectAll(id: string, options?: { page?: number; li
 | `sort_by` | `"id" \| "name" \| "status" \| "created_at" \| "updated_at"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
 | `runtime` | `string` | No | query | Include live runtime information. Accepts "true", "false", or a URL-encoded JSON string like `{"displays":true}`. An empty JSON object `{}` fetches all info. Runtime information may be up to 2 seconds old. |
-| `include_proxy_domains` | `boolean` | No | query | Include proxy domains (aliases) for each container. When true, adds a proxy_domains array to each container object. |
-| `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (container-level proxy_permissions and parent-project-level project_proxy_permissions) for each container. Returns proxy authentication group configuration including credentials — request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
-| `include_expired` | `boolean` | No | query | Include containers that have expired due to server termination. By default, expired containers are excluded from results. |
-| `include_deleting` | `boolean` | No | query | Include containers currently being deleted. By default, deleting containers are excluded from results. |
+| `include_proxy_domains` | `boolean` | No | query | Include proxy domains (aliases) for each computer. When true, adds a proxy_domains array to each computer object. |
+| `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (computer-level proxy_permissions and parent-project-level project_proxy_permissions) for each computer. Returns proxy authentication group configuration including credentials. Request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
+| `include_expired` | `boolean` | No | query | Include computers that have expired due to server termination. By default, expired computers are excluded from results. |
+| `include_deleting` | `boolean` | No | query | Include computers currently being deleted. By default, deleting computers are excluded from results. |
 
 **Returns:** `unknown[]`
 
@@ -1222,12 +1792,12 @@ client.api.containers.listByProjectAll(id: string, options?: { page?: number; li
 
 ### `listByProjectIterator`
 
-**GET** `/api/v1/projects/{id}/containers`
+**GET** `/api/v1/projects/{id}/computers`
 
-Get all containers for a project (async iterator)
+Get all computers for a project (async iterator)
 
 ```typescript
-client.api.containers.listByProjectIterator(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): AsyncIterableIterator<unknown>
+client.api.computers.listByProjectIterator(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1238,10 +1808,10 @@ client.api.containers.listByProjectIterator(id: string, options?: { page?: numbe
 | `sort_by` | `"id" \| "name" \| "status" \| "created_at" \| "updated_at"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
 | `runtime` | `string` | No | query | Include live runtime information. Accepts "true", "false", or a URL-encoded JSON string like `{"displays":true}`. An empty JSON object `{}` fetches all info. Runtime information may be up to 2 seconds old. |
-| `include_proxy_domains` | `boolean` | No | query | Include proxy domains (aliases) for each container. When true, adds a proxy_domains array to each container object. |
-| `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (container-level proxy_permissions and parent-project-level project_proxy_permissions) for each container. Returns proxy authentication group configuration including credentials — request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
-| `include_expired` | `boolean` | No | query | Include containers that have expired due to server termination. By default, expired containers are excluded from results. |
-| `include_deleting` | `boolean` | No | query | Include containers currently being deleted. By default, deleting containers are excluded from results. |
+| `include_proxy_domains` | `boolean` | No | query | Include proxy domains (aliases) for each computer. When true, adds a proxy_domains array to each computer object. |
+| `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (computer-level proxy_permissions and parent-project-level project_proxy_permissions) for each computer. Returns proxy authentication group configuration including credentials. Request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
+| `include_expired` | `boolean` | No | query | Include computers that have expired due to server termination. By default, expired computers are excluded from results. |
+| `include_deleting` | `boolean` | No | query | Include computers currently being deleted. By default, deleting computers are excluded from results. |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -1249,26 +1819,26 @@ client.api.containers.listByProjectIterator(id: string, options?: { page?: numbe
 
 ### `listIterator`
 
-**GET** `/api/v1/containers/`
+**GET** `/api/v1/computers/`
 
-Get all containers (async iterator)
+Get all computers (async iterator)
 
 ```typescript
-client.api.containers.listIterator(options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): AsyncIterableIterator<unknown>
+client.api.computers.listIterator(options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | Page number for pagination - starts from 1 |
-| `limit` | `number` | No | query | Number of containers to return per page - maximum 100 items |
-| `sort_by` | `"id" \| "name" \| "status" \| "created_at" \| "updated_at"` | No | query | Field to sort containers by |
+| `limit` | `number` | No | query | Number of computers to return per page - maximum 100 items |
+| `sort_by` | `"id" \| "name" \| "status" \| "created_at" \| "updated_at"` | No | query | Field to sort computers by |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction - ascending or descending |
-| `realm_id` | `string` | No | query | Filter by realm ID. Only returns containers that belong to this realm. Alternative to using realm subdomain in URL. |
+| `realm_id` | `string` | No | query | Filter by realm ID. Only returns computers that belong to this realm. Alternative to using realm subdomain in URL. |
 | `runtime` | `string` | No | query | Include live runtime information. Accepts "true", "false", or a URL-encoded JSON string like `{"displays":true}`. An empty JSON object `{}` fetches all info. Runtime information may be up to 2 seconds old. |
-| `include_proxy_domains` | `boolean` | No | query | Include proxy domains (aliases) for each container. When true, adds a proxy_domains array to each container object. |
-| `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (container-level proxy_permissions and parent-project-level project_proxy_permissions) for each container. Returns proxy authentication group configuration including credentials — request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
-| `include_expired` | `boolean` | No | query | Include containers that have expired due to server termination. By default, expired containers are excluded from results. |
-| `include_deleting` | `boolean` | No | query | Include containers currently being deleted. By default, deleting containers are excluded from results. |
+| `include_proxy_domains` | `boolean` | No | query | Include proxy domains (aliases) for each computer. When true, adds a proxy_domains array to each computer object. |
+| `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (computer-level proxy_permissions and parent-project-level project_proxy_permissions) for each computer. Returns proxy authentication group configuration including credentials. Request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
+| `include_expired` | `boolean` | No | query | Include computers that have expired due to server termination. By default, expired computers are excluded from results. |
+| `include_deleting` | `boolean` | No | query | Include computers currently being deleted. By default, deleting computers are excluded from results. |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -1276,258 +1846,876 @@ client.api.containers.listIterator(options?: { page?: number; limit?: number; so
 
 ### `listStatusHistory`
 
-**GET** `/api/v1/containers/{id}/status-logs`
+**GET** `/api/v1/computers/{id}/status-logs`
 
-Get status logs for a container
+Get status logs for a computer
 
 ```typescript
-client.api.containers.listStatusHistory(id: string, options?: { page?: number; limit?: number; sort_by?: "transition_time" | "created_at" | "to_status" | "from_status"; sort_order?: "asc" | "desc" }): Promise<ApiContainersListStatusHistoryResponse>
+client.api.computers.listStatusHistory(id: string, options?: { page?: number; limit?: number; sort_by?: "transition_time" | "created_at" | "to_status" | "from_status"; sort_order?: "asc" | "desc" }): Promise<ApiComputersListStatusHistoryResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
+| `id` | `string` | Yes | path | Computer ID |
 | `page` | `number` | No | query |  |
 | `limit` | `number` | No | query |  |
 | `sort_by` | `"transition_time" \| "created_at" \| "to_status" \| "from_status"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
 
-**Returns:** `ApiContainersListStatusHistoryResponse`
+**Returns:** `ApiComputersListStatusHistoryResponse`
 
-**CLI:** `hoody containers status history list`
+**CLI:** `hoody computers statushistory list`
 
 ---
 
 ### `pause`
 
-**POST** `/api/v1/containers/{id}/{operation}`
+**POST** `/api/v1/computers/{id}/{operation}`
 
-Manage container
+Manage computer
 
 ```typescript
-client.api.containers.pause(id: string, data?: object): Promise<any>
+client.api.computers.pause(id: string, data?: object, options?: object): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to manage |
+| `id` | `string` | Yes | path | Unique identifier of the computer to manage |
 | `data` | `object` | No | body |  |
 
 **Returns:** `any`
 
-**CLI:** `hoody containers pause`
+**CLI:** `hoody computers pause`
 
 ---
 
 ### `restart`
 
-**POST** `/api/v1/containers/{id}/{operation}`
+**POST** `/api/v1/computers/{id}/{operation}`
 
-Manage container
+Manage computer
 
 ```typescript
-client.api.containers.restart(id: string, data?: object): Promise<any>
+client.api.computers.restart(id: string, data?: object, options?: object): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to manage |
+| `id` | `string` | Yes | path | Unique identifier of the computer to manage |
 | `data` | `object` | No | body |  |
 
 **Returns:** `any`
 
-**CLI:** `hoody containers restart`
+**CLI:** `hoody computers restart`
 
 ---
 
 ### `resume`
 
-**POST** `/api/v1/containers/{id}/{operation}`
+**POST** `/api/v1/computers/{id}/{operation}`
 
-Manage container
+Manage computer
 
 ```typescript
-client.api.containers.resume(id: string, data?: object): Promise<any>
+client.api.computers.resume(id: string, data?: object, options?: object): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to manage |
+| `id` | `string` | Yes | path | Unique identifier of the computer to manage |
 | `data` | `object` | No | body |  |
 
 **Returns:** `any`
 
-**CLI:** `hoody containers resume`
+**CLI:** `hoody computers resume`
 
 ---
 
 ### `start`
 
-**POST** `/api/v1/containers/{id}/{operation}`
+**POST** `/api/v1/computers/{id}/{operation}`
 
-Manage container
+Manage computer
 
 ```typescript
-client.api.containers.start(id: string, data?: object): Promise<any>
+client.api.computers.start(id: string, data?: object, options?: object): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to manage |
+| `id` | `string` | Yes | path | Unique identifier of the computer to manage |
 | `data` | `object` | No | body |  |
 
 **Returns:** `any`
 
-**CLI:** `hoody containers start`
+**CLI:** `hoody computers start`
 
 ---
 
 ### `stop`
 
-**POST** `/api/v1/containers/{id}/{operation}`
+**POST** `/api/v1/computers/{id}/{operation}`
 
-Manage container
+Manage computer
 
 ```typescript
-client.api.containers.stop(id: string, data?: object, options?: { force?: boolean }): Promise<any>
+client.api.computers.stop(id: string, data?: object, options?: { force?: boolean }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to manage |
+| `id` | `string` | Yes | path | Unique identifier of the computer to manage |
 | `data` | `object` | No | body |  |
-| `force` | `boolean` | No | option | Kill the container without a graceful shutdown (the force-stop operation). |
+| `force` | `boolean` | No | option | Kill the computer without a graceful shutdown (the force-stop operation). |
 
 **Returns:** `any`
 
-**CLI:** `hoody containers stop`
+**CLI:** `hoody computers stop`
 
 ---
 
 ### `sync`
 
-**POST** `/api/v1/containers/{id}/sync`
+**POST** `/api/v1/computers/{id}/sync`
 
-Sync a copied container with its source
+Sync a copied computer with its source
 
 ```typescript
-client.api.containers.sync(id: string): Promise<ApiContainersSyncResponse>
+client.api.computers.sync(id: string): Promise<ApiComputersSyncResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to sync (must have been created via copy) |
+| `id` | `string` | Yes | path | Unique identifier of the computer to sync (must have been created via copy) |
 
-**Returns:** `ApiContainersSyncResponse`
+**Returns:** `ApiComputersSyncResponse`
 
-**CLI:** `hoody containers sync`
+**CLI:** `hoody computers sync`
 
 ---
 
 ### `update`
 
-**PUT** `/api/v1/containers/{id}`
+**PUT** `/api/v1/computers/{id}`
 
-Update a container
+Update a computer
 
 ```typescript
-client.api.containers.update(id: string, data: ApiContainersUpdateRequest): Promise<ApiContainersUpdateResponse>
+client.api.computers.update(id: string, data: ApiComputersUpdateRequest, options?: { ifMatch?: string }): Promise<ApiComputersUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to update |
-| `data` | `ApiContainersUpdateRequest` | Yes | body |  |
+| `id` | `string` | Yes | path | Unique identifier of the computer to update |
+| `data` | `ApiComputersUpdateRequest` | Yes | body |  |
+| `ifMatch` | `string` | No | header | Save only over the settings you read: the ETag from an earlier GET or PUT of this computer. If its editable settings now differ from the ones that tag names, the answer is 412 PRECONDITION_FAILED and nothing is saved. Without it the update is unconditional. |
 
-**Returns:** `ApiContainersUpdateResponse`
+**Returns:** `ApiComputersUpdateResponse`
 
-**CLI:** `hoody containers update`
+**CLI:** `hoody computers update`
 
 ---
 
-## `client.api.containers.env` (4 methods)
+## `client.api.computers.env` (4 methods)
 
 ### `delete`
 
-**DELETE** `/api/v1/containers/{id}/env/{key}`
+**DELETE** `/api/v1/computers/{id}/env/{key}`
 
 Delete a single environment variable
 
 ```typescript
-client.api.containers.env.delete(id: string, key: string): Promise<ApiContainersEnvDeleteResponse>
+client.api.computers.env.delete(id: string, key: string): Promise<ApiComputersEnvDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
+| `id` | `string` | Yes | path | Computer ID |
 | `key` | `string` | Yes | path | Environment variable key |
 
-**Returns:** `ApiContainersEnvDeleteResponse`
+**Returns:** `ApiComputersEnvDeleteResponse`
 
-**CLI:** `hoody containers env delete`
+**CLI:** `hoody computers env delete`
 
 ---
 
 ### `list`
 
-**GET** `/api/v1/containers/{id}/env`
+**GET** `/api/v1/computers/{id}/env`
 
-List container environment variables
+List computer environment variables
 
 ```typescript
-client.api.containers.env.list(id: string): Promise<ApiContainersEnvListResponse>
+client.api.computers.env.list(id: string): Promise<ApiComputersEnvListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
+| `id` | `string` | Yes | path | Computer ID |
 
-**Returns:** `ApiContainersEnvListResponse`
+**Returns:** `ApiComputersEnvListResponse`
 
-**CLI:** `hoody containers env list`
+**CLI:** `hoody computers env list`
 
 ---
 
 ### `set`
 
-**PUT** `/api/v1/containers/{id}/env/{key}`
+**PUT** `/api/v1/computers/{id}/env/{key}`
 
 Set a single environment variable
 
 ```typescript
-client.api.containers.env.set(id: string, key: string, data: ApiContainersEnvSetRequest): Promise<ApiContainersEnvSetResponse>
+client.api.computers.env.set(id: string, key: string, data: ApiComputersEnvSetRequest): Promise<ApiComputersEnvSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
+| `id` | `string` | Yes | path | Computer ID |
 | `key` | `string` | Yes | path | Environment variable key |
-| `data` | `ApiContainersEnvSetRequest` | Yes | body |  |
+| `data` | `ApiComputersEnvSetRequest` | Yes | body |  |
 
-**Returns:** `ApiContainersEnvSetResponse`
+**Returns:** `ApiComputersEnvSetResponse`
 
-**CLI:** `hoody containers env set`
+**CLI:** `hoody computers env set`
 
 ---
 
 ### `update`
 
-**PUT** `/api/v1/containers/{id}/env`
+**PUT** `/api/v1/computers/{id}/env`
 
-Bulk set container environment variables
+Bulk set computer environment variables
 
 ```typescript
-client.api.containers.env.update(id: string, data: ApiContainersEnvUpdateRequest): Promise<ApiContainersEnvUpdateResponse>
+client.api.computers.env.update(id: string, data: ApiComputersEnvUpdateRequest): Promise<ApiComputersEnvUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `data` | `ApiContainersEnvUpdateRequest` | Yes | body |  |
+| `id` | `string` | Yes | path | Computer ID |
+| `data` | `ApiComputersEnvUpdateRequest` | Yes | body |  |
 
-**Returns:** `ApiContainersEnvUpdateResponse`
+**Returns:** `ApiComputersEnvUpdateResponse`
 
-**CLI:** `hoody containers env update`
+**CLI:** `hoody computers env update`
+
+---
+
+## `client.api.computers.proxy` (28 methods)
+
+### `clearGroupPermissions`
+
+**DELETE** `/api/v1/computers/{id}/proxy/permissions/permissions/{groupName}`
+
+Remove all program permissions for a computer group
+
+```typescript
+client.api.computers.proxy.clearGroupPermissions(id: string, groupName: string, options: { ifMatch: string }): Promise<ApiComputersProxyClearGroupPermissionsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `groupName` | `string` | Yes | path | Group name |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiComputersProxyClearGroupPermissionsResponse`
+
+**CLI:** `hoody computers proxy groups permissions clear`
+
+---
+
+### `clearHooks`
+
+**DELETE** `/api/v1/computers/{id}/proxy/hooks/{service}`
+
+Clear all hooks for a service
+
+```typescript
+client.api.computers.proxy.clearHooks(id: string, service: string, options: { ifMatch: string }): Promise<ApiComputersProxyClearHooksResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `service` | `string` | Yes | path | Canonical name of the computer program the hook applies to. Every program takes hooks except logs, egress and cdp, which answer 404. Adding a hook under another name, or under an alias of a program name, is refused with 422; the message lists the names that take hooks. |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
+
+**Returns:** `ApiComputersProxyClearHooksResponse`
+
+**CLI:** `hoody computers proxy hooks clear`
+
+---
+
+### `createHook`
+
+**POST** `/api/v1/computers/{id}/proxy/hooks/{service}`
+
+Append or insert a new hook
+
+```typescript
+client.api.computers.proxy.createHook(id: string, service: string, data: ApiComputersProxyCreateHookRequest, options: { ifMatch: string }): Promise<ApiComputersProxyCreateHookResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `service` | `string` | Yes | path | Canonical name of the computer program the hook applies to. Every program takes hooks except logs, egress and cdp, which answer 404. Adding a hook under another name, or under an alias of a program name, is refused with 422; the message lists the names that take hooks. |
+| `data` | `ApiComputersProxyCreateHookRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
+
+**Returns:** `ApiComputersProxyCreateHookResponse`
+
+**CLI:** `hoody computers proxy hooks create`
+
+---
+
+### `deleteGroup`
+
+**DELETE** `/api/v1/computers/{id}/proxy/permissions/groups/{groupName}`
+
+Remove computer authentication group
+
+```typescript
+client.api.computers.proxy.deleteGroup(id: string, groupName: string, options: { ifMatch: string }): Promise<ApiComputersProxyDeleteGroupResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `groupName` | `string` | Yes | path | Group name to remove |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiComputersProxyDeleteGroupResponse`
+
+**CLI:** `hoody computers proxy groups delete`
+
+---
+
+### `deleteGroupPermission`
+
+**DELETE** `/api/v1/computers/{id}/proxy/permissions/permissions/{groupName}/{program}`
+
+Remove a single program permission for a computer group
+
+```typescript
+client.api.computers.proxy.deleteGroupPermission(id: string, groupName: string, program: string, options: { ifMatch: string }): Promise<ApiComputersProxyDeleteGroupPermissionResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `groupName` | `string` | Yes | path | Group name |
+| `program` | `string` | Yes | path | Program name (e.g., http, ssh, files) |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiComputersProxyDeleteGroupPermissionResponse`
+
+**CLI:** `hoody computers proxy groups permissions delete`
+
+---
+
+### `deleteHook`
+
+**DELETE** `/api/v1/computers/{id}/proxy/hooks/{service}/{hookId}`
+
+Remove a hook
+
+```typescript
+client.api.computers.proxy.deleteHook(id: string, service: string, hookId: string, options: { ifMatch: string }): Promise<ApiComputersProxyDeleteHookResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `service` | `string` | Yes | path | Canonical name of the computer program the hook applies to. Every program takes hooks except logs, egress and cdp, which answer 404. Adding a hook under another name, or under an alias of a program name, is refused with 422; the message lists the names that take hooks. |
+| `hookId` | `string` | Yes | path | 26-char Crockford base32 ULID (lowercase) |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
+
+**Returns:** `ApiComputersProxyDeleteHookResponse`
+
+**CLI:** `hoody computers proxy hooks delete`
+
+---
+
+### `deletePermissions`
+
+**DELETE** `/api/v1/computers/{id}/proxy/permissions`
+
+Delete computer proxy permissions
+
+```typescript
+client.api.computers.proxy.deletePermissions(id: string, options: { ifMatch: string }): Promise<ApiComputersProxyDeletePermissionsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiComputersProxyDeletePermissionsResponse`
+
+**CLI:** `hoody computers proxy permissions delete`
+
+---
+
+### `disable`
+
+**PATCH** `/api/v1/computers/{id}/proxy/permissions/state`
+
+Update computer proxy enable state
+
+```typescript
+client.api.computers.proxy.disable(id: string, data: object, options: { ifMatch: string }): Promise<any>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+| `data` | `object` | Yes | body |  |
+
+**Returns:** `any`
+
+**CLI:** `hoody computers proxy disable`
+
+---
+
+### `enable`
+
+**PATCH** `/api/v1/computers/{id}/proxy/permissions/state`
+
+Update computer proxy enable state
+
+```typescript
+client.api.computers.proxy.enable(id: string, data: object, options: { ifMatch: string }): Promise<any>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+| `data` | `object` | Yes | body |  |
+
+**Returns:** `any`
+
+**CLI:** `hoody computers proxy enable`
+
+---
+
+### `getHook`
+
+**GET** `/api/v1/computers/{id}/proxy/hooks/{service}/{hookId}`
+
+Get a single hook by id
+
+```typescript
+client.api.computers.proxy.getHook(id: string, service: string, hookId: string): Promise<ApiComputersProxyGetHookResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `service` | `string` | Yes | path | Canonical name of the computer program the hook applies to. Every program takes hooks except logs, egress and cdp, which answer 404. Adding a hook under another name, or under an alias of a program name, is refused with 422; the message lists the names that take hooks. |
+| `hookId` | `string` | Yes | path | 26-char Crockford base32 ULID (lowercase) |
+
+**Returns:** `ApiComputersProxyGetHookResponse`
+
+**CLI:** `hoody computers proxy hooks get`
+
+---
+
+### `getPermissions`
+
+**GET** `/api/v1/computers/{id}/proxy/permissions`
+
+Get computer proxy permissions
+
+```typescript
+client.api.computers.proxy.getPermissions(id: string): Promise<ApiComputersProxyGetPermissionsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+
+**Returns:** `ApiComputersProxyGetPermissionsResponse`
+
+**CLI:** `hoody computers proxy permissions get`
+
+---
+
+### `getService`
+
+**GET** `/api/v1/computers/{id}/proxy/services/{service}`
+
+Get merged proxy view for a service
+
+```typescript
+client.api.computers.proxy.getService(id: string, service: string): Promise<ApiComputersProxyGetServiceResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `service` | `string` | Yes | path | Service name |
+
+**Returns:** `ApiComputersProxyGetServiceResponse`
+
+**CLI:** `hoody computers proxy services get`
+
+---
+
+### `getSettings`
+
+**GET** `/api/v1/computers/{id}/proxy/settings`
+
+Get computer proxy root settings
+
+```typescript
+client.api.computers.proxy.getSettings(id: string): Promise<ApiComputersProxyGetSettingsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+
+**Returns:** `ApiComputersProxyGetSettingsResponse`
+
+**CLI:** `hoody computers proxy settings get`
+
+---
+
+### `getUsage`
+
+**GET** `/api/v1/computers/{id}/proxy-usage`
+
+Get proxied-usage documents for a computer
+
+```typescript
+client.api.computers.proxy.getUsage(id: string, options: { from: string; to: string }): Promise<ApiComputersProxyGetUsageResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer id |
+| `from` | `string` | Yes | query | First month, inclusive (YYYY-MM), from 2020-01. |
+| `to` | `string` | Yes | query | Last month, inclusive (YYYY-MM), up to 2099-12 and not before `from`. At most 12 months. |
+
+**Returns:** `ApiComputersProxyGetUsageResponse`
+
+**CLI:** `hoody computers proxy usage get`
+
+---
+
+### `listGroups`
+
+**GET** `/api/v1/computers/{id}/proxy/groups`
+
+List computer proxy groups
+
+```typescript
+client.api.computers.proxy.listGroups(id: string): Promise<ApiComputersProxyListGroupsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+
+**Returns:** `ApiComputersProxyListGroupsResponse`
+
+**CLI:** `hoody computers proxy groups list`
+
+---
+
+### `listHooks`
+
+**GET** `/api/v1/computers/{id}/proxy/hooks`
+
+List all proxy hooks for a computer
+
+```typescript
+client.api.computers.proxy.listHooks(id: string): Promise<ApiComputersProxyListHooksResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+
+**Returns:** `ApiComputersProxyListHooksResponse`
+
+**CLI:** `hoody computers proxy hooks list`
+
+---
+
+### `listHooksByService`
+
+**GET** `/api/v1/computers/{id}/proxy/hooks/{service}`
+
+List hooks for a specific service
+
+```typescript
+client.api.computers.proxy.listHooksByService(id: string, service: string): Promise<ApiComputersProxyListHooksByServiceResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `service` | `string` | Yes | path | Canonical name of the computer program the hook applies to. Every program takes hooks except logs, egress and cdp, which answer 404. Adding a hook under another name, or under an alias of a program name, is refused with 422; the message lists the names that take hooks. |
+
+**Returns:** `ApiComputersProxyListHooksByServiceResponse`
+
+**CLI:** `hoody computers proxy hooks list`
+
+---
+
+### `listServices`
+
+**GET** `/api/v1/computers/{id}/proxy/services`
+
+List services referenced in proxy config
+
+```typescript
+client.api.computers.proxy.listServices(id: string): Promise<ApiComputersProxyListServicesResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+
+**Returns:** `ApiComputersProxyListServicesResponse`
+
+**CLI:** `hoody computers proxy services list`
+
+---
+
+### `moveHook`
+
+**PATCH** `/api/v1/computers/{id}/proxy/hooks/{service}/{hookId}/position`
+
+Move a hook to a new position
+
+```typescript
+client.api.computers.proxy.moveHook(id: string, service: string, hookId: string, data: ApiComputersProxyMoveHookRequest, options: { ifMatch: string }): Promise<ApiComputersProxyMoveHookResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `service` | `string` | Yes | path | Canonical name of the computer program the hook applies to. Every program takes hooks except logs, egress and cdp, which answer 404. Adding a hook under another name, or under an alias of a program name, is refused with 422; the message lists the names that take hooks. |
+| `hookId` | `string` | Yes | path | 26-char Crockford base32 ULID (lowercase) |
+| `data` | `ApiComputersProxyMoveHookRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
+
+**Returns:** `ApiComputersProxyMoveHookResponse`
+
+**CLI:** `hoody computers proxy hooks move`
+
+---
+
+### `setDefault`
+
+**PATCH** `/api/v1/computers/{id}/proxy/permissions/default`
+
+Update computer default proxy permission policy
+
+```typescript
+client.api.computers.proxy.setDefault(id: string, data: ApiComputersProxySetDefaultRequest, options: { ifMatch: string }): Promise<ApiComputersProxySetDefaultResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `data` | `ApiComputersProxySetDefaultRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiComputersProxySetDefaultResponse`
+
+**CLI:** `hoody computers proxy default set`
+
+---
+
+### `setGroupPermission`
+
+**PUT** `/api/v1/computers/{id}/proxy/permissions/permissions/{groupName}`
+
+Set computer group program permission
+
+```typescript
+client.api.computers.proxy.setGroupPermission(id: string, groupName: string, data: ApiComputersProxySetGroupPermissionRequest, options: { ifMatch: string }): Promise<ApiComputersProxySetGroupPermissionResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+| `groupName` | `string` | Yes | path |  |
+| `data` | `ApiComputersProxySetGroupPermissionRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiComputersProxySetGroupPermissionResponse`
+
+**CLI:** `hoody computers proxy groups permissions set`
+
+---
+
+### `setHook`
+
+**PUT** `/api/v1/computers/{id}/proxy/hooks/{service}/{hookId}`
+
+Replace a hook in place
+
+```typescript
+client.api.computers.proxy.setHook(id: string, service: string, hookId: string, data: ApiComputersProxySetHookRequest, options: { ifMatch: string }): Promise<ApiComputersProxySetHookResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `service` | `string` | Yes | path | Canonical name of the computer program the hook applies to. Every program takes hooks except logs, egress and cdp, which answer 404. Adding a hook under another name, or under an alias of a program name, is refused with 422; the message lists the names that take hooks. |
+| `hookId` | `string` | Yes | path | 26-char Crockford base32 ULID (lowercase) |
+| `data` | `ApiComputersProxySetHookRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
+
+**Returns:** `ApiComputersProxySetHookResponse`
+
+**CLI:** `hoody computers proxy hooks set`
+
+---
+
+### `setIpGroup`
+
+**PUT** `/api/v1/computers/{id}/proxy/permissions/groups/{groupName}/ip`
+
+Set IP authentication group (computer)
+
+```typescript
+client.api.computers.proxy.setIpGroup(id: string, groupName: string, data: ApiComputersProxySetIpGroupRequest, options: { ifMatch: string }): Promise<ApiComputersProxySetIpGroupResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+| `groupName` | `string` | Yes | path |  |
+| `data` | `ApiComputersProxySetIpGroupRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiComputersProxySetIpGroupResponse`
+
+**CLI:** `hoody computers proxy groups ip set`
+
+---
+
+### `setJwtGroup`
+
+**PUT** `/api/v1/computers/{id}/proxy/permissions/groups/{groupName}/jwt`
+
+Set JWT authentication group (computer)
+
+```typescript
+client.api.computers.proxy.setJwtGroup(id: string, groupName: string, data: ApiComputersProxySetJwtGroupRequest, options: { ifMatch: string }): Promise<ApiComputersProxySetJwtGroupResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+| `groupName` | `string` | Yes | path |  |
+| `data` | `ApiComputersProxySetJwtGroupRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiComputersProxySetJwtGroupResponse`
+
+**CLI:** `hoody computers proxy groups jwt set`
+
+---
+
+### `setPasswordGroup`
+
+**PUT** `/api/v1/computers/{id}/proxy/permissions/groups/{groupName}/password`
+
+Set password authentication group (computer)
+
+```typescript
+client.api.computers.proxy.setPasswordGroup(id: string, groupName: string, data: ApiComputersProxySetPasswordGroupRequest, options: { ifMatch: string }): Promise<ApiComputersProxySetPasswordGroupResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+| `groupName` | `string` | Yes | path |  |
+| `data` | `ApiComputersProxySetPasswordGroupRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiComputersProxySetPasswordGroupResponse`
+
+**CLI:** `hoody computers proxy groups password set`
+
+---
+
+### `setPermissions`
+
+**PUT** `/api/v1/computers/{id}/proxy/permissions`
+
+Replace computer proxy permissions JSON
+
+```typescript
+client.api.computers.proxy.setPermissions(id: string, data: ApiComputersProxySetPermissionsRequest, options: { ifMatch: string }): Promise<ApiComputersProxySetPermissionsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+| `data` | `ApiComputersProxySetPermissionsRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiComputersProxySetPermissionsResponse`
+
+**CLI:** `hoody computers proxy permissions set`
+
+---
+
+### `setTokenGroup`
+
+**PUT** `/api/v1/computers/{id}/proxy/permissions/groups/{groupName}/token`
+
+Set token authentication group (computer)
+
+```typescript
+client.api.computers.proxy.setTokenGroup(id: string, groupName: string, data: ApiComputersProxySetTokenGroupRequest, options: { ifMatch: string }): Promise<ApiComputersProxySetTokenGroupResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+| `groupName` | `string` | Yes | path |  |
+| `data` | `ApiComputersProxySetTokenGroupRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiComputersProxySetTokenGroupResponse`
+
+**CLI:** `hoody computers proxy groups token set`
+
+---
+
+### `updateSettings`
+
+**PUT** `/api/v1/computers/{id}/proxy/settings`
+
+Update computer proxy root settings
+
+```typescript
+client.api.computers.proxy.updateSettings(id: string, data: ApiComputersProxyUpdateSettingsRequest, options: { ifMatch: string }): Promise<ApiComputersProxyUpdateSettingsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `data` | `ApiComputersProxyUpdateSettingsRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
+
+**Returns:** `ApiComputersProxyUpdateSettingsResponse`
+
+**CLI:** `hoody computers proxy settings update`
 
 ---
 
@@ -1622,7 +2810,7 @@ client.api.events.getStats(options?: { start_date?: string; end_date?: string; r
 List event history
 
 ```typescript
-client.api.events.list(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "container.paused" | "container.copying" | "container.updated" | "container.env.updated" | "container.env.applied" | "container.env.failed" | "container.network.created" | "container.network.updated" | "container.network.running" | "container.network.stopped" | "container.network.failed" | "container.network.deleted" | "container.access_suspended" | "container.access_restored" | "container.operation.completed" | "container.operation.failed" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "notification.updated" | "project.created" | "project.updated" | "project.deleted" | "project.permission.granted" | "project.permission.updated" | "project.permission.revoked" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "server.deleted" | "server.rental_started" | "server.rental_extended" | "server.rental_expired" | "server.rental_terminated" | "server.rental_hold_started" | "server.rental_updated" | "server.command.completed" | "server.command.failed" | "server.reservation.created" | "server.reservation.fulfilled" | "server.reservation.refunded" | "server.offer.published" | "server.offer.updated" | "server.offer.withdrawn" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "pool.created" | "pool.updated" | "pool.deleted" | "activity.logged" | "vault.key.set" | "vault.key.deleted" | "vault.cleared" | "account.updated" | "billing.balance_changed" | "billing.payment.succeeded" | "billing.payment.failed" | "billing.payment.updated" | "billing.invoice.created" | "billing.payment_method.added" | "billing.payment_method.removed" | "billing.payment_method.default_changed" | "billing.payment_method.updated" | "image.library.added"; resource_type?: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "activity_log" | "container_network" | "project_permission" | "vault" | "account" | "wallet" | "payment" | "invoice" | "payment_method" | "user_image" | "reservation" | "server_offer"; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string; after?: string; bootstrap?: boolean }): Promise<ApiEventsListResponse>
+client.api.events.list(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "computer.creating" | "computer.running" | "computer.stopped" | "computer.failed" | "computer.deleting" | "computer.deleted" | "computer.autostart_enabled" | "computer.autostart_disabled" | "computer.renamed" | "computer.resource_updated" | "computer.ssh_key.added" | "computer.ssh_key.removed" | "computer.snapshot.created" | "computer.snapshot.deleted" | "computer.snapshot.restored" | "computer.snapshot.renamed" | "computer.display.enabled" | "computer.paused" | "computer.copying" | "computer.updated" | "computer.env.updated" | "computer.env.applied" | "computer.env.failed" | "computer.network.created" | "computer.network.updated" | "computer.network.running" | "computer.network.stopped" | "computer.network.failed" | "computer.network.deleted" | "computer.access_suspended" | "computer.access_restored" | "computer.operation.completed" | "computer.operation.failed" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "notification.updated" | "project.created" | "project.updated" | "project.deleted" | "project.permission.granted" | "project.permission.updated" | "project.permission.revoked" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "server.deleted" | "server.rental_started" | "server.rental_extended" | "server.rental_expired" | "server.rental_terminated" | "server.rental_hold_started" | "server.rental_updated" | "server.command.completed" | "server.command.failed" | "server.reservation.created" | "server.reservation.fulfilled" | "server.reservation.refunded" | "server.offer.published" | "server.offer.updated" | "server.offer.withdrawn" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "pool.created" | "pool.updated" | "pool.deleted" | "activity.logged" | "vault.key.set" | "vault.key.deleted" | "vault.cleared" | "account.updated" | "billing.balance_changed" | "billing.payment.succeeded" | "billing.payment.failed" | "billing.payment.updated" | "billing.invoice.created" | "billing.payment_method.added" | "billing.payment_method.removed" | "billing.payment_method.default_changed" | "billing.payment_method.updated" | "image.library.added"; resource_type?: "computer" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "activity_log" | "computer_network" | "project_permission" | "vault" | "account" | "wallet" | "payment" | "invoice" | "payment_method" | "user_image" | "reservation" | "server_offer"; resource_id?: string; project_id?: string; computer_id?: string; start_date?: string; end_date?: string; realm_id?: string; after?: string; bootstrap?: boolean }): Promise<ApiEventsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1631,15 +2819,15 @@ client.api.events.list(options?: { limit?: number; offset?: number; sort_by?: "c
 | `offset` | `number` | No | query | Number of events to skip |
 | `sort_by` | `"created_at" \| "event_type"` | No | query | Field to sort by |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction |
-| `event_type` | `"container.creating" \| "container.running" \| "container.stopped" \| "container.failed" \| "container.deleting" \| "container.deleted" \| "container.autostart_enabled" \| "container.autostart_disabled" \| "container.renamed" \| "container.resource_updated" \| "container.ssh_key.added" \| "container.ssh_key.removed" \| "container.snapshot.created" \| "container.snapshot.deleted" \| "container.snapshot.restored" \| "container.snapshot.renamed" \| "container.display.enabled" \| "container.paused" \| "container.copying" \| "container.updated" \| "container.env.updated" \| "container.env.applied" \| "container.env.failed" \| "container.network.created" \| "container.network.updated" \| "container.network.running" \| "container.network.stopped" \| "container.network.failed" \| "container.network.deleted" \| "container.access_suspended" \| "container.access_restored" \| "container.operation.completed" \| "container.operation.failed" \| "storage.share.created" \| "storage.share.updated" \| "storage.share.deleted" \| "storage.share.enabled" \| "storage.share.disabled" \| "storage.share.expiring_soon" \| "storage.share.expired" \| "storage.share.mount_changed" \| "notification.created" \| "notification.read" \| "notification.deleted" \| "notification.updated" \| "project.created" \| "project.updated" \| "project.deleted" \| "project.permission.granted" \| "project.permission.updated" \| "project.permission.revoked" \| "server.created" \| "server.updated" \| "server.enabled" \| "server.disabled" \| "server.health_changed" \| "server.rental_expiring" \| "server.deleted" \| "server.rental_started" \| "server.rental_extended" \| "server.rental_expired" \| "server.rental_terminated" \| "server.rental_hold_started" \| "server.rental_updated" \| "server.command.completed" \| "server.command.failed" \| "server.reservation.created" \| "server.reservation.fulfilled" \| "server.reservation.refunded" \| "server.offer.published" \| "server.offer.updated" \| "server.offer.withdrawn" \| "firewall.rule.added" \| "firewall.rule.removed" \| "firewall.rule.updated" \| "firewall.rule.enabled" \| "firewall.rule.disabled" \| "proxy.alias.created" \| "proxy.alias.updated" \| "proxy.alias.deleted" \| "proxy.alias.enabled" \| "proxy.alias.disabled" \| "proxy.alias.expiring_soon" \| "proxy.alias.expired" \| "proxy.permissions.updated" \| "proxy.permissions.default_changed" \| "proxy.permissions.group_added" \| "proxy.permissions.group_updated" \| "proxy.permissions.group_removed" \| "auth.token.created" \| "auth.token.updated" \| "auth.token.deleted" \| "auth.token.enabled" \| "auth.token.disabled" \| "pool.member.joined" \| "pool.member.left" \| "pool.member.role_changed" \| "pool.invited" \| "pool.invitation_revoked" \| "pool.created" \| "pool.updated" \| "pool.deleted" \| "activity.logged" \| "vault.key.set" \| "vault.key.deleted" \| "vault.cleared" \| "account.updated" \| "billing.balance_changed" \| "billing.payment.succeeded" \| "billing.payment.failed" \| "billing.payment.updated" \| "billing.invoice.created" \| "billing.payment_method.added" \| "billing.payment_method.removed" \| "billing.payment_method.default_changed" \| "billing.payment_method.updated" \| "image.library.added"` | No | query | Filter by specific event type |
-| `resource_type` | `"container" \| "storage_share" \| "notification" \| "project" \| "server" \| "firewall" \| "proxy_alias" \| "proxy_permissions" \| "auth_token" \| "pool" \| "activity_log" \| "container_network" \| "project_permission" \| "vault" \| "account" \| "wallet" \| "payment" \| "invoice" \| "payment_method" \| "user_image" \| "reservation" \| "server_offer"` | No | query | Filter by resource type |
+| `event_type` | `"computer.creating" \| "computer.running" \| "computer.stopped" \| "computer.failed" \| "computer.deleting" \| "computer.deleted" \| "computer.autostart_enabled" \| "computer.autostart_disabled" \| "computer.renamed" \| "computer.resource_updated" \| "computer.ssh_key.added" \| "computer.ssh_key.removed" \| "computer.snapshot.created" \| "computer.snapshot.deleted" \| "computer.snapshot.restored" \| "computer.snapshot.renamed" \| "computer.display.enabled" \| "computer.paused" \| "computer.copying" \| "computer.updated" \| "computer.env.updated" \| "computer.env.applied" \| "computer.env.failed" \| "computer.network.created" \| "computer.network.updated" \| "computer.network.running" \| "computer.network.stopped" \| "computer.network.failed" \| "computer.network.deleted" \| "computer.access_suspended" \| "computer.access_restored" \| "computer.operation.completed" \| "computer.operation.failed" \| "storage.share.created" \| "storage.share.updated" \| "storage.share.deleted" \| "storage.share.enabled" \| "storage.share.disabled" \| "storage.share.expiring_soon" \| "storage.share.expired" \| "storage.share.mount_changed" \| "notification.created" \| "notification.read" \| "notification.deleted" \| "notification.updated" \| "project.created" \| "project.updated" \| "project.deleted" \| "project.permission.granted" \| "project.permission.updated" \| "project.permission.revoked" \| "server.created" \| "server.updated" \| "server.enabled" \| "server.disabled" \| "server.health_changed" \| "server.rental_expiring" \| "server.deleted" \| "server.rental_started" \| "server.rental_extended" \| "server.rental_expired" \| "server.rental_terminated" \| "server.rental_hold_started" \| "server.rental_updated" \| "server.command.completed" \| "server.command.failed" \| "server.reservation.created" \| "server.reservation.fulfilled" \| "server.reservation.refunded" \| "server.offer.published" \| "server.offer.updated" \| "server.offer.withdrawn" \| "firewall.rule.added" \| "firewall.rule.removed" \| "firewall.rule.updated" \| "firewall.rule.enabled" \| "firewall.rule.disabled" \| "proxy.alias.created" \| "proxy.alias.updated" \| "proxy.alias.deleted" \| "proxy.alias.enabled" \| "proxy.alias.disabled" \| "proxy.alias.expiring_soon" \| "proxy.alias.expired" \| "proxy.permissions.updated" \| "proxy.permissions.default_changed" \| "proxy.permissions.group_added" \| "proxy.permissions.group_updated" \| "proxy.permissions.group_removed" \| "auth.token.created" \| "auth.token.updated" \| "auth.token.deleted" \| "auth.token.enabled" \| "auth.token.disabled" \| "pool.member.joined" \| "pool.member.left" \| "pool.member.role_changed" \| "pool.invited" \| "pool.invitation_revoked" \| "pool.created" \| "pool.updated" \| "pool.deleted" \| "activity.logged" \| "vault.key.set" \| "vault.key.deleted" \| "vault.cleared" \| "account.updated" \| "billing.balance_changed" \| "billing.payment.succeeded" \| "billing.payment.failed" \| "billing.payment.updated" \| "billing.invoice.created" \| "billing.payment_method.added" \| "billing.payment_method.removed" \| "billing.payment_method.default_changed" \| "billing.payment_method.updated" \| "image.library.added"` | No | query | Filter by specific event type |
+| `resource_type` | `"computer" \| "storage_share" \| "notification" \| "project" \| "server" \| "firewall" \| "proxy_alias" \| "proxy_permissions" \| "auth_token" \| "pool" \| "activity_log" \| "computer_network" \| "project_permission" \| "vault" \| "account" \| "wallet" \| "payment" \| "invoice" \| "payment_method" \| "user_image" \| "reservation" \| "server_offer"` | No | query | Filter by resource type |
 | `resource_id` | `string` | No | query | Filter by specific resource ID |
 | `project_id` | `string` | No | query | Filter by project ID |
-| `container_id` | `string` | No | query | Filter by container ID |
+| `computer_id` | `string` | No | query | Filter by computer ID |
 | `start_date` | `string` | No | query | Filter events after this timestamp |
 | `end_date` | `string` | No | query | Filter events before this timestamp |
 | `realm_id` | `string` | No | query | Selects the realm scope in all modes; 403 on a realm-host or token conflict |
-| `after` | `string` | No | query | Cursor mode: return events after this cursor, oldest first. Cannot be combined with offset, sort_by, sort_order other than asc, event_type, resource_type, resource_id, project_id, container_id, start_date or end_date. In every mode `realm_id` selects the realm exactly as it does in offset mode: the cursor is bound to that realm, and a `realm_id` that conflicts with the realm host or lies outside the realms of the token is refused with 403. |
+| `after` | `string` | No | query | Cursor mode: return events after this cursor, oldest first. Cannot be combined with offset, sort_by, sort_order other than asc, event_type, resource_type, resource_id, project_id, computer_id, start_date or end_date. In every mode `realm_id` selects the realm exactly as it does in offset mode: the cursor is bound to that realm, and a `realm_id` that conflicts with the realm host or lies outside the realms of the token is refused with 403. |
 | `bootstrap` | `boolean` | No | query | Return no events, only the resumable boundary (`next_cursor`) and `latest_cursor` for this scope. |
 
 **Returns:** `ApiEventsListResponse`
@@ -1655,7 +2843,7 @@ client.api.events.list(options?: { limit?: number; offset?: number; sort_by?: "c
 List event history (collect all pages)
 
 ```typescript
-client.api.events.listAll(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "container.paused" | "container.copying" | "container.updated" | "container.env.updated" | "container.env.applied" | "container.env.failed" | "container.network.created" | "container.network.updated" | "container.network.running" | "container.network.stopped" | "container.network.failed" | "container.network.deleted" | "container.access_suspended" | "container.access_restored" | "container.operation.completed" | "container.operation.failed" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "notification.updated" | "project.created" | "project.updated" | "project.deleted" | "project.permission.granted" | "project.permission.updated" | "project.permission.revoked" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "server.deleted" | "server.rental_started" | "server.rental_extended" | "server.rental_expired" | "server.rental_terminated" | "server.rental_hold_started" | "server.rental_updated" | "server.command.completed" | "server.command.failed" | "server.reservation.created" | "server.reservation.fulfilled" | "server.reservation.refunded" | "server.offer.published" | "server.offer.updated" | "server.offer.withdrawn" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "pool.created" | "pool.updated" | "pool.deleted" | "activity.logged" | "vault.key.set" | "vault.key.deleted" | "vault.cleared" | "account.updated" | "billing.balance_changed" | "billing.payment.succeeded" | "billing.payment.failed" | "billing.payment.updated" | "billing.invoice.created" | "billing.payment_method.added" | "billing.payment_method.removed" | "billing.payment_method.default_changed" | "billing.payment_method.updated" | "image.library.added"; resource_type?: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "activity_log" | "container_network" | "project_permission" | "vault" | "account" | "wallet" | "payment" | "invoice" | "payment_method" | "user_image" | "reservation" | "server_offer"; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string; after?: string; bootstrap?: boolean }): Promise<unknown[]>
+client.api.events.listAll(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "computer.creating" | "computer.running" | "computer.stopped" | "computer.failed" | "computer.deleting" | "computer.deleted" | "computer.autostart_enabled" | "computer.autostart_disabled" | "computer.renamed" | "computer.resource_updated" | "computer.ssh_key.added" | "computer.ssh_key.removed" | "computer.snapshot.created" | "computer.snapshot.deleted" | "computer.snapshot.restored" | "computer.snapshot.renamed" | "computer.display.enabled" | "computer.paused" | "computer.copying" | "computer.updated" | "computer.env.updated" | "computer.env.applied" | "computer.env.failed" | "computer.network.created" | "computer.network.updated" | "computer.network.running" | "computer.network.stopped" | "computer.network.failed" | "computer.network.deleted" | "computer.access_suspended" | "computer.access_restored" | "computer.operation.completed" | "computer.operation.failed" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "notification.updated" | "project.created" | "project.updated" | "project.deleted" | "project.permission.granted" | "project.permission.updated" | "project.permission.revoked" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "server.deleted" | "server.rental_started" | "server.rental_extended" | "server.rental_expired" | "server.rental_terminated" | "server.rental_hold_started" | "server.rental_updated" | "server.command.completed" | "server.command.failed" | "server.reservation.created" | "server.reservation.fulfilled" | "server.reservation.refunded" | "server.offer.published" | "server.offer.updated" | "server.offer.withdrawn" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "pool.created" | "pool.updated" | "pool.deleted" | "activity.logged" | "vault.key.set" | "vault.key.deleted" | "vault.cleared" | "account.updated" | "billing.balance_changed" | "billing.payment.succeeded" | "billing.payment.failed" | "billing.payment.updated" | "billing.invoice.created" | "billing.payment_method.added" | "billing.payment_method.removed" | "billing.payment_method.default_changed" | "billing.payment_method.updated" | "image.library.added"; resource_type?: "computer" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "activity_log" | "computer_network" | "project_permission" | "vault" | "account" | "wallet" | "payment" | "invoice" | "payment_method" | "user_image" | "reservation" | "server_offer"; resource_id?: string; project_id?: string; computer_id?: string; start_date?: string; end_date?: string; realm_id?: string; after?: string; bootstrap?: boolean }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1664,15 +2852,15 @@ client.api.events.listAll(options?: { limit?: number; offset?: number; sort_by?:
 | `offset` | `number` | No | query | Number of events to skip |
 | `sort_by` | `"created_at" \| "event_type"` | No | query | Field to sort by |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction |
-| `event_type` | `"container.creating" \| "container.running" \| "container.stopped" \| "container.failed" \| "container.deleting" \| "container.deleted" \| "container.autostart_enabled" \| "container.autostart_disabled" \| "container.renamed" \| "container.resource_updated" \| "container.ssh_key.added" \| "container.ssh_key.removed" \| "container.snapshot.created" \| "container.snapshot.deleted" \| "container.snapshot.restored" \| "container.snapshot.renamed" \| "container.display.enabled" \| "container.paused" \| "container.copying" \| "container.updated" \| "container.env.updated" \| "container.env.applied" \| "container.env.failed" \| "container.network.created" \| "container.network.updated" \| "container.network.running" \| "container.network.stopped" \| "container.network.failed" \| "container.network.deleted" \| "container.access_suspended" \| "container.access_restored" \| "container.operation.completed" \| "container.operation.failed" \| "storage.share.created" \| "storage.share.updated" \| "storage.share.deleted" \| "storage.share.enabled" \| "storage.share.disabled" \| "storage.share.expiring_soon" \| "storage.share.expired" \| "storage.share.mount_changed" \| "notification.created" \| "notification.read" \| "notification.deleted" \| "notification.updated" \| "project.created" \| "project.updated" \| "project.deleted" \| "project.permission.granted" \| "project.permission.updated" \| "project.permission.revoked" \| "server.created" \| "server.updated" \| "server.enabled" \| "server.disabled" \| "server.health_changed" \| "server.rental_expiring" \| "server.deleted" \| "server.rental_started" \| "server.rental_extended" \| "server.rental_expired" \| "server.rental_terminated" \| "server.rental_hold_started" \| "server.rental_updated" \| "server.command.completed" \| "server.command.failed" \| "server.reservation.created" \| "server.reservation.fulfilled" \| "server.reservation.refunded" \| "server.offer.published" \| "server.offer.updated" \| "server.offer.withdrawn" \| "firewall.rule.added" \| "firewall.rule.removed" \| "firewall.rule.updated" \| "firewall.rule.enabled" \| "firewall.rule.disabled" \| "proxy.alias.created" \| "proxy.alias.updated" \| "proxy.alias.deleted" \| "proxy.alias.enabled" \| "proxy.alias.disabled" \| "proxy.alias.expiring_soon" \| "proxy.alias.expired" \| "proxy.permissions.updated" \| "proxy.permissions.default_changed" \| "proxy.permissions.group_added" \| "proxy.permissions.group_updated" \| "proxy.permissions.group_removed" \| "auth.token.created" \| "auth.token.updated" \| "auth.token.deleted" \| "auth.token.enabled" \| "auth.token.disabled" \| "pool.member.joined" \| "pool.member.left" \| "pool.member.role_changed" \| "pool.invited" \| "pool.invitation_revoked" \| "pool.created" \| "pool.updated" \| "pool.deleted" \| "activity.logged" \| "vault.key.set" \| "vault.key.deleted" \| "vault.cleared" \| "account.updated" \| "billing.balance_changed" \| "billing.payment.succeeded" \| "billing.payment.failed" \| "billing.payment.updated" \| "billing.invoice.created" \| "billing.payment_method.added" \| "billing.payment_method.removed" \| "billing.payment_method.default_changed" \| "billing.payment_method.updated" \| "image.library.added"` | No | query | Filter by specific event type |
-| `resource_type` | `"container" \| "storage_share" \| "notification" \| "project" \| "server" \| "firewall" \| "proxy_alias" \| "proxy_permissions" \| "auth_token" \| "pool" \| "activity_log" \| "container_network" \| "project_permission" \| "vault" \| "account" \| "wallet" \| "payment" \| "invoice" \| "payment_method" \| "user_image" \| "reservation" \| "server_offer"` | No | query | Filter by resource type |
+| `event_type` | `"computer.creating" \| "computer.running" \| "computer.stopped" \| "computer.failed" \| "computer.deleting" \| "computer.deleted" \| "computer.autostart_enabled" \| "computer.autostart_disabled" \| "computer.renamed" \| "computer.resource_updated" \| "computer.ssh_key.added" \| "computer.ssh_key.removed" \| "computer.snapshot.created" \| "computer.snapshot.deleted" \| "computer.snapshot.restored" \| "computer.snapshot.renamed" \| "computer.display.enabled" \| "computer.paused" \| "computer.copying" \| "computer.updated" \| "computer.env.updated" \| "computer.env.applied" \| "computer.env.failed" \| "computer.network.created" \| "computer.network.updated" \| "computer.network.running" \| "computer.network.stopped" \| "computer.network.failed" \| "computer.network.deleted" \| "computer.access_suspended" \| "computer.access_restored" \| "computer.operation.completed" \| "computer.operation.failed" \| "storage.share.created" \| "storage.share.updated" \| "storage.share.deleted" \| "storage.share.enabled" \| "storage.share.disabled" \| "storage.share.expiring_soon" \| "storage.share.expired" \| "storage.share.mount_changed" \| "notification.created" \| "notification.read" \| "notification.deleted" \| "notification.updated" \| "project.created" \| "project.updated" \| "project.deleted" \| "project.permission.granted" \| "project.permission.updated" \| "project.permission.revoked" \| "server.created" \| "server.updated" \| "server.enabled" \| "server.disabled" \| "server.health_changed" \| "server.rental_expiring" \| "server.deleted" \| "server.rental_started" \| "server.rental_extended" \| "server.rental_expired" \| "server.rental_terminated" \| "server.rental_hold_started" \| "server.rental_updated" \| "server.command.completed" \| "server.command.failed" \| "server.reservation.created" \| "server.reservation.fulfilled" \| "server.reservation.refunded" \| "server.offer.published" \| "server.offer.updated" \| "server.offer.withdrawn" \| "firewall.rule.added" \| "firewall.rule.removed" \| "firewall.rule.updated" \| "firewall.rule.enabled" \| "firewall.rule.disabled" \| "proxy.alias.created" \| "proxy.alias.updated" \| "proxy.alias.deleted" \| "proxy.alias.enabled" \| "proxy.alias.disabled" \| "proxy.alias.expiring_soon" \| "proxy.alias.expired" \| "proxy.permissions.updated" \| "proxy.permissions.default_changed" \| "proxy.permissions.group_added" \| "proxy.permissions.group_updated" \| "proxy.permissions.group_removed" \| "auth.token.created" \| "auth.token.updated" \| "auth.token.deleted" \| "auth.token.enabled" \| "auth.token.disabled" \| "pool.member.joined" \| "pool.member.left" \| "pool.member.role_changed" \| "pool.invited" \| "pool.invitation_revoked" \| "pool.created" \| "pool.updated" \| "pool.deleted" \| "activity.logged" \| "vault.key.set" \| "vault.key.deleted" \| "vault.cleared" \| "account.updated" \| "billing.balance_changed" \| "billing.payment.succeeded" \| "billing.payment.failed" \| "billing.payment.updated" \| "billing.invoice.created" \| "billing.payment_method.added" \| "billing.payment_method.removed" \| "billing.payment_method.default_changed" \| "billing.payment_method.updated" \| "image.library.added"` | No | query | Filter by specific event type |
+| `resource_type` | `"computer" \| "storage_share" \| "notification" \| "project" \| "server" \| "firewall" \| "proxy_alias" \| "proxy_permissions" \| "auth_token" \| "pool" \| "activity_log" \| "computer_network" \| "project_permission" \| "vault" \| "account" \| "wallet" \| "payment" \| "invoice" \| "payment_method" \| "user_image" \| "reservation" \| "server_offer"` | No | query | Filter by resource type |
 | `resource_id` | `string` | No | query | Filter by specific resource ID |
 | `project_id` | `string` | No | query | Filter by project ID |
-| `container_id` | `string` | No | query | Filter by container ID |
+| `computer_id` | `string` | No | query | Filter by computer ID |
 | `start_date` | `string` | No | query | Filter events after this timestamp |
 | `end_date` | `string` | No | query | Filter events before this timestamp |
 | `realm_id` | `string` | No | query | Selects the realm scope in all modes; 403 on a realm-host or token conflict |
-| `after` | `string` | No | query | Cursor mode: return events after this cursor, oldest first. Cannot be combined with offset, sort_by, sort_order other than asc, event_type, resource_type, resource_id, project_id, container_id, start_date or end_date. In every mode `realm_id` selects the realm exactly as it does in offset mode: the cursor is bound to that realm, and a `realm_id` that conflicts with the realm host or lies outside the realms of the token is refused with 403. |
+| `after` | `string` | No | query | Cursor mode: return events after this cursor, oldest first. Cannot be combined with offset, sort_by, sort_order other than asc, event_type, resource_type, resource_id, project_id, computer_id, start_date or end_date. In every mode `realm_id` selects the realm exactly as it does in offset mode: the cursor is bound to that realm, and a `realm_id` that conflicts with the realm host or lies outside the realms of the token is refused with 403. |
 | `bootstrap` | `boolean` | No | query | Return no events, only the resumable boundary (`next_cursor`) and `latest_cursor` for this scope. |
 
 **Returns:** `unknown[]`
@@ -1686,7 +2874,7 @@ client.api.events.listAll(options?: { limit?: number; offset?: number; sort_by?:
 List event history (async iterator)
 
 ```typescript
-client.api.events.listIterator(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "container.paused" | "container.copying" | "container.updated" | "container.env.updated" | "container.env.applied" | "container.env.failed" | "container.network.created" | "container.network.updated" | "container.network.running" | "container.network.stopped" | "container.network.failed" | "container.network.deleted" | "container.access_suspended" | "container.access_restored" | "container.operation.completed" | "container.operation.failed" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "notification.updated" | "project.created" | "project.updated" | "project.deleted" | "project.permission.granted" | "project.permission.updated" | "project.permission.revoked" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "server.deleted" | "server.rental_started" | "server.rental_extended" | "server.rental_expired" | "server.rental_terminated" | "server.rental_hold_started" | "server.rental_updated" | "server.command.completed" | "server.command.failed" | "server.reservation.created" | "server.reservation.fulfilled" | "server.reservation.refunded" | "server.offer.published" | "server.offer.updated" | "server.offer.withdrawn" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "pool.created" | "pool.updated" | "pool.deleted" | "activity.logged" | "vault.key.set" | "vault.key.deleted" | "vault.cleared" | "account.updated" | "billing.balance_changed" | "billing.payment.succeeded" | "billing.payment.failed" | "billing.payment.updated" | "billing.invoice.created" | "billing.payment_method.added" | "billing.payment_method.removed" | "billing.payment_method.default_changed" | "billing.payment_method.updated" | "image.library.added"; resource_type?: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "activity_log" | "container_network" | "project_permission" | "vault" | "account" | "wallet" | "payment" | "invoice" | "payment_method" | "user_image" | "reservation" | "server_offer"; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string; after?: string; bootstrap?: boolean }): AsyncIterableIterator<unknown>
+client.api.events.listIterator(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "computer.creating" | "computer.running" | "computer.stopped" | "computer.failed" | "computer.deleting" | "computer.deleted" | "computer.autostart_enabled" | "computer.autostart_disabled" | "computer.renamed" | "computer.resource_updated" | "computer.ssh_key.added" | "computer.ssh_key.removed" | "computer.snapshot.created" | "computer.snapshot.deleted" | "computer.snapshot.restored" | "computer.snapshot.renamed" | "computer.display.enabled" | "computer.paused" | "computer.copying" | "computer.updated" | "computer.env.updated" | "computer.env.applied" | "computer.env.failed" | "computer.network.created" | "computer.network.updated" | "computer.network.running" | "computer.network.stopped" | "computer.network.failed" | "computer.network.deleted" | "computer.access_suspended" | "computer.access_restored" | "computer.operation.completed" | "computer.operation.failed" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "notification.updated" | "project.created" | "project.updated" | "project.deleted" | "project.permission.granted" | "project.permission.updated" | "project.permission.revoked" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "server.deleted" | "server.rental_started" | "server.rental_extended" | "server.rental_expired" | "server.rental_terminated" | "server.rental_hold_started" | "server.rental_updated" | "server.command.completed" | "server.command.failed" | "server.reservation.created" | "server.reservation.fulfilled" | "server.reservation.refunded" | "server.offer.published" | "server.offer.updated" | "server.offer.withdrawn" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "pool.created" | "pool.updated" | "pool.deleted" | "activity.logged" | "vault.key.set" | "vault.key.deleted" | "vault.cleared" | "account.updated" | "billing.balance_changed" | "billing.payment.succeeded" | "billing.payment.failed" | "billing.payment.updated" | "billing.invoice.created" | "billing.payment_method.added" | "billing.payment_method.removed" | "billing.payment_method.default_changed" | "billing.payment_method.updated" | "image.library.added"; resource_type?: "computer" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "activity_log" | "computer_network" | "project_permission" | "vault" | "account" | "wallet" | "payment" | "invoice" | "payment_method" | "user_image" | "reservation" | "server_offer"; resource_id?: string; project_id?: string; computer_id?: string; start_date?: string; end_date?: string; realm_id?: string; after?: string; bootstrap?: boolean }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1695,15 +2883,15 @@ client.api.events.listIterator(options?: { limit?: number; offset?: number; sort
 | `offset` | `number` | No | query | Number of events to skip |
 | `sort_by` | `"created_at" \| "event_type"` | No | query | Field to sort by |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction |
-| `event_type` | `"container.creating" \| "container.running" \| "container.stopped" \| "container.failed" \| "container.deleting" \| "container.deleted" \| "container.autostart_enabled" \| "container.autostart_disabled" \| "container.renamed" \| "container.resource_updated" \| "container.ssh_key.added" \| "container.ssh_key.removed" \| "container.snapshot.created" \| "container.snapshot.deleted" \| "container.snapshot.restored" \| "container.snapshot.renamed" \| "container.display.enabled" \| "container.paused" \| "container.copying" \| "container.updated" \| "container.env.updated" \| "container.env.applied" \| "container.env.failed" \| "container.network.created" \| "container.network.updated" \| "container.network.running" \| "container.network.stopped" \| "container.network.failed" \| "container.network.deleted" \| "container.access_suspended" \| "container.access_restored" \| "container.operation.completed" \| "container.operation.failed" \| "storage.share.created" \| "storage.share.updated" \| "storage.share.deleted" \| "storage.share.enabled" \| "storage.share.disabled" \| "storage.share.expiring_soon" \| "storage.share.expired" \| "storage.share.mount_changed" \| "notification.created" \| "notification.read" \| "notification.deleted" \| "notification.updated" \| "project.created" \| "project.updated" \| "project.deleted" \| "project.permission.granted" \| "project.permission.updated" \| "project.permission.revoked" \| "server.created" \| "server.updated" \| "server.enabled" \| "server.disabled" \| "server.health_changed" \| "server.rental_expiring" \| "server.deleted" \| "server.rental_started" \| "server.rental_extended" \| "server.rental_expired" \| "server.rental_terminated" \| "server.rental_hold_started" \| "server.rental_updated" \| "server.command.completed" \| "server.command.failed" \| "server.reservation.created" \| "server.reservation.fulfilled" \| "server.reservation.refunded" \| "server.offer.published" \| "server.offer.updated" \| "server.offer.withdrawn" \| "firewall.rule.added" \| "firewall.rule.removed" \| "firewall.rule.updated" \| "firewall.rule.enabled" \| "firewall.rule.disabled" \| "proxy.alias.created" \| "proxy.alias.updated" \| "proxy.alias.deleted" \| "proxy.alias.enabled" \| "proxy.alias.disabled" \| "proxy.alias.expiring_soon" \| "proxy.alias.expired" \| "proxy.permissions.updated" \| "proxy.permissions.default_changed" \| "proxy.permissions.group_added" \| "proxy.permissions.group_updated" \| "proxy.permissions.group_removed" \| "auth.token.created" \| "auth.token.updated" \| "auth.token.deleted" \| "auth.token.enabled" \| "auth.token.disabled" \| "pool.member.joined" \| "pool.member.left" \| "pool.member.role_changed" \| "pool.invited" \| "pool.invitation_revoked" \| "pool.created" \| "pool.updated" \| "pool.deleted" \| "activity.logged" \| "vault.key.set" \| "vault.key.deleted" \| "vault.cleared" \| "account.updated" \| "billing.balance_changed" \| "billing.payment.succeeded" \| "billing.payment.failed" \| "billing.payment.updated" \| "billing.invoice.created" \| "billing.payment_method.added" \| "billing.payment_method.removed" \| "billing.payment_method.default_changed" \| "billing.payment_method.updated" \| "image.library.added"` | No | query | Filter by specific event type |
-| `resource_type` | `"container" \| "storage_share" \| "notification" \| "project" \| "server" \| "firewall" \| "proxy_alias" \| "proxy_permissions" \| "auth_token" \| "pool" \| "activity_log" \| "container_network" \| "project_permission" \| "vault" \| "account" \| "wallet" \| "payment" \| "invoice" \| "payment_method" \| "user_image" \| "reservation" \| "server_offer"` | No | query | Filter by resource type |
+| `event_type` | `"computer.creating" \| "computer.running" \| "computer.stopped" \| "computer.failed" \| "computer.deleting" \| "computer.deleted" \| "computer.autostart_enabled" \| "computer.autostart_disabled" \| "computer.renamed" \| "computer.resource_updated" \| "computer.ssh_key.added" \| "computer.ssh_key.removed" \| "computer.snapshot.created" \| "computer.snapshot.deleted" \| "computer.snapshot.restored" \| "computer.snapshot.renamed" \| "computer.display.enabled" \| "computer.paused" \| "computer.copying" \| "computer.updated" \| "computer.env.updated" \| "computer.env.applied" \| "computer.env.failed" \| "computer.network.created" \| "computer.network.updated" \| "computer.network.running" \| "computer.network.stopped" \| "computer.network.failed" \| "computer.network.deleted" \| "computer.access_suspended" \| "computer.access_restored" \| "computer.operation.completed" \| "computer.operation.failed" \| "storage.share.created" \| "storage.share.updated" \| "storage.share.deleted" \| "storage.share.enabled" \| "storage.share.disabled" \| "storage.share.expiring_soon" \| "storage.share.expired" \| "storage.share.mount_changed" \| "notification.created" \| "notification.read" \| "notification.deleted" \| "notification.updated" \| "project.created" \| "project.updated" \| "project.deleted" \| "project.permission.granted" \| "project.permission.updated" \| "project.permission.revoked" \| "server.created" \| "server.updated" \| "server.enabled" \| "server.disabled" \| "server.health_changed" \| "server.rental_expiring" \| "server.deleted" \| "server.rental_started" \| "server.rental_extended" \| "server.rental_expired" \| "server.rental_terminated" \| "server.rental_hold_started" \| "server.rental_updated" \| "server.command.completed" \| "server.command.failed" \| "server.reservation.created" \| "server.reservation.fulfilled" \| "server.reservation.refunded" \| "server.offer.published" \| "server.offer.updated" \| "server.offer.withdrawn" \| "firewall.rule.added" \| "firewall.rule.removed" \| "firewall.rule.updated" \| "firewall.rule.enabled" \| "firewall.rule.disabled" \| "proxy.alias.created" \| "proxy.alias.updated" \| "proxy.alias.deleted" \| "proxy.alias.enabled" \| "proxy.alias.disabled" \| "proxy.alias.expiring_soon" \| "proxy.alias.expired" \| "proxy.permissions.updated" \| "proxy.permissions.default_changed" \| "proxy.permissions.group_added" \| "proxy.permissions.group_updated" \| "proxy.permissions.group_removed" \| "auth.token.created" \| "auth.token.updated" \| "auth.token.deleted" \| "auth.token.enabled" \| "auth.token.disabled" \| "pool.member.joined" \| "pool.member.left" \| "pool.member.role_changed" \| "pool.invited" \| "pool.invitation_revoked" \| "pool.created" \| "pool.updated" \| "pool.deleted" \| "activity.logged" \| "vault.key.set" \| "vault.key.deleted" \| "vault.cleared" \| "account.updated" \| "billing.balance_changed" \| "billing.payment.succeeded" \| "billing.payment.failed" \| "billing.payment.updated" \| "billing.invoice.created" \| "billing.payment_method.added" \| "billing.payment_method.removed" \| "billing.payment_method.default_changed" \| "billing.payment_method.updated" \| "image.library.added"` | No | query | Filter by specific event type |
+| `resource_type` | `"computer" \| "storage_share" \| "notification" \| "project" \| "server" \| "firewall" \| "proxy_alias" \| "proxy_permissions" \| "auth_token" \| "pool" \| "activity_log" \| "computer_network" \| "project_permission" \| "vault" \| "account" \| "wallet" \| "payment" \| "invoice" \| "payment_method" \| "user_image" \| "reservation" \| "server_offer"` | No | query | Filter by resource type |
 | `resource_id` | `string` | No | query | Filter by specific resource ID |
 | `project_id` | `string` | No | query | Filter by project ID |
-| `container_id` | `string` | No | query | Filter by container ID |
+| `computer_id` | `string` | No | query | Filter by computer ID |
 | `start_date` | `string` | No | query | Filter events after this timestamp |
 | `end_date` | `string` | No | query | Filter events before this timestamp |
 | `realm_id` | `string` | No | query | Selects the realm scope in all modes; 403 on a realm-host or token conflict |
-| `after` | `string` | No | query | Cursor mode: return events after this cursor, oldest first. Cannot be combined with offset, sort_by, sort_order other than asc, event_type, resource_type, resource_id, project_id, container_id, start_date or end_date. In every mode `realm_id` selects the realm exactly as it does in offset mode: the cursor is bound to that realm, and a `realm_id` that conflicts with the realm host or lies outside the realms of the token is refused with 403. |
+| `after` | `string` | No | query | Cursor mode: return events after this cursor, oldest first. Cannot be combined with offset, sort_by, sort_order other than asc, event_type, resource_type, resource_id, project_id, computer_id, start_date or end_date. In every mode `realm_id` selects the realm exactly as it does in offset mode: the cursor is bound to that realm, and a `realm_id` that conflicts with the realm host or lies outside the realms of the token is refused with 403. |
 | `bootstrap` | `boolean` | No | query | Return no events, only the resumable boundary (`next_cursor`) and `latest_cursor` for this scope. |
 
 **Returns:** `AsyncIterableIterator<unknown>`
@@ -1730,181 +2918,13 @@ client.api.events.purge(data: ApiEventsPurgeRequest): Promise<ApiEventsPurgeResp
 
 ---
 
-## `client.api.firewall` (10 methods)
-
-### `createEgressRule`
-
-**POST** `/api/v1/containers/{id}/firewall/egress`
-
-Add Egress Rule
-
-```typescript
-client.api.firewall.createEgressRule(id: string, data: ApiFirewallCreateEgressRuleRequest): Promise<ApiFirewallCreateEgressRuleResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `data` | `ApiFirewallCreateEgressRuleRequest` | Yes | body |  |
-
-**Returns:** `ApiFirewallCreateEgressRuleResponse`
-
-**CLI:** `hoody firewall egress create`
-
----
-
-### `createIngressRule`
-
-**POST** `/api/v1/containers/{id}/firewall/ingress`
-
-Add Ingress Rule
-
-```typescript
-client.api.firewall.createIngressRule(id: string, data: ApiFirewallCreateIngressRuleRequest): Promise<ApiFirewallCreateIngressRuleResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `data` | `ApiFirewallCreateIngressRuleRequest` | Yes | body |  |
-
-**Returns:** `ApiFirewallCreateIngressRuleResponse`
-
-**CLI:** `hoody firewall ingress create`
-
----
-
-### `deleteEgressRule`
-
-**DELETE** `/api/v1/containers/{id}/firewall/egress`
-
-Remove Egress Rule(s)
-
-```typescript
-client.api.firewall.deleteEgressRule(id: string, data: ApiFirewallDeleteEgressRuleRequest): Promise<ApiFirewallDeleteEgressRuleResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `data` | `ApiFirewallDeleteEgressRuleRequest` | Yes | body |  |
-
-**Returns:** `ApiFirewallDeleteEgressRuleResponse`
-
-**CLI:** `hoody firewall egress delete`
-
----
-
-### `deleteIngressRule`
-
-**DELETE** `/api/v1/containers/{id}/firewall/ingress`
-
-Remove Ingress Rule(s)
-
-```typescript
-client.api.firewall.deleteIngressRule(id: string, data: ApiFirewallDeleteIngressRuleRequest): Promise<ApiFirewallDeleteIngressRuleResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `data` | `ApiFirewallDeleteIngressRuleRequest` | Yes | body |  |
-
-**Returns:** `ApiFirewallDeleteIngressRuleResponse`
-
-**CLI:** `hoody firewall ingress delete`
-
----
-
-### `disableEgressRule`
-
-**PATCH** `/api/v1/containers/{id}/firewall/egress`
-
-Toggle Egress Rule State
-
-```typescript
-client.api.firewall.disableEgressRule(id: string, data?: object): Promise<any>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `data` | `object` | No | body |  |
-
-**Returns:** `any`
-
-**CLI:** `hoody firewall egress disable`
-
----
-
-### `disableIngressRule`
-
-**PATCH** `/api/v1/containers/{id}/firewall/ingress`
-
-Toggle Ingress Rule State
-
-```typescript
-client.api.firewall.disableIngressRule(id: string, data?: object): Promise<any>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `data` | `object` | No | body |  |
-
-**Returns:** `any`
-
-**CLI:** `hoody firewall ingress disable`
-
----
-
-### `enableEgressRule`
-
-**PATCH** `/api/v1/containers/{id}/firewall/egress`
-
-Toggle Egress Rule State
-
-```typescript
-client.api.firewall.enableEgressRule(id: string, data?: object): Promise<any>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `data` | `object` | No | body |  |
-
-**Returns:** `any`
-
-**CLI:** `hoody firewall egress enable`
-
----
-
-### `enableIngressRule`
-
-**PATCH** `/api/v1/containers/{id}/firewall/ingress`
-
-Toggle Ingress Rule State
-
-```typescript
-client.api.firewall.enableIngressRule(id: string, data?: object): Promise<any>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `data` | `object` | No | body |  |
-
-**Returns:** `any`
-
-**CLI:** `hoody firewall ingress enable`
-
----
+## `client.api.firewall` (2 methods)
 
 ### `listRules`
 
-**GET** `/api/v1/containers/{id}/firewall/rules`
+**GET** `/api/v1/computers/{id}/firewall/rules`
 
-List container firewall rules
+List computer firewall rules
 
 ```typescript
 client.api.firewall.listRules(id: string): Promise<ApiFirewallListRulesResponse>
@@ -1912,7 +2932,7 @@ client.api.firewall.listRules(id: string): Promise<ApiFirewallListRulesResponse>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
+| `id` | `string` | Yes | path | Computer ID |
 
 **Returns:** `ApiFirewallListRulesResponse`
 
@@ -1922,9 +2942,9 @@ client.api.firewall.listRules(id: string): Promise<ApiFirewallListRulesResponse>
 
 ### `reset`
 
-**POST** `/api/v1/containers/{id}/firewall/reset`
+**POST** `/api/v1/computers/{id}/firewall/reset`
 
-Reset container firewall
+Reset computer firewall
 
 ```typescript
 client.api.firewall.reset(id: string): Promise<ApiFirewallResetResponse>
@@ -1932,11 +2952,183 @@ client.api.firewall.reset(id: string): Promise<ApiFirewallResetResponse>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
+| `id` | `string` | Yes | path | Computer ID |
 
 **Returns:** `ApiFirewallResetResponse`
 
 **CLI:** `hoody firewall reset`
+
+---
+
+## `client.api.firewall.egress` (4 methods)
+
+### `create`
+
+**POST** `/api/v1/computers/{id}/firewall/egress`
+
+Add Egress Rule
+
+```typescript
+client.api.firewall.egress.create(id: string, data: ApiFirewallEgressCreateRequest): Promise<ApiFirewallEgressCreateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `data` | `ApiFirewallEgressCreateRequest` | Yes | body |  |
+
+**Returns:** `ApiFirewallEgressCreateResponse`
+
+**CLI:** `hoody firewall egress create`
+
+---
+
+### `delete`
+
+**DELETE** `/api/v1/computers/{id}/firewall/egress`
+
+Remove Egress Rule(s)
+
+```typescript
+client.api.firewall.egress.delete(id: string, data: ApiFirewallEgressDeleteRequest): Promise<ApiFirewallEgressDeleteResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `data` | `ApiFirewallEgressDeleteRequest` | Yes | body |  |
+
+**Returns:** `ApiFirewallEgressDeleteResponse`
+
+**CLI:** `hoody firewall egress delete`
+
+---
+
+### `disable`
+
+**PATCH** `/api/v1/computers/{id}/firewall/egress`
+
+Toggle Egress Rule State
+
+```typescript
+client.api.firewall.egress.disable(id: string, data?: object, options?: object): Promise<any>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `data` | `object` | No | body |  |
+
+**Returns:** `any`
+
+**CLI:** `hoody firewall egress disable`
+
+---
+
+### `enable`
+
+**PATCH** `/api/v1/computers/{id}/firewall/egress`
+
+Toggle Egress Rule State
+
+```typescript
+client.api.firewall.egress.enable(id: string, data?: object, options?: object): Promise<any>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `data` | `object` | No | body |  |
+
+**Returns:** `any`
+
+**CLI:** `hoody firewall egress enable`
+
+---
+
+## `client.api.firewall.ingress` (4 methods)
+
+### `create`
+
+**POST** `/api/v1/computers/{id}/firewall/ingress`
+
+Add Ingress Rule
+
+```typescript
+client.api.firewall.ingress.create(id: string, data: ApiFirewallIngressCreateRequest): Promise<ApiFirewallIngressCreateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `data` | `ApiFirewallIngressCreateRequest` | Yes | body |  |
+
+**Returns:** `ApiFirewallIngressCreateResponse`
+
+**CLI:** `hoody firewall ingress create`
+
+---
+
+### `delete`
+
+**DELETE** `/api/v1/computers/{id}/firewall/ingress`
+
+Remove Ingress Rule(s)
+
+```typescript
+client.api.firewall.ingress.delete(id: string, data: ApiFirewallIngressDeleteRequest): Promise<ApiFirewallIngressDeleteResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `data` | `ApiFirewallIngressDeleteRequest` | Yes | body |  |
+
+**Returns:** `ApiFirewallIngressDeleteResponse`
+
+**CLI:** `hoody firewall ingress delete`
+
+---
+
+### `disable`
+
+**PATCH** `/api/v1/computers/{id}/firewall/ingress`
+
+Toggle Ingress Rule State
+
+```typescript
+client.api.firewall.ingress.disable(id: string, data?: object, options?: object): Promise<any>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `data` | `object` | No | body |  |
+
+**Returns:** `any`
+
+**CLI:** `hoody firewall ingress disable`
+
+---
+
+### `enable`
+
+**PATCH** `/api/v1/computers/{id}/firewall/ingress`
+
+Toggle Ingress Rule State
+
+```typescript
+client.api.firewall.ingress.enable(id: string, data?: object, options?: object): Promise<any>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+| `data` | `object` | No | body |  |
+
+**Returns:** `any`
+
+**CLI:** `hoody firewall ingress enable`
 
 ---
 
@@ -1954,7 +3146,7 @@ client.api.images.buy(id: string): Promise<ApiImagesBuyResponse>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the paid container image to purchase |
+| `id` | `string` | Yes | path | Unique identifier of the paid computer image to purchase |
 
 **Returns:** `ApiImagesBuyResponse`
 
@@ -1969,14 +3161,14 @@ client.api.images.buy(id: string): Promise<ApiImagesBuyResponse>
 Get image icon
 
 ```typescript
-client.api.images.getIcon(id: string): Promise<ApiResponse<ArrayBuffer> | ApiImagesGetIconResponse>
+client.api.images.getIcon(id: string): Promise<ApiResponse<ArrayBuffer>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container image to retrieve icon for |
+| `id` | `string` | Yes | path | Unique identifier of the computer image to retrieve icon for |
 
-**Returns:** `ApiResponse<ArrayBuffer> | ApiImagesGetIconResponse`
+**Returns:** `ApiResponse<ArrayBuffer>`
 
 **CLI:** `hoody images icon get`
 
@@ -1994,7 +3186,7 @@ client.api.images.getPublic(id: string): Promise<ApiImagesGetPublicResponse>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the public container image to retrieve details for |
+| `id` | `string` | Yes | path | Unique identifier of the public computer image to retrieve details for |
 
 **Returns:** `ApiImagesGetPublicResponse`
 
@@ -2014,7 +3206,7 @@ client.api.images.import(id: string): Promise<ApiImagesImportResponse>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the public container image to import |
+| `id` | `string` | Yes | path | Unique identifier of the public computer image to import |
 
 **Returns:** `ApiImagesImportResponse`
 
@@ -2022,14 +3214,14 @@ client.api.images.import(id: string): Promise<ApiImagesImportResponse>
 
 ---
 
-### `list`
+### `listMine`
 
 **GET** `/api/v1/images/user`
 
 List user images
 
 ```typescript
-client.api.images.list(options?: { page?: number; limit?: number; sort_by?: "created_at"; sort_order?: "asc" | "desc" }): Promise<ApiImagesListResponse>
+client.api.images.listMine(options?: { page?: number; limit?: number; sort_by?: "created_at"; sort_order?: "asc" | "desc" }): Promise<ApiImagesListMineResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2039,20 +3231,20 @@ client.api.images.list(options?: { page?: number; limit?: number; sort_by?: "cre
 | `sort_by` | `"created_at"` | No | query | Field to sort user images by - currently only supports creation date |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction - ascending or descending |
 
-**Returns:** `ApiImagesListResponse`
+**Returns:** `ApiImagesListMineResponse`
 
 **CLI:** `hoody images list`
 
 ---
 
-### `listAll`
+### `listMineAll`
 
 **GET** `/api/v1/images/user`
 
 List user images (collect all pages)
 
 ```typescript
-client.api.images.listAll(options?: { page?: number; limit?: number; sort_by?: "created_at"; sort_order?: "asc" | "desc" }): Promise<unknown[]>
+client.api.images.listMineAll(options?: { page?: number; limit?: number; sort_by?: "created_at"; sort_order?: "asc" | "desc" }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2066,14 +3258,14 @@ client.api.images.listAll(options?: { page?: number; limit?: number; sort_by?: "
 
 ---
 
-### `listIterator`
+### `listMineIterator`
 
 **GET** `/api/v1/images/user`
 
 List user images (async iterator)
 
 ```typescript
-client.api.images.listIterator(options?: { page?: number; limit?: number; sort_by?: "created_at"; sort_order?: "asc" | "desc" }): AsyncIterableIterator<unknown>
+client.api.images.listMineIterator(options?: { page?: number; limit?: number; sort_by?: "created_at"; sort_order?: "asc" | "desc" }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2105,7 +3297,7 @@ client.api.images.listPublic(options?: { os?: string; architecture?: string; min
 | `max_price` | `number` | No | query | Maximum price filter for paid images - useful for budget constraints |
 | `min_rating` | `number` | No | query | Minimum average rating filter - filters images with rating &gt;= this value (0-5 stars) |
 | `max_rating` | `number` | No | query | Maximum average rating filter - filters images with rating at most this value (0-5 stars) |
-| `search` | `string` | No | query | Search term to filter images by name, description, or tags |
+| `search` | `string` | No | query | Search term matched as a substring against the image alias, image name and description |
 | `page` | `number` | No | query | Page number for pagination - starts from 1 |
 | `limit` | `number` | No | query | Number of images to return per page - maximum 100 items |
 | `sort_by` | `"alias" \| "added_date" \| "price" \| "rating"` | No | query | Field to sort images by - name, date added, price, or average rating |
@@ -2135,7 +3327,7 @@ client.api.images.listPublicAll(options?: { os?: string; architecture?: string; 
 | `max_price` | `number` | No | query | Maximum price filter for paid images - useful for budget constraints |
 | `min_rating` | `number` | No | query | Minimum average rating filter - filters images with rating &gt;= this value (0-5 stars) |
 | `max_rating` | `number` | No | query | Maximum average rating filter - filters images with rating at most this value (0-5 stars) |
-| `search` | `string` | No | query | Search term to filter images by name, description, or tags |
+| `search` | `string` | No | query | Search term matched as a substring against the image alias, image name and description |
 | `page` | `number` | No | query | Page number for pagination - starts from 1 |
 | `limit` | `number` | No | query | Number of images to return per page - maximum 100 items |
 | `sort_by` | `"alias" \| "added_date" \| "price" \| "rating"` | No | query | Field to sort images by - name, date added, price, or average rating |
@@ -2163,7 +3355,7 @@ client.api.images.listPublicIterator(options?: { os?: string; architecture?: str
 | `max_price` | `number` | No | query | Maximum price filter for paid images - useful for budget constraints |
 | `min_rating` | `number` | No | query | Minimum average rating filter - filters images with rating &gt;= this value (0-5 stars) |
 | `max_rating` | `number` | No | query | Maximum average rating filter - filters images with rating at most this value (0-5 stars) |
-| `search` | `string` | No | query | Search term to filter images by name, description, or tags |
+| `search` | `string` | No | query | Search term matched as a substring against the image alias, image name and description |
 | `page` | `number` | No | query | Page number for pagination - starts from 1 |
 | `limit` | `number` | No | query | Number of images to return per page - maximum 100 items |
 | `sort_by` | `"alias" \| "added_date" \| "price" \| "rating"` | No | query | Field to sort images by - name, date added, price, or average rating |
@@ -2185,7 +3377,7 @@ client.api.images.rate(id: string, data: ApiImagesRateRequest): Promise<ApiImage
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container image to rate |
+| `id` | `string` | Yes | path | Unique identifier of the computer image to rate |
 | `data` | `ApiImagesRateRequest` | Yes | body |  |
 
 **Returns:** `ApiImagesRateResponse`
@@ -2208,7 +3400,7 @@ client.api.inbox.getSummary(): Promise<ApiInboxGetSummaryResponse>
 
 **Returns:** `ApiInboxGetSummaryResponse`
 
-**CLI:** `hoody inbox summary`
+**CLI:** `hoody inbox summary get`
 
 ---
 
@@ -2227,7 +3419,7 @@ client.api.inbox.list(options?: { page?: number; limit?: number; unread_only?: b
 | `page` | `number` | No | query | Page number (offset paging). Ignored when `before` is supplied. |
 | `limit` | `number` | No | query | Rows per page (max 100). |
 | `unread_only` | `boolean` | No | query | Return only notifications the user has not read. Mutually exclusive with read_only. |
-| `read_only` | `boolean` | No | query | Return only notifications the user HAS read — the archive half of the inbox. `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
+| `read_only` | `boolean` | No | query | Return only notifications the user HAS read (the archive half of the inbox). `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
 | `before` | `string` | No | query | Keyset cursor from a previous response's pagination.next_cursor ("&lt;created_at&gt;,&lt;id&gt;"). Prefer this over `page` for an inbox: offset paging duplicates or skips rows when a new notification arrives mid-read. |
 
 **Returns:** `ApiInboxListResponse`
@@ -2251,7 +3443,7 @@ client.api.inbox.listAll(options?: { page?: number; limit?: number; unread_only?
 | `page` | `number` | No | query | Page number (offset paging). Ignored when `before` is supplied. |
 | `limit` | `number` | No | query | Rows per page (max 100). |
 | `unread_only` | `boolean` | No | query | Return only notifications the user has not read. Mutually exclusive with read_only. |
-| `read_only` | `boolean` | No | query | Return only notifications the user HAS read — the archive half of the inbox. `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
+| `read_only` | `boolean` | No | query | Return only notifications the user HAS read (the archive half of the inbox). `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
 | `before` | `string` | No | query | Keyset cursor from a previous response's pagination.next_cursor ("&lt;created_at&gt;,&lt;id&gt;"). Prefer this over `page` for an inbox: offset paging duplicates or skips rows when a new notification arrives mid-read. |
 
 **Returns:** `unknown[]`
@@ -2317,7 +3509,7 @@ client.api.inbox.listIterator(options?: { page?: number; limit?: number; unread_
 | `page` | `number` | No | query | Page number (offset paging). Ignored when `before` is supplied. |
 | `limit` | `number` | No | query | Rows per page (max 100). |
 | `unread_only` | `boolean` | No | query | Return only notifications the user has not read. Mutually exclusive with read_only. |
-| `read_only` | `boolean` | No | query | Return only notifications the user HAS read — the archive half of the inbox. `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
+| `read_only` | `boolean` | No | query | Return only notifications the user HAS read (the archive half of the inbox). `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
 | `before` | `string` | No | query | Keyset cursor from a previous response's pagination.next_cursor ("&lt;created_at&gt;,&lt;id&gt;"). Prefer this over `page` for an inbox: offset paging duplicates or skips rows when a new notification arrives mid-read. |
 
 **Returns:** `AsyncIterableIterator<unknown>`
@@ -2336,7 +3528,7 @@ client.api.inbox.markAllRead(): Promise<ApiInboxMarkAllReadResponse>
 
 **Returns:** `ApiInboxMarkAllReadResponse`
 
-**CLI:** `hoody inbox mark read`
+**CLI:** `hoody inbox markread`
 
 ---
 
@@ -2356,11 +3548,11 @@ client.api.inbox.markRead(id: string): Promise<ApiInboxMarkReadResponse>
 
 **Returns:** `ApiInboxMarkReadResponse`
 
-**CLI:** `hoody inbox mark read`
+**CLI:** `hoody inbox markread`
 
 ---
 
-## `client.api.ip` (1 method)
+## `client.api.ip` (2 methods)
 
 ### `get`
 
@@ -2378,6 +3570,26 @@ client.api.ip.get(): Promise<ApiIpGetResponse>
 
 ---
 
+### `lookup`
+
+**GET** `/api/v1/ip/lookup`
+
+Look Up IP Information
+
+```typescript
+client.api.ip.lookup(options: { ip: string }): Promise<ApiIpLookupResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `ip` | `string` | Yes | query | Comma-separated public IPv4 addresses, at most 25 |
+
+**Returns:** `ApiIpLookupResponse`
+
+**CLI:** `hoody ip lookup`
+
+---
+
 ## `client.api.meta` (1 method)
 
 ### `getPublicKey`
@@ -2392,7 +3604,7 @@ client.api.meta.getPublicKey(): Promise<ApiMetaGetPublicKeyResponse>
 
 **Returns:** `ApiMetaGetPublicKeyResponse`
 
-**CLI:** `hoody meta key get`
+**CLI:** `hoody meta publickey get`
 
 ---
 
@@ -2400,9 +3612,9 @@ client.api.meta.getPublicKey(): Promise<ApiMetaGetPublicKeyResponse>
 
 ### `delete`
 
-**DELETE** `/api/v1/containers/{id}/network`
+**DELETE** `/api/v1/computers/{id}/network`
 
-Remove container network configuration
+Remove computer network configuration
 
 ```typescript
 client.api.network.delete(id: string): Promise<ApiNetworkDeleteResponse>
@@ -2410,7 +3622,7 @@ client.api.network.delete(id: string): Promise<ApiNetworkDeleteResponse>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to remove network configuration from |
+| `id` | `string` | Yes | path | Unique identifier of the computer to remove network configuration from |
 
 **Returns:** `ApiNetworkDeleteResponse`
 
@@ -2420,9 +3632,9 @@ client.api.network.delete(id: string): Promise<ApiNetworkDeleteResponse>
 
 ### `get`
 
-**GET** `/api/v1/containers/{id}/network`
+**GET** `/api/v1/computers/{id}/network`
 
-Get container network configuration
+Get computer network configuration
 
 ```typescript
 client.api.network.get(id: string): Promise<ApiNetworkGetResponse>
@@ -2430,7 +3642,7 @@ client.api.network.get(id: string): Promise<ApiNetworkGetResponse>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to retrieve network configuration for |
+| `id` | `string` | Yes | path | Unique identifier of the computer to retrieve network configuration for |
 
 **Returns:** `ApiNetworkGetResponse`
 
@@ -2440,9 +3652,9 @@ client.api.network.get(id: string): Promise<ApiNetworkGetResponse>
 
 ### `start`
 
-**POST** `/api/v1/containers/{id}/network/start`
+**POST** `/api/v1/computers/{id}/network/start`
 
-Start container network proxy/blocking
+Start computer network proxy/blocking
 
 ```typescript
 client.api.network.start(id: string): Promise<ApiNetworkStartResponse>
@@ -2450,7 +3662,7 @@ client.api.network.start(id: string): Promise<ApiNetworkStartResponse>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to start network for |
+| `id` | `string` | Yes | path | Unique identifier of the computer to start network for |
 
 **Returns:** `ApiNetworkStartResponse`
 
@@ -2460,9 +3672,9 @@ client.api.network.start(id: string): Promise<ApiNetworkStartResponse>
 
 ### `stop`
 
-**POST** `/api/v1/containers/{id}/network/stop`
+**POST** `/api/v1/computers/{id}/network/stop`
 
-Stop container network proxy/blocking
+Stop computer network proxy/blocking
 
 ```typescript
 client.api.network.stop(id: string): Promise<ApiNetworkStopResponse>
@@ -2470,7 +3682,7 @@ client.api.network.stop(id: string): Promise<ApiNetworkStopResponse>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to stop network for |
+| `id` | `string` | Yes | path | Unique identifier of the computer to stop network for |
 
 **Returns:** `ApiNetworkStopResponse`
 
@@ -2480,9 +3692,9 @@ client.api.network.stop(id: string): Promise<ApiNetworkStopResponse>
 
 ### `update`
 
-**PUT** `/api/v1/containers/{id}/network`
+**PUT** `/api/v1/computers/{id}/network`
 
-Update container network configuration
+Update computer network configuration
 
 ```typescript
 client.api.network.update(id: string, data: ApiNetworkUpdateRequest): Promise<ApiNetworkUpdateResponse>
@@ -2490,7 +3702,7 @@ client.api.network.update(id: string, data: ApiNetworkUpdateRequest): Promise<Ap
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to configure network for |
+| `id` | `string` | Yes | path | Unique identifier of the computer to configure network for |
 | `data` | `ApiNetworkUpdateRequest` | Yes | body |  |
 
 **Returns:** `ApiNetworkUpdateResponse`
@@ -2750,7 +3962,7 @@ client.api.pools.members.setRole(id: string, userId: string, data: ApiPoolsMembe
 
 ---
 
-## `client.api.projects` (15 methods)
+## `client.api.projects` (8 methods)
 
 ### `create`
 
@@ -2772,27 +3984,6 @@ client.api.projects.create(data: ApiProjectsCreateRequest): Promise<ApiProjectsC
 
 ---
 
-### `createPermission`
-
-**POST** `/api/v1/projects/{id}/permissions`
-
-Grant project access
-
-```typescript
-client.api.projects.createPermission(id: string, data: ApiProjectsCreatePermissionRequest): Promise<ApiProjectsCreatePermissionResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Project ID |
-| `data` | `ApiProjectsCreatePermissionRequest` | Yes | body |  |
-
-**Returns:** `ApiProjectsCreatePermissionResponse`
-
-**CLI:** `hoody projects permissions create`
-
----
-
 ### `delete`
 
 **DELETE** `/api/v1/projects/{id}`
@@ -2800,38 +3991,18 @@ client.api.projects.createPermission(id: string, data: ApiProjectsCreatePermissi
 Delete project
 
 ```typescript
-client.api.projects.delete(id: string, options?: { include_deleted_items?: boolean }): Promise<ApiProjectsDeleteResponse>
+client.api.projects.delete(id: string, options?: { include_deleted_items?: boolean; delete_computers?: boolean }): Promise<ApiProjectsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Project ID to delete |
-| `include_deleted_items` | `boolean` | No | query | Include a short list of the deleted container IDs and names in the response. |
+| `include_deleted_items` | `boolean` | No | query | Include a short list of the deleted computer IDs and names in the response. |
+| `delete_computers` | `boolean` | No | query | Also delete every computer in the project. Without it, a project that still holds computers is refused with 422 PROJECT_HAS_COMPUTERS and nothing is changed. |
 
 **Returns:** `ApiProjectsDeleteResponse`
 
 **CLI:** `hoody projects delete`
-
----
-
-### `deletePermission`
-
-**DELETE** `/api/v1/projects/{id}/permissions/{permissionId}`
-
-Revoke project access
-
-```typescript
-client.api.projects.deletePermission(id: string, permissionId: string): Promise<ApiProjectsDeletePermissionResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Project ID |
-| `permissionId` | `string` | Yes | path | Permission ID to remove |
-
-**Returns:** `ApiProjectsDeletePermissionResponse`
-
-**CLI:** `hoody projects permissions delete`
 
 ---
 
@@ -2848,7 +4019,7 @@ client.api.projects.get(id: string, options?: { include_permissions?: boolean })
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Project ID |
-| `include_permissions` | `boolean` | No | query | Include project permissions with user details in response |
+| `include_permissions` | `boolean` | No | query | Include project permissions with user details in response. An auth token needs a projects.members capability (invite, remove or change_roles) to request it, as for the member list endpoint |
 
 **Returns:** `ApiProjectsGetResponse`
 
@@ -2856,33 +4027,11 @@ client.api.projects.get(id: string, options?: { include_permissions?: boolean })
 
 ---
 
-### `getProxyUsage`
-
-**GET** `/api/v1/projects/{id}/proxy-usage`
-
-Get proxied-usage documents for every container in a project
-
-```typescript
-client.api.projects.getProxyUsage(id: string, options: { from: string; to: string }): Promise<ApiProjectsGetProxyUsageResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Project id |
-| `from` | `string` | Yes | query | First month, inclusive (YYYY-MM) |
-| `to` | `string` | Yes | query | Last month, inclusive (YYYY-MM). Max 12 months. |
-
-**Returns:** `ApiProjectsGetProxyUsageResponse`
-
-**CLI:** `hoody projects proxy usage`
-
----
-
 ### `getStats`
 
 **GET** `/api/v1/projects/{id}/stats`
 
-Get statistics for all containers in a project
+Get statistics for all computers in a project
 
 ```typescript
 client.api.projects.getStats(id: string): Promise<ApiProjectsGetStatsResponse>
@@ -2966,74 +4115,6 @@ client.api.projects.listIterator(options?: { page?: number; limit?: number; sort
 
 ---
 
-### `listPermissions`
-
-**GET** `/api/v1/projects/{id}/permissions`
-
-List project permissions
-
-```typescript
-client.api.projects.listPermissions(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "user_id" | "permission_level" | "created_at" | "updated_at"; sort_order?: "asc" | "desc" }): Promise<ApiProjectsListPermissionsResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Project ID |
-| `page` | `number` | No | query |  |
-| `limit` | `number` | No | query |  |
-| `sort_by` | `"id" \| "user_id" \| "permission_level" \| "created_at" \| "updated_at"` | No | query |  |
-| `sort_order` | `"asc" \| "desc"` | No | query |  |
-
-**Returns:** `ApiProjectsListPermissionsResponse`
-
-**CLI:** `hoody projects permissions list`
-
----
-
-### `listPermissionsAll`
-
-**GET** `/api/v1/projects/{id}/permissions`
-
-List project permissions (collect all pages)
-
-```typescript
-client.api.projects.listPermissionsAll(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "user_id" | "permission_level" | "created_at" | "updated_at"; sort_order?: "asc" | "desc" }): Promise<unknown[]>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Project ID |
-| `page` | `number` | No | query |  |
-| `limit` | `number` | No | query |  |
-| `sort_by` | `"id" \| "user_id" \| "permission_level" \| "created_at" \| "updated_at"` | No | query |  |
-| `sort_order` | `"asc" \| "desc"` | No | query |  |
-
-**Returns:** `unknown[]`
-
----
-
-### `listPermissionsIterator`
-
-**GET** `/api/v1/projects/{id}/permissions`
-
-List project permissions (async iterator)
-
-```typescript
-client.api.projects.listPermissionsIterator(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "user_id" | "permission_level" | "created_at" | "updated_at"; sort_order?: "asc" | "desc" }): AsyncIterableIterator<unknown>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Project ID |
-| `page` | `number` | No | query |  |
-| `limit` | `number` | No | query |  |
-| `sort_by` | `"id" \| "user_id" \| "permission_level" \| "created_at" \| "updated_at"` | No | query |  |
-| `sort_order` | `"asc" \| "desc"` | No | query |  |
-
-**Returns:** `AsyncIterableIterator<unknown>`
-
----
-
 ### `update`
 
 **PUT** `/api/v1/projects/{id}`
@@ -3055,25 +4136,472 @@ client.api.projects.update(id: string, data: ApiProjectsUpdateRequest): Promise<
 
 ---
 
-### `updatePermission`
+## `client.api.projects.permissions` (6 methods)
+
+### `add`
+
+**POST** `/api/v1/projects/{id}/permissions`
+
+Grant project access
+
+```typescript
+client.api.projects.permissions.add(id: string, data: ApiProjectsPermissionsAddRequest): Promise<ApiProjectsPermissionsAddResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Project ID |
+| `data` | `ApiProjectsPermissionsAddRequest` | Yes | body |  |
+
+**Returns:** `ApiProjectsPermissionsAddResponse`
+
+**CLI:** `hoody projects permissions add`
+
+---
+
+### `list`
+
+**GET** `/api/v1/projects/{id}/permissions`
+
+List project permissions
+
+```typescript
+client.api.projects.permissions.list(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "user_id" | "permission_level" | "created_at" | "updated_at"; sort_order?: "asc" | "desc" }): Promise<ApiProjectsPermissionsListResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Project ID |
+| `page` | `number` | No | query | Page number (1-based). Default: 1. |
+| `limit` | `number` | No | query | Items per page, from 1 to 100. Default: 10. |
+| `sort_by` | `"id" \| "user_id" \| "permission_level" \| "created_at" \| "updated_at"` | No | query |  |
+| `sort_order` | `"asc" \| "desc"` | No | query |  |
+
+**Returns:** `ApiProjectsPermissionsListResponse`
+
+**CLI:** `hoody projects permissions list`
+
+---
+
+### `listAll`
+
+**GET** `/api/v1/projects/{id}/permissions`
+
+List project permissions (collect all pages)
+
+```typescript
+client.api.projects.permissions.listAll(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "user_id" | "permission_level" | "created_at" | "updated_at"; sort_order?: "asc" | "desc" }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Project ID |
+| `page` | `number` | No | query | Page number (1-based). Default: 1. |
+| `limit` | `number` | No | query | Items per page, from 1 to 100. Default: 10. |
+| `sort_by` | `"id" \| "user_id" \| "permission_level" \| "created_at" \| "updated_at"` | No | query |  |
+| `sort_order` | `"asc" \| "desc"` | No | query |  |
+
+**Returns:** `unknown[]`
+
+---
+
+### `listIterator`
+
+**GET** `/api/v1/projects/{id}/permissions`
+
+List project permissions (async iterator)
+
+```typescript
+client.api.projects.permissions.listIterator(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "user_id" | "permission_level" | "created_at" | "updated_at"; sort_order?: "asc" | "desc" }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Project ID |
+| `page` | `number` | No | query | Page number (1-based). Default: 1. |
+| `limit` | `number` | No | query | Items per page, from 1 to 100. Default: 10. |
+| `sort_by` | `"id" \| "user_id" \| "permission_level" \| "created_at" \| "updated_at"` | No | query |  |
+| `sort_order` | `"asc" \| "desc"` | No | query |  |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+### `remove`
+
+**DELETE** `/api/v1/projects/{id}/permissions/{permissionId}`
+
+Revoke project access
+
+```typescript
+client.api.projects.permissions.remove(id: string, permissionId: string): Promise<ApiProjectsPermissionsRemoveResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Project ID |
+| `permissionId` | `string` | Yes | path | Permission ID to remove |
+
+**Returns:** `ApiProjectsPermissionsRemoveResponse`
+
+**CLI:** `hoody projects permissions remove`
+
+---
+
+### `update`
 
 **PUT** `/api/v1/projects/{id}/permissions/{permissionId}`
 
 Update project permission
 
 ```typescript
-client.api.projects.updatePermission(id: string, permissionId: string, data: ApiProjectsUpdatePermissionRequest): Promise<ApiProjectsUpdatePermissionResponse>
+client.api.projects.permissions.update(id: string, permissionId: string, data: ApiProjectsPermissionsUpdateRequest): Promise<ApiProjectsPermissionsUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Project ID |
 | `permissionId` | `string` | Yes | path | Permission ID to update |
-| `data` | `ApiProjectsUpdatePermissionRequest` | Yes | body |  |
+| `data` | `ApiProjectsPermissionsUpdateRequest` | Yes | body |  |
 
-**Returns:** `ApiProjectsUpdatePermissionResponse`
+**Returns:** `ApiProjectsPermissionsUpdateResponse`
 
 **CLI:** `hoody projects permissions update`
+
+---
+
+## `client.api.projects.proxy` (15 methods)
+
+### `clearGroupPermissions`
+
+**DELETE** `/api/v1/projects/{id}/proxy/permissions/permissions/{groupName}`
+
+Remove all program permissions for a project group
+
+```typescript
+client.api.projects.proxy.clearGroupPermissions(id: string, groupName: string, options: { ifMatch: string }): Promise<ApiProjectsProxyClearGroupPermissionsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Project ID |
+| `groupName` | `string` | Yes | path | Group name |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiProjectsProxyClearGroupPermissionsResponse`
+
+**CLI:** `hoody projects proxy groups permissions clear`
+
+---
+
+### `deleteGroup`
+
+**DELETE** `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}`
+
+Remove project authentication group
+
+```typescript
+client.api.projects.proxy.deleteGroup(id: string, groupName: string, options: { ifMatch: string }): Promise<ApiProjectsProxyDeleteGroupResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Project ID |
+| `groupName` | `string` | Yes | path | Group name to remove |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiProjectsProxyDeleteGroupResponse`
+
+**CLI:** `hoody projects proxy groups delete`
+
+---
+
+### `deleteGroupPermission`
+
+**DELETE** `/api/v1/projects/{id}/proxy/permissions/permissions/{groupName}/{program}`
+
+Remove a single program permission for a project group
+
+```typescript
+client.api.projects.proxy.deleteGroupPermission(id: string, groupName: string, program: string, options: { ifMatch: string }): Promise<ApiProjectsProxyDeleteGroupPermissionResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Project ID |
+| `groupName` | `string` | Yes | path | Group name |
+| `program` | `string` | Yes | path | Program name (e.g., http, ssh, files) |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiProjectsProxyDeleteGroupPermissionResponse`
+
+**CLI:** `hoody projects proxy groups permissions delete`
+
+---
+
+### `deletePermissions`
+
+**DELETE** `/api/v1/projects/{id}/proxy/permissions`
+
+Delete project proxy permissions
+
+```typescript
+client.api.projects.proxy.deletePermissions(id: string, options: { ifMatch: string }): Promise<ApiProjectsProxyDeletePermissionsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Project ID |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiProjectsProxyDeletePermissionsResponse`
+
+**CLI:** `hoody projects proxy permissions delete`
+
+---
+
+### `disable`
+
+**PATCH** `/api/v1/projects/{id}/proxy/permissions/state`
+
+Update project proxy enable state
+
+```typescript
+client.api.projects.proxy.disable(id: string, data: object, options: { ifMatch: string }): Promise<any>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Project ID |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+| `data` | `object` | Yes | body |  |
+
+**Returns:** `any`
+
+**CLI:** `hoody projects proxy disable`
+
+---
+
+### `enable`
+
+**PATCH** `/api/v1/projects/{id}/proxy/permissions/state`
+
+Update project proxy enable state
+
+```typescript
+client.api.projects.proxy.enable(id: string, data: object, options: { ifMatch: string }): Promise<any>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Project ID |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+| `data` | `object` | Yes | body |  |
+
+**Returns:** `any`
+
+**CLI:** `hoody projects proxy enable`
+
+---
+
+### `getPermissions`
+
+**GET** `/api/v1/projects/{id}/proxy/permissions`
+
+Get project proxy permissions
+
+```typescript
+client.api.projects.proxy.getPermissions(id: string): Promise<ApiProjectsProxyGetPermissionsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Project ID |
+
+**Returns:** `ApiProjectsProxyGetPermissionsResponse`
+
+**CLI:** `hoody projects proxy permissions get`
+
+---
+
+### `getUsage`
+
+**GET** `/api/v1/projects/{id}/proxy-usage`
+
+Get proxied-usage documents for every computer in a project
+
+```typescript
+client.api.projects.proxy.getUsage(id: string, options: { from: string; to: string }): Promise<ApiProjectsProxyGetUsageResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Project id |
+| `from` | `string` | Yes | query | First month, inclusive (YYYY-MM), from 2020-01. |
+| `to` | `string` | Yes | query | Last month, inclusive (YYYY-MM), up to 2099-12 and not before `from`. At most 12 months. |
+
+**Returns:** `ApiProjectsProxyGetUsageResponse`
+
+**CLI:** `hoody projects proxy usage get`
+
+---
+
+### `setDefault`
+
+**PATCH** `/api/v1/projects/{id}/proxy/permissions/default`
+
+Update project default proxy permission policy
+
+```typescript
+client.api.projects.proxy.setDefault(id: string, data: ApiProjectsProxySetDefaultRequest, options: { ifMatch: string }): Promise<ApiProjectsProxySetDefaultResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Project ID |
+| `data` | `ApiProjectsProxySetDefaultRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiProjectsProxySetDefaultResponse`
+
+**CLI:** `hoody projects proxy default set`
+
+---
+
+### `setGroupPermission`
+
+**PUT** `/api/v1/projects/{id}/proxy/permissions/permissions/{groupName}`
+
+Set project group program permission
+
+```typescript
+client.api.projects.proxy.setGroupPermission(id: string, groupName: string, data: ApiProjectsProxySetGroupPermissionRequest, options: { ifMatch: string }): Promise<ApiProjectsProxySetGroupPermissionResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+| `groupName` | `string` | Yes | path |  |
+| `data` | `ApiProjectsProxySetGroupPermissionRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiProjectsProxySetGroupPermissionResponse`
+
+**CLI:** `hoody projects proxy groups permissions set`
+
+---
+
+### `setIpGroup`
+
+**PUT** `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}/ip`
+
+Set IP authentication group (project)
+
+```typescript
+client.api.projects.proxy.setIpGroup(id: string, groupName: string, data: ApiProjectsProxySetIpGroupRequest, options: { ifMatch: string }): Promise<ApiProjectsProxySetIpGroupResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+| `groupName` | `string` | Yes | path |  |
+| `data` | `ApiProjectsProxySetIpGroupRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiProjectsProxySetIpGroupResponse`
+
+**CLI:** `hoody projects proxy groups ip set`
+
+---
+
+### `setJwtGroup`
+
+**PUT** `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}/jwt`
+
+Set JWT authentication group (project)
+
+```typescript
+client.api.projects.proxy.setJwtGroup(id: string, groupName: string, data: ApiProjectsProxySetJwtGroupRequest, options: { ifMatch: string }): Promise<ApiProjectsProxySetJwtGroupResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+| `groupName` | `string` | Yes | path |  |
+| `data` | `ApiProjectsProxySetJwtGroupRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiProjectsProxySetJwtGroupResponse`
+
+**CLI:** `hoody projects proxy groups jwt set`
+
+---
+
+### `setPasswordGroup`
+
+**PUT** `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}/password`
+
+Set password authentication group (project)
+
+```typescript
+client.api.projects.proxy.setPasswordGroup(id: string, groupName: string, data: ApiProjectsProxySetPasswordGroupRequest, options: { ifMatch: string }): Promise<ApiProjectsProxySetPasswordGroupResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+| `groupName` | `string` | Yes | path |  |
+| `data` | `ApiProjectsProxySetPasswordGroupRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiProjectsProxySetPasswordGroupResponse`
+
+**CLI:** `hoody projects proxy groups password set`
+
+---
+
+### `setPermissions`
+
+**PUT** `/api/v1/projects/{id}/proxy/permissions`
+
+Replace project proxy permissions JSON
+
+```typescript
+client.api.projects.proxy.setPermissions(id: string, data: ApiProjectsProxySetPermissionsRequest, options: { ifMatch: string }): Promise<ApiProjectsProxySetPermissionsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+| `data` | `ApiProjectsProxySetPermissionsRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiProjectsProxySetPermissionsResponse`
+
+**CLI:** `hoody projects proxy permissions set`
+
+---
+
+### `setTokenGroup`
+
+**PUT** `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}/token`
+
+Set token authentication group (project)
+
+```typescript
+client.api.projects.proxy.setTokenGroup(id: string, groupName: string, data: ApiProjectsProxySetTokenGroupRequest, options: { ifMatch: string }): Promise<ApiProjectsProxySetTokenGroupResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+| `groupName` | `string` | Yes | path |  |
+| `data` | `ApiProjectsProxySetTokenGroupRequest` | Yes | body |  |
+| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition. Read the current file_version with GET first. |
+
+**Returns:** `ApiProjectsProxySetTokenGroupResponse`
+
+**CLI:** `hoody projects proxy groups token set`
 
 ---
 
@@ -3126,7 +4654,7 @@ client.api.proxy.aliases.delete(id: string): Promise<ApiProxyAliasesDeleteRespon
 Enable or disable proxy alias
 
 ```typescript
-client.api.proxy.aliases.disable(id: string): Promise<any>
+client.api.proxy.aliases.disable(id: string, options?: object): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3146,7 +4674,7 @@ client.api.proxy.aliases.disable(id: string): Promise<any>
 Enable or disable proxy alias
 
 ```typescript
-client.api.proxy.aliases.enable(id: string): Promise<any>
+client.api.proxy.aliases.enable(id: string, options?: object): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3186,13 +4714,13 @@ client.api.proxy.aliases.get(id: string): Promise<ApiProxyAliasesGetResponse>
 List proxy aliases
 
 ```typescript
-client.api.proxy.aliases.list(options?: { project_id?: string; container_id?: string; realm_id?: string; enabled?: boolean; expired?: boolean }): Promise<ApiProxyAliasesListResponse>
+client.api.proxy.aliases.list(options?: { project_id?: string; computer_id?: string; realm_id?: string; enabled?: boolean; expired?: boolean }): Promise<ApiProxyAliasesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `project_id` | `string` | No | query | Filter by project ID |
-| `container_id` | `string` | No | query | Filter by container ID |
+| `computer_id` | `string` | No | query | Filter by computer ID |
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
 | `enabled` | `boolean` | No | query | Filter by enabled status |
 | `expired` | `boolean` | No | query | Filter by expiration: true = only expired, false = only non-expired |
@@ -3210,13 +4738,13 @@ client.api.proxy.aliases.list(options?: { project_id?: string; container_id?: st
 List proxy aliases (collect all pages)
 
 ```typescript
-client.api.proxy.aliases.listAll(options?: { project_id?: string; container_id?: string; realm_id?: string; enabled?: boolean; expired?: boolean }): Promise<unknown[]>
+client.api.proxy.aliases.listAll(options?: { project_id?: string; computer_id?: string; realm_id?: string; enabled?: boolean; expired?: boolean }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `project_id` | `string` | No | query | Filter by project ID |
-| `container_id` | `string` | No | query | Filter by container ID |
+| `computer_id` | `string` | No | query | Filter by computer ID |
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
 | `enabled` | `boolean` | No | query | Filter by enabled status |
 | `expired` | `boolean` | No | query | Filter by expiration: true = only expired, false = only non-expired |
@@ -3232,13 +4760,13 @@ client.api.proxy.aliases.listAll(options?: { project_id?: string; container_id?:
 List proxy aliases (async iterator)
 
 ```typescript
-client.api.proxy.aliases.listIterator(options?: { project_id?: string; container_id?: string; realm_id?: string; enabled?: boolean; expired?: boolean }): AsyncIterableIterator<unknown>
+client.api.proxy.aliases.listIterator(options?: { project_id?: string; computer_id?: string; realm_id?: string; enabled?: boolean; expired?: boolean }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `project_id` | `string` | No | query | Filter by project ID |
-| `container_id` | `string` | No | query | Filter by container ID |
+| `computer_id` | `string` | No | query | Filter by computer ID |
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
 | `enabled` | `boolean` | No | query | Filter by enabled status |
 | `expired` | `boolean` | No | query | Filter by expiration: true = only expired, false = only non-expired |
@@ -3268,922 +4796,6 @@ client.api.proxy.aliases.update(id: string, data: ApiProxyAliasesUpdateRequest):
 
 ---
 
-## `client.api.proxy.containerPermissions` (14 methods)
-
-### `clearGroupPermissions`
-
-**DELETE** `/api/v1/containers/{id}/proxy/permissions/permissions/{groupName}`
-
-Remove all program permissions for a container group
-
-```typescript
-client.api.proxy.containerPermissions.clearGroupPermissions(id: string, groupName: string, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsClearGroupPermissionsResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `groupName` | `string` | Yes | path | Group name |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyContainerPermissionsClearGroupPermissionsResponse`
-
-**CLI:** `hoody containers proxy groups permissions clear`
-
----
-
-### `delete`
-
-**DELETE** `/api/v1/containers/{id}/proxy/permissions`
-
-Delete container proxy permissions
-
-```typescript
-client.api.proxy.containerPermissions.delete(id: string, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsDeleteResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyContainerPermissionsDeleteResponse`
-
-**CLI:** `hoody containers proxy permissions delete`
-
----
-
-### `deleteAuthGroup`
-
-**DELETE** `/api/v1/containers/{id}/proxy/permissions/groups/{groupName}`
-
-Remove container authentication group
-
-```typescript
-client.api.proxy.containerPermissions.deleteAuthGroup(id: string, groupName: string, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsDeleteAuthGroupResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `groupName` | `string` | Yes | path | Group name to remove |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyContainerPermissionsDeleteAuthGroupResponse`
-
-**CLI:** `hoody containers proxy groups delete`
-
----
-
-### `deleteGroupPermission`
-
-**DELETE** `/api/v1/containers/{id}/proxy/permissions/permissions/{groupName}/{program}`
-
-Remove a single program permission for a container group
-
-```typescript
-client.api.proxy.containerPermissions.deleteGroupPermission(id: string, groupName: string, program: string, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsDeleteGroupPermissionResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `groupName` | `string` | Yes | path | Group name |
-| `program` | `string` | Yes | path | Program name (e.g., http, ssh, files) |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyContainerPermissionsDeleteGroupPermissionResponse`
-
-**CLI:** `hoody containers proxy groups permissions delete`
-
----
-
-### `disable`
-
-**PATCH** `/api/v1/containers/{id}/proxy/permissions/state`
-
-Update container proxy enable state
-
-```typescript
-client.api.proxy.containerPermissions.disable(id: string, data: object, options: { ifMatch: string }): Promise<any>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `data` | `object` | Yes | body |  |
-
-**Returns:** `any`
-
-**CLI:** `hoody containers proxy disable`
-
----
-
-### `enable`
-
-**PATCH** `/api/v1/containers/{id}/proxy/permissions/state`
-
-Update container proxy enable state
-
-```typescript
-client.api.proxy.containerPermissions.enable(id: string, data: object, options: { ifMatch: string }): Promise<any>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `data` | `object` | Yes | body |  |
-
-**Returns:** `any`
-
-**CLI:** `hoody containers proxy enable`
-
----
-
-### `get`
-
-**GET** `/api/v1/containers/{id}/proxy/permissions`
-
-Get container proxy permissions
-
-```typescript
-client.api.proxy.containerPermissions.get(id: string): Promise<ApiProxyContainerPermissionsGetResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-
-**Returns:** `ApiProxyContainerPermissionsGetResponse`
-
-**CLI:** `hoody containers proxy permissions get`
-
----
-
-### `set`
-
-**PUT** `/api/v1/containers/{id}/proxy/permissions`
-
-Replace container proxy permissions JSON
-
-```typescript
-client.api.proxy.containerPermissions.set(id: string, data: ApiProxyContainerPermissionsSetRequest, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsSetResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-| `data` | `ApiProxyContainerPermissionsSetRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyContainerPermissionsSetResponse`
-
-**CLI:** `hoody containers proxy permissions set`
-
----
-
-### `setDefault`
-
-**PATCH** `/api/v1/containers/{id}/proxy/permissions/default`
-
-Update container default proxy permission policy
-
-```typescript
-client.api.proxy.containerPermissions.setDefault(id: string, data: ApiProxyContainerPermissionsSetDefaultRequest, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsSetDefaultResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `data` | `ApiProxyContainerPermissionsSetDefaultRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyContainerPermissionsSetDefaultResponse`
-
-**CLI:** `hoody containers proxy default set`
-
----
-
-### `setGroupPermission`
-
-**PUT** `/api/v1/containers/{id}/proxy/permissions/permissions/{groupName}`
-
-Set container group program permission
-
-```typescript
-client.api.proxy.containerPermissions.setGroupPermission(id: string, groupName: string, data: ApiProxyContainerPermissionsSetGroupPermissionRequest, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsSetGroupPermissionResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-| `groupName` | `string` | Yes | path |  |
-| `data` | `ApiProxyContainerPermissionsSetGroupPermissionRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyContainerPermissionsSetGroupPermissionResponse`
-
-**CLI:** `hoody containers proxy groups permissions set`
-
----
-
-### `setIpGroup`
-
-**PUT** `/api/v1/containers/{id}/proxy/permissions/groups/{groupName}/ip`
-
-Set IP authentication group (container)
-
-```typescript
-client.api.proxy.containerPermissions.setIpGroup(id: string, groupName: string, data: ApiProxyContainerPermissionsSetIpGroupRequest, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsSetIpGroupResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-| `groupName` | `string` | Yes | path |  |
-| `data` | `ApiProxyContainerPermissionsSetIpGroupRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyContainerPermissionsSetIpGroupResponse`
-
-**CLI:** `hoody containers proxy groups ip set`
-
----
-
-### `setJwtGroup`
-
-**PUT** `/api/v1/containers/{id}/proxy/permissions/groups/{groupName}/jwt`
-
-Set JWT authentication group (container)
-
-```typescript
-client.api.proxy.containerPermissions.setJwtGroup(id: string, groupName: string, data: ApiProxyContainerPermissionsSetJwtGroupRequest, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsSetJwtGroupResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-| `groupName` | `string` | Yes | path |  |
-| `data` | `ApiProxyContainerPermissionsSetJwtGroupRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyContainerPermissionsSetJwtGroupResponse`
-
-**CLI:** `hoody containers proxy groups jwt set`
-
----
-
-### `setPasswordGroup`
-
-**PUT** `/api/v1/containers/{id}/proxy/permissions/groups/{groupName}/password`
-
-Set password authentication group (container)
-
-```typescript
-client.api.proxy.containerPermissions.setPasswordGroup(id: string, groupName: string, data: ApiProxyContainerPermissionsSetPasswordGroupRequest, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsSetPasswordGroupResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-| `groupName` | `string` | Yes | path |  |
-| `data` | `ApiProxyContainerPermissionsSetPasswordGroupRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyContainerPermissionsSetPasswordGroupResponse`
-
-**CLI:** `hoody containers proxy groups password set`
-
----
-
-### `setTokenGroup`
-
-**PUT** `/api/v1/containers/{id}/proxy/permissions/groups/{groupName}/token`
-
-Set token authentication group (container)
-
-```typescript
-client.api.proxy.containerPermissions.setTokenGroup(id: string, groupName: string, data: ApiProxyContainerPermissionsSetTokenGroupRequest, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsSetTokenGroupResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-| `groupName` | `string` | Yes | path |  |
-| `data` | `ApiProxyContainerPermissionsSetTokenGroupRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyContainerPermissionsSetTokenGroupResponse`
-
-**CLI:** `hoody containers proxy groups token set`
-
----
-
-## `client.api.proxy.groups` (1 method)
-
-### `list`
-
-**GET** `/api/v1/containers/{id}/proxy/groups`
-
-List container proxy groups
-
-```typescript
-client.api.proxy.groups.list(id: string): Promise<ApiProxyGroupsListResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-
-**Returns:** `ApiProxyGroupsListResponse`
-
-**CLI:** `hoody containers proxy groups list`
-
----
-
-## `client.api.proxy.hooks` (8 methods)
-
-### `clear`
-
-**DELETE** `/api/v1/containers/{id}/proxy/hooks/{service}`
-
-Clear all hooks for a service
-
-```typescript
-client.api.proxy.hooks.clear(id: string, service: string, options: { ifMatch: string }): Promise<ApiProxyHooksClearResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `service` | `string` | Yes | path | Service name |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
-
-**Returns:** `ApiProxyHooksClearResponse`
-
-**CLI:** `hoody containers proxy services hooks clear`
-
----
-
-### `create`
-
-**POST** `/api/v1/containers/{id}/proxy/hooks/{service}`
-
-Append or insert a new hook
-
-```typescript
-client.api.proxy.hooks.create(id: string, service: string, data: ApiProxyHooksCreateRequest, options: { ifMatch: string }): Promise<ApiProxyHooksCreateResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `service` | `string` | Yes | path | Service name |
-| `data` | `ApiProxyHooksCreateRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
-
-**Returns:** `ApiProxyHooksCreateResponse`
-
-**CLI:** `hoody containers proxy hooks create`
-
----
-
-### `delete`
-
-**DELETE** `/api/v1/containers/{id}/proxy/hooks/{service}/{hookId}`
-
-Remove a hook
-
-```typescript
-client.api.proxy.hooks.delete(id: string, service: string, hookId: string, options: { ifMatch: string }): Promise<ApiProxyHooksDeleteResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `service` | `string` | Yes | path | Service name |
-| `hookId` | `string` | Yes | path | 26-char Crockford base32 ULID (lowercase) |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
-
-**Returns:** `ApiProxyHooksDeleteResponse`
-
-**CLI:** `hoody containers proxy hooks delete`
-
----
-
-### `get`
-
-**GET** `/api/v1/containers/{id}/proxy/hooks/{service}/{hookId}`
-
-Get a single hook by id
-
-```typescript
-client.api.proxy.hooks.get(id: string, service: string, hookId: string): Promise<ApiProxyHooksGetResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `service` | `string` | Yes | path | Service name |
-| `hookId` | `string` | Yes | path | 26-char Crockford base32 ULID (lowercase) |
-
-**Returns:** `ApiProxyHooksGetResponse`
-
-**CLI:** `hoody containers proxy hooks get`
-
----
-
-### `list`
-
-**GET** `/api/v1/containers/{id}/proxy/hooks`
-
-List all proxy hooks for a container
-
-```typescript
-client.api.proxy.hooks.list(id: string): Promise<ApiProxyHooksListResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-
-**Returns:** `ApiProxyHooksListResponse`
-
-**CLI:** `hoody containers proxy hooks list`
-
----
-
-### `listByService`
-
-**GET** `/api/v1/containers/{id}/proxy/hooks/{service}`
-
-List hooks for a specific service
-
-```typescript
-client.api.proxy.hooks.listByService(id: string, service: string): Promise<ApiProxyHooksListByServiceResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `service` | `string` | Yes | path | Service name |
-
-**Returns:** `ApiProxyHooksListByServiceResponse`
-
-**CLI:** `hoody containers proxy services hooks list`
-
----
-
-### `move`
-
-**PATCH** `/api/v1/containers/{id}/proxy/hooks/{service}/{hookId}/position`
-
-Move a hook to a new position
-
-```typescript
-client.api.proxy.hooks.move(id: string, service: string, hookId: string, data: ApiProxyHooksMoveRequest, options: { ifMatch: string }): Promise<ApiProxyHooksMoveResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `service` | `string` | Yes | path | Service name |
-| `hookId` | `string` | Yes | path | 26-char Crockford base32 ULID (lowercase) |
-| `data` | `ApiProxyHooksMoveRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
-
-**Returns:** `ApiProxyHooksMoveResponse`
-
-**CLI:** `hoody containers proxy hooks move`
-
----
-
-### `set`
-
-**PUT** `/api/v1/containers/{id}/proxy/hooks/{service}/{hookId}`
-
-Replace a hook in place
-
-```typescript
-client.api.proxy.hooks.set(id: string, service: string, hookId: string, data: ApiProxyHooksSetRequest, options: { ifMatch: string }): Promise<ApiProxyHooksSetResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `service` | `string` | Yes | path | Service name |
-| `hookId` | `string` | Yes | path | 26-char Crockford base32 ULID (lowercase) |
-| `data` | `ApiProxyHooksSetRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
-
-**Returns:** `ApiProxyHooksSetResponse`
-
-**CLI:** `hoody containers proxy hooks set`
-
----
-
-## `client.api.proxy.projectPermissions` (14 methods)
-
-### `clearGroupPermissions`
-
-**DELETE** `/api/v1/projects/{id}/proxy/permissions/permissions/{groupName}`
-
-Remove all program permissions for a project group
-
-```typescript
-client.api.proxy.projectPermissions.clearGroupPermissions(id: string, groupName: string, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsClearGroupPermissionsResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Project ID |
-| `groupName` | `string` | Yes | path | Group name |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyProjectPermissionsClearGroupPermissionsResponse`
-
-**CLI:** `hoody projects proxy groups permissions clear`
-
----
-
-### `delete`
-
-**DELETE** `/api/v1/projects/{id}/proxy/permissions`
-
-Delete project proxy permissions
-
-```typescript
-client.api.proxy.projectPermissions.delete(id: string, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsDeleteResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Project ID |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyProjectPermissionsDeleteResponse`
-
-**CLI:** `hoody projects proxy permissions delete`
-
----
-
-### `deleteAuthGroup`
-
-**DELETE** `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}`
-
-Remove project authentication group
-
-```typescript
-client.api.proxy.projectPermissions.deleteAuthGroup(id: string, groupName: string, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsDeleteAuthGroupResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Project ID |
-| `groupName` | `string` | Yes | path | Group name to remove |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyProjectPermissionsDeleteAuthGroupResponse`
-
-**CLI:** `hoody projects proxy groups delete`
-
----
-
-### `deleteGroupPermission`
-
-**DELETE** `/api/v1/projects/{id}/proxy/permissions/permissions/{groupName}/{program}`
-
-Remove a single program permission for a project group
-
-```typescript
-client.api.proxy.projectPermissions.deleteGroupPermission(id: string, groupName: string, program: string, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsDeleteGroupPermissionResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Project ID |
-| `groupName` | `string` | Yes | path | Group name |
-| `program` | `string` | Yes | path | Program name (e.g., http, ssh, files) |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyProjectPermissionsDeleteGroupPermissionResponse`
-
-**CLI:** `hoody projects proxy groups permissions delete`
-
----
-
-### `disable`
-
-**PATCH** `/api/v1/projects/{id}/proxy/permissions/state`
-
-Update project proxy enable state
-
-```typescript
-client.api.proxy.projectPermissions.disable(id: string, data: object, options: { ifMatch: string }): Promise<any>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Project ID |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `data` | `object` | Yes | body |  |
-
-**Returns:** `any`
-
-**CLI:** `hoody projects proxy disable`
-
----
-
-### `enable`
-
-**PATCH** `/api/v1/projects/{id}/proxy/permissions/state`
-
-Update project proxy enable state
-
-```typescript
-client.api.proxy.projectPermissions.enable(id: string, data: object, options: { ifMatch: string }): Promise<any>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Project ID |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `data` | `object` | Yes | body |  |
-
-**Returns:** `any`
-
-**CLI:** `hoody projects proxy enable`
-
----
-
-### `get`
-
-**GET** `/api/v1/projects/{id}/proxy/permissions`
-
-Get project proxy permissions
-
-```typescript
-client.api.proxy.projectPermissions.get(id: string): Promise<ApiProxyProjectPermissionsGetResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Project ID |
-
-**Returns:** `ApiProxyProjectPermissionsGetResponse`
-
-**CLI:** `hoody projects proxy permissions get`
-
----
-
-### `set`
-
-**PUT** `/api/v1/projects/{id}/proxy/permissions`
-
-Replace project proxy permissions JSON
-
-```typescript
-client.api.proxy.projectPermissions.set(id: string, data: ApiProxyProjectPermissionsSetRequest, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsSetResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-| `data` | `ApiProxyProjectPermissionsSetRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyProjectPermissionsSetResponse`
-
-**CLI:** `hoody projects proxy permissions set`
-
----
-
-### `setDefault`
-
-**PATCH** `/api/v1/projects/{id}/proxy/permissions/default`
-
-Update project default proxy permission policy
-
-```typescript
-client.api.proxy.projectPermissions.setDefault(id: string, data: ApiProxyProjectPermissionsSetDefaultRequest, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsSetDefaultResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Project ID |
-| `data` | `ApiProxyProjectPermissionsSetDefaultRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyProjectPermissionsSetDefaultResponse`
-
-**CLI:** `hoody projects proxy default set`
-
----
-
-### `setGroupPermission`
-
-**PUT** `/api/v1/projects/{id}/proxy/permissions/permissions/{groupName}`
-
-Set project group program permission
-
-```typescript
-client.api.proxy.projectPermissions.setGroupPermission(id: string, groupName: string, data: ApiProxyProjectPermissionsSetGroupPermissionRequest, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsSetGroupPermissionResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-| `groupName` | `string` | Yes | path |  |
-| `data` | `ApiProxyProjectPermissionsSetGroupPermissionRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyProjectPermissionsSetGroupPermissionResponse`
-
-**CLI:** `hoody projects proxy groups permissions set`
-
----
-
-### `setIpGroup`
-
-**PUT** `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}/ip`
-
-Set IP authentication group (project)
-
-```typescript
-client.api.proxy.projectPermissions.setIpGroup(id: string, groupName: string, data: ApiProxyProjectPermissionsSetIpGroupRequest, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsSetIpGroupResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-| `groupName` | `string` | Yes | path |  |
-| `data` | `ApiProxyProjectPermissionsSetIpGroupRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyProjectPermissionsSetIpGroupResponse`
-
-**CLI:** `hoody projects proxy groups ip set`
-
----
-
-### `setJwtGroup`
-
-**PUT** `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}/jwt`
-
-Set JWT authentication group (project)
-
-```typescript
-client.api.proxy.projectPermissions.setJwtGroup(id: string, groupName: string, data: ApiProxyProjectPermissionsSetJwtGroupRequest, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsSetJwtGroupResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-| `groupName` | `string` | Yes | path |  |
-| `data` | `ApiProxyProjectPermissionsSetJwtGroupRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyProjectPermissionsSetJwtGroupResponse`
-
-**CLI:** `hoody projects proxy groups jwt set`
-
----
-
-### `setPasswordGroup`
-
-**PUT** `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}/password`
-
-Set password authentication group (project)
-
-```typescript
-client.api.proxy.projectPermissions.setPasswordGroup(id: string, groupName: string, data: ApiProxyProjectPermissionsSetPasswordGroupRequest, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsSetPasswordGroupResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-| `groupName` | `string` | Yes | path |  |
-| `data` | `ApiProxyProjectPermissionsSetPasswordGroupRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyProjectPermissionsSetPasswordGroupResponse`
-
-**CLI:** `hoody projects proxy groups password set`
-
----
-
-### `setTokenGroup`
-
-**PUT** `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}/token`
-
-Set token authentication group (project)
-
-```typescript
-client.api.proxy.projectPermissions.setTokenGroup(id: string, groupName: string, data: ApiProxyProjectPermissionsSetTokenGroupRequest, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsSetTokenGroupResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-| `groupName` | `string` | Yes | path |  |
-| `data` | `ApiProxyProjectPermissionsSetTokenGroupRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-
-**Returns:** `ApiProxyProjectPermissionsSetTokenGroupResponse`
-
-**CLI:** `hoody projects proxy groups token set`
-
----
-
-## `client.api.proxy.services` (2 methods)
-
-### `get`
-
-**GET** `/api/v1/containers/{id}/proxy/services/{service}`
-
-Get merged proxy view for a service
-
-```typescript
-client.api.proxy.services.get(id: string, service: string): Promise<ApiProxyServicesGetResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `service` | `string` | Yes | path | Service name |
-
-**Returns:** `ApiProxyServicesGetResponse`
-
-**CLI:** `hoody containers proxy services get`
-
----
-
-### `list`
-
-**GET** `/api/v1/containers/{id}/proxy/services`
-
-List services referenced in proxy config
-
-```typescript
-client.api.proxy.services.list(id: string): Promise<ApiProxyServicesListResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-
-**Returns:** `ApiProxyServicesListResponse`
-
-**CLI:** `hoody containers proxy services list`
-
----
-
-## `client.api.proxy.settings` (2 methods)
-
-### `get`
-
-**GET** `/api/v1/containers/{id}/proxy/settings`
-
-Get container proxy root settings
-
-```typescript
-client.api.proxy.settings.get(id: string): Promise<ApiProxySettingsGetResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-
-**Returns:** `ApiProxySettingsGetResponse`
-
-**CLI:** `hoody containers proxy settings get`
-
----
-
-### `update`
-
-**PUT** `/api/v1/containers/{id}/proxy/settings`
-
-Update container proxy root settings
-
-```typescript
-client.api.proxy.settings.update(id: string, data: ApiProxySettingsUpdateRequest, options: { ifMatch: string }): Promise<ApiProxySettingsUpdateResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-| `data` | `ApiProxySettingsUpdateRequest` | Yes | body |  |
-| `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
-
-**Returns:** `ApiProxySettingsUpdateResponse`
-
-**CLI:** `hoody containers proxy settings update`
-
----
-
 ## `client.api.realms` (1 method)
 
 ### `list`
@@ -4198,7 +4810,7 @@ client.api.realms.list(options?: { include_usage?: boolean }): Promise<ApiRealms
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `include_usage` | `boolean` | No | query | Include resource counts per realm_id (projects, containers, servers, auth_tokens). Adds "usage" object to response data. |
+| `include_usage` | `boolean` | No | query | Include resource counts per realm_id (projects, computers, servers, auth_tokens). Adds "usage" object to response data. |
 
 **Returns:** `ApiRealmsListResponse`
 
@@ -4206,7 +4818,103 @@ client.api.realms.list(options?: { include_usage?: boolean }): Promise<ApiRealms
 
 ---
 
-## `client.api.servers` (11 methods)
+## `client.api.referrals` (2 methods)
+
+### `get`
+
+**GET** `/api/v1/referrals/me`
+
+Show your referral program status
+
+```typescript
+client.api.referrals.get(): Promise<ApiReferralsGetResponse>
+```
+
+**Returns:** `ApiReferralsGetResponse`
+
+**CLI:** `hoody referrals get`
+
+---
+
+### `join`
+
+**POST** `/api/v1/referrals/me`
+
+Join the referral program
+
+```typescript
+client.api.referrals.join(): Promise<ApiReferralsJoinResponse>
+```
+
+**Returns:** `ApiReferralsJoinResponse`
+
+**CLI:** `hoody referrals join`
+
+---
+
+## `client.api.referrals.codes` (3 methods)
+
+### `check`
+
+**GET** `/api/v1/referrals/me/codes/check`
+
+Check a custom referral code
+
+```typescript
+client.api.referrals.codes.check(options: { code: string }): Promise<ApiReferralsCodesCheckResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `code` | `string` | Yes | query | The custom code to check: 4 to 20 lowercase letters or digits, single hyphens between them. |
+
+**Returns:** `ApiReferralsCodesCheckResponse`
+
+**CLI:** `hoody referrals codes check`
+
+---
+
+### `create`
+
+**POST** `/api/v1/referrals/me/codes`
+
+Create a custom referral code
+
+```typescript
+client.api.referrals.codes.create(data: ApiReferralsCodesCreateRequest): Promise<ApiReferralsCodesCreateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ApiReferralsCodesCreateRequest` | Yes | body |  |
+
+**Returns:** `ApiReferralsCodesCreateResponse`
+
+**CLI:** `hoody referrals codes create`
+
+---
+
+### `release`
+
+**DELETE** `/api/v1/referrals/me/codes/{code}`
+
+Release a custom referral code
+
+```typescript
+client.api.referrals.codes.release(code: string): Promise<ApiReferralsCodesReleaseResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `code` | `string` | Yes | path | Referral code: 4 to 20 letters or digits, single hyphens between them (any letter case). |
+
+**Returns:** `ApiReferralsCodesReleaseResponse`
+
+**CLI:** `hoody referrals codes release`
+
+---
+
+## `client.api.servers` (20 methods)
 
 ### `extend`
 
@@ -4246,6 +4954,46 @@ client.api.servers.get(id: string): Promise<ApiServersGetResponse>
 **Returns:** `ApiServersGetResponse`
 
 **CLI:** `hoody servers get`
+
+---
+
+### `getJob`
+
+**GET** `/api/v1/subserver-operations/{id}`
+
+Status of a paid subserver operation
+
+```typescript
+client.api.servers.getJob(id: string): Promise<ApiServersGetJobResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+
+**Returns:** `ApiServersGetJobResponse`
+
+**CLI:** `hoody servers jobs get`
+
+---
+
+### `getReservation`
+
+**GET** `/api/v1/reservations/{id}`
+
+One of your reservations
+
+```typescript
+client.api.servers.getReservation(id: string): Promise<ApiServersGetReservationResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+
+**Returns:** `ApiServersGetReservationResponse`
+
+**CLI:** `hoody servers reservations get`
 
 ---
 
@@ -4299,6 +5047,68 @@ client.api.servers.listAll(): Promise<unknown[]>
 
 ---
 
+### `listCommands`
+
+**GET** `/api/v1/servers/{serverId}/available-commands`
+
+Get available commands
+
+```typescript
+client.api.servers.listCommands(serverId: string, options?: { category?: string; risk_level?: "low" | "medium" | "high" | "critical" }): Promise<ApiServersListCommandsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `serverId` | `string` | Yes | path | Server ID to get available commands for |
+| `category` | `string` | No | query | Filter by command category |
+| `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | No | query | Filter by maximum risk level |
+
+**Returns:** `ApiServersListCommandsResponse`
+
+**CLI:** `hoody servers commands list`
+
+---
+
+### `listCommandsAll`
+
+**GET** `/api/v1/servers/{serverId}/available-commands`
+
+Get available commands (collect all pages)
+
+```typescript
+client.api.servers.listCommandsAll(serverId: string, options?: { category?: string; risk_level?: "low" | "medium" | "high" | "critical" }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `serverId` | `string` | Yes | path | Server ID to get available commands for |
+| `category` | `string` | No | query | Filter by command category |
+| `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | No | query | Filter by maximum risk level |
+
+**Returns:** `unknown[]`
+
+---
+
+### `listCommandsIterator`
+
+**GET** `/api/v1/servers/{serverId}/available-commands`
+
+Get available commands (async iterator)
+
+```typescript
+client.api.servers.listCommandsIterator(serverId: string, options?: { category?: string; risk_level?: "low" | "medium" | "high" | "critical" }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `serverId` | `string` | Yes | path | Server ID to get available commands for |
+| `category` | `string` | No | query | Filter by command category |
+| `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | No | query | Filter by maximum risk level |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
 ### `listIterator`
 
 **GET** `/api/v1/rentals`
@@ -4320,7 +5130,7 @@ client.api.servers.listIterator(): AsyncIterableIterator<unknown>
 Browse rental marketplace
 
 ```typescript
-client.api.servers.listMarketplace(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: number[]; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: "passmark" | "geekbench_single" | "geekbench_multi"; min_ram_gb?: number; ram_types?: ("DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5")[]; min_total_storage_gb?: number; disk_types?: ("HDD" | "SSD" | "NVMe" | "SAS")[]; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: "compute" | "memory" | "storage" | "general" | "gpu"; featured_only?: boolean }): Promise<ApiServersListMarketplaceResponse>
+client.api.servers.listMarketplace(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: number[]; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: "passmark" | "geekbench_single" | "geekbench_multi"; min_ram_gb?: number; ram_types?: ("DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5")[]; min_total_storage_gb?: number; disk_types?: ("HDD" | "SSD" | "NVMe" | "SAS")[]; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: "compute" | "memory" | "storage" | "general" | "gpu"; featured_only?: boolean; discounted_only?: boolean; locale?: string }): Promise<ApiServersListMarketplaceResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4328,7 +5138,7 @@ client.api.servers.listMarketplace(options?: { country?: string; region?: string
 | `country` | `string` | No | query | Filter by country code (e.g., US, DE) |
 | `region` | `string` | No | query | Filter by region (e.g., us-east, eu-central) |
 | `max_price_per_day` | `number` | No | query | Maximum price per day in USD |
-| `available_durations` | `number[]` | No | query | Filter servers that support these rental durations (days) |
+| `available_durations` | `number[]` | No | query | A server matches when it supports at least one of these rental durations (days). |
 | `min_cpu_cores` | `number` | No | query | Minimum CPU cores |
 | `min_cpu_score` | `number` | No | query | Minimum CPU benchmark score |
 | `cpu_score_type` | `"passmark" \| "geekbench_single" \| "geekbench_multi"` | No | query | CPU benchmark type for score filtering |
@@ -4341,6 +5151,8 @@ client.api.servers.listMarketplace(options?: { country?: string; region?: string
 | `unlimited_traffic_only` | `boolean` | No | query | Show only servers with unlimited traffic |
 | `category` | `"compute" \| "memory" \| "storage" \| "general" \| "gpu"` | No | query | Filter by server category |
 | `featured_only` | `boolean` | No | query | Show only featured servers |
+| `discounted_only` | `boolean` | No | query | Only listings with a sale running now. |
+| `locale` | `string` | No | query | Language for the sale label (e.g. de, pt-BR). Wins over Accept-Language; unknown or invalid values fall back to English. |
 
 **Returns:** `ApiServersListMarketplaceResponse`
 
@@ -4355,7 +5167,7 @@ client.api.servers.listMarketplace(options?: { country?: string; region?: string
 Browse rental marketplace (collect all pages)
 
 ```typescript
-client.api.servers.listMarketplaceAll(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: number[]; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: "passmark" | "geekbench_single" | "geekbench_multi"; min_ram_gb?: number; ram_types?: ("DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5")[]; min_total_storage_gb?: number; disk_types?: ("HDD" | "SSD" | "NVMe" | "SAS")[]; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: "compute" | "memory" | "storage" | "general" | "gpu"; featured_only?: boolean }): Promise<unknown[]>
+client.api.servers.listMarketplaceAll(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: number[]; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: "passmark" | "geekbench_single" | "geekbench_multi"; min_ram_gb?: number; ram_types?: ("DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5")[]; min_total_storage_gb?: number; disk_types?: ("HDD" | "SSD" | "NVMe" | "SAS")[]; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: "compute" | "memory" | "storage" | "general" | "gpu"; featured_only?: boolean; discounted_only?: boolean; locale?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4363,7 +5175,7 @@ client.api.servers.listMarketplaceAll(options?: { country?: string; region?: str
 | `country` | `string` | No | query | Filter by country code (e.g., US, DE) |
 | `region` | `string` | No | query | Filter by region (e.g., us-east, eu-central) |
 | `max_price_per_day` | `number` | No | query | Maximum price per day in USD |
-| `available_durations` | `number[]` | No | query | Filter servers that support these rental durations (days) |
+| `available_durations` | `number[]` | No | query | A server matches when it supports at least one of these rental durations (days). |
 | `min_cpu_cores` | `number` | No | query | Minimum CPU cores |
 | `min_cpu_score` | `number` | No | query | Minimum CPU benchmark score |
 | `cpu_score_type` | `"passmark" \| "geekbench_single" \| "geekbench_multi"` | No | query | CPU benchmark type for score filtering |
@@ -4376,6 +5188,8 @@ client.api.servers.listMarketplaceAll(options?: { country?: string; region?: str
 | `unlimited_traffic_only` | `boolean` | No | query | Show only servers with unlimited traffic |
 | `category` | `"compute" \| "memory" \| "storage" \| "general" \| "gpu"` | No | query | Filter by server category |
 | `featured_only` | `boolean` | No | query | Show only featured servers |
+| `discounted_only` | `boolean` | No | query | Only listings with a sale running now. |
+| `locale` | `string` | No | query | Language for the sale label (e.g. de, pt-BR). Wins over Accept-Language; unknown or invalid values fall back to English. |
 
 **Returns:** `unknown[]`
 
@@ -4388,7 +5202,7 @@ client.api.servers.listMarketplaceAll(options?: { country?: string; region?: str
 Browse rental marketplace (async iterator)
 
 ```typescript
-client.api.servers.listMarketplaceIterator(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: number[]; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: "passmark" | "geekbench_single" | "geekbench_multi"; min_ram_gb?: number; ram_types?: ("DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5")[]; min_total_storage_gb?: number; disk_types?: ("HDD" | "SSD" | "NVMe" | "SAS")[]; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: "compute" | "memory" | "storage" | "general" | "gpu"; featured_only?: boolean }): AsyncIterableIterator<unknown>
+client.api.servers.listMarketplaceIterator(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: number[]; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: "passmark" | "geekbench_single" | "geekbench_multi"; min_ram_gb?: number; ram_types?: ("DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5")[]; min_total_storage_gb?: number; disk_types?: ("HDD" | "SSD" | "NVMe" | "SAS")[]; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: "compute" | "memory" | "storage" | "general" | "gpu"; featured_only?: boolean; discounted_only?: boolean; locale?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4396,7 +5210,7 @@ client.api.servers.listMarketplaceIterator(options?: { country?: string; region?
 | `country` | `string` | No | query | Filter by country code (e.g., US, DE) |
 | `region` | `string` | No | query | Filter by region (e.g., us-east, eu-central) |
 | `max_price_per_day` | `number` | No | query | Maximum price per day in USD |
-| `available_durations` | `number[]` | No | query | Filter servers that support these rental durations (days) |
+| `available_durations` | `number[]` | No | query | A server matches when it supports at least one of these rental durations (days). |
 | `min_cpu_cores` | `number` | No | query | Minimum CPU cores |
 | `min_cpu_score` | `number` | No | query | Minimum CPU benchmark score |
 | `cpu_score_type` | `"passmark" \| "geekbench_single" \| "geekbench_multi"` | No | query | CPU benchmark type for score filtering |
@@ -4409,8 +5223,31 @@ client.api.servers.listMarketplaceIterator(options?: { country?: string; region?
 | `unlimited_traffic_only` | `boolean` | No | query | Show only servers with unlimited traffic |
 | `category` | `"compute" \| "memory" \| "storage" \| "general" \| "gpu"` | No | query | Filter by server category |
 | `featured_only` | `boolean` | No | query | Show only featured servers |
+| `discounted_only` | `boolean` | No | query | Only listings with a sale running now. |
+| `locale` | `string` | No | query | Language for the sale label (e.g. de, pt-BR). Wins over Accept-Language; unknown or invalid values fall back to English. |
 
 **Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+### `listOffers`
+
+**GET** `/api/v1/offers`
+
+Browse machines available to order
+
+```typescript
+client.api.servers.listOffers(options?: { discounted_only?: boolean; locale?: string }): Promise<ApiServersListOffersResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `discounted_only` | `boolean` | No | query | Only listings with a sale running now. |
+| `locale` | `string` | No | query | Language for the sale label (e.g. de, pt-BR). Wins over Accept-Language; unknown or invalid values fall back to English. |
+
+**Returns:** `ApiServersListOffersResponse`
+
+**CLI:** `hoody servers offers list`
 
 ---
 
@@ -4427,6 +5264,27 @@ client.api.servers.listRegions(): Promise<ApiServersListRegionsResponse>
 **Returns:** `ApiServersListRegionsResponse`
 
 **CLI:** `hoody servers regions list`
+
+---
+
+### `listReservations`
+
+**GET** `/api/v1/reservations`
+
+Your reservations
+
+```typescript
+client.api.servers.listReservations(options?: { limit?: number; offset?: number }): Promise<ApiServersListReservationsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `limit` | `number` | No | query |  |
+| `offset` | `number` | No | query |  |
+
+**Returns:** `ApiServersListReservationsResponse`
+
+**CLI:** `hoody servers reservations list`
 
 ---
 
@@ -4451,153 +5309,49 @@ client.api.servers.rent(id: string, data: ApiServersRentRequest): Promise<ApiSer
 
 ---
 
-## `client.api.servers.commands` (4 methods)
-
-### `list`
-
-**GET** `/api/v1/servers/{serverId}/available-commands`
-
-Get available commands
-
-```typescript
-client.api.servers.commands.list(serverId: string, options?: { category?: string; risk_level?: "low" | "medium" | "high" | "critical" }): Promise<ApiServersCommandsListResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `serverId` | `string` | Yes | path | Server ID to get available commands for |
-| `category` | `string` | No | query | Filter by command category |
-| `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | No | query | Filter by maximum risk level |
-
-**Returns:** `ApiServersCommandsListResponse`
-
-**CLI:** `hoody servers commands list`
-
----
-
-### `listAll`
-
-**GET** `/api/v1/servers/{serverId}/available-commands`
-
-Get available commands (collect all pages)
-
-```typescript
-client.api.servers.commands.listAll(serverId: string, options?: { category?: string; risk_level?: "low" | "medium" | "high" | "critical" }): Promise<unknown[]>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `serverId` | `string` | Yes | path | Server ID to get available commands for |
-| `category` | `string` | No | query | Filter by command category |
-| `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | No | query | Filter by maximum risk level |
-
-**Returns:** `unknown[]`
-
----
-
-### `listIterator`
-
-**GET** `/api/v1/servers/{serverId}/available-commands`
-
-Get available commands (async iterator)
-
-```typescript
-client.api.servers.commands.listIterator(serverId: string, options?: { category?: string; risk_level?: "low" | "medium" | "high" | "critical" }): AsyncIterableIterator<unknown>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `serverId` | `string` | Yes | path | Server ID to get available commands for |
-| `category` | `string` | No | query | Filter by command category |
-| `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | No | query | Filter by maximum risk level |
-
-**Returns:** `AsyncIterableIterator<unknown>`
-
----
-
-### `run`
-
-**POST** `/api/v1/servers/{serverId}/execute-command`
-
-Execute server command
-
-```typescript
-client.api.servers.commands.run(serverId: string, data: ApiServersCommandsRunRequest): Promise<ApiServersCommandsRunResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `serverId` | `string` | Yes | path | Server ID to execute command on |
-| `data` | `ApiServersCommandsRunRequest` | Yes | body |  |
-
-**Returns:** `ApiServersCommandsRunResponse`
-
-**CLI:** `hoody servers commands run`
-
----
-
-## `client.api.servers.jobs` (1 method)
-
-### `get`
-
-**GET** `/api/v1/subserver-operations/{id}`
-
-Status of a paid subserver operation
-
-```typescript
-client.api.servers.jobs.get(id: string): Promise<ApiServersJobsGetResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-
-**Returns:** `ApiServersJobsGetResponse`
-
-**CLI:** `hoody servers jobs get`
-
----
-
-## `client.api.servers.offers` (2 methods)
-
-### `list`
-
-**GET** `/api/v1/offers`
-
-Browse machines available to order
-
-```typescript
-client.api.servers.offers.list(): Promise<ApiServersOffersListResponse>
-```
-
-**Returns:** `ApiServersOffersListResponse`
-
-**CLI:** `hoody servers offers list`
-
----
-
-### `reserve`
+### `reserveOffer`
 
 **POST** `/api/v1/offers/{id}/reserve`
 
 Reserve an offer (charges immediately)
 
 ```typescript
-client.api.servers.offers.reserve(id: string, data: ApiServersOffersReserveRequest): Promise<ApiServersOffersReserveResponse>
+client.api.servers.reserveOffer(id: string, data: ApiServersReserveOfferRequest): Promise<ApiServersReserveOfferResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `data` | `ApiServersOffersReserveRequest` | Yes | body |  |
+| `data` | `ApiServersReserveOfferRequest` | Yes | body |  |
 
-**Returns:** `ApiServersOffersReserveResponse`
+**Returns:** `ApiServersReserveOfferResponse`
 
 **CLI:** `hoody servers offers reserve`
 
 ---
 
-## `client.api.servers.plans` (2 methods)
+### `runCommand`
+
+**POST** `/api/v1/servers/{serverId}/execute-command`
+
+Execute server command
+
+```typescript
+client.api.servers.runCommand(serverId: string, data: ApiServersRunCommandRequest): Promise<ApiServersRunCommandResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `serverId` | `string` | Yes | path | Server ID to execute command on |
+| `data` | `ApiServersRunCommandRequest` | Yes | body |  |
+
+**Returns:** `ApiServersRunCommandResponse`
+
+**CLI:** `hoody servers commands run`
+
+---
+
+## `client.api.servers.plans` (4 methods)
 
 ### `list`
 
@@ -4619,6 +5373,44 @@ client.api.servers.plans.list(options?: { locale?: string }): Promise<ApiServers
 
 ---
 
+### `listPublic`
+
+**GET** `/api/v1/meta/subserver-plans`
+
+List public subserver plans
+
+```typescript
+client.api.servers.plans.listPublic(options?: { locale?: string }): Promise<ApiServersPlansListPublicResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `locale` | `string` | No | query | Language tag such as en, fr or pt-BR. Overrides Accept-Language. Unknown or invalid values are served as en. |
+
+**Returns:** `ApiServersPlansListPublicResponse`
+
+---
+
+### `listRegions`
+
+**GET** `/api/v1/subserver-subscriptions/regions`
+
+List the regions a paid subserver plan is sold in
+
+```typescript
+client.api.servers.plans.listRegions(options: { plan_id: string }): Promise<ApiServersPlansListRegionsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `plan_id` | `string` | Yes | query | Plan version id from GET /api/v1/subserver-plans. |
+
+**Returns:** `ApiServersPlansListRegionsResponse`
+
+**CLI:** `hoody servers plans regions`
+
+---
+
 ### `quote`
 
 **GET** `/api/v1/subserver-subscriptions/quote`
@@ -4626,59 +5418,17 @@ client.api.servers.plans.list(options?: { locale?: string }): Promise<ApiServers
 Quote a paid subserver purchase
 
 ```typescript
-client.api.servers.plans.quote(options: { plan_id: string }): Promise<ApiServersPlansQuoteResponse>
+client.api.servers.plans.quote(options: { plan_id: string; region?: string }): Promise<ApiServersPlansQuoteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `plan_id` | `string` | Yes | query |  |
+| `region` | `string` | No | query | Region code from GET /api/v1/subserver-subscriptions/regions. Leave out to let Hoody choose. |
 
 **Returns:** `ApiServersPlansQuoteResponse`
 
 **CLI:** `hoody servers plans quote`
-
----
-
-## `client.api.servers.reservations` (2 methods)
-
-### `get`
-
-**GET** `/api/v1/reservations/{id}`
-
-One of your reservations
-
-```typescript
-client.api.servers.reservations.get(id: string): Promise<ApiServersReservationsGetResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-
-**Returns:** `ApiServersReservationsGetResponse`
-
-**CLI:** `hoody servers reservations get`
-
----
-
-### `list`
-
-**GET** `/api/v1/reservations`
-
-Your reservations
-
-```typescript
-client.api.servers.reservations.list(options?: { limit?: number; offset?: number }): Promise<ApiServersReservationsListResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `limit` | `number` | No | query |  |
-| `offset` | `number` | No | query |  |
-
-**Returns:** `ApiServersReservationsListResponse`
-
-**CLI:** `hoody servers reservations list`
 
 ---
 
@@ -4731,7 +5481,7 @@ client.api.servers.subscriptions.cancel(id: string): Promise<ApiServersSubscript
 Turn auto-renew on or off
 
 ```typescript
-client.api.servers.subscriptions.disableAutoRenew(id: string): Promise<any>
+client.api.servers.subscriptions.disableAutoRenew(id: string, options?: object): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4751,7 +5501,7 @@ client.api.servers.subscriptions.disableAutoRenew(id: string): Promise<any>
 Turn auto-renew on or off
 
 ```typescript
-client.api.servers.subscriptions.enableAutoRenew(id: string): Promise<any>
+client.api.servers.subscriptions.enableAutoRenew(id: string, options?: object): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4835,7 +5585,7 @@ client.api.servers.subscriptions.pay(id: string, data: ApiServersSubscriptionsPa
 Quote an upgrade or a payment
 
 ```typescript
-client.api.servers.subscriptions.quote(id: string, options: { action: "upgrade" | "pay"; plan_id?: string }): Promise<ApiServersSubscriptionsQuoteResponse>
+client.api.servers.subscriptions.quote(id: string, options: { action: "upgrade" | "pay"; plan_id?: string; region?: string }): Promise<ApiServersSubscriptionsQuoteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4843,6 +5593,7 @@ client.api.servers.subscriptions.quote(id: string, options: { action: "upgrade" 
 | `id` | `string` | Yes | path |  |
 | `action` | `"upgrade" \| "pay"` | Yes | query |  |
 | `plan_id` | `string` | No | query |  |
+| `region` | `string` | No | query | upgrade only, optional: the region you expect the subserver to be in. An upgrade never moves it: another region is refused (409). |
 
 **Returns:** `ApiServersSubscriptionsQuoteResponse`
 
@@ -4875,9 +5626,9 @@ client.api.servers.subscriptions.upgrade(id: string, data: ApiServersSubscriptio
 
 ### `create`
 
-**POST** `/api/v1/containers/{id}/snapshots`
+**POST** `/api/v1/computers/{id}/snapshots`
 
-Create container snapshot
+Create computer snapshot
 
 ```typescript
 client.api.snapshots.create(id: string, data: ApiSnapshotsCreateRequest): Promise<ApiSnapshotsCreateResponse>
@@ -4885,7 +5636,7 @@ client.api.snapshots.create(id: string, data: ApiSnapshotsCreateRequest): Promis
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to create snapshot for |
+| `id` | `string` | Yes | path | Unique identifier of the computer to create snapshot for |
 | `data` | `ApiSnapshotsCreateRequest` | Yes | body |  |
 
 **Returns:** `ApiSnapshotsCreateResponse`
@@ -4896,9 +5647,9 @@ client.api.snapshots.create(id: string, data: ApiSnapshotsCreateRequest): Promis
 
 ### `delete`
 
-**DELETE** `/api/v1/containers/{id}/snapshots/{name}`
+**DELETE** `/api/v1/computers/{id}/snapshots/{name}`
 
-Delete container snapshot
+Delete computer snapshot
 
 ```typescript
 client.api.snapshots.delete(id: string, name: string): Promise<ApiSnapshotsDeleteResponse>
@@ -4906,8 +5657,8 @@ client.api.snapshots.delete(id: string, name: string): Promise<ApiSnapshotsDelet
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container |
-| `name` | `string` | Yes | path | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
+| `id` | `string` | Yes | path | Unique identifier of the computer |
+| `name` | `string` | Yes | path | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias (or when sanitization leaves nothing), a timestamped snap-YYYYMMDD-HHMMSS. |
 
 **Returns:** `ApiSnapshotsDeleteResponse`
 
@@ -4917,9 +5668,9 @@ client.api.snapshots.delete(id: string, name: string): Promise<ApiSnapshotsDelet
 
 ### `list`
 
-**GET** `/api/v1/containers/{id}/snapshots`
+**GET** `/api/v1/computers/{id}/snapshots`
 
-Get container snapshots
+Get computer snapshots
 
 ```typescript
 client.api.snapshots.list(id: string): Promise<ApiSnapshotsListResponse>
@@ -4927,7 +5678,7 @@ client.api.snapshots.list(id: string): Promise<ApiSnapshotsListResponse>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to retrieve snapshots for |
+| `id` | `string` | Yes | path | Unique identifier of the computer to retrieve snapshots for |
 
 **Returns:** `ApiSnapshotsListResponse`
 
@@ -4937,9 +5688,9 @@ client.api.snapshots.list(id: string): Promise<ApiSnapshotsListResponse>
 
 ### `listAll`
 
-**GET** `/api/v1/containers/{id}/snapshots`
+**GET** `/api/v1/computers/{id}/snapshots`
 
-Get container snapshots (collect all pages)
+Get computer snapshots (collect all pages)
 
 ```typescript
 client.api.snapshots.listAll(id: string): Promise<unknown[]>
@@ -4947,7 +5698,7 @@ client.api.snapshots.listAll(id: string): Promise<unknown[]>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to retrieve snapshots for |
+| `id` | `string` | Yes | path | Unique identifier of the computer to retrieve snapshots for |
 
 **Returns:** `unknown[]`
 
@@ -4955,9 +5706,9 @@ client.api.snapshots.listAll(id: string): Promise<unknown[]>
 
 ### `listIterator`
 
-**GET** `/api/v1/containers/{id}/snapshots`
+**GET** `/api/v1/computers/{id}/snapshots`
 
-Get container snapshots (async iterator)
+Get computer snapshots (async iterator)
 
 ```typescript
 client.api.snapshots.listIterator(id: string): AsyncIterableIterator<unknown>
@@ -4965,7 +5716,7 @@ client.api.snapshots.listIterator(id: string): AsyncIterableIterator<unknown>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to retrieve snapshots for |
+| `id` | `string` | Yes | path | Unique identifier of the computer to retrieve snapshots for |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -4973,9 +5724,9 @@ client.api.snapshots.listIterator(id: string): AsyncIterableIterator<unknown>
 
 ### `restore`
 
-**PUT** `/api/v1/containers/{id}/snapshots/{name}`
+**PUT** `/api/v1/computers/{id}/snapshots/{name}`
 
-Restore container from snapshot
+Restore computer from snapshot
 
 ```typescript
 client.api.snapshots.restore(id: string, name: string): Promise<ApiSnapshotsRestoreResponse>
@@ -4983,8 +5734,8 @@ client.api.snapshots.restore(id: string, name: string): Promise<ApiSnapshotsRest
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container to restore |
-| `name` | `string` | Yes | path | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
+| `id` | `string` | Yes | path | Unique identifier of the computer to restore |
+| `name` | `string` | Yes | path | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias (or when sanitization leaves nothing), a timestamped snap-YYYYMMDD-HHMMSS. |
 
 **Returns:** `ApiSnapshotsRestoreResponse`
 
@@ -4994,7 +5745,7 @@ client.api.snapshots.restore(id: string, name: string): Promise<ApiSnapshotsRest
 
 ### `setAlias`
 
-**PUT** `/api/v1/containers/{id}/snapshots/{name}/alias`
+**PUT** `/api/v1/computers/{id}/snapshots/{name}/alias`
 
 Update snapshot alias
 
@@ -5004,8 +5755,8 @@ client.api.snapshots.setAlias(id: string, name: string, data: ApiSnapshotsSetAli
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Unique identifier of the container |
-| `name` | `string` | Yes | path | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
+| `id` | `string` | Yes | path | Unique identifier of the computer |
+| `name` | `string` | Yes | path | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias (or when sanitization leaves nothing), a timestamped snap-YYYYMMDD-HHMMSS. |
 | `data` | `ApiSnapshotsSetAliasRequest` | Yes | body |  |
 
 **Returns:** `ApiSnapshotsSetAliasResponse`
@@ -5014,11 +5765,131 @@ client.api.snapshots.setAlias(id: string, name: string, data: ApiSnapshotsSetAli
 
 ---
 
-## `client.api.storage.shares` (16 methods)
+## `client.api.storage.incoming` (6 methods)
+
+### `list`
+
+**GET** `/api/v1/storage/incoming`
+
+Get all incoming shares
+
+```typescript
+client.api.storage.incoming.list(options?: { realm_id?: string }): Promise<ApiStorageIncomingListResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
+
+**Returns:** `ApiStorageIncomingListResponse`
+
+**CLI:** `hoody storage incoming list`
+
+---
+
+### `listAll`
+
+**GET** `/api/v1/storage/incoming`
+
+Get all incoming shares (collect all pages)
+
+```typescript
+client.api.storage.incoming.listAll(options?: { realm_id?: string }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
+
+**Returns:** `unknown[]`
+
+---
+
+### `listByComputer`
+
+**GET** `/api/v1/computers/{id}/storage/incoming`
+
+Get incoming shares
+
+```typescript
+client.api.storage.incoming.listByComputer(id: string): Promise<ApiStorageIncomingListByComputerResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Computer ID |
+
+**Returns:** `ApiStorageIncomingListByComputerResponse`
+
+**CLI:** `hoody storage computers incoming list`
+
+---
+
+### `listIterator`
+
+**GET** `/api/v1/storage/incoming`
+
+Get all incoming shares (async iterator)
+
+```typescript
+client.api.storage.incoming.listIterator(options?: { realm_id?: string }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+### `mount`
+
+**PATCH** `/api/v1/computers/{id}/storage/incoming/{shareId}/mount`
+
+Toggle incoming share mount
+
+```typescript
+client.api.storage.incoming.mount(id: string, shareId: string, options?: object): Promise<any>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Target computer ID (receiver computer) |
+| `shareId` | `string` | Yes | path | Share ID to toggle |
+
+**Returns:** `any`
+
+**CLI:** `hoody storage incoming mount`
+
+---
+
+### `unmount`
+
+**PATCH** `/api/v1/computers/{id}/storage/incoming/{shareId}/mount`
+
+Toggle incoming share mount
+
+```typescript
+client.api.storage.incoming.unmount(id: string, shareId: string, options?: object): Promise<any>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Target computer ID (receiver computer) |
+| `shareId` | `string` | Yes | path | Share ID to toggle |
+
+**Returns:** `any`
+
+**CLI:** `hoody storage incoming unmount`
+
+---
+
+## `client.api.storage.shares` (10 methods)
 
 ### `create`
 
-**POST** `/api/v1/containers/{id}/storage/shares`
+**POST** `/api/v1/computers/{id}/storage/shares`
 
 Create storage share
 
@@ -5028,7 +5899,7 @@ client.api.storage.shares.create(id: string, data: ApiStorageSharesCreateRequest
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Source container ID |
+| `id` | `string` | Yes | path | Source computer ID |
 | `data` | `ApiStorageSharesCreateRequest` | Yes | body |  |
 
 **Returns:** `ApiStorageSharesCreateResponse`
@@ -5049,7 +5920,7 @@ client.api.storage.shares.delete(shareId: string): Promise<ApiStorageSharesDelet
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `shareId` | `string` | Yes | path | Share ID (globally unique, no container ID needed) |
+| `shareId` | `string` | Yes | path | Share ID (globally unique, no computer ID needed) |
 
 **Returns:** `ApiStorageSharesDeleteResponse`
 
@@ -5059,7 +5930,7 @@ client.api.storage.shares.delete(shareId: string): Promise<ApiStorageSharesDelet
 
 ### `get`
 
-**GET** `/api/v1/containers/{id}/storage/shares/{shareId}`
+**GET** `/api/v1/computers/{id}/storage/shares/{shareId}`
 
 Get storage share
 
@@ -5069,7 +5940,7 @@ client.api.storage.shares.get(id: string, shareId: string): Promise<ApiStorageSh
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Source container ID |
+| `id` | `string` | Yes | path | Source computer ID |
 | `shareId` | `string` | Yes | path | Share ID |
 
 **Returns:** `ApiStorageSharesGetResponse`
@@ -5116,46 +5987,46 @@ client.api.storage.shares.listAll(options?: { realm_id?: string }): Promise<unkn
 
 ---
 
-### `listByContainer`
+### `listByComputer`
 
-**GET** `/api/v1/containers/{id}/storage/shares`
+**GET** `/api/v1/computers/{id}/storage/shares`
 
 List storage shares
 
 ```typescript
-client.api.storage.shares.listByContainer(id: string, options?: { target_type?: "container" | "project"; label?: string; status?: "active" | "failed"; enabled?: boolean; include_expired?: boolean; realm_id?: string }): Promise<ApiStorageSharesListByContainerResponse>
+client.api.storage.shares.listByComputer(id: string, options?: { target_type?: "computer" | "project"; label?: string; status?: "active" | "failed"; enabled?: boolean; include_expired?: boolean; realm_id?: string }): Promise<ApiStorageSharesListByComputerResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Source container ID |
-| `target_type` | `"container" \| "project"` | No | query | Filter by target type |
+| `id` | `string` | Yes | path | Source computer ID |
+| `target_type` | `"computer" \| "project"` | No | query | Filter by target type |
 | `label` | `string` | No | query | Filter by label |
 | `status` | `"active" \| "failed"` | No | query | Filter by status |
 | `enabled` | `boolean` | No | query | Filter by enabled status |
 | `include_expired` | `boolean` | No | query | Include expired shares (default: false) |
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
 
-**Returns:** `ApiStorageSharesListByContainerResponse`
+**Returns:** `ApiStorageSharesListByComputerResponse`
 
-**CLI:** `hoody storage containers shares list`
+**CLI:** `hoody storage computers shares list`
 
 ---
 
-### `listByContainerAll`
+### `listByComputerAll`
 
-**GET** `/api/v1/containers/{id}/storage/shares`
+**GET** `/api/v1/computers/{id}/storage/shares`
 
 List storage shares (collect all pages)
 
 ```typescript
-client.api.storage.shares.listByContainerAll(id: string, options?: { target_type?: "container" | "project"; label?: string; status?: "active" | "failed"; enabled?: boolean; include_expired?: boolean; realm_id?: string }): Promise<unknown[]>
+client.api.storage.shares.listByComputerAll(id: string, options?: { target_type?: "computer" | "project"; label?: string; status?: "active" | "failed"; enabled?: boolean; include_expired?: boolean; realm_id?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Source container ID |
-| `target_type` | `"container" \| "project"` | No | query | Filter by target type |
+| `id` | `string` | Yes | path | Source computer ID |
+| `target_type` | `"computer" \| "project"` | No | query | Filter by target type |
 | `label` | `string` | No | query | Filter by label |
 | `status` | `"active" \| "failed"` | No | query | Filter by status |
 | `enabled` | `boolean` | No | query | Filter by enabled status |
@@ -5166,100 +6037,24 @@ client.api.storage.shares.listByContainerAll(id: string, options?: { target_type
 
 ---
 
-### `listByContainerIterator`
+### `listByComputerIterator`
 
-**GET** `/api/v1/containers/{id}/storage/shares`
+**GET** `/api/v1/computers/{id}/storage/shares`
 
 List storage shares (async iterator)
 
 ```typescript
-client.api.storage.shares.listByContainerIterator(id: string, options?: { target_type?: "container" | "project"; label?: string; status?: "active" | "failed"; enabled?: boolean; include_expired?: boolean; realm_id?: string }): AsyncIterableIterator<unknown>
+client.api.storage.shares.listByComputerIterator(id: string, options?: { target_type?: "computer" | "project"; label?: string; status?: "active" | "failed"; enabled?: boolean; include_expired?: boolean; realm_id?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Source container ID |
-| `target_type` | `"container" \| "project"` | No | query | Filter by target type |
+| `id` | `string` | Yes | path | Source computer ID |
+| `target_type` | `"computer" \| "project"` | No | query | Filter by target type |
 | `label` | `string` | No | query | Filter by label |
 | `status` | `"active" \| "failed"` | No | query | Filter by status |
 | `enabled` | `boolean` | No | query | Filter by enabled status |
 | `include_expired` | `boolean` | No | query | Include expired shares (default: false) |
-| `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
-
-**Returns:** `AsyncIterableIterator<unknown>`
-
----
-
-### `listIncoming`
-
-**GET** `/api/v1/storage/incoming`
-
-Get all incoming shares
-
-```typescript
-client.api.storage.shares.listIncoming(options?: { realm_id?: string }): Promise<ApiStorageSharesListIncomingResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
-
-**Returns:** `ApiStorageSharesListIncomingResponse`
-
-**CLI:** `hoody storage incoming list`
-
----
-
-### `listIncomingAll`
-
-**GET** `/api/v1/storage/incoming`
-
-Get all incoming shares (collect all pages)
-
-```typescript
-client.api.storage.shares.listIncomingAll(options?: { realm_id?: string }): Promise<unknown[]>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
-
-**Returns:** `unknown[]`
-
----
-
-### `listIncomingByContainer`
-
-**GET** `/api/v1/containers/{id}/storage/incoming`
-
-Get incoming shares
-
-```typescript
-client.api.storage.shares.listIncomingByContainer(id: string): Promise<ApiStorageSharesListIncomingByContainerResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Container ID |
-
-**Returns:** `ApiStorageSharesListIncomingByContainerResponse`
-
-**CLI:** `hoody storage containers incoming list`
-
----
-
-### `listIncomingIterator`
-
-**GET** `/api/v1/storage/incoming`
-
-Get all incoming shares (async iterator)
-
-```typescript
-client.api.storage.shares.listIncomingIterator(options?: { realm_id?: string }): AsyncIterableIterator<unknown>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
 
 **Returns:** `AsyncIterableIterator<unknown>`
@@ -5284,51 +6079,9 @@ client.api.storage.shares.listIterator(options?: { realm_id?: string }): AsyncIt
 
 ---
 
-### `mountIncoming`
-
-**PATCH** `/api/v1/containers/{id}/storage/incoming/{shareId}/mount`
-
-Toggle incoming share mount
-
-```typescript
-client.api.storage.shares.mountIncoming(id: string, shareId: string): Promise<any>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Target container ID (receiver container) |
-| `shareId` | `string` | Yes | path | Share ID to toggle |
-
-**Returns:** `any`
-
-**CLI:** `hoody storage incoming mount`
-
----
-
-### `unmountIncoming`
-
-**PATCH** `/api/v1/containers/{id}/storage/incoming/{shareId}/mount`
-
-Toggle incoming share mount
-
-```typescript
-client.api.storage.shares.unmountIncoming(id: string, shareId: string): Promise<any>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Target container ID (receiver container) |
-| `shareId` | `string` | Yes | path | Share ID to toggle |
-
-**Returns:** `any`
-
-**CLI:** `hoody storage incoming unmount`
-
----
-
 ### `update`
 
-**PATCH** `/api/v1/containers/{id}/storage/shares/{shareId}`
+**PATCH** `/api/v1/computers/{id}/storage/shares/{shareId}`
 
 Update storage share
 
@@ -5338,13 +6091,236 @@ client.api.storage.shares.update(id: string, shareId: string, data: ApiStorageSh
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Source container ID |
+| `id` | `string` | Yes | path | Source computer ID |
 | `shareId` | `string` | Yes | path | Share ID |
 | `data` | `ApiStorageSharesUpdateRequest` | Yes | body |  |
 
 **Returns:** `ApiStorageSharesUpdateResponse`
 
 **CLI:** `hoody storage shares update`
+
+---
+
+## `client.api.support` (1 method)
+
+### `getLimits`
+
+**GET** `/api/v1/support/limits`
+
+Your support limits
+
+```typescript
+client.api.support.getLimits(): Promise<ApiSupportGetLimitsResponse>
+```
+
+**Returns:** `ApiSupportGetLimitsResponse`
+
+**CLI:** `hoody support limits get`
+
+---
+
+## `client.api.support.tickets` (10 methods)
+
+### `close`
+
+**POST** `/api/v1/support/tickets/{id}/close`
+
+Close a support ticket
+
+```typescript
+client.api.support.tickets.close(id: string): Promise<ApiSupportTicketsCloseResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Ticket id |
+
+**Returns:** `ApiSupportTicketsCloseResponse`
+
+**CLI:** `hoody support close`
+
+---
+
+### `create`
+
+**POST** `/api/v1/support/tickets`
+
+Open a support ticket
+
+```typescript
+client.api.support.tickets.create(data: ApiSupportTicketsCreateRequest): Promise<ApiSupportTicketsCreateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ApiSupportTicketsCreateRequest` | Yes | body |  |
+
+**Returns:** `ApiSupportTicketsCreateResponse`
+
+---
+
+### `get`
+
+**GET** `/api/v1/support/tickets/{id}`
+
+Read a support ticket
+
+```typescript
+client.api.support.tickets.get(id: string, options?: { before_seq?: number; limit?: number }): Promise<ApiSupportTicketsGetResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Ticket id |
+| `before_seq` | `number` | No | query | Only messages older than this `seq` (pass the smallest `seq` you have). Omit for the latest page, which also marks the ticket read. |
+| `limit` | `number` | No | query | Messages per page |
+
+**Returns:** `ApiSupportTicketsGetResponse`
+
+**CLI:** `hoody support get`
+
+---
+
+### `getByKey`
+
+**GET** `/api/v1/support/tickets/by-key`
+
+Find the ticket a create with a client_key made
+
+```typescript
+client.api.support.tickets.getByKey(options: { client_key: string }): Promise<ApiSupportTicketsGetByKeyResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `client_key` | `string` | Yes | query | The `client_key` your create or reply sent, exactly as sent. In a raw HTTP query string, URL-encode it (encode `+`, `&`, `#`, `%` and any non-ASCII character); the SDK and CLI encode it for you, so pass the plain key. |
+
+**Returns:** `ApiSupportTicketsGetByKeyResponse`
+
+**CLI:** `hoody support keys get`
+
+---
+
+### `getMessageByKey`
+
+**GET** `/api/v1/support/tickets/{id}/messages/by-key`
+
+Find the reply a client_key added to a ticket
+
+```typescript
+client.api.support.tickets.getMessageByKey(id: string, options: { client_key: string }): Promise<ApiSupportTicketsGetMessageByKeyResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Ticket id |
+| `client_key` | `string` | Yes | query | The `client_key` your create or reply sent, exactly as sent. In a raw HTTP query string, URL-encode it (encode `+`, `&`, `#`, `%` and any non-ASCII character); the SDK and CLI encode it for you, so pass the plain key. |
+
+**Returns:** `ApiSupportTicketsGetMessageByKeyResponse`
+
+**CLI:** `hoody support messages keys get`
+
+---
+
+### `list`
+
+**GET** `/api/v1/support/tickets`
+
+List your support tickets
+
+```typescript
+client.api.support.tickets.list(options?: { status?: "open" | "waiting_user" | "closed"; cursor?: string; limit?: number }): Promise<ApiSupportTicketsListResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `status` | `"open" \| "waiting_user" \| "closed"` | No | query | Only tickets in this status (open: waiting for support; waiting_user: support answered; closed). Omit for all. |
+| `cursor` | `string` | No | query | `next_cursor` of the previous page |
+| `limit` | `number` | No | query | Tickets per page |
+
+**Returns:** `ApiSupportTicketsListResponse`
+
+**CLI:** `hoody support list`
+
+---
+
+### `listAll`
+
+**GET** `/api/v1/support/tickets`
+
+List your support tickets (collect all pages)
+
+```typescript
+client.api.support.tickets.listAll(options?: { status?: "open" | "waiting_user" | "closed"; cursor?: string; limit?: number }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `status` | `"open" \| "waiting_user" \| "closed"` | No | query | Only tickets in this status (open: waiting for support; waiting_user: support answered; closed). Omit for all. |
+| `cursor` | `string` | No | query | `next_cursor` of the previous page |
+| `limit` | `number` | No | query | Tickets per page |
+
+**Returns:** `unknown[]`
+
+---
+
+### `listChanges`
+
+**GET** `/api/v1/support/tickets/changes`
+
+Poll for ticket changes
+
+```typescript
+client.api.support.tickets.listChanges(options?: { since?: string; limit?: number }): Promise<ApiSupportTicketsListChangesResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `since` | `string` | No | query | `next_since` of the previous call |
+| `limit` | `number` | No | query | Changed tickets per call; `has_more` is true when more are waiting |
+
+**Returns:** `ApiSupportTicketsListChangesResponse`
+
+**CLI:** `hoody support changes list`
+
+---
+
+### `listIterator`
+
+**GET** `/api/v1/support/tickets`
+
+List your support tickets (async iterator)
+
+```typescript
+client.api.support.tickets.listIterator(options?: { status?: "open" | "waiting_user" | "closed"; cursor?: string; limit?: number }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `status` | `"open" \| "waiting_user" \| "closed"` | No | query | Only tickets in this status (open: waiting for support; waiting_user: support answered; closed). Omit for all. |
+| `cursor` | `string` | No | query | `next_cursor` of the previous page |
+| `limit` | `number` | No | query | Tickets per page |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+### `reply`
+
+**POST** `/api/v1/support/tickets/{id}/messages`
+
+Reply to a support ticket
+
+```typescript
+client.api.support.tickets.reply(id: string, data: ApiSupportTicketsReplyRequest): Promise<ApiSupportTicketsReplyResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Ticket id |
+| `data` | `ApiSupportTicketsReplyRequest` | Yes | body |  |
+
+**Returns:** `ApiSupportTicketsReplyResponse`
 
 ---
 
@@ -5366,7 +6342,7 @@ client.api.users.completeOnboardingMilestone(data: ApiUsersCompleteOnboardingMil
 
 **Returns:** `ApiUsersCompleteOnboardingMilestoneResponse`
 
-**CLI:** `hoody users onboarding milestones complete`
+**CLI:** `hoody users onboardingmilestones complete`
 
 ---
 
@@ -5402,7 +6378,7 @@ client.api.users.getFreeTierStatus(): Promise<ApiUsersGetFreeTierStatusResponse>
 
 **Returns:** `ApiUsersGetFreeTierStatusResponse`
 
-**CLI:** `hoody users free tier status`
+**CLI:** `hoody users freetier status`
 
 ---
 
@@ -5425,7 +6401,7 @@ client.api.users.listSecurityHistory(options?: { page?: number; limit?: number; 
 
 **Returns:** `ApiUsersListSecurityHistoryResponse`
 
-**CLI:** `hoody users security history list`
+**CLI:** `hoody users securityhistory list`
 
 ---
 
@@ -5538,7 +6514,7 @@ client.api.users.update(id: string, data: ApiUsersUpdateRequest): Promise<ApiUse
 
 **DELETE** `/api/v1/vault`
 
-Clear entire vault
+Clear the vault of the current realm
 
 ```typescript
 client.api.vault.clear(options?: { realm_id?: string }): Promise<ApiVaultClearResponse>
@@ -5546,7 +6522,7 @@ client.api.vault.clear(options?: { realm_id?: string }): Promise<ApiVaultClearRe
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive — uppercase is normalized to lowercase. |
+| `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive: uppercase is normalized to lowercase. |
 
 **Returns:** `ApiVaultClearResponse`
 
@@ -5567,7 +6543,7 @@ client.api.vault.delete(key: string, options?: { realm_id?: string }): Promise<A
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `key` | `string` | Yes | path | Vault key name (alphanumeric, dots, underscores, hyphens) |
-| `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive — uppercase is normalized to lowercase. |
+| `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive: uppercase is normalized to lowercase. |
 
 **Returns:** `ApiVaultDeleteResponse`
 
@@ -5588,7 +6564,7 @@ client.api.vault.get(key: string, options?: { realm_id?: string }): Promise<ApiV
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `key` | `string` | Yes | path | Vault key name (alphanumeric, dots, underscores, hyphens) |
-| `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive — uppercase is normalized to lowercase. |
+| `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive: uppercase is normalized to lowercase. |
 
 **Returns:** `ApiVaultGetResponse`
 
@@ -5608,7 +6584,7 @@ client.api.vault.getStats(options?: { realm_id?: string }): Promise<ApiVaultGetS
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive — uppercase is normalized to lowercase. |
+| `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive: uppercase is normalized to lowercase. |
 
 **Returns:** `ApiVaultGetStatsResponse`
 
@@ -5628,7 +6604,7 @@ client.api.vault.list(options?: { realm_id?: string }): Promise<ApiVaultListResp
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive — uppercase is normalized to lowercase. |
+| `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive: uppercase is normalized to lowercase. |
 
 **Returns:** `ApiVaultListResponse`
 
@@ -5648,7 +6624,7 @@ client.api.vault.listAll(options?: { realm_id?: string }): Promise<unknown[]>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive — uppercase is normalized to lowercase. |
+| `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive: uppercase is normalized to lowercase. |
 
 **Returns:** `unknown[]`
 
@@ -5666,7 +6642,7 @@ client.api.vault.listIterator(options?: { realm_id?: string }): AsyncIterableIte
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive — uppercase is normalized to lowercase. |
+| `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive: uppercase is normalized to lowercase. |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -5679,14 +6655,16 @@ client.api.vault.listIterator(options?: { realm_id?: string }): AsyncIterableIte
 Set vault key
 
 ```typescript
-client.api.vault.set(key: string, data: ApiVaultSetRequest, options?: { realm_id?: string }): Promise<ApiVaultSetResponse>
+client.api.vault.set(key: string, data: ApiVaultSetRequest, options?: { realm_id?: string; ifMatch?: string; ifNoneMatch?: "*" }): Promise<ApiVaultSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `key` | `string` | Yes | path | Vault key name (alphanumeric, dots, underscores, hyphens) |
 | `data` | `ApiVaultSetRequest` | Yes | body |  |
-| `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive — uppercase is normalized to lowercase. |
+| `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive: uppercase is normalized to lowercase. |
+| `ifMatch` | `string` | No | header | Save only over the version you read: the ETag from an earlier GET or PUT of this key. If the key as stored now no longer matches it (value, metadata or millisecond timestamps), or no longer exists, the answer is 412 PRECONDITION_FAILED and nothing is saved. `*` matches any existing version. |
+| `ifNoneMatch` | `"*"` | No | header | Send `*` to create the key only if it does not exist yet. If it exists, the answer is 412 PRECONDITION_FAILED and nothing is saved. |
 
 **Returns:** `ApiVaultSetResponse`
 
@@ -5694,7 +6672,7 @@ client.api.vault.set(key: string, data: ApiVaultSetRequest, options?: { realm_id
 
 ---
 
-## `client.api.wallet` (34 methods)
+## `client.api.wallet` (8 methods)
 
 ### `claimGithubBonus`
 
@@ -5708,143 +6686,7 @@ client.api.wallet.claimGithubBonus(): Promise<ApiWalletClaimGithubBonusResponse>
 
 **Returns:** `ApiWalletClaimGithubBonusResponse`
 
-**CLI:** `hoody wallet github bonus claim`
-
----
-
-### `createCryptoInvoice`
-
-**POST** `/api/v1/wallet/payments/crypto/invoice`
-
-Start a crypto payment (hosted invoice)
-
-```typescript
-client.api.wallet.createCryptoInvoice(data: ApiWalletCreateCryptoInvoiceRequest): Promise<ApiWalletCreateCryptoInvoiceResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `ApiWalletCreateCryptoInvoiceRequest` | Yes | body |  |
-
-**Returns:** `ApiWalletCreateCryptoInvoiceResponse`
-
-**CLI:** `hoody wallet payments crypto invoices create`
-
----
-
-### `createInvoice`
-
-**POST** `/api/v1/wallet/invoices/generate/{id}`
-
-Generate invoice for transaction
-
-```typescript
-client.api.wallet.createInvoice(id: string): Promise<ApiWalletCreateInvoiceResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-
-**Returns:** `ApiWalletCreateInvoiceResponse`
-
-**CLI:** `hoody wallet invoices create`
-
----
-
-### `createPaymentMethod`
-
-**POST** `/api/v1/wallet/payment-methods/`
-
-Add a new payment method
-
-```typescript
-client.api.wallet.createPaymentMethod(data: ApiWalletCreatePaymentMethodRequest): Promise<ApiWalletCreatePaymentMethodResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `ApiWalletCreatePaymentMethodRequest` | Yes | body |  |
-
-**Returns:** `ApiWalletCreatePaymentMethodResponse`
-
-**CLI:** `hoody wallet payments methods create`
-
----
-
-### `createStripeCheckout`
-
-**POST** `/api/v1/wallet/payments/stripe/checkout`
-
-Start a card payment (Stripe Checkout)
-
-```typescript
-client.api.wallet.createStripeCheckout(data: ApiWalletCreateStripeCheckoutRequest): Promise<ApiWalletCreateStripeCheckoutResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `ApiWalletCreateStripeCheckoutRequest` | Yes | body |  |
-
-**Returns:** `ApiWalletCreateStripeCheckoutResponse`
-
-**CLI:** `hoody wallet payments stripe checkout create`
-
----
-
-### `deletePaymentMethod`
-
-**DELETE** `/api/v1/wallet/payment-methods/{id}`
-
-Delete a payment method
-
-```typescript
-client.api.wallet.deletePaymentMethod(id: string): Promise<ApiWalletDeletePaymentMethodResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-
-**Returns:** `ApiWalletDeletePaymentMethodResponse`
-
-**CLI:** `hoody wallet payments methods delete`
-
----
-
-### `downloadInvoice`
-
-**GET** `/api/v1/wallet/invoices/{id}/pdf`
-
-Download invoice PDF
-
-```typescript
-client.api.wallet.downloadInvoice(id: string): Promise<ApiResponse<ArrayBuffer> | ApiWalletDownloadInvoiceResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-
-**Returns:** `ApiResponse<ArrayBuffer> | ApiWalletDownloadInvoiceResponse`
-
-**CLI:** `hoody wallet invoices download`
-
----
-
-### `getBalance`
-
-**GET** `/api/v1/wallet/balances/general`
-
-Get general balance only
-
-```typescript
-client.api.wallet.getBalance(): Promise<ApiWalletGetBalanceResponse>
-```
-
-**Returns:** `ApiWalletGetBalanceResponse`
-
-**CLI:** `hoody wallet balance get`
+**CLI:** `hoody wallet githubbonus claim`
 
 ---
 
@@ -5864,131 +6706,35 @@ client.api.wallet.getBalances(): Promise<ApiWalletGetBalancesResponse>
 
 ---
 
-### `getCredits`
+### `getGeneralBalance`
 
-**GET** `/api/v1/wallet/balances/ai`
+**GET** `/api/v1/wallet/balances/general`
 
-Get AI balance (limit, usage, remaining)
+Get general balance only
 
 ```typescript
-client.api.wallet.getCredits(): Promise<ApiWalletGetCreditsResponse>
+client.api.wallet.getGeneralBalance(): Promise<ApiWalletGetGeneralBalanceResponse>
 ```
 
-**Returns:** `ApiWalletGetCreditsResponse`
+**Returns:** `ApiWalletGetGeneralBalanceResponse`
 
-**CLI:** `hoody wallet credits get`
+**CLI:** `hoody wallet balances general get`
 
 ---
 
-### `getCryptoPaymentIntent`
-
-**GET** `/api/v1/wallet/payments/crypto/intents/{id}`
-
-Get a crypto payment intent
-
-```typescript
-client.api.wallet.getCryptoPaymentIntent(id: string): Promise<ApiWalletGetCryptoPaymentIntentResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-
-**Returns:** `ApiWalletGetCryptoPaymentIntentResponse`
-
-**CLI:** `hoody wallet payments crypto intents get`
-
----
-
-### `getGithubBonus`
+### `getGithubBonusStatus`
 
 **GET** `/api/v1/wallet/github-bonus`
 
 Get GitHub connection bonus status
 
 ```typescript
-client.api.wallet.getGithubBonus(): Promise<ApiWalletGetGithubBonusResponse>
+client.api.wallet.getGithubBonusStatus(): Promise<ApiWalletGetGithubBonusStatusResponse>
 ```
 
-**Returns:** `ApiWalletGetGithubBonusResponse`
+**Returns:** `ApiWalletGetGithubBonusStatusResponse`
 
-**CLI:** `hoody wallet github bonus status`
-
----
-
-### `getInvoice`
-
-**GET** `/api/v1/wallet/invoices/{id}`
-
-Get invoice by ID
-
-```typescript
-client.api.wallet.getInvoice(id: string): Promise<ApiWalletGetInvoiceResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-
-**Returns:** `ApiWalletGetInvoiceResponse`
-
-**CLI:** `hoody wallet invoices get`
-
----
-
-### `getPaymentAvailability`
-
-**GET** `/api/v1/wallet/payment-availability`
-
-Get top-up payment availability (providers, bounds, AI transfer fee)
-
-```typescript
-client.api.wallet.getPaymentAvailability(): Promise<ApiWalletGetPaymentAvailabilityResponse>
-```
-
-**Returns:** `ApiWalletGetPaymentAvailabilityResponse`
-
-**CLI:** `hoody wallet payments availability get`
-
----
-
-### `getPaymentMethod`
-
-**GET** `/api/v1/wallet/payment-methods/{id}`
-
-Get payment method by ID
-
-```typescript
-client.api.wallet.getPaymentMethod(id: string): Promise<ApiWalletGetPaymentMethodResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-
-**Returns:** `ApiWalletGetPaymentMethodResponse`
-
-**CLI:** `hoody wallet payments methods get`
-
----
-
-### `getStripePaymentIntent`
-
-**GET** `/api/v1/wallet/payments/stripe/intents/{id}`
-
-Get a card payment intent
-
-```typescript
-client.api.wallet.getStripePaymentIntent(id: string): Promise<ApiWalletGetStripePaymentIntentResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-
-**Returns:** `ApiWalletGetStripePaymentIntentResponse`
-
-**CLI:** `hoody wallet payments stripe intents get`
+**CLI:** `hoody wallet githubbonus status`
 
 ---
 
@@ -6009,240 +6755,6 @@ client.api.wallet.getTransaction(id: string): Promise<ApiWalletGetTransactionRes
 **Returns:** `ApiWalletGetTransactionResponse`
 
 **CLI:** `hoody wallet transactions get`
-
----
-
-### `listCreditFees`
-
-**GET** `/api/v1/wallet/ai-fee-history`
-
-Get AI credit fee history
-
-```typescript
-client.api.wallet.listCreditFees(options?: { page?: number; limit?: number; sort_by?: "created_at" | "amount" | "transaction_id"; sort_order?: "asc" | "desc" }): Promise<ApiWalletListCreditFeesResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `page` | `number` | No | query |  |
-| `limit` | `number` | No | query |  |
-| `sort_by` | `"created_at" \| "amount" \| "transaction_id"` | No | query |  |
-| `sort_order` | `"asc" \| "desc"` | No | query |  |
-
-**Returns:** `ApiWalletListCreditFeesResponse`
-
-**CLI:** `hoody wallet credits fees list`
-
----
-
-### `listCreditFeesAll`
-
-**GET** `/api/v1/wallet/ai-fee-history`
-
-Get AI credit fee history (collect all pages)
-
-```typescript
-client.api.wallet.listCreditFeesAll(options?: { page?: number; limit?: number; sort_by?: "created_at" | "amount" | "transaction_id"; sort_order?: "asc" | "desc" }): Promise<unknown[]>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `page` | `number` | No | query |  |
-| `limit` | `number` | No | query |  |
-| `sort_by` | `"created_at" \| "amount" \| "transaction_id"` | No | query |  |
-| `sort_order` | `"asc" \| "desc"` | No | query |  |
-
-**Returns:** `unknown[]`
-
----
-
-### `listCreditFeesIterator`
-
-**GET** `/api/v1/wallet/ai-fee-history`
-
-Get AI credit fee history (async iterator)
-
-```typescript
-client.api.wallet.listCreditFeesIterator(options?: { page?: number; limit?: number; sort_by?: "created_at" | "amount" | "transaction_id"; sort_order?: "asc" | "desc" }): AsyncIterableIterator<unknown>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `page` | `number` | No | query |  |
-| `limit` | `number` | No | query |  |
-| `sort_by` | `"created_at" \| "amount" \| "transaction_id"` | No | query |  |
-| `sort_order` | `"asc" \| "desc"` | No | query |  |
-
-**Returns:** `AsyncIterableIterator<unknown>`
-
----
-
-### `listCryptoPaymentIntents`
-
-**GET** `/api/v1/wallet/payments/crypto/intents`
-
-List crypto payment intents
-
-```typescript
-client.api.wallet.listCryptoPaymentIntents(options?: { limit?: number; offset?: number }): Promise<ApiWalletListCryptoPaymentIntentsResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `limit` | `number` | No | query |  |
-| `offset` | `number` | No | query |  |
-
-**Returns:** `ApiWalletListCryptoPaymentIntentsResponse`
-
-**CLI:** `hoody wallet payments crypto intents list`
-
----
-
-### `listInvoices`
-
-**GET** `/api/v1/wallet/invoices/`
-
-Get all invoices
-
-```typescript
-client.api.wallet.listInvoices(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: "asc" | "desc"; filter?: string }): Promise<ApiWalletListInvoicesResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `page` | `number` | No | query | Page number for pagination - starts from 1 |
-| `limit` | `number` | No | query | Number of invoices to return per page - maximum 100 |
-| `sort_by` | `string` | No | query | Field to sort by. One of: id, invoice_number, status, amount, currency, issue_date, due_date, paid_date, created_at, updated_at, user_id, transaction_id. Unrecognised values fall back to created_at. |
-| `sort_order` | `"asc" \| "desc"` | No | query |  |
-| `filter` | `string` | No | query | JSON object string filtering by the sortable fields, e.g. {"status":"paid"} or {"amount":{"gte":10}}. Operators: eq, ne, gt, gte, lt, lte, like, in. Unknown fields or operators are rejected with 400. |
-
-**Returns:** `ApiWalletListInvoicesResponse`
-
-**CLI:** `hoody wallet invoices list`
-
----
-
-### `listInvoicesAll`
-
-**GET** `/api/v1/wallet/invoices/`
-
-Get all invoices (collect all pages)
-
-```typescript
-client.api.wallet.listInvoicesAll(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: "asc" | "desc"; filter?: string }): Promise<unknown[]>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `page` | `number` | No | query | Page number for pagination - starts from 1 |
-| `limit` | `number` | No | query | Number of invoices to return per page - maximum 100 |
-| `sort_by` | `string` | No | query | Field to sort by. One of: id, invoice_number, status, amount, currency, issue_date, due_date, paid_date, created_at, updated_at, user_id, transaction_id. Unrecognised values fall back to created_at. |
-| `sort_order` | `"asc" \| "desc"` | No | query |  |
-| `filter` | `string` | No | query | JSON object string filtering by the sortable fields, e.g. {"status":"paid"} or {"amount":{"gte":10}}. Operators: eq, ne, gt, gte, lt, lte, like, in. Unknown fields or operators are rejected with 400. |
-
-**Returns:** `unknown[]`
-
----
-
-### `listInvoicesIterator`
-
-**GET** `/api/v1/wallet/invoices/`
-
-Get all invoices (async iterator)
-
-```typescript
-client.api.wallet.listInvoicesIterator(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: "asc" | "desc"; filter?: string }): AsyncIterableIterator<unknown>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `page` | `number` | No | query | Page number for pagination - starts from 1 |
-| `limit` | `number` | No | query | Number of invoices to return per page - maximum 100 |
-| `sort_by` | `string` | No | query | Field to sort by. One of: id, invoice_number, status, amount, currency, issue_date, due_date, paid_date, created_at, updated_at, user_id, transaction_id. Unrecognised values fall back to created_at. |
-| `sort_order` | `"asc" \| "desc"` | No | query |  |
-| `filter` | `string` | No | query | JSON object string filtering by the sortable fields, e.g. {"status":"paid"} or {"amount":{"gte":10}}. Operators: eq, ne, gt, gte, lt, lte, like, in. Unknown fields or operators are rejected with 400. |
-
-**Returns:** `AsyncIterableIterator<unknown>`
-
----
-
-### `listPaymentMethods`
-
-**GET** `/api/v1/wallet/payment-methods/`
-
-Get all payment methods
-
-```typescript
-client.api.wallet.listPaymentMethods(options?: { page?: number; limit?: number }): Promise<ApiWalletListPaymentMethodsResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `page` | `number` | No | query | Page number, starting from 1. |
-| `limit` | `number` | No | query | Results per page. |
-
-**Returns:** `ApiWalletListPaymentMethodsResponse`
-
-**CLI:** `hoody wallet payments methods list`
-
----
-
-### `listPaymentMethodsAll`
-
-**GET** `/api/v1/wallet/payment-methods/`
-
-Get all payment methods (collect all pages)
-
-```typescript
-client.api.wallet.listPaymentMethodsAll(options?: { page?: number; limit?: number }): Promise<unknown[]>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `page` | `number` | No | query | Page number, starting from 1. |
-| `limit` | `number` | No | query | Results per page. |
-
-**Returns:** `unknown[]`
-
----
-
-### `listPaymentMethodsIterator`
-
-**GET** `/api/v1/wallet/payment-methods/`
-
-Get all payment methods (async iterator)
-
-```typescript
-client.api.wallet.listPaymentMethodsIterator(options?: { page?: number; limit?: number }): AsyncIterableIterator<unknown>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `page` | `number` | No | query | Page number, starting from 1. |
-| `limit` | `number` | No | query | Results per page. |
-
-**Returns:** `AsyncIterableIterator<unknown>`
-
----
-
-### `listStripePaymentIntents`
-
-**GET** `/api/v1/wallet/payments/stripe/intents`
-
-List card payment intents
-
-```typescript
-client.api.wallet.listStripePaymentIntents(options?: { limit?: number; offset?: number }): Promise<ApiWalletListStripePaymentIntentsResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `limit` | `number` | No | query |  |
-| `offset` | `number` | No | query |  |
-
-**Returns:** `ApiWalletListStripePaymentIntentsResponse`
-
-**CLI:** `hoody wallet payments stripe intents list`
 
 ---
 
@@ -6314,62 +6826,534 @@ client.api.wallet.listTransactionsIterator(options?: { page?: number; limit?: nu
 
 ---
 
-### `setDefaultPaymentMethod`
+## `client.api.wallet.credits` (5 methods)
 
-**PUT** `/api/v1/wallet/payment-methods/{id}/default`
+### `get`
 
-Set a payment method as default
+**GET** `/api/v1/wallet/balances/ai`
+
+Get AI balance (limit, usage, remaining)
 
 ```typescript
-client.api.wallet.setDefaultPaymentMethod(id: string): Promise<ApiWalletSetDefaultPaymentMethodResponse>
+client.api.wallet.credits.get(): Promise<ApiWalletCreditsGetResponse>
+```
+
+**Returns:** `ApiWalletCreditsGetResponse`
+
+**CLI:** `hoody wallet credits get`
+
+---
+
+### `listFees`
+
+**GET** `/api/v1/wallet/ai-fee-history`
+
+Get AI credit fee history
+
+```typescript
+client.api.wallet.credits.listFees(options?: { page?: number; limit?: number; sort_by?: "created_at" | "amount" | "transaction_id"; sort_order?: "asc" | "desc" }): Promise<ApiWalletCreditsListFeesResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
+| `page` | `number` | No | query |  |
+| `limit` | `number` | No | query |  |
+| `sort_by` | `"created_at" \| "amount" \| "transaction_id"` | No | query |  |
+| `sort_order` | `"asc" \| "desc"` | No | query |  |
 
-**Returns:** `ApiWalletSetDefaultPaymentMethodResponse`
+**Returns:** `ApiWalletCreditsListFeesResponse`
 
-**CLI:** `hoody wallet payments methods default set`
+**CLI:** `hoody wallet credits fees list`
 
 ---
 
-### `transferToCredits`
+### `listFeesAll`
+
+**GET** `/api/v1/wallet/ai-fee-history`
+
+Get AI credit fee history (collect all pages)
+
+```typescript
+client.api.wallet.credits.listFeesAll(options?: { page?: number; limit?: number; sort_by?: "created_at" | "amount" | "transaction_id"; sort_order?: "asc" | "desc" }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `page` | `number` | No | query |  |
+| `limit` | `number` | No | query |  |
+| `sort_by` | `"created_at" \| "amount" \| "transaction_id"` | No | query |  |
+| `sort_order` | `"asc" \| "desc"` | No | query |  |
+
+**Returns:** `unknown[]`
+
+---
+
+### `listFeesIterator`
+
+**GET** `/api/v1/wallet/ai-fee-history`
+
+Get AI credit fee history (async iterator)
+
+```typescript
+client.api.wallet.credits.listFeesIterator(options?: { page?: number; limit?: number; sort_by?: "created_at" | "amount" | "transaction_id"; sort_order?: "asc" | "desc" }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `page` | `number` | No | query |  |
+| `limit` | `number` | No | query |  |
+| `sort_by` | `"created_at" \| "amount" \| "transaction_id"` | No | query |  |
+| `sort_order` | `"asc" \| "desc"` | No | query |  |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+### `transfer`
 
 **POST** `/api/v1/wallet/transfers`
 
 Transfer from general balance to AI credits
 
 ```typescript
-client.api.wallet.transferToCredits(data: ApiWalletTransferToCreditsRequest): Promise<ApiWalletTransferToCreditsResponse>
+client.api.wallet.credits.transfer(data: ApiWalletCreditsTransferRequest): Promise<ApiWalletCreditsTransferResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ApiWalletTransferToCreditsRequest` | Yes | body |  |
+| `data` | `ApiWalletCreditsTransferRequest` | Yes | body |  |
 
-**Returns:** `ApiWalletTransferToCreditsResponse`
+**Returns:** `ApiWalletCreditsTransferResponse`
 
 **CLI:** `hoody wallet credits transfer`
 
 ---
 
-### `updatePaymentMethod`
+## `client.api.wallet.invoices` (6 methods)
+
+### `create`
+
+**POST** `/api/v1/wallet/invoices/generate/{id}`
+
+Generate invoice for transaction
+
+```typescript
+client.api.wallet.invoices.create(id: string): Promise<ApiWalletInvoicesCreateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+
+**Returns:** `ApiWalletInvoicesCreateResponse`
+
+**CLI:** `hoody wallet invoices create`
+
+---
+
+### `download`
+
+**GET** `/api/v1/wallet/invoices/{id}/pdf`
+
+Download invoice PDF
+
+```typescript
+client.api.wallet.invoices.download(id: string): Promise<ApiResponse<ArrayBuffer>>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+
+**Returns:** `ApiResponse<ArrayBuffer>`
+
+**CLI:** `hoody wallet invoices download`
+
+---
+
+### `get`
+
+**GET** `/api/v1/wallet/invoices/{id}`
+
+Get invoice by ID
+
+```typescript
+client.api.wallet.invoices.get(id: string): Promise<ApiWalletInvoicesGetResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+
+**Returns:** `ApiWalletInvoicesGetResponse`
+
+**CLI:** `hoody wallet invoices get`
+
+---
+
+### `list`
+
+**GET** `/api/v1/wallet/invoices/`
+
+Get all invoices
+
+```typescript
+client.api.wallet.invoices.list(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: "asc" | "desc"; filter?: string }): Promise<ApiWalletInvoicesListResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `page` | `number` | No | query | Page number for pagination - starts from 1 |
+| `limit` | `number` | No | query | Number of invoices to return per page - maximum 100 |
+| `sort_by` | `string` | No | query | Field to sort by. One of: id, invoice_number, status, amount, currency, issue_date, due_date, paid_date, created_at, updated_at, user_id, transaction_id. Unrecognised values fall back to created_at. |
+| `sort_order` | `"asc" \| "desc"` | No | query |  |
+| `filter` | `string` | No | query | JSON object string filtering by the sortable fields, e.g. {"status":"paid"} or {"amount":{"gte":10}}. Operators: eq, ne, gt, gte, lt, lte, like, in. Unknown fields or operators are rejected with 400. |
+
+**Returns:** `ApiWalletInvoicesListResponse`
+
+**CLI:** `hoody wallet invoices list`
+
+---
+
+### `listAll`
+
+**GET** `/api/v1/wallet/invoices/`
+
+Get all invoices (collect all pages)
+
+```typescript
+client.api.wallet.invoices.listAll(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: "asc" | "desc"; filter?: string }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `page` | `number` | No | query | Page number for pagination - starts from 1 |
+| `limit` | `number` | No | query | Number of invoices to return per page - maximum 100 |
+| `sort_by` | `string` | No | query | Field to sort by. One of: id, invoice_number, status, amount, currency, issue_date, due_date, paid_date, created_at, updated_at, user_id, transaction_id. Unrecognised values fall back to created_at. |
+| `sort_order` | `"asc" \| "desc"` | No | query |  |
+| `filter` | `string` | No | query | JSON object string filtering by the sortable fields, e.g. {"status":"paid"} or {"amount":{"gte":10}}. Operators: eq, ne, gt, gte, lt, lte, like, in. Unknown fields or operators are rejected with 400. |
+
+**Returns:** `unknown[]`
+
+---
+
+### `listIterator`
+
+**GET** `/api/v1/wallet/invoices/`
+
+Get all invoices (async iterator)
+
+```typescript
+client.api.wallet.invoices.listIterator(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: "asc" | "desc"; filter?: string }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `page` | `number` | No | query | Page number for pagination - starts from 1 |
+| `limit` | `number` | No | query | Number of invoices to return per page - maximum 100 |
+| `sort_by` | `string` | No | query | Field to sort by. One of: id, invoice_number, status, amount, currency, issue_date, due_date, paid_date, created_at, updated_at, user_id, transaction_id. Unrecognised values fall back to created_at. |
+| `sort_order` | `"asc" \| "desc"` | No | query |  |
+| `filter` | `string` | No | query | JSON object string filtering by the sortable fields, e.g. {"status":"paid"} or {"amount":{"gte":10}}. Operators: eq, ne, gt, gte, lt, lte, like, in. Unknown fields or operators are rejected with 400. |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+## `client.api.wallet.payments` (15 methods)
+
+### `createCardCheckout`
+
+**POST** `/api/v1/wallet/payments/card/checkout`
+
+Start a card payment (card checkout)
+
+```typescript
+client.api.wallet.payments.createCardCheckout(data: ApiWalletPaymentsCreateCardCheckoutRequest): Promise<ApiWalletPaymentsCreateCardCheckoutResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ApiWalletPaymentsCreateCardCheckoutRequest` | Yes | body |  |
+
+**Returns:** `ApiWalletPaymentsCreateCardCheckoutResponse`
+
+**CLI:** `hoody wallet payments card checkout create`
+
+---
+
+### `createCryptoInvoice`
+
+**POST** `/api/v1/wallet/payments/crypto/invoice`
+
+Start a crypto payment (hosted invoice)
+
+```typescript
+client.api.wallet.payments.createCryptoInvoice(data: ApiWalletPaymentsCreateCryptoInvoiceRequest): Promise<ApiWalletPaymentsCreateCryptoInvoiceResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ApiWalletPaymentsCreateCryptoInvoiceRequest` | Yes | body |  |
+
+**Returns:** `ApiWalletPaymentsCreateCryptoInvoiceResponse`
+
+**CLI:** `hoody wallet payments crypto invoices create`
+
+---
+
+### `createMethod`
+
+**POST** `/api/v1/wallet/payment-methods/`
+
+Add a new payment method
+
+```typescript
+client.api.wallet.payments.createMethod(data: ApiWalletPaymentsCreateMethodRequest): Promise<ApiWalletPaymentsCreateMethodResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ApiWalletPaymentsCreateMethodRequest` | Yes | body |  |
+
+**Returns:** `ApiWalletPaymentsCreateMethodResponse`
+
+**CLI:** `hoody wallet payments methods create`
+
+---
+
+### `deleteMethod`
+
+**DELETE** `/api/v1/wallet/payment-methods/{id}`
+
+Delete a payment method
+
+```typescript
+client.api.wallet.payments.deleteMethod(id: string): Promise<ApiWalletPaymentsDeleteMethodResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+
+**Returns:** `ApiWalletPaymentsDeleteMethodResponse`
+
+**CLI:** `hoody wallet payments methods delete`
+
+---
+
+### `getAvailability`
+
+**GET** `/api/v1/wallet/payment-availability`
+
+Get top-up payment availability (providers, bounds, AI transfer fee)
+
+```typescript
+client.api.wallet.payments.getAvailability(): Promise<ApiWalletPaymentsGetAvailabilityResponse>
+```
+
+**Returns:** `ApiWalletPaymentsGetAvailabilityResponse`
+
+**CLI:** `hoody wallet payments availability get`
+
+---
+
+### `getCardIntent`
+
+**GET** `/api/v1/wallet/payments/card/intents/{id}`
+
+Get a card payment intent
+
+```typescript
+client.api.wallet.payments.getCardIntent(id: string): Promise<ApiWalletPaymentsGetCardIntentResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+
+**Returns:** `ApiWalletPaymentsGetCardIntentResponse`
+
+**CLI:** `hoody wallet payments card intents get`
+
+---
+
+### `getCryptoIntent`
+
+**GET** `/api/v1/wallet/payments/crypto/intents/{id}`
+
+Get a crypto payment intent
+
+```typescript
+client.api.wallet.payments.getCryptoIntent(id: string): Promise<ApiWalletPaymentsGetCryptoIntentResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+
+**Returns:** `ApiWalletPaymentsGetCryptoIntentResponse`
+
+**CLI:** `hoody wallet payments crypto intents get`
+
+---
+
+### `getMethod`
+
+**GET** `/api/v1/wallet/payment-methods/{id}`
+
+Get payment method by ID
+
+```typescript
+client.api.wallet.payments.getMethod(id: string): Promise<ApiWalletPaymentsGetMethodResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+
+**Returns:** `ApiWalletPaymentsGetMethodResponse`
+
+**CLI:** `hoody wallet payments methods get`
+
+---
+
+### `listCardIntents`
+
+**GET** `/api/v1/wallet/payments/card/intents`
+
+List card payment intents
+
+```typescript
+client.api.wallet.payments.listCardIntents(options?: { limit?: number; offset?: number }): Promise<ApiWalletPaymentsListCardIntentsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `limit` | `number` | No | query |  |
+| `offset` | `number` | No | query |  |
+
+**Returns:** `ApiWalletPaymentsListCardIntentsResponse`
+
+**CLI:** `hoody wallet payments card intents list`
+
+---
+
+### `listCryptoIntents`
+
+**GET** `/api/v1/wallet/payments/crypto/intents`
+
+List crypto payment intents
+
+```typescript
+client.api.wallet.payments.listCryptoIntents(options?: { limit?: number; offset?: number }): Promise<ApiWalletPaymentsListCryptoIntentsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `limit` | `number` | No | query |  |
+| `offset` | `number` | No | query |  |
+
+**Returns:** `ApiWalletPaymentsListCryptoIntentsResponse`
+
+**CLI:** `hoody wallet payments crypto intents list`
+
+---
+
+### `listMethods`
+
+**GET** `/api/v1/wallet/payment-methods/`
+
+Get all payment methods
+
+```typescript
+client.api.wallet.payments.listMethods(options?: { page?: number; limit?: number }): Promise<ApiWalletPaymentsListMethodsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `page` | `number` | No | query | Page number, starting from 1. |
+| `limit` | `number` | No | query | Results per page. |
+
+**Returns:** `ApiWalletPaymentsListMethodsResponse`
+
+**CLI:** `hoody wallet payments methods list`
+
+---
+
+### `listMethodsAll`
+
+**GET** `/api/v1/wallet/payment-methods/`
+
+Get all payment methods (collect all pages)
+
+```typescript
+client.api.wallet.payments.listMethodsAll(options?: { page?: number; limit?: number }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `page` | `number` | No | query | Page number, starting from 1. |
+| `limit` | `number` | No | query | Results per page. |
+
+**Returns:** `unknown[]`
+
+---
+
+### `listMethodsIterator`
+
+**GET** `/api/v1/wallet/payment-methods/`
+
+Get all payment methods (async iterator)
+
+```typescript
+client.api.wallet.payments.listMethodsIterator(options?: { page?: number; limit?: number }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `page` | `number` | No | query | Page number, starting from 1. |
+| `limit` | `number` | No | query | Results per page. |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+### `setDefaultMethod`
+
+**PUT** `/api/v1/wallet/payment-methods/{id}/default`
+
+Set a payment method as default
+
+```typescript
+client.api.wallet.payments.setDefaultMethod(id: string): Promise<ApiWalletPaymentsSetDefaultMethodResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+
+**Returns:** `ApiWalletPaymentsSetDefaultMethodResponse`
+
+**CLI:** `hoody wallet payments methods default set`
+
+---
+
+### `updateMethod`
 
 **PUT** `/api/v1/wallet/payment-methods/{id}`
 
 Update a payment method
 
 ```typescript
-client.api.wallet.updatePaymentMethod(id: string, data: ApiWalletUpdatePaymentMethodRequest): Promise<ApiWalletUpdatePaymentMethodResponse>
+client.api.wallet.payments.updateMethod(id: string, data: ApiWalletPaymentsUpdateMethodRequest): Promise<ApiWalletPaymentsUpdateMethodResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `data` | `ApiWalletUpdatePaymentMethodRequest` | Yes | body |  |
+| `data` | `ApiWalletPaymentsUpdateMethodRequest` | Yes | body |  |
 
-**Returns:** `ApiWalletUpdatePaymentMethodResponse`
+**Returns:** `ApiWalletPaymentsUpdateMethodResponse`
 
 **CLI:** `hoody wallet payments methods update`
 

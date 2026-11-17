@@ -1,6 +1,6 @@
 # `sqlite` — 42 methods
 
-**Version:** 1.0.0-beta.17
+**Version:** 1.0.1
 **Accessor:** `client.sqlite`
 
 ```typescript
@@ -267,7 +267,7 @@ client.sqlite.kit.getHealth(options?: { verbose?: boolean }): Promise<SqliteKitG
 
 ---
 
-## `client.sqlite.kv` (28 methods)
+## `client.sqlite.kv` (22 methods)
 
 ### `clearTtl`
 
@@ -276,7 +276,7 @@ client.sqlite.kit.getHealth(options?: { verbose?: boolean }): Promise<SqliteKitG
 Remove a key's TTL
 
 ```typescript
-client.sqlite.kv.clearTtl(key: string, options: { db: string; table?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; IfMatch?: string; IdempotencyKey?: string }): Promise<SqliteKvClearTtlResponse>
+client.sqlite.kv.clearTtl(key: string, options: { db: string; table?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; ifMatch?: string; idempotencyKey?: string }): Promise<SqliteKvClearTtlResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -287,37 +287,12 @@ client.sqlite.kv.clearTtl(key: string, options: { db: string; table?: string; hi
 | `history` | `boolean` | No | query | Store this write's value in history; false records only that the write happened, not what it wrote |
 | `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing. The legacy alias `auto_create` is still accepted and means the same thing; the two must agree when both are sent. |
 | `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-| `IfMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
-| `IdempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key (24 h). |
+| `ifMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
+| `idempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key. By default a receipt is kept for at most 24 h; the oldest are evicted early when the per-database receipt count or size budget is exceeded. The time and both budgets are configurable. After eviction a retry with the same key is applied again. |
 
 **Returns:** `SqliteKvClearTtlResponse`
 
 **CLI:** `hoody kv ttl clear`
-
----
-
-### `compareTableSnapshots`
-
-**GET** `/api/v1/sqlite/kv/diff`
-
-Compare table snapshots
-
-```typescript
-client.sqlite.kv.compareTableSnapshots(options: { db: string; from: number; to: number; table?: string; keys?: string; timeout?: number }): Promise<SqliteKvCompareTableSnapshotsResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `db` | `string` | Yes | query | Database file path |
-| `from` | `number` | Yes | query | Starting timestamp (Unix seconds), at least 1 and earlier than to |
-| `to` | `number` | Yes | query | Ending timestamp (Unix seconds), later than from and not in the future |
-| `table` | `string` | No | query | Custom table name |
-| `keys` | `string` | No | query | Comma-separated list of keys to compare (optional). When given, exactly these keys are reconstructed (duplicates collapsed) |
-| `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-
-**Returns:** `SqliteKvCompareTableSnapshotsResponse`
-
-**CLI:** `hoody kv table snapshots compare`
 
 ---
 
@@ -328,7 +303,7 @@ client.sqlite.kv.compareTableSnapshots(options: { db: string; from: number; to: 
 Atomic decrement
 
 ```typescript
-client.sqlite.kv.decrement(key: string, options: { db: string; table?: string; delta?: number; path?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; IfMatch?: string; IdempotencyKey?: string }): Promise<SqliteKvDecrementResponse>
+client.sqlite.kv.decrement(key: string, options: { db: string; table?: string; delta?: number; path?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; ifMatch?: string; idempotencyKey?: string }): Promise<SqliteKvDecrementResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -341,8 +316,8 @@ client.sqlite.kv.decrement(key: string, options: { db: string; table?: string; d
 | `history` | `boolean` | No | query | Store this write's value in history; false records only that the write happened, not what it wrote |
 | `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing. The legacy alias `auto_create` is still accepted and means the same thing; the two must agree when both are sent. |
 | `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-| `IfMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
-| `IdempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key (24 h). |
+| `ifMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
+| `idempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key. By default a receipt is kept for at most 24 h; the oldest are evicted early when the per-database receipt count or size budget is exceeded. The time and both budgets are configurable. After eviction a retry with the same key is applied again. |
 
 **Returns:** `SqliteKvDecrementResponse`
 
@@ -357,7 +332,7 @@ client.sqlite.kv.decrement(key: string, options: { db: string; table?: string; d
 Delete key
 
 ```typescript
-client.sqlite.kv.delete(key: string, options: { db: string; table?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; IfMatch?: string; IdempotencyKey?: string }): Promise<SqliteKvDeleteResponse>
+client.sqlite.kv.delete(key: string, options: { db: string; table?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; ifMatch?: string; idempotencyKey?: string }): Promise<SqliteKvDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -368,8 +343,8 @@ client.sqlite.kv.delete(key: string, options: { db: string; table?: string; hist
 | `history` | `boolean` | No | query | Store this write's value in history; false records only that the write happened, not what it wrote |
 | `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing. The legacy alias `auto_create` is still accepted and means the same thing; the two must agree when both are sent. |
 | `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-| `IfMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
-| `IdempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key (24 h). |
+| `ifMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
+| `idempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key. By default a receipt is kept for at most 24 h; the oldest are evicted early when the per-database receipt count or size budget is exceeded. The time and both budgets are configurable. After eviction a retry with the same key is applied again. |
 
 **Returns:** `SqliteKvDeleteResponse`
 
@@ -384,7 +359,7 @@ client.sqlite.kv.delete(key: string, options: { db: string; table?: string; hist
 Batch delete multiple keys
 
 ```typescript
-client.sqlite.kv.deleteMany(data: SqliteKvDeleteManyRequest, options: { db: string; table?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; IdempotencyKey?: string }): Promise<SqliteKvDeleteManyResponse>
+client.sqlite.kv.deleteMany(data: SqliteKvDeleteManyRequest, options: { db: string; table?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; idempotencyKey?: string }): Promise<SqliteKvDeleteManyResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -395,7 +370,7 @@ client.sqlite.kv.deleteMany(data: SqliteKvDeleteManyRequest, options: { db: stri
 | `history` | `boolean` | No | query | Store this write's value in history; false records only that the write happened, not what it wrote |
 | `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing. The legacy alias `auto_create` is still accepted and means the same thing; the two must agree when both are sent. |
 | `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-| `IdempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key (24 h). |
+| `idempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key. By default a receipt is kept for at most 24 h; the oldest are evicted early when the per-database receipt count or size budget is exceeded. The time and both budgets are configurable. After eviction a retry with the same key is applied again. |
 
 **Returns:** `SqliteKvDeleteManyResponse`
 
@@ -418,7 +393,7 @@ client.sqlite.kv.exists(key: string, options: KvExistsOptions, templateVars?: Ex
 | `key` | `string` | Yes | path | Key name |
 | `db` | `string` | Yes | query | Database file path or directory |
 | `table` | `string` | No | query | Custom table name |
-| `IfNoneMatch` | `string` | No | header | Answers 304 while the key's current ETag matches. |
+| `ifNoneMatch` | `string` | No | header | Answers 304 while the key's current ETag matches. |
 | `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
 
 **Returns:** `boolean`
@@ -434,7 +409,7 @@ client.sqlite.kv.exists(key: string, options: KvExistsOptions, templateVars?: Ex
 Get value by key
 
 ```typescript
-client.sqlite.kv.get(key: string, options: { db: string; table?: string; path?: string; at_timestamp?: number; rebuild?: boolean; timeout?: number; IfNoneMatch?: string }): Promise<ApiResponse<ArrayBuffer> | SqliteKvGetResponse>
+client.sqlite.kv.get(key: string, options: { db: string; table?: string; path?: string; at_timestamp?: number; rebuild?: boolean; timeout?: number; ifNoneMatch?: string }): Promise<ApiResponse<ArrayBuffer> | SqliteKvGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -446,7 +421,7 @@ client.sqlite.kv.get(key: string, options: { db: string; table?: string; path?: 
 | `at_timestamp` | `number` | No | query | Unix timestamp. Returns the value the key held at that moment, in a JSON envelope instead of the current value. The value is reconstructed from the key's recorded history. When no recorded write establishes it, the current value is returned if it was already in place at that moment: with op_number 0 when the key has recorded history, and without op_number or op_timestamp when it has none (for example, a key written through SQL). A write made with history=false that leaves the value at that moment unknown answers 409 TIME_TRAVEL_CHAIN_GAP. 0 or omitted reads the current value; a time in the future is rejected with 400. A directory (directory mode) is rejected with 400 in this mode. |
 | `rebuild` | `boolean` | No | query | Directory mode only: clear the directory's cached file information (this directory only, not its subdirectories), then read the key. Ignored with at_timestamp. |
 | `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-| `IfNoneMatch` | `string` | No | header | Answers 304 while the key's current ETag matches. |
+| `ifNoneMatch` | `string` | No | header | Answers 304 while the key's current ETag matches. |
 
 **Returns:** `ApiResponse<ArrayBuffer> | SqliteKvGetResponse`
 
@@ -461,7 +436,7 @@ client.sqlite.kv.get(key: string, options: { db: string; table?: string; path?: 
 Get a key's entry
 
 ```typescript
-client.sqlite.kv.getEntry(key: string, options: { db: string; table?: string; timeout?: number; IfNoneMatch?: string }): Promise<SqliteKvGetEntryResponse>
+client.sqlite.kv.getEntry(key: string, options: { db: string; table?: string; timeout?: number; ifNoneMatch?: string }): Promise<SqliteKvGetEntryResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -470,7 +445,7 @@ client.sqlite.kv.getEntry(key: string, options: { db: string; table?: string; ti
 | `db` | `string` | Yes | query | Database file path |
 | `table` | `string` | No | query | Custom table name |
 | `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-| `IfNoneMatch` | `string` | No | header | Answers 304 while the key's current ETag matches. |
+| `ifNoneMatch` | `string` | No | header | Answers 304 while the key's current ETag matches. |
 
 **Returns:** `SqliteKvGetEntryResponse`
 
@@ -525,31 +500,6 @@ client.sqlite.kv.getSnapshot(key: string, options: { db: string; op_number: numb
 
 ---
 
-### `getTableSnapshot`
-
-**GET** `/api/v1/sqlite/kv/snapshot`
-
-Get table snapshot at timestamp
-
-```typescript
-client.sqlite.kv.getTableSnapshot(options: { db: string; timestamp: number; table?: string; limit?: number; prefix?: string; timeout?: number }): Promise<SqliteKvGetTableSnapshotResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `db` | `string` | Yes | query | Database file path |
-| `timestamp` | `number` | Yes | query | Unix timestamp (seconds) to reconstruct, at least 1 and not in the future |
-| `table` | `string` | No | query | Custom table name |
-| `limit` | `number` | No | query | Maximum number of keys to return. Values above 1000 are treated as 1000; 0 returns every key found. Either way key discovery is bounded: when it stops early, candidate_truncated is true and keys may be missing; narrow with prefix |
-| `prefix` | `string` | No | query | Filter keys by prefix |
-| `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-
-**Returns:** `SqliteKvGetTableSnapshotResponse`
-
-**CLI:** `hoody kv table snapshots get`
-
----
-
 ### `increment`
 
 **POST** `/api/v1/sqlite/kv/{key}/incr`
@@ -557,7 +507,7 @@ client.sqlite.kv.getTableSnapshot(options: { db: string; timestamp: number; tabl
 Atomic increment
 
 ```typescript
-client.sqlite.kv.increment(key: string, options: { db: string; table?: string; delta?: number; path?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; IfMatch?: string; IdempotencyKey?: string }): Promise<SqliteKvIncrementResponse>
+client.sqlite.kv.increment(key: string, options: { db: string; table?: string; delta?: number; path?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; ifMatch?: string; idempotencyKey?: string }): Promise<SqliteKvIncrementResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -570,8 +520,8 @@ client.sqlite.kv.increment(key: string, options: { db: string; table?: string; d
 | `history` | `boolean` | No | query | Store this write's value in history; false records only that the write happened, not what it wrote |
 | `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing. The legacy alias `auto_create` is still accepted and means the same thing; the two must agree when both are sent. |
 | `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-| `IfMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
-| `IdempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key (24 h). |
+| `ifMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
+| `idempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key. By default a receipt is kept for at most 24 h; the oldest are evicted early when the per-database receipt count or size budget is exceeded. The time and both budgets are configurable. After eviction a retry with the same key is applied again. |
 
 **Returns:** `SqliteKvIncrementResponse`
 
@@ -595,9 +545,9 @@ client.sqlite.kv.list(options: { db: string; table?: string; prefix?: string; li
 | `table` | `string` | No | query | Custom table name |
 | `prefix` | `string` | No | query | Filter keys by prefix |
 | `limit` | `number` | No | query | Maximum number of results. Values above 1000 are treated as 1000; a negative value is rejected with 400. 0 returns an empty page, except with at_timestamp, where it means no limit |
-| `offset` | `number` | No | query | Skip N results for pagination. Honoured for both the regular listing and the at_timestamp listing; results are ordered by key in both cases. A negative value is rejected with 400. Keys written or deleted between two requests shift later pages; use after to page without skipping or repeating keys |
+| `offset` | `number` | No | query | Skip N results for pagination. Honoured for both the regular listing and the at_timestamp listing; results are ordered by key in both cases. A negative value is rejected with 400. Keys written or deleted between two requests shift later pages; use after to page without skipping or repeating keys (not available with at_timestamp) |
 | `after` | `string` | No | query | Cursor: list only keys that sort after this one (byte order, exclusive). Pass the previous page's next_after; a key written or deleted elsewhere between two pages never makes another key be skipped or repeated. The value is used as given, so any string works, including a key that no longer exists. Combined with offset greater than 0 or with at_timestamp it is rejected with 400 |
-| `at_timestamp` | `number` | No | query | Unix timestamp for time-travel LIST: returns the keys as they stood at that moment, in a different response envelope. 0 or omitted lists the current keys; a time in the future is rejected with 400. A directory (directory mode) is rejected with 400 in this mode |
+| `at_timestamp` | `number` | No | query | Unix timestamp for time-travel LIST: returns the keys as they stood at that moment, in a different response envelope. 0 or omitted lists the current keys; a time in the future is rejected with 400. This listing pages by offset only: after is rejected with 400 and the response carries no next_after or has_more, so request limit and offset until an empty page, and check has_gaps and candidate_truncated. A directory (directory mode) is rejected with 400 in this mode |
 | `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
 
 **Returns:** `SqliteKvListResponse`
@@ -622,9 +572,9 @@ client.sqlite.kv.listAll(options: { db: string; table?: string; prefix?: string;
 | `table` | `string` | No | query | Custom table name |
 | `prefix` | `string` | No | query | Filter keys by prefix |
 | `limit` | `number` | No | query | Maximum number of results. Values above 1000 are treated as 1000; a negative value is rejected with 400. 0 returns an empty page, except with at_timestamp, where it means no limit |
-| `offset` | `number` | No | query | Skip N results for pagination. Honoured for both the regular listing and the at_timestamp listing; results are ordered by key in both cases. A negative value is rejected with 400. Keys written or deleted between two requests shift later pages; use after to page without skipping or repeating keys |
+| `offset` | `number` | No | query | Skip N results for pagination. Honoured for both the regular listing and the at_timestamp listing; results are ordered by key in both cases. A negative value is rejected with 400. Keys written or deleted between two requests shift later pages; use after to page without skipping or repeating keys (not available with at_timestamp) |
 | `after` | `string` | No | query | Cursor: list only keys that sort after this one (byte order, exclusive). Pass the previous page's next_after; a key written or deleted elsewhere between two pages never makes another key be skipped or repeated. The value is used as given, so any string works, including a key that no longer exists. Combined with offset greater than 0 or with at_timestamp it is rejected with 400 |
-| `at_timestamp` | `number` | No | query | Unix timestamp for time-travel LIST: returns the keys as they stood at that moment, in a different response envelope. 0 or omitted lists the current keys; a time in the future is rejected with 400. A directory (directory mode) is rejected with 400 in this mode |
+| `at_timestamp` | `number` | No | query | Unix timestamp for time-travel LIST: returns the keys as they stood at that moment, in a different response envelope. 0 or omitted lists the current keys; a time in the future is rejected with 400. This listing pages by offset only: after is rejected with 400 and the response carries no next_after or has_more, so request limit and offset until an empty page, and check has_gaps and candidate_truncated. A directory (directory mode) is rejected with 400 in this mode |
 | `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
 
 **Returns:** `unknown[]`
@@ -748,99 +698,12 @@ client.sqlite.kv.listIterator(options: { db: string; table?: string; prefix?: st
 | `table` | `string` | No | query | Custom table name |
 | `prefix` | `string` | No | query | Filter keys by prefix |
 | `limit` | `number` | No | query | Maximum number of results. Values above 1000 are treated as 1000; a negative value is rejected with 400. 0 returns an empty page, except with at_timestamp, where it means no limit |
-| `offset` | `number` | No | query | Skip N results for pagination. Honoured for both the regular listing and the at_timestamp listing; results are ordered by key in both cases. A negative value is rejected with 400. Keys written or deleted between two requests shift later pages; use after to page without skipping or repeating keys |
+| `offset` | `number` | No | query | Skip N results for pagination. Honoured for both the regular listing and the at_timestamp listing; results are ordered by key in both cases. A negative value is rejected with 400. Keys written or deleted between two requests shift later pages; use after to page without skipping or repeating keys (not available with at_timestamp) |
 | `after` | `string` | No | query | Cursor: list only keys that sort after this one (byte order, exclusive). Pass the previous page's next_after; a key written or deleted elsewhere between two pages never makes another key be skipped or repeated. The value is used as given, so any string works, including a key that no longer exists. Combined with offset greater than 0 or with at_timestamp it is rejected with 400 |
-| `at_timestamp` | `number` | No | query | Unix timestamp for time-travel LIST: returns the keys as they stood at that moment, in a different response envelope. 0 or omitted lists the current keys; a time in the future is rejected with 400. A directory (directory mode) is rejected with 400 in this mode |
+| `at_timestamp` | `number` | No | query | Unix timestamp for time-travel LIST: returns the keys as they stood at that moment, in a different response envelope. 0 or omitted lists the current keys; a time in the future is rejected with 400. This listing pages by offset only: after is rejected with 400 and the response carries no next_after or has_more, so request limit and offset until an empty page, and check has_gaps and candidate_truncated. A directory (directory mode) is rejected with 400 in this mode |
 | `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
 
 **Returns:** `AsyncIterableIterator<unknown>`
-
----
-
-### `pop`
-
-**POST** `/api/v1/sqlite/kv/{key}/pop`
-
-Remove from array end
-
-```typescript
-client.sqlite.kv.pop(key: string, options: { db: string; table?: string; path?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; IfMatch?: string; IdempotencyKey?: string }): Promise<SqliteKvPopResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `key` | `string` | Yes | path | Key name |
-| `db` | `string` | Yes | query | Database file path |
-| `table` | `string` | No | query | Custom table name |
-| `path` | `string` | No | query | JSON path to nested array |
-| `history` | `boolean` | No | query | Store this write's value in history; false records only that the write happened, not what it wrote |
-| `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing. The legacy alias `auto_create` is still accepted and means the same thing; the two must agree when both are sent. |
-| `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-| `IfMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
-| `IdempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key (24 h). |
-
-**Returns:** `SqliteKvPopResponse`
-
-**CLI:** `hoody kv arrays pop`
-
----
-
-### `push`
-
-**POST** `/api/v1/sqlite/kv/{key}/push`
-
-Append to array
-
-```typescript
-client.sqlite.kv.push(key: string, data: SqliteKvPushRequest, options: { db: string; table?: string; path?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; IfMatch?: string; IdempotencyKey?: string }): Promise<SqliteKvPushResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `key` | `string` | Yes | path | Key name |
-| `data` | `SqliteKvPushRequest` | Yes | body |  |
-| `db` | `string` | Yes | query | Database file path |
-| `table` | `string` | No | query | Custom table name |
-| `path` | `string` | No | query | JSON path to nested array |
-| `history` | `boolean` | No | query | Store this write's value in history; false records only that the write happened, not what it wrote |
-| `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing. The legacy alias `auto_create` is still accepted and means the same thing; the two must agree when both are sent. |
-| `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-| `IfMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
-| `IdempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key (24 h). |
-
-**Returns:** `SqliteKvPushResponse`
-
-**CLI:** `hoody kv arrays push`
-
----
-
-### `remove`
-
-**POST** `/api/v1/sqlite/kv/{key}/remove`
-
-Remove array element
-
-```typescript
-client.sqlite.kv.remove(key: string, data: SqliteKvRemoveRequest | undefined, options: { db: string; table?: string; path?: string; index?: number; history?: boolean; create_db_if_missing?: boolean; timeout?: number; IfMatch?: string; IdempotencyKey?: string }): Promise<SqliteKvRemoveResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `key` | `string` | Yes | path | Key name |
-| `data` | `SqliteKvRemoveRequest \| undefined` | Yes | body |  |
-| `db` | `string` | Yes | query | Database file path |
-| `table` | `string` | No | query | Custom table name |
-| `path` | `string` | No | query | JSON path to nested array |
-| `index` | `number` | No | query | Array index to remove. Send this or a body value; with neither the request is a 400 |
-| `history` | `boolean` | No | query | Store this write's value in history; false records only that the write happened, not what it wrote |
-| `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing. The legacy alias `auto_create` is still accepted and means the same thing; the two must agree when both are sent. |
-| `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-| `IfMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
-| `IdempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key (24 h). |
-
-**Returns:** `SqliteKvRemoveResponse`
-
-**CLI:** `hoody kv arrays remove`
 
 ---
 
@@ -851,7 +714,7 @@ client.sqlite.kv.remove(key: string, data: SqliteKvRemoveRequest | undefined, op
 Rollback key operations
 
 ```typescript
-client.sqlite.kv.rollback(key: string, options: { db: string; table?: string; steps?: number; create_db_if_missing?: boolean; timeout?: number; IdempotencyKey?: string }): Promise<SqliteKvRollbackResponse>
+client.sqlite.kv.rollback(key: string, options: { db: string; table?: string; steps?: number; create_db_if_missing?: boolean; timeout?: number; idempotencyKey?: string }): Promise<SqliteKvRollbackResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -862,39 +725,11 @@ client.sqlite.kv.rollback(key: string, options: { db: string; table?: string; st
 | `steps` | `number` | No | query | Number of operations to undo, 1 to 50000 |
 | `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing. The legacy alias `auto_create` is still accepted and means the same thing; the two must agree when both are sent. |
 | `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-| `IdempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key (24 h). |
+| `idempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key. By default a receipt is kept for at most 24 h; the oldest are evicted early when the per-database receipt count or size budget is exceeded. The time and both budgets are configurable. After eviction a retry with the same key is applied again. |
 
 **Returns:** `SqliteKvRollbackResponse`
 
 **CLI:** `hoody kv rollback`
-
----
-
-### `rollbackTable`
-
-**POST** `/api/v1/sqlite/kv/rollback`
-
-Rollback entire table
-
-```typescript
-client.sqlite.kv.rollbackTable(data: SqliteKvRollbackTableRequest | undefined, options: { db: string; to_timestamp: number; table?: string; dry_run?: boolean; confirm?: string; create_db_if_missing?: boolean; timeout?: number; IdempotencyKey?: string }): Promise<SqliteKvRollbackTableResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `SqliteKvRollbackTableRequest \| undefined` | Yes | body |  |
-| `db` | `string` | Yes | query | Database file path |
-| `to_timestamp` | `number` | Yes | query | Target timestamp (Unix seconds), at least 1 and not in the future |
-| `table` | `string` | No | query | Custom table name |
-| `dry_run` | `boolean` | No | query | Preview changes without applying |
-| `confirm` | `string` | No | query | Must be 'yes' to execute actual rollback |
-| `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing. The legacy alias `auto_create` is still accepted and means the same thing; the two must agree when both are sent. |
-| `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-| `IdempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key (24 h). |
-
-**Returns:** `SqliteKvRollbackTableResponse`
-
-**CLI:** `hoody kv table rollback`
 
 ---
 
@@ -905,7 +740,7 @@ client.sqlite.kv.rollbackTable(data: SqliteKvRollbackTableRequest | undefined, o
 Set value for key
 
 ```typescript
-client.sqlite.kv.set(key: string, data: SqliteKvSetRequest, options: { db: string; table?: string; path?: string; ttl?: number; if_match?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; IfMatch?: string; IfNoneMatch?: string; IdempotencyKey?: string; contentType?: 'application/octet-stream' }): Promise<SqliteKvSetResponse>
+client.sqlite.kv.set(key: string, data: SqliteKvSetRequest, options: { db: string; table?: string; path?: string; ttl?: number; ifValue?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; ifMatch?: string; ifNoneMatch?: string; idempotencyKey?: string; contentType?: 'application/octet-stream' }): Promise<SqliteKvSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -916,13 +751,13 @@ client.sqlite.kv.set(key: string, data: SqliteKvSetRequest, options: { db: strin
 | `table` | `string` | No | query | Custom table name |
 | `path` | `string` | No | query | JSON path for nested value update |
 | `ttl` | `number` | No | query | Time-to-live in seconds (SQLite mode only; a non-zero ttl against a directory-mode store is rejected with 400) |
-| `if_match` | `string` | No | query | Current value for compare-and-swap (SQLite mode only; rejected with 400 against a directory-mode store) |
+| `ifValue` | `string` | No | query | Compare-and-swap: write only if the key's current value equals this. Against a JSON value it is read as one JSON value and compared as a value: any spacing and key order, numbers as written (1 and 1.0 differ). Text that is not valid JSON is the string with that text, so v1 matches the stored string v1; a string whose text is itself JSON (such as 5 or true) is sent JSON-quoted. Against a text or binary value it compares byte for byte. SQLite mode only; rejected with 400 against a directory-mode store. Cannot be combined with an If-Match or If-None-Match header (400) |
 | `history` | `boolean` | No | query | Store this write's value in history; false records only that the write happened, not what it wrote |
 | `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing. The legacy alias `auto_create` is still accepted and means the same thing; the two must agree when both are sent. |
 | `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-| `IfMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
-| `IfNoneMatch` | `string` | No | header | Set to * to write only if the key does not exist yet. |
-| `IdempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key (24 h). |
+| `ifMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
+| `ifNoneMatch` | `string` | No | header | Set to * to write only if the key does not exist yet. |
+| `idempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key. By default a receipt is kept for at most 24 h; the oldest are evicted early when the per-database receipt count or size budget is exceeded. The time and both budgets are configurable. After eviction a retry with the same key is applied again. |
 | `contentType` | `'application/octet-stream'` | No | query |  |
 
 **Returns:** `SqliteKvSetResponse`
@@ -938,7 +773,7 @@ client.sqlite.kv.set(key: string, data: SqliteKvSetRequest, options: { db: strin
 Batch set multiple keys
 
 ```typescript
-client.sqlite.kv.setMany(data: SqliteKvSetManyRequest, options: { db: string; table?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; IdempotencyKey?: string }): Promise<SqliteKvSetManyResponse>
+client.sqlite.kv.setMany(data: SqliteKvSetManyRequest, options: { db: string; table?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; idempotencyKey?: string }): Promise<SqliteKvSetManyResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -949,7 +784,7 @@ client.sqlite.kv.setMany(data: SqliteKvSetManyRequest, options: { db: string; ta
 | `history` | `boolean` | No | query | Store this write's value in history; false records only that the write happened, not what it wrote |
 | `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing. The legacy alias `auto_create` is still accepted and means the same thing; the two must agree when both are sent. |
 | `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-| `IdempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key (24 h). |
+| `idempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key. By default a receipt is kept for at most 24 h; the oldest are evicted early when the per-database receipt count or size budget is exceeded. The time and both budgets are configurable. After eviction a retry with the same key is applied again. |
 
 **Returns:** `SqliteKvSetManyResponse`
 
@@ -964,7 +799,7 @@ client.sqlite.kv.setMany(data: SqliteKvSetManyRequest, options: { db: string; ta
 Set a key's TTL
 
 ```typescript
-client.sqlite.kv.setTtl(key: string, options: { db: string; ttl: number; table?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; IfMatch?: string; IdempotencyKey?: string }): Promise<SqliteKvSetTtlResponse>
+client.sqlite.kv.setTtl(key: string, options: { db: string; ttl: number; table?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; ifMatch?: string; idempotencyKey?: string }): Promise<SqliteKvSetTtlResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -976,8 +811,8 @@ client.sqlite.kv.setTtl(key: string, options: { db: string; ttl: number; table?:
 | `history` | `boolean` | No | query | Store this write's value in history; false records only that the write happened, not what it wrote |
 | `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing. The legacy alias `auto_create` is still accepted and means the same thing; the two must agree when both are sent. |
 | `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-| `IfMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
-| `IdempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key (24 h). |
+| `ifMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
+| `idempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key. By default a receipt is kept for at most 24 h; the oldest are evicted early when the per-database receipt count or size budget is exceeded. The time and both budgets are configurable. After eviction a retry with the same key is applied again. |
 
 **Returns:** `SqliteKvSetTtlResponse`
 
@@ -992,7 +827,7 @@ client.sqlite.kv.setTtl(key: string, options: { db: string; ttl: number; table?:
 Stream the changes of a KV table
 
 ```typescript
-client.sqlite.kv.streamChanges(options: { db: string; table?: string; since?: string; prefix?: string; include_values?: boolean; LastEventID?: string }): Promise<IEventStream<Record<never, string>, ITypedStreamEvent<SqliteKvStreamChangesFrames>>>
+client.sqlite.kv.streamChanges(options: { db: string; table?: string; since?: string; prefix?: string; include_values?: boolean }): Promise<IEventStream<Record<never, string>, ITypedStreamEvent<SqliteKvStreamChangesFrames>>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1002,11 +837,179 @@ client.sqlite.kv.streamChanges(options: { db: string; table?: string; since?: st
 | `since` | `string` | No | query | Cursor to continue after; Last-Event-ID wins when both are sent |
 | `prefix` | `string` | No | query | Only keys starting with this prefix |
 | `include_values` | `boolean` | No | query | Attach small current values to set/ttl events (see GET /changes) |
-| `LastEventID` | `string` | No | header | Resumes the stream after this event id. |
 
 **Returns:** `IEventStream<Record<never, string>, ITypedStreamEvent<SqliteKvStreamChangesFrames>>`
 
 **CLI:** `hoody kv changes stream`
+
+---
+
+## `client.sqlite.kv.arrays` (3 methods)
+
+### `pop`
+
+**POST** `/api/v1/sqlite/kv/{key}/pop`
+
+Remove from array end
+
+```typescript
+client.sqlite.kv.arrays.pop(key: string, options: { db: string; table?: string; path?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; ifMatch?: string; idempotencyKey?: string }): Promise<SqliteKvArraysPopResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `key` | `string` | Yes | path | Key name |
+| `db` | `string` | Yes | query | Database file path |
+| `table` | `string` | No | query | Custom table name |
+| `path` | `string` | No | query | JSON path to nested array |
+| `history` | `boolean` | No | query | Store this write's value in history; false records only that the write happened, not what it wrote |
+| `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing. The legacy alias `auto_create` is still accepted and means the same thing; the two must agree when both are sent. |
+| `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
+| `ifMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
+| `idempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key. By default a receipt is kept for at most 24 h; the oldest are evicted early when the per-database receipt count or size budget is exceeded. The time and both budgets are configurable. After eviction a retry with the same key is applied again. |
+
+**Returns:** `SqliteKvArraysPopResponse`
+
+**CLI:** `hoody kv arrays pop`
+
+---
+
+### `push`
+
+**POST** `/api/v1/sqlite/kv/{key}/push`
+
+Append to array
+
+```typescript
+client.sqlite.kv.arrays.push(key: string, data: SqliteKvArraysPushRequest, options: { db: string; table?: string; path?: string; history?: boolean; create_db_if_missing?: boolean; timeout?: number; ifMatch?: string; idempotencyKey?: string }): Promise<SqliteKvArraysPushResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `key` | `string` | Yes | path | Key name |
+| `data` | `SqliteKvArraysPushRequest` | Yes | body |  |
+| `db` | `string` | Yes | query | Database file path |
+| `table` | `string` | No | query | Custom table name |
+| `path` | `string` | No | query | JSON path to nested array |
+| `history` | `boolean` | No | query | Store this write's value in history; false records only that the write happened, not what it wrote |
+| `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing. The legacy alias `auto_create` is still accepted and means the same thing; the two must agree when both are sent. |
+| `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
+| `ifMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
+| `idempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key. By default a receipt is kept for at most 24 h; the oldest are evicted early when the per-database receipt count or size budget is exceeded. The time and both budgets are configurable. After eviction a retry with the same key is applied again. |
+
+**Returns:** `SqliteKvArraysPushResponse`
+
+**CLI:** `hoody kv arrays push`
+
+---
+
+### `remove`
+
+**POST** `/api/v1/sqlite/kv/{key}/remove`
+
+Remove array element
+
+```typescript
+client.sqlite.kv.arrays.remove(key: string, data: SqliteKvArraysRemoveRequest | undefined, options: { db: string; table?: string; path?: string; index?: number; history?: boolean; create_db_if_missing?: boolean; timeout?: number; ifMatch?: string; idempotencyKey?: string }): Promise<SqliteKvArraysRemoveResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `key` | `string` | Yes | path | Key name |
+| `data` | `SqliteKvArraysRemoveRequest \| undefined` | Yes | body |  |
+| `db` | `string` | Yes | query | Database file path |
+| `table` | `string` | No | query | Custom table name |
+| `path` | `string` | No | query | JSON path to nested array |
+| `index` | `number` | No | query | Array index to remove. Send this or a body value; with neither the request is a 400 |
+| `history` | `boolean` | No | query | Store this write's value in history; false records only that the write happened, not what it wrote |
+| `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing. The legacy alias `auto_create` is still accepted and means the same thing; the two must agree when both are sent. |
+| `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
+| `ifMatch` | `string` | No | header | Applies the write only if the key's current ETag matches. |
+| `idempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key. By default a receipt is kept for at most 24 h; the oldest are evicted early when the per-database receipt count or size budget is exceeded. The time and both budgets are configurable. After eviction a retry with the same key is applied again. |
+
+**Returns:** `SqliteKvArraysRemoveResponse`
+
+**CLI:** `hoody kv arrays remove`
+
+---
+
+## `client.sqlite.kv.table` (3 methods)
+
+### `compareSnapshots`
+
+**GET** `/api/v1/sqlite/kv/diff`
+
+Compare table snapshots
+
+```typescript
+client.sqlite.kv.table.compareSnapshots(options: { db: string; from: number; to: number; table?: string; keys?: string; timeout?: number }): Promise<SqliteKvTableCompareSnapshotsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `db` | `string` | Yes | query | Database file path |
+| `from` | `number` | Yes | query | Starting timestamp (Unix seconds), at least 1 and earlier than to |
+| `to` | `number` | Yes | query | Ending timestamp (Unix seconds), later than from and not in the future |
+| `table` | `string` | No | query | Custom table name |
+| `keys` | `string` | No | query | Comma-separated list of keys to compare (optional). When given, exactly these keys are reconstructed (duplicates collapsed) |
+| `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
+
+**Returns:** `SqliteKvTableCompareSnapshotsResponse`
+
+**CLI:** `hoody kv table snapshots compare`
+
+---
+
+### `getSnapshot`
+
+**GET** `/api/v1/sqlite/kv/snapshot`
+
+Get table snapshot at timestamp
+
+```typescript
+client.sqlite.kv.table.getSnapshot(options: { db: string; timestamp: number; table?: string; limit?: number; prefix?: string; timeout?: number }): Promise<SqliteKvTableGetSnapshotResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `db` | `string` | Yes | query | Database file path |
+| `timestamp` | `number` | Yes | query | Unix timestamp (seconds) to reconstruct, at least 1 and not in the future |
+| `table` | `string` | No | query | Custom table name |
+| `limit` | `number` | No | query | Maximum number of keys to return. Values above 1000 are treated as 1000; 0 returns every key found. Either way key discovery is bounded: when it stops early, candidate_truncated is true and keys may be missing; narrow with prefix |
+| `prefix` | `string` | No | query | Filter keys by prefix |
+| `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
+
+**Returns:** `SqliteKvTableGetSnapshotResponse`
+
+**CLI:** `hoody kv table snapshots get`
+
+---
+
+### `rollback`
+
+**POST** `/api/v1/sqlite/kv/rollback`
+
+Rollback entire table
+
+```typescript
+client.sqlite.kv.table.rollback(data: SqliteKvTableRollbackRequest | undefined, options: { db: string; to_timestamp: number; table?: string; dry_run?: boolean; confirm?: string; create_db_if_missing?: boolean; timeout?: number; idempotencyKey?: string }): Promise<SqliteKvTableRollbackResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `SqliteKvTableRollbackRequest \| undefined` | Yes | body |  |
+| `db` | `string` | Yes | query | Database file path |
+| `to_timestamp` | `number` | Yes | query | Target timestamp (Unix seconds), at least 1 and not in the future |
+| `table` | `string` | No | query | Custom table name |
+| `dry_run` | `boolean` | No | query | Preview changes without applying |
+| `confirm` | `string` | No | query | Must be 'yes' to execute actual rollback |
+| `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing. The legacy alias `auto_create` is still accepted and means the same thing; the two must agree when both are sent. |
+| `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
+| `idempotencyKey` | `string` | No | header | Replays the stored response for a repeat of the same key. By default a receipt is kept for at most 24 h; the oldest are evicted early when the per-database receipt count or size budget is exceeded. The time and both budgets are configurable. After eviction a retry with the same key is applied again. |
+
+**Returns:** `SqliteKvTableRollbackResponse`
+
+**CLI:** `hoody kv table rollback`
 
 ---
 

@@ -1,20 +1,26 @@
 # Hoody SDK — Complete Method Reference
 
-**Version:** 1.0.0-beta.17
-**Total methods:** 1212
+**Version:** 1.0.1
+**Total methods:** 1418
 **Namespaces:** 21
 
 ---
 
-## `agent` (326 methods)
+## `agent` (403 methods)
 
 ### `client.agent.acp`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
+| `applyCredentialImport` | POST | `/api/v1/agent/acp/agents/{agent}/credential-imports/apply` | Copy Claude Code's login to another computer, as previewed. |
+| `applyFileSync` | POST | `/api/v1/agent/acp/agents/{agent}/file-syncs/apply` | Copy Claude Code files to another computer, as previewed. |
 | `disable` | PUT | `/api/v1/agent/acp/agents/{agent}/enabled` | Enable or disable a BYOA ACP backend. |
 | `enable` | PUT | `/api/v1/agent/acp/agents/{agent}/enabled` | Enable or disable a BYOA ACP backend. |
+| `getDefault` | GET | `/api/v1/agent/acp/default` | Get the realm's default delegated agent. |
 | `getStatus` | GET | `/api/v1/agent/acp/agents` | Get BYOA ACP backend status. |
+| `previewCredentialImport` | POST | `/api/v1/agent/acp/agents/{agent}/credential-imports` | Preview copying Claude Code's login to another computer. |
+| `previewFileSync` | POST | `/api/v1/agent/acp/agents/{agent}/file-syncs` | Preview copying Claude Code files to another computer. |
+| `setDefault` | PUT | `/api/v1/agent/acp/default` | Set the realm's default delegated agent. |
 | `setModel` | PUT | `/api/v1/agent/acp/agents/{agent}/model` | Set a BYOA backend's default model and effort. |
 | `setSecret` | PUT | `/api/v1/agent/acp/agents/{agent}/secrets/{key}` | Store an ACP per-agent secret value. |
 
@@ -22,37 +28,86 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `signIn` | POST | `/api/v1/agent/hoody/auth/bootstrap` | Sign this container's agent in to the Hoody platform with a token of the box's owner. Until then the agent's shell and file tools answer "not logged in". |
-| `stopAllWork` | POST | `/api/v1/agent/stop` | Stop everything running in the realm. |
+| `getPauseState` | GET | `/api/v1/agent/pause` | Get the pause state. |
+| `login` | POST | `/api/v1/agent/hoody/auth/bootstrap` | Sign this computer's agent in to the Hoody platform with a token of the box's owner. Until then the agent's shell and file tools answer "not logged in". |
+| `pause` | PUT | `/api/v1/agent/pause` | Pause or resume the agent. |
+| `resume` | PUT | `/api/v1/agent/pause` | Pause or resume the agent. |
+| `stopAllWork` | POST | `/api/v1/agent/stop` | Stop the work running in the realm that the caller may see (at most 256 items per call; next_cursor continues). |
 | `whoami` | GET | `/api/v1/agent/hoody/auth/status` | Hoody platform identity and realm scope. |
+
+### `client.agent.audio`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `createSpeech` | POST | `/api/v1/agent/audio/speech` | Turn text into speech. |
+| `createTranscription` | POST | `/api/v1/agent/audio/transcriptions` | Turn speech into text. |
+| `listModels` | GET | `/api/v1/agent/audio/models` | List the speech models. |
+| `listVoices` | GET | `/api/v1/agent/audio/voices` | List the voices of the speech models. |
 
 ### `client.agent.bots`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
+| `answerGate` | POST | `/api/v1/agent/bots/{id}/gate` | Answer the approval or question the Bot itself waits on. |
+| `cancelTurn` | POST | `/api/v1/agent/bots/{id}/cancel` | Stop the Bot's running turn, and only that turn. |
+| `clearArchive` | POST | `/api/v1/agent/bots/{id}/purge` | Delete a Bot's archive. |
+| `clearConversation` | POST | `/api/v1/agent/bots/{id}/forget` | Make a Bot forget its conversation. |
+| `connectRealtime` | GET | `/api/v1/agent/bots/{id}/realtime` | Talk to a Bot with an OpenAI Realtime client (WebSocket). |
+| `connectTwilio` | GET | `/api/v1/agent/bots/{id}/twilio` | Connect a Twilio Media Stream to a Bot (WebSocket). |
+| `connectVoice` | GET | `/api/v1/agent/bots/{id}/voice` | Talk to a Bot by voice (WebSocket). |
 | `create` | POST | `/api/v1/agent/bots` | Create a Bot. |
 | `delete` | DELETE | `/api/v1/agent/bots/{id}` | Delete a Bot. |
-| `forget` | POST | `/api/v1/agent/bots/{id}/forget` | Make a Bot forget its conversation. |
 | `get` | GET | `/api/v1/agent/bots/{id}` | Get a Bot. |
 | `getArchive` | GET | `/api/v1/agent/bots/{id}/archive` | Read a Bot's archive. |
 | `getArchiveAll` | GET | `/api/v1/agent/bots/{id}/archive` | Read a Bot's archive. (collect all pages) |
 | `getArchiveIterator` | GET | `/api/v1/agent/bots/{id}/archive` | Read a Bot's archive. (async iterator) |
-| `getLog` | GET | `/api/v1/agent/bots/{id}/log` | Read a Bot's log. |
-| `getLogAll` | GET | `/api/v1/agent/bots/{id}/log` | Read a Bot's log. (collect all pages) |
-| `getLogIterator` | GET | `/api/v1/agent/bots/{id}/log` | Read a Bot's log. (async iterator) |
+| `getLogs` | GET | `/api/v1/agent/bots/{id}/log` | Read a Bot's log. |
+| `getLogsAll` | GET | `/api/v1/agent/bots/{id}/log` | Read a Bot's log. (collect all pages) |
+| `getLogsIterator` | GET | `/api/v1/agent/bots/{id}/log` | Read a Bot's log. (async iterator) |
+| `getVoiceCheck` | GET | `/api/v1/agent/bots/{id}/voice/check` | Check that a Bot can talk by voice. |
 | `list` | GET | `/api/v1/agent/bots` | List the Bots. |
 | `listAll` | GET | `/api/v1/agent/bots` | List the Bots. (collect all pages) |
 | `listDelegates` | GET | `/api/v1/agent/bots/{id}/delegates` | List a Bot's delegates. |
 | `listDelegatesAll` | GET | `/api/v1/agent/bots/{id}/delegates` | List a Bot's delegates. (collect all pages) |
 | `listDelegatesIterator` | GET | `/api/v1/agent/bots/{id}/delegates` | List a Bot's delegates. (async iterator) |
 | `listIterator` | GET | `/api/v1/agent/bots` | List the Bots. (async iterator) |
-| `purgeArchive` | POST | `/api/v1/agent/bots/{id}/purge` | Delete a Bot's archive. |
 | `reset` | POST | `/api/v1/agent/bots/{id}/reset` | Give a Bot a new session. |
-| `sendMessage` | POST | `/api/v1/agent/bots/{id}/messages` | Post a message to a Bot. |
+| `resumeAll` | POST | `/api/v1/agent/bots/resume` | Resume suspended Bots. |
 | `setGuardrails` | PUT | `/api/v1/agent/bots/{id}/guardrails` | Replace a Bot's guardrails. |
 | `stopDelegate` | POST | `/api/v1/agent/bots/{id}/delegates/{sid}/stop` | Stop one of a Bot's delegates now. |
-| `stream` | GET | `/api/v1/agent/bots/{id}/stream` | Follow a Bot's log (SSE). |
+| `streamLogs` | GET | `/api/v1/agent/bots/{id}/stream` | Follow a Bot's log (SSE). |
 | `update` | PATCH | `/api/v1/agent/bots/{id}` | Change a Bot's settings. |
+
+### `client.agent.bots.channels`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `addPrincipal` | POST | `/api/v1/agent/bots/{id}/channels/{cid}/principals` | Pair a person with a channel by their user id in the chat app. |
+| `cancelPairing` | DELETE | `/api/v1/agent/bots/{id}/channels/{cid}/pairing` | Cancel a channel's pairing code. |
+| `create` | POST | `/api/v1/agent/bots/{id}/channels` | Connect a Bot to a chat app. |
+| `createPairing` | POST | `/api/v1/agent/bots/{id}/channels/{cid}/pairing` | Make a pairing code for a channel. |
+| `delete` | DELETE | `/api/v1/agent/bots/{id}/channels/{cid}` | Delete one of a Bot's chat channels. |
+| `deleteChat` | DELETE | `/api/v1/agent/bots/{id}/channels/{cid}/chats/{chat}` | Forget a chat. |
+| `get` | GET | `/api/v1/agent/bots/{id}/channels/{cid}` | Get one of a Bot's chat channels. |
+| `getSettings` | GET | `/api/v1/agent/bots/{id}/channel-settings` | Get a Bot's channel-wide settings. |
+| `getSetup` | GET | `/api/v1/agent/bots/{id}/channels/setup` | How to get the credentials of a chat app. |
+| `list` | GET | `/api/v1/agent/bots/{id}/channels` | List a Bot's chat channels. |
+| `listAll` | GET | `/api/v1/agent/bots/{id}/channels` | List a Bot's chat channels. (collect all pages) |
+| `listIterator` | GET | `/api/v1/agent/bots/{id}/channels` | List a Bot's chat channels. (async iterator) |
+| `removePrincipal` | DELETE | `/api/v1/agent/bots/{id}/channels/{cid}/principals/{pid}` | Unpair a person. |
+| `setCredentials` | PUT | `/api/v1/agent/bots/{id}/channels/{cid}/credentials` | Replace a channel's credentials. |
+| `update` | PATCH | `/api/v1/agent/bots/{id}/channels/{cid}` | Change one of a Bot's chat channels. |
+| `updateChat` | PATCH | `/api/v1/agent/bots/{id}/channels/{cid}/chats/{chat}` | Approve, mute or configure a chat. |
+| `updatePrincipal` | PATCH | `/api/v1/agent/bots/{id}/channels/{cid}/principals/{pid}` | Change a paired person. |
+| `updateSettings` | PATCH | `/api/v1/agent/bots/{id}/channel-settings` | Change a Bot's channel-wide settings. |
+
+### `client.agent.bots.messages`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `getByKey` | GET | `/api/v1/agent/bots/{id}/messages/by-key/{key}` | Read a Bot message by its idempotency key. |
+| `send` | POST | `/api/v1/agent/bots/{id}/messages` | Post a message to a Bot. |
+| `sendAudio` | POST | `/api/v1/agent/bots/{id}/messages/audio` | Post a spoken message to a Bot. |
 
 ### `client.agent.changes`
 
@@ -67,13 +122,13 @@
 |--------|------|------|---------|
 | `create` | POST | `/api/v1/agent/completions` | Run one tool-free model completion. |
 
-### `client.agent.containers`
+### `client.agent.computers`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `list` | GET | `/api/v1/agent/containers` | List containers in a realm (for binding). |
-| `listAll` | GET | `/api/v1/agent/containers` | List containers in a realm (for binding). (collect all pages) |
-| `listIterator` | GET | `/api/v1/agent/containers` | List containers in a realm (for binding). (async iterator) |
+| `list` | GET | `/api/v1/agent/computers` | List computers in a realm (for binding). |
+| `listAll` | GET | `/api/v1/agent/computers` | List computers in a realm (for binding). (collect all pages) |
+| `listIterator` | GET | `/api/v1/agent/computers` | List computers in a realm (for binding). (async iterator) |
 
 ### `client.agent.definitions`
 
@@ -88,6 +143,7 @@
 | `listIterator` | GET | `/api/v1/agent/agents` | List chat-agent definitions. (async iterator) |
 | `rename` | POST | `/api/v1/agent/agents/{name}/rename` | Rename a chat agent. |
 | `reset` | POST | `/api/v1/agent/agents/{name}/reset-to-shipped` | Reset an agent to its shipped default. |
+| `setEffort` | PATCH | `/api/v1/agent/agents/{name}/effort` | Set an agent's reasoning effort. |
 | `setModel` | PATCH | `/api/v1/agent/agents/{name}/model` | Set an agent's model. |
 | `setSource` | PUT | `/api/v1/agent/agents/{name}/source` | Write a chat agent's source. |
 | `setTools` | PATCH | `/api/v1/agent/agents/{name}/tools` | Set an agent's tool allow-list. |
@@ -128,43 +184,74 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `checkoutPr` | POST | `/api/v1/agent/github/pr/checkout` | Check out a pull request. |
-| `clone` | POST | `/api/v1/agent/github/clone` | Clone a GitHub repository. |
-| `createBranch` | POST | `/api/v1/agent/github/branch` | Create a branch. |
-| `createCommit` | POST | `/api/v1/agent/github/commit` | Stage all and commit. |
 | `createIssue` | POST | `/api/v1/agent/github/issues` | Open an issue. |
-| `createPr` | POST | `/api/v1/agent/github/pr` | Open a pull request. |
-| `createWorktree` | POST | `/api/v1/agent/github/worktrees` | Add a linked worktree. |
-| `deleteBranch` | POST | `/api/v1/agent/github/branch/delete` | Force-delete a local branch. |
-| `deleteWorktree` | POST | `/api/v1/agent/github/worktrees/remove` | Remove a linked worktree. |
-| `diff` | GET | `/api/v1/agent/github/diff` | Read the working-tree diff. |
-| `getAuth` | GET | `/api/v1/agent/github/auth/status` | GitHub auth status. |
+| `getDiff` | GET | `/api/v1/agent/github/diff` | Read the working-tree diff. |
 | `getStatus` | GET | `/api/v1/agent/github/status` | GitHub working-tree status. |
-| `listBranches` | GET | `/api/v1/agent/github/branches` | List GitHub branches. |
-| `listCommits` | GET | `/api/v1/agent/github/log` | Read recent commit history. |
 | `listIssues` | GET | `/api/v1/agent/github/issues` | List issues. |
-| `listPrs` | GET | `/api/v1/agent/github/pr` | List pull requests. |
-| `listRepos` | GET | `/api/v1/agent/github/repos` | List GitHub repos. |
-| `listWorktrees` | GET | `/api/v1/agent/github/worktrees` | List linked worktrees. |
-| `login` | POST | `/api/v1/agent/github/auth/login` | Start a GitHub device-flow login (or add a PAT). |
-| `logout` | POST | `/api/v1/agent/github/auth/logout` | Remove a linked GitHub account. |
-| `mergePr` | POST | `/api/v1/agent/github/pr/merge` | Merge a pull request. |
-| `pollLogin` | POST | `/api/v1/agent/github/auth/login/poll` | Poll a GitHub device-flow login to completion. |
 | `popStash` | POST | `/api/v1/agent/github/stash/pop` | Restore the most recent stash entry. |
 | `pushStash` | POST | `/api/v1/agent/github/stash` | Stash the working tree. |
-| `resolveRepo` | GET | `/api/v1/agent/github/identity` | Resolve the bound repository's owner/name. |
-| `setRepoCredentials` | POST | `/api/v1/agent/github/repo/reconnect` | Re-write a checkout's GitHub credential. |
-| `suggestCommitMessage` | POST | `/api/v1/agent/github/commit/suggest-message` | Draft a commit message with a model. |
 | `sync` | POST | `/api/v1/agent/github/sync` | Sync (fetch → pull → push). |
 | `useAccount` | POST | `/api/v1/agent/github/auth/active` | Switch the active GitHub account. |
-| `useBranch` | POST | `/api/v1/agent/github/branch/switch` | Switch to an existing branch. |
+
+### `client.agent.github.auth`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `getStatus` | GET | `/api/v1/agent/github/auth/status` | GitHub auth status. |
+| `login` | POST | `/api/v1/agent/github/auth/login` | Sign in to GitHub with a personal access token (body token, required); the call ends signed in. |
+| `logout` | POST | `/api/v1/agent/github/auth/logout` | Remove a linked GitHub account. |
+| `poll` | POST | `/api/v1/agent/github/auth/login/poll` | Poll a GitHub device-flow login to completion. |
+| `start` | POST | `/api/v1/agent/github/auth/login` | Start a GitHub device-flow login: answers the user code and verification URL; finish with auth.poll(). |
+
+### `client.agent.github.branches`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `create` | POST | `/api/v1/agent/github/branch` | Create a branch. |
+| `delete` | POST | `/api/v1/agent/github/branch/delete` | Force-delete a local branch. |
+| `getRemote` | GET | `/api/v1/agent/github/remote-branch` | Read a branch's head on GitHub. |
+| `list` | GET | `/api/v1/agent/github/branches` | List GitHub branches. |
+| `use` | POST | `/api/v1/agent/github/branch/switch` | Switch to an existing branch. |
+
+### `client.agent.github.commits`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `create` | POST | `/api/v1/agent/github/commit` | Stage all and commit. |
+| `list` | GET | `/api/v1/agent/github/log` | Read recent commit history. |
+| `suggestMessage` | POST | `/api/v1/agent/github/commit/suggest-message` | Draft a commit message with a model. |
+
+### `client.agent.github.prs`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `checkout` | POST | `/api/v1/agent/github/pr/checkout` | Check out a pull request. |
+| `create` | POST | `/api/v1/agent/github/pr` | Open a pull request. |
+| `list` | GET | `/api/v1/agent/github/pr` | List pull requests. |
+| `merge` | POST | `/api/v1/agent/github/pr/merge` | Merge a pull request. |
+
+### `client.agent.github.repos`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `clone` | POST | `/api/v1/agent/github/clone` | Clone a GitHub repository. |
+| `list` | GET | `/api/v1/agent/github/repos` | List GitHub repos. |
+| `resolve` | GET | `/api/v1/agent/github/identity` | Resolve the bound repository's owner/name. |
+| `setCredentials` | POST | `/api/v1/agent/github/repo/reconnect` | Re-write a checkout's GitHub credential. |
+
+### `client.agent.github.worktrees`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `create` | POST | `/api/v1/agent/github/worktrees` | Add a linked worktree. |
+| `delete` | POST | `/api/v1/agent/github/worktrees/remove` | Remove a linked worktree. |
+| `list` | GET | `/api/v1/agent/github/worktrees` | List linked worktrees. |
 
 ### `client.agent.headless`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `start` | POST | `/api/v1/agent/headless/runs` | Create a headless one-shot run. |
-| `stream` | POST | `/api/v1/agent/headless/runs` | Create a headless one-shot run. |
 
 ### `client.agent.hooks`
 
@@ -175,13 +262,13 @@
 | `disable` | POST | `/api/v1/agent/hooks/toggle` | Toggle a hook. |
 | `disableAll` | POST | `/api/v1/agent/hooks/disable-all` | Disable all hooks. |
 | `enable` | POST | `/api/v1/agent/hooks/toggle` | Toggle a hook. |
-| `enableAll` | POST | `/api/v1/agent/hooks/disable-all` | Disable all hooks. |
+| `enableAll` | POST | `/api/v1/agent/hooks/disable-all` | Resume hooks: clear the hook suspension in the selected scope. Hooks stay suspended when another settings layer still sets it. |
 | `getRules` | GET | `/api/v1/agent/hooks/rules` | Get the tool-call rules. |
 | `list` | GET | `/api/v1/agent/hooks` | List hooks. |
 | `reload` | POST | `/api/v1/agent/hooks/reload` | Reload hooks from disk. |
-| `run` | POST | `/api/v1/agent/hooks/test` | Test-fire a hook. |
+| `run` | POST | `/api/v1/agent/hooks/test` | Run hooks now. With `command` it executes that unsaved command inline; without it, it executes the saved hooks matching `event` and `match_value`. This executes commands; use `hooks.test` to dry-run a shipped hook. |
 | `setRules` | POST | `/api/v1/agent/hooks/rules` | Set the tool-call rules. |
-| `test` | POST | `/api/v1/agent/hooks/test` | Test-fire a hook. |
+| `test` | POST | `/api/v1/agent/hooks/test` | Dry-run a shipped hook, chosen by `shipped_id`. Nothing is executed. |
 | `trust` | POST | `/api/v1/agent/hooks/trust/ack` | Acknowledge hook trust. |
 | `upsert` | PUT | `/api/v1/agent/hooks` | Upsert a hook. |
 
@@ -240,41 +327,46 @@
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `createWriteIntent` | POST | `/api/v1/agent/mcp/write-intents` | Begin an MCP config write. |
-| `deleteServer` | DELETE | `/api/v1/agent/mcp/servers` | Delete an MCP server. |
-| `disableServer` | POST | `/api/v1/agent/mcp/servers/enable` | Enable or disable an MCP server. |
-| `enableServer` | POST | `/api/v1/agent/mcp/servers/enable` | Enable or disable an MCP server. |
-| `importServers` | POST | `/api/v1/agent/mcp/import` | Import MCP servers from another tool's config. |
-| `listServers` | GET | `/api/v1/agent/mcp/servers` | List configured MCP servers. |
+| `delete` | DELETE | `/api/v1/agent/mcp/servers` | Delete an MCP server. |
+| `disable` | POST | `/api/v1/agent/mcp/servers/enable` | Enable or disable an MCP server. |
+| `enable` | POST | `/api/v1/agent/mcp/servers/enable` | Enable or disable an MCP server. |
+| `import` | POST | `/api/v1/agent/mcp/import` | Import MCP servers from another tool's config. |
+| `list` | GET | `/api/v1/agent/mcp/servers` | List configured MCP servers. |
 | `previewImport` | POST | `/api/v1/agent/mcp/parse` | Preview an MCP config import. |
 | `reconnect` | POST | `/api/v1/agent/mcp/reconnect` | Reload MCP config and reconnect. |
-| `testServer` | POST | `/api/v1/agent/mcp/probe` | Probe an MCP server without saving it. |
-| `upsertServer` | PUT | `/api/v1/agent/mcp/servers` | Create or update an MCP server. |
+| `test` | POST | `/api/v1/agent/mcp/probe` | Probe an MCP server without saving it. |
+| `upsert` | PUT | `/api/v1/agent/mcp/servers` | Create or update an MCP server. |
 
 ### `client.agent.memory`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `claimDataHost` | PUT | `/api/v1/agent/memory/datahost` | Assign this computer as the memory data host. |
-| `consolidate` | POST | `/api/v1/agent/memory/consolidate` | Trigger a memory consolidation pass (human-only). |
-| `createItem` | POST | `/api/v1/agent/memory/items` | Save a memory item. |
+| `consolidate` | POST | `/api/v1/agent/memory/consolidate` | Trigger a memory consolidation pass. |
 | `createWriteIntent` | POST | `/api/v1/agent/memory/write-intents` | Begin a guarded memory write (intent). |
-| `deleteItem` | DELETE | `/api/v1/agent/memory/items` | Delete a memory item. |
 | `deleteProject` | DELETE | `/api/v1/agent/memory/projects/{project}` | Erase a memory project. |
 | `disable` | PUT | `/api/v1/agent/memory/enabled` | Toggle memory capture. |
 | `enable` | PUT | `/api/v1/agent/memory/enabled` | Toggle memory capture. |
 | `flush` | POST | `/api/v1/agent/memory/flush` | Flush the memory store. |
 | `getDataHost` | GET | `/api/v1/agent/memory/datahost` | Read the realm's memory data host. |
 | `getGraph` | GET | `/api/v1/agent/memory/graph` | Read a project's memory relation graph. |
-| `getItem` | GET | `/api/v1/agent/memory/items/{id}` | Read a memory item. |
 | `getStatus` | GET | `/api/v1/agent/memory/status` | Read memory subsystem status. |
-| `listItems` | GET | `/api/v1/agent/memory/items` | List memory items. |
-| `listItemsAll` | GET | `/api/v1/agent/memory/items` | List memory items. (collect all pages) |
-| `listItemsIterator` | GET | `/api/v1/agent/memory/items` | List memory items. (async iterator) |
 | `listProjects` | GET | `/api/v1/agent/memory/projects` | List memory projects. |
 | `listProjectsAll` | GET | `/api/v1/agent/memory/projects` | List memory projects. (collect all pages) |
 | `listProjectsIterator` | GET | `/api/v1/agent/memory/projects` | List memory projects. (async iterator) |
 | `search` | POST | `/api/v1/agent/memory/search` | Search memory (hybrid recall). |
-| `updateItem` | PATCH | `/api/v1/agent/memory/items/{id}` | Edit a memory item. |
+
+### `client.agent.memory.items`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `create` | POST | `/api/v1/agent/memory/items` | Save a memory item. |
+| `delete` | DELETE | `/api/v1/agent/memory/items` | Delete a memory item. |
+| `get` | GET | `/api/v1/agent/memory/items/{id}` | Read a memory item. |
+| `list` | GET | `/api/v1/agent/memory/items` | List memory items. |
+| `listAll` | GET | `/api/v1/agent/memory/items` | List memory items. (collect all pages) |
+| `listIterator` | GET | `/api/v1/agent/memory/items` | List memory items. (async iterator) |
+| `update` | PATCH | `/api/v1/agent/memory/items/{id}` | Edit a memory item. |
 
 ### `client.agent.models`
 
@@ -285,37 +377,48 @@
 | `listAll` | GET | `/api/v1/agent/models` | List models. (collect all pages) |
 | `listIterator` | GET | `/api/v1/agent/models` | List models. (async iterator) |
 
-### `client.agent.platform`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `bootstrapToken` | POST | `/api/v1/agent/hoody/auth/bootstrap` | Bootstrap the Hoody platform credential (install-if-absent). |
-
 ### `client.agent.providers`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `addAccount` | POST | `/api/v1/agent/providers/{id}/auth/accounts` | Add an OAuth account to a provider's pool. |
 | `create` | POST | `/api/v1/agent/providers` | Create a custom provider. |
 | `delete` | DELETE | `/api/v1/agent/providers/{id}` | Delete a custom provider. |
 | `deleteApiKey` | DELETE | `/api/v1/agent/providers/{id}/auth/api-key` | Delete a provider API key. |
 | `get` | GET | `/api/v1/agent/providers/{id}` | Get a provider. |
-| `getAuth` | GET | `/api/v1/agent/providers/{id}/auth` | Get a provider's auth status. |
 | `list` | GET | `/api/v1/agent/providers` | List LLM providers. |
-| `listAccounts` | GET | `/api/v1/agent/providers/{id}/auth/accounts` | List a provider's OAuth account pool. |
-| `listAccountsAll` | GET | `/api/v1/agent/providers/{id}/auth/accounts` | List a provider's OAuth account pool. (collect all pages) |
-| `listAccountsIterator` | GET | `/api/v1/agent/providers/{id}/auth/accounts` | List a provider's OAuth account pool. (async iterator) |
 | `listAll` | GET | `/api/v1/agent/providers` | List LLM providers. (collect all pages) |
 | `listIterator` | GET | `/api/v1/agent/providers` | List LLM providers. (async iterator) |
-| `logoutOauth` | DELETE | `/api/v1/agent/providers/{id}/auth/oauth` | Remove a provider's OAuth login. |
-| `pollOauth` | GET | `/api/v1/agent/providers/{id}/auth/oauth/{job}` | Poll a provider OAuth login. |
-| `removeAccount` | DELETE | `/api/v1/agent/providers/{id}/auth/accounts/{key}` | Remove a pooled OAuth account. |
 | `setApiKey` | PUT | `/api/v1/agent/providers/{id}/auth/api-key` | Store a provider API key. |
-| `setDefaultAuth` | PUT | `/api/v1/agent/providers/{id}/auth/default` | Set a provider's default credential method. |
-| `startOauth` | POST | `/api/v1/agent/providers/{id}/auth/oauth` | Start a provider OAuth login. |
-| `submitOauthCode` | POST | `/api/v1/agent/providers/{id}/auth/oauth/{job}/code` | Submit a provider OAuth authorization code. |
 | `update` | PATCH | `/api/v1/agent/providers/{id}` | Change a custom provider. |
-| `useAccount` | PUT | `/api/v1/agent/providers/{id}/auth/accounts/{key}/active` | Make a pooled OAuth account active. |
+
+### `client.agent.providers.accounts`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `add` | POST | `/api/v1/agent/providers/{id}/auth/accounts` | Add an OAuth account to a provider's pool. |
+| `list` | GET | `/api/v1/agent/providers/{id}/auth/accounts` | List a provider's OAuth account pool. |
+| `listAll` | GET | `/api/v1/agent/providers/{id}/auth/accounts` | List a provider's OAuth account pool. (collect all pages) |
+| `listIterator` | GET | `/api/v1/agent/providers/{id}/auth/accounts` | List a provider's OAuth account pool. (async iterator) |
+| `remove` | DELETE | `/api/v1/agent/providers/{id}/auth/accounts/{key}` | Remove a pooled OAuth account. |
+| `use` | PUT | `/api/v1/agent/providers/{id}/auth/accounts/{key}/active` | Make a pooled OAuth account active. |
+
+### `client.agent.providers.auth`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `getStatus` | GET | `/api/v1/agent/providers/{id}/auth` | Get a provider's auth status. |
+| `setDefault` | PUT | `/api/v1/agent/providers/{id}/auth/default` | Set a provider's default credential method. |
+| `test` | POST | `/api/v1/agent/providers/{id}/auth/test` | Try a provider's stored API key. |
+
+### `client.agent.providers.oauth`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `cancel` | DELETE | `/api/v1/agent/providers/{id}/auth/oauth/{job}` | Cancel a provider OAuth login. |
+| `logout` | DELETE | `/api/v1/agent/providers/{id}/auth/oauth` | Remove a provider's OAuth login. |
+| `poll` | GET | `/api/v1/agent/providers/{id}/auth/oauth/{job}` | Poll a provider OAuth login. |
+| `start` | POST | `/api/v1/agent/providers/{id}/auth/oauth` | Start a provider OAuth login. |
+| `submitCode` | POST | `/api/v1/agent/providers/{id}/auth/oauth/{job}/code` | Submit a provider OAuth authorization code. |
 
 ### `client.agent.realms`
 
@@ -326,20 +429,36 @@
 | `listIterator` | GET | `/api/v1/agent/realms` | List realms (for binding). (async iterator) |
 | `use` | PUT | `/api/v1/agent/hoody/realm` | Switch the agent's active realm. |
 
+### `client.agent.scripts`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `deleteInstance` | POST | `/api/v1/agent/script-instances/delete` | Delete a managed script. |
+| `listInstances` | GET | `/api/v1/agent/script-instances` | List a computer's managed scripts. |
+
+### `client.agent.scripts.templates`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `get` | GET | `/api/v1/agent/script-templates/{name}` | Get one script template. |
+| `instantiate` | POST | `/api/v1/agent/script-templates/{name}/instantiate` | Make a script from a template. |
+| `list` | GET | `/api/v1/agent/script-templates` | List script templates. |
+
 ### `client.agent.sessions`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `cancelTasks` | POST | `/api/v1/agent/sessions/{id}/tasks/cancel` | Cancel all background tasks. |
-| `claimApproverLease` | POST | `/api/v1/agent/sessions/{id}/approver-lease` | Acquire the right to answer this session's gates. |
-| `claimAttachment` | POST | `/api/v1/agent/sessions/{id}/attachments` | Hold a live session (and its parked gate) alive. |
 | `close` | POST | `/api/v1/agent/sessions/{id}/close` | Close the session (teardown). |
 | `connect` | GET | `/api/v1/agent/sessions/{id}/stream` | Attach to a session's event stream (WebSocket / SSE). |
 | `create` | POST | `/api/v1/agent/sessions` | Create, fork, or attach a session. |
-| `delete` | DELETE | `/api/v1/agent/sessions/{id}` | Close (and optionally hard-delete) a session. |
-| `deleteApprovalRule` | DELETE | `/api/v1/agent/sessions/{id}/approval/rules/{tool}` | Remove one session permission rule. |
+| `delete` | DELETE | `/api/v1/agent/sessions/{id}` | Close a session and hard-delete it: the persisted record is removed too, not only the live connection. |
+| `disableHoodyEnv` | PATCH | `/api/v1/agent/sessions/{id}/hoody-env` | Toggle Hoody shell-env injection. |
+| `disableYolo` | PATCH | `/api/v1/agent/sessions/{id}/yolo` | Turn Allow everything on or off for this chat. |
+| `enableHoodyEnv` | PATCH | `/api/v1/agent/sessions/{id}/hoody-env` | Toggle Hoody shell-env injection. |
+| `enableYolo` | PATCH | `/api/v1/agent/sessions/{id}/yolo` | Turn Allow everything on or off for this chat. |
 | `get` | GET | `/api/v1/agent/sessions/{id}` | Get a session summary. |
-| `getApproval` | GET | `/api/v1/agent/sessions/{id}/approval` | Read a session's approval policy. |
+| `getCreateKey` | GET | `/api/v1/agent/session-create-keys/{key}` | Read what a keyed session create became. |
+| `getImage` | GET | `/api/v1/agent/sessions/{id}/images/{image_id}` | Read an image attached to a session message. |
 | `getSnapshot` | GET | `/api/v1/agent/sessions/{id}/state` | Read a session's recoverable state. |
 | `getTranscript` | GET | `/api/v1/agent/sessions/{id}/transcript` | Read a session's transcript without attaching. |
 | `getUsage` | GET | `/api/v1/agent/sessions/{id}/usage` | Read a session's per-call LLM usage. |
@@ -353,41 +472,86 @@
 | `listLoops` | GET | `/api/v1/agent/sessions/{id}/loops` | List a session's loops. |
 | `listLoopsAll` | GET | `/api/v1/agent/sessions/{id}/loops` | List a session's loops. (collect all pages) |
 | `listLoopsIterator` | GET | `/api/v1/agent/sessions/{id}/loops` | List a session's loops. (async iterator) |
-| `listMcpTools` | GET | `/api/v1/agent/sessions/{id}/tools/mcp` | List a session's MCP tools. |
-| `listMcpToolsAll` | GET | `/api/v1/agent/sessions/{id}/tools/mcp` | List a session's MCP tools. (collect all pages) |
-| `listMcpToolsIterator` | GET | `/api/v1/agent/sessions/{id}/tools/mcp` | List a session's MCP tools. (async iterator) |
-| `listTools` | GET | `/api/v1/agent/sessions/{id}/tools` | List a session's effective tool set. |
-| `listToolsAll` | GET | `/api/v1/agent/sessions/{id}/tools` | List a session's effective tool set. (collect all pages) |
-| `listToolsIterator` | GET | `/api/v1/agent/sessions/{id}/tools` | List a session's effective tool set. (async iterator) |
-| `releaseApproverLease` | DELETE | `/api/v1/agent/sessions/{id}/approver-lease` | Release the approver lease. |
-| `releaseAttachment` | DELETE | `/api/v1/agent/sessions/{id}/attachments/{lease_id}` | Release an attachment lease. |
+| `listShells` | GET | `/api/v1/agent/sessions/{id}/bash-jobs` | List a session's background shells. |
+| `listSlashCommands` | GET | `/api/v1/agent/sessions/{id}/slash-commands` | List the slash commands a session's chat offers. |
+| `listSlashCommandsAll` | GET | `/api/v1/agent/sessions/{id}/slash-commands` | List the slash commands a session's chat offers. (collect all pages) |
+| `listSlashCommandsIterator` | GET | `/api/v1/agent/sessions/{id}/slash-commands` | List the slash commands a session's chat offers. (async iterator) |
 | `rename` | PATCH | `/api/v1/agent/sessions/{id}` | Rename a session. |
-| `renewApproverLease` | PATCH | `/api/v1/agent/sessions/{id}/approver-lease` | Renew the approver lease. |
-| `renewAttachment` | PATCH | `/api/v1/agent/sessions/{id}/attachments/{lease_id}` | Renew an attachment lease. |
 | `replay` | GET | `/api/v1/agent/sessions/{id}/replay` | Replay a live session's buffered events. |
-| `runTool` | POST | `/api/v1/agent/sessions/{id}/tools/{name}/run` | Run a tool inside a live session (gated). |
+| `retireCreateKey` | POST | `/api/v1/agent/session-create-keys/{key}/retire` | Retire a session create key no read found. |
 | `setAfterCompaction` | PUT | `/api/v1/agent/sessions/{id}/after-compaction` | Set the message re-added after every compaction. |
 | `setAgent` | PATCH | `/api/v1/agent/sessions/{id}/agent` | Switch the chat agent. |
-| `setApprovalRule` | PUT | `/api/v1/agent/sessions/{id}/approval/rules/{tool}` | Set one session permission rule. |
-| `setAutoReply` | PATCH | `/api/v1/agent/sessions/{id}/auto-reply` | Arm/disarm the auto-reply loop. |
-| `setAutoReplyWrites` | PATCH | `/api/v1/agent/sessions/{id}/auto-reply/writes` | Flip the auto-reply write opt-in. |
 | `setEffort` | PATCH | `/api/v1/agent/sessions/{id}/effort` | Set reasoning effort. |
-| `setHoodyEnv` | PATCH | `/api/v1/agent/sessions/{id}/hoody-env` | Toggle Hoody shell-env injection. |
 | `setModel` | PATCH | `/api/v1/agent/sessions/{id}/model` | Switch the session model. |
 | `setVerbosity` | PATCH | `/api/v1/agent/sessions/{id}/verbosity` | Set response verbosity. |
-| `setYolo` | PATCH | `/api/v1/agent/sessions/{id}/yolo` | Arm or disarm YOLO auto-approve. |
-| `startTurn` | POST | `/api/v1/agent/sessions/{id}/messages` | Dispatch a turn (fire-and-observe). |
-| `startTurnAndStream` | POST | `/api/v1/agent/sessions/{id}/prompt:stream` | Dispatch a turn and stream the response. |
 | `startWorkflow` | POST | `/api/v1/agent/sessions/{id}/workflows/{name}/runs` | Run a workflow onto an existing session. |
+| `stopShell` | POST | `/api/v1/agent/sessions/{id}/bash-jobs/{job_id}/stop` | Stop one of a session's background shells. |
+| `streamMany` | GET | `/api/v1/agent/sessions:events` | Watch up to 32 live sessions' events on one stream (SSE). |
 | `trim` | POST | `/api/v1/agent/sessions/{id}/trim` | Trim session history to a turn index. |
-| `updateApproval` | PUT | `/api/v1/agent/sessions/{id}/approval` | Set a session's approval mode and lock. |
+
+### `client.agent.sessions.approval`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `deleteRule` | DELETE | `/api/v1/agent/sessions/{id}/approval/rules/{tool}` | Remove one session permission rule. |
+| `get` | GET | `/api/v1/agent/sessions/{id}/approval` | Read a session's approval policy. |
+| `setRule` | PUT | `/api/v1/agent/sessions/{id}/approval/rules/{tool}` | Set one session permission rule. |
+| `update` | PUT | `/api/v1/agent/sessions/{id}/approval` | Set a session's approval mode and lock. |
+
+### `client.agent.sessions.approverLease`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `claim` | POST | `/api/v1/agent/sessions/{id}/approver-lease` | Acquire the right to answer this session's gates. |
+| `release` | DELETE | `/api/v1/agent/sessions/{id}/approver-lease` | Release the approver lease. |
+| `renew` | PATCH | `/api/v1/agent/sessions/{id}/approver-lease` | Renew the approver lease. |
+
+### `client.agent.sessions.attachments`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `claim` | POST | `/api/v1/agent/sessions/{id}/attachments` | Hold a live session (and its parked gate) alive. |
+| `release` | DELETE | `/api/v1/agent/sessions/{id}/attachments/{lease_id}` | Release an attachment lease. |
+| `renew` | PATCH | `/api/v1/agent/sessions/{id}/attachments/{lease_id}` | Renew an attachment lease. |
+
+### `client.agent.sessions.autoReply`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `disableWrites` | PATCH | `/api/v1/agent/sessions/{id}/auto-reply/writes` | Flip the auto-reply write opt-in. |
+| `enableWrites` | PATCH | `/api/v1/agent/sessions/{id}/auto-reply/writes` | Flip the auto-reply write opt-in. |
+| `update` | PATCH | `/api/v1/agent/sessions/{id}/auto-reply` | Arm/disarm the auto-reply loop. |
 
 ### `client.agent.sessions.commands`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `get` | GET | `/api/v1/agent/sessions/{id}/commands/{command_id}` | Get a command's receipt. |
+| `getByKey` | GET | `/api/v1/agent/sessions/{id}/commands/by-key/{key}` | Read a command by its idempotency key. |
+| `retireKey` | POST | `/api/v1/agent/sessions/{id}/commands/by-key/{key}/retire` | Retire a command key no read found. |
 | `send` | POST | `/api/v1/agent/sessions/{id}/commands` | Send a message, an interrupt or a stop to a session. |
+| `withdraw` | POST | `/api/v1/agent/sessions/{id}/commands/{command_id}/withdraw` | Take back a queued message. |
+
+### `client.agent.sessions.tasks`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `cancel` | POST | `/api/v1/agent/sessions/{id}/tasks/{tid}/cancel` | Cancel a background task. |
+| `cancelAll` | POST | `/api/v1/agent/sessions/{id}/tasks/cancel` | Cancel all background tasks. |
+| `getTranscript` | GET | `/api/v1/agent/sessions/{id}/tasks/{tid}/transcript` | Read a background task's transcript. |
+| `list` | GET | `/api/v1/agent/sessions/{id}/tasks` | List a session's background tasks. |
+
+### `client.agent.sessions.tools`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `list` | GET | `/api/v1/agent/sessions/{id}/tools` | List a session's effective tool set. |
+| `listAll` | GET | `/api/v1/agent/sessions/{id}/tools` | List a session's effective tool set. (collect all pages) |
+| `listIterator` | GET | `/api/v1/agent/sessions/{id}/tools` | List a session's effective tool set. (async iterator) |
+| `listMcp` | GET | `/api/v1/agent/sessions/{id}/tools/mcp` | List a session's MCP tools. |
+| `listMcpAll` | GET | `/api/v1/agent/sessions/{id}/tools/mcp` | List a session's MCP tools. (collect all pages) |
+| `listMcpIterator` | GET | `/api/v1/agent/sessions/{id}/tools/mcp` | List a session's MCP tools. (async iterator) |
+| `run` | POST | `/api/v1/agent/sessions/{id}/tools/{name}/run` | Run a tool inside a live session (gated). |
 
 ### `client.agent.sessions.turns`
 
@@ -396,15 +560,34 @@
 | `cancel` | POST | `/api/v1/agent/sessions/{id}/cancel` | Cancel the active turn (Esc), or one named turn. |
 | `create` | POST | `/api/v1/agent/sessions/{id}/turns` | Dispatch a turn (retry-safe). |
 | `get` | GET | `/api/v1/agent/sessions/{id}/turns/{turn_id}` | Get a turn's durable receipt. |
+| `getByKey` | GET | `/api/v1/agent/sessions/{id}/turns/by-key/{key}` | Read a turn by its idempotency key. |
 | `list` | GET | `/api/v1/agent/sessions/{id}/turns` | List a session's durable turn receipts. |
+| `retireKey` | POST | `/api/v1/agent/sessions/{id}/turns/by-key/{key}/retire` | Retire a turn key no read found. |
 | `run` | POST | `/api/v1/agent/sessions/{id}/prompt:sync` | Dispatch a turn and block until it ends (no reply text: read it from the transcript) |
+| `start` | POST | `/api/v1/agent/sessions/{id}/messages` | Dispatch a turn (fire-and-observe). |
+
+### `client.agent.sessions.waiters`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `cancel` | DELETE | `/api/v1/agent/sessions/{id}/waiters/{waiter_id}` | Cancel a waiter. |
+| `create` | POST | `/api/v1/agent/sessions/{id}/waiters` | Wait for an outcome in another session's work. |
+| `get` | GET | `/api/v1/agent/sessions/{id}/waiters/{waiter_id}` | Get a waiter. |
+| `list` | GET | `/api/v1/agent/sessions/{id}/waiters` | List a session's waiters. |
 
 ### `client.agent.settings`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `get` | GET | `/api/v1/agent/settings` | Get settings. |
+| `getInstructions` | GET | `/api/v1/agent/settings/agent-instructions` | Get a realm's agent instructions. |
+| `getSpendCaps` | GET | `/api/v1/agent/settings/spend-caps` | Read the spend caps. |
+| `getWhereAgentsWork` | GET | `/api/v1/agent/settings/where-agents-work` | Read where agents may work. |
+| `listFeatures` | GET | `/api/v1/agent/settings/features` | List the agent features. |
+| `setInstructions` | PUT | `/api/v1/agent/settings/agent-instructions` | Set a realm's agent instructions. |
+| `setSpendCaps` | PUT | `/api/v1/agent/settings/spend-caps` | Set the spend caps. |
 | `update` | PATCH | `/api/v1/agent/settings` | Patch settings. |
+| `updateFeatures` | PATCH | `/api/v1/agent/settings/features` | Change agent features. |
 
 ### `client.agent.skills`
 
@@ -423,6 +606,7 @@
 | `scan` | GET | `/api/v1/agent/skills/import/scan` | Scan for importable skills. |
 | `setSource` | PUT | `/api/v1/agent/skills/source` | Write a skill's source. |
 | `trust` | POST | `/api/v1/agent/skills/trust` | Set a skill's trust state. |
+| `untrust` | POST | `/api/v1/agent/skills/trust` | Set a skill's trust state. |
 
 ### `client.agent.skills.hub`
 
@@ -433,20 +617,6 @@
 | `install` | POST | `/api/v1/agent/skills/hub/install` | Install a hub skill. |
 | `preview` | GET | `/api/v1/agent/skills/hub/preview` | Preview a hub skill. |
 | `search` | GET | `/api/v1/agent/skills/hub/search` | Search the skill hub. |
-
-### `client.agent.stats`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `get` | GET | `/api/v1/agent/statistics` | Cross-session statistics. |
-
-### `client.agent.tasks`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `cancel` | POST | `/api/v1/agent/sessions/{id}/tasks/{tid}/cancel` | Cancel a background task. |
-| `getTranscript` | GET | `/api/v1/agent/sessions/{id}/tasks/{tid}/transcript` | Read a background task's transcript. |
-| `list` | GET | `/api/v1/agent/sessions/{id}/tasks` | List a session's background tasks. |
 
 ### `client.agent.todos`
 
@@ -490,6 +660,7 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
+| `getStats` | GET | `/api/v1/agent/statistics` | Cross-session statistics. |
 | `listByAccount` | GET | `/api/v1/agent/usage/by-account` | Usage rollup by account. |
 | `listByModel` | GET | `/api/v1/agent/usage/by-model` | Usage rollup by model. |
 
@@ -497,24 +668,38 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `cancelRun` | POST | `/api/v1/agent/workflows/runs/{run_id}/cancel` | Cancel a workflow run. |
 | `delete` | DELETE | `/api/v1/agent/workflows/{name}` | Delete a workflow definition. |
 | `get` | GET | `/api/v1/agent/workflows/{name}` | Read one workflow definition. |
-| `getRun` | GET | `/api/v1/agent/workflows/runs/{run_id}` | Get one workflow run by id. |
+| `hide` | POST | `/api/v1/agent/workflows/{name}/hide` | Hide or un-hide a workflow. |
 | `list` | GET | `/api/v1/agent/workflows` | List workflow definitions. |
 | `listAll` | GET | `/api/v1/agent/workflows` | List workflow definitions. (collect all pages) |
 | `listIterator` | GET | `/api/v1/agent/workflows` | List workflow definitions. (async iterator) |
-| `listRuns` | GET | `/api/v1/agent/workflows/runs` | Snapshot in-flight and recent workflow runs. |
-| `listRunsAll` | GET | `/api/v1/agent/workflows/runs` | Snapshot in-flight and recent workflow runs. (collect all pages) |
-| `listRunsIterator` | GET | `/api/v1/agent/workflows/runs` | Snapshot in-flight and recent workflow runs. (async iterator) |
-| `resumeRun` | POST | `/api/v1/agent/workflows/runs/{run_id}/resume` | Resume a failed or cancelled workflow run. |
 | `sendMessage` | POST | `/api/v1/agent/sessions/{id}/workflow/messages` | Send a message to a running workflow. |
 | `set` | PUT | `/api/v1/agent/workflows/{name}` | Create or replace a workflow definition. |
-| `setHidden` | POST | `/api/v1/agent/workflows/{name}/hide` | Hide or un-hide a workflow. |
 | `setSummary` | PUT | `/api/v1/agent/workflows/{name}/summary` | Set or clear a workflow's summary. |
 | `start` | POST | `/api/v1/agent/workflows/{name}/runs` | Run a workflow in a new session. |
+| `unhide` | POST | `/api/v1/agent/workflows/{name}/hide` | Hide or un-hide a workflow. |
 
-## `api` (303 methods)
+### `client.agent.workflows.runs`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `cancel` | POST | `/api/v1/agent/workflows/runs/{run_id}/cancel` | Cancel a workflow run. |
+| `get` | GET | `/api/v1/agent/workflows/runs/{run_id}` | Get one workflow run by id. |
+| `list` | GET | `/api/v1/agent/workflows/runs` | Snapshot in-flight and recent workflow runs. |
+| `listAll` | GET | `/api/v1/agent/workflows/runs` | Snapshot in-flight and recent workflow runs. (collect all pages) |
+| `listIterator` | GET | `/api/v1/agent/workflows/runs` | Snapshot in-flight and recent workflow runs. (async iterator) |
+| `resume` | POST | `/api/v1/agent/workflows/runs/{run_id}/resume` | Resume a failed or cancelled workflow run. |
+
+## `api` (351 methods)
+
+### `client.api.abuseNotices`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `get` | GET | `/api/v1/abuse-notices/{id}` | Read one notice with every message |
+| `list` | GET | `/api/v1/abuse-notices` | List notices Hoody sent you about your servers |
+| `reply` | POST | `/api/v1/abuse-notices/{id}/messages` | Reply to a notice |
 
 ### `client.api.activity`
 
@@ -529,6 +714,7 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
+| `getFreeUsage` | GET | `/api/v1/users/me/free-ai-usage` | Get free AI usage for your servers |
 | `listModels` | GET | `/api/v1/ai/models` | List available AI models (Hoody catalog) |
 
 ### `client.api.auth`
@@ -542,9 +728,7 @@
 | `recoverPassword` | POST | `/api/v1/auth/forgot-password` | Request password reset |
 | `refresh` | POST | `/api/v1/users/auth/refresh` | Refresh access token |
 | `resetPassword` | POST | `/api/v1/auth/reset-password` | Reset password |
-| `sendVerificationEmail` | POST | `/api/v1/auth/resend-verification` | Resend verification email |
 | `signup` | POST | `/api/v1/auth/signup` | Sign up with email and password |
-| `verifyEmail` | POST | `/api/v1/auth/verify-email` | Verify email address |
 | `whoami` | GET | `/api/v1/users/auth/me` | Get current user profile |
 
 ### `client.api.auth.device`
@@ -557,6 +741,17 @@
 | `start` | POST | `/api/v1/auth/device/code` | Start a device authorization flow (RFC-8628-inspired) |
 | `verifyCode` | POST | `/api/v1/auth/device/verify_code` | Confirm a device user_code (verification page) |
 
+### `client.api.auth.email`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `cancelChange` | DELETE | `/api/v1/users/me/email-change` | Cancel a pending email address change |
+| `confirmChange` | POST | `/api/v1/auth/email-change/confirm` | Confirm an email address change |
+| `sendVerification` | POST | `/api/v1/auth/resend-verification` | Resend verification email |
+| `startChange` | POST | `/api/v1/users/me/email-change` | Request an email address change |
+| `undoChange` | POST | `/api/v1/auth/email-change/revert` | Undo an email address change |
+| `verify` | POST | `/api/v1/auth/verify-email` | Verify email address |
+
 ### `client.api.auth.oauth`
 
 | Method | HTTP | Path | Summary |
@@ -565,6 +760,16 @@
 | `cancelIntent` | POST | `/api/v1/auth/intent/cancel` | Cancel a pending OAuth intent or 2FA temp_token |
 | `exchange` | POST | `/api/v1/auth/exchange` | Exchange a PKCE authorization code for tokens |
 | `startLaunch` | POST | `/api/v1/auth/launch/initiate` | Initiate OAuth popup-handoff launch |
+
+### `client.api.auth.sessions`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `list` | GET | `/api/v1/users/auth/sessions` | List your sign-in sessions |
+| `listAll` | GET | `/api/v1/users/auth/sessions` | List your sign-in sessions (collect all pages) |
+| `listIterator` | GET | `/api/v1/users/auth/sessions` | List your sign-in sessions (async iterator) |
+| `revoke` | DELETE | `/api/v1/users/auth/sessions/{id}` | End one of your sign-in sessions |
+| `revokeOthers` | POST | `/api/v1/users/auth/sessions/revoke-others` | End all your other sign-in sessions |
 
 ### `client.api.auth.tokens`
 
@@ -596,44 +801,102 @@
 | `getStatus` | GET | `/api/v1/users/auth/2fa/status` | Get 2FA Status |
 | `rotateBackupCodes` | POST | `/api/v1/users/auth/2fa/backup-codes/regenerate` | Regenerate Backup Codes |
 | `startSetup` | POST | `/api/v1/users/auth/2fa/setup` | Initialize 2FA Setup |
+| `undoEnrollment` | POST | `/api/v1/auth/two-factor/undo` | Undo a two-factor enrollment ("this was not me") |
 | `verify` | POST | `/api/v1/users/auth/2fa/verify` | Verify 2FA Code During Login |
 
-### `client.api.containers`
+### `client.api.botUrls`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `copy` | POST | `/api/v1/containers/{id}/copy` | Copy a container |
-| `create` | POST | `/api/v1/projects/{id}/containers` | Create a new container |
-| `createClaim` | POST | `/api/v1/containers/{id}/authorize` | Authorize Container Access |
-| `delete` | DELETE | `/api/v1/containers/{id}` | Delete a container |
-| `disableKvm` | PUT | `/api/v1/containers/{id}/kvm` | Enable or disable /dev/kvm (run VMs in the container) |
-| `enableKvm` | PUT | `/api/v1/containers/{id}/kvm` | Enable or disable /dev/kvm (run VMs in the container) |
-| `get` | GET | `/api/v1/containers/{id}` | Get a container by ID |
-| `getProxyUsage` | GET | `/api/v1/containers/{id}/proxy-usage` | Get proxied-usage documents for a container |
-| `getStats` | GET | `/api/v1/containers/{id}/stats` | Get container resource statistics |
-| `list` | GET | `/api/v1/containers/` | Get all containers |
-| `listAll` | GET | `/api/v1/containers/` | Get all containers (collect all pages) |
-| `listByProject` | GET | `/api/v1/projects/{id}/containers` | Get all containers for a project |
-| `listByProjectAll` | GET | `/api/v1/projects/{id}/containers` | Get all containers for a project (collect all pages) |
-| `listByProjectIterator` | GET | `/api/v1/projects/{id}/containers` | Get all containers for a project (async iterator) |
-| `listIterator` | GET | `/api/v1/containers/` | Get all containers (async iterator) |
-| `listStatusHistory` | GET | `/api/v1/containers/{id}/status-logs` | Get status logs for a container |
-| `pause` | POST | `/api/v1/containers/{id}/{operation}` | Manage container |
-| `restart` | POST | `/api/v1/containers/{id}/{operation}` | Manage container |
-| `resume` | POST | `/api/v1/containers/{id}/{operation}` | Manage container |
-| `start` | POST | `/api/v1/containers/{id}/{operation}` | Manage container |
-| `stop` | POST | `/api/v1/containers/{id}/{operation}` | Manage container |
-| `sync` | POST | `/api/v1/containers/{id}/sync` | Sync a copied container with its source |
-| `update` | PUT | `/api/v1/containers/{id}` | Update a container |
+| `create` | POST | `/api/v1/bot-urls` | Create a Bot URL |
+| `delete` | DELETE | `/api/v1/bot-urls/{id}` | Delete a Bot URL |
+| `get` | GET | `/api/v1/bot-urls/{id}` | Get a Bot URL |
+| `list` | GET | `/api/v1/bot-urls` | List your Bot URLs |
+| `listAll` | GET | `/api/v1/bot-urls` | List your Bot URLs (collect all pages) |
+| `listIterator` | GET | `/api/v1/bot-urls` | List your Bot URLs (async iterator) |
+| `panic` | POST | `/api/v1/bot-urls/{id}/panic` | Panic: turn a Bot URL off and revoke every key |
+| `repoint` | POST | `/api/v1/bot-urls/{id}/repoint` | Point a Bot URL at another computer |
+| `suggestLabel` | GET | `/api/v1/bot-urls/suggest-label` | Suggest a free Bot name |
+| `update` | PATCH | `/api/v1/bot-urls/{id}` | Change Bot URL settings |
 
-### `client.api.containers.env`
+### `client.api.botUrls.keys`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `delete` | DELETE | `/api/v1/containers/{id}/env/{key}` | Delete a single environment variable |
-| `list` | GET | `/api/v1/containers/{id}/env` | List container environment variables |
-| `set` | PUT | `/api/v1/containers/{id}/env/{key}` | Set a single environment variable |
-| `update` | PUT | `/api/v1/containers/{id}/env` | Bulk set container environment variables |
+| `create` | POST | `/api/v1/bot-urls/{id}/keys` | Create a key |
+| `revoke` | DELETE | `/api/v1/bot-urls/{id}/keys/{keyId}` | Revoke a key |
+| `revokeAll` | POST | `/api/v1/bot-urls/{id}/keys/revoke-all` | Revoke every key |
+| `rotate` | POST | `/api/v1/bot-urls/{id}/keys/{keyId}/rotate` | Rotate a key |
+| `update` | PATCH | `/api/v1/bot-urls/{id}/keys/{keyId}` | Change a key |
+
+### `client.api.computers`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `copy` | POST | `/api/v1/computers/{id}/copy` | Copy a computer |
+| `create` | POST | `/api/v1/projects/{id}/computers` | Create a new computer |
+| `createClaim` | POST | `/api/v1/computers/{id}/authorize` | Authorize Computer Access |
+| `delete` | DELETE | `/api/v1/computers/{id}` | Delete a computer |
+| `disableKvm` | PUT | `/api/v1/computers/{id}/kvm` | Enable or disable /dev/kvm (run VMs in the computer) |
+| `enableKvm` | PUT | `/api/v1/computers/{id}/kvm` | Enable or disable /dev/kvm (run VMs in the computer) |
+| `get` | GET | `/api/v1/computers/{id}` | Get a computer by ID |
+| `getStats` | GET | `/api/v1/computers/{id}/stats` | Get computer resource statistics |
+| `list` | GET | `/api/v1/computers/` | Get all computers |
+| `listAll` | GET | `/api/v1/computers/` | Get all computers (collect all pages) |
+| `listByProject` | GET | `/api/v1/projects/{id}/computers` | Get all computers for a project |
+| `listByProjectAll` | GET | `/api/v1/projects/{id}/computers` | Get all computers for a project (collect all pages) |
+| `listByProjectIterator` | GET | `/api/v1/projects/{id}/computers` | Get all computers for a project (async iterator) |
+| `listIterator` | GET | `/api/v1/computers/` | Get all computers (async iterator) |
+| `listStatusHistory` | GET | `/api/v1/computers/{id}/status-logs` | Get status logs for a computer |
+| `pause` | POST | `/api/v1/computers/{id}/{operation}` | Manage computer |
+| `restart` | POST | `/api/v1/computers/{id}/{operation}` | Manage computer |
+| `resume` | POST | `/api/v1/computers/{id}/{operation}` | Manage computer |
+| `start` | POST | `/api/v1/computers/{id}/{operation}` | Manage computer |
+| `stop` | POST | `/api/v1/computers/{id}/{operation}` | Manage computer |
+| `sync` | POST | `/api/v1/computers/{id}/sync` | Sync a copied computer with its source |
+| `update` | PUT | `/api/v1/computers/{id}` | Update a computer |
+
+### `client.api.computers.env`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `delete` | DELETE | `/api/v1/computers/{id}/env/{key}` | Delete a single environment variable |
+| `list` | GET | `/api/v1/computers/{id}/env` | List computer environment variables |
+| `set` | PUT | `/api/v1/computers/{id}/env/{key}` | Set a single environment variable |
+| `update` | PUT | `/api/v1/computers/{id}/env` | Bulk set computer environment variables |
+
+### `client.api.computers.proxy`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `clearGroupPermissions` | DELETE | `/api/v1/computers/{id}/proxy/permissions/permissions/{groupName}` | Remove all program permissions for a computer group |
+| `clearHooks` | DELETE | `/api/v1/computers/{id}/proxy/hooks/{service}` | Clear all hooks for a service |
+| `createHook` | POST | `/api/v1/computers/{id}/proxy/hooks/{service}` | Append or insert a new hook |
+| `deleteGroup` | DELETE | `/api/v1/computers/{id}/proxy/permissions/groups/{groupName}` | Remove computer authentication group |
+| `deleteGroupPermission` | DELETE | `/api/v1/computers/{id}/proxy/permissions/permissions/{groupName}/{program}` | Remove a single program permission for a computer group |
+| `deleteHook` | DELETE | `/api/v1/computers/{id}/proxy/hooks/{service}/{hookId}` | Remove a hook |
+| `deletePermissions` | DELETE | `/api/v1/computers/{id}/proxy/permissions` | Delete computer proxy permissions |
+| `disable` | PATCH | `/api/v1/computers/{id}/proxy/permissions/state` | Update computer proxy enable state |
+| `enable` | PATCH | `/api/v1/computers/{id}/proxy/permissions/state` | Update computer proxy enable state |
+| `getHook` | GET | `/api/v1/computers/{id}/proxy/hooks/{service}/{hookId}` | Get a single hook by id |
+| `getPermissions` | GET | `/api/v1/computers/{id}/proxy/permissions` | Get computer proxy permissions |
+| `getService` | GET | `/api/v1/computers/{id}/proxy/services/{service}` | Get merged proxy view for a service |
+| `getSettings` | GET | `/api/v1/computers/{id}/proxy/settings` | Get computer proxy root settings |
+| `getUsage` | GET | `/api/v1/computers/{id}/proxy-usage` | Get proxied-usage documents for a computer |
+| `listGroups` | GET | `/api/v1/computers/{id}/proxy/groups` | List computer proxy groups |
+| `listHooks` | GET | `/api/v1/computers/{id}/proxy/hooks` | List all proxy hooks for a computer |
+| `listHooksByService` | GET | `/api/v1/computers/{id}/proxy/hooks/{service}` | List hooks for a specific service |
+| `listServices` | GET | `/api/v1/computers/{id}/proxy/services` | List services referenced in proxy config |
+| `moveHook` | PATCH | `/api/v1/computers/{id}/proxy/hooks/{service}/{hookId}/position` | Move a hook to a new position |
+| `setDefault` | PATCH | `/api/v1/computers/{id}/proxy/permissions/default` | Update computer default proxy permission policy |
+| `setGroupPermission` | PUT | `/api/v1/computers/{id}/proxy/permissions/permissions/{groupName}` | Set computer group program permission |
+| `setHook` | PUT | `/api/v1/computers/{id}/proxy/hooks/{service}/{hookId}` | Replace a hook in place |
+| `setIpGroup` | PUT | `/api/v1/computers/{id}/proxy/permissions/groups/{groupName}/ip` | Set IP authentication group (computer) |
+| `setJwtGroup` | PUT | `/api/v1/computers/{id}/proxy/permissions/groups/{groupName}/jwt` | Set JWT authentication group (computer) |
+| `setPasswordGroup` | PUT | `/api/v1/computers/{id}/proxy/permissions/groups/{groupName}/password` | Set password authentication group (computer) |
+| `setPermissions` | PUT | `/api/v1/computers/{id}/proxy/permissions` | Replace computer proxy permissions JSON |
+| `setTokenGroup` | PUT | `/api/v1/computers/{id}/proxy/permissions/groups/{groupName}/token` | Set token authentication group (computer) |
+| `updateSettings` | PUT | `/api/v1/computers/{id}/proxy/settings` | Update computer proxy root settings |
 
 ### `client.api.events`
 
@@ -652,16 +915,26 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `createEgressRule` | POST | `/api/v1/containers/{id}/firewall/egress` | Add Egress Rule |
-| `createIngressRule` | POST | `/api/v1/containers/{id}/firewall/ingress` | Add Ingress Rule |
-| `deleteEgressRule` | DELETE | `/api/v1/containers/{id}/firewall/egress` | Remove Egress Rule(s) |
-| `deleteIngressRule` | DELETE | `/api/v1/containers/{id}/firewall/ingress` | Remove Ingress Rule(s) |
-| `disableEgressRule` | PATCH | `/api/v1/containers/{id}/firewall/egress` | Toggle Egress Rule State |
-| `disableIngressRule` | PATCH | `/api/v1/containers/{id}/firewall/ingress` | Toggle Ingress Rule State |
-| `enableEgressRule` | PATCH | `/api/v1/containers/{id}/firewall/egress` | Toggle Egress Rule State |
-| `enableIngressRule` | PATCH | `/api/v1/containers/{id}/firewall/ingress` | Toggle Ingress Rule State |
-| `listRules` | GET | `/api/v1/containers/{id}/firewall/rules` | List container firewall rules |
-| `reset` | POST | `/api/v1/containers/{id}/firewall/reset` | Reset container firewall |
+| `listRules` | GET | `/api/v1/computers/{id}/firewall/rules` | List computer firewall rules |
+| `reset` | POST | `/api/v1/computers/{id}/firewall/reset` | Reset computer firewall |
+
+### `client.api.firewall.egress`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `create` | POST | `/api/v1/computers/{id}/firewall/egress` | Add Egress Rule |
+| `delete` | DELETE | `/api/v1/computers/{id}/firewall/egress` | Remove Egress Rule(s) |
+| `disable` | PATCH | `/api/v1/computers/{id}/firewall/egress` | Toggle Egress Rule State |
+| `enable` | PATCH | `/api/v1/computers/{id}/firewall/egress` | Toggle Egress Rule State |
+
+### `client.api.firewall.ingress`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `create` | POST | `/api/v1/computers/{id}/firewall/ingress` | Add Ingress Rule |
+| `delete` | DELETE | `/api/v1/computers/{id}/firewall/ingress` | Remove Ingress Rule(s) |
+| `disable` | PATCH | `/api/v1/computers/{id}/firewall/ingress` | Toggle Ingress Rule State |
+| `enable` | PATCH | `/api/v1/computers/{id}/firewall/ingress` | Toggle Ingress Rule State |
 
 ### `client.api.images`
 
@@ -671,9 +944,9 @@
 | `getIcon` | GET | `/api/v1/images/{id}/icon` | Get image icon |
 | `getPublic` | GET | `/api/v1/images/public/{id}` | Get public image details |
 | `import` | POST | `/api/v1/images/import/{id}` | Import free image |
-| `list` | GET | `/api/v1/images/user` | List user images |
-| `listAll` | GET | `/api/v1/images/user` | List user images (collect all pages) |
-| `listIterator` | GET | `/api/v1/images/user` | List user images (async iterator) |
+| `listMine` | GET | `/api/v1/images/user` | List user images |
+| `listMineAll` | GET | `/api/v1/images/user` | List user images (collect all pages) |
+| `listMineIterator` | GET | `/api/v1/images/user` | List user images (async iterator) |
 | `listPublic` | GET | `/api/v1/images/public` | List public images |
 | `listPublicAll` | GET | `/api/v1/images/public` | List public images (collect all pages) |
 | `listPublicIterator` | GET | `/api/v1/images/public` | List public images (async iterator) |
@@ -698,6 +971,7 @@
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `get` | GET | `/api/v1/ip` | Get IP Information |
+| `lookup` | GET | `/api/v1/ip/lookup` | Look Up IP Information |
 
 ### `client.api.meta`
 
@@ -709,11 +983,11 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `delete` | DELETE | `/api/v1/containers/{id}/network` | Remove container network configuration |
-| `get` | GET | `/api/v1/containers/{id}/network` | Get container network configuration |
-| `start` | POST | `/api/v1/containers/{id}/network/start` | Start container network proxy/blocking |
-| `stop` | POST | `/api/v1/containers/{id}/network/stop` | Stop container network proxy/blocking |
-| `update` | PUT | `/api/v1/containers/{id}/network` | Update container network configuration |
+| `delete` | DELETE | `/api/v1/computers/{id}/network` | Remove computer network configuration |
+| `get` | GET | `/api/v1/computers/{id}/network` | Get computer network configuration |
+| `start` | POST | `/api/v1/computers/{id}/network/start` | Start computer network proxy/blocking |
+| `stop` | POST | `/api/v1/computers/{id}/network/stop` | Stop computer network proxy/blocking |
+| `update` | PUT | `/api/v1/computers/{id}/network` | Update computer network configuration |
 
 ### `client.api.pools`
 
@@ -748,20 +1022,44 @@
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `create` | POST | `/api/v1/projects/` | Create a new project |
-| `createPermission` | POST | `/api/v1/projects/{id}/permissions` | Grant project access |
 | `delete` | DELETE | `/api/v1/projects/{id}` | Delete project |
-| `deletePermission` | DELETE | `/api/v1/projects/{id}/permissions/{permissionId}` | Revoke project access |
 | `get` | GET | `/api/v1/projects/{id}` | Get project by ID |
-| `getProxyUsage` | GET | `/api/v1/projects/{id}/proxy-usage` | Get proxied-usage documents for every container in a project |
-| `getStats` | GET | `/api/v1/projects/{id}/stats` | Get statistics for all containers in a project |
+| `getStats` | GET | `/api/v1/projects/{id}/stats` | Get statistics for all computers in a project |
 | `list` | GET | `/api/v1/projects/` | List all projects |
 | `listAll` | GET | `/api/v1/projects/` | List all projects (collect all pages) |
 | `listIterator` | GET | `/api/v1/projects/` | List all projects (async iterator) |
-| `listPermissions` | GET | `/api/v1/projects/{id}/permissions` | List project permissions |
-| `listPermissionsAll` | GET | `/api/v1/projects/{id}/permissions` | List project permissions (collect all pages) |
-| `listPermissionsIterator` | GET | `/api/v1/projects/{id}/permissions` | List project permissions (async iterator) |
 | `update` | PUT | `/api/v1/projects/{id}` | Update project |
-| `updatePermission` | PUT | `/api/v1/projects/{id}/permissions/{permissionId}` | Update project permission |
+
+### `client.api.projects.permissions`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `add` | POST | `/api/v1/projects/{id}/permissions` | Grant project access |
+| `list` | GET | `/api/v1/projects/{id}/permissions` | List project permissions |
+| `listAll` | GET | `/api/v1/projects/{id}/permissions` | List project permissions (collect all pages) |
+| `listIterator` | GET | `/api/v1/projects/{id}/permissions` | List project permissions (async iterator) |
+| `remove` | DELETE | `/api/v1/projects/{id}/permissions/{permissionId}` | Revoke project access |
+| `update` | PUT | `/api/v1/projects/{id}/permissions/{permissionId}` | Update project permission |
+
+### `client.api.projects.proxy`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `clearGroupPermissions` | DELETE | `/api/v1/projects/{id}/proxy/permissions/permissions/{groupName}` | Remove all program permissions for a project group |
+| `deleteGroup` | DELETE | `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}` | Remove project authentication group |
+| `deleteGroupPermission` | DELETE | `/api/v1/projects/{id}/proxy/permissions/permissions/{groupName}/{program}` | Remove a single program permission for a project group |
+| `deletePermissions` | DELETE | `/api/v1/projects/{id}/proxy/permissions` | Delete project proxy permissions |
+| `disable` | PATCH | `/api/v1/projects/{id}/proxy/permissions/state` | Update project proxy enable state |
+| `enable` | PATCH | `/api/v1/projects/{id}/proxy/permissions/state` | Update project proxy enable state |
+| `getPermissions` | GET | `/api/v1/projects/{id}/proxy/permissions` | Get project proxy permissions |
+| `getUsage` | GET | `/api/v1/projects/{id}/proxy-usage` | Get proxied-usage documents for every computer in a project |
+| `setDefault` | PATCH | `/api/v1/projects/{id}/proxy/permissions/default` | Update project default proxy permission policy |
+| `setGroupPermission` | PUT | `/api/v1/projects/{id}/proxy/permissions/permissions/{groupName}` | Set project group program permission |
+| `setIpGroup` | PUT | `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}/ip` | Set IP authentication group (project) |
+| `setJwtGroup` | PUT | `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}/jwt` | Set JWT authentication group (project) |
+| `setPasswordGroup` | PUT | `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}/password` | Set password authentication group (project) |
+| `setPermissions` | PUT | `/api/v1/projects/{id}/proxy/permissions` | Replace project proxy permissions JSON |
+| `setTokenGroup` | PUT | `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}/token` | Set token authentication group (project) |
 
 ### `client.api.proxy.aliases`
 
@@ -777,82 +1075,26 @@
 | `listIterator` | GET | `/api/v1/proxy/aliases` | List proxy aliases (async iterator) |
 | `update` | PATCH | `/api/v1/proxy/aliases/{id}` | Update proxy alias |
 
-### `client.api.proxy.containerPermissions`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `clearGroupPermissions` | DELETE | `/api/v1/containers/{id}/proxy/permissions/permissions/{groupName}` | Remove all program permissions for a container group |
-| `delete` | DELETE | `/api/v1/containers/{id}/proxy/permissions` | Delete container proxy permissions |
-| `deleteAuthGroup` | DELETE | `/api/v1/containers/{id}/proxy/permissions/groups/{groupName}` | Remove container authentication group |
-| `deleteGroupPermission` | DELETE | `/api/v1/containers/{id}/proxy/permissions/permissions/{groupName}/{program}` | Remove a single program permission for a container group |
-| `disable` | PATCH | `/api/v1/containers/{id}/proxy/permissions/state` | Update container proxy enable state |
-| `enable` | PATCH | `/api/v1/containers/{id}/proxy/permissions/state` | Update container proxy enable state |
-| `get` | GET | `/api/v1/containers/{id}/proxy/permissions` | Get container proxy permissions |
-| `set` | PUT | `/api/v1/containers/{id}/proxy/permissions` | Replace container proxy permissions JSON |
-| `setDefault` | PATCH | `/api/v1/containers/{id}/proxy/permissions/default` | Update container default proxy permission policy |
-| `setGroupPermission` | PUT | `/api/v1/containers/{id}/proxy/permissions/permissions/{groupName}` | Set container group program permission |
-| `setIpGroup` | PUT | `/api/v1/containers/{id}/proxy/permissions/groups/{groupName}/ip` | Set IP authentication group (container) |
-| `setJwtGroup` | PUT | `/api/v1/containers/{id}/proxy/permissions/groups/{groupName}/jwt` | Set JWT authentication group (container) |
-| `setPasswordGroup` | PUT | `/api/v1/containers/{id}/proxy/permissions/groups/{groupName}/password` | Set password authentication group (container) |
-| `setTokenGroup` | PUT | `/api/v1/containers/{id}/proxy/permissions/groups/{groupName}/token` | Set token authentication group (container) |
-
-### `client.api.proxy.groups`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `list` | GET | `/api/v1/containers/{id}/proxy/groups` | List container proxy groups |
-
-### `client.api.proxy.hooks`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `clear` | DELETE | `/api/v1/containers/{id}/proxy/hooks/{service}` | Clear all hooks for a service |
-| `create` | POST | `/api/v1/containers/{id}/proxy/hooks/{service}` | Append or insert a new hook |
-| `delete` | DELETE | `/api/v1/containers/{id}/proxy/hooks/{service}/{hookId}` | Remove a hook |
-| `get` | GET | `/api/v1/containers/{id}/proxy/hooks/{service}/{hookId}` | Get a single hook by id |
-| `list` | GET | `/api/v1/containers/{id}/proxy/hooks` | List all proxy hooks for a container |
-| `listByService` | GET | `/api/v1/containers/{id}/proxy/hooks/{service}` | List hooks for a specific service |
-| `move` | PATCH | `/api/v1/containers/{id}/proxy/hooks/{service}/{hookId}/position` | Move a hook to a new position |
-| `set` | PUT | `/api/v1/containers/{id}/proxy/hooks/{service}/{hookId}` | Replace a hook in place |
-
-### `client.api.proxy.projectPermissions`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `clearGroupPermissions` | DELETE | `/api/v1/projects/{id}/proxy/permissions/permissions/{groupName}` | Remove all program permissions for a project group |
-| `delete` | DELETE | `/api/v1/projects/{id}/proxy/permissions` | Delete project proxy permissions |
-| `deleteAuthGroup` | DELETE | `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}` | Remove project authentication group |
-| `deleteGroupPermission` | DELETE | `/api/v1/projects/{id}/proxy/permissions/permissions/{groupName}/{program}` | Remove a single program permission for a project group |
-| `disable` | PATCH | `/api/v1/projects/{id}/proxy/permissions/state` | Update project proxy enable state |
-| `enable` | PATCH | `/api/v1/projects/{id}/proxy/permissions/state` | Update project proxy enable state |
-| `get` | GET | `/api/v1/projects/{id}/proxy/permissions` | Get project proxy permissions |
-| `set` | PUT | `/api/v1/projects/{id}/proxy/permissions` | Replace project proxy permissions JSON |
-| `setDefault` | PATCH | `/api/v1/projects/{id}/proxy/permissions/default` | Update project default proxy permission policy |
-| `setGroupPermission` | PUT | `/api/v1/projects/{id}/proxy/permissions/permissions/{groupName}` | Set project group program permission |
-| `setIpGroup` | PUT | `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}/ip` | Set IP authentication group (project) |
-| `setJwtGroup` | PUT | `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}/jwt` | Set JWT authentication group (project) |
-| `setPasswordGroup` | PUT | `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}/password` | Set password authentication group (project) |
-| `setTokenGroup` | PUT | `/api/v1/projects/{id}/proxy/permissions/groups/{groupName}/token` | Set token authentication group (project) |
-
-### `client.api.proxy.services`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `get` | GET | `/api/v1/containers/{id}/proxy/services/{service}` | Get merged proxy view for a service |
-| `list` | GET | `/api/v1/containers/{id}/proxy/services` | List services referenced in proxy config |
-
-### `client.api.proxy.settings`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `get` | GET | `/api/v1/containers/{id}/proxy/settings` | Get container proxy root settings |
-| `update` | PUT | `/api/v1/containers/{id}/proxy/settings` | Update container proxy root settings |
-
 ### `client.api.realms`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `list` | GET | `/api/v1/realms/` | List your realm IDs |
+
+### `client.api.referrals`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `get` | GET | `/api/v1/referrals/me` | Show your referral program status |
+| `join` | POST | `/api/v1/referrals/me` | Join the referral program |
+
+### `client.api.referrals.codes`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `check` | GET | `/api/v1/referrals/me/codes/check` | Check a custom referral code |
+| `create` | POST | `/api/v1/referrals/me/codes` | Create a custom referral code |
+| `release` | DELETE | `/api/v1/referrals/me/codes/{code}` | Release a custom referral code |
 
 ### `client.api.servers`
 
@@ -860,51 +1102,33 @@
 |--------|------|------|---------|
 | `extend` | POST | `/api/v1/rentals/{id}/extend` | Extend rental |
 | `get` | GET | `/api/v1/rentals/{id}` | Get rental details |
+| `getJob` | GET | `/api/v1/subserver-operations/{id}` | Status of a paid subserver operation |
+| `getReservation` | GET | `/api/v1/reservations/{id}` | One of your reservations |
 | `getStats` | GET | `/api/v1/rentals/{id}/runtime` | Get live runtime info for a rented server or subserver |
 | `list` | GET | `/api/v1/rentals` | List user rentals |
 | `listAll` | GET | `/api/v1/rentals` | List user rentals (collect all pages) |
+| `listCommands` | GET | `/api/v1/servers/{serverId}/available-commands` | Get available commands |
+| `listCommandsAll` | GET | `/api/v1/servers/{serverId}/available-commands` | Get available commands (collect all pages) |
+| `listCommandsIterator` | GET | `/api/v1/servers/{serverId}/available-commands` | Get available commands (async iterator) |
 | `listIterator` | GET | `/api/v1/rentals` | List user rentals (async iterator) |
 | `listMarketplace` | GET | `/api/v1/servers/available` | Browse rental marketplace |
 | `listMarketplaceAll` | GET | `/api/v1/servers/available` | Browse rental marketplace (collect all pages) |
 | `listMarketplaceIterator` | GET | `/api/v1/servers/available` | Browse rental marketplace (async iterator) |
+| `listOffers` | GET | `/api/v1/offers` | Browse machines available to order |
 | `listRegions` | GET | `/api/v1/auth/available-regions` | Get available server regions |
+| `listReservations` | GET | `/api/v1/reservations` | Your reservations |
 | `rent` | POST | `/api/v1/servers/{id}/rent` | Rent server |
-
-### `client.api.servers.commands`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `list` | GET | `/api/v1/servers/{serverId}/available-commands` | Get available commands |
-| `listAll` | GET | `/api/v1/servers/{serverId}/available-commands` | Get available commands (collect all pages) |
-| `listIterator` | GET | `/api/v1/servers/{serverId}/available-commands` | Get available commands (async iterator) |
-| `run` | POST | `/api/v1/servers/{serverId}/execute-command` | Execute server command |
-
-### `client.api.servers.jobs`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `get` | GET | `/api/v1/subserver-operations/{id}` | Status of a paid subserver operation |
-
-### `client.api.servers.offers`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `list` | GET | `/api/v1/offers` | Browse machines available to order |
-| `reserve` | POST | `/api/v1/offers/{id}/reserve` | Reserve an offer (charges immediately) |
+| `reserveOffer` | POST | `/api/v1/offers/{id}/reserve` | Reserve an offer (charges immediately) |
+| `runCommand` | POST | `/api/v1/servers/{serverId}/execute-command` | Execute server command |
 
 ### `client.api.servers.plans`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `list` | GET | `/api/v1/subserver-plans` | List subserver plans available to you |
+| `listPublic` | GET | `/api/v1/meta/subserver-plans` | List public subserver plans |
+| `listRegions` | GET | `/api/v1/subserver-subscriptions/regions` | List the regions a paid subserver plan is sold in |
 | `quote` | GET | `/api/v1/subserver-subscriptions/quote` | Quote a paid subserver purchase |
-
-### `client.api.servers.reservations`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `get` | GET | `/api/v1/reservations/{id}` | One of your reservations |
-| `list` | GET | `/api/v1/reservations` | Your reservations |
 
 ### `client.api.servers.subscriptions`
 
@@ -924,34 +1148,60 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `create` | POST | `/api/v1/containers/{id}/snapshots` | Create container snapshot |
-| `delete` | DELETE | `/api/v1/containers/{id}/snapshots/{name}` | Delete container snapshot |
-| `list` | GET | `/api/v1/containers/{id}/snapshots` | Get container snapshots |
-| `listAll` | GET | `/api/v1/containers/{id}/snapshots` | Get container snapshots (collect all pages) |
-| `listIterator` | GET | `/api/v1/containers/{id}/snapshots` | Get container snapshots (async iterator) |
-| `restore` | PUT | `/api/v1/containers/{id}/snapshots/{name}` | Restore container from snapshot |
-| `setAlias` | PUT | `/api/v1/containers/{id}/snapshots/{name}/alias` | Update snapshot alias |
+| `create` | POST | `/api/v1/computers/{id}/snapshots` | Create computer snapshot |
+| `delete` | DELETE | `/api/v1/computers/{id}/snapshots/{name}` | Delete computer snapshot |
+| `list` | GET | `/api/v1/computers/{id}/snapshots` | Get computer snapshots |
+| `listAll` | GET | `/api/v1/computers/{id}/snapshots` | Get computer snapshots (collect all pages) |
+| `listIterator` | GET | `/api/v1/computers/{id}/snapshots` | Get computer snapshots (async iterator) |
+| `restore` | PUT | `/api/v1/computers/{id}/snapshots/{name}` | Restore computer from snapshot |
+| `setAlias` | PUT | `/api/v1/computers/{id}/snapshots/{name}/alias` | Update snapshot alias |
+
+### `client.api.storage.incoming`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `list` | GET | `/api/v1/storage/incoming` | Get all incoming shares |
+| `listAll` | GET | `/api/v1/storage/incoming` | Get all incoming shares (collect all pages) |
+| `listByComputer` | GET | `/api/v1/computers/{id}/storage/incoming` | Get incoming shares |
+| `listIterator` | GET | `/api/v1/storage/incoming` | Get all incoming shares (async iterator) |
+| `mount` | PATCH | `/api/v1/computers/{id}/storage/incoming/{shareId}/mount` | Toggle incoming share mount |
+| `unmount` | PATCH | `/api/v1/computers/{id}/storage/incoming/{shareId}/mount` | Toggle incoming share mount |
 
 ### `client.api.storage.shares`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `create` | POST | `/api/v1/containers/{id}/storage/shares` | Create storage share |
+| `create` | POST | `/api/v1/computers/{id}/storage/shares` | Create storage share |
 | `delete` | DELETE | `/api/v1/storage/shares/{shareId}` | Delete storage share |
-| `get` | GET | `/api/v1/containers/{id}/storage/shares/{shareId}` | Get storage share |
+| `get` | GET | `/api/v1/computers/{id}/storage/shares/{shareId}` | Get storage share |
 | `list` | GET | `/api/v1/storage/shares` | List all your storage shares |
 | `listAll` | GET | `/api/v1/storage/shares` | List all your storage shares (collect all pages) |
-| `listByContainer` | GET | `/api/v1/containers/{id}/storage/shares` | List storage shares |
-| `listByContainerAll` | GET | `/api/v1/containers/{id}/storage/shares` | List storage shares (collect all pages) |
-| `listByContainerIterator` | GET | `/api/v1/containers/{id}/storage/shares` | List storage shares (async iterator) |
-| `listIncoming` | GET | `/api/v1/storage/incoming` | Get all incoming shares |
-| `listIncomingAll` | GET | `/api/v1/storage/incoming` | Get all incoming shares (collect all pages) |
-| `listIncomingByContainer` | GET | `/api/v1/containers/{id}/storage/incoming` | Get incoming shares |
-| `listIncomingIterator` | GET | `/api/v1/storage/incoming` | Get all incoming shares (async iterator) |
+| `listByComputer` | GET | `/api/v1/computers/{id}/storage/shares` | List storage shares |
+| `listByComputerAll` | GET | `/api/v1/computers/{id}/storage/shares` | List storage shares (collect all pages) |
+| `listByComputerIterator` | GET | `/api/v1/computers/{id}/storage/shares` | List storage shares (async iterator) |
 | `listIterator` | GET | `/api/v1/storage/shares` | List all your storage shares (async iterator) |
-| `mountIncoming` | PATCH | `/api/v1/containers/{id}/storage/incoming/{shareId}/mount` | Toggle incoming share mount |
-| `unmountIncoming` | PATCH | `/api/v1/containers/{id}/storage/incoming/{shareId}/mount` | Toggle incoming share mount |
-| `update` | PATCH | `/api/v1/containers/{id}/storage/shares/{shareId}` | Update storage share |
+| `update` | PATCH | `/api/v1/computers/{id}/storage/shares/{shareId}` | Update storage share |
+
+### `client.api.support`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `getLimits` | GET | `/api/v1/support/limits` | Your support limits |
+
+### `client.api.support.tickets`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `close` | POST | `/api/v1/support/tickets/{id}/close` | Close a support ticket |
+| `create` | POST | `/api/v1/support/tickets` | Open a support ticket |
+| `get` | GET | `/api/v1/support/tickets/{id}` | Read a support ticket |
+| `getByKey` | GET | `/api/v1/support/tickets/by-key` | Find the ticket a create with a client_key made |
+| `getMessageByKey` | GET | `/api/v1/support/tickets/{id}/messages/by-key` | Find the reply a client_key added to a ticket |
+| `list` | GET | `/api/v1/support/tickets` | List your support tickets |
+| `listAll` | GET | `/api/v1/support/tickets` | List your support tickets (collect all pages) |
+| `listChanges` | GET | `/api/v1/support/tickets/changes` | Poll for ticket changes |
+| `listIterator` | GET | `/api/v1/support/tickets` | List your support tickets (async iterator) |
+| `reply` | POST | `/api/v1/support/tickets/{id}/messages` | Reply to a support ticket |
 
 ### `client.api.users`
 
@@ -971,7 +1221,7 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `clear` | DELETE | `/api/v1/vault` | Clear entire vault |
+| `clear` | DELETE | `/api/v1/vault` | Clear the vault of the current realm |
 | `delete` | DELETE | `/api/v1/vault/keys/{key}` | Delete vault key |
 | `get` | GET | `/api/v1/vault/keys/{key}` | Get vault key |
 | `getStats` | GET | `/api/v1/vault/stats` | Get vault statistics |
@@ -985,70 +1235,56 @@
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `claimGithubBonus` | POST | `/api/v1/wallet/github-bonus/claim` | Claim the GitHub connection bonus |
-| `createCryptoInvoice` | POST | `/api/v1/wallet/payments/crypto/invoice` | Start a crypto payment (hosted invoice) |
-| `createInvoice` | POST | `/api/v1/wallet/invoices/generate/{id}` | Generate invoice for transaction |
-| `createPaymentMethod` | POST | `/api/v1/wallet/payment-methods/` | Add a new payment method |
-| `createStripeCheckout` | POST | `/api/v1/wallet/payments/stripe/checkout` | Start a card payment (Stripe Checkout) |
-| `deletePaymentMethod` | DELETE | `/api/v1/wallet/payment-methods/{id}` | Delete a payment method |
-| `downloadInvoice` | GET | `/api/v1/wallet/invoices/{id}/pdf` | Download invoice PDF |
-| `getBalance` | GET | `/api/v1/wallet/balances/general` | Get general balance only |
 | `getBalances` | GET | `/api/v1/wallet/balances` | Get aggregate balances (general + AI) |
-| `getCredits` | GET | `/api/v1/wallet/balances/ai` | Get AI balance (limit, usage, remaining) |
-| `getCryptoPaymentIntent` | GET | `/api/v1/wallet/payments/crypto/intents/{id}` | Get a crypto payment intent |
-| `getGithubBonus` | GET | `/api/v1/wallet/github-bonus` | Get GitHub connection bonus status |
-| `getInvoice` | GET | `/api/v1/wallet/invoices/{id}` | Get invoice by ID |
-| `getPaymentAvailability` | GET | `/api/v1/wallet/payment-availability` | Get top-up payment availability (providers, bounds, AI transfer fee) |
-| `getPaymentMethod` | GET | `/api/v1/wallet/payment-methods/{id}` | Get payment method by ID |
-| `getStripePaymentIntent` | GET | `/api/v1/wallet/payments/stripe/intents/{id}` | Get a card payment intent |
+| `getGeneralBalance` | GET | `/api/v1/wallet/balances/general` | Get general balance only |
+| `getGithubBonusStatus` | GET | `/api/v1/wallet/github-bonus` | Get GitHub connection bonus status |
 | `getTransaction` | GET | `/api/v1/wallet/transactions/{id}` | Get transaction by ID |
-| `listCreditFees` | GET | `/api/v1/wallet/ai-fee-history` | Get AI credit fee history |
-| `listCreditFeesAll` | GET | `/api/v1/wallet/ai-fee-history` | Get AI credit fee history (collect all pages) |
-| `listCreditFeesIterator` | GET | `/api/v1/wallet/ai-fee-history` | Get AI credit fee history (async iterator) |
-| `listCryptoPaymentIntents` | GET | `/api/v1/wallet/payments/crypto/intents` | List crypto payment intents |
-| `listInvoices` | GET | `/api/v1/wallet/invoices/` | Get all invoices |
-| `listInvoicesAll` | GET | `/api/v1/wallet/invoices/` | Get all invoices (collect all pages) |
-| `listInvoicesIterator` | GET | `/api/v1/wallet/invoices/` | Get all invoices (async iterator) |
-| `listPaymentMethods` | GET | `/api/v1/wallet/payment-methods/` | Get all payment methods |
-| `listPaymentMethodsAll` | GET | `/api/v1/wallet/payment-methods/` | Get all payment methods (collect all pages) |
-| `listPaymentMethodsIterator` | GET | `/api/v1/wallet/payment-methods/` | Get all payment methods (async iterator) |
-| `listStripePaymentIntents` | GET | `/api/v1/wallet/payments/stripe/intents` | List card payment intents |
 | `listTransactions` | GET | `/api/v1/wallet/transactions` | List transactions |
 | `listTransactionsAll` | GET | `/api/v1/wallet/transactions` | List transactions (collect all pages) |
 | `listTransactionsIterator` | GET | `/api/v1/wallet/transactions` | List transactions (async iterator) |
-| `setDefaultPaymentMethod` | PUT | `/api/v1/wallet/payment-methods/{id}/default` | Set a payment method as default |
-| `transferToCredits` | POST | `/api/v1/wallet/transfers` | Transfer from general balance to AI credits |
-| `updatePaymentMethod` | PUT | `/api/v1/wallet/payment-methods/{id}` | Update a payment method |
 
-## `bot` (17 methods)
-
-### `client.bot.kit`
+### `client.api.wallet.credits`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `getHealth` | GET | `/api/v1/bot/health` | Nine-field kit health; unauthenticated by design. |
-| `getManifest` | GET | `/api/v1/bot/manifest` | The chat manifest this build is pinned to, as it was baked. |
-| `rotateKeys` | POST | `/api/v1/bot/kit/keys/rotate` | Re-encrypt every sealed column under a new kit key. |
+| `get` | GET | `/api/v1/wallet/balances/ai` | Get AI balance (limit, usage, remaining) |
+| `listFees` | GET | `/api/v1/wallet/ai-fee-history` | Get AI credit fee history |
+| `listFeesAll` | GET | `/api/v1/wallet/ai-fee-history` | Get AI credit fee history (collect all pages) |
+| `listFeesIterator` | GET | `/api/v1/wallet/ai-fee-history` | Get AI credit fee history (async iterator) |
+| `transfer` | POST | `/api/v1/wallet/transfers` | Transfer from general balance to AI credits |
 
-### `client.bot.registrations`
+### `client.api.wallet.invoices`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `create` | POST | `/api/v1/bot/registrations` | Register a channel bot; the token arrives in the body and is stored encrypted. |
-| `delete` | DELETE | `/api/v1/bot/registrations/{registrationId}` | Delete a registration and its stored channel token. |
-| `get` | GET | `/api/v1/bot/registrations/{registrationId}` | Read one registration. |
-| `getPolicy` | GET | `/api/v1/bot/registrations/{registrationId}/policy` | Read a registration’s mode and allowlists. |
-| `list` | GET | `/api/v1/bot/registrations` | List the registrations owned by the calling account. |
-| `listLogs` | GET | `/api/v1/bot/registrations/{registrationId}/logs` | Read the redacted audit log of a registration, newest first. |
-| `purgeLogs` | DELETE | `/api/v1/bot/registrations/{registrationId}/logs` | Delete audit rows older than a cutoff, never inside the retention window. |
-| `revokeAllTokens` | POST | `/api/v1/bot/registrations/{registrationId}/tokens/revoke-all` | Revoke every chat user’s lineage for this registration. |
-| `revokeSession` | POST | `/api/v1/bot/registrations/{registrationId}/sessions/{channelUserId}/revoke` | Revoke one chat user’s login: delete the leaf through the parent and forget it. |
-| `start` | POST | `/api/v1/bot/registrations/{registrationId}/start` | Start long-polling for a registration. |
-| `stop` | POST | `/api/v1/bot/registrations/{registrationId}/stop` | Stop long-polling for a registration. |
-| `syncCommands` | POST | `/api/v1/bot/registrations/{registrationId}/commands/sync` | Publish the registered commands to the channel and return the readback diff. |
-| `updatePolicy` | PUT | `/api/v1/bot/registrations/{registrationId}/policy` | Set a registration’s mode and allowlists. |
-| `updateProfile` | PUT | `/api/v1/bot/registrations/{registrationId}/profile` | Set the bot profile (name, descriptions, default admin rights) and publish it. |
+| `create` | POST | `/api/v1/wallet/invoices/generate/{id}` | Generate invoice for transaction |
+| `download` | GET | `/api/v1/wallet/invoices/{id}/pdf` | Download invoice PDF |
+| `get` | GET | `/api/v1/wallet/invoices/{id}` | Get invoice by ID |
+| `list` | GET | `/api/v1/wallet/invoices/` | Get all invoices |
+| `listAll` | GET | `/api/v1/wallet/invoices/` | Get all invoices (collect all pages) |
+| `listIterator` | GET | `/api/v1/wallet/invoices/` | Get all invoices (async iterator) |
 
-## `browser` (28 methods)
+### `client.api.wallet.payments`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `createCardCheckout` | POST | `/api/v1/wallet/payments/card/checkout` | Start a card payment (card checkout) |
+| `createCryptoInvoice` | POST | `/api/v1/wallet/payments/crypto/invoice` | Start a crypto payment (hosted invoice) |
+| `createMethod` | POST | `/api/v1/wallet/payment-methods/` | Add a new payment method |
+| `deleteMethod` | DELETE | `/api/v1/wallet/payment-methods/{id}` | Delete a payment method |
+| `getAvailability` | GET | `/api/v1/wallet/payment-availability` | Get top-up payment availability (providers, bounds, AI transfer fee) |
+| `getCardIntent` | GET | `/api/v1/wallet/payments/card/intents/{id}` | Get a card payment intent |
+| `getCryptoIntent` | GET | `/api/v1/wallet/payments/crypto/intents/{id}` | Get a crypto payment intent |
+| `getMethod` | GET | `/api/v1/wallet/payment-methods/{id}` | Get payment method by ID |
+| `listCardIntents` | GET | `/api/v1/wallet/payments/card/intents` | List card payment intents |
+| `listCryptoIntents` | GET | `/api/v1/wallet/payments/crypto/intents` | List crypto payment intents |
+| `listMethods` | GET | `/api/v1/wallet/payment-methods/` | Get all payment methods |
+| `listMethodsAll` | GET | `/api/v1/wallet/payment-methods/` | Get all payment methods (collect all pages) |
+| `listMethodsIterator` | GET | `/api/v1/wallet/payment-methods/` | Get all payment methods (async iterator) |
+| `setDefaultMethod` | PUT | `/api/v1/wallet/payment-methods/{id}/default` | Set a payment method as default |
+| `updateMethod` | PUT | `/api/v1/wallet/payment-methods/{id}` | Update a payment method |
+
+## `browser` (29 methods)
 
 ### `client.browser.cookies`
 
@@ -1099,6 +1335,7 @@
 | `evaluate` | POST | `/api/v1/browser/eval` | Execute JavaScript (POST) |
 | `exportPdf` | GET | `/api/v1/browser/pdf` | Export page as PDF |
 | `getHtml` | GET | `/api/v1/browser/html` | Get page HTML |
+| `getMarkdown` | GET | `/api/v1/browser/markdown` | Get page as Markdown |
 | `getSnapshot` | GET | `/api/v1/browser/snapshot` | Accessibility snapshot of a tab with element refs |
 | `getText` | GET | `/api/v1/browser/text` | Get page text |
 | `navigate` | POST | `/api/v1/browser/browse` | Navigate to URL (POST) |
@@ -1150,7 +1387,7 @@
 | `getRobots` | GET | `/robots.txt` | Crawler policy |
 | `getSecurityPolicy` | GET | `/security.txt` | Security contact information |
 
-## `cron` (13 methods)
+## `cron` (22 methods)
 
 ### `client.cron.crontabs`
 
@@ -1168,17 +1405,36 @@
 |--------|------|------|---------|
 | `create` | POST | `/api/v1/cron/users/{user}/entries` | Create Entry |
 | `delete` | DELETE | `/api/v1/cron/users/{user}/entries/{id}` | Delete Entry |
+| `describeSchedule` | POST | `/api/v1/cron/schedule/describe` | Describe Schedule |
 | `get` | GET | `/api/v1/cron/users/{user}/entries/{id}` | Get Entry |
 | `list` | GET | `/api/v1/cron/users/{user}/entries` | List Entries |
 | `listAll` | GET | `/api/v1/cron/users/{user}/entries` | List Entries (collect all pages) |
+| `listForAllUsers` | GET | `/api/v1/cron/entries` | List All Entries |
+| `listForAllUsersAll` | GET | `/api/v1/cron/entries` | List All Entries (collect all pages) |
+| `listForAllUsersIterator` | GET | `/api/v1/cron/entries` | List All Entries (async iterator) |
 | `listIterator` | GET | `/api/v1/cron/users/{user}/entries` | List Entries (async iterator) |
+| `run` | POST | `/api/v1/cron/users/{user}/entries/{id}/run` | Run Entry |
 | `update` | PATCH | `/api/v1/cron/users/{user}/entries/{id}` | Update Entry |
+
+### `client.cron.events`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `connect` | GET | `/api/v1/cron/events/ws` | Live events about the crontabs of the computer's users: managed entries created, updated or deleted (`source` api, expired or external), whole crontabs replaced or edited (`crontab_changed`, sent after the entry events of that change), and runs of managed jobs (`job_started`, `job_finished`). Edits made outside this service, such as `crontab -e` or `crontab -r`, appear within about 2 seconds with `source: external`. Job events come from the crontab line of an enabled managed entry, which reports its own start and end: scheduled runs of raw lines (lines this service did not write) and of entries in a crontab whose `SHELL` is not a POSIX shell are not reported; Run now of a managed entry is always recorded and sends job events; and a job whose shell exits without reporting its end (it replaced itself with `exec`, or was killed) finishes with `outcome: lost`. Events are kept in memory only: the history used by `since_id` (the last 1024 events by default) is lost when the service restarts, and a `since_id` from before a restart answers 409 `HISTORY_GAP`. Runs are also kept on disk (GET /api/v1/cron/runs), so after a restart read them there (only the runs that reached the disk: see that operation). |
+| `stream` | GET | `/api/v1/cron/events/sse` | Live events about the crontabs of the computer's users: managed entries created, updated or deleted (`source` api, expired or external), whole crontabs replaced or edited (`crontab_changed`, sent after the entry events of that change), and runs of managed jobs (`job_started`, `job_finished`). Edits made outside this service, such as `crontab -e` or `crontab -r`, appear within about 2 seconds with `source: external`. Job events come from the crontab line of an enabled managed entry, which reports its own start and end: scheduled runs of raw lines (lines this service did not write) and of entries in a crontab whose `SHELL` is not a POSIX shell are not reported; Run now of a managed entry is always recorded and sends job events; and a job whose shell exits without reporting its end (it replaced itself with `exec`, or was killed) finishes with `outcome: lost`. Events are kept in memory only: the history used by `since_id` (the last 1024 events by default) is lost when the service restarts, and a `since_id` from before a restart answers 409 `HISTORY_GAP`. Runs are also kept on disk (GET /api/v1/cron/runs), so after a restart read them there (only the runs that reached the disk: see that operation). |
 
 ### `client.cron.kit`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `getHealth` | GET | `/api/v1/cron/health` | Health Check |
+| `getInfo` | GET | `/api/v1/cron/info` | Get Cron Info |
+
+### `client.cron.runs`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `list` | GET | `/api/v1/cron/runs` | The latest runs of managed jobs, newest first, from the reports the jobs' crontab lines send (see the event stream). The service keeps the runs still running (a scheduled job that starts while 500 runs, scheduled and Run now together, are already running still runs but is not listed; Run now has its own limit of 16 simultaneous runs by default) and, for each entry, its last 50 ended runs of the last 30 days, at most 10 000 ended runs in all, in a history file capped at 5 MiB (the oldest ended runs are dropped first). They are kept on disk, so a restart keeps them: a run still running at the restart is followed again, or recorded `lost` when its shell is gone. When the disk cannot be used, or a write fails later, runs from then on are kept in memory only and a restart loses them; runs that reached the disk before stay (`GET /api/v1/cron/info` `history_persisted` says which). Page back with `before` (the `started_at` of the last run received). Raw lines and entries in a crontab whose `SHELL` is not a POSIX shell have no scheduled runs listed; Run now runs are listed. |
 
 ## `curl` (31 methods)
 
@@ -1192,15 +1448,15 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `run` | POST | `/api/v1/curl/request` | Execute HTTP request with full cURL capabilities |
+| `run` | POST | `/api/v1/curl/request` | Run one HTTP request through the curl service. `mode: 'async'` answers 202 with the job; `response: 'json'` answers the response wrapped in JSON with timing; otherwise `data` is the upstream body, parsed by its Content-Type (JSON to a value, text to a string, binary to an ArrayBuffer). |
 
 ### `client.curl.jobs`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `cancel` | DELETE | `/api/v1/curl/jobs/{id}` | Cancel a pending or running job, or delete a finished one |
+| `cancel` | DELETE | `/api/v1/curl/jobs/{id}` | Cancel a pending or running job; the record stays. A job that has already finished is left unchanged. |
 | `connect` | GET | `/api/v1/curl/ws` | Subscribe to job events over WebSocket |
-| `delete` | DELETE | `/api/v1/curl/jobs/{id}` | Cancel a pending or running job, or delete a finished one |
+| `delete` | DELETE | `/api/v1/curl/jobs/{id}` | Permanently delete a finished job's record and its saved downloads. A pending or running job is refused with 409 JOB_NOT_FINISHED: cancel it first. |
 | `get` | GET | `/api/v1/curl/jobs/{id}` | Get detailed job information |
 | `getResult` | GET | `/api/v1/curl/jobs/{id}/result` | Get job response body |
 | `list` | GET | `/api/v1/curl/jobs` | List all async jobs |
@@ -1248,7 +1504,7 @@
 | `listAll` | GET | `/api/v1/curl/storage` | List all saved downloads (collect all pages) |
 | `listIterator` | GET | `/api/v1/curl/storage` | List all saved downloads (async iterator) |
 
-## `daemon` (21 methods)
+## `daemon` (26 methods)
 
 ### `client.daemon.ephemeralPrograms`
 
@@ -1273,14 +1529,19 @@
 | `create` | POST | `/api/v1/daemon/programs/add` | Add a new CUSTOM program |
 | `delete` | POST | `/api/v1/daemon/programs/remove/{id}` | Remove a program |
 | `disable` | POST | `/api/v1/daemon/programs/{id}/disable` | Disable a program |
+| `disableBoot` | POST | `/api/v1/daemon/programs/{id}/boot` | Choose whether a program starts with the computer |
 | `enable` | POST | `/api/v1/daemon/programs/{id}/enable` | Enable a program |
+| `enableBoot` | POST | `/api/v1/daemon/programs/{id}/boot` | Choose whether a program starts with the computer |
 | `get` | GET | `/api/v1/daemon/programs/{id}` | Get a specific program |
 | `getLogs` | GET | `/api/v1/daemon/programs/{id}/logs` | Get program logs |
+| `getOverview` | GET | `/api/v1/daemon/programs/overview` | Overview of every program and quick-start |
+| `getRestartReceipt` | GET | `/api/v1/daemon/programs/{id}/restart` | Read a restart's receipt by its key |
 | `getSandbox` | GET | `/api/v1/daemon/programs/{id}/sandbox` | Get sandbox status for a program |
 | `getStatus` | GET | `/api/v1/daemon/status/{id}` | Get specific program status |
 | `list` | GET | `/api/v1/daemon/programs` | List all programs |
-| `listStatus` | GET | `/api/v1/daemon/status` | Get all program statuses |
+| `listStatuses` | GET | `/api/v1/daemon/status` | Get all program statuses |
 | `reset` | POST | `/api/v1/daemon/programs/reset` | Reset programs to default |
+| `restart` | POST | `/api/v1/daemon/programs/{id}/restart` | Restart a program or port instance |
 | `start` | POST | `/api/v1/daemon/programs/{id}/start` | Start a program or port instance |
 | `stop` | POST | `/api/v1/daemon/programs/{id}/stop` | Stop a program or port instance |
 | `streamLogs` | GET | `/api/v1/daemon/programs/{id}/logs/stream` | Follow program logs (SSE) |
@@ -1396,13 +1657,20 @@
 | `renewLease` | POST | `/api/v1/egress/upstream/renew` | Renew the upstream lease |
 | `set` | PUT | `/api/v1/egress/upstream` | Set upstream |
 
-## `exec` (68 methods)
+## `exec` (83 methods)
 
 ### `client.exec.cache`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `clear` | POST | `/api/v1/exec/cache/clear` | Clear Cache |
+
+### `client.exec.env`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `listKeys` | GET | `/api/v1/exec/env/keys` | List Env Keys |
+| `updateKeys` | POST | `/api/v1/exec/env/update` | Update Env Keys |
 
 ### `client.exec`
 
@@ -1428,6 +1696,7 @@
 | `clear` | DELETE | `/api/v1/exec/logs/clear` | Clear Logs |
 | `get` | POST | `/api/v1/exec/logs/read` | Read Log |
 | `list` | GET | `/api/v1/exec/logs/list` | List Logs |
+| `listExecutions` | GET | `/api/v1/exec/logs/executions` | List Script Executions |
 | `search` | POST | `/api/v1/exec/logs/search` | Search Logs |
 | `stream` | GET | `/api/v1/exec/logs/stream` | Stream Logs |
 
@@ -1437,6 +1706,8 @@
 |--------|------|------|---------|
 | `get` | GET | `/api/v1/exec/magic-comments/read` | Read Magic Comments |
 | `getSchema` | GET | `/api/v1/exec/magic-comments/schema` | Get Magic Comments Schema |
+| `parse` | POST | `/api/v1/exec/magic-comments/parse` | Parse Magic Comments Text |
+| `print` | POST | `/api/v1/exec/magic-comments/print` | Print Magic Comments Text |
 | `update` | PUT | `/api/v1/exec/magic-comments/update` | Update Magic Comments Handler |
 | `updateMany` | POST | `/api/v1/exec/magic-comments/bulk-update` | Bulk Update Magic Comments |
 | `validate` | POST | `/api/v1/exec/validate/magic-comments` | Validate Magic Comments |
@@ -1466,16 +1737,27 @@
 | `merge` | POST | `/api/v1/exec/user-openapi/merge` | Merge OpenAPI Specs |
 | `validateSchema` | POST | `/api/v1/exec/user-openapi/validate` | Validate User Schema |
 
+### `client.exec.ops`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `settle` | POST | `/api/v1/exec/ops/settle` | Settle Op |
+
 ### `client.exec.packages`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `compare` | POST | `/api/v1/exec/package/compare` | Compare Packages |
-| `createManifest` | POST | `/api/v1/exec/package/init` | Init package.json |
-| `getManifest` | GET | `/api/v1/exec/package/read` | Read package.json |
 | `install` | POST | `/api/v1/exec/package/install` | Install Packages |
 | `pin` | POST | `/api/v1/exec/package/pin` | Pin Versions |
-| `updateManifest` | POST | `/api/v1/exec/package/update` | Update package.json |
+
+### `client.exec.packages.manifest`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `create` | POST | `/api/v1/exec/package/init` | Init package.json |
+| `get` | GET | `/api/v1/exec/package/read` | Read package.json |
+| `update` | POST | `/api/v1/exec/package/update` | Update package.json |
 
 ### `client.exec.routes`
 
@@ -1500,11 +1782,17 @@
 |--------|------|------|---------|
 | `delete` | DELETE | `/api/v1/exec/scripts/delete` | Delete Script |
 | `getStats` | POST | `/api/v1/exec/monitor/script-performance` | Get Script Performance |
+| `getSummary` | GET | `/api/v1/exec/monitor/scripts-summary` | Get Scripts Summary |
 | `getTree` | POST | `/api/v1/exec/scripts/tree` | Get Script Tree |
+| `getUsage` | GET | `/api/v1/exec/monitor/script-usage` | Get Script Usage |
 | `list` | GET | `/api/v1/exec/scripts/list` | List Scripts |
+| `listDeleted` | GET | `/api/v1/exec/scripts/history/deleted` | Deleted Scripts |
+| `listHistory` | GET | `/api/v1/exec/scripts/history` | Script History |
 | `listStats` | GET | `/api/v1/exec/monitor/scripts` | List Monitor Scripts |
 | `move` | POST | `/api/v1/exec/scripts/move` | Move Script |
 | `read` | GET | `/api/v1/exec/scripts/read` | Read Script |
+| `readVersion` | GET | `/api/v1/exec/scripts/history/read` | Read Script Version |
+| `restore` | POST | `/api/v1/exec/scripts/restore` | Restore Script |
 | `validate` | POST | `/api/v1/exec/validate/script` | Validate Script |
 | `validateDependencies` | POST | `/api/v1/exec/validate/dependencies` | Validate Dependencies |
 | `validateReturnType` | POST | `/api/v1/exec/validate/return-type` | Validate Return Type |
@@ -1546,7 +1834,15 @@
 | `preview` | GET | `/api/v1/exec/templates/preview` | Preview Template |
 | `update` | PUT | `/api/v1/exec/templates/update-custom/{name}` | Update Custom Template |
 
-## `files` (120 methods)
+### `client.exec.tests`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `delete` | DELETE | `/api/v1/exec/tests/delete` | Delete Script Tests |
+| `list` | GET | `/api/v1/exec/tests/list` | List Script Tests |
+| `set` | PUT | `/api/v1/exec/tests/put` | Put Script Tests |
+
+## `files` (121 methods)
 
 ### `client.files.archives`
 
@@ -1622,6 +1918,7 @@
 |--------|------|------|---------|
 | `cancel` | DELETE | `/api/v1/downloads/{id}` | Cancel a running download |
 | `create` | GET | `/{directory}?download` | Download file from remote URL |
+| `get` | GET | `/api/v1/downloads/{id}` | Get one download by id |
 | `list` | GET | `/api/v1/downloads` | List active downloads |
 | `listByDirectory` | GET | `/{directory}?downloads` | List active downloads |
 | `listHistory` | GET | `/?download_history` | Download history |
@@ -1645,7 +1942,7 @@
 | `copy` | POST | `/api/v1/files/copy/{path}` | Copy file or directory |
 | `delete` | DELETE | `/api/v1/files/{path}` | Delete file or directory |
 | `exists` | HEAD | `/{path}` | Get file metadata |
-| `get` | GET | `/api/v1/files/{path}` | List directory or download file |
+| `get` | GET | `/api/v1/files/{path}` | List a directory, or read a file: a line range, its hash, base64 or a journal version. |
 | `glob` | GET | `/api/v1/files/glob/{path}` | Find files by glob pattern |
 | `grep` | GET | `/api/v1/files/grep/{path}` | Search file contents (grep) |
 | `logout` | LOGOUT | `/{path}` | Clear authentication |
@@ -1743,7 +2040,7 @@
 | `unlock` | UNLOCK | `/{path}` | Unlock file (WebDAV compatibility) |
 | `updateProperties` | PROPPATCH | `/{path}` | Update WebDAV properties |
 
-## `notes` (74 methods)
+## `notes` (77 methods)
 
 ### `client.notes.avatars`
 
@@ -1784,7 +2081,7 @@
 | `append` | POST | `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append` | Append blocks to a document |
 | `createExportTicket` | POST | `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/export-ticket` | Create secure HTML export ticket |
 | `exportBlock` | GET | `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/blocks/{blockId}/svg` | Export drawing block as SVG |
-| `get` | GET | `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` | Get document content |
+| `get` | GET | `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` | Read a notebook node's document. `output: 'md'` or `'html'` answers the rendered text; otherwise the document object. |
 | `set` | PUT | `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` | Create or replace document |
 | `update` | PATCH | `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` | Merge document content |
 
@@ -1810,6 +2107,7 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
+| `getCapabilities` | GET | `/api/v1/notes/capabilities` | Optional features of this server |
 | `getHealth` | GET | `/api/v1/notes/health` | Service health and runtime info |
 
 ### `client.notes.members`
@@ -1838,6 +2136,7 @@
 | `listChildrenAll` | GET | `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/children` | List child nodes (collect all pages) |
 | `listChildrenIterator` | GET | `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/children` | List child nodes (async iterator) |
 | `listIterator` | GET | `/api/v1/notes/notebooks/{notebookId}/nodes` | List nodes (async iterator) |
+| `listRecent` | GET | `/api/v1/notes/notebooks/{notebookId}/recent` | List recently changed pages |
 | `markOpened` | POST | `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/opened` | Mark node as opened |
 | `markSeen` | POST | `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/seen` | Mark node as seen |
 | `resolve` | GET | `/api/v1/notes/notebooks/{notebookId}/nodes/alias/{alias}` | Resolve page by alias |
@@ -1849,6 +2148,7 @@
 |--------|------|------|---------|
 | `create` | POST | `/api/v1/notes/notebooks` | Create a notebook |
 | `delete` | DELETE | `/api/v1/notes/notebooks/{notebookId}` | Delete a notebook |
+| `export` | GET | `/api/v1/notes/notebooks/{notebookId}/export` | Export notes as a ZIP |
 | `get` | GET | `/api/v1/notes/notebooks/{notebookId}` | Get notebook details |
 | `list` | GET | `/api/v1/notes/notebooks` | List notebooks |
 | `update` | PATCH | `/api/v1/notes/notebooks/{notebookId}` | Update notebook settings |
@@ -1899,7 +2199,7 @@
 | `listIterator` | GET | `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/versions` | List document versions (async iterator) |
 | `restore` | POST | `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/versions/{versionId}/restore` | Restore a document version |
 
-## `notifications` (10 methods)
+## `notifications` (15 methods)
 
 ### `client.notifications.icons`
 
@@ -1926,14 +2226,29 @@
 | `restore` | DELETE | `/api/v1/notifications/dismiss` | Clear dismissed notifications |
 | `send` | POST | `/api/v1/notifications/notify` | Trigger a new desktop notification |
 
+### `client.notifications.push`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `getPublicKey` | GET | `/api/v1/notifications/push/vapid-public-key` | Get the push public key |
+| `test` | POST | `/api/v1/notifications/push/test` | Send a test push |
+
+### `client.notifications.push.subscriptions`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `create` | POST | `/api/v1/notifications/push/subscriptions` | Register a push subscription |
+| `delete` | DELETE | `/api/v1/notifications/push/subscriptions/{id}` | Delete a push subscription |
+| `list` | GET | `/api/v1/notifications/push/subscriptions` | List push subscriptions |
+
 ## `pipe` (6 methods)
 
 ### `client.pipe.kit`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
+| `getCheatsheet` | GET | `/api/v1/pipe/help` | Get help text with curl examples |
 | `getHealth` | GET | `/api/v1/pipe/health` | Service health check |
-| `getHelp` | GET | `/api/v1/pipe/help` | Get help text with curl examples |
 | `getMetrics` | GET | `/api/v1/pipe/metrics` | Service metrics (Prometheus) |
 
 ### `client.pipe`
@@ -1956,22 +2271,29 @@
 | `listIterator` | GET | `/_logs` | Query centralized logs (async iterator) |
 | `stream` | GET | `/_logs/stream` | Live-tail logs over Server-Sent Events |
 
-## `run` (30 methods)
+## `run` (32 methods)
 
-### `client.run.config`
+### `client.run.catalog`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `get` | GET | `/api/v1/run/config` | Get full runtime configuration |
+| `list` | GET | `/api/v1/run/catalog` | List the starter apps |
 
 ### `client.run.jobs`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `cancel` | POST | `/api/v1/run/jobs/{job_id}/cancel` | Cancel a search job |
-| `createSearch` | POST | `/api/v1/run/search/jobs` | Start an async search job |
 | `get` | GET | `/api/v1/run/jobs/{job_id}` | Get job status |
 | `list` | GET | `/api/v1/run/jobs` | List background jobs |
+| `startSearch` | POST | `/api/v1/run/search/jobs` | Start an async search job |
+
+### `client.run.kit`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `getCapabilities` | GET | `/api/v1/run/capabilities` | Resolve features of this service |
+| `getConfig` | GET | `/api/v1/run/config` | Get full runtime configuration |
 
 ### `client.run.profiles`
 
@@ -2052,7 +2374,6 @@
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `clearTtl` | POST | `/api/v1/sqlite/kv/{key}/persist` | Remove a key's TTL |
-| `compareTableSnapshots` | GET | `/api/v1/sqlite/kv/diff` | Compare table snapshots |
 | `decrement` | POST | `/api/v1/sqlite/kv/{key}/decr` | Atomic decrement |
 | `delete` | DELETE | `/api/v1/sqlite/kv/{key}` | Delete key |
 | `deleteMany` | POST | `/api/v1/sqlite/kv/batch/delete` | Batch delete multiple keys |
@@ -2061,7 +2382,6 @@
 | `getEntry` | GET | `/api/v1/sqlite/kv/{key}/entry` | Get a key's entry |
 | `getMany` | POST | `/api/v1/sqlite/kv/batch/get` | Batch get multiple keys |
 | `getSnapshot` | GET | `/api/v1/sqlite/kv/{key}/snapshot` | Get key snapshot at operation |
-| `getTableSnapshot` | GET | `/api/v1/sqlite/kv/snapshot` | Get table snapshot at timestamp |
 | `increment` | POST | `/api/v1/sqlite/kv/{key}/incr` | Atomic increment |
 | `list` | GET | `/api/v1/sqlite/kv` | List keys |
 | `listAll` | GET | `/api/v1/sqlite/kv` | List keys (collect all pages) |
@@ -2070,15 +2390,27 @@
 | `listChangesIterator` | GET | `/api/v1/sqlite/changes` | List the changes of a KV table (async iterator) |
 | `listHistory` | GET | `/api/v1/sqlite/kv/{key}/history` | Get key operation history |
 | `listIterator` | GET | `/api/v1/sqlite/kv` | List keys (async iterator) |
-| `pop` | POST | `/api/v1/sqlite/kv/{key}/pop` | Remove from array end |
-| `push` | POST | `/api/v1/sqlite/kv/{key}/push` | Append to array |
-| `remove` | POST | `/api/v1/sqlite/kv/{key}/remove` | Remove array element |
 | `rollback` | POST | `/api/v1/sqlite/kv/{key}/rollback` | Rollback key operations |
-| `rollbackTable` | POST | `/api/v1/sqlite/kv/rollback` | Rollback entire table |
 | `set` | PUT | `/api/v1/sqlite/kv/{key}` | Set value for key |
 | `setMany` | POST | `/api/v1/sqlite/kv/batch/set` | Batch set multiple keys |
 | `setTtl` | POST | `/api/v1/sqlite/kv/{key}/expire` | Set a key's TTL |
 | `streamChanges` | GET | `/api/v1/sqlite/changes/stream` | Stream the changes of a KV table |
+
+### `client.sqlite.kv.arrays`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `pop` | POST | `/api/v1/sqlite/kv/{key}/pop` | Remove from array end |
+| `push` | POST | `/api/v1/sqlite/kv/{key}/push` | Append to array |
+| `remove` | POST | `/api/v1/sqlite/kv/{key}/remove` | Remove array element |
+
+### `client.sqlite.kv.table`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `compareSnapshots` | GET | `/api/v1/sqlite/kv/diff` | Compare table snapshots |
+| `getSnapshot` | GET | `/api/v1/sqlite/kv/snapshot` | Get table snapshot at timestamp |
+| `rollback` | POST | `/api/v1/sqlite/kv/rollback` | Rollback entire table |
 
 ### `client.sqlite.sql`
 
@@ -2087,13 +2419,7 @@
 | `queryReadOnly` | GET | `/api/v1/sqlite/query` | Execute shareable SQL query |
 | `runTransaction` | POST | `/api/v1/sqlite/db` | Execute SQL transaction |
 
-## `terminal` (38 methods)
-
-### `client.terminal.automation`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `getStats` | GET | `/api/v1/terminal/automation/metrics` | Get terminal automation metrics |
+## `terminal` (41 methods)
 
 ### `client.terminal.commands`
 
@@ -2108,8 +2434,8 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `commit` | POST | `/api/v1/terminal/drop-commit` | Finalize a drop and inject the OSC frame |
 | `create` | POST | `/api/v1/terminal/drop-begin` | Begin a drag-and-drop staging transaction |
+| `finalize` | POST | `/api/v1/terminal/drop-commit` | Finalize a drop and inject the OSC frame |
 | `send` | POST | `/api/v1/terminal/drop` | One-shot drop (begin + stage + commit) |
 | `writeChunk` | POST | `/api/v1/terminal/upload` | Upload a raw file slice into a drop |
 
@@ -2123,6 +2449,8 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
+| `getAutomationStats` | GET | `/api/v1/terminal/automation/metrics` | Get terminal automation metrics |
+| `getCapabilities` | GET | `/api/v1/terminal/capabilities` | Get the terminal service's features |
 | `getHealth` | GET | `/api/v1/terminal/health` | Service health check |
 
 ### `client.terminal.processes`
@@ -2167,6 +2495,13 @@
 | `shutdown` | POST | `/api/v1/system/shutdown` | Shutdown the system |
 | `stopDisplay` | POST | `/api/v1/system/displays/{display}/stop` | Stop a display |
 
+### `client.terminal.workloads`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `list` | GET | `/api/v1/terminal/workloads` | List tracked workloads |
+| `signal` | POST | `/api/v1/terminal/workloads/{command_id}/signal` | Signal a tracked workload |
+
 ## `tunnel` (6 methods)
 
 ### `client.tunnel.bindings`
@@ -2194,6 +2529,127 @@
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `list` | GET | `/api/v1/tunnel/tunnels` | List all active tunnels (combined sessions + bindings) |
+
+## `vm` (54 methods)
+
+### `client.vm.console`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `read` | GET | `/api/v1/vm/vms/{name}/console` | Read a VM's serial console |
+| `write` | POST | `/api/v1/vm/vms/{name}/console` | Write to a VM's serial console |
+
+### `client.vm.events`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `stream` | GET | `/api/v1/vm/vms/{name}/events` | Stream one VM's events |
+| `streamAll` | GET | `/api/v1/vm/events` | Stream every VM's events |
+
+### `client.vm.guestAgent`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `get` | GET | `/api/v1/vm/vms/{name}/agent` | Check the guest agent |
+| `getInventory` | GET | `/api/v1/vm/vms/{name}/agent/inventory` | Get the guest's inventory |
+
+### `client.vm.imports`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `create` | POST | `/api/v1/vm/imports/{sha256}` | Begin or resume a snapshot artifact upload |
+| `delete` | DELETE | `/api/v1/vm/imports/{sha256}` | Delete a snapshot artifact |
+| `finalize` | POST | `/api/v1/vm/imports/{sha256}/finalize` | Verify and publish a snapshot artifact |
+| `get` | GET | `/api/v1/vm/imports/{sha256}` | Get a snapshot artifact |
+| `list` | GET | `/api/v1/vm/imports` | List snapshot artifacts |
+| `uploadPart` | PUT | `/api/v1/vm/imports/{sha256}/parts/{part}` | Upload one part of a snapshot artifact |
+
+### `client.vm.isos`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `create` | POST | `/api/v1/vm/isos/{sha256}` | Begin or resume an installer image upload |
+| `delete` | DELETE | `/api/v1/vm/isos/{sha256}` | Delete an installer image |
+| `finalize` | POST | `/api/v1/vm/isos/{sha256}/finalize` | Verify and publish an installer image |
+| `get` | GET | `/api/v1/vm/isos/{sha256}` | Get an installer image |
+| `list` | GET | `/api/v1/vm/isos` | List installer images |
+| `uploadPart` | PUT | `/api/v1/vm/isos/{sha256}/parts/{part}` | Upload one part of an installer image |
+
+### `client.vm.isos.downloads`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `delete` | DELETE | `/api/v1/vm/isos/downloads/{id}` | Cancel or remove an image download |
+| `get` | GET | `/api/v1/vm/isos/downloads/{id}` | Get an image download |
+| `list` | GET | `/api/v1/vm/isos/downloads` | List image downloads |
+| `start` | POST | `/api/v1/vm/isos/downloads` | Download an installer image from a URL |
+
+### `client.vm.kit`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `getCapabilities` | GET | `/api/v1/vm/capabilities` | Get host capabilities |
+| `getHealth` | GET | `/api/v1/vm/health` | Check service health |
+| `getMetrics` | GET | `/api/v1/vm/metrics` | Get Prometheus metrics |
+
+### `client.vm.osinfo`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `list` | GET | `/api/v1/vm/osinfo` | List installable operating systems |
+
+### `client.vm.snapshots`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `create` | POST | `/api/v1/vm/vms/{name}/snapshots` | Create a snapshot |
+| `delete` | DELETE | `/api/v1/vm/vms/{name}/snapshots/{label}` | Delete a snapshot |
+| `list` | GET | `/api/v1/vm/vms/{name}/snapshots` | List snapshots |
+| `restore` | POST | `/api/v1/vm/vms/{name}/snapshots/{label}/restore` | Restore a snapshot |
+
+### `client.vm.snapshots.export`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `create` | POST | `/api/v1/vm/vms/{name}/snapshots/{label}/export` | Export a snapshot |
+| `delete` | DELETE | `/api/v1/vm/vms/{name}/snapshots/{label}/export` | Release a snapshot export |
+| `getPart` | GET | `/api/v1/vm/vms/{name}/snapshots/{label}/export/parts/{part}` | Download one part of a snapshot export |
+
+### `client.vm.templates`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `list` | GET | `/api/v1/vm/templates` | List VM templates |
+
+### `client.vm.unidentifiedRuns`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `forceMarkDead` | POST | `/api/v1/vm/unidentified-runs/{run}/force-mark-dead` | Mark an unidentified run as dead |
+| `list` | GET | `/api/v1/vm/unidentified-runs` | List runs that hold memory under no VM name |
+
+### `client.vm.vms`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `changeCdrom` | PUT | `/api/v1/vm/vms/{name}/cdroms/{slot}` | Change the disc in a running VM's CD-ROM slot |
+| `create` | POST | `/api/v1/vm/vms` | Create a VM |
+| `delete` | DELETE | `/api/v1/vm/vms/{name}` | Delete a VM |
+| `ejectCdrom` | DELETE | `/api/v1/vm/vms/{name}/cdroms/{slot}` | Eject the disc from a running VM's CD-ROM slot |
+| `forceAdopt` | POST | `/api/v1/vm/vms/{name}/force-adopt` | Adopt an orphaned VM's run |
+| `forceMarkDead` | POST | `/api/v1/vm/vms/{name}/force-mark-dead` | Mark an orphaned VM's run as dead |
+| `forceStop` | POST | `/api/v1/vm/vms/{name}/force-stop` | Force a VM to stop |
+| `get` | GET | `/api/v1/vm/vms/{name}` | Get a VM's state and create progress |
+| `getDisplay` | GET | `/api/v1/vm/vms/{name}/display` | Get the address of a VM's screen as `{name, display, url}`. Always asks for the JSON form: the route's default answer is a 302 redirect to the display page, which this method never returns. `url` is absent when the request did not arrive through the computer's `vm` URL, and for display 0. |
+| `getLogs` | GET | `/api/v1/vm/vms/{name}/log` | Read the end of a VM's log |
+| `list` | GET | `/api/v1/vm/vms` | List VMs |
+| `pause` | POST | `/api/v1/vm/vms/{name}/pause` | Pause a VM |
+| `pressKeys` | POST | `/api/v1/vm/vms/{name}/keys` | Press keys in a running VM |
+| `reset` | POST | `/api/v1/vm/vms/{name}/reset` | Reset a running VM |
+| `resume` | POST | `/api/v1/vm/vms/{name}/resume` | Resume a paused VM |
+| `start` | POST | `/api/v1/vm/vms/{name}/start` | Start a VM |
+| `stop` | POST | `/api/v1/vm/vms/{name}/stop` | Stop a VM gracefully |
+| `update` | PATCH | `/api/v1/vm/vms/{name}` | Reconfigure a stopped VM |
 
 ## `watch` (13 methods)
 
@@ -2223,7 +2679,7 @@
 | `list` | GET | `/api/v1/watch/watchers` | List Watchers |
 | `listAll` | GET | `/api/v1/watch/watchers` | List Watchers (collect all pages) |
 | `listIterator` | GET | `/api/v1/watch/watchers` | List Watchers (async iterator) |
-| `update` | PATCH | `/api/v1/watch/watchers/{id}` | Reconfigure a live watcher in place. Omitted fields keep their current values. The watcher keeps its id, replay history (so since_id / since_timestamp cursors stay valid) and its connected SSE/WebSocket clients; only the file-system backend is replaced. The new backend starts before the old one stops, and events the old backend had already queued are processed before the handoff completes. So a change under a path watched by both configurations is not lost across the swap (one landing inside that window may be reported twice), and a change under a path only the old configuration watched is delivered if the old backend saw it before stopping. The drain is bounded: if the old backend has not finished within 5 seconds (a backstop against a wedged backend), the handoff completes anyway and events still queued in the old backend at that point are dropped, with a warning in the service log. A request that fails leaves the watcher unchanged. A body with no field is refused with 400 `INVALID_REQUEST`; a body whose fields all equal the current values returns the watcher as it is, without replacing the backend. |
+| `update` | PATCH | `/api/v1/watch/watchers/{id}` | Reconfigure a live watcher in place. Omitted fields keep their current values. The watcher keeps its id, its replay history and its connected SSE/WebSocket clients; only the file-system backend is replaced. Reconfiguration preserves replay history, except that lowering `history_size` evicts retained events beyond the new capacity (minimum 32). Later replay returns 409 `HISTORY_GAP` if an event strictly after the requested cursor was evicted or could not be retained; `since_id=0` always returns retained history without a gap. The new backend starts before the old one stops, and events the old backend had already queued are processed before the handoff completes. So a change under a path watched by both configurations is not lost across the swap (one landing inside that window may be reported twice), and a change under a path only the old configuration watched is delivered if the old backend saw it before stopping. The drain is bounded: if the old backend has not finished within 5 seconds (a backstop against a wedged backend), the handoff completes anyway and events still queued in the old backend at that point are dropped, with a warning in the service log. A request that fails leaves the watcher unchanged. A body with no field is refused with 400 `INVALID_REQUEST`; a body whose fields all equal the current values returns the watcher as it is, without replacing the backend. |
 
 ## Hand-written client helpers
 
@@ -2238,8 +2694,8 @@ static catalog data that has no OpenAPI operation.
 | `HoodyClient.listDesktopEnvironments()` | static | List of known desktop environment identifiers acceptable to getDesktopUrl(). |
 | `client.listKits(options?)` | instance | Instance form of HoodyClient.listKits — convenience accessor. |
 | `client.listDesktopEnvironments()` | instance | Instance form of HoodyClient.listDesktopEnvironments. |
-| `client.getDesktopUrl(container, options?)` | instance | Build a desktop-{N} URL for a container; the public alias 302s to display once X is ready. |
-| `client.withContainer(containerOrId, options?)` | instance | Scope a client to a specific container (applies templateVars + kit routing). |
+| `client.getDesktopUrl(computer, options?)` | instance | Build a desktop-{N} URL for a computer; the public alias 302s to display once X is ready. |
+| `client.withComputer(computerOrId, options?)` | instance | Scope a client to a specific computer (applies templateVars + kit routing). |
 | `client.withRealm(realmId?)` | instance | Scope a client to a specific realm subdomain. |
 
 

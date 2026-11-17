@@ -1,6 +1,6 @@
-# `files` — 120 methods
+# `files` — 121 methods
 
-**Version:** 1.0.0-beta.17
+**Version:** 1.0.1
 **Accessor:** `client.files`
 
 ```typescript
@@ -25,7 +25,7 @@ client.files.archives.extract(archive: string, options: { extract: string; dest?
 |-----------|------|----------|----------|-------------|
 | `archive` | `string` | Yes | path |  |
 | `extract` | `string` | Yes | query | Empty for full extraction; path for selective (e.g. "src/" or "lib/") |
-| `dest` | `string` | No | query | Destination directory name (default: archive name) |
+| `dest` | `string` | No | query | Destination folder, relative to the folder holding the archive. By default, the archive's name is used with its last extension removed, and then a `.tar` left at its end removed too: `release` for `release.zip`, `release.tar.gz` or `release.tar.zip`. Absolute paths and `..` components are refused with 400. |
 | `owner` | `string` | No | query | Create-time owner for newly-created inodes as user[:group] or uid[:gid]. Requires the deployment to have enabled chown, and must resolve to one of the owners it permits; refuses root (uid/gid 0). Absent → the server default create owner. Applies to mkdir/extract/download_from/copy_to. |
 
 **Returns:** `files_ExtractionResult`
@@ -48,7 +48,7 @@ client.files.archives.extractMember(archive: string, options: { extract: string;
 |-----------|------|----------|----------|-------------|
 | `archive` | `string` | Yes | path | Path to archive file |
 | `extract` | `string` | Yes | query | Path of the file or directory inside the archive to extract (e.g. "src/" or "lib/") |
-| `dest` | `string` | No | query | Destination directory name (default: archive name) |
+| `dest` | `string` | No | query | Destination folder, relative to the folder holding the archive. By default, the archive's name is used with its last extension removed, and then a `.tar` left at its end removed too: `release` for `release.zip`, `release.tar.gz` or `release.tar.zip`. Absolute paths and `..` components are refused with 400. |
 
 **Returns:** `FilesArchivesExtractMemberResponse`
 
@@ -1094,7 +1094,7 @@ client.files.backends.delete(id: string, options?: { uploads?: "keep" | "discard
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `uploads` | `"keep" \| "discard"` | No | query | What becomes of what was written on the backend's mounts and is not uploaded yet: keep uploading it (`keep`) or delete it (`discard`) |
+| `uploads` | `"keep" \| "discard"` | No | query | What becomes of what was written on the backend's mounts and is not uploaded yet: keep uploading it (`keep`) or delete it (`discard`; refused with 409 `UPLOADS_DISCARD_SHARED` while a mount is served by the backend's shared connection: remove those mounts first) |
 
 **Returns:** `FilesBackendsDeleteResponse`
 
@@ -1179,7 +1179,7 @@ client.files.backends.update(id: string, data: FilesBackendsUpdateRequest): Prom
 
 ---
 
-## `client.files.downloads` (5 methods)
+## `client.files.downloads` (6 methods)
 
 ### `cancel`
 
@@ -1208,7 +1208,7 @@ client.files.downloads.cancel(id: string): Promise<FilesDownloadsCancelResponse>
 Download file from remote URL
 
 ```typescript
-client.files.downloads.create(directory: string, options: { download: string; filename?: string; timeout?: integer; owner?: string }): Promise<files_DownloadResult>
+client.files.downloads.create(directory: string, options: { download: string; filename?: string; timeout?: integer; id?: string; owner?: string }): Promise<files_DownloadResult>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1217,11 +1217,30 @@ client.files.downloads.create(directory: string, options: { download: string; fi
 | `download` | `string` | Yes | query | URL to download from |
 | `filename` | `string` | No | query | Custom filename for downloaded file |
 | `timeout` | `number` | No | query | Download timeout in seconds. Default and maximum: 43200 (12 hours) |
+| `id` | `string` | No | query | With download_from: the download's id, chosen by the client, so that a request sent again after a lost answer never starts it twice. A random (version 4) UUID, hyphenated; anything else is refused with 400 INVALID_PARAMETER. The request answers 202 once the download is accepted. An id a download already had, running or ended within the last 7 days, is refused with 409 DOWNLOAD_ID_EXISTS and nothing changes; GET /api/v1/downloads/{id} finds that download. When a record of the id exists but cannot be read, the request is refused with 500 and nothing starts: an id is free only when no record of it is certain. The 202 is sent once the download's record is on stable storage, so a download accepted keeps its id across a crash. The id is checked after the limit of running jobs (a 429 records nothing) and before the path is reserved (a busy path records nothing). Servers that take id list `download_client_id` in the `features` of GET /api/v1/version. |
 | `owner` | `string` | No | query | Create-time owner for newly-created inodes as user[:group] or uid[:gid]. Requires the deployment to have enabled chown, and must resolve to one of the owners it permits; refuses root (uid/gid 0). Absent → the server default create owner. Applies to mkdir/extract/download_from/copy_to. |
 
 **Returns:** `files_DownloadResult`
 
 **CLI:** `hoody files downloads create`
+
+---
+
+### `get`
+
+**GET** `/api/v1/downloads/{id}`
+
+Get one download by id
+
+```typescript
+client.files.downloads.get(id: string): Promise<FilesDownloadsGetResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The download's id |
+
+**Returns:** `FilesDownloadsGetResponse`
 
 ---
 
@@ -1254,7 +1273,7 @@ client.files.downloads.listByDirectory(directory: string, options: { downloads: 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `directory` | `string` | Yes | path |  |
-| `downloads` | `""` | Yes | query |  |
+| `downloads` | `""` | Yes | query | Selects this operation: send downloads with no value. It is part of the route, not an option. |
 
 **Returns:** `FilesDownloadsListByDirectoryResponse`
 
@@ -1274,7 +1293,7 @@ client.files.downloads.listHistory(options: { download_history: string }): Promi
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `download_history` | `string` | Yes | query |  |
+| `download_history` | `string` | Yes | query | Selects this operation: send download_history with no value. It is part of the route, not an option. |
 
 **Returns:** `files_DownloadHistory`
 
@@ -1332,7 +1351,7 @@ client.files.extractions.listByDirectory(options: { extractions: "" }): Promise<
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `extractions` | `""` | Yes | query |  |
+| `extractions` | `""` | Yes | query | Selects this operation: send extractions with no value. It is part of the route, not an option. |
 
 **Returns:** `FilesExtractionsListByDirectoryResponse`
 
@@ -1350,7 +1369,7 @@ client.files.extractions.listHistory(options: { extraction_history: string }): P
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `extraction_history` | `string` | Yes | query |  |
+| `extraction_history` | `string` | Yes | query | Selects this operation: send extraction_history with no value. It is part of the route, not an option. |
 
 **Returns:** `files_ExtractionHistory`
 
@@ -1367,7 +1386,7 @@ client.files.extractions.listHistory(options: { extraction_history: string }): P
 Append data to file
 
 ```typescript
-client.files.append(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { owner?: string; IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string; contentType?: 'application/octet-stream' }): Promise<FilesAppendResponse>
+client.files.append(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { owner?: string; expectedLength?: string; ifMatch?: string; ifNoneMatch?: string; ifUnmodifiedSince?: string; contentType?: 'application/octet-stream' }): Promise<FilesAppendResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1375,9 +1394,10 @@ client.files.append(path: string, data: Blob | ArrayBuffer | Uint8Array | Readab
 | `path` | `string` | Yes | path | File path |
 | `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream&lt;Uint8Array&gt; \| string` | Yes | body |  |
 | `owner` | `string` | No | query | Create-time owner (user[:group]/uid[:gid]) when this append creates a new file. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. Absent → server default. |
-| `IfMatch` | `string` | No | header | Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
-| `IfNoneMatch` | `string` | No | header | '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
-| `IfUnmodifiedSince` | `string` | No | header | Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
+| `expectedLength` | `string` | No | header | The length of the whole body in bytes, for a body streamed without Content-Length. A body that ends before this many bytes, or runs past them, is refused with 400 and nothing is written or appended: the file stays as it was. Send it whenever the length is known: some HTTP/2 clients end a request's body normally when they are aborted, so without it a cut-off body can look complete. Over the upload size limit it is refused with 413 before the body is read. |
+| `ifMatch` | `string` | No | header | Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
+| `ifNoneMatch` | `string` | No | header | '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
+| `ifUnmodifiedSince` | `string` | No | header | Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
 | `contentType` | `'application/octet-stream'` | No | query |  |
 
 **Returns:** `FilesAppendResponse`
@@ -1485,10 +1505,10 @@ client.files.exists(path: string, options?: FilesExistsOptions, templateVars?: F
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path |  |
-| `history` | `string` | No | query | List all revisions of a file. Returns JSON with revisions array, pagination via after_id. Mutually exclusive with at/revision/diff. |
-| `at` | `string` | No | query | Read file content at a point in time. Accepts RFC3339 timestamp or Unix milliseconds. Mutually exclusive with history/revision/diff. Composable with ?lines, ?hash, ?base64. |
-| `revision` | `number` | No | query | Read file content by stable per-path sequence number. Mutually exclusive with history/at/diff. Composable with ?lines, ?hash, ?base64. |
-| `diff` | `string` | No | query | Compute unified diff between two versions. Requires from_seq or from_ts. Optional to_seq or to_ts (defaults to current file). Mutually exclusive with history/at/revision. |
+| `history` | `string` | No | query | List all revisions of a file recorded in the journal. Returns JSON with revisions array, pagination via after_id, and head_matches_disk: true when the file on disk holds what the journal's newest record of it says, false when it does not (an outside write, an unrecorded change, pruned history or missing content history can each cause this; the flag alone does not identify the cause); absent for a folder or any other path that is neither a file nor missing, and when the file could not be read. Mutually exclusive with at/revision/diff. The journal records only changes made through Hoody Files; a change made by the agent's tools, a terminal, a script or a program is not recorded. |
+| `at` | `string` | No | query | Read file content at a point in time, as the journal recorded it. Accepts RFC3339 timestamp or Unix milliseconds. Mutually exclusive with history/revision/diff. Composable with ?lines, ?hash, ?base64. The X-Journal-Head-Matches-Disk response header is true when the file on disk holds what the journal's newest record of it says, false when it does not (an outside write, an unrecorded change, pruned history or missing content history can each cause this; the flag alone does not identify the cause); absent for a folder or any other path that is neither a file nor missing, and when the file could not be read. The journal records only changes made through Hoody Files; a change made by the agent's tools, a terminal, a script or a program is not recorded. |
+| `revision` | `number` | No | query | Read file content by stable per-path sequence number. Mutually exclusive with history/at/diff. Composable with ?lines, ?hash, ?base64. The X-Journal-Head-Matches-Disk response header is true when the file on disk holds what the journal's newest record of it says, false when it does not (an outside write, an unrecorded change, pruned history or missing content history can each cause this; the flag alone does not identify the cause); absent for a folder or any other path that is neither a file nor missing, and when the file could not be read. The journal records only changes made through Hoody Files; a change made by the agent's tools, a terminal, a script or a program is not recorded. |
+| `diff` | `string` | No | query | Compute unified diff between two versions. Requires from_seq or from_ts. With to_seq or to_ts it compares two recorded versions; with neither it compares with the file as it is on disk now (410 when the file no longer exists, 422 when it is over the journal's size limit). Mutually exclusive with history/at/revision. The X-Journal-Head-Matches-Disk response header is true when the file on disk holds what the journal's newest record of it says, false when it does not (an outside write, an unrecorded change, pruned history or missing content history can each cause this; the flag alone does not identify the cause); absent for a folder or any other path that is neither a file nor missing, and when the file could not be read. The journal records only changes made through Hoody Files; a change made by the agent's tools, a terminal, a script or a program is not recorded. |
 | `from_seq` | `number` | No | query | Source revision seq number for ?diff. Mutually exclusive with from_ts. |
 | `from_ts` | `string` | No | query | Source timestamp for ?diff (RFC3339 or Unix ms). Mutually exclusive with from_seq. |
 | `to_seq` | `number` | No | query | Target revision seq number for ?diff. Mutually exclusive with to_ts. Default: current file on disk. |
@@ -1506,65 +1526,33 @@ client.files.exists(path: string, options?: FilesExistsOptions, templateVars?: F
 
 **GET** `/api/v1/files/{path}`
 
-List directory or download file
+List a directory, or read a file: a line range, its hash, base64 or a journal version.
 
 ```typescript
-client.files.get(path: string, options?: { backend?: string; hash?: ""; sha256?: ""; base64?: ""; preview?: ""; contents?: ""; stat?: ""; thumbnail?: string; format?: "jpeg" | "png" | "webp" | "gif" | "bmp"; size?: string; width?: number; height?: number; resize?: "fit" | "fill" | "cover" | "exact"; quality?: "low" | "medium" | "high"; blur?: number; grayscale?: ""; bg?: string; q?: string; grep?: string; ignore_case?: boolean; fixed_string?: boolean; glob?: string; context?: number; max_count?: number; max_matches?: number; max_depth?: number; max_filesize?: number; timeout?: number; no_ignore?: boolean; hidden?: boolean; max_results?: number; max_files_scanned?: number; sort?: "mtime" | "name" | "size"; order?: "asc" | "desc"; lines?: string; history?: ""; at?: string; revision?: number; diff?: ""; from_seq?: number; from_ts?: string; to_seq?: number; to_ts?: string; after_id?: number; limit?: number; zip?: ""; Range?: string; IfRange?: string }): Promise<ApiResponse<ArrayBuffer> | FilesGetResponse>
+client.files.get(path: string, options?: { backend?: string; hash?: string; base64?: string; lines?: string; history?: string; at?: string; revision?: integer; diff?: string; from_seq?: integer; from_ts?: string; to_seq?: integer; to_ts?: string; after_id?: integer; limit?: integer; range?: string; ifRange?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | File or directory path |
-| `backend` | `string` | No | query | Backend ID for remote file access |
-| `hash` | `""` | No | query | Get SHA256 hash of file |
-| `sha256` | `""` | No | query | Get SHA256 hash of file (alias for hash) |
-| `base64` | `""` | No | query | Get file content as base64 |
-| `preview` | `""` | No | query | Preview archive contents (for zip/tar files). Alias: ?contents |
-| `contents` | `""` | No | query | Alias for ?preview - list archive contents |
-| `stat` | `""` | No | query | Get file/directory metadata (stat) without downloading content |
-| `thumbnail` | `string` | No | query | Return a processed image (resize, format convert, blur, grayscale), shaped by format, size, width, height, resize, quality, blur, grayscale and bg: the same image as the WebDAV-style /{image}?thumbnail. Only where the deployment enabled thumbnail processing; returns 403 when disabled. |
-| `format` | `"jpeg" \| "png" \| "webp" \| "gif" \| "bmp"` | No | query | With thumbnail: output image format |
-| `size` | `string` | No | query | With thumbnail: Target box in pixels: WIDTHxHEIGHT, or a single N for an N×N box |
-| `width` | `number` | No | query | With thumbnail: target width in pixels |
-| `height` | `number` | No | query | With thumbnail: target height in pixels |
-| `resize` | `"fit" \| "fill" \| "cover" \| "exact"` | No | query | With thumbnail: How the image meets a target box given by size, or by width and height together: fit (default) keeps the aspect ratio and fits inside the box; fill keeps the aspect ratio, covers the box and centre-crops to exactly WIDTH×HEIGHT; cover keeps the aspect ratio and covers the box, so one side may be larger than the box; exact forces WIDTH×HEIGHT and may distort. With only width or only height, the other side follows the aspect ratio. |
-| `quality` | `"low" \| "medium" \| "high"` | No | query | With thumbnail: Resampling filter for resizing: low (box), medium (bilinear, the default) or high (Lanczos3). It does not set compression; q sets JPEG quality. |
-| `blur` | `number` | No | query | With thumbnail: Gaussian blur radius |
-| `grayscale` | `""` | No | query | With thumbnail: convert to grayscale |
-| `bg` | `string` | No | query | With thumbnail: background color for transparent areas |
-| `q` | `string` | No | query | Two roles. On a directory (without thumbnail): search the names and paths below it for this text, case-insensitive; at most 512 bytes of UTF-8, measured before and after lowercasing (longer is refused with 400, not truncated); only where the deployment enabled search (403 otherwise). With thumbnail: JPEG quality, 1-100 (default 85); only JPEG output uses it. |
-| `grep` | `string` | No | query | Search file/directory contents for regex pattern (or literal if fixed_string=true). Only where the deployment enabled content search. |
-| `ignore_case` | `boolean` | No | query | Case-insensitive grep matching |
-| `fixed_string` | `boolean` | No | query | Treat grep pattern as literal string, not regex |
-| `glob` | `string` | No | query | Without grep, finds files and folders matching this glob (e.g. '**/*.rs', 'src/**/*.{ts,tsx}'); directory paths only, where the deployment enabled search. The pattern is matched against each path relative to the searched folder: '*' stays within one folder and '**' crosses folders, so '*.md' finds only the folder's own files and '**/*.md' finds them at any depth. A pattern starting with '/' or holding a '..' segment is refused with 400. Symbolic links are listed but the search does not go into a linked folder. With grep, the content-search file filter. Only search files matching this glob (ripgrep -g syntax, one pattern per request, at most 1024 bytes). A pattern without '/' matches file names at any depth ('*.rs', '*.{ts,tsx}'). A pattern with a '/' other than a trailing one matches the path relative to the searched folder, and a leading '/' anchors it there ('src/**/*.go'). '*' stays within one folder and '**' crosses folders. A leading '!' excludes instead ('!*_test.go'; '!vendor/' skips every folder named vendor); write '\!' for a literal '!' and '\#' for a leading '#'. Matching is case-sensitive whatever ignore_case says. A positive pattern ending in '/' names folders only and so selects no files; use 'src/**' for everything under a folder. A pattern that is only whitespace or a comment (an unescaped leading '#') is refused. The filter only narrows the search: it never brings back a file that ignore files or the default exclusion of names starting with '.' leave out; no_ignore and hidden do that. Not applied when the path is a single file. Repeating glob in a content search is refused. |
-| `context` | `number` | No | query | Number of context lines before/after each grep match |
-| `max_count` | `number` | No | query | Max matches per file for grep |
-| `max_matches` | `number` | No | query | Total max matches across all files for grep |
-| `max_depth` | `number` | No | query | Directory recursion depth for grep |
-| `max_filesize` | `number` | No | query | Skip files larger than this (bytes) during grep |
-| `timeout` | `number` | No | query | Grep timeout in seconds |
-| `no_ignore` | `boolean` | No | query | Also search files excluded by .gitignore (inside a git repository), .ignore, .git/info/exclude and the global git excludes |
-| `hidden` | `boolean` | No | query | Also search names starting with '.', which are otherwise skipped unless an ignore file whitelists them. '.git' folders found inside the searched folder are still skipped, and the server's configured hidden paths still apply. Refused with 403 for an account that may only list this path. |
-| `max_results` | `number` | No | query | Max entries returned for glob search |
-| `max_files_scanned` | `number` | No | query | Max filesystem entries scanned during glob search |
-| `sort` | `"mtime" \| "name" \| "size"` | No | query | Sort glob results by: mtime (default), name, or size |
-| `order` | `"asc" \| "desc"` | No | query | Sort order for glob results. Default: desc for mtime, asc for name/size |
+| `backend` | `string` | No | query | Backend ID for remote file access. Remote reads support listings, downloads, stat, hash, and base64. grep, glob, lines, and journal queries return 400. Remote folder ZIP and file thumbnails return 501. Archive-preview flags do not produce a preview: a remote file is downloaded and a remote directory is listed. |
+| `hash` | `string` | No | query | Get SHA256 hash of file |
+| `base64` | `string` | No | query | Get file content as base64 |
 | `lines` | `string` | No | query | Extract specific lines from a file. Formats: '10-50' (range, 1-indexed inclusive), '100' (single line), '-20' (last 20 lines / tail), '50-' (line 50 to end). Returns text/plain with X-Line-Range header. X-Total-Lines header included when naturally known (scan reached EOF). Max 100,000 lines or 64MB per request. |
-| `history` | `""` | No | query | List all revisions of a file. Returns JSON with revisions array, pagination via after_id. Mutually exclusive with at/revision/diff. |
-| `at` | `string` | No | query | Read file content at a point in time. Accepts RFC3339 timestamp or Unix milliseconds. Mutually exclusive with history/revision/diff. Composable with ?lines, ?hash, ?base64. |
-| `revision` | `number` | No | query | Read file content by stable per-path sequence number. Mutually exclusive with history/at/diff. Composable with ?lines, ?hash, ?base64. |
-| `diff` | `""` | No | query | Compute unified diff between two versions. Requires from_seq or from_ts. Optional to_seq or to_ts (defaults to current file). Mutually exclusive with history/at/revision. |
+| `history` | `string` | No | query | List all revisions of a file recorded in the journal. Returns JSON with revisions array, pagination via after_id, and head_matches_disk: true when the file on disk holds what the journal's newest record of it says, false when it does not (an outside write, an unrecorded change, pruned history or missing content history can each cause this; the flag alone does not identify the cause); absent for a folder or any other path that is neither a file nor missing, and when the file could not be read. Mutually exclusive with at/revision/diff. The journal records only changes made through Hoody Files; a change made by the agent's tools, a terminal, a script or a program is not recorded. |
+| `at` | `string` | No | query | Read file content at a point in time, as the journal recorded it. Accepts RFC3339 timestamp or Unix milliseconds. Mutually exclusive with history/revision/diff. Composable with ?lines, ?hash, ?base64. The X-Journal-Head-Matches-Disk response header is true when the file on disk holds what the journal's newest record of it says, false when it does not (an outside write, an unrecorded change, pruned history or missing content history can each cause this; the flag alone does not identify the cause); absent for a folder or any other path that is neither a file nor missing, and when the file could not be read. The journal records only changes made through Hoody Files; a change made by the agent's tools, a terminal, a script or a program is not recorded. |
+| `revision` | `number` | No | query | Read file content by stable per-path sequence number. Mutually exclusive with history/at/diff. Composable with ?lines, ?hash, ?base64. The X-Journal-Head-Matches-Disk response header is true when the file on disk holds what the journal's newest record of it says, false when it does not (an outside write, an unrecorded change, pruned history or missing content history can each cause this; the flag alone does not identify the cause); absent for a folder or any other path that is neither a file nor missing, and when the file could not be read. The journal records only changes made through Hoody Files; a change made by the agent's tools, a terminal, a script or a program is not recorded. |
+| `diff` | `string` | No | query | Compute unified diff between two versions. Requires from_seq or from_ts. With to_seq or to_ts it compares two recorded versions; with neither it compares with the file as it is on disk now (410 when the file no longer exists, 422 when it is over the journal's size limit). Mutually exclusive with history/at/revision. The X-Journal-Head-Matches-Disk response header is true when the file on disk holds what the journal's newest record of it says, false when it does not (an outside write, an unrecorded change, pruned history or missing content history can each cause this; the flag alone does not identify the cause); absent for a folder or any other path that is neither a file nor missing, and when the file could not be read. The journal records only changes made through Hoody Files; a change made by the agent's tools, a terminal, a script or a program is not recorded. |
 | `from_seq` | `number` | No | query | Source revision seq number for ?diff. Mutually exclusive with from_ts. |
 | `from_ts` | `string` | No | query | Source timestamp for ?diff (RFC3339 or Unix ms). Mutually exclusive with from_seq. |
 | `to_seq` | `number` | No | query | Target revision seq number for ?diff. Mutually exclusive with to_ts. Default: current file on disk. |
 | `to_ts` | `string` | No | query | Target timestamp for ?diff (RFC3339 or Unix ms). Mutually exclusive with to_seq. |
 | `after_id` | `number` | No | query | Cursor for ?history pagination. Returns entries with id &gt; after_id. |
 | `limit` | `number` | No | query | Max entries to return for ?history. |
-| `zip` | `""` | No | query | Download a directory as a streaming zip archive (bare flag, e.g. ?zip). Local directories only (a folder of a remote backend, named with backend, answers 501), and only where the deployment enabled archive downloads (403 otherwise). Same behavior as the WebDAV-style /{directory}?zip, including its limits: a folder one archive cannot hold whole (more than 100000 files, more than 1000000 files and folders in all, or folders nested deeper than 50 levels) is refused with 422 `ARCHIVE_TOO_LARGE`. |
-| `Range` | `string` | No | header | File download only: ask for part of the file, as 'bytes=first-last', 'bytes=first-' or 'bytes=-suffix_length'. A last position past the end is clamped to the last byte, and a suffix longer than the file selects all of it. One satisfiable range answers 206 with Content-Range; several answer 206 as multipart/byteranges for a local file, while a remote file (with backend) answers 200 with the whole file. Ranges that cannot be satisfied are dropped from a list, and 416 comes only when none is left. A malformed header, another unit or more than 100 ranges is ignored (200, whole file). HEAD ignores Range. |
-| `IfRange` | `string` | No | header | File download only: honour Range only if the file still has this ETag, exactly; otherwise answer 200 with the whole file. A date never matches, since two versions saved within the same second share it. A remote file's (with backend) ETag is weak, so with If-Range a remote file is always sent whole. |
+| `range` | `string` | No | header | File download only: ask for part of the file, as 'bytes=first-last', 'bytes=first-' or 'bytes=-suffix_length'. A last position past the end is clamped to the last byte, and a suffix longer than the file selects all of it. One satisfiable range answers 206 with Content-Range; several answer 206 as multipart/byteranges for a local file, while a remote file (with backend) answers 200 with the whole file. Ranges that cannot be satisfied are dropped from a list, and 416 comes only when none is left. A malformed header, another unit or more than 100 ranges is ignored (200, whole file). HEAD ignores Range. |
+| `ifRange` | `string` | No | header | File download only: honour Range only if the file still has this ETag, exactly; otherwise answer 200 with the whole file. A date never matches, since two versions saved within the same second share it. A remote file's (with backend) ETag is weak, so with If-Range a remote file is always sent whole. |
 
-**Returns:** `ApiResponse<ArrayBuffer> | FilesGetResponse`
+**Returns:** `any`
 
 **CLI:** `hoody files get`
 
@@ -1726,7 +1714,7 @@ client.files.search(directory: string, options: { q: string; json?: ""; theme?: 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `directory` | `string` | Yes | path |  |
-| `q` | `string` | Yes | query | Search query (case-insensitive filename match). Maximum 512 BYTES of UTF-8 after form/percent decoding, measured both before and after Unicode lowercasing — lowercasing can change a string's byte length in either direction. Longer queries are rejected with 400; they are not truncated. Note this is a byte limit, not a character limit, so it is deliberately not expressed as `maxLength`. |
+| `q` | `string` | Yes | query | Search query (case-insensitive filename match). Maximum 512 BYTES of UTF-8 after form/percent decoding, measured both before and after Unicode lowercasing, because lowercasing can change a string's byte length in either direction. Longer queries are rejected with 400; they are not truncated. Note this is a byte limit, not a character limit, so it is deliberately not expressed as `maxLength`. |
 | `json` | `""` | No | query | Return JSON format instead of HTML |
 | `theme` | `"oc-1" \| "aura" \| "ayu" \| "carbonfox" \| "catppuccin" \| "dracula" \| "gruvbox" \| "monokai" \| "nightowl" \| "nord" \| "onedarkpro" \| "shadesofpurple" \| "solarized" \| "tokyonight" \| "vesper"` | No | query | HTML page only: colour theme of the page. Default oc-1. |
 | `colorScheme` | `"light" \| "dark"` | No | query | HTML page only: light or dark colour scheme. Without it the page follows the system setting. |
@@ -1775,13 +1763,14 @@ client.files.stat(path: string, options?: { backend?: string }): Promise<FilesSt
 Touch file (create or update mtime)
 
 ```typescript
-client.files.touch(path: string, options: { touch: string }): Promise<any>
+client.files.touch(path: string, options: { touch: string; type?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | File path to touch |
 | `touch` | `string` | Yes | query | Flag to indicate touch operation |
+| `type` | `string` | No | query | Names a remote backend type (an Hoody backend name such as sftp, webdav, ftp or s3). The request is then not a local touch: it is a remote request, which takes the connection parameters of an SSH upload, PUT /{path}?type=ssh (server, user, pass and the others) and needs remote access and uploads enabled. It writes the request body to the remote path, replacing a file already there, so an empty body leaves an empty file. |
 
 **Returns:** `any`
 
@@ -1820,7 +1809,7 @@ client.files.update(path: string, data?: FilesUpdateRequest, options?: { owner?:
 Upload or append file
 
 ```typescript
-client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { backend?: string; append?: ""; chmod?: string; owner?: string; XExpectedLength?: string; IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string; contentType?: 'application/octet-stream' }): Promise<FilesUploadResponse>
+client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { backend?: string; append?: ""; chmod?: string; owner?: string; expectedLength?: string; ifMatch?: string; ifNoneMatch?: string; ifUnmodifiedSince?: string; contentType?: 'application/octet-stream' }): Promise<FilesUploadResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1831,10 +1820,10 @@ client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | Readab
 | `append` | `""` | No | query | Append body to end of existing file (create if missing) instead of overwriting |
 | `chmod` | `string` | No | query | Permission bits the local file ends with, in octal (`644`, `0600`, `0o755`, `000`), whatever the server's umask; the response gives them in `mode`, read back from the file. Where the filesystem keeps no permission bits of its own (a mount of a remote storage without them), the upload is answered 409 PERMISSIONS_NOT_APPLIED instead: nothing is changed when the bits asked for are narrower than the file's, and otherwise the body is written whole under the file's bits. Requires both upload and chmod to be enabled (403 otherwise). setuid, setgid and sticky bits are refused, as are values above 777. Refused with 400 together with `backend` or `append`, and when the path names something other than a regular file (a directory, a pipe, a device, a socket). Each of these refusals comes before the body is read: nothing is created or changed. |
 | `owner` | `string` | No | query | Create-time owner (user[:group]/uid[:gid]) for a newly-created file. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. Overwrites/appends to an existing file preserve its owner. Absent → server default. |
-| `XExpectedLength` | `string` | No | header | The length of the whole body in bytes, for a body streamed without Content-Length. A body that ends before this many bytes, or runs past them, is refused with 400 and nothing is written or appended: the file stays as it was. Send it whenever the length is known: some HTTP/2 clients end a request's body normally when they are aborted, so without it a cut-off body can look complete. Over the upload size limit it is refused with 413 before the body is read. |
-| `IfMatch` | `string` | No | header | Local files only; with backend it is refused with 400. Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
-| `IfNoneMatch` | `string` | No | header | Local files only; with backend it is refused with 400. '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
-| `IfUnmodifiedSince` | `string` | No | header | Local files only; with backend it is refused with 400. Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
+| `expectedLength` | `string` | No | header | The length of the whole body in bytes, for a body streamed without Content-Length. A body that ends before this many bytes, or runs past them, is refused with 400 and nothing is written or appended: the file stays as it was. Send it whenever the length is known: some HTTP/2 clients end a request's body normally when they are aborted, so without it a cut-off body can look complete. Over the upload size limit it is refused with 413 before the body is read. |
+| `ifMatch` | `string` | No | header | Local files only; with backend it is refused with 400. Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
+| `ifNoneMatch` | `string` | No | header | Local files only; with backend it is refused with 400. '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
+| `ifUnmodifiedSince` | `string` | No | header | Local files only; with backend it is refused with 400. Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
 | `contentType` | `'application/octet-stream'` | No | query |  |
 
 **Returns:** `FilesUploadResponse`
@@ -1870,15 +1859,15 @@ client.files.whoami(path: string): Promise<ApiResponse<string>>
 File operations
 
 ```typescript
-client.files.writeChunk(path: string, data?: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array>, options?: { IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string }): Promise<void>
+client.files.writeChunk(path: string, data?: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array>, options?: { ifMatch?: string; ifNoneMatch?: string; ifUnmodifiedSince?: string }): Promise<void>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path |  |
-| `IfMatch` | `string` | No | header | Writes of content (X-Update-Range) only. Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
-| `IfNoneMatch` | `string` | No | header | Writes of content (X-Update-Range) only. '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
-| `IfUnmodifiedSince` | `string` | No | header | Writes of content (X-Update-Range) only. Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
+| `ifMatch` | `string` | No | header | Writes of content (X-Update-Range) only. Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
+| `ifNoneMatch` | `string` | No | header | Writes of content (X-Update-Range) only. '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
+| `ifUnmodifiedSince` | `string` | No | header | Writes of content (X-Update-Range) only. Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
 | `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream&lt;Uint8Array&gt;` | No | body |  |
 
 **Returns:** `void`
@@ -1900,7 +1889,7 @@ client.files.zip(directory: string, options: { zip: string }): Promise<any>
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `directory` | `string` | Yes | path |  |
-| `zip` | `string` | Yes | query |  |
+| `zip` | `string` | Yes | query | Selects this operation: send zip with no value. It is part of the route, not an option. |
 
 **Returns:** `any`
 
@@ -1926,9 +1915,9 @@ client.files.ftp.get(path: string, options: { type: "ftp"; server: string; user?
 | `type` | `"ftp"` | Yes | query |  |
 | `server` | `string` | Yes | query |  |
 | `user` | `string` | No | query |  |
-| `pass` | `string` | No | query |  |
-| `ftp_secure` | `boolean` | No | query | Use explicit FTPS (AUTH TLS on the control connection) |
-| `ftp_passive` | `boolean` | No | query | Passive mode, the only mode supported: `false` is refused with 400 |
+| `pass` | `string` | No | query | FTP password, base64 encoded. |
+| `ftp_secure` | `boolean` | No | query | Use explicit FTPS (AUTH TLS on the control connection). Accepts true, false, 1 or 0. |
+| `ftp_passive` | `boolean` | No | query | Passive mode, the only mode supported: `false` is refused with 400. Accepts true, false, 1 or 0. |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -2018,7 +2007,7 @@ client.files.journal.list(options?: { path?: string; op?: string; since?: string
 | `path` | `string` | No | query | Filter entries by path prefix |
 | `op` | `string` | No | query | Filter by operation type(s), comma-separated (e.g. 'write,delete') |
 | `since` | `string` | No | query | Return entries at or after this time: an RFC3339 timestamp (Z or an offset, any fractional precision), or a Unix timestamp in seconds or milliseconds. A number below 100000000000 is read as seconds. Omitted or empty, no time filter applies; any other value is refused with 400. |
-| `limit` | `number` | No | query | Max entries to return |
+| `limit` | `number` | No | query | Maximum entries to return, from `1` to `1000`. Default `100`. A whole number from `1001` up to `18446744073709551615` is lowered to `1000` and `0` is raised to `1`; any other value (a negative number, a fraction, a larger number, or not a number) uses the default. |
 | `after_id` | `number` | No | query | Cursor: return entries with id &gt; after_id |
 
 **Returns:** `FilesJournalListResponse`
@@ -2036,10 +2025,10 @@ client.files.journal.list(options?: { path?: string; op?: string; since?: string
 Service health check
 
 ```typescript
-client.files.kit.getHealth(): Promise<FilesHealthCheckResponse>
+client.files.kit.getHealth(): Promise<FilesKitGetHealthResponse>
 ```
 
-**Returns:** `FilesHealthCheckResponse`
+**Returns:** `FilesKitGetHealthResponse`
 
 **CLI:** `hoody files health`
 
@@ -2096,7 +2085,7 @@ client.files.mounts.delete(id: string, options?: { uploads?: "keep" | "wait" | "
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `uploads` | `"keep" \| "wait" \| "discard"` | No | query | What becomes of what was written on the mount and is not uploaded yet: keep uploading it (`keep`), the same and wait for it (`wait`), or delete it (`discard`) |
+| `uploads` | `"keep" \| "wait" \| "discard"` | No | query | What becomes of what was written on the mount and is not uploaded yet: keep uploading it (`keep`), the same and wait for it (`wait`), or delete it (`discard`; refused with 409 `UPLOADS_DISCARD_SHARED` for a mount served by its backend's shared connection) |
 | `wait_seconds` | `number` | No | query | With `uploads=wait` only: the longest the answer waits, in seconds |
 
 **Returns:** `FilesMountsDeleteResponse`
@@ -2184,7 +2173,7 @@ client.files.s3.get(path: string, options: { type: "s3"; server: string; s3_buck
 | `path` | `string` | Yes | path |  |
 | `type` | `"s3"` | Yes | query |  |
 | `server` | `string` | Yes | query | S3 service host. An AWS host (`*.amazonaws.com`) is reached by `s3_region`; any other host is the endpoint of an S3-compatible service (MinIO, DigitalOcean Spaces, ...), unless `s3_endpoint` names one. |
-| `s3_bucket` | `string` | Yes | query | S3 bucket name. The path is the object key (or key prefix) within this bucket. |
+| `s3_bucket` | `string` | Yes | query | S3 bucket name. The connection is rooted at this bucket, and the path is the object key (or key prefix) within it. Reading an object also lists its folder, so the credentials (or anonymous access) need permission to list the bucket. |
 | `s3_region` | `string` | Yes | query |  |
 | `user` | `string` | No | query | Access key ID. Give both `user` and `pass`, or neither for anonymous access to a public bucket. |
 | `pass` | `string` | No | query | Secret access key (base64 encoded). Give both `user` and `pass`, or neither. |
@@ -2214,8 +2203,8 @@ client.files.ssh.get(path: string, options: { type: "ssh"; server: string; user:
 | `type` | `"ssh"` | Yes | query |  |
 | `server` | `string` | Yes | query | Server hostname:port |
 | `user` | `string` | Yes | query | SSH username |
-| `pass` | `string` | No | query | Password (base64 encoded) |
-| `key` | `string` | No | query | Private key in PEM form (base64 encoded) |
+| `pass` | `string` | No | query | Password (base64 encoded). Give `pass` or `key`; a request with neither is refused with 400. |
+| `key` | `string` | No | query | Private key in PEM form (base64 encoded). Give `pass` or `key`; a request with neither is refused with 400. |
 | `passphrase` | `string` | No | query | Key passphrase (base64 encoded) |
 
 **Returns:** `ApiResponse<ArrayBuffer>`
@@ -2240,8 +2229,8 @@ client.files.ssh.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | Re
 | `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream&lt;Uint8Array&gt; \| string` | Yes | body |  |
 | `server` | `string` | Yes | query | Server hostname:port |
 | `user` | `string` | Yes | query | SSH username |
-| `pass` | `string` | No | query | Password (base64 encoded) |
-| `key` | `string` | No | query | Private key in PEM form (base64 encoded) |
+| `pass` | `string` | No | query | Password (base64 encoded). Give `pass` or `key`; a request with neither is refused with 400. |
+| `key` | `string` | No | query | Private key in PEM form (base64 encoded). Give `pass` or `key`; a request with neither is refused with 400. |
 | `passphrase` | `string` | No | query | Key passphrase (base64 encoded) |
 | `contentType` | `'application/octet-stream'` | No | query |  |
 
@@ -2267,7 +2256,7 @@ client.files.ui.getPage(path: string, options?: { json?: ""; simple?: ""; sort?:
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | File or directory path |
 | `json` | `""` | No | query | Return JSON format instead of HTML |
-| `simple` | `""` | No | query | Return simple text listing |
+| `simple` | `""` | No | query | Directory only: return the entry names one per line (directories end in /) as text/plain |
 | `sort` | `"name" \| "mtime" \| "size"` | No | query | Sort by field |
 | `order` | `"asc" \| "desc"` | No | query | Sort order |
 | `hash` | `""` | No | query | Get SHA256 hash of file (returns plain text hash) |
@@ -2277,10 +2266,10 @@ client.files.ui.getPage(path: string, options?: { json?: ""; simple?: ""; sort?:
 | `view` | `""` | No | query | Open file in a read-only Web UI page: the text is shown with no Save, rename, move or delete. |
 | `download` | `"" \| "1" \| "true"` | No | query | For file paths only: force browser download (Content-Disposition: attachment). Accepted values: empty (?download), 1, or true. For directory paths, ?download is the URL download-manager operation. |
 | `contentType` | `string` | No | query | Override Content-Type header for file downloads |
-| `history` | `""` | No | query | List all revisions of a file. Returns JSON with revisions array, pagination via after_id. Mutually exclusive with at/revision/diff. |
-| `at` | `string` | No | query | Read file content at a point in time. Accepts RFC3339 timestamp or Unix milliseconds. Mutually exclusive with history/revision/diff. Composable with ?lines, ?hash, ?base64. |
-| `revision` | `number` | No | query | Read file content by stable per-path sequence number. Mutually exclusive with history/at/diff. Composable with ?lines, ?hash, ?base64. |
-| `diff` | `""` | No | query | Compute unified diff between two versions. Requires from_seq or from_ts. Optional to_seq or to_ts (defaults to current file). Mutually exclusive with history/at/revision. |
+| `history` | `""` | No | query | List all revisions of a file recorded in the journal. Returns JSON with revisions array, pagination via after_id, and head_matches_disk: true when the file on disk holds what the journal's newest record of it says, false when it does not (an outside write, an unrecorded change, pruned history or missing content history can each cause this; the flag alone does not identify the cause); absent for a folder or any other path that is neither a file nor missing, and when the file could not be read. Mutually exclusive with at/revision/diff. The journal records only changes made through Hoody Files; a change made by the agent's tools, a terminal, a script or a program is not recorded. |
+| `at` | `string` | No | query | Read file content at a point in time, as the journal recorded it. Accepts RFC3339 timestamp or Unix milliseconds. Mutually exclusive with history/revision/diff. Composable with ?lines, ?hash, ?base64. The X-Journal-Head-Matches-Disk response header is true when the file on disk holds what the journal's newest record of it says, false when it does not (an outside write, an unrecorded change, pruned history or missing content history can each cause this; the flag alone does not identify the cause); absent for a folder or any other path that is neither a file nor missing, and when the file could not be read. The journal records only changes made through Hoody Files; a change made by the agent's tools, a terminal, a script or a program is not recorded. |
+| `revision` | `number` | No | query | Read file content by stable per-path sequence number. Mutually exclusive with history/at/diff. Composable with ?lines, ?hash, ?base64. The X-Journal-Head-Matches-Disk response header is true when the file on disk holds what the journal's newest record of it says, false when it does not (an outside write, an unrecorded change, pruned history or missing content history can each cause this; the flag alone does not identify the cause); absent for a folder or any other path that is neither a file nor missing, and when the file could not be read. The journal records only changes made through Hoody Files; a change made by the agent's tools, a terminal, a script or a program is not recorded. |
+| `diff` | `""` | No | query | Compute unified diff between two versions. Requires from_seq or from_ts. With to_seq or to_ts it compares two recorded versions; with neither it compares with the file as it is on disk now (410 when the file no longer exists, 422 when it is over the journal's size limit). Mutually exclusive with history/at/revision. The X-Journal-Head-Matches-Disk response header is true when the file on disk holds what the journal's newest record of it says, false when it does not (an outside write, an unrecorded change, pruned history or missing content history can each cause this; the flag alone does not identify the cause); absent for a folder or any other path that is neither a file nor missing, and when the file could not be read. The journal records only changes made through Hoody Files; a change made by the agent's tools, a terminal, a script or a program is not recorded. |
 | `from_seq` | `number` | No | query | Source revision seq number for ?diff. Mutually exclusive with from_ts. |
 | `from_ts` | `string` | No | query | Source timestamp for ?diff (RFC3339 or Unix ms). Mutually exclusive with from_seq. |
 | `to_seq` | `number` | No | query | Target revision seq number for ?diff. Mutually exclusive with to_ts. Default: current file on disk. |
@@ -2318,7 +2307,7 @@ client.files.uploads.delete(id: string): Promise<ApiResponse<unknown>>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Pending upload ID |
+| `id` | `string` | Yes | path | Pending upload ID: 32 lowercase hex characters, as the listing gives it |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -2338,7 +2327,7 @@ client.files.uploads.deleteUnreadable(id: string): Promise<ApiResponse<unknown>>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Pending upload ID |
+| `id` | `string` | Yes | path | Pending upload ID: 32 lowercase hex characters, as the listing gives it |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -2358,7 +2347,7 @@ client.files.uploads.deliver(id: string, data?: FilesUploadsDeliverRequest): Pro
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Pending upload ID |
+| `id` | `string` | Yes | path | Pending upload ID: 32 lowercase hex characters, as the listing gives it |
 | `data` | `FilesUploadsDeliverRequest` | No | body |  |
 
 **Returns:** `FilesUploadsDeliverResponse`
@@ -2374,16 +2363,16 @@ client.files.uploads.deliver(id: string, data?: FilesUploadsDeliverRequest): Pro
 Download a held file
 
 ```typescript
-client.files.uploads.download(id: string, options?: { path?: string; path_b64?: string; Range?: string; IfRange?: string }): Promise<ApiResponse<ArrayBuffer>>
+client.files.uploads.download(id: string, options?: { path?: string; path_b64?: string; range?: string; ifRange?: string }): Promise<ApiResponse<ArrayBuffer>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Pending upload ID |
+| `id` | `string` | Yes | path | Pending upload ID: 32 lowercase hex characters, as the listing gives it |
 | `path` | `string` | No | query | A path from the item's files, exactly as listed. Give this or path_b64, not both. |
 | `path_b64` | `string` | No | query | A path_b64 from the item's files, exactly as listed. Give this or path, not both. |
-| `Range` | `string` | No | header | Ask for part of the held file, as 'bytes=first-last', 'bytes=first-' or 'bytes=-suffix_length', as for a file download. One satisfiable range answers 206 with Content-Range; several answer 206 as multipart/byteranges. Ranges that cannot be satisfied are dropped from a list, and 416 comes only when none is left. A malformed header is ignored (200, whole file). |
-| `IfRange` | `string` | No | header | Honour Range only if the held file still has this ETag, exactly; otherwise answer 200 with the whole file. |
+| `range` | `string` | No | header | Ask for part of the held file, as 'bytes=first-last', 'bytes=first-' or 'bytes=-suffix_length', as for a file download. One satisfiable range answers 206 with Content-Range; several answer 206 as multipart/byteranges. Ranges that cannot be satisfied are dropped from a list, and 416 comes only when none is left. A malformed header is ignored (200, whole file). |
+| `ifRange` | `string` | No | header | Honour Range only if the held file still has this ETag, exactly; otherwise answer 200 with the whole file. |
 
 **Returns:** `ApiResponse<ArrayBuffer>`
 
@@ -2423,7 +2412,7 @@ client.files.uploads.listFiles(id: string, options?: { cursor?: string; limit?: 
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Pending upload ID |
+| `id` | `string` | Yes | path | Pending upload ID: 32 lowercase hex characters, as the listing gives it |
 | `cursor` | `string` | No | query | next_cursor from the previous page. Omit it for the first page. |
 | `limit` | `number` | No | query | Largest number of files on the page |
 
@@ -2461,7 +2450,7 @@ client.files.uploads.stop(id: string): Promise<FilesUploadsStopResponse>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Pending upload ID |
+| `id` | `string` | Yes | path | Pending upload ID: 32 lowercase hex characters, as the listing gives it |
 
 **Returns:** `FilesUploadsStopResponse`
 
@@ -2478,14 +2467,14 @@ client.files.uploads.stop(id: string): Promise<FilesUploadsStopResponse>
 Copy a file
 
 ```typescript
-client.files.webdav.copy(path: string, options: { Destination: string; Overwrite?: "T" | "F" }): Promise<ApiResponse<unknown>>
+client.files.webdav.copy(path: string, options: { destination: string; overwrite?: "T" | "F" }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | Source file path |
-| `Destination` | `string` | Yes | header | Destination URL for the copy |
-| `Overwrite` | `"T" \| "F"` | No | header | T (default) replaces an existing destination; F refuses one, answering 412 and leaving it untouched. A request refused for another reason is answered for that reason instead, whatever this header says: copying or moving a resource onto itself is 403, and so is a source that is not a regular file. |
+| `destination` | `string` | Yes | header | Destination URL for the copy |
+| `overwrite` | `"T" \| "F"` | No | header | T (default) replaces an existing destination; F refuses one, answering 412 and leaving it untouched. A request refused for another reason is answered for that reason instead, whatever this header says: copying or moving a resource onto itself is 403, and so is a source that is not a regular file. |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -2541,14 +2530,14 @@ client.files.webdav.getOptions(path: string): Promise<ApiResponse<unknown>>
 Get WebDAV properties
 
 ```typescript
-client.files.webdav.getProperties(path: string, data?: string, options?: { Depth?: "0" | "1" | "infinity" }): Promise<ApiResponse<unknown>>
+client.files.webdav.getProperties(path: string, data?: string, options?: { depth?: string }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path |  |
 | `data` | `string` | No | body |  |
-| `Depth` | `"0" \| "1" \| "infinity"` | No | header | Depth of property retrieval: 0 (resource only), 1 (immediate children), infinity (recursive) |
+| `depth` | `string` | No | header | For directories, Depth 0 or 1 is accepted, defaulting to 1; other values receive 400. For files, Depth is ignored. |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -2561,14 +2550,14 @@ client.files.webdav.getProperties(path: string, data?: string, options?: { Depth
 Lock file (WebDAV compatibility)
 
 ```typescript
-client.files.webdav.lock(path: string, data?: string, options?: { Depth?: "0" | "infinity" }): Promise<ApiResponse<unknown>>
+client.files.webdav.lock(path: string, data?: string, options?: { depth?: "0" | "infinity" }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path |  |
 | `data` | `string` | No | body |  |
-| `Depth` | `"0" \| "infinity"` | No | header |  |
+| `depth` | `"0" \| "infinity"` | No | header |  |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -2581,14 +2570,14 @@ client.files.webdav.lock(path: string, data?: string, options?: { Depth?: "0" | 
 Move or rename file/directory
 
 ```typescript
-client.files.webdav.move(path: string, options: { Destination: string; Overwrite?: "T" | "F" }): Promise<ApiResponse<unknown>>
+client.files.webdav.move(path: string, options: { destination: string; overwrite?: "T" | "F" }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | Source file or directory path |
-| `Destination` | `string` | Yes | header | Destination URL for the move |
-| `Overwrite` | `"T" \| "F"` | No | header | T (default) replaces an existing destination; F refuses one, answering 412 and leaving it untouched. A request refused for another reason is answered for that reason instead, whatever this header says: copying or moving a resource onto itself is 403, and so is a source that is not a regular file. |
+| `destination` | `string` | Yes | header | Destination URL for the move |
+| `overwrite` | `"T" \| "F"` | No | header | T (default) replaces an existing destination; F refuses one, answering 412 and leaving it untouched. A request refused for another reason is answered for that reason instead, whatever this header says: copying or moving a resource onto itself is 403. |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -2624,7 +2613,7 @@ client.files.webdav.updateProperties(path: string, data?: string): Promise<ApiRe
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `path` | `string` | Yes | path |  |
+| `path` | `string` | Yes | path | Path of the file; a directory is answered 404 |
 | `data` | `string` | No | body |  |
 
 **Returns:** `ApiResponse<unknown>`

@@ -1,6 +1,6 @@
 # `display` — 46 methods
 
-**Version:** 1.0.0-beta.17
+**Version:** 1.0.1
 **Accessor:** `client.display`
 
 ```typescript
@@ -188,11 +188,12 @@ client.display.input.drag(data: DisplayInputDragRequest, options?: { displayId?:
 Emergency release all inputs
 
 ```typescript
-client.display.input.reset(options?: { displayId?: number }): Promise<DisplayInputResetResponse>
+client.display.input.reset(data?: DisplayInputResetRequest, options?: { displayId?: number }): Promise<DisplayInputResetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
+| `data` | `DisplayInputResetRequest` | No | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
 
 **Returns:** `DisplayInputResetResponse`
@@ -359,10 +360,10 @@ client.display.keyboard.up(data: DisplayKeyboardUpRequest, options?: { displayId
 Service health check
 
 ```typescript
-client.display.kit.getHealth(): Promise<DisplayHealthCheckResponse>
+client.display.kit.getHealth(): Promise<DisplayKitGetHealthResponse>
 ```
 
-**Returns:** `DisplayHealthCheckResponse`
+**Returns:** `DisplayKitGetHealthResponse`
 
 **CLI:** `hoody display health`
 
@@ -553,7 +554,7 @@ client.display.screenshots.capture(options?: { base64?: boolean; displayId?: int
 |-----------|------|----------|----------|-------------|
 | `base64` | `boolean` | No | query | Return base64-encoded JSON response instead of binary image. Useful for AI agents and systems that can't handle binary data. Accepted values: - `true`, `1`, `` (empty) - Return base64 JSON - `false`, `0` - Return binary (default) |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `region` | `string` | No | query | Crop the returned image to `x1,y1,x2,y2`. Minimum 10x10 px, maximum 65535 on each axis, `x2 &gt; x1` and `y2 &gt; y1`; anything else is a 400. A capture spans the whole screen, so these are screen coordinates: the same ones `POST /input/click-at` takes and `GET /input/display-geometry` describes. The cropped image starts at `x1,y1`: its pixel (x, y) is screen point (x1 + x, y1 + y). |
+| `region` | `string` | No | query | Crop the returned image to `x1,y1,x2,y2`. Minimum 10x10 px, maximum 65535 on each axis, `x2 &gt; x1` and `y2 &gt; y1`; anything else, an empty `region` or one given twice included, is a 400. A capture spans the whole screen, so these are screen coordinates: the same ones `POST /input/click-at` takes and `GET /input/display-geometry` describes. The cropped image starts at `x1,y1`: its pixel (x, y) is screen point (x1 + x, y1 + y). The region must lie inside the captured screen (`x2` at most its width, `y2` at most its height): one that does not is a 400 `VALIDATION_ERROR` naming the screen size. That check needs the capture, so it comes after the display was started. |
 | `cursor` | `boolean` | No | query | Include the pointer position in the response. Only has an effect on the base64 JSON form, which gains a `cursor` object; a binary PNG response has nowhere to put it. Accepted values: `true`, `1`, `` (empty). Anything else is off. |
 | `metadata` | `boolean` | No | option | Answer the screenshot metadata instead of the image. |
 
@@ -575,7 +576,7 @@ client.display.screenshots.get(timestamp: string, options?: { base64?: boolean; 
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `timestamp` | `string` | Yes | path | Unix timestamp of the screenshot. Use the `timestamp` field returned by screenshot metadata/list endpoints. Do not use `timestamp_human` for path queries. Must be numeric only for security. |
+| `timestamp` | `string` | Yes | path | The screenshot to return. Any of these names it: - Unix time in seconds (`1749541160`), with or without a fraction (`1749541160.5`). - Unix time in milliseconds, microseconds or nanoseconds (`1749541160123`); the unit is read from the number of whole digits after any leading zeros (12 or more is milliseconds, 15 or more microseconds, 18 or more nanoseconds). A number that equals a stored `timestamp` exactly, as written, matches that screenshot first. - A date and time, such as the `timestamp_human` field (`2025-06-10T07:39:20+00:00`): an ISO 8601 calendar date written with dashes (`2025-06-10T07:39:20Z`, with an offset or none, or `2025-06-10` alone), an RFC 2822 date (`Tue, 10 Jun 2025 07:39:20 GMT`), or a date such as `06/10/2025 07:39:20`. A date with no zone is read as UTC. ISO 8601 week and ordinal dates and the form without dashes are not accepted. A date first matches the screenshot whose `timestamp_human` is that second, then one whose `timestamp` is: `timestamp_human` is when the file was written, which can be a few seconds after `timestamp`, so one second can name two different screenshots. Unix time matches `timestamp` only. - The screenshot's file name from `full.path` or `thumbnail.path` (`1749541160.4242.17.png`), or the whole path, URL-encoded. This names exactly that screenshot, even when another was taken in the same second. The `.png` can be left off a name in three parts (`1749541160.4242.17`); an older single-number name (`1749541160.png`) needs it, as without it the value is Unix time. - `latest` (or `newest`): the newest stored screenshot. Times are matched to the second. Two screenshots taken in the same second share a timestamp: Unix time returns the newer one (after any exact match as written), a date the first one whose `timestamp_human` is that second (which can be the older). Use the file name to pick a screenshot exactly. Anything else is a 400 `VALIDATION_ERROR`. |
 | `base64` | `boolean` | No | query | Return base64-encoded JSON response instead of binary image. Useful for AI agents and systems that can't handle binary data. Accepted values: - `true`, `1`, `` (empty) - Return base64 JSON - `false`, `0` - Return binary (default) |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
 
@@ -662,7 +663,7 @@ client.display.thumbnails.get(timestamp: string, options?: { base64?: boolean; d
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `timestamp` | `string` | Yes | path | Unix timestamp of the screenshot. Use the `timestamp` field returned by screenshot metadata/list endpoints. Do not use `timestamp_human` for path queries. Must be numeric only for security. |
+| `timestamp` | `string` | Yes | path | The screenshot to return. Any of these names it: - Unix time in seconds (`1749541160`), with or without a fraction (`1749541160.5`). - Unix time in milliseconds, microseconds or nanoseconds (`1749541160123`); the unit is read from the number of whole digits after any leading zeros (12 or more is milliseconds, 15 or more microseconds, 18 or more nanoseconds). A number that equals a stored `timestamp` exactly, as written, matches that screenshot first. - A date and time, such as the `timestamp_human` field (`2025-06-10T07:39:20+00:00`): an ISO 8601 calendar date written with dashes (`2025-06-10T07:39:20Z`, with an offset or none, or `2025-06-10` alone), an RFC 2822 date (`Tue, 10 Jun 2025 07:39:20 GMT`), or a date such as `06/10/2025 07:39:20`. A date with no zone is read as UTC. ISO 8601 week and ordinal dates and the form without dashes are not accepted. A date first matches the screenshot whose `timestamp_human` is that second, then one whose `timestamp` is: `timestamp_human` is when the file was written, which can be a few seconds after `timestamp`, so one second can name two different screenshots. Unix time matches `timestamp` only. - The screenshot's file name from `full.path` or `thumbnail.path` (`1749541160.4242.17.png`), or the whole path, URL-encoded. This names exactly that screenshot, even when another was taken in the same second. The `.png` can be left off a name in three parts (`1749541160.4242.17`); an older single-number name (`1749541160.png`) needs it, as without it the value is Unix time. - `latest` (or `newest`): the newest stored screenshot. Times are matched to the second. Two screenshots taken in the same second share a timestamp: Unix time returns the newer one (after any exact match as written), a date the first one whose `timestamp_human` is that second (which can be the older). Use the file name to pick a screenshot exactly. Anything else is a 400 `VALIDATION_ERROR`. |
 | `base64` | `boolean` | No | query | Return base64-encoded JSON response instead of binary image. Useful for AI agents and systems that can't handle binary data. Accepted values: - `true`, `1`, `` (empty) - Return base64 JSON - `false`, `0` - Return binary (default) |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
 
@@ -749,7 +750,7 @@ client.display.windows.get(windowId: string, options?: { displayId?: number }): 
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `windowId` | `string` | Yes | path | Window ID (decimal or hex 0x...) |
+| `windowId` | `string` | Yes | path | Window ID: a decimal number up to 4294967295, or 0x followed by 1-8 hex digits |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
 
 **Returns:** `DisplayWindowsGetResponse`
@@ -790,7 +791,7 @@ client.display.windows.getGeometry(windowId: string, options?: { displayId?: num
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `windowId` | `string` | Yes | path | Window ID (decimal or hex) |
+| `windowId` | `string` | Yes | path | Window ID: a decimal number up to 4294967295, or 0x followed by 1-8 hex digits |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
 
 **Returns:** `DisplayWindowsGetGeometryResponse`
@@ -811,7 +812,7 @@ client.display.windows.getTitle(windowId: string, options?: { displayId?: number
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `windowId` | `string` | Yes | path | Window ID (decimal or hex) |
+| `windowId` | `string` | Yes | path | Window ID: a decimal number up to 4294967295, or 0x followed by 1-8 hex digits |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
 
 **Returns:** `DisplayWindowsGetTitleResponse`

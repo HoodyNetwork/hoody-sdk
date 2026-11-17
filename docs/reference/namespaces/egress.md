@@ -1,6 +1,6 @@
 # `egress` — 5 methods
 
-**Version:** 1.0.0-beta.17
+**Version:** 1.0.1
 **Accessor:** `client.egress`
 
 ```typescript
@@ -77,7 +77,7 @@ client.egress.upstream.renewLease(options: { lease_id: string }): Promise<Egress
 
 **Returns:** `EgressUpstreamRenewLeaseResponse`
 
-**CLI:** `hoody egress upstream renew`
+**CLI:** `hoody egress upstream lease renew`
 
 ---
 

@@ -1,6 +1,6 @@
-# `daemon` — 21 methods
+# `daemon` — 26 methods
 
-**Version:** 1.0.0-beta.17
+**Version:** 1.0.1
 **Accessor:** `client.daemon`
 
 ```typescript
@@ -29,7 +29,7 @@ client.daemon.ephemeralPrograms.getLogs(id: string, options?: { type?: "stdout" 
 
 **Returns:** `DaemonEphemeralProgramsGetLogsResponse`
 
-**CLI:** `hoody daemon ephemeral programs logs get`
+**CLI:** `hoody daemon ephemeralprograms logs get`
 
 ---
 
@@ -49,7 +49,7 @@ client.daemon.ephemeralPrograms.getStatus(id: string): Promise<DaemonEphemeralPr
 
 **Returns:** `DaemonEphemeralProgramsGetStatusResponse`
 
-**CLI:** `hoody daemon ephemeral programs status`
+**CLI:** `hoody daemon ephemeralprograms status`
 
 ---
 
@@ -65,7 +65,7 @@ client.daemon.ephemeralPrograms.list(): Promise<DaemonEphemeralProgramsListRespo
 
 **Returns:** `DaemonEphemeralProgramsListResponse`
 
-**CLI:** `hoody daemon ephemeral programs list`
+**CLI:** `hoody daemon ephemeralprograms list`
 
 ---
 
@@ -85,7 +85,7 @@ client.daemon.ephemeralPrograms.start(data: DaemonEphemeralProgramsStartRequest)
 
 **Returns:** `DaemonEphemeralProgramsStartResponse`
 
-**CLI:** `hoody daemon ephemeral programs start`
+**CLI:** `hoody daemon ephemeralprograms start`
 
 ---
 
@@ -105,7 +105,7 @@ client.daemon.ephemeralPrograms.stop(id: string): Promise<DaemonEphemeralProgram
 
 **Returns:** `DaemonEphemeralProgramsStopResponse`
 
-**CLI:** `hoody daemon ephemeral programs stop`
+**CLI:** `hoody daemon ephemeralprograms stop`
 
 ---
 
@@ -118,16 +118,16 @@ client.daemon.ephemeralPrograms.stop(id: string): Promise<DaemonEphemeralProgram
 Service health check
 
 ```typescript
-client.daemon.kit.getHealth(): Promise<DaemonHealthCheckResponse>
+client.daemon.kit.getHealth(): Promise<DaemonKitGetHealthResponse>
 ```
 
-**Returns:** `DaemonHealthCheckResponse`
+**Returns:** `DaemonKitGetHealthResponse`
 
 **CLI:** `hoody daemon health`
 
 ---
 
-## `client.daemon.programs` (15 methods)
+## `client.daemon.programs` (20 methods)
 
 ### `create`
 
@@ -161,7 +161,7 @@ client.daemon.programs.delete(id: number): Promise<DaemonProgramsDeleteResponse>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) never reaches the handler: the path extractor refuses it with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new container (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
+| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) is refused with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new computer (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
 
 **Returns:** `DaemonProgramsDeleteResponse`
 
@@ -181,11 +181,29 @@ client.daemon.programs.disable(id: number): Promise<DaemonProgramsDisableRespons
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) never reaches the handler: the path extractor refuses it with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new container (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
+| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) is refused with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new computer (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
 
 **Returns:** `DaemonProgramsDisableResponse`
 
 **CLI:** `hoody daemon programs disable`
+
+---
+
+### `disableBoot`
+
+**POST** `/api/v1/daemon/programs/{id}/boot`
+
+Choose whether a program starts with the computer
+
+```typescript
+client.daemon.programs.disableBoot(id: integer, options?: object): Promise<daemon_BootAnswer>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) is refused with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new computer (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
+
+**Returns:** `daemon_BootAnswer`
 
 ---
 
@@ -201,11 +219,29 @@ client.daemon.programs.enable(id: number): Promise<DaemonProgramsEnableResponse>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) never reaches the handler: the path extractor refuses it with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new container (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
+| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) is refused with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new computer (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
 
 **Returns:** `DaemonProgramsEnableResponse`
 
 **CLI:** `hoody daemon programs enable`
+
+---
+
+### `enableBoot`
+
+**POST** `/api/v1/daemon/programs/{id}/boot`
+
+Choose whether a program starts with the computer
+
+```typescript
+client.daemon.programs.enableBoot(id: integer, options?: object): Promise<daemon_BootAnswer>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) is refused with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new computer (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
+
+**Returns:** `daemon_BootAnswer`
 
 ---
 
@@ -221,7 +257,7 @@ client.daemon.programs.get(id: number): Promise<DaemonProgramsGetResponse>
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) never reaches the handler: the path extractor refuses it with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new container (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
+| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) is refused with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new computer (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
 
 **Returns:** `DaemonProgramsGetResponse`
 
@@ -252,6 +288,39 @@ client.daemon.programs.getLogs(id: number, options?: { type?: "stdout" | "stderr
 
 ---
 
+### `getOverview`
+
+**GET** `/api/v1/daemon/programs/overview`
+
+Overview of every program and quick-start
+
+```typescript
+client.daemon.programs.getOverview(): Promise<DaemonProgramsGetOverviewResponse>
+```
+
+**Returns:** `DaemonProgramsGetOverviewResponse`
+
+---
+
+### `getRestartReceipt`
+
+**GET** `/api/v1/daemon/programs/{id}/restart`
+
+Read a restart's receipt by its key
+
+```typescript
+client.daemon.programs.getRestartReceipt(id: number, options: { key: string }): Promise<DaemonProgramsGetRestartReceiptResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) is refused with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new computer (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
+| `key` | `string` | Yes | query | The restart's Idempotency-Key. |
+
+**Returns:** `DaemonProgramsGetRestartReceiptResponse`
+
+---
+
 ### `getSandbox`
 
 **GET** `/api/v1/daemon/programs/{id}/sandbox`
@@ -264,7 +333,7 @@ client.daemon.programs.getSandbox(id: number): Promise<DaemonProgramsGetSandboxR
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) never reaches the handler: the path extractor refuses it with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new container (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
+| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) is refused with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new computer (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
 
 **Returns:** `DaemonProgramsGetSandboxResponse`
 
@@ -284,7 +353,7 @@ client.daemon.programs.getStatus(id: number, options?: { port?: number; include_
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) never reaches the handler: the path extractor refuses it with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new container (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
+| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) is refused with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new computer (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
 | `port` | `number` | No | query | Filter to specific port instance (for port-range programs only) |
 | `include_stats` | `"true" \| "false"` | No | query | Include resource stats (CPU, memory, process tree) for running programs. WHERE the stats land depends on the program: a standard program gets a top-level `stats`; a port-range program gets one `stats` per instance, on the instance itself (`instance.stats`, or `instances[].stats`), never at the top level. Each carries pid, started_at, cpu_percent, memory_rss_bytes, process_count and a per-process breakdown. |
 
@@ -307,7 +376,7 @@ client.daemon.programs.list(options?: { hoody_kit?: "true" | "false"; lazy_load?
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `hoody_kit` | `"true" \| "false"` | No | query | Filter by hoody_kit status. Use "true" for Hoody Kit programs only, "false" for user (non-kit) programs only. |
-| `lazy_load` | `"true" \| "false"` | No | query | Filter by lazy_load status. Use "true" for lazy-loaded programs only (started on-demand), "false" for programs that auto-start. |
+| `lazy_load` | `"true" \| "false"` | No | query | Filter by the lazy_load field. Use "true" for lazy-loaded programs only (started on-demand), "false" for programs whose lazy_load is false. This does not tell whether a program auto-starts: filter on `boot` for that. |
 | `enabled` | `"true" \| "false"` | No | query | Filter by enabled status. Use "true" for enabled programs only, "false" for disabled programs only. |
 | `boot` | `"true" \| "false"` | No | query | Filter by boot status. Use "true" for programs that auto-start on system boot, "false" for manual-start programs. |
 | `name` | `string` | No | query | Filter by exact program name (e.g. "hoody-agent"). Lazy mode: the proxy resolves the agent BY NAME because it is a standard program with no port_range (the port filter cannot match it) and program ids are positional. Invalid names return 400. |
@@ -315,7 +384,7 @@ client.daemon.programs.list(options?: { hoody_kit?: "true" | "false"; lazy_load?
 | `port_from` | `number` | No | query | Filter by port range start (must be used with port_to). Returns programs whose port ranges overlap with the specified range. Uses overlap logic: program.start &lt;= port_to AND program.end &gt;= port_from. |
 | `port_to` | `number` | No | query | Filter by port range end (must be used with port_from). Returns programs whose port ranges overlap with the specified range. Multiple programs may be returned if their ranges overlap. |
 | `include_status` | `"true" \| "false"` | No | query | Include runtime status for each program. When true, adds a "status" field to each program showing current running state, instances, and process details. |
-| `include_stats` | `"true" \| "false"` | No | query | Include resource stats (CPU, memory, process tree) for each running program. Turns status on only when `include_status` is omitted: an explicit `include_status=false` suppresses both status and stats. Adds a "stats" field with pid, started_at, cpu_percent, memory_rss_bytes, process_count, and per-process breakdown. Only present for running programs. |
+| `include_stats` | `"true" \| "false"` | No | query | Include resource stats (CPU, memory, process tree) for each running program. Turns status on only when `include_status` is omitted: an explicit `include_status=false` suppresses both status and stats. Where the stats land depends on the program: a standard program gets a top-level `stats`; a port-range program gets one `stats` per running instance, on `status.instances[]`, never at the top level. Each carries pid, started_at, cpu_percent, memory_rss_bytes, process_count and a per-process breakdown. |
 
 **Returns:** `DaemonProgramsListResponse`
 
@@ -323,17 +392,17 @@ client.daemon.programs.list(options?: { hoody_kit?: "true" | "false"; lazy_load?
 
 ---
 
-### `listStatus`
+### `listStatuses`
 
 **GET** `/api/v1/daemon/status`
 
 Get all program statuses
 
 ```typescript
-client.daemon.programs.listStatus(): Promise<DaemonProgramsListStatusResponse>
+client.daemon.programs.listStatuses(): Promise<DaemonProgramsListStatusesResponse>
 ```
 
-**Returns:** `DaemonProgramsListStatusResponse`
+**Returns:** `DaemonProgramsListStatusesResponse`
 
 **CLI:** `hoody daemon programs status`
 
@@ -355,6 +424,26 @@ client.daemon.programs.reset(): Promise<DaemonProgramsResetResponse>
 
 ---
 
+### `restart`
+
+**POST** `/api/v1/daemon/programs/{id}/restart`
+
+Restart a program or port instance
+
+```typescript
+client.daemon.programs.restart(id: number, data: DaemonProgramsRestartRequest, options?: { idempotencyKey?: string }): Promise<DaemonProgramsRestartResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) is refused with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new computer (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
+| `data` | `DaemonProgramsRestartRequest` | Yes | body |  |
+| `idempotencyKey` | `string` | No | header | 1 to 255 printable ASCII characters. After the request passes validation the daemon holds the key, bound to this program and body, before it restarts anything. The same key with the same program and body answers the receipt as it stands (200) and never restarts again, while the program exists; the same key with another program or body is refused (422). Receipts are kept for 24 hours, until the daemon restarts. Without a key the restart still runs, but a retry cannot be told apart from a new restart. |
+
+**Returns:** `DaemonProgramsRestartResponse`
+
+---
+
 ### `start`
 
 **POST** `/api/v1/daemon/programs/{id}/start`
@@ -367,7 +456,7 @@ client.daemon.programs.start(id: number, data: DaemonProgramsStartRequest): Prom
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) never reaches the handler: the path extractor refuses it with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new container (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
+| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) is refused with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new computer (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
 | `data` | `DaemonProgramsStartRequest` | Yes | body |  |
 
 **Returns:** `DaemonProgramsStartResponse`
@@ -388,7 +477,7 @@ client.daemon.programs.stop(id: number, data: DaemonProgramsStopRequest): Promis
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) never reaches the handler: the path extractor refuses it with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new container (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
+| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) is refused with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new computer (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
 | `data` | `DaemonProgramsStopRequest` | Yes | body |  |
 
 **Returns:** `DaemonProgramsStopResponse`
@@ -404,7 +493,7 @@ client.daemon.programs.stop(id: number, data: DaemonProgramsStopRequest): Promis
 Follow program logs (SSE)
 
 ```typescript
-client.daemon.programs.streamLogs(id: number, options?: { type?: "stdout" | "stderr"; lines?: number; port?: number; offset?: number; LastEventID?: string }): Promise<IEventStream<{ CacheControl?: string; }>>
+client.daemon.programs.streamLogs(id: number, options?: { type?: "stdout" | "stderr"; lines?: number; port?: number; offset?: number }): Promise<IEventStream<{ CacheControl?: string; }>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -414,7 +503,6 @@ client.daemon.programs.streamLogs(id: number, options?: { type?: "stdout" | "std
 | `lines` | `number` | No | query | Number of complete lines replayed from the end of the file before following (default 100). `0` replays nothing and only follows; values above 10000 are clamped to 10000. The replay is found in the last 10 MiB of the file. Ignored when resuming with `offset` or `Last-Event-ID`. |
 | `port` | `number` | No | query | Port number (required for port-range programs) |
 | `offset` | `number` | No | query | Resume cursor: the `id` of the last `line` event received (a byte offset just past that line). Streaming restarts at the next line and no backlog is replayed. An offset beyond the end of the current file means it was truncated or replaced since: the stream sends a `reset` event and starts from the top of the file. The cursor is a byte position, not a file identity, so a file replaced by one at least as long is not detected across a reconnect. Takes precedence over `Last-Event-ID`. |
-| `LastEventID` | `string` | No | header | Same cursor as `offset`, as sent automatically by an EventSource when it reconnects. Must be a non-negative integer. |
 
 **Returns:** `IEventStream<{ CacheControl?: string; }>`
 
@@ -434,7 +522,7 @@ client.daemon.programs.update(id: number, data: DaemonProgramsUpdateRequest): Pr
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) never reaches the handler: the path extractor refuses it with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new container (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
+| `id` | `number` | Yes | path | Unique numeric identifier of the program. An id that is not a valid `i32` (a word, an empty segment, a number too large) is refused with a plain-text 404, on every route that takes an id, which is NOT the documented JSON 404 of the routes that have one. An id that parses but names no program is the handler's own answer, a 400 carrying the `{success: false, error: ...}` envelope, except on the routes that document a 404. The Hoody Kit programs take the lowest ids on a new computer (the terminal kit is usually 1), so the examples use 100: add your program with `id: 100` (the `complete` add example does), or use the `program.id` the add call returns. Never point a write at a Hoody Kit program's id. |
 | `data` | `DaemonProgramsUpdateRequest` | Yes | body |  |
 
 **Returns:** `DaemonProgramsUpdateResponse`

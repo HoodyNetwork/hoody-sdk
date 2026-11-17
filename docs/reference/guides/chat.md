@@ -5,16 +5,16 @@
 goes to Hoody's documentation assistant and the answer streams back.
 
 ```bash
-hoody chat "how do I create a container with a specific image?"
+hoody chat "how do I create a computer with a specific image?"
 ```
 
 That is the whole setup. There is nothing to export first.
 
 ## Scope
 
-It answers questions about Hoody — the platform, the CLI, the SDK, the API, and
-the surrounding infrastructure / HTTP / AI / security concepts — plus any
-software or code meant to run in, deploy to, or call a Hoody container.
+It answers questions about Hoody: the platform, the CLI, the SDK, the API, and
+the infrastructure, HTTP, AI and security concepts around them. It also answers
+questions about software or code meant to run in, deploy to, or call a Hoody computer.
 
 Requests with no Hoody connection at all (trivia, world knowledge, homework, a
 generic algorithm that never touches Hoody) are declined in one line. This is the
@@ -22,10 +22,10 @@ same scope the documentation assistant on the docs site applies, because it is
 the same assistant: `hoody chat` is a terminal front-end for it, so both surfaces
 answer the same set of questions the same way.
 
-For agentic AI — reading files, running commands, editing code — use
-[`hoody agent`](../CLI-COMMANDS.md). `hoody chat` is intentionally non-agentic:
+For agentic AI (reading files, running commands, editing code), use
+[`hoody agent prompt`](../CLI-COMMANDS.md). `hoody chat` is intentionally non-agentic:
 it produces text and nothing else. It cannot read your files, run commands, or
-reach your container.
+reach your computer.
 
 > **Privacy:** no transcripts are written by default; persistence is opt-in via
 > `--persist` (REPL-only). Your question and the conversation history are sent to
@@ -52,7 +52,7 @@ hoody chat sessions delete --all -y          # wipe all; requires -y
 | `--new` | off | Force a fresh session (overrides `--resume`) |
 | `--resume [id]` | off | Resume latest (no arg) or specific session (requires `--persist`) |
 | `--private` | off | Disable ALL disk writes AND reads for this process |
-| `--accept-endpoint <origin>` | — | Accept a non-allowlisted service origin (persisted) |
+| `--accept-endpoint <origin>` | none | Accept a non-allowlisted service origin (persisted) |
 
 There is deliberately **no** `--model`, `--max-tokens`, `--temperature`, or
 provider selection. There is one assistant, run by Hoody, and it is not
@@ -74,7 +74,7 @@ When no prompt is passed and stdin is interactive, `hoody chat` enters a REPL.
 | `/save` | Promote the current ephemeral session → persistent file |
 | `/delete [id]` | Delete session; no arg deletes current + auto-`/new` |
 | `/wipe` | Delete **all** persistent sessions; requires typing `yes` in full; disabled in private mode |
-| `/private` | Turn private mode on for the rest of this REPL. **One-way** — it can never be turned back off, because the turns taken while it was on would become writable again. Restart `hoody chat` for a non-private session |
+| `/private` | Turn private mode on for the rest of this REPL. **One-way**: it can never be turned back off, because the turns taken while it was on would become writable again. Restart `hoody chat` for a non-private session |
 | `/retry` | Drop the last assistant reply and re-send the last user message |
 
 Ctrl-C once interrupts an in-flight answer, or asks for confirmation when idle;
@@ -104,8 +104,8 @@ the docs site:
 
 ```
 Sources:
-- [Container Images](https://docs.hoody.com/foundation/containers/images)
-- [Create, Edit, Delete](https://docs.hoody.com/foundation/containers/create-edit-delete)
+- [Computer Images](https://docs.hoody.com/foundation/computers/images)
+- [Create, Edit, Delete](https://docs.hoody.com/foundation/computers/create-edit-delete)
 ```
 
 Citations are display-only: they are not replayed as conversation history, so
@@ -146,7 +146,7 @@ also printed for human readability.
 
 ```
 # Example non-TTY output (4 tab-separated columns: ID, UPDATED-UTC, TURNS, TITLE)
-a1b2c3d4	2026-04-20T10:15:42Z	   6  	how do I list containers on a specific server?
+a1b2c3d4	2026-04-20T10:15:42Z	   6  	how do I list computers on a specific server?
 e5f6a7b8	2026-04-19T22:08:11Z	   2  	what is a realm?
 ```
 
@@ -172,22 +172,29 @@ any other route still cannot print a secret.
   (private mode's "no disk reads/writes" contract forbids even the `unlink`).
 
 Individual deletes (`sessions delete <id>` or `/delete <id>`) do NOT require
-confirmation — the guard is scoped to "delete everything" semantics.
+confirmation. The guard covers only "delete everything".
 
-Under `HOODY_CHAT_PRIVATE=1` the `sessions` subcommands refuse outright and exit
-1: `list`, `show`, and `delete` all read or write chat files, which that setting
-forbids for the whole process.
+In private mode (`--private` or `HOODY_CHAT_PRIVATE=1`) the `sessions`
+subcommands refuse and exit 1: `list`, `get` and `delete` all read or write chat
+files, which private mode forbids for the whole process.
 
 ## Endpoint acceptance
 
-`hoody chat` talks to one origin: `https://chatbot.hoody.com`. Overriding
-`HOODY_CHAT_URL` to anything not on the built-in allowlist requires explicit
-authorization via `--accept-endpoint <origin>` or `HOODY_CHAT_ACCEPT_ENDPOINT`.
-Accepted origins are persisted to `~/.hoody/chats/chat-accept.json` (mode
-`0o600`).
+`hoody chat` talks to the documentation assistant of the platform your CLI is
+set up for: `/api/chat` on the `chatbot.` host of your API's domain. For a
+hoody.com account that is `https://chatbot.hoody.com/api/chat`.
 
-Built-in allowlist: `chatbot.hoody.com`, plus localhost/RFC1918 (no prompt for
-local endpoints, so you can point at your own instance while developing).
+Setting `HOODY_CHAT_URL` to an origin outside the built-in list needs your
+consent: pass `--accept-endpoint <origin>`, set `HOODY_CHAT_ACCEPT_ENDPOINT`, or
+answer the prompt in a terminal. Without a terminal and without either of
+those, the request is refused with exit code 2. Accepted origins are saved in
+`~/.hoody/chats/chat-accept.json` (mode `0600`). Private mode neither reads nor
+writes that file.
+
+Built-in list: the assistant of the default platform and of the platform your
+account is on, plus localhost, `127.0.0.1`, `::1` and private network
+addresses (RFC 1918). Local addresses need no consent, so a compatible service
+you run on your own machine or network works without that step.
 
 ## Environment variables
 
@@ -217,7 +224,7 @@ HOODY_CHAT_MAX_RESULT_BYTES=16384             # answer size cap
 
 ```bash
 # Ask a question:
-hoody chat "how do I create a container with a specific image?"
+hoody chat "how do I create a computer with a specific image?"
 
 # Clean text for piping:
 hoody chat --no-markdown "give me 3 hoody agent tips" > tips.md
@@ -240,5 +247,5 @@ hoody chat sessions delete --all -y
 
 ## Related
 
-- [`hoody agent`](../CLI-COMMANDS.md) — full agentic AI for file edits, command execution, workspaces
-- [Chat privacy model](./chat-privacy.md) — what leaves your machine, retention, redaction
+- [`hoody agent prompt`](../CLI-COMMANDS.md): full agentic AI for file edits, command execution, workspaces
+- [Chat privacy model](./chat-privacy.md): what leaves your machine, retention, redaction

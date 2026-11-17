@@ -1,6 +1,6 @@
-# `notes` — 74 methods
+# `notes` — 77 methods
 
-**Version:** 1.0.0-beta.17
+**Version:** 1.0.1
 **Accessor:** `client.notes`
 
 ```typescript
@@ -60,7 +60,7 @@ client.notes.avatars.upload(data: Blob | ArrayBuffer | Uint8Array | ReadableStre
 Add a collaborator
 
 ```typescript
-client.notes.collaborators.add(notebookId: string, nodeId: string, data: NotesCollaboratorsAddRequest): Promise<NotesCollaboratorsAddResponse>
+client.notes.collaborators.add(notebookId: string, nodeId: string, data: NotesCollaboratorsAddRequest, options?: { idempotencyKey?: string }): Promise<NotesCollaboratorsAddResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -68,6 +68,7 @@ client.notes.collaborators.add(notebookId: string, nodeId: string, data: NotesCo
 | `notebookId` | `string` | Yes | path |  |
 | `nodeId` | `string` | Yes | path |  |
 | `data` | `NotesCollaboratorsAddRequest` | Yes | body |  |
+| `idempotencyKey` | `string` | No | header | Optional idempotency key, at most 256 characters, such as a random UUID per request. Keys are kept per notebook and user. Repeating a request that succeeded with the same key, path and body returns the stored response without adding the collaborator again. The same key with a different method, path or body returns 409. A request that failed stores nothing, so repeating it runs it again. A repeat sent while the first request is still running waits for it, up to 60 seconds, and is then handled the same way; if the first is still running then, the answer is 409. A longer key is refused with 409. |
 
 **Returns:** `NotesCollaboratorsAddResponse`
 
@@ -204,7 +205,7 @@ client.notes.comments.list(notebookId: string, nodeId: string, options?: { limit
 | `nodeId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cursor` | `string` | No | query |  |
+| `cursor` | `string` | No | query | The nextCursor of the previous page. While cursor pagination is turned off (the default), a non-empty cursor returns 409 with code bad_request. While it is on, a non-empty cursor cannot be combined with an offset above 0; that combination or an invalid cursor returns 400 with code bad_request. |
 
 **Returns:** `NotesCommentsListResponse`
 
@@ -228,7 +229,7 @@ client.notes.comments.listAll(notebookId: string, nodeId: string, options?: { li
 | `nodeId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cursor` | `string` | No | query |  |
+| `cursor` | `string` | No | query | The nextCursor of the previous page. While cursor pagination is turned off (the default), a non-empty cursor returns 409 with code bad_request. While it is on, a non-empty cursor cannot be combined with an offset above 0; that combination or an invalid cursor returns 400 with code bad_request. |
 
 **Returns:** `unknown[]`
 
@@ -250,7 +251,7 @@ client.notes.comments.listAnchors(notebookId: string, nodeId: string, options?: 
 | `nodeId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cursor` | `string` | No | query |  |
+| `cursor` | `string` | No | query | The nextCursor of the previous page. A non-empty cursor cannot be combined with an offset above 0; that combination or an invalid cursor returns 400 with code bad_request. While comment anchors are turned off (the default), the endpoint returns 409 with code bad_request whatever the cursor. |
 
 **Returns:** `NotesCommentsListAnchorsResponse`
 
@@ -274,7 +275,7 @@ client.notes.comments.listAnchorsAll(notebookId: string, nodeId: string, options
 | `nodeId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cursor` | `string` | No | query |  |
+| `cursor` | `string` | No | query | The nextCursor of the previous page. A non-empty cursor cannot be combined with an offset above 0; that combination or an invalid cursor returns 400 with code bad_request. While comment anchors are turned off (the default), the endpoint returns 409 with code bad_request whatever the cursor. |
 
 **Returns:** `unknown[]`
 
@@ -296,7 +297,7 @@ client.notes.comments.listAnchorsIterator(notebookId: string, nodeId: string, op
 | `nodeId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cursor` | `string` | No | query |  |
+| `cursor` | `string` | No | query | The nextCursor of the previous page. A non-empty cursor cannot be combined with an offset above 0; that combination or an invalid cursor returns 400 with code bad_request. While comment anchors are turned off (the default), the endpoint returns 409 with code bad_request whatever the cursor. |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -318,7 +319,7 @@ client.notes.comments.listIterator(notebookId: string, nodeId: string, options?:
 | `nodeId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cursor` | `string` | No | query |  |
+| `cursor` | `string` | No | query | The nextCursor of the previous page. While cursor pagination is turned off (the default), a non-empty cursor returns 409 with code bad_request. While it is on, a non-empty cursor cannot be combined with an offset above 0; that combination or an invalid cursor returns 400 with code bad_request. |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -366,7 +367,7 @@ client.notes.comments.setAnchor(notebookId: string, nodeId: string, commentId: s
 
 **Returns:** `NotesCommentsSetAnchorResponse`
 
-**CLI:** `hoody notes comments anchor set`
+**CLI:** `hoody notes comments anchors set`
 
 ---
 
@@ -402,7 +403,7 @@ client.notes.comments.update(notebookId: string, nodeId: string, commentId: stri
 Append blocks to a document
 
 ```typescript
-client.notes.document.append(notebookId: string, nodeId: string, data: NotesDocumentAppendRequest, options?: { IfMatch?: string; XIdempotencyKey?: string }): Promise<NotesDocumentAppendResponse>
+client.notes.document.append(notebookId: string, nodeId: string, data: NotesDocumentAppendRequest, options?: { ifMatch?: string; idempotencyKey?: string }): Promise<NotesDocumentAppendResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -410,8 +411,8 @@ client.notes.document.append(notebookId: string, nodeId: string, data: NotesDocu
 | `notebookId` | `string` | Yes | path |  |
 | `nodeId` | `string` | Yes | path |  |
 | `data` | `NotesDocumentAppendRequest` | Yes | body |  |
-| `IfMatch` | `string` | No | header | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). |
-| `XIdempotencyKey` | `string` | No | header | Optional idempotency key (max 256 chars). Reusing the same key with an identical request body and node replays the original response; reusing it with a different body or node returns 409. |
+| `ifMatch` | `string` | No | header | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). An append that repeats an `X-Idempotency-Key` it already completed is answered from the stored response without checking `If-Match` again. |
+| `idempotencyKey` | `string` | No | header | Optional idempotency key (max 256 chars). Reusing the same key with an identical request body and node replays the original response; reusing it with a different body or node returns 409. |
 
 **Returns:** `NotesDocumentAppendResponse`
 
@@ -437,7 +438,7 @@ client.notes.document.createExportTicket(notebookId: string, nodeId: string, dat
 
 **Returns:** `NotesDocumentCreateExportTicketResponse`
 
-**CLI:** `hoody notes document tickets create`
+**CLI:** `hoody notes document exporttickets create`
 
 ---
 
@@ -469,24 +470,24 @@ client.notes.document.exportBlock(notebookId: string, nodeId: string, blockId: s
 
 **GET** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`
 
-Get document content
+Read a notebook node's document. `output: 'md'` or `'html'` answers the rendered text; otherwise the document object.
 
 ```typescript
-client.notes.document.get(notebookId: string, nodeId: string, options?: { blockIds?: string; lines?: string; output?: "json" | "md" | "html"; includeComments?: "none" | "appendix"; ticket?: string; IfNoneMatch?: string }): Promise<NotesDocumentGetResponse>
+client.notes.document.get(notebookId: string, nodeId: string, options?: { blockIds?: string; lines?: string; output?: string; includeComments?: string; ticket?: string; ifNoneMatch?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `notebookId` | `string` | Yes | path |  |
-| `nodeId` | `string` | Yes | path |  |
 | `blockIds` | `string` | No | query |  |
 | `lines` | `string` | No | query |  |
-| `output` | `"json" \| "md" \| "html"` | No | query |  |
-| `includeComments` | `"none" \| "appendix"` | No | query |  |
+| `output` | `string` | No | query |  |
+| `includeComments` | `string` | No | query |  |
 | `ticket` | `string` | No | query |  |
-| `IfNoneMatch` | `string` | No | header | Optional (RFC 9110): ETags of copies the caller already holds, or `*`. When the document is still at one of them the JSON output answers 304 with no body. Ignored by the Markdown and HTML outputs. |
+| `notebookId` | `string` | Yes | path |  |
+| `nodeId` | `string` | Yes | path |  |
+| `ifNoneMatch` | `string` | No | header | Optional (RFC 9110): ETags of copies the caller already holds, or `*`. When the document is still at one of them the JSON output answers 304 with no body. Ignored by the Markdown and HTML outputs. |
 
-**Returns:** `NotesDocumentGetResponse`
+**Returns:** `any`
 
 **CLI:** `hoody notes document get`
 
@@ -499,7 +500,7 @@ client.notes.document.get(notebookId: string, nodeId: string, options?: { blockI
 Create or replace document
 
 ```typescript
-client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumentSetRequest, options?: { IfMatch?: string }): Promise<NotesDocumentSetResponse>
+client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumentSetRequest, options?: { ifMatch?: string }): Promise<NotesDocumentSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -507,7 +508,7 @@ client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumen
 | `notebookId` | `string` | Yes | path |  |
 | `nodeId` | `string` | Yes | path |  |
 | `data` | `NotesDocumentSetRequest` | Yes | body |  |
-| `IfMatch` | `string` | No | header | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). |
+| `ifMatch` | `string` | No | header | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). An append that repeats an `X-Idempotency-Key` it already completed is answered from the stored response without checking `If-Match` again. |
 
 **Returns:** `NotesDocumentSetResponse`
 
@@ -522,7 +523,7 @@ client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumen
 Merge document content
 
 ```typescript
-client.notes.document.update(notebookId: string, nodeId: string, data: NotesDocumentUpdateRequest, options?: { IfMatch?: string }): Promise<NotesDocumentUpdateResponse>
+client.notes.document.update(notebookId: string, nodeId: string, data: NotesDocumentUpdateRequest, options?: { ifMatch?: string }): Promise<NotesDocumentUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -530,7 +531,7 @@ client.notes.document.update(notebookId: string, nodeId: string, data: NotesDocu
 | `notebookId` | `string` | Yes | path |  |
 | `nodeId` | `string` | Yes | path |  |
 | `data` | `NotesDocumentUpdateRequest` | Yes | body |  |
-| `IfMatch` | `string` | No | header | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). |
+| `ifMatch` | `string` | No | header | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). An append that repeats an `X-Idempotency-Key` it already completed is answered from the stored response without checking `If-Match` again. |
 
 **Returns:** `NotesDocumentUpdateResponse`
 
@@ -632,14 +633,14 @@ client.notes.files.listIterator(notebookId: string, options?: { limit?: number; 
 Abort a TUS upload
 
 ```typescript
-client.notes.files.uploads.cancel(notebookId: string, fileId: string, options: { TusResumable: "1.0.0" }): Promise<ApiResponse<unknown>>
+client.notes.files.uploads.cancel(notebookId: string, fileId: string, options: { tusResumable: "1.0.0" }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `fileId` | `string` | Yes | path |  |
-| `TusResumable` | `"1.0.0"` | Yes | header | TUS protocol version. Every TUS request must send `1.0.0`; anything else is refused with 412. |
+| `tusResumable` | `"1.0.0"` | Yes | header | TUS protocol version. Every TUS request must send `1.0.0`: a missing header is refused with 412, any other value with 400. |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -652,16 +653,16 @@ client.notes.files.uploads.cancel(notebookId: string, fileId: string, options: {
 Create a resumable (TUS) upload
 
 ```typescript
-client.notes.files.uploads.create(notebookId: string, fileId: string, options: { TusResumable: "1.0.0"; UploadLength: number; UploadMetadata?: string }): Promise<NotesFilesUploadsCreateResponse>
+client.notes.files.uploads.create(notebookId: string, fileId: string, options: { tusResumable: "1.0.0"; uploadLength: number; uploadMetadata?: string }): Promise<NotesFilesUploadsCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `fileId` | `string` | Yes | path |  |
-| `TusResumable` | `"1.0.0"` | Yes | header | TUS protocol version. Every TUS request must send `1.0.0`; anything else is refused with 412. |
-| `UploadLength` | `number` | Yes | header | Total size of the file in bytes. Must equal the file node's `size` (set when the node was created), which must not exceed the notebook's maximum file size. Upload-Defer-Length is not supported. |
-| `UploadMetadata` | `string` | No | header | Optional TUS metadata: comma-separated `key base64(value)` pairs. |
+| `tusResumable` | `"1.0.0"` | Yes | header | TUS protocol version. Every TUS request must send `1.0.0`: a missing header is refused with 412, any other value with 400. |
+| `uploadLength` | `number` | Yes | header | Total size of the file in bytes. Must equal the file node's `size` (set when the node was created), which must not exceed the notebook's maximum file size. Upload-Defer-Length is not supported. |
+| `uploadMetadata` | `string` | No | header | Optional TUS metadata: comma-separated `key base64(value)` pairs. |
 
 **Returns:** `NotesFilesUploadsCreateResponse`
 
@@ -674,14 +675,14 @@ client.notes.files.uploads.create(notebookId: string, fileId: string, options: {
 Check a TUS upload's offset (for resuming)
 
 ```typescript
-client.notes.files.uploads.getOffset(notebookId: string, fileId: string, options: { TusResumable: "1.0.0" }): Promise<ApiResponse<Record<string, string>>>
+client.notes.files.uploads.getOffset(notebookId: string, fileId: string, options: { tusResumable: "1.0.0" }): Promise<ApiResponse<Record<string, string>>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `fileId` | `string` | Yes | path |  |
-| `TusResumable` | `"1.0.0"` | Yes | header | TUS protocol version. Every TUS request must send `1.0.0`; anything else is refused with 412. |
+| `tusResumable` | `"1.0.0"` | Yes | header | TUS protocol version. Every TUS request must send `1.0.0`: a missing header is refused with 412, any other value with 400. |
 
 **Returns:** `ApiResponse<Record<string, string>>`
 
@@ -694,7 +695,7 @@ client.notes.files.uploads.getOffset(notebookId: string, fileId: string, options
 Upload a chunk to a TUS upload
 
 ```typescript
-client.notes.files.uploads.writeChunk(notebookId: string, fileId: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options: { TusResumable: "1.0.0"; UploadOffset: number; contentType?: 'application/offset+octet-stream' }): Promise<NotesFilesUploadsWriteChunkResponse>
+client.notes.files.uploads.writeChunk(notebookId: string, fileId: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options: { tusResumable: "1.0.0"; uploadOffset: number; contentType?: 'application/offset+octet-stream' }): Promise<NotesFilesUploadsWriteChunkResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -702,15 +703,29 @@ client.notes.files.uploads.writeChunk(notebookId: string, fileId: string, data: 
 | `notebookId` | `string` | Yes | path |  |
 | `fileId` | `string` | Yes | path |  |
 | `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream&lt;Uint8Array&gt; \| string` | Yes | body |  |
-| `TusResumable` | `"1.0.0"` | Yes | header | TUS protocol version. Every TUS request must send `1.0.0`; anything else is refused with 412. |
-| `UploadOffset` | `number` | Yes | header | Offset this chunk starts at — the value the HEAD check (or the previous chunk) returned. |
+| `tusResumable` | `"1.0.0"` | Yes | header | TUS protocol version. Every TUS request must send `1.0.0`: a missing header is refused with 412, any other value with 400. |
+| `uploadOffset` | `number` | Yes | header | Offset this chunk starts at: the value the HEAD check (or the previous chunk) returned. |
 | `contentType` | `'application/offset+octet-stream'` | No | query |  |
 
 **Returns:** `NotesFilesUploadsWriteChunkResponse`
 
 ---
 
-## `client.notes.kit` (1 method)
+## `client.notes.kit` (2 methods)
+
+### `getCapabilities`
+
+**GET** `/api/v1/notes/capabilities`
+
+Optional features of this server
+
+```typescript
+client.notes.kit.getCapabilities(): Promise<NotesKitGetCapabilitiesResponse>
+```
+
+**Returns:** `NotesKitGetCapabilitiesResponse`
+
+---
 
 ### `getHealth`
 
@@ -794,7 +809,7 @@ client.notes.mutations.sync(notebookId: string, data: NotesMutationsSyncRequest)
 
 ---
 
-## `client.notes.nodes` (13 methods)
+## `client.notes.nodes` (14 methods)
 
 ### `create`
 
@@ -803,14 +818,14 @@ client.notes.mutations.sync(notebookId: string, data: NotesMutationsSyncRequest)
 Create a node
 
 ```typescript
-client.notes.nodes.create(notebookId: string, data: NotesNodesCreateRequest, options?: { XIdempotencyKey?: string }): Promise<NotesNodesCreateResponse>
+client.notes.nodes.create(notebookId: string, data: NotesNodesCreateRequest, options?: { idempotencyKey?: string }): Promise<NotesNodesCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `data` | `NotesNodesCreateRequest` | Yes | body |  |
-| `XIdempotencyKey` | `string` | No | header | Optional idempotency key (max 256 chars), such as a random UUID per node. Reusing the same key with an identical request body replays the original response instead of creating a second node; reusing it with a different body returns 409. |
+| `idempotencyKey` | `string` | No | header | Optional idempotency key (max 256 chars), such as a random UUID per node. Reusing the same key with an identical request body replays the original response instead of creating a second node; reusing it with a different body returns 409. |
 
 **Returns:** `NotesNodesCreateResponse`
 
@@ -996,6 +1011,25 @@ client.notes.nodes.listIterator(notebookId: string, options?: { type?: string; p
 
 ---
 
+### `listRecent`
+
+**GET** `/api/v1/notes/notebooks/{notebookId}/recent`
+
+List recently changed pages
+
+```typescript
+client.notes.nodes.listRecent(notebookId: string, options?: { limit?: number }): Promise<NotesNodesListRecentResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `limit` | `number` | No | query |  |
+
+**Returns:** `NotesNodesListRecentResponse`
+
+---
+
 ### `markOpened`
 
 **POST** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/opened`
@@ -1003,7 +1037,7 @@ client.notes.nodes.listIterator(notebookId: string, options?: { type?: string; p
 Mark node as opened
 
 ```typescript
-client.notes.nodes.markOpened(notebookId: string, nodeId: string, data: NotesNodesMarkOpenedRequest): Promise<NotesNodesMarkOpenedResponse>
+client.notes.nodes.markOpened(notebookId: string, nodeId: string, data: NotesNodesMarkOpenedRequest, options?: { idempotencyKey?: string }): Promise<NotesNodesMarkOpenedResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1011,10 +1045,11 @@ client.notes.nodes.markOpened(notebookId: string, nodeId: string, data: NotesNod
 | `notebookId` | `string` | Yes | path |  |
 | `nodeId` | `string` | Yes | path |  |
 | `data` | `NotesNodesMarkOpenedRequest` | Yes | body |  |
+| `idempotencyKey` | `string` | No | header | Optional idempotency key, at most 256 characters, such as a random UUID per request. Keys are kept per notebook and user. Repeating a request that succeeded with the same key, path and body returns the stored response without recording the open again. The same key with a different method, path or body returns 409. A request that failed stores nothing, so repeating it runs it again. A repeat sent while the first request is still running waits for it, up to 60 seconds, and is then handled the same way; if the first is still running then, the answer is 409. A longer key is refused with 409. |
 
 **Returns:** `NotesNodesMarkOpenedResponse`
 
-**CLI:** `hoody notes nodes mark opened`
+**CLI:** `hoody notes nodes markopened`
 
 ---
 
@@ -1025,7 +1060,7 @@ client.notes.nodes.markOpened(notebookId: string, nodeId: string, data: NotesNod
 Mark node as seen
 
 ```typescript
-client.notes.nodes.markSeen(notebookId: string, nodeId: string, data: NotesNodesMarkSeenRequest): Promise<NotesNodesMarkSeenResponse>
+client.notes.nodes.markSeen(notebookId: string, nodeId: string, data: NotesNodesMarkSeenRequest, options?: { idempotencyKey?: string }): Promise<NotesNodesMarkSeenResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1033,10 +1068,11 @@ client.notes.nodes.markSeen(notebookId: string, nodeId: string, data: NotesNodes
 | `notebookId` | `string` | Yes | path |  |
 | `nodeId` | `string` | Yes | path |  |
 | `data` | `NotesNodesMarkSeenRequest` | Yes | body |  |
+| `idempotencyKey` | `string` | No | header | Optional idempotency key, at most 256 characters, such as a random UUID per request. Keys are kept per notebook and user. Repeating a request that succeeded with the same key, path and body returns the stored response without recording the view again. The same key with a different method, path or body returns 409. A request that failed stores nothing, so repeating it runs it again. A repeat sent while the first request is still running waits for it, up to 60 seconds, and is then handled the same way; if the first is still running then, the answer is 409. A longer key is refused with 409. |
 
 **Returns:** `NotesNodesMarkSeenResponse`
 
-**CLI:** `hoody notes nodes mark seen`
+**CLI:** `hoody notes nodes markseen`
 
 ---
 
@@ -1083,7 +1119,7 @@ client.notes.nodes.update(notebookId: string, nodeId: string, data: NotesNodesUp
 
 ---
 
-## `client.notes.notebooks` (5 methods)
+## `client.notes.notebooks` (6 methods)
 
 ### `create`
 
@@ -1122,6 +1158,32 @@ client.notes.notebooks.delete(notebookId: string): Promise<NotesNotebooksDeleteR
 **Returns:** `NotesNotebooksDeleteResponse`
 
 **CLI:** `hoody notes notebooks delete`
+
+---
+
+### `export`
+
+**GET** `/api/v1/notes/notebooks/{notebookId}/export`
+
+Export notes as a ZIP
+
+```typescript
+client.notes.notebooks.export(notebookId: string, options?: { nodeId?: string; format?: "md" | "html"; attachments?: "true" | "false"; comments?: "none" | "appendix"; themeMode?: "light" | "dark"; dryRun?: "true" | "false" }): Promise<ApiResponse<ArrayBuffer>>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `nodeId` | `string` | No | query |  |
+| `format` | `"md" \| "html"` | No | query |  |
+| `attachments` | `"true" \| "false"` | No | query |  |
+| `comments` | `"none" \| "appendix"` | No | query |  |
+| `themeMode` | `"light" \| "dark"` | No | query |  |
+| `dryRun` | `"true" \| "false"` | No | query |  |
+
+**Returns:** `ApiResponse<ArrayBuffer>`
+
+**CLI:** `hoody notes notebooks export`
 
 ---
 
@@ -1209,7 +1271,7 @@ client.notes.whoami(): Promise<NotesWhoamiResponse>
 Add a reaction
 
 ```typescript
-client.notes.reactions.add(notebookId: string, nodeId: string, data: NotesReactionsAddRequest): Promise<NotesReactionsAddResponse>
+client.notes.reactions.add(notebookId: string, nodeId: string, data: NotesReactionsAddRequest, options?: { idempotencyKey?: string }): Promise<NotesReactionsAddResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1217,6 +1279,7 @@ client.notes.reactions.add(notebookId: string, nodeId: string, data: NotesReacti
 | `notebookId` | `string` | Yes | path |  |
 | `nodeId` | `string` | Yes | path |  |
 | `data` | `NotesReactionsAddRequest` | Yes | body |  |
+| `idempotencyKey` | `string` | No | header | Optional idempotency key, at most 256 characters, such as a random UUID per request. Keys are kept per notebook and user. Repeating a request that succeeded with the same key, path and body returns the stored response without adding the reaction again. The same key with a different method, path or body returns 409. A request that failed stores nothing, so repeating it runs it again. A repeat sent while the first request is still running waits for it, up to 60 seconds, and is then handled the same way; if the first is still running then, the answer is 409. A longer key is refused with 409. |
 
 **Returns:** `NotesReactionsAddResponse`
 
@@ -1276,14 +1339,15 @@ client.notes.reactions.remove(notebookId: string, nodeId: string, reaction: stri
 Create a database record
 
 ```typescript
-client.notes.records.create(notebookId: string, databaseId: string, data: NotesRecordsCreateRequest): Promise<NotesRecordsCreateResponse>
+client.notes.records.create(notebookId: string, databaseId: string, data?: NotesRecordsCreateRequest, options?: { idempotencyKey?: string }): Promise<NotesRecordsCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `databaseId` | `string` | Yes | path |  |
-| `data` | `NotesRecordsCreateRequest` | Yes | body |  |
+| `data` | `NotesRecordsCreateRequest` | No | body |  |
+| `idempotencyKey` | `string` | No | header | Optional idempotency key, at most 256 characters, such as a random UUID per request. Keys are kept per notebook and user. Repeating a request that succeeded with the same key, path and body returns the stored response instead of creating a second record. The same key with a different method, path or body returns 409. A request that failed stores nothing, so repeating it runs it again. A repeat sent while the first request is still running waits for it, up to 60 seconds, and is then handled the same way; if the first is still running then, the answer is 409. A longer key is refused with 409. |
 
 **Returns:** `NotesRecordsCreateResponse`
 
@@ -1349,8 +1413,8 @@ client.notes.records.list(notebookId: string, databaseId: string, options?: { fi
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `databaseId` | `string` | Yes | path |  |
-| `filters` | `string` | No | query |  |
-| `sorts` | `string` | No | query |  |
+| `filters` | `string` | No | query | JSON-encoded array of filters. Each is a field filter { id, type: "field", fieldId, operator, value } or a group { id, type: "group", operator: "and" \| "or", filters }. The fieldId `name` filters on the record name. A filter on a field the database does not have is ignored. |
+| `sorts` | `string` | No | query | JSON-encoded array of sorts, applied in order. Each is { id, fieldId, direction: "asc" \| "desc" }. The fieldId `name` sorts by the record name. A sort on a field the database does not have is ignored. |
 | `page` | `number` | No | query |  |
 | `count` | `number` | No | query |  |
 
@@ -1374,8 +1438,8 @@ client.notes.records.listAll(notebookId: string, databaseId: string, options?: {
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `databaseId` | `string` | Yes | path |  |
-| `filters` | `string` | No | query |  |
-| `sorts` | `string` | No | query |  |
+| `filters` | `string` | No | query | JSON-encoded array of filters. Each is a field filter { id, type: "field", fieldId, operator, value } or a group { id, type: "group", operator: "and" \| "or", filters }. The fieldId `name` filters on the record name. A filter on a field the database does not have is ignored. |
+| `sorts` | `string` | No | query | JSON-encoded array of sorts, applied in order. Each is { id, fieldId, direction: "asc" \| "desc" }. The fieldId `name` sorts by the record name. A sort on a field the database does not have is ignored. |
 | `page` | `number` | No | query |  |
 | `count` | `number` | No | query |  |
 
@@ -1397,8 +1461,8 @@ client.notes.records.listIterator(notebookId: string, databaseId: string, option
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `databaseId` | `string` | Yes | path |  |
-| `filters` | `string` | No | query |  |
-| `sorts` | `string` | No | query |  |
+| `filters` | `string` | No | query | JSON-encoded array of filters. Each is a field filter { id, type: "field", fieldId, operator, value } or a group { id, type: "group", operator: "and" \| "or", filters }. The fieldId `name` filters on the record name. A filter on a field the database does not have is ignored. |
+| `sorts` | `string` | No | query | JSON-encoded array of sorts, applied in order. Each is { id, fieldId, direction: "asc" \| "desc" }. The fieldId `name` sorts by the record name. A sort on a field the database does not have is ignored. |
 | `page` | `number` | No | query |  |
 | `count` | `number` | No | query |  |
 
@@ -1420,7 +1484,7 @@ client.notes.records.search(notebookId: string, databaseId: string, options?: { 
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `databaseId` | `string` | Yes | path |  |
-| `q` | `string` | No | query |  |
+| `q` | `string` | No | query | Text to find in the record name or in any field value (substring match; ASCII letters match in any case). A field value is matched as its JSON text, such as {"type":"string","value":"Q3"}, so a query can also match a field type name. Empty returns all records except those specified in `exclude`. |
 | `exclude` | `string` | No | query |  |
 
 **Returns:** `NotesRecordsSearchResponse`
@@ -1436,7 +1500,7 @@ client.notes.records.search(notebookId: string, databaseId: string, options?: { 
 Update a database record
 
 ```typescript
-client.notes.records.update(notebookId: string, databaseId: string, recordId: string, data: NotesRecordsUpdateRequest): Promise<NotesRecordsUpdateResponse>
+client.notes.records.update(notebookId: string, databaseId: string, recordId: string, data?: NotesRecordsUpdateRequest): Promise<NotesRecordsUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1444,7 +1508,7 @@ client.notes.records.update(notebookId: string, databaseId: string, recordId: st
 | `notebookId` | `string` | Yes | path |  |
 | `databaseId` | `string` | Yes | path |  |
 | `recordId` | `string` | Yes | path |  |
-| `data` | `NotesRecordsUpdateRequest` | Yes | body |  |
+| `data` | `NotesRecordsUpdateRequest` | No | body |  |
 
 **Returns:** `NotesRecordsUpdateResponse`
 
@@ -1461,14 +1525,15 @@ client.notes.records.update(notebookId: string, databaseId: string, recordId: st
 Open a WebSocket connection
 
 ```typescript
-client.notes.sockets.connect(socketId: string): Promise<NotesOpenSocketWebSocket>
+client.notes.sockets.connect(socketId: string, _templateVars?: object, requestOptions?: object, wsOptions?: { reconnect?: boolean; connectTimeoutMs?: number; transport?: 'auto' | 'ws' }): Promise<NotesSocketsConnectWebSocket>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `socketId` | `string` | Yes | path |  |
+| `wsOptions` | `{ reconnect?: boolean; connectTimeoutMs?: number; transport?: 'auto' \| 'ws' }` | No | path |  |
 
-**Returns:** `NotesOpenSocketWebSocket`
+**Returns:** `NotesSocketsConnectWebSocket`
 
 ---
 
@@ -1560,7 +1625,7 @@ client.notes.versions.get(notebookId: string, nodeId: string, versionId: string)
 List document versions
 
 ```typescript
-client.notes.versions.list(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number }): Promise<NotesVersionsListResponse>
+client.notes.versions.list(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; beforeRevision?: number }): Promise<NotesVersionsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1569,6 +1634,7 @@ client.notes.versions.list(notebookId: string, nodeId: string, options?: { limit
 | `nodeId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
+| `beforeRevision` | `number` | No | query | Only versions with a lower revision. Pass the lowest revision you already have to get the next page: unlike offset it stays correct while versions are added or deleted. Combines with offset (normally 0). |
 
 **Returns:** `NotesVersionsListResponse`
 
@@ -1583,7 +1649,7 @@ client.notes.versions.list(notebookId: string, nodeId: string, options?: { limit
 List document versions (collect all pages)
 
 ```typescript
-client.notes.versions.listAll(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number }): Promise<unknown[]>
+client.notes.versions.listAll(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; beforeRevision?: number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1592,6 +1658,7 @@ client.notes.versions.listAll(notebookId: string, nodeId: string, options?: { li
 | `nodeId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
+| `beforeRevision` | `number` | No | query | Only versions with a lower revision. Pass the lowest revision you already have to get the next page: unlike offset it stays correct while versions are added or deleted. Combines with offset (normally 0). |
 
 **Returns:** `unknown[]`
 
@@ -1604,7 +1671,7 @@ client.notes.versions.listAll(notebookId: string, nodeId: string, options?: { li
 List document versions (async iterator)
 
 ```typescript
-client.notes.versions.listIterator(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number }): AsyncIterableIterator<unknown>
+client.notes.versions.listIterator(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; beforeRevision?: number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1613,6 +1680,7 @@ client.notes.versions.listIterator(notebookId: string, nodeId: string, options?:
 | `nodeId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
+| `beforeRevision` | `number` | No | query | Only versions with a lower revision. Pass the lowest revision you already have to get the next page: unlike offset it stays correct while versions are added or deleted. Combines with offset (normally 0). |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 

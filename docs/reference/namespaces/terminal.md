@@ -1,29 +1,11 @@
-# `terminal` — 38 methods
+# `terminal` — 41 methods
 
-**Version:** 1.0.0-beta.17
+**Version:** 1.0.1
 **Accessor:** `client.terminal`
 
 ```typescript
 import * as terminal from 'hoody-sdk/terminal';
 ```
-
----
-
-## `client.terminal.automation` (1 method)
-
-### `getStats`
-
-**GET** `/api/v1/terminal/automation/metrics`
-
-Get terminal automation metrics
-
-```typescript
-client.terminal.automation.getStats(): Promise<TerminalAutomationGetStatsResponse>
-```
-
-**Returns:** `TerminalAutomationGetStatsResponse`
-
-**CLI:** `hoody terminal automation stats`
 
 ---
 
@@ -41,7 +23,7 @@ client.terminal.commands.cancel(command_id: string, data?: TerminalCommandsCance
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `command_id` | `string` | Yes | path | The command ID returned by the execute endpoint |
+| `command_id` | `string` | Yes | path | The command ID returned by the execute endpoint (numeric 1-65535) |
 | `data` | `TerminalCommandsCancelRequest` | No | body |  |
 
 **Returns:** `TerminalCommandsCancelResponse`
@@ -82,7 +64,7 @@ client.terminal.commands.list(terminal_id: string): Promise<TerminalCommandsList
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | Yes | path | Terminal session ID (numeric 1-65535, can also be provided as query parameter). The containers proxy injects only the query form on hostname-routed calls — this path segment must always be supplied explicitly, and it must name the host's terminal: a path id that differs from the query terminal_id (N on a terminal-N host) is refused with 400 TERMINAL_ID_MISMATCH |
+| `terminal_id` | `string` | Yes | path | Terminal session ID (numeric 1-65535, can also be provided as query parameter). edge proxy injects only the query form on hostname-routed calls, so this path segment must always be supplied explicitly, and it must name the host's terminal: a path id that differs from the query terminal_id (N on a terminal-N host) is refused with 400 TERMINAL_ID_MISMATCH. On a terminal-N edge proxy hostname, N must be at most 9999 and outside the numbers reserved for agent sessions; an existing id above that range (up to 65535) is reached only without the proxy. |
 
 **Returns:** `TerminalCommandsListResponse`
 
@@ -97,25 +79,25 @@ client.terminal.commands.list(terminal_id: string): Promise<TerminalCommandsList
 Execute command in terminal session
 
 ```typescript
-client.terminal.commands.run(data: TerminalCommandsRunRequest, options?: { terminal_id?: string; ephemeral?: boolean; defer_pid?: number; defer_start_time_ticks?: string; defer_timeout_ms?: number; defer_poll_ms?: number; reset?: boolean; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; env?: string; skip_display_wait?: boolean; display_wait_timeout?: number; display?: string; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; ssh_key?: string; socks5_pass?: string }): Promise<TerminalCommandsRunResponse>
+client.terminal.commands.run(data: TerminalCommandsRunRequest, options?: { terminal_id?: string; ephemeral?: boolean; defer_pid?: number; defer_start_time_ticks?: string; defer_timeout_ms?: number; defer_poll_ms?: number; reset?: boolean; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; env?: string[]; skip_display_wait?: boolean; display_wait_timeout?: number; display?: string; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; ssh_key?: string; socks5_pass?: string }): Promise<TerminalCommandsRunResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `TerminalCommandsRunRequest` | Yes | body |  |
-| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535). Required unless ephemeral=true, in which case it is auto-generated if not provided. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and OVERWRITES any value you send (a ?terminal_id=0 query sentinel never survives the proxy) — use the terminal-0 hostname as the "no terminal ID" sentinel so ephemeral=true can auto-generate; supply this parameter directly only when calling the terminal service without the proxy |
+| `terminal_id` | `string` | No | query | Terminal session ID (numeric; a new session needs 1-9999, an existing one up to 65535). Required unless ephemeral=true, in which case it is auto-generated if not provided. On calls routed through a terminal-N edge proxy hostname, the proxy sets this from the hostname label and OVERWRITES any value you send (a ?terminal_id=0 query sentinel never survives the proxy). Use the terminal-0 hostname as the "no terminal ID" sentinel so ephemeral=true can auto-generate; supply this parameter directly only when calling the terminal service without the proxy |
 | `ephemeral` | `boolean` | No | query | When true, auto-generates a unique terminal_id (if not provided), skips display/dbus initialization, and applies aggressive cleanup. Designed for programmatic CLI command execution like a scripted command runner (default: false). WARNING: Do NOT use ephemeral=true for GUI applications that require a display. Ephemeral sessions strip the DISPLAY environment variable, which means X11/GUI applications will not work. Use a regular terminal session with an explicit terminal_id and display parameter instead for GUI workloads. A terminal_id that names a running terminal with a display is refused with 409 PERSISTENT_SESSION rather than turned ephemeral; on a terminal-N host the proxy sets terminal_id=N, so send ephemeral commands to the terminal-0 host |
-| `defer_pid` | `number` | No | query | Defer command injection until this PID exits (TUI-safe). If set, the API returns immediately regardless of wait=true |
+| `defer_pid` | `number` | No | query | Defer command injection until this PID exits (TUI-safe). With defer_pid the response does not wait for completion even when wait=true (session setup and display readiness can still delay it) |
 | `defer_start_time_ticks` | `string` | No | query | Optional /proc/&lt;pid&gt;/stat field 22 (starttime in clock ticks since boot) to avoid PID reuse bugs. If it mismatches, command executes immediately |
 | `defer_timeout_ms` | `number` | No | query | Max time to wait for defer_pid exit before failing (default: 60000) |
 | `defer_poll_ms` | `number` | No | query | Poll interval while waiting for defer_pid exit (default: 50, minimum: 10) |
 | `reset` | `boolean` | No | query | Reset existing session and reconfigure (kills current process, clears state, allows switching from bash to SSH or changing any parameter) - Use 'true', '1', or no value |
 | `cwd` | `string` | No | query | Working directory for local bash sessions (ignored for SSH). In raw mode: the command's working directory, when the body has no cwd |
-| `cwd_auto_create` | `boolean` | No | query | Auto-create cwd when the requested working directory does not exist yet. Only applies when cwd is explicitly provided for a new or reset local session. Enable with 'true', '1', or no value (default: false) |
+| `cwd_auto_create` | `boolean` | No | query | Auto-create cwd when the requested working directory does not exist yet. Applies when cwd is explicitly provided for a new or reset local session, and to a command run with mode raw. Enable with 'true', '1', or no value (default: false) |
 | `shell` | `string` | No | query | Shell to use for local sessions: bash (case-insensitive), zsh, fish, sh, etc. (default: server startup command, only applies to new sessions or after reset) |
 | `user` | `string` | No | query | System user to spawn shell as (requires su permissions, only applies to new sessions or after reset). In raw mode: the user the command runs as, when the body has no user |
-| `cmd` | `string` | No | query | Base64-encoded command to execute automatically (works with both new and active shells, executes every time URL is visited) |
-| `env` | `string` | No | query | Environment variable in KEY=VALUE format (can be repeated for multiple variables, e.g., ?env=DEBUG=1&env=API_KEY=abc) |
+| `cmd` | `string` | No | query | Base64-encoded command to execute automatically on spawn (executes once when the shell starts; ignored on an active session unless reset is true) |
+| `env` | `string[]` | No | query | Environment variable in KEY=VALUE format (can be repeated for multiple variables, e.g., ?env=DEBUG=1&env=API_KEY=abc) |
 | `skip_display_wait` | `boolean` | No | query | Skip waiting for Hoody Display readiness before executing command. By default, if a DISPLAY is configured, the request waits until the session's display server is ready, unless no X server holds the display and none can be started, or a wait for it already timed out on the same shell within the last 30 seconds. Commands of one terminal still run in arrival order, so a request with skip_display_wait=true runs after earlier ones still waiting (default: false) |
 | `display_wait_timeout` | `number` | No | query | Timeout in seconds for display readiness wait, counted from the request (default: 10, capped at 10 seconds; values &lt;=0 or malformed also map to the 10-second cap). When it elapses the command runs anyway. Ignored if skip_display_wait=true |
 | `display` | `string` | No | query | DISPLAY environment variable for X11 applications (auto-formats :display if number provided, e.g., ?display=1 becomes DISPLAY=:1) |
@@ -137,27 +119,6 @@ client.terminal.commands.run(data: TerminalCommandsRunRequest, options?: { termi
 
 ## `client.terminal.drops` (4 methods)
 
-### `commit`
-
-**POST** `/api/v1/terminal/drop-commit`
-
-Finalize a drop and inject the OSC frame
-
-```typescript
-client.terminal.drops.commit(data: TerminalDropsCommitRequest, options: { drop: string; token: string; terminal_id: string }): Promise<TerminalDropsCommitResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `TerminalDropsCommitRequest` | Yes | body |  |
-| `drop` | `string` | Yes | query | Drop id from /drop-begin |
-| `token` | `string` | Yes | query | Drop token from /drop-begin |
-| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
-
-**Returns:** `TerminalDropsCommitResponse`
-
----
-
 ### `create`
 
 **POST** `/api/v1/terminal/drop-begin`
@@ -170,9 +131,30 @@ client.terminal.drops.create(options?: { terminal_id: string }): Promise<Termina
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N edge proxy hostname, the proxy sets this from the hostname label and overwrites any value you send. Pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy. On a terminal-N edge proxy hostname, N must be at most 9999 and outside the numbers reserved for agent sessions; an existing id above that range (up to 65535) is reached only without the proxy. |
 
 **Returns:** `TerminalDropsCreateResponse`
+
+---
+
+### `finalize`
+
+**POST** `/api/v1/terminal/drop-commit`
+
+Finalize a drop and inject the OSC frame
+
+```typescript
+client.terminal.drops.finalize(data: TerminalDropsFinalizeRequest, options: { drop: string; token: string; terminal_id: string }): Promise<TerminalDropsFinalizeResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `TerminalDropsFinalizeRequest` | Yes | body |  |
+| `drop` | `string` | Yes | query | Drop id from /drop-begin |
+| `token` | `string` | Yes | query | Drop token from /drop-begin |
+| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N edge proxy hostname, the proxy sets this from the hostname label and overwrites any value you send. Pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy. On a terminal-N edge proxy hostname, N must be at most 9999 and outside the numbers reserved for agent sessions; an existing id above that range (up to 65535) is reached only without the proxy. |
+
+**Returns:** `TerminalDropsFinalizeResponse`
 
 ---
 
@@ -189,7 +171,7 @@ client.terminal.drops.send(data: TerminalDropsSendRequest, options?: { terminal_
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `TerminalDropsSendRequest` | Yes | body |  |
-| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N edge proxy hostname, the proxy sets this from the hostname label and overwrites any value you send. Pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy. On a terminal-N edge proxy hostname, N must be at most 9999 and outside the numbers reserved for agent sessions; an existing id above that range (up to 65535) is reached only without the proxy. |
 
 **Returns:** `TerminalDropsSendResponse`
 
@@ -210,9 +192,9 @@ client.terminal.drops.writeChunk(data: Blob | ArrayBuffer | Uint8Array | Readabl
 | `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream&lt;Uint8Array&gt; \| string` | Yes | body |  |
 | `drop` | `string` | Yes | query | Drop id from /drop-begin |
 | `token` | `string` | Yes | query | Drop token from /drop-begin |
-| `path` | `string` | Yes | query | Sanitized relative path of the staged file (no `..`, not absolute) |
+| `path` | `string` | Yes | query | Relative path of the staged file: not empty, shorter than 1024 bytes, each component at most 255 bytes; absolute paths, `.` or `..` components, backslashes, control characters and DEL are refused with 400 DROP_INVALID_PATH |
 | `offset` | `number` | Yes | query | Byte offset to write at (must equal the current staged size) |
-| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N edge proxy hostname, the proxy sets this from the hostname label and overwrites any value you send. Pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy. On a terminal-N edge proxy hostname, N must be at most 9999 and outside the numbers reserved for agent sessions; an existing id above that range (up to 65535) is reached only without the proxy. |
 | `contentType` | `'application/octet-stream'` | No | query |  |
 
 **Returns:** `TerminalDropsWriteChunkResponse`
@@ -237,7 +219,37 @@ client.terminal.keys.list(): Promise<TerminalKeysListResponse>
 
 ---
 
-## `client.terminal.kit` (1 method)
+## `client.terminal.kit` (3 methods)
+
+### `getAutomationStats`
+
+**GET** `/api/v1/terminal/automation/metrics`
+
+Get terminal automation metrics
+
+```typescript
+client.terminal.kit.getAutomationStats(): Promise<TerminalKitGetAutomationStatsResponse>
+```
+
+**Returns:** `TerminalKitGetAutomationStatsResponse`
+
+**CLI:** `hoody terminal automation stats`
+
+---
+
+### `getCapabilities`
+
+**GET** `/api/v1/terminal/capabilities`
+
+Get the terminal service's features
+
+```typescript
+client.terminal.kit.getCapabilities(): Promise<TerminalKitGetCapabilitiesResponse>
+```
+
+**Returns:** `TerminalKitGetCapabilitiesResponse`
+
+---
 
 ### `getHealth`
 
@@ -246,10 +258,10 @@ client.terminal.keys.list(): Promise<TerminalKeysListResponse>
 Service health check
 
 ```typescript
-client.terminal.kit.getHealth(): Promise<TerminalHealthCheckResponse>
+client.terminal.kit.getHealth(): Promise<TerminalKitGetHealthResponse>
 ```
 
-**Returns:** `TerminalHealthCheckResponse`
+**Returns:** `TerminalKitGetHealthResponse`
 
 **CLI:** `hoody terminal health`
 
@@ -373,7 +385,7 @@ client.terminal.sessions.captureScreenshot(options?: { terminal_id: string; form
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N edge proxy hostname, the proxy sets this from the hostname label and overwrites any value you send. Pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy. On a terminal-N edge proxy hostname, N must be at most 9999 and outside the numbers reserved for agent sessions; an existing id above that range (up to 65535) is reached only without the proxy. |
 | `format` | `"png" \| "jpeg" \| "gif"` | No | query | Output format: png, jpeg, gif (default: png) |
 | `foreground` | `string` | No | query | Foreground color: black, red, green, yellow, blue, magenta, cyan, white, or RGB (R,G,B,A) (default: white) |
 | `background` | `string` | No | query | Background color: same as foreground options (default: black) |
@@ -393,19 +405,20 @@ client.terminal.sessions.captureScreenshot(options?: { terminal_id: string; form
 WebSocket terminal connection
 
 ```typescript
-client.terminal.sessions.connect(options?: { terminal_id?: string; readonly?: boolean; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; env?: string; display?: string; pid?: number; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; socks5_pass?: string; ssh_key?: string; display_id?: string; ephemeral?: boolean; reset?: boolean; startup_script?: string; env_inject?: boolean; desktop?: boolean; desktop_env?: "xfce" | "mate"; debug?: boolean; welcome?: boolean; agent?: boolean; onboarding?: boolean; arg?: string }): Promise<TerminalConnectTerminalWebSocketWebSocket>
+client.terminal.sessions.connect(options?: { terminal_id?: string; readonly?: boolean; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; env?: string[]; display?: string; pid?: number; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; socks5_pass?: string; ssh_key?: string; display_id?: string; ephemeral?: boolean; reset?: boolean; startup_script?: string; env_inject?: boolean; desktop?: boolean; desktop_env?: "xfce" | "mate" | "vm"; debug?: boolean; welcome?: boolean; agent?: boolean; onboarding?: boolean; arg?: string }, _templateVars?: object, wsOptions?: { reconnect?: boolean; connectTimeoutMs?: number; transport?: 'auto' | 'ws' }): Promise<TerminalSessionsConnectWebSocket>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535). Omitted, the connection joins the shared terminal "1" that every client without a terminal_id uses; with ephemeral=true it instead gets a fresh ID in 40000-65535, reported in the SET_TERMINAL_ID frame. A value that is present but malformed is refused, never mapped to "1". 0 (the terminal-0 host) only starts a fresh ephemeral session: without ephemeral=true (or in agent mode) the connection is refused, never mapped to "1". Multiple clients can share by using the same ID. On connections routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send |
+| `wsOptions` | `{ reconnect?: boolean; connectTimeoutMs?: number; transport?: 'auto' \| 'ws' }` | No | path |  |
+| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535; an id with no session yet must be 1-9999, a higher one is refused). Omitted, the connection joins the shared terminal "1" that every client without a terminal_id uses; with ephemeral=true it instead gets a fresh ID in 5001-7999, reported in the SET_TERMINAL_ID frame. A value that is present but malformed is refused, never mapped to "1". 0 (the terminal-0 host) only starts a fresh ephemeral session: without ephemeral=true (or in agent mode) the connection is refused, never mapped to "1". Multiple clients can share by using the same ID. On connections routed through a terminal-N edge proxy hostname, the proxy sets this from the hostname label and overwrites any value you send. On a terminal-N edge proxy hostname, N must be at most 9999 and outside the numbers reserved for agent sessions; an existing id above that range (up to 65535) is reached only without the proxy. |
 | `readonly` | `boolean` | No | query | Enable read-only mode for this client (blocks keyboard input) - Use 'true', '1', or no value |
 | `cwd` | `string` | No | query | Working directory for new sessions |
 | `cwd_auto_create` | `boolean` | No | query | Auto-create cwd when the requested working directory does not exist yet. Only applies when cwd is explicitly provided for a new local session. Enable with 'true', '1', or no value (default: false) |
 | `shell` | `string` | No | query | Shell to use (bash, zsh, fish, tmux, ssh, etc.) |
 | `user` | `string` | No | query | System user to spawn shell as (requires permissions) |
-| `cmd` | `string` | No | query | Base64-encoded command to auto-execute on spawn |
-| `env` | `string` | No | query | Environment variable KEY=VALUE (repeatable) |
+| `cmd` | `string` | No | query | Base64-encoded command (ignored on a server without -W, by agent sessions and by daemon-program terminals). With no shell running yet it becomes the session's initial command, run once when the shell starts (the first connection that sets it wins); on a shell that already runs it is typed into that shell on every connection that carries it, except from a readonly client, whose cmd is then ignored |
+| `env` | `string[]` | No | query | Environment variable KEY=VALUE (repeatable) |
 | `display` | `string` | No | query | DISPLAY variable for X11 apps (auto-formats :N) |
 | `pid` | `number` | No | query | Attach to existing process PID for monitoring |
 | `ssh_host` | `string` | No | query | SSH server hostname/IP for remote connections |
@@ -418,21 +431,19 @@ client.terminal.sessions.connect(options?: { terminal_id?: string; readonly?: bo
 | `socks5_pass` | `string` | No | query | SOCKS5 proxy password (shell-dangerous characters are refused) |
 | `ssh_key` | `string` | No | query | Base64-encoded SSH private key for key authentication (alternative to ssh_password) |
 | `display_id` | `string` | No | query | Alias of display; when both are sent, display wins |
-| `ephemeral` | `boolean` | No | query | Throwaway session: without a terminal_id a fresh ID in 40000-65535 is allocated instead of joining shared terminal "1"; the display environment is not inherited, a cmd= command exits the shell when it finishes, and the idle session is cleaned up. Accepts true, 1 or yes (default: false). Ignored with agent=true |
+| `ephemeral` | `boolean` | No | query | Throwaway session: without a terminal_id a fresh ID in 5001-7999 is allocated instead of joining shared terminal "1"; the display environment is not inherited, a cmd= command exits the shell when it finishes, and the idle session is cleaned up. Accepts true, 1 or yes (default: false). Ignored with agent=true |
 | `reset` | `boolean` | No | query | Tear down the session's running process (or SSH / PID attachment) and start a fresh one before this client joins. Accepts true, 1 or a bare flag (default: false) |
 | `startup_script` | `string` | No | query | Absolute path of a script to run before the shell starts; relative paths and paths containing ".." are ignored. Ignored with agent=true |
 | `env_inject` | `boolean` | No | query | Inject the HOODY_* environment variables into the spawned shell (default: true; only false or 0 disables it) |
-| `desktop` | `boolean` | No | query | Desktop mode: sets TTYD_DESKTOP_MODE=true in the shell environment (default: false). Ignored with agent=true |
-| `desktop_env` | `"xfce" \| "mate"` | No | query | Desktop environment for desktop mode; implies desktop=true. Other values are ignored. Not started again when a window manager already runs on the display; it keeps running after the session is deleted (POST /api/v1/system/displays/{display}/stop ends it) |
+| `desktop` | `boolean` | No | query | Enable Hoody Display desktop mode: the viewer shows the whole display as one screen instead of each window on its own. It starts no window manager and no desktop environment; set `desktop_env` (xfce, mate, vm) for one with a window manager (default: false). Ignored with agent=true |
+| `desktop_env` | `"xfce" \| "mate" \| "vm"` | No | query | Desktop environment for desktop mode; implies desktop=true. `vm` is for a hoody-vm display: openbox with hoody-vm's configuration, which binds no keys or mouse buttons so every key and click reaches the VM, and keeps QEMU's window undecorated and maximised. Other values are ignored. Not started again when a window manager already runs on the display; it keeps running after the session is deleted (POST /api/v1/system/displays/{display}/stop ends it) |
 | `debug` | `boolean` | No | query | Sets TTYD_DEBUG=true in the shell environment (default: false) |
-| `welcome` | `boolean` | No | query | Show the Hoody welcome banner when the shell starts (default: false) |
+| `welcome` | `boolean` | No | query | Show the Hoody welcome banner when the shell starts. Default: true on a connection through a terminal-N edge proxy hostname (the proxy adds welcome=true when you do not send it), false when calling the terminal service directly. Send welcome=false to turn it off |
 | `agent` | `boolean` | No | query | Launch the server-configured Hoody Agent TUI instead of a shell. A locked-down mode: shell, cmd, user, ssh_*, pid, startup_script, desktop and ephemeral are ignored (default: false) |
 | `onboarding` | `boolean` | No | query | With agent=true, start the agent's first-run onboarding (default: false) |
 | `arg` | `string` | No | query | Command-line argument for the shell, repeatable and kept in order. Accepted only when URL arguments are enabled on this server; ignored otherwise |
 
-**Returns:** `TerminalConnectTerminalWebSocketWebSocket`
-
-**CLI:** `hoody terminal sessions connect`
+**Returns:** `TerminalSessionsConnectWebSocket`
 
 ---
 
@@ -463,12 +474,13 @@ client.terminal.sessions.create(data: TerminalSessionsCreateRequest): Promise<Te
 Delete a terminal session
 
 ```typescript
-client.terminal.sessions.delete(terminal_id: string): Promise<TerminalSessionsDeleteResponse>
+client.terminal.sessions.delete(terminal_id: string, options?: { incarnation?: string }): Promise<TerminalSessionsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | Yes | path | Terminal session ID to delete (numeric 1-65535). The containers proxy cannot fill this path segment — supply it explicitly even on hostname-routed calls, and it must name the host's terminal: a path id that differs from the query terminal_id (N on a terminal-N host) is refused with 400 TERMINAL_ID_MISMATCH |
+| `terminal_id` | `string` | Yes | path | Terminal session ID to delete (numeric 1-65535). edge proxy cannot fill this path segment: supply it explicitly even on hostname-routed calls, and it must name the host's terminal: a path id that differs from the query terminal_id (N on a terminal-N host) is refused with 400 TERMINAL_ID_MISMATCH. On a terminal-N edge proxy hostname, N must be at most 9999 and outside the numbers reserved for agent sessions; an existing id above that range (up to 65535) is reached only without the proxy. |
+| `incarnation` | `string` | No | query | Delete only while the session's shell has this incarnation (32 lowercase hex characters); otherwise 409 INCARNATION_MISMATCH and nothing is deleted. Pending tracked workloads of that incarnation are closed without starting; running ones keep running and stay readable and signallable |
 
 **Returns:** `TerminalSessionsDeleteResponse`
 
@@ -488,7 +500,7 @@ client.terminal.sessions.getAutomationStatus(terminal_id: string): Promise<Termi
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | Yes | path | Terminal session ID. The containers proxy cannot fill this path segment — supply it explicitly even on hostname-routed calls, and it must name the host's terminal: a path id that differs from the query terminal_id (N on a terminal-N host) is refused with 400 TERMINAL_ID_MISMATCH |
+| `terminal_id` | `string` | Yes | path | Terminal session ID. edge proxy cannot fill this path segment: supply it explicitly even on hostname-routed calls, and it must name the host's terminal: a path id that differs from the query terminal_id (N on a terminal-N host) is refused with 400 TERMINAL_ID_MISMATCH |
 
 **Returns:** `TerminalSessionsGetAutomationStatusResponse`
 
@@ -508,7 +520,7 @@ client.terminal.sessions.getSnapshot(options?: { terminal_id: string; include_co
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N edge proxy hostname, the proxy sets this from the hostname label and overwrites any value you send. Pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy. On a terminal-N edge proxy hostname, N must be at most 9999 and outside the numbers reserved for agent sessions; an existing id above that range (up to 65535) is reached only without the proxy. |
 | `include_colors` | `boolean` | No | query | Include ANSI SGR colored_lines array alongside plain text lines. Default: false |
 | `include_highlights` | `boolean` | No | query | Include reverse-video highlight spans. Default: true |
 | `scroll_offset` | `number` | No | query | Lines into scrollback (0 = live viewport). Default: 0 |
@@ -553,7 +565,7 @@ client.terminal.sessions.paste(data: TerminalSessionsPasteRequest, options?: { t
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `TerminalSessionsPasteRequest` | Yes | body |  |
-| `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N edge proxy hostname, the proxy sets this from the hostname label and overwrites any value you send. Pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
 
 **Returns:** `TerminalSessionsPasteResponse`
 
@@ -574,11 +586,11 @@ client.terminal.sessions.pressKeys(data: TerminalSessionsPressKeysRequest, optio
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `TerminalSessionsPressKeysRequest` | Yes | body |  |
-| `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N edge proxy hostname, the proxy sets this from the hostname label and overwrites any value you send. Pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
 
 **Returns:** `TerminalSessionsPressKeysResponse`
 
-**CLI:** `hoody terminal sessions press`
+**CLI:** `hoody terminal sessions keys press`
 
 ---
 
@@ -589,16 +601,16 @@ client.terminal.sessions.pressKeys(data: TerminalSessionsPressKeysRequest, optio
 Get raw terminal output
 
 ```typescript
-client.terminal.sessions.read(options?: { terminal_id?: string; format?: "download" | "text" | "html"; tail?: number }): Promise<ApiResponse<ArrayBuffer>>
+client.terminal.sessions.read(options?: { terminal_id?: string; format?: "download" | "text" | "html"; tail?: number }): Promise<ApiResponse<ArrayBuffer | string>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535, defaults to "1" if not provided). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send. 0 (the terminal-0 host) names no terminal to read and is refused with 400 TERMINAL_ID_ZERO |
+| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535, defaults to "1" if not provided). On calls routed through a terminal-N edge proxy hostname, the proxy sets this from the hostname label and overwrites any value you send. 0 (the terminal-0 host) names no terminal to read and is refused with 400 TERMINAL_ID_ZERO. On a terminal-N edge proxy hostname, N must be at most 9999 and outside the numbers reserved for agent sessions; an existing id above that range (up to 65535) is reached only without the proxy. |
 | `format` | `"download" \| "text" \| "html"` | No | query | Output format: download, text, or html (defaults to "download" if not provided) |
 | `tail` | `number` | No | query | Return only the last N lines of output |
 
-**Returns:** `ApiResponse<ArrayBuffer>`
+**Returns:** `ApiResponse<ArrayBuffer | string>`
 
 **CLI:** `hoody terminal sessions read`
 
@@ -635,11 +647,11 @@ client.terminal.sessions.search(options: { pattern: string; terminal_id: string;
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `pattern` | `string` | Yes | query | PCRE2 regex pattern to search for (max 1024 bytes) |
-| `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N edge proxy hostname, the proxy sets this from the hostname label and overwrites any value you send. Pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
 | `scope` | `"screen" \| "scrollback" \| "all"` | No | query | Search scope: screen (default), scrollback, or all |
-| `limit` | `number` | No | query | Maximum number of hits to return (default 100, max 1000) |
+| `limit` | `number` | No | query | Maximum number of hits to return, from 1 to 1000 (default 100). A value outside that range is refused with 400 |
 | `case_insensitive` | `boolean` | No | query | Case-insensitive matching. Default: false |
-| `scroll_offset` | `number` | No | query | Scrollback offset for screen scope (0 = live viewport). Default: 0 |
+| `scroll_offset` | `number` | No | query | Scrollback offset for screen scope (0 = live viewport), from 0 to 2147483647. A value outside that range is refused with 400. Default: 0 |
 
 **Returns:** `TerminalSessionsSearchResponse`
 
@@ -660,11 +672,11 @@ client.terminal.sessions.sendMouseEvents(data: TerminalSessionsSendMouseEventsRe
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `TerminalSessionsSendMouseEventsRequest` | Yes | body |  |
-| `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N edge proxy hostname, the proxy sets this from the hostname label and overwrites any value you send. Pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
 
 **Returns:** `TerminalSessionsSendMouseEventsResponse`
 
-**CLI:** `hoody terminal sessions mouse send`
+**CLI:** `hoody terminal sessions mouseevents send`
 
 ---
 
@@ -681,7 +693,7 @@ client.terminal.sessions.wait(data: TerminalSessionsWaitRequest, options?: { ter
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `TerminalSessionsWaitRequest` | Yes | body |  |
-| `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N edge proxy hostname, the proxy sets this from the hostname label and overwrites any value you send. Pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
 
 **Returns:** `TerminalSessionsWaitResponse`
 
@@ -702,7 +714,7 @@ client.terminal.sessions.write(data?: TerminalSessionsWriteRequest, options?: { 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `TerminalSessionsWriteRequest` | No | body |  |
-| `terminal_id` | `string` | Yes | query | Terminal session ID to write to. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `terminal_id` | `string` | Yes | query | Terminal session ID to write to. On calls routed through a terminal-N edge proxy hostname, the proxy sets this from the hostname label and overwrites any value you send. Pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
 
 **Returns:** `TerminalSessionsWriteResponse`
 
@@ -740,7 +752,7 @@ client.terminal.system.listDaemonPrograms(): Promise<TerminalSystemListDaemonPro
 
 **Returns:** `TerminalSystemListDaemonProgramsResponse`
 
-**CLI:** `hoody terminal system daemon programs list`
+**CLI:** `hoody terminal system daemonprograms list`
 
 ---
 
@@ -772,7 +784,7 @@ client.terminal.system.listPorts(options?: { protocol?: string; user?: string; p
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `protocol` | `string` | No | query | Filter by protocol: tcp, udp, or comma-separated list |
+| `protocol` | `string` | No | query | Filter by protocol: `tcp` or `udp` (one value; omit it for both) |
 | `user` | `string` | No | query | Filter by user (exact match) |
 | `port` | `number` | No | query | Filter by specific port number |
 | `ip` | `string` | No | query | Filter by IP address (comma-separated list) |
@@ -843,6 +855,48 @@ client.terminal.system.stopDisplay(display: number): Promise<TerminalSystemStopD
 **Returns:** `TerminalSystemStopDisplayResponse`
 
 **CLI:** `hoody terminal system displays stop`
+
+---
+
+## `client.terminal.workloads` (2 methods)
+
+### `list`
+
+**GET** `/api/v1/terminal/workloads`
+
+List tracked workloads
+
+```typescript
+client.terminal.workloads.list(options?: { terminal_id: string; incarnation?: string; command_id?: string }): Promise<TerminalWorkloadsListResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On a terminal-N edge proxy hostname, N must be at most 9999 and outside the numbers reserved for agent sessions; an existing id above that range (up to 65535) is reached only without the proxy. |
+| `incarnation` | `string` | No | query | Only workloads of this shell incarnation (32 lowercase hex characters) |
+| `command_id` | `string` | No | query | Only the workload with this command id (numeric 1-65535) |
+
+**Returns:** `TerminalWorkloadsListResponse`
+
+---
+
+### `signal`
+
+**POST** `/api/v1/terminal/workloads/{command_id}/signal`
+
+Signal a tracked workload
+
+```typescript
+client.terminal.workloads.signal(command_id: string, data: TerminalWorkloadsSignalRequest, options?: { terminal_id: string }): Promise<TerminalWorkloadsSignalResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `command_id` | `string` | Yes | path | The workload's command id (numeric 1-65535) |
+| `data` | `TerminalWorkloadsSignalRequest` | Yes | body |  |
+| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On a terminal-N edge proxy hostname, N must be at most 9999 and outside the numbers reserved for agent sessions; an existing id above that range (up to 65535) is reached only without the proxy. |
+
+**Returns:** `TerminalWorkloadsSignalResponse`
 
 ---
 

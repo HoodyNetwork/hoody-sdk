@@ -1,6 +1,6 @@
 # `curl` — 31 methods
 
-**Version:** 1.0.0-beta.17
+**Version:** 1.0.1
 **Accessor:** `client.curl`
 
 ```typescript
@@ -45,17 +45,17 @@ client.curl.channel.connect(opts?: CurlChannelHelperOptions): Promise<CurlChanne
 
 **POST** `/api/v1/curl/request`
 
-Execute HTTP request with full cURL capabilities
+Run one HTTP request through the curl service. `mode: 'async'` answers 202 with the job; `response: 'json'` answers the response wrapped in JSON with timing; otherwise `data` is the upstream body, parsed by its Content-Type (JSON to a value, text to a string, binary to an ArrayBuffer).
 
 ```typescript
-client.curl.run(data: CurlRunRequest): Promise<CurlRunResponse>
+client.curl.run(data: curl_CurlRequest, options?: object): Promise<curl_JsonResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `CurlRunRequest` | Yes | body |  |
+| `data` | `curl_CurlRequest` | Yes | body |  |
 
-**Returns:** `CurlRunResponse`
+**Returns:** `curl_JsonResponse`
 
 **CLI:** `hoody curl run`
 
@@ -67,10 +67,10 @@ client.curl.run(data: CurlRunRequest): Promise<CurlRunResponse>
 
 **DELETE** `/api/v1/curl/jobs/{id}`
 
-Cancel a pending or running job, or delete a finished one
+Cancel a pending or running job; the record stays. A job that has already finished is left unchanged.
 
 ```typescript
-client.curl.jobs.cancel(id: string): Promise<curl_CurlJobDeleteResult>
+client.curl.jobs.cancel(id: string, options?: object): Promise<curl_CurlJobDeleteResult>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -90,16 +90,17 @@ client.curl.jobs.cancel(id: string): Promise<curl_CurlJobDeleteResult>
 Subscribe to job events over WebSocket
 
 ```typescript
-client.curl.jobs.connect(options?: { job_id?: string; since?: number; incarnation?: string }): Promise<CurlWsJobEventsWebSocket>
+client.curl.jobs.connect(options?: { job_id?: string; since?: number; incarnation?: string }, _templateVars?: object, wsOptions?: { reconnect?: boolean; connectTimeoutMs?: number; transport?: 'auto' | 'ws' }): Promise<CurlJobsConnectWebSocket>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
+| `wsOptions` | `{ reconnect?: boolean; connectTimeoutMs?: number; transport?: 'auto' \| 'ws' }` | No | path |  |
 | `job_id` | `string` | No | query | Optional job ID filter |
 | `since` | `number` | No | query | Resume cursor: the last `seq` (or `replay_boundary.max_seq`) received; `0` for everything still kept. The lifecycle events after it are replayed first, then a `replay_boundary` frame |
 | `incarnation` | `string` | No | query | The `incarnation` of the last control frame received; a different one means the server restarted since |
 
-**Returns:** `CurlWsJobEventsWebSocket`
+**Returns:** `CurlJobsConnectWebSocket`
 
 ---
 
@@ -107,10 +108,10 @@ client.curl.jobs.connect(options?: { job_id?: string; since?: number; incarnatio
 
 **DELETE** `/api/v1/curl/jobs/{id}`
 
-Cancel a pending or running job, or delete a finished one
+Permanently delete a finished job's record and its saved downloads. A pending or running job is refused with 409 JOB_NOT_FINISHED: cancel it first.
 
 ```typescript
-client.curl.jobs.delete(id: string): Promise<curl_CurlJobDeleteResult>
+client.curl.jobs.delete(id: string, options?: object): Promise<curl_CurlJobDeleteResult>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -229,7 +230,7 @@ client.curl.jobs.listIterator(options?: { page?: number; limit?: number }): Asyn
 Subscribe to job events over Server-Sent Events
 
 ```typescript
-client.curl.jobs.stream(options?: { job_id?: string; since?: number; incarnation?: string; LastEventID?: string | null }): Promise<IEventStream>
+client.curl.jobs.stream(options?: { job_id?: string; since?: number; incarnation?: string }): Promise<IEventStream>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -237,7 +238,6 @@ client.curl.jobs.stream(options?: { job_id?: string; since?: number; incarnation
 | `job_id` | `string` | No | query | Optional job ID filter |
 | `since` | `number` | No | query | Resume cursor: the last `seq` (SSE `id:`) received; `0` for everything still kept. Wins over `Last-Event-ID` |
 | `incarnation` | `string` | No | query | The `incarnation` of the last `lagged` event received; a different one means the server restarted since |
-| `LastEventID` | `string \| null` | No | header | Resume cursor as sent by an EventSource reconnect: the last `id:` received. Ignored when it is not a number or when `since` is given |
 
 **Returns:** `IEventStream`
 
@@ -254,10 +254,10 @@ client.curl.jobs.stream(options?: { job_id?: string; since?: number; incarnation
 Service health check
 
 ```typescript
-client.curl.kit.getHealth(): Promise<ApiResponse<unknown>>
+client.curl.kit.getHealth(): Promise<CurlKitGetHealthResponse>
 ```
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `CurlKitGetHealthResponse`
 
 **CLI:** `hoody curl health`
 
@@ -288,14 +288,14 @@ client.curl.kit.getMetrics(): Promise<ApiResponse<string>>
 Create a recurring scheduled job
 
 ```typescript
-client.curl.schedules.create(data: CurlSchedulesCreateRequest): Promise<ApiResponse<unknown>>
+client.curl.schedules.create(data: CurlSchedulesCreateRequest): Promise<CurlSchedulesCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `CurlSchedulesCreateRequest` | Yes | body |  |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `CurlSchedulesCreateResponse`
 
 **CLI:** `hoody curl schedules create`
 
@@ -308,14 +308,14 @@ client.curl.schedules.create(data: CurlSchedulesCreateRequest): Promise<ApiRespo
 Delete a schedule
 
 ```typescript
-client.curl.schedules.delete(id: string): Promise<ApiResponse<unknown>>
+client.curl.schedules.delete(id: string): Promise<CurlSchedulesDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique schedule identifier |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `CurlSchedulesDeleteResponse`
 
 **CLI:** `hoody curl schedules delete`
 
@@ -430,14 +430,14 @@ client.curl.schedules.update(id: string, data: CurlSchedulesUpdateRequest): Prom
 Delete a session
 
 ```typescript
-client.curl.sessions.delete(id: string): Promise<ApiResponse<unknown>>
+client.curl.sessions.delete(id: string): Promise<CurlSessionsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Session identifier to delete |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `CurlSessionsDeleteResponse`
 
 **CLI:** `hoody curl sessions delete`
 
@@ -510,14 +510,14 @@ client.curl.sessions.listAll(options?: { page?: number; limit?: number }): Promi
 Get session cookies only
 
 ```typescript
-client.curl.sessions.listCookies(id: string): Promise<ApiResponse<unknown>>
+client.curl.sessions.listCookies(id: string): Promise<CurlSessionsListCookiesResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Session identifier |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `CurlSessionsListCookiesResponse`
 
 **CLI:** `hoody curl sessions cookies list`
 
@@ -551,7 +551,7 @@ client.curl.sessions.listIterator(options?: { page?: number; limit?: number }): 
 Delete a saved file or directory
 
 ```typescript
-client.curl.storage.delete(path: string, options?: { recursive?: boolean }): Promise<ApiResponse<unknown>>
+client.curl.storage.delete(path: string, options?: { recursive?: boolean }): Promise<CurlStorageDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -559,7 +559,7 @@ client.curl.storage.delete(path: string, options?: { recursive?: boolean }): Pro
 | `path` | `string` | Yes | path | Relative path to a file or directory in storage |
 | `recursive` | `boolean` | No | query | `true` deletes a directory and everything in it (default false) |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `CurlStorageDeleteResponse`
 
 **CLI:** `hoody curl storage delete`
 

@@ -1,6 +1,6 @@
-# `run` — 30 methods
+# `run` — 32 methods
 
-**Version:** 1.0.0-beta.17
+**Version:** 1.0.1
 **Accessor:** `client.run`
 
 ```typescript
@@ -9,21 +9,23 @@ import * as run from 'hoody-sdk/run';
 
 ---
 
-## `client.run.config` (1 method)
+## `client.run.catalog` (1 method)
 
-### `get`
+### `list`
 
-**GET** `/api/v1/run/config`
+**GET** `/api/v1/run/catalog`
 
-Get full runtime configuration
+List the starter apps
 
 ```typescript
-client.run.config.get(): Promise<RunConfigGetResponse>
+client.run.catalog.list(options?: { q?: string }): Promise<RunCatalogListResponse>
 ```
 
-**Returns:** `RunConfigGetResponse`
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `q` | `string` | No | query | Words to filter by; absent or blank lists every entry |
 
-**CLI:** `hoody run config get`
+**Returns:** `RunCatalogListResponse`
 
 ---
 
@@ -49,26 +51,6 @@ client.run.jobs.cancel(job_id: string): Promise<RunJobsCancelResponse>
 
 ---
 
-### `createSearch`
-
-**POST** `/api/v1/run/search/jobs`
-
-Start an async search job
-
-```typescript
-client.run.jobs.createSearch(data: RunJobsCreateSearchRequest): Promise<RunJobsCreateSearchResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `RunJobsCreateSearchRequest` | Yes | body |  |
-
-**Returns:** `RunJobsCreateSearchResponse`
-
-**CLI:** `hoody run jobs search create`
-
----
-
 ### `get`
 
 **GET** `/api/v1/run/jobs/{job_id}`
@@ -82,7 +64,7 @@ client.run.jobs.get(job_id: string, options?: { wait?: string; timeout_ms?: numb
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `job_id` | `string` | Yes | path | Job identifier (UUID) |
-| `wait` | `string` | No | query | Set to 'done' to long-poll until the job completes, fails or is cancelled |
+| `wait` | `string` | No | query | Set to 'done' to long-poll until the job completes, fails or is cancelled, or until timeout_ms passes. Takes effect only with a positive timeout_ms; without one the current state is returned at once. |
 | `timeout_ms` | `number` | No | query | Long-poll timeout in milliseconds (default 0, max 120000) |
 
 **Returns:** `RunJobsGetResponse`
@@ -109,6 +91,58 @@ client.run.jobs.list(options?: { kind?: "search-resolve" | "source-sync"; status
 **Returns:** `RunJobsListResponse`
 
 **CLI:** `hoody run jobs list`
+
+---
+
+### `startSearch`
+
+**POST** `/api/v1/run/search/jobs`
+
+Start an async search job
+
+```typescript
+client.run.jobs.startSearch(data: RunJobsStartSearchRequest): Promise<RunJobsStartSearchResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `RunJobsStartSearchRequest` | Yes | body |  |
+
+**Returns:** `RunJobsStartSearchResponse`
+
+**CLI:** `hoody run jobs search start`
+
+---
+
+## `client.run.kit` (2 methods)
+
+### `getCapabilities`
+
+**GET** `/api/v1/run/capabilities`
+
+Resolve features of this service
+
+```typescript
+client.run.kit.getCapabilities(): Promise<RunKitGetCapabilitiesResponse>
+```
+
+**Returns:** `RunKitGetCapabilitiesResponse`
+
+---
+
+### `getConfig`
+
+**GET** `/api/v1/run/config`
+
+Get full runtime configuration
+
+```typescript
+client.run.kit.getConfig(): Promise<RunKitGetConfigResponse>
+```
+
+**Returns:** `RunKitGetConfigResponse`
+
+**CLI:** `hoody run config get`
 
 ---
 

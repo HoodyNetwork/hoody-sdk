@@ -1,6 +1,6 @@
-# `notifications` — 10 methods
+# `notifications` — 15 methods
 
-**Version:** 1.0.0-beta.17
+**Version:** 1.0.1
 **Accessor:** `client.notifications`
 
 ```typescript
@@ -18,14 +18,14 @@ import * as notifications from 'hoody-sdk/notifications';
 Get notification icon
 
 ```typescript
-client.notifications.icons.get(iconId: string, options?: { IfNoneMatch?: string; IfModifiedSince?: string }): Promise<ApiResponse<ArrayBuffer>>
+client.notifications.icons.get(iconId: string, options?: { ifNoneMatch?: string; ifModifiedSince?: string }): Promise<ApiResponse<ArrayBuffer>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `iconId` | `string` | Yes | path | The unique identifier for the icon (e.g., "6_10_1749024932903.png") |
-| `IfNoneMatch` | `string` | No | header | ETag(s) from an earlier response, or `*`. A match returns 304. Overrides If-Modified-Since. |
-| `IfModifiedSince` | `string` | No | header | HTTP date; returns 304 when the icon has not changed since then (whole seconds). Ignored when If-None-Match is sent. |
+| `ifNoneMatch` | `string` | No | header | ETag(s) from an earlier response, or `*`. A match returns 304. Overrides If-Modified-Since. |
+| `ifModifiedSince` | `string` | No | header | HTTP date; returns 304 when the icon has not changed since then (whole seconds). Ignored when If-None-Match is sent. |
 
 **Returns:** `ApiResponse<ArrayBuffer>`
 
@@ -42,10 +42,10 @@ client.notifications.icons.get(iconId: string, options?: { IfNoneMatch?: string;
 Service health check
 
 ```typescript
-client.notifications.kit.getHealth(): Promise<NotificationsHealthCheckResponse>
+client.notifications.kit.getHealth(): Promise<NotificationsKitGetHealthResponse>
 ```
 
-**Returns:** `NotificationsHealthCheckResponse`
+**Returns:** `NotificationsKitGetHealthResponse`
 
 **CLI:** `hoody notifications health`
 
@@ -76,14 +76,15 @@ client.notifications.kit.getMetrics(): Promise<ApiResponse<string>>
 Real-time notification stream (WebSocket or SSE)
 
 ```typescript
-client.notifications.connect(options?: { displays?: string }): Promise<NotificationsConnectNotificationStreamWebSocket>
+client.notifications.connect(options?: { displays?: string }, _templateVars?: object, wsOptions?: { reconnect?: boolean; connectTimeoutMs?: number; transport?: 'auto' | 'ws' }): Promise<NotificationsConnectWebSocket>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `displays` | `string` | No | query | Comma-separated display IDs (`1,:2,3`), or `all` / `*` for every display. Required for SSE (400 without it). Optional for WebSocket: without it the socket receives nothing until the client sends a `subscribe` message; an invalid ID arrives as an `error` frame after the upgrade. |
+| `wsOptions` | `{ reconnect?: boolean; connectTimeoutMs?: number; transport?: 'auto' \| 'ws' }` | No | path |  |
+| `displays` | `string` | No | query | Comma-separated display IDs (`1,:2,3`), or `all` / `*` for every display. Required for SSE (400 without it). Optional for WebSocket: without it no notification is delivered until the client sends a `subscribe` message (Ping and `heartbeat` still arrive); an invalid ID arrives as an `error` frame after the upgrade. |
 
-**Returns:** `NotificationsConnectNotificationStreamWebSocket`
+**Returns:** `NotificationsConnectWebSocket`
 
 **CLI:** `hoody notifications stream`
 
@@ -220,6 +221,101 @@ client.notifications.send(data: NotificationsSendRequest): Promise<Notifications
 **Returns:** `NotificationsSendResponse`
 
 **CLI:** `hoody notifications send`
+
+---
+
+## `client.notifications.push` (2 methods)
+
+### `getPublicKey`
+
+**GET** `/api/v1/notifications/push/vapid-public-key`
+
+Get the push public key
+
+```typescript
+client.notifications.push.getPublicKey(): Promise<NotificationsPushGetPublicKeyResponse>
+```
+
+**Returns:** `NotificationsPushGetPublicKeyResponse`
+
+**CLI:** `hoody notifications push publickey get`
+
+---
+
+### `test`
+
+**POST** `/api/v1/notifications/push/test`
+
+Send a test push
+
+```typescript
+client.notifications.push.test(data?: NotificationsPushTestRequest): Promise<NotificationsPushTestResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `NotificationsPushTestRequest` | No | body |  |
+
+**Returns:** `NotificationsPushTestResponse`
+
+**CLI:** `hoody notifications push test`
+
+---
+
+## `client.notifications.push.subscriptions` (3 methods)
+
+### `create`
+
+**POST** `/api/v1/notifications/push/subscriptions`
+
+Register a push subscription
+
+```typescript
+client.notifications.push.subscriptions.create(data: NotificationsPushSubscriptionsCreateRequest, options: { origin: string }): Promise<NotificationsPushSubscriptionsCreateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `NotificationsPushSubscriptionsCreateRequest` | Yes | body |  |
+| `origin` | `string` | Yes | header | Set by the browser. Must be an https origin; `null` is refused. |
+
+**Returns:** `NotificationsPushSubscriptionsCreateResponse`
+
+---
+
+### `delete`
+
+**DELETE** `/api/v1/notifications/push/subscriptions/{id}`
+
+Delete a push subscription
+
+```typescript
+client.notifications.push.subscriptions.delete(id: string): Promise<ApiResponse<unknown>>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Subscription id from the list |
+
+**Returns:** `ApiResponse<unknown>`
+
+**CLI:** `hoody notifications push subscriptions delete`
+
+---
+
+### `list`
+
+**GET** `/api/v1/notifications/push/subscriptions`
+
+List push subscriptions
+
+```typescript
+client.notifications.push.subscriptions.list(): Promise<NotificationsPushSubscriptionsListResponse>
+```
+
+**Returns:** `NotificationsPushSubscriptionsListResponse`
+
+**CLI:** `hoody notifications push subscriptions list`
 
 ---
 
