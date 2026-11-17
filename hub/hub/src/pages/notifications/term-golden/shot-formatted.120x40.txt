@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notifications                                                               [✓ Mark all read]
+ Computers             │  Messages about your account: computers, rentals, sign-in and keys.
+ Files                 │  ‹ Notifications  Esc
+ Bots                  │  Hoody news: harbor  i Info
+ Board                 │  Other Oct 22, 2026, 8:45 PM
+ Demo                  │
+ Vault                 │
+                       │    ✓ Marked read
+On atlas ▾             │
+ Programs              │    Notifications now explain exactly what Hoody sends and where you see it: https://
+ Schedules             │    hoody.com/notifications.
+ Scripts               │    https://hoody.com/notifications
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+▌Notifications      25 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

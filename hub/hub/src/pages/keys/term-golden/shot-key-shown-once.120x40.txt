@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ ci · shown once                                                         Esc ×
+ Home                  │  Keys and token┃ ─────────────────────────────────────────────────────────────────────────────
+ Computers             │  A key lets you┃ ┌───────────────────────────────────────────────────────────────────────────┐
+ Files                 │  date.         ┃ │ YOUR NEW KEY                                                              │
+ Bots                  │  ▸ API keys 6 k┃ │ Copy it now. When you close this panel it is gone, and nobody at          │
+ Board                 │  ──────────────┃ │ Hoody can show it again.                                                  │
+ Demo                  │  i Keys that wo┃ │ Works in                                                         Personal │
+ Vault                 │                ┃ │ ───────────────────────────────────────────────────────────────────────── │
+                       │  / Search      ┃ │ Ends                                                      Feb 9, 2027 UTC │
+On atlas ▾             │  4 keys · 1 exp┃ │ ───────────────────────────────────────────────────────────────────────── │
+ Programs              │                ┃ └───────────────────────────────────────────────────────────────────────────┘
+ Schedules             │    Name ↑      ┃
+ Scripts               │    ci          ┃ Key · shown once
+ Logs                  │  › ci-deploy   ┃ │ hdy_f3f•••••••••••••••••••••••••••••••• (Hidden until you press Show)
+ Tunnels               │    hoody-agent ┃    [Show] [Copy key]
+ Notes                 │    sdk-readonly┃ ⚿ Copy it now: it won't be shown again.
+ AI                    │                ┃
+ VMs                   │                ┃ Use it as HOODY_TOKEN
+                       │                ┃  export HOODY_TOKEN=••••••••
+Account                │                ┃ ⧉ copy
+ Plans & Billing       │                ┃
+ Referrals             │                ┃ ▸ How do I use it?
+▌Keys and tokens       │                ┃
+ API                   │                ┃
+ Notifications      26 │                ┃
+ Account               │                ┃
+                       │                ┃
+ + Rent servers        │                ┃
+ Guide                 │                ┃
+ Support               │                ┃
+                       │  Questions     ┃
+                       │  ▸ Can I see a ┃
+                       │  ▸ What is an A┃
+                       │  ▸ Which realms┃
+                       │  ▸ What can a k┃
+                       │  ▸ When does a ┃
+                       │  ▸ How does the┃
+                       │  ▸ What does sh┃
+                       │  ▸ What do I se┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃                                                           [I saved it, close]

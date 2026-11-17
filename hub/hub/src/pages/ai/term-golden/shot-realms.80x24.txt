@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                        ◆ Personal ▾  All computers ▾  [A]  ^K · ?
+ atlas › Models & keys
+ Models & keys                                            + Connect an account
+ atlas uses Hoody Free for everything.
+ ▌Default model  Accounts  Claude Code  Hoody AI allowance  Spending   2 ›
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Default model                                                             │█
+ │ The model your AI helper and your Bots use unless told otherwise.         │█
+ │ Choose a realm                                                            │
+ │ This computer is in more than one realm. A realm                          │
+ │ is a separate space with its own computers, keys                          │
+ │ and settings. Pick it from the realm menu at the                          │
+ │ top. Pick one there to see its default model.                             │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Accounts                                                                  │
+ │ The AI providers this computer can use, and how each one connects.        │
+ │ / Search                                            2 accounts  ↻ Refresh │
+ │   Provider     How it connects            Status       Used by            │
+ │ › H Hoody AI   Included with Hoody        ● Ready      2 Bots             │
+ │   O OpenAI     Your key                   ● Ready      1 Bot            ⋯ │
+ └───────────────────────────────────────────────────────────────────────────┘
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

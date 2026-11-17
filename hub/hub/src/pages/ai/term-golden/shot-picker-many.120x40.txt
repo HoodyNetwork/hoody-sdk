@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Choose a model                                                          Esc ×
+ Home                  │   Chats   Agent┃ For your AI helper and tasks
+ Computers             │  ▌Models & keys┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  atlas › Models┃ Choose a model                                                              █
+ Bots                  │  Models & keys ┃                                                                             █
+ Board                 │  atlas uses Hoo┃ ┃ /  Search models and providers                                            █
+ Demo                  │                ┃                                                                             █
+ Vault                 │  ▌Default model┃ Show: Ready  Provider ▾  Can ▾  Window ▾  List price, input ▾               █
+                       │  ──────────────┃                                                                             █
+On atlas ▾             │  ┌─────────────┃ 67 of 67 models                                                             █
+ Programs              │  │ Default mode┃                                                                             █
+ Schedules             │  │ The model yo┃  (•) Hoody Free Current · Recommended                                       █
+ Scripts               │  │ ┌───────────┃                                                                             █
+ Logs                  │  │ │           ┃  O OpenAI Ready · 2 models                                                  █
+ Tunnels               │  │ │ AI helper ┃  ( ) GPT-5                                                                  █
+ Notes                 │  │ │ The model ┃  ( ) GPT-5 mini                                                             █
+▌AI                    │  │ │ everyday w┃                                                                             █
+ VMs                   │  │ │ computer. ┃  A Anthropic Ready · 1 model                                                █
+                       │  │ │           ┃  ( ) Claude Sonnet                                                          █
+Account                │  │ │ Bots      ┃                                                                             █
+ Plans & Billing       │  │ │ Bots follo┃  G Google Gemini Ready · 1 model                                            █
+ Referrals             │  │ │           ┃  ( ) Gemini Pro                                                             █
+ Keys and tokens       │  │ └───────────┃                                                                             █
+ API                   │  └─────────────┃  O OpenRouter Ready · 1 model                                               █
+ Notifications      26 │                ┃  ( ) OpenRouter Auto                                                        █
+ Account               │  ┌─────────────┃                                                                             █
+                       │  │ Accounts    ┃  X Xiaomi MiMo Ready · 1 model                                              █
+ + Rent servers        │  │ The AI provi┃  ( ) MiMo v2                                                                █
+ Guide                 │  │ / Search    ┃
+ Support               │  │             ┃  A AI21 Labs Ready · 2 models
+                       │  │   Provider  ┃  ( ) snappy-squid
+                       │  │ › H Hoody AI┃  ( ) epic-gazelle
+                       │  │   A AI21 Lab┃
+                       │  │   A Alibaba ┃  A Alibaba Qwen Ready · 2 models
+                       │  │   A Anthropi┃  ( ) swift-cheetah
+                       │  │   B Baidu Er┃  ( ) zesty-ocelot
+                       │  │   C Cerebras┃
+                       │  │   C Cohere  ┃  B Baidu Ernie Ready · 2 models
+                       │  │   D DeepSeek┃  ( ) happy-finch
+ Typing · Esc leaves the field · Ctrl+K ┃  ( ) noble-koala

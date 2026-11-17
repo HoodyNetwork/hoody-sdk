@@ -1,0 +1,49 @@
+/* The Tunnels page's own pieces: kit spacing tokens, generous end. */
+.state {
+  padding-block: var(--sp-5);
+}
+
+.what {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.faint {
+  color: var(--hx-faint);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.peer {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+/* Rows kept from the last read while a refresh failed: quieter under the "as of" note. The muted text token, never an
+   opacity: 60% took muted text to 2.4:1 on the light card. */
+.stale tbody {
+  color: var(--hx-muted);
+}
+
+/* The session row's disconnect state and its one action, after the count. */
+.groupExtra {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  padding-inline-start: var(--sp-3);
+  white-space: nowrap;
+}
+
+/* Measures the list pane (the session label's width); out of the flow, takes no space. */
+.probe {
+  position: absolute;
+  inline-size: 0;
+  block-size: 0;
+  pointer-events: none;
+}

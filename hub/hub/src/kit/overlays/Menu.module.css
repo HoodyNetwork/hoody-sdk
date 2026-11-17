@@ -1,0 +1,422 @@
+/* ActionMenu: the popover menu and, below 600 px, the bottom tray. Both are registered popover surfaces
+   (app/conformance.surfaces.test.ts): the one --pop-line / --pop-bg / --sh-pop frame, rows on the --pop-row-* metrics.
+   The tray's reserves (--tray-r1, --tray-r3, --tray-row-m) are read by the Toaster: change them only with it. */
+.popover {
+  --ring-gap: var(--pop-bg);
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus); /* again with the gap: see kit/tokens.css Focus */
+
+  z-index: var(--z-popover);
+  min-width: 200px;
+  max-width: min(var(--popover-w), calc(100vw - 2 * var(--sp-4)));
+  border: var(--bw) solid var(--pop-line);
+  border-radius: var(--r-1);
+  background: var(--pop-bg);
+  box-shadow: var(--sh-pop);
+  outline: none;
+
+  /* The menu fills the popover and never outgrows it. React Aria sizes the popover to the room by its trigger (an
+   * inline max-height); a taller menu would overflow the popover and lie over its own trigger, where a mouse press
+   * (menus open on press start) ends on a hidden item. The menu scrolls (overflow: auto), so as a flex item its least
+   * height is 0 and it shrinks to the popover. It has no height cap of its own: it takes all the room React Aria
+   * measured on its side of the trigger and scrolls only when it does not fit there. */
+  display: flex;
+  flex-direction: column;
+}
+
+.popover[data-entering] {
+  animation: popoverIn var(--dur-enter) var(--ease-out);
+}
+
+.popover[data-exiting] {
+  animation: fadeIn var(--dur-exit) linear reverse;
+}
+
+.popover[data-placement='top'] {
+  --pop-from: -4px;
+}
+
+.menu {
+  --surface-inset: var(--pad-menu);
+
+  overflow: auto;
+  padding: var(--pad-menu);
+  outline: none;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The footer section (MenuFooter's look) reaches across the menu's padding. */
+.footer {
+  --footer-reach: var(--pad-menu);
+}
+
+/* A host menu's search row (the footer's mirror at the top): sticky at the block start of the menu's scroller, on the
+ * popover's surface with a hairline below, so the rows scroll under it. Its field takes the whole row. */
+.search {
+  position: sticky;
+  z-index: var(--z-raised);
+  inset-block-start: 0;
+  padding: var(--pad-menu);
+  border-block-end: var(--bw) solid var(--pop-sep);
+  background: var(--pop-bg);
+}
+
+.search > * {
+  max-width: none;
+}
+
+/* Row gap between rows only, never after a rule (the space either side of a .sep stays even; popsurfaces.test.ts). */
+.item + .item {
+  margin-block-start: var(--pop-row-gap);
+}
+
+.sep {
+  height: var(--bw);
+  margin: var(--pad-menu) calc(-1 * var(--pad-menu));
+  border: 0;
+  background: var(--pop-sep);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--pop-row-h);
+  padding: 0 var(--pop-row-x);
+  border-radius: var(--r-1);
+  color: var(--hx-ink);
+  font: var(--t-body);
+  cursor: default;
+  outline: none;
+}
+
+/* The lead column: an icon, a MenuThumb picture (22×16) or the on/off box; menu-wide, so every row keeps it once any
+   row has one. State colours are scoped to the slot they paint, never an svg anywhere in the row. */
+.lead {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-md);
+  color: var(--hx-muted);
+}
+
+.menu[data-pictures] .lead {
+  width: 22px;
+}
+
+.item[data-focused] {
+  background: var(--pop-hover);
+}
+
+.item[data-focused] .lead {
+  color: var(--hx-ink);
+}
+
+.item[data-pressed] {
+  background: var(--hx-press);
+}
+
+/* A one-of group's current choice: a medium label and the trailing blue check, kept in every state but unavailable. */
+.current .label {
+  font-weight: var(--fw-medium);
+}
+
+.currentMark {
+  display: inline-flex;
+  flex: none;
+  color: var(--hx-selected-bar);
+}
+
+/* A MenuThumb picture: cells in the muted fill, the current choice's in the selected fill (ink, like a ticked box) with
+   the selected bar as its edge. */
+.thumb {
+  display: block;
+  fill: var(--hx-muted-fill);
+  stroke: var(--hx-muted);
+  stroke-width: 1;
+}
+
+.current .thumb {
+  fill: var(--hx-selected-fill);
+  stroke: var(--hx-selected-bar);
+}
+
+/* The on/off box: edge --hx-muted; ticked = ink fill and an --hx-on-ink tick. */
+.box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  border: var(--bw) solid var(--hx-muted);
+  border-radius: var(--r-1);
+  color: var(--hx-on-ink);
+}
+
+.box[data-on] {
+  border-color: var(--hx-ink);
+  background: var(--hx-ink);
+}
+
+/* Danger only while available; focused, it takes the same --pop-hover fill as every item. */
+.danger,
+.danger .lead,
+.danger[data-focused] .lead {
+  color: var(--hx-danger);
+}
+
+/* Unavailable wins over focus, danger, checked and current: load-bearing order, written after them at equal or higher
+   specificity. No opacity: label, lead, box and mark take --pop-off, and the reason line under stays readable. */
+.item[data-disabled],
+.item[data-unavailable],
+.item[data-disabled] .lead,
+.item[data-unavailable] .lead,
+.item[data-unavailable] .currentMark,
+.item[data-unavailable] .box {
+  color: var(--pop-off);
+}
+
+.item[data-unavailable] .box,
+.item[data-unavailable] .box[data-on] {
+  border-color: var(--pop-off);
+  background: none;
+}
+
+.item[data-unavailable] .thumb {
+  fill: none;
+  stroke: var(--pop-off);
+}
+
+.labels {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  padding-block: var(--sp-1);
+}
+
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reason {
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* A group's label, in the one label shape, and the notes that say a shared reason once. */
+.header {
+  display: flex;
+  flex-direction: column;
+}
+
+.head {
+  padding: var(--sp-2) var(--pop-row-x) var(--sp-1);
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.offscreen {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: 0 calc(-1 * var(--pad-menu)) var(--pad-menu);
+  padding: var(--sp-2) calc(var(--pop-row-x) + var(--pad-menu));
+  border-block: var(--bw) solid var(--pop-sep);
+  background: var(--pop-band);
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.note > svg {
+  flex: none;
+  margin-block-start: var(--sp-px);
+}
+
+/* A note directly under the menu's top edge or a rule needs no rule of its own above. */
+.section:first-child .header:first-child .note:first-child,
+.sep + .header .note:first-child {
+  border-block-start: 0;
+}
+
+/* Phone tray: below 600 px an ActionMenu rises from the bottom as a modal panel over a scrim, above drawers and
+   dialogs (--z-popover), below toasts. Its max height is Toaster's budget (--tray-max) when toasts show; otherwise all
+   but a 48 px strip at the top. The head (title + Close) stays put and the rows scroll under it. It has no exit
+   animation: the Toaster's budget follows the tray's presence, so it leaves at once.
+   Reserves: --tray-r1 is the frame (top border, head, the menu's padding, the bottom padding) and one row,
+   --tray-r3 the frame and three rows with their gaps; token sums, except that a menu with a two-line row reserves its
+   tallest row as drawn (.tray[data-two-line] below). Registered as lengths so Toaster reads them resolved. The tray is never shorter than r1 (or the viewport, when that is shorter): below it the head and rows
+   scroll as one, so Close and every action stay reachable. */
+@property --tray-r1 {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --tray-r3 {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.trayScrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-popover);
+  background: var(--hx-scrim);
+}
+
+.trayScrim[data-entering] {
+  animation: fadeIn var(--dur-enter) var(--ease-out);
+}
+
+.tray {
+  --ring-gap: var(--pop-bg);
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus); /* again with the gap: see kit/tokens.css Focus */
+
+  --tray-frame: calc(var(--bw) + var(--drawer-head-h) + 2 * var(--pad-menu) + max(var(--sp-2), var(--safe-bottom)));
+  --tray-r1: calc(var(--tray-frame) + var(--pop-row-h));
+  --tray-r3: calc(var(--tray-frame) + 3 * var(--pop-row-h) + 2 * var(--pop-row-gap));
+
+  /* One row as its tokens draw it: a token row, or a two-line row (label + reason or description: .labels' block
+     padding, a body line and a small line), whichever is taller: under a one-token floor the body's scrollport would
+     cut a two-line row on very short screens. */
+  --tray-row: max(var(--pop-row-h), calc(2 * var(--sp-1) + var(--lh-box-body) + var(--lh-box-small)));
+
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  display: flex;
+  box-sizing: border-box;
+  max-block-size: var(--tray-max, max(calc(100dvh - 48px), min(100dvh, var(--tray-r1))));
+  padding-block-end: max(var(--sp-2), var(--safe-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-block-start: var(--bw) solid var(--pop-line);
+  background: var(--pop-bg);
+  box-shadow: var(--sh-pop);
+  outline: none;
+}
+
+.tray[data-entering] {
+  animation: trayIn var(--dur-enter) var(--ease-out);
+}
+
+/* Rows ignore pointers until the press that opened the tray ends; the panel keeps them (no outside press). */
+.tray[data-arming] [role^='menuitem'] {
+  pointer-events: none;
+}
+
+.trayDialog {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+
+  /* The tray's width, never its title's: a long title (a path) is cut by .trayTitle's ellipsis instead of widening the
+     dialog past the screen (a flex item's automatic minimum is its content's, the unwrapped title included). */
+  min-inline-size: 0;
+
+  /* Head + one row: below it the dialog overflows the tray, which then scrolls whole. */
+  min-block-size: calc(var(--drawer-head-h) + var(--pop-row-h) + 2 * var(--pad-menu));
+  outline: none;
+}
+
+/* A menu with a two-line row: a reason or description wraps to as many lines as it needs, so the
+   row it sits in can be taller than --tray-row. ActionMenu sets --tray-row-m to the tallest row as drawn (measured, kept
+   current while the tray is open); the dialog's floor and both reserves take it, so neither the body's scrollport nor
+   Toaster's budget cuts that row. On a screen shorter than the floor the tray scrolls whole, the head with it. */
+.tray[data-two-line] {
+  --tray-row-real: max(var(--tray-row), var(--tray-row-m, 0px));
+  --tray-r1: calc(var(--tray-frame) + var(--tray-row-real));
+  --tray-r3: calc(var(--tray-r1) + 2 * (var(--tray-row) + var(--pop-row-gap)));
+}
+
+.tray[data-two-line] .trayDialog {
+  min-block-size: calc(var(--drawer-head-h) + var(--tray-row-real) + 2 * var(--pad-menu));
+}
+
+.trayHead {
+  --ring-gap: var(--bar-bg);
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus);
+
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2);
+  min-block-size: var(--drawer-head-h);
+  padding-inline: var(--pad-surface) var(--sp-2);
+  border-block-end: var(--bw) solid var(--pop-sep);
+  background: var(--bar-bg);
+}
+
+.trayTitle {
+  flex: 1;
+  min-inline-size: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--hx-ink);
+  font: var(--t-heading); /* the one overlay title: Dialog, Drawer and Sheet draw the same */
+  letter-spacing: var(--tracking-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trayBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@keyframes popoverIn {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--pop-from, 4px)));
+  }
+}
+
+@keyframes trayIn {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+/* A copy item confirming inline ("Copied") before the menu closes. */
+.copied,
+.copied svg {
+  color: var(--hx-ink);
+}
+
+/* Forced colours repaint backgrounds, so the focused row's fill would vanish: an inset outline in the system Highlight
+   colour marks the row the arrow keys are on, as the kit's focus rings do there. */
+@media (forced-colors: active) {
+  .item[data-focused] {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: calc(-1 * var(--bw-2));
+  }
+}

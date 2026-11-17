@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Support                                                                        [+ New ticket]
+ Computers             │
+ Files                 │  ‹ Support  Esc
+ Bots                  │  How do I add a domain?  · Closed                                                          [⋯]
+ Board                 │  · Networking 0000…a1b5
+ Demo                  │
+ Vault                 │
+                       │   You Nov 1, 2026, 3:00 AM
+On atlas ▾             │   Where do I add my own domain?
+ Programs              │
+ Schedules             │
+ Scripts               │   Hoody support Nov 1, 2026, 3:50 AM
+ Logs                  │   Open Domains in the left menu: https://docs.hoody.com/domains ⇗ explains each step.
+ Tunnels               │
+ Notes                 │  Closed on Nov 1, 2026. Reply within 30 days of closing to open it again.
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+▌Support               │
+                       │
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Your reply
+                       │  │
+                       │
+                       │
+                       │
+                       │  0 of 4,000 · Plain text. Never paste passwords, keys or tokens.
+                       │                                                                                          Send
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

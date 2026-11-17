@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Logs                                                     ▸ Use with your agent
+ Program output
+   Everything    Visits    Bots    Changes    Scripts  ▸ Programs   [More ▾]  █
+ │ ● SG atlas · █ Personal ▾ │ / Search                          [Refresh] [⋯]█
+ Program: worker × [Clear all]                                                █
+ │  worker  ▾   Normal output  ‹ Errors › [↻ Refresh] [✦ Explain]             █
+                                                                              █
+ Program output has no times and is not kept forever: this is what the program█
+ wrote most recently.                                                         █
+                                                                              █
+ Recent output as of Nov 11, 09:00 AM. Refresh to read it again.              █
+                                                                              █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │                                                                           │█
+ │ error: job 40 failed: connection refused                                  │█
+ │ error: job 41 failed: connection refused                                  │█
+ │ error: job 42 failed: connection refused                                  │▀
+ │ error: job 43 failed: connection refused                                  │
+ │ error: job 44 failed: connection refused                                  │
+ │ error: job 45 failed: connection refused                                  │
+ │ error: job 46 failed: connection refused                                  │
+ │ error: job 47 failed: connection refused                                  │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

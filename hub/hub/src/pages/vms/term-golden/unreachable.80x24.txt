@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines                                         ▸ Use with your agent
+ Full machines that run inside atlas.
+ ▸ VMs    Images    KVM on computers
+ ──────────────────────────────────────────────────────────────────────────────
+ │ ! Cannot reach the VM service inside atlas. Check    [Check again]  Details
+ │   that the computer and its VM program are running,
+ │   and that its access rules let you in.
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ This computer                                                             │█
+ │ VMs need a bare-metal server, with KVM on for the computer.               │█
+ │                                                                           │█
+ │ What this computer can run                                                │█
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │█
+ │ │                                                                       │ │█
+ │ │ Run VMs on this computer (KVM)  [■ on ]                               │ │▀
+ │ │ KVM is on for this computer.                                          │ │
+ │ │                                                                       │ │
+ │ └───────────────────────────────────────────────────────────────────────┘ │
+ │ Server  Bare metal                                                        │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ VMs                                                                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

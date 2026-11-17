@@ -1,0 +1,107 @@
+/* The overlays gallery tab. */
+.p {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-body);
+}
+
+.list {
+  margin: 0;
+  padding: var(--sp-1);
+  list-style: none;
+}
+
+.pick {
+  justify-content: space-between;
+  color: var(--hx-ink);
+}
+
+.pickName {
+  font-weight: var(--fw-medium);
+}
+
+/* The phone sheet: thumb-sized rows (44 px). */
+@media (width < 600px) {
+  .pick {
+    min-height: 44px;
+  }
+}
+
+/* The lg drawer's own section rail (180 inside). */
+.railed {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: var(--sp-6);
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+  color: var(--hx-muted);
+  font: var(--t-body);
+}
+
+.rail > span {
+  display: flex;
+  align-items: center;
+  min-height: var(--ctl-h);
+  padding-inline: var(--sp-3);
+  border-radius: var(--r-1);
+}
+
+.rail > .railCur {
+  background: var(--hx-selected);
+  color: var(--hx-ink);
+  font-weight: var(--fw-semibold);
+}
+
+@media (width < 600px) {
+  .railed {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The picker footer demo: a short scrolling box, so the footer has rows to stay over. */
+.footerBox {
+  inline-size: min(var(--popover-w), 100%);
+  max-block-size: calc(8 * var(--pop-row-h));
+  overflow-y: auto;
+  padding-inline: var(--pad-menu);
+  padding-block-end: var(--pad-menu);
+
+  /* MenuFooter reaches across this padding (inline and block end) to the scroller's edges. */
+  --footer-reach: var(--pad-menu);
+  border: var(--bw) solid var(--pop-line);
+  background: var(--pop-bg);
+}
+
+/* The menu search row demo: one scroller holds the search row and the menu (the topbar realm menu's shape), short
+ * enough that 20 realms scroll under the search row and over the footer. It sits inside the popover because React Aria
+ * puts the popover's own max-height inline (the room below the trigger). */
+.searchScroll {
+  max-block-size: calc(8 * var(--pop-row-h));
+  overflow-y: auto;
+}
+
+.searchList {
+  padding: var(--pad-menu);
+  outline: none;
+}
+
+/* The guided-setup drawer: the open step and its foot. Under 600 px of body the drawer's footer mirrors the
+   primary, so the step's own goes (data-foot-primary on the drawer body). */
+.setupStep {
+  padding: var(--sp-4);
+  border: var(--bw) solid var(--hx-plate-line);
+  border-radius: var(--r-1);
+  background: var(--hx-plate-bg);
+}
+
+.setupFoot {
+  align-self: flex-end;
+}
+
+[data-foot-primary] .setupFoot {
+  display: none;
+}

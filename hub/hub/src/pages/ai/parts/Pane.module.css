@@ -1,0 +1,102 @@
+/* The AI tab's layout: the kit's rail (RailFrame, RailPane) beside the main region at PANE_MIN_PAGE
+   (890 px, Pane.tsx) of page and wider; one at a time below. The main region keeps the shell's page scroll. */
+
+
+/* State marks: accent square = needs you, ok dot = running, nothing = idle. */
+.markNeeds,
+.markRunning,
+.markNone {
+  display: inline-block;
+  inline-size: 8px;
+  block-size: 8px;
+  flex: none;
+}
+
+.markNeeds {
+  border-radius: var(--r-0);
+  background: var(--hx-acc);
+}
+
+.markRunning {
+  border-radius: var(--r-round);
+  background: var(--hx-ok);
+  animation: ai-live 1.6s ease-in-out infinite;
+}
+
+@keyframes ai-live {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markRunning {
+    animation: none;
+  }
+}
+
+.tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.more {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.stopResult:empty {
+  display: none;
+}
+
+.stopResult {
+  max-block-size: 40vh;
+  overflow: auto;
+}
+
+/* The main region's own placeholder screens: a short centred note. */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-block-size: 60vh;
+  padding: var(--pad-page);
+  text-align: center;
+}
+
+.chatHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-4) var(--pad-page);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.chatHead > h2 {
+  margin: 0;
+  font: var(--t-section);
+  overflow-wrap: anywhere;
+}
+
+.chatMeta {
+  color: var(--hx-muted);
+  font: var(--t-small);
+  overflow-wrap: anywhere;
+}
+
+/* The chat list screen's h1 (narrow): named for screen readers and the shell's route focus, not drawn. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines › win11
+ win11  ● Stopped                                                   Start   [⋯]
+ A VM inside atlas.
+  Overview  Screen  Ports ▸Storage  Snapshots  Settings  Logs
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Storage                                              Make the disk bigger  │
+ │ The VM's disk, its disc drives and its shared folder.                      │
+ │◷ Making the disk of win11 bigger may have    [Check again]  [Stop tracking]│
+ │  gone through. It is not confirmed yet. The                                │
+ │  computer reported: not enough free disk.                                  │
+ │Size  64 GB                                                                 │
+ │  Drive            Disc                                                     │
+ │› Drive 1          /var/lib/hoody-vm/isos/win11.iso          [Change disc] ⋯│
+ │  Drive 2          /usr/share/virtio-win/virtio-win.iso      [Change disc] ⋯│
+ │  Drive 3          Empty                                     [Insert a disc]│
+ └────────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

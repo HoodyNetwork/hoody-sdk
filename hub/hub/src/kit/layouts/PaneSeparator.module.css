@@ -1,0 +1,37 @@
+/* The handle between two panes measured in pixels: a column the page's grid gives it, or placed by its own page. */
+.handle {
+  position: relative;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.handle::after {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: calc(50% - 1px);
+  width: var(--bw-2);
+  border-radius: var(--r-1);
+  background: transparent;
+  content: "";
+  transition: background var(--dur-hover) linear;
+}
+
+.handle:hover::after {
+  background: var(--hx-line-strong);
+}
+
+.handle:focus-visible {
+  outline: none;
+}
+
+.handle:focus-visible::after {
+  background: var(--hx-focus);
+}
+
+/* Forced colours repaint backgrounds, so the focused line above could vanish: a solid outline in the system Highlight
+   colour instead. */
+@media (forced-colors: active) {
+  .handle:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+  }
+}

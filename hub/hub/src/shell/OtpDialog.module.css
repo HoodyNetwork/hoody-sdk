@@ -1,0 +1,5 @@
+/* 2FA code dialog: the code field fills the dialog's 480 width. */
+.form {
+  display: flex;
+  flex-direction: column;
+}

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Bots                                                     ▸ Use with your agent
+ ‹ Bots  Esc
+   i Task report ·  Read deploy log  · on atlas
+   The dep┌──────────────────────────────────────────────────────────┐st
+   raising│ Stop what the Bot is doing?                        Esc × │
+   19 days│ ──────────────────────────────────────────────────────── │
+          │ Asks the turn shown at Nov 11, 2026, 9:00 AM to stop, if │
+          │ it is still running. Tasks it started keep running; stop │
+          │ them under Work in progress.                             │thing.
+          │                                                          │
+          │                                     [Cancel]   Stop now  │
+   Underst└──────────────────────────────────────────────────────────┘
+   restart.
+   19 days ago
+   … Working on it
+
+   ┌───────────────────────────────────────────────────────────────────────┐
+   │ Message the Bot                                                       │  █
+   └───────────────────────────────────────────────────────────────────────┘  █
+                                  Write a message first.  [⇗ Talk]  [Send ↵]  █
+                                                                              █
+                                                                              █
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

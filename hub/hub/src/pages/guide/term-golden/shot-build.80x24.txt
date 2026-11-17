@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  Guide                       ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Ask your agent  Connect  Skills ▌Build your own  Every link  Bots  Tools
+  Try this  Realms  Topics  Keyboard  Look
+ │ The Hub has no private powers. Every page here calls Hoody's public HTTP  │
+ │ API. Your own page, script or agent can make the same calls, within what  │
+ │ its key or sign-in may do, so you can build the interface you want, or    │
+ │ run your account from your own agents.                                    │ █
+ │                                                                           │
+ │ See the Hub's own calls                                                   │
+ │ These steps are for the web Hub, since a terminal has no developer tools. │
+ │ To find the call behind something the Hub shows, do it in the web Hub     │
+ │ with the Network tab open, then give your agent the method and address.   │
+ │   1. Open your browser's developer tools: F12, or Ctrl+Shift+I on         │
+ │      Windows and Linux, or Cmd+Option+I on macOS. Chrome and Firefox      │
+ │      both have them.                                                      │
+ │                                                                           │
+ │   2. Open the Network tab and pick the Fetch/XHR filter (XHR in Firefox)  │
+ │      .                                                                    │
+ │                                                                           │
+ │   3. Use the Hub as usual. Each new row is one call. Click it to see its  │
+ │      method, address and headers, and the JSON it answered under          │
+ │      Response.                                                            │
+ │ lock The Authorization header carries your session token. Anyone who has  │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

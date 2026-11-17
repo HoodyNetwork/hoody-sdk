@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Vault                                ▸ Use with your agent   + New entry   [⋯]
+ Tokens, passwords and settings your tools and agents read by name. The list
+ shows only names.
+ These entries belong to Personal. Other realms and Global have their own.
+
+ Entries here    Size here    Account storage
+ 3               327 B        3% of 50 MB
+ / zzzz                 Filters              0 entries  ↻ Refresh  View options
+
+ No entry matches.
+ Clear filters
+
+
+
+ Questions
+ ▸ What goes in the vault?
+ ▸ What is the difference between Global and a realm's entries?
+ ▸ How do I see or copy a value?
+ ▸ What does "Encrypt with a password" do?
+ ▸ What can I put in a name and a value?
+ ▸ What is metadata?
+ ▸ What does Export vault do?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

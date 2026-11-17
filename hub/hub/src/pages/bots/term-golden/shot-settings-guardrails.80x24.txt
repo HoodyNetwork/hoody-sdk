@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Settings for Chief                                               Esc ×
+ Bots  ┃ Model, behaviour, guardrails and voice.
+ ‹ Bots┃ ──────────────────────────────────────────────────────────────────────
+       ┃ │ The Bot itself        ┌───────────────────────────────────────────┐█
+   i Ta┃ │ Model                 │ Guardrails and limits                     │█
+   The ┃ │ Behaviour             │ Limits on the work this Bot and its new   │█
+   rais┃ │ Voice                 │ tasks may do. They aren't instructions to │█
+   19 d┃ │ The helpers it        │ the Bot.                                  │█
+       ┃ │ starts                │ ┌───────────────────────────────────────┐ │█
+       ┃ │ Helpers               │ │                                       │ │█
+       ┃ │▌Guardrails and        │ │ Rules                                 │ │█
+       ┃ │ limits                │ │ One rule per line. Tasks already      │ │█
+       ┃ │ Advanced              │ │ running keep the limits they started  │ │█
+   Unde┃                         │ │ with.                                 │ │█
+   rest┃                         │ │ │ Never delete data without asking.   │ │█
+   19 d┃                         │ │   Stay inside the shop repository.    │ │
+       ┃                         │ │                                       │ │
+   ┌───┃                         │ │                                       │ │
+   │ Me┃                         │ │                                       │ │
+   └───┃                         │ │ Check                                 │ │
+       ┃                         │ │ Work that may break a rule is         │ │
+       ┃                         │ │ refused, and so is work that can't be │ │
+       ┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Discard] [Cancel]  Save

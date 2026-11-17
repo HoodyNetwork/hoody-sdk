@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Notifications
+ Messages about your account: computers, rentals, sign-in and keys.
+ ▸ Inbox    Notices    Get notified
+ ──────────────────────────────────────────────────────────────────────────────
+    ┌──────────────────────────────────────────────────────────────────────┐
+    │ Notifications are kept in the account                                │
+    │                                                                      │
+    │ Your notifications open when you sign in with your account. They are │
+    │ not available with an access key.                                    │
+    │                                                                      │
+    │ [Leave the Hub]                                                      │
+    └──────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

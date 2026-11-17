@@ -1,0 +1,52 @@
+/* ActionCards (data/ActionCards.tsx): a list drawn as a grid of framed cards, about 220 px or wider each (the CardGrid
+   column formula), one per line when the container is narrower. Each card: head (icon + title), one muted line that
+   takes the spare height, so the action rows of one line sit level, and a wrapping action row. */
+.grid {
+  display: grid;
+
+  /* auto-fill: cards keep one size; spare tracks keep one or two cards from stretching across the row. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(4 * var(--sp-10))), 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--hx-raised);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.head > [data-hub-heading] {
+  margin: 0;
+  color: var(--hx-ink);
+  font: var(--t-body-strong);
+  overflow-wrap: anywhere;
+}
+
+.body {
+  flex: 1;
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}

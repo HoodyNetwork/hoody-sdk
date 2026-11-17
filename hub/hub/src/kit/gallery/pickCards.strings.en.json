@@ -1,0 +1,22 @@
+{
+  "title": "Pick cards",
+  "grid": "Sample programs",
+  "gridNote": "Marks lg and xl, plain and tinted. The grid is one Tab stop: arrow keys move, a letter jumps to a name, Enter picks and marks the card you came from. A card on its own is one button.",
+  "here": "You opened this",
+  "web": "Web page",
+  "api": "API",
+  "terminal": "Terminal",
+  "kuma.line": "Uptime monitor with a status page",
+  "kuma.why": "Know when one of your sites goes down, with alerts and a status page you can share.",
+  "gitea.line": "Code hosting with issues and reviews",
+  "gitea.why": "A light code host of your own for private repositories.",
+  "ollama.line": "Runs AI models on the computer",
+  "ollama.why": "The model server that chat apps such as Open WebUI talk to.",
+  "lazygit.line": "Git in a terminal, with panels",
+  "memos.line": "Quick notes in a timeline",
+  "memos.why": "Jot short notes from any device; they stay in one small database you own.",
+  "own": "own licence",
+  "unknown": "Not in the library",
+  "pasted": "owner/repo",
+  "pastedMeta": "github.com/owner/repo"
+}

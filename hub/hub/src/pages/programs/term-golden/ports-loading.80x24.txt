@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs             ▸ Use with your agent  [+ New program]   + Launch an app
+ 19 programs on atlas · 11 running · 4 need a look
+ ▸ Running programs    Apps    Ports & aliases
+ ──────────────────────────────────────────────────────────────────────────────
+ / Search programs      Filters                         19 programs  ↻ Refresh█
+ ▌   ! nightly-sync                               ● Ended (code 2)   [Start] ⋯█
+     ! worker                                        ● Not working   [Start] ⋯█
+     ! mystery                                        ● Can't tell           ⋯█
+       api                                               ● Running [Restart] ⋯█
+       8000-8003 · 2/4 up                                                     █
+       web                                               ● Running [Restart] ⋯█
+       3 days · 3000                                                          █
+       backup                                           ● Finished   [Start] ⋯█
+       docs-preview                                      ● Stopped   [Start] ⋯▀
+       legacy-cron                                    ● Turned off           ⋯
+       report-builder                           ● Starts when used   [Start] ⋯
+ ▾ Temporary programs · 1
+       http-server                                       ● Running           ⋯
+       · Temporary · Ends in 40 minutes (09:40 AM)
+ ▸ System programs · 9 ● 1 problem
+
+ Questions
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Connect an account                                                      Esc ×
+ Home                  │   Chats   Agent┃ Pick a provider. Your key stays on this computer.
+ Computers             │  ▌Models & keys┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  atlas › Models┃ Connected
+ Bots                  │  Models & keys ┃
+ Board                 │  atlas uses Hoo┃  H Hoody AI                    [View]   O OpenAI                    [Set up]
+ Demo                  │                ┃  2 models · Included with Hoody         2 models · ChatGPT sign-in or API
+ Vault                 │  ▌Default model┃                                         key
+                       │  ──────────────┃
+On atlas ▾             │  ┌─────────────┃
+ Programs              │  │ Default mode┃ Suggested
+ Schedules             │  │ The model yo┃
+ Scripts               │  │ ┌───────────┃  A Anthropic                 [Set up]   G Google Gemini             [Set up]
+ Logs                  │  │ │           ┃  1 model · API key                      1 model · API key
+ Tunnels               │  │ │ AI helper ┃
+ Notes                 │  │ │ The model ┃
+▌AI                    │  │ │ everyday w┃  O OpenRouter                [Set up]   X Xiaomi MiMo               [Set up]
+ VMs                   │  │ │ computer. ┃  1 model · OpenRouter sign-in or API    1 model · API key
+                       │  │ │           ┃  key
+Account                │  │ │ Bots      ┃
+ Plans & Billing       │  │ │ Bots follo┃
+ Referrals             │  │ │           ┃ Other ways
+ Keys and tokens       │  │ └───────────┃ [Your own endpoint] [Claude Code]
+ API                   │  └─────────────┃
+ Notifications      26 │                ┃
+ Account               │  ┌─────────────┃
+                       │  │ Accounts    ┃
+ + Rent servers        │  │ The AI provi┃
+ Guide                 │  │ / Search    ┃
+ Support               │  │             ┃
+                       │  │   Provider  ┃
+                       │  │ › H Hoody AI┃
+                       │  │   O OpenAI  ┃
+                       │  └─────────────┃
+                       │                ┃
+                       │  ┌─────────────┃
+                       │  │ Claude Code ┃
+                       │  │ Use your own┃
+                       │  │ ┌───────────┃
+ Tab move · Enter open · Ctrl+K commands┃

@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Explain with your AI helper                                      Esc ×
+ Logs  ┃ Asks your chosen model about this text. On atlas.
+ 55 eve┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Ever┃                                                                      █
+ │ ● SG┃ Your AI helper will read exactly this                                █
+       ┃ What I am looking at:                                               │█
+ ! Prob┃ | 55 events failed in the last hour. 19 kinds of problem.           │█
+   minu┃                                                                     │█
+       ┃ 1 log entry, newest first:                                          │█
+       ┃ <<<LOG DATA                                                         │█
+ What k┃ | ERROR edge                                                        │█
+       ┃ LOG DATA>>>                                                         │█
+       ┃ What happened here?                                                 │█
+   Time┃ Passwords, keys and tokens are already hidden as [REDACTED].         █
+ › 08:5┃                                                                      █
+   08:5┃ ▸ Instructions sent with it                                          █
+   08:5┃                                                                      █
+   08:5┃ ┌───────────────────────────────────────────────────────────────────┐█
+   08:5┃ │                                                                   │█
+   08:5┃ │ Model                           Hoody Free                 Change │█
+   08:5┃ │ Free.                                                             │
+   08:5┃ │                                                                   │
+   08:5┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Close]   Ask your AI helper

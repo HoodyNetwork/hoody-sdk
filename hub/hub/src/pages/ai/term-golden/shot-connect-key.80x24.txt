@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ ‹ Back                                                           Esc ×
+  Chats┃ Connect an account
+ ▌Model┃ ──────────────────────────────────────────────────────────────────────
+ atlas ┃ Anthropic API key * (required)
+ Models┃ ┃
+ atlas ┃ Stored on atlas only. It is never shown again.
+ ▌Defau┃
+ ──────┃ [Cancel]  Check and save
+ ┌─────┃
+ │ Defa┃
+ │ The ┃
+ │ ┌───┃
+ │ │   ┃
+ │ │ AI┃
+ │ │ Th┃
+ │ │ ev┃
+ │ │ co┃
+ │ │   ┃
+ │ │ Bo┃
+ │ │ Bo┃
+ │ │   ┃
+ │ └───┃
+ └─────┃
+ Tab mo┃

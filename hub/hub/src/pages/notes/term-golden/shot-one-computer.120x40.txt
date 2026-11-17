@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notes                                                     ▸ Use with your agent   + New note
+ Computers             │  The notes on your computers. Everyone who opens Notes on a computer shares the same notes.
+ Files                 │
+ Bots                  │  / Search                   Computer: borealis ×              4 notes  ↻ Refresh  View options
+ Board                 │
+ Demo                  │      Title                                  Section                  Changed ↓
+ Vault                 │  ▾ borealis · 4  Open Notes New note
+                       │  ▌   Staging release notes                  Work                     40 minutes ago          ⋯
+On atlas ▾             │      Customer feedback                      Work                     5 hours ago             ⋯
+ Programs              │      Launch timeline                        Projects                 3 days ago              ⋯
+ Schedules             │      Open questions                         Work                                             ⋯
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+▌Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

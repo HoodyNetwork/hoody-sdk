@@ -1,0 +1,20 @@
+{
+  "pager.range": "{{start}}–{{end}} of {{total}}",
+  "pager.rangeNamed": "{{start}}–{{end}} of {{count}}",
+  "pager.prev": "Previous page",
+  "pager.next": "Next page",
+  "pager.label": "Pages",
+  "showing.newest": "Showing newest {{shown}} of {{total}}",
+  "showing.first": "Showing {{shown}} of {{total}}",
+  "select.start": "Select rows",
+  "select.stop": "Stop selecting",
+  "select.clearHint": "Clear selection (Esc)",
+  "sort.label": "Sort by {{name}}",
+  "expand.show": "Show",
+  "expand.hide": "Hide",
+  "filters.title": "Filters",
+  "filters.done": "Done",
+  "refreshing": "Refreshing",
+  "more": "Show more",
+  "refresh": "Refresh"
+}

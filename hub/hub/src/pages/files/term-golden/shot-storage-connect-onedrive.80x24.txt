@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Add storage                                                      Esc ×
+ Files ┃ This computer checks the details with the storage before it
+ Storag┃ keeps them.
+   Brow┃ ──────────────────────────────────────────────────────────────────────
+ ──────┃ ┌───────────────────────────────────────────────────────────────────┐█
+ ┌─────┃ │ WHERE YOUR KEYS GO                                                │█
+ │ At a┃ │ Keys, passwords and tokens you enter go only to this computer's   │█
+ │ Conn┃ │ files program, once, and are kept there in a private file. The    │█
+ │ Open┃ │ Hub never keeps them.                                             │█
+ │ Wait┃ │ Nothing is sent until you press Connect.                          │█
+ └─────┃ └───────────────────────────────────────────────────────────────────┘█
+       ┃                                                                      ▀
+ ┌─────┃ Storage
+ │ Conn┃ ┃ Microsoft OneDrive                                                ▾
+ │ Conn┃ This storage can be opened as a plain folder only.
+ │ fold┃
+ │ Keys┃ ┌───────────────────────────────────────────────────────────────────┐
+ │ prog┃ │ Get a token with rclone                                           │
+ │ them┃ │ OneDrive also needs its drive, so its token comes from an rclone  │
+ │No st┃ │ config.                                                           │
+ │Add c┃ │                                                                   │
+ │folde┃ │ ON YOUR OWN COMPUTER ──────────────────────────────────────────── │
+ └─────┃ ──────────────────────────────────────────────────────────────────────
+ Typing┃ [Cancel]  Connect

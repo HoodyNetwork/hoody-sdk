@@ -1,0 +1,14 @@
+{
+  "pane": "Chats",
+  "paneItem": "Fix the failing checkout tests",
+  "addGate": "Another approval",
+  "placeholder": "Message your agent",
+  "headerAction": "More",
+  "title": "Fix the failing checkout tests",
+  "turn1": "Turn 1",
+  "turn2": "Turn 2",
+  "askTitle": "Check who can open these computers",
+  "askReply": "- **atlas**: anyone with the address can open its programs.\n- **borealis**: only your IP address; project rules too.\n\n**Risks**\n\n- **atlas** is open to anyone who has its address.",
+  "picsSummary": "A blue and white checkout banner",
+  "picsMessage": "Make the checkout banner look like this draft, not like the old one."
+}

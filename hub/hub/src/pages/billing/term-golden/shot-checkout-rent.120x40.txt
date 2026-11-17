@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Rent a server                                                           Esc ×
+ Home                  │  Plans & Billin┃ 1 Review 2 Confirm
+ Computers             │  Upgrade a serv┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │                ┃ Singapore M Singapore, SG
+ Bots                  │  ▸ Plans    Bar┃
+ Board                 │  ──────────────┃  Rental                                                               $39.00
+ Demo                  │  │ ✗ fra-7: On ┃  Total first payment                                                  $39.00
+ Vault                 │                ┃  Wallet balance                                                       $42.50
+                       │  Plans         ┃
+On atlas ▾             │  Each plan is a┃ This charges at most $39.00. If the price goes up, you are asked again.
+ Programs              │  take the same ┃ Purchases are prepaid and not eligible for customer-requested refunds.
+ Schedules             │                ┃
+ Scripts               │  ┌─────────────┃ This adds a new server. Your free server ash-3 stays as it is.
+ Logs                  │  │             ┃
+ Tunnels               │  │ Plans for   ┃ [ ] I understand this purchase is not eligible for a customer-requested
+ Notes                 │  │ Choose a pla┃     refund, and I agree to the Terms of Service and Privacy Policy.
+ AI                    │  │ server, or p┃
+ VMs                   │  │ to upgrade i┃
+                       │  │             ┃
+Account                │  └─────────────┃
+▌Plans & Billing       │                ┃
+ Referrals             │  ┌─────────────┃
+ Keys and tokens       │  │ Free        ┃
+ API                   │  │ $0 / month  ┃
+ Notifications      26 │  │ Your free se┃
+ Account               │  │ Computers   ┃
+                       │  │ Hardware    ┃
+ + Rent servers        │  │ AI allowance┃
+ Guide                 │  │             ┃
+ Support               │  │ Locations   ┃
+                       │  │ No choice of┃
+                       │  │ Your free se┃
+                       │  │ buy a plan. ┃
+                       │  │ Next: Small.┃
+                       │  │ computers.  ┃
+                       │  │ Free server ┃
+                       │  │             ┃
+                       │  │             ┃
+                       │  │             ┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ [Cancel]   Confirm and pay

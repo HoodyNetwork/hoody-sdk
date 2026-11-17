@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                                    ▸ Use with your agent
+ Computers             │
+ Files                 │  ‹ Bots  Esc
+▌Bots                  │  Chief  ● Idle                                                             [Bot settings] [⋯]█
+ Board                 │    SG atlas    Hoody Free  · Allow everything is off +2                                      █
+ Demo                  │                                                                                              █
+ Vault                 │    Activity  ▸ Link and keys    Chat apps 2    Work 2                                        █
+                       │  ────────────────────────────────────────────────────────────────────────────────────────────█
+On atlas ▾             │                                                                                              █
+ Programs              │    ┌──────────────────────────────────────────────────────────────────────────────────────┐  █
+ Schedules             │    │ At a glance                                                                          │  █
+ Scripts               │    │ Link                   ● Active                                                      │  █
+ Logs                  │    │ Keys                   20 of 20 ██████████ ✗                                         │  █
+ Tunnels               │    │ Limits                 60 / min per key, 120 / min in all                            │  █
+ Notes                 │    │ Other websites (CORS)  Allowed                                                       │  █
+ AI                    │    └──────────────────────────────────────────────────────────────────────────────────────┘  █
+ VMs                   │                                                                                              █
+                       │                                                                                              █
+Account                │    ┌──────────────────────────────────────────────────────────────────────────────────────┐  █
+ Plans & Billing       │    │ Keys                                                                    New key  [⋯] │  █
+ Referrals             │    │ Whoever holds a key can use this Bot through its link. Give each person or program   │  █
+ Keys and tokens       │    │ its own.                                                                             │  █
+ API                   │    │  Key                Prefix           State            Allowed addresses              │  █
+ Notifications      26 │    │› key 1              hk_0000…         ● Active         Any address            [Edit] ⋯│  █
+ Account               │    │  key 2              hk_0001…         ● Active         Any address            [Edit] ⋯│  █
+                       │    │  key 3              hk_0002…         ● Active         Any address            [Edit] ⋯│
+ + Rent servers        │    │  key 4              hk_0003…         ● Active         Any address            [Edit] ⋯│
+ Guide                 │    │  key 5              hk_0004…         ● Active         Any address            [Edit] ⋯│
+ Support               │    │  key 6              hk_0005…         ● Active         Any address            [Edit] ⋯│
+                       │    │  key 7              hk_0006…         ● Active         Any address            [Edit] ⋯│
+                       │    │  key 8              hk_0007…         ● Active         Any address            [Edit] ⋯│
+                       │    │  key 9              hk_0008…         ● Active         Any address            [Edit] ⋯│
+                       │    │  key 10             hk_0009…         ● Active         Any address            [Edit] ⋯│
+                       │    │  key 11             hk_0010…         ● Active         Any address            [Edit] ⋯│
+                       │    │  key 12             hk_0011…         ● Active         Any address            [Edit] ⋯│
+                       │    │  key 13             hk_0012…         ● Active         Any address            [Edit] ⋯│
+                       │    │  key 14             hk_0013…         ● Active         Any address            [Edit] ⋯│
+                       │    │  key 15             hk_0014…         ● Active         Any address            [Edit] ⋯│
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

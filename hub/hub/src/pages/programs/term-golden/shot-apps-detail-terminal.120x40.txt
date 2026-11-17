@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                                             ▸ Use with your agent  [+ Launch an app]
+ Computers             │  Apps on atlas: programs you open only when you need them.
+ Files                 │  ‹ Programs  Esc
+ Bots                  │  htop  ● Ready                                                                           Open
+ Board                 │
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Vault                 │  │ RIGHT NOW                                                                                 │
+                       │  │ htop is ready.                                                                            │
+On atlas ▾             │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+▌Programs              │
+ Schedules             │  Opens in  Terminal                              Source    Installed
+ Scripts               │  Where     Terminal 15004                        Handle    b2c3…b2c3 ⧉
+ Logs                  │  Started   Nov 11, 2026, 7:30 AM
+ Tunnels               │
+ Notes                 │                                                                                        ⧉ copy
+ AI                    │   $ /usr/bin/htop
+ VMs                   │
+                       │
+Account                │  Stop or remove
+ Plans & Billing       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Referrals             │  │                                                                                           │
+ Keys and tokens       │  │ Stop htop                       [■ Stop]                                                  │
+ API                   │  │ It closes the app and anything                                                            │
+ Notifications      26 │  │ unsaved in it. You can open it                                                            │
+ Account               │  │ again later.                                                                              │
+                       │  │                                                                                           │
+ + Rent servers        │  │ Remove from this list           [Remove]                                                  │
+ Guide                 │  │ htop keeps running. Only this                                                             │
+ Support               │  │ row goes.                                                                                 │
+                       │  │                                                                                           │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                 ◆ Personal ▾  … Loading computers… ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent   + Get a computer
+ Your computers: start them, open a terminal, and manage access.
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ / Search computers     Filters         [ ] Show usage  ↻ Refresh  View options
+ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+
+
+
+
+ Questions
+ ▸ What does a new computer come with?
+ ▸ What are realms and projects?
+ ▸ Who can open my computer's programs?
+ ▸ How does the firewall work, and what does No internet block?
+ ▸ How do I use a computer as a proxy, and what is an exit?
+ ▸ How do I use my own domain for a web address?
+ ▸ How do I get a shell on my computer?
+ ▸ What is the difference between a snapshot and a zip backup?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

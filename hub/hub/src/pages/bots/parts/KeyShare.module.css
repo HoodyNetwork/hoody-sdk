@@ -1,0 +1,27 @@
+/* KeyShare: the two codes side by side, the address only and the address with its key; one above the
+   other when the pane is too narrow for both. */
+.pair {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  justify-content: center;
+}
+
+.code {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.caption {
+  color: var(--hx-ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+/* The plain code's box: the same 200 px as the keyed one. */
+.box {
+  display: flex;
+}

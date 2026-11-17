@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                                             ▸ Use with your agent   + Launch an app
+ Computers             │  Open ports and aliases on atlas
+ Files                 │    Running programs    Apps  ▸ Ports & aliases
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  │  More about your own domain                                                              │
+ Vault                 │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+On atlas ▾             │  Questions
+▌Programs              │  ▸ What is a program, and what are Running programs and Apps?
+ Schedules             │  ▸ What are the system programs, and is it safe to stop one?
+ Scripts               │  ▸ What is the difference between Keep it and Run once?
+ Logs                  │  ▸ When does a start count as done, and what happens when a program stops?
+ Tunnels               │  ▸ What does a sandbox limit, and what do the starting points do?
+ Notes                 │  ▸ What do the network choices and allowed ranges do?
+ AI                    │  ▸ When do new sandbox limits take effect, and what does removing them do?
+ VMs                   │  ▸ What if a change may have gone through?
+                       │  ▸ Which open ports get a web address?
+Account                │  ▸ Why are some ports counted but not shown?
+ Plans & Billing       │  ▸ What is the difference between a port's address and an alias?                             ▄
+ Referrals             │  ▸ How do I create an alias?                                                                 █
+ Keys and tokens       │  ▸ What happens to an alias when its program stops?                                          █
+ API                   │  ▸ Who can open a port's address or an alias?                                                █
+ Notifications      26 │  ▾ How do I open an alias at my own domain?                                                  █
+ Account               │    Where you manage your DNS, add a CNAME record:                                            █
+                       │                                                                                              █
+ + Rent servers        │    - Name: the part you want in front of your domain, such as                                █
+ Guide                 │    app.                                                                                      █
+ Support               │    - Target: the address in the alias's "Your domain points to"                              █
+                       │    column.                                                                                   █
+                       │    - DNS proxy: off for that record.                                                         █
+                       │                                                                                              █
+                       │    HTTPS is set up on the first visit, and the computer's access                             █
+                       │    rules still apply.                                                                        █
+                       │                                                                                              █
+                       │    The Hub can't see your DNS, so it can't list or check the                                 █
+                       │    domains you connected.                                                                    █
+                       │  ▸ Is the address HTTP or HTTPS, and what if my program serves HTTPS itself?                 █
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

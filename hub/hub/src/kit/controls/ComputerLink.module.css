@@ -1,0 +1,12 @@
+/* ComputerLink cut: one line, the name cut at the end with an ellipsis, as Link.module.css .extCut does for a web address.
+   The link itself clips its words; its focus ring (a box-shadow) is outside its own box and stays whole. min-inline-size 0
+   lets it shrink as a flex item (a table cell's flag and name). */
+.cut {
+  display: inline-block;
+  overflow: hidden;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  white-space: nowrap;
+}

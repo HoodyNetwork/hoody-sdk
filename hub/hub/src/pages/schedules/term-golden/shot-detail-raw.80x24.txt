@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Schedules                              ▸ Use with your agent   + New schedule
+ 15 schedules on atlas · next: ping-api in 3 minutes · 4 failed today
+ Computers › · 9 programs running ›
+ ‹ Schedules  Esc
+ poll.sh  ● No results for this one
+  Hand-written   Read-only here
+
+ i A hand-written line: its runs aren't reported.
+
+ Schedule     Every 7 minutes
+ Next run     Can't tell
+ Last result  No results for this one
+
+ History
+ i No history for this one.
+
+ Advanced
+ The saved command, with the secrets we recognise hidden.
+ Schedule  */7 * * * *
+ [Show the command]
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

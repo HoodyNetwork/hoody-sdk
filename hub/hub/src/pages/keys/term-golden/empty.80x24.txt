@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                     ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+ Keys and tokens                             ▸ Use with your agent  [+ New key]
+ A key lets your agent, the CLI or the SDK act for you. Give each one its own
+ key, with an end date.
+ ▸ API keys 0 keys    SSH keys    Shared access 0 shares
+ ──────────────────────────────────────────────────────────────────────────────
+ i Keys that work in Personal.                                [Show all realms]
+      ┌──────────────────────────────────────────────────────────────────┐    █
+      │ Make your first key                                              │    █
+      │                                                                  │    █
+      │ Press New key to make one. Its secret is shown once, so copy it  │    █
+      │ right away.                                                      │    █
+      │                                                                  │    █
+      │  + New key   How to use keys                                     │    █
+      │                                                                  │    █
+      │ [n] Use it as HOODY_TOKEN in the SDK and HTTP examples.          │    █
+      └──────────────────────────────────────────────────────────────────┘    █
+                                                                              █
+ Questions                                                                    █
+ ▸ Can I see a key's secret again?                                            ▀
+ ▸ What is an API key for?
+ ▸ Which realms does a key work in?
+ ▸ What can a key do, and what does Full mean?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

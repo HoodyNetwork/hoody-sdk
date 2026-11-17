@@ -1,0 +1,72 @@
+/* The kit Spinner (states/Spinner.tsx, its own module so the kit Button can draw it without importing States):
+   three pulsing dots, still at stepped shades under reduced motion and in performance mode. The perf selector names
+   the attribute alone (kit/perf.ts sets it only when on, "on"): a kit module that does nothing at load holds no quote in a
+   selector (kitpure), and stylelint wants a value quoted. */
+.spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-half);
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  vertical-align: middle;
+}
+
+.spinnerDot {
+  width: 3px;
+  height: 3px;
+  border-radius: var(--r-round);
+  background: currentcolor;
+  animation: spinner-pulse var(--dur-pulse) var(--ease-in-out) infinite;
+}
+
+.spinnerDot:nth-child(2) {
+  animation-delay: 150ms;
+}
+
+.spinnerDot:nth-child(3) {
+  animation-delay: 300ms;
+}
+
+/* The large loader (a tile while its app starts): the same dots, larger, in a larger frame. */
+.spinnerLg {
+  gap: var(--sp-2);
+  width: var(--sp-10);
+  height: var(--sp-10);
+}
+
+.spinnerLg .spinnerDot {
+  width: var(--sp-3);
+  height: var(--sp-3);
+}
+
+@keyframes spinner-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* Reduced motion (429): the dots hold still at stepped shades, so the spinner still reads as working. */
+@media (prefers-reduced-motion: reduce) {
+  .spinnerDot {
+    animation: none;
+  }
+
+  .spinnerDot:nth-child(2) {
+    opacity: 0.6;
+  }
+
+  .spinnerDot:nth-child(3) {
+    opacity: 0.3;
+  }
+}
+
+/* Performance mode (kit/perf.ts) stops the dots too: they take the same still shades. */
+:root[data-hx-perf] .spinnerDot:nth-child(2) {
+  opacity: 0.6;
+}
+
+:root[data-hx-perf] .spinnerDot:nth-child(3) {
+  opacity: 0.3;
+}
+

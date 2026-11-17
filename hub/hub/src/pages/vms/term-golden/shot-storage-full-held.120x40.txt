@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines › win11
+ Computers             │  win11  ● Stopped                                                                  Start   [⋯]
+ Files                 │  A VM inside atlas.
+ Bots                  │
+ Board                 │   Overview  Screen  Ports ▸Storage  Snapshots  Settings  Logs
+ Demo                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Storage                                                             Make the disk bigger  │
+On atlas ▾             │  │ The VM's disk, its disc drives and its shared folder.                                     │
+ Programs              │  │◷ Making the disk of win11 bigger may have gone through. It  [Check again]  [Stop tracking]│
+ Schedules             │  │  is not confirmed yet. The computer reported: not enough                                  │
+ Scripts               │  │  free disk.                                                                               │
+ Logs                  │  │Size  64 GB                                                                                │
+ Tunnels               │  │  Drive            Disc                                                                    │
+ Notes                 │  │› Drive 1          /var/lib/hoody-vm/isos/win11.iso                         [Change disc] ⋯│
+ AI                    │  │  Drive 2          /usr/share/virtio-win/virtio-win.iso                     [Change disc] ⋯│
+▌VMs                   │  │  Drive 3          Empty                                                    [Insert a disc]│
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

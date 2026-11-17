@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ ‹ Back                                                           Esc ×
+  Chats┃ Connect OpenAI
+ ▌Model┃ ──────────────────────────────────────────────────────────────────────
+ atlas ┃ How to connect OpenAI
+ Models┃ (•) Sign in with ChatGPT
+ atlas ┃     Use your ChatGPT plan
+ ▌Defau┃ ( ) Use an API key
+ ──────┃     Pay as you go on your own key
+ ┌─────┃
+ │ Defa┃ Open the page, then enter this code.
+ │ The ┃
+ │ ┌───┃ Your code
+ │ │   ┃ │ •••••••••••• (Hidden until you press Show) [Show] [Copy]
+ │ │ AI┃ ⚿ Type it on the page that opens. It is hidden when you leave this
+ │ │ Th┃ step.
+ │ │ ev┃
+ │ │ co┃  Open the sign-in page ⇗  [Cancel sign-in]
+ │ │   ┃
+ │ │ Bo┃ The code works for 15 minutes.
+ │ │ Bo┃
+ │ │   ┃ Waiting for you to finish signing in
+ │ └───┃
+ └─────┃
+ Tab mo┃

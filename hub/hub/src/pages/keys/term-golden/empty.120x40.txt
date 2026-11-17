@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                          ◆ Personal ▾  No computers yet ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Keys and tokens                                            ▸ Use with your agent  [+ New key]
+ Computers             │  A key lets your agent, the CLI or the SDK act for you. Give each one its own key, with an end
+ Files                 │  date.
+ Bots                  │  ▸ API keys 0 keys    SSH keys    Shared access 0 shares
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  i Keys that work in Personal.                                               [Show all realms]
+ Vault                 │
+                       │               ┌──────────────────────────────────────────────────────────────────┐
+On this computer       │               │ Make your first key                                              │
+ Programs              │               │                                                                  │
+ Schedules             │               │ Press New key to make one. Its secret is shown once, so copy it  │
+ Scripts               │               │ right away.                                                      │
+ Logs                  │               │                                                                  │
+ Tunnels               │               │  + New key   How to use keys                                     │
+ Notes                 │               │                                                                  │
+ AI                    │               │ [n] Use it as HOODY_TOKEN in the SDK and HTTP examples.          │
+ VMs                   │               └──────────────────────────────────────────────────────────────────┘
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+▌Keys and tokens       │
+ API                   │
+ Notifications         │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │  Questions
+                       │  ▸ Can I see a key's secret again?
+                       │  ▸ What is an API key for?
+                       │  ▸ Which realms does a key work in?
+                       │  ▸ What can a key do, and what does Full mean?
+                       │  ▸ When does a key stop working, and can I limit where it works from?
+                       │  ▸ How does the SSH key work?
+                       │  ▸ What does sharing a realm give someone?
+                       │  ▸ What do I send to the person I share with?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

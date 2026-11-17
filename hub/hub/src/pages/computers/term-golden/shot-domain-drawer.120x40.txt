@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ Use your own domain for shop                        Esc ×
+ Home                  │  Computers                         ┃ Open this alias at an address on a domain you own,
+▌Computers             │                                    ┃ such as app.example.com.
+ Files                 │  ▸ Computers    Servers    Projects┃ ─────────────────────────────────────────────────────────
+ Bots                  │  ──────────────────────────────────┃ ┌───────────────────────────────────────────────────────┐
+ Board                 │                                    ┃ │ THE ROUTE                                             │
+ Demo                  │  ‹ Computers  Esc                  ┃ │ One CNAME record sends your domain to this alias.     │
+ Vault                 │  atlas  ● Running                  ┃ │ The Hub cannot see your DNS, so it cannot check this  │
+                       │  SG n12 · Home base · █  Personal ·┃ │ record for you.                                       │
+On atlas ▾             │                                    ┃ │ Type    CNAME                                         │
+ Programs              │   Overview  Connect  Permissions ▸P┃ │ Name    The address you want, such as app (for        │
+ Schedules             │   Storage                          ┃ │         app.example.com)                              │
+ Scripts               │  ──────────────────────────────────┃ │ Access  The computer's access rules still apply at    │
+ Logs                  │  ┌─────────────────────────────────┃ │         your domain, just as at the alias.            │
+ Tunnels               │  │ At a glance                     ┃ └───────────────────────────────────────────────────────┘
+ Notes                 │  │ Who can open  Access rules apply┃ 01  Where you manage your DNS, add a CNAME record that
+ AI                    │  │ Ports         2 web · 1 other   ┃     points to shop.example.test ⧉ copy
+ VMs                   │  └─────────────────────────────────┃     Use a name under your domain, such as
+                       │                                    ┃     app.example.com. Most DNS companies don't allow this
+Account                │  ┌─────────────────────────────────┃     kind of record on the bare domain (example.com).
+ Plans & Billing       │  │ Ports                           ┃ 02  Turn off any proxy or CNAME flattening for this
+ Referrals             │  │ Every port a program listens on;┃     record
+ Keys and tokens       │  │  Port              Program      ┃     A proxy is often shown as an orange cloud. With
+ API                   │  │› 3000              node         ┃     either one left on, your domain can't find the alias.
+ Notifications      26 │  │  5432              postgres     ┃ 03  Wait for DNS, then open your address
+ Account               │  │  8080              caddy        ┃     DNS changes take from a few minutes to a few hours to
+                       │  └─────────────────────────────────┃     reach everyone. HTTPS is set up for you on the first
+ + Rent servers        │                                    ┃     visit, which can take a little while. If that first
+ Guide                 │  ┌─────────────────────────────────┃     visit fails, wait a minute and open it again.
+ Support               │  │ Aliases                         ┃ │ ! To stop, delete the record. If you also remove the
+                       │  │ Short addresses that point to a ┃ │   alias, delete the record first: an alias name that
+                       │  │  Alias              Goes to Addr┃ │   is free again can be taken by someone else, and a
+                       │  │› shop               3000    http┃ │   record left behind would send your domain to them.
+                       │  └─────────────────────────────────┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit  ┃                                                   [Close]

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Support                                                                        [+ New ticket]
+ Computers             │
+ Files                 │  ‹ Support  Esc
+ Bots                  │  Invoice shows the wrong country  ● Waiting for support                                    [⋯]
+ Board                 │  · Billing 0000…a1b4
+ Demo                  │
+ Vault                 │
+                       │   You Nov 2, 2026, 12:00 PM
+On atlas ▾             │   The invoice for October lists Germany, but my billing address is in Austria.
+ Programs              │
+ Schedules             │  We'll answer here. You'll get a notice when we reply.
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+▌Support               │  │ ◷ This may have gone through
+                       │  │   Your message may have been sent. We couldn't confirm it.
+                       │  │   Check again looks through your tickets. It never sends anything.
+                       │  │   Stop tracking this message: the draft unlocks. If it did go through, sending it again
+                       │  │   can post it twice.
+                       │  │   [Check again]  [Stop tracking]
+                       │  Your reply (read only)
+                       │  ┃ Any news on this?                                                                         │
+                       │  17 of 4,000 · Plain text. Never paste passwords, keys or tokens.
+                       │                                                                                          Send
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

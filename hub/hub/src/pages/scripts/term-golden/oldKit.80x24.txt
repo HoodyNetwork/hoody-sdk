@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Scripts                                                  ▸ Use with your agent
+ Small programs on your computers that answer an address or run on a schedule.
+ / Search               Filters             3 scripts  ↻ Refresh  View options█
+ i borealis: Runs an older Scripts program. You can read and test its scripts.█
+   To change them, update the computer.                                       █
+ ─────────────────────────────────────────────────────────────────────────────█
+   Script ↑                    Status           Address                       █
+ ▌ Daily digest  Read-only     —                /daily-digest                ⋯█
+   Order status  Read-only     —                /orders/:id                  ⋯█
+   Weather lookup  Read-only   —                /weather                     ⋯█
+                                                                              █
+ ▸ Advanced                                                                   █
+                                                                              █
+ Questions                                                                    █
+ ▸ What is a script?                                                          █
+ ▸ Do I need to know how to code?                                             █
+ ▸ What can a script do?                                                      █
+ ▸ How does the assistant write a script?                                     █
+ ▸ How do I make a script run on a schedule?                                  █
+ ▸ What is a public link, and how is its name chosen?                         █
+ ▸ How does a script key work?
+ ▸ Where do I keep secrets such as passwords or API keys?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

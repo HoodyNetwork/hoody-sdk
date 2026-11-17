@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                 ◆ Personal ▾  Computers not loaded ▾  [A]  ^K · ?
+ Files
+ The folders on your computers.
+               ! Couldn't load your computers
+
+               Files needs the list of your computers. Try again.
+
+               [Try again]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

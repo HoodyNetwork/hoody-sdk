@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  Guide                       ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Ask your agent  Connect ▌Skills  Build your own  Every link  Bots  Tools
+  Try this  Realms  Topics  Keyboard  Look                                     ▄
+ │ A skill is a file that teaches a coding agent how Hoody's HTTP API works: │ ▀
+ │ which calls exist and how to make them. It gives no access by itself; a   │
+ │ key or a sign-in does that.                                               │
+ │                                                                           │
+ │ Install the skill                                                         │
+ │ Run one of these in the folder where you use your agent. The tool asks    │
+ │ which of your agents to add the skill to.                                 │
+ │ Install the skill                                              ⧉ Copy all │
+ │ 1. The Hoody skill                                                        │
+ │  $ npx skills add https://hoody.com/SKILLS/SKILL.md               ⧉ copy  │
+ │ 2. The same skill with every docs page on disk                            │
+ │  $ npx skills add HoodyNetwork/hoody-sdk                          ⧉ copy  │
+ │ 3. For one agent, without questions                                       │
+ │  $ npx skills add HoodyNetwork/hoody-sdk -a claude-code -y        ⧉ copy  │
+ │ 4. For every project on this device                                       │
+ │  $ npx skills add HoodyNetwork/hoody-sdk -g                       ⧉ copy  │
+ │ npx comes with Node.js. The skills tool needs Node.js 22.20 or newer.     │
+ │ ! A skill runs with your agent's full permissions. Read what you install; │
+ │   the Hoody skill is plain text.                                          │
+ │ ▸ Where each agent keeps it                                               │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

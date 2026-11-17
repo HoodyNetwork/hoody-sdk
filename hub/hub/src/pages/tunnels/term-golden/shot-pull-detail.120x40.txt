@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Tunnels                                           ▸ Use with your agent   + Connect a laptop
+ Computers             │  Put a laptop app online through atlas, or let atlas reach a service on your laptop. 2
+ Files                 │  sessions connected to atlas · tunnel program running since 06:00 AM
+ Bots                  │
+ Board                 │  ‹ Tunnels  Esc
+ Demo                  │  Inside this computer :6379  ● Connected                                                   [⋯]
+ Vault                 │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+On atlas ▾             │  │ Session                                                                                   │
+ Programs              │  │ Session             9b1d7e…  ⧉ copy                                                       │
+ Schedules             │  │ Connection address  192.0.2.x Show  ⧉ copy                                                │
+ Scripts               │  │ Streams             0 streams of 1024                                                     │
+ Logs                  │  │ Protocol            v2                                                                    │
+▌Tunnels               │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Notes                 │
+ AI                    │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ VMs                   │  │ Inside this computer                                                                      │
+                       │  │ Programs on this computer connect here to reach the laptop's service; it gets no public   │
+Account                │  │ address.                                                                                  │
+ Plans & Billing       │  │ Inside this computer  127.0.0.1:6379  ⧉ copy                                              │
+ Referrals             │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

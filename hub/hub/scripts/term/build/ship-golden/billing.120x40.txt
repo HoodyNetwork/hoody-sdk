@@ -1,0 +1,41 @@
+ ▐━┓ HOODY HUB                                     ◆ 5f0c…fee0 ▾  Computers not loaded ▾  [N]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing                                                                  + Add funds
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │  ▸ Plans    Bare metal    Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │
+                       │  Plans                                                                                       █
+On this computer       │  Each plan is a server of your own. Its computers share its cores, memory and disk. You can  █
+ Programs              │  take the same plan more than once.                                                          █
+ Schedules             │                                                                                              █
+ Scripts               │  ┌───────────────────────────────────────────┐  ! Couldn't load the offer.                   █
+ Logs                  │  │ Free                                      │  Nothing was sent. You can try again.         █
+ Tunnels               │  │ $0 / month                                │  [Try again]                                  █
+ Notes                 │  │ Hardware                  Shared hardware │  ▸ Details                                    █
+ AI                    │  │ AI                      Free AI allowance │                                               ▀
+ VMs                   │  │ Locations                                 │
+                       │  │ No choice of location                     │
+Account                │  │ Free server details                       │
+▌Plans & Billing       │  └───────────────────────────────────────────┘
+ Referrals             │
+ Keys and tokens       │  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ API                   │  ┃ Bare metal                                                                               ┃
+ Notifications         │  ┃ A whole machine for you alone                                                            ┃
+ Account               │  ┃ Hardware                 Dedicated hardware   Locations  Pick a listing and its location ┃
+                       │  ┃                                                                                          ┃
+ + Rent servers        │  ┃  Browse machines →                                                                       ┃
+ Guide                 │  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+ Support               │
+                       │
+                       │  Compare plans
+                       │
+                       │
+                       │  ✗ Compare plans: This didn't load
+                       │  Try again
+                       │
+                       │
+                       │
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit
+

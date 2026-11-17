@@ -1,0 +1,416 @@
+/* Drawer: the modal side panel (head bar, scrolling body, foot bar), full screen below 600 px. A viewport-level overlay,
+   so its queries key on the viewport, never a container. Two greys: the bars on --drawer-bar-bg, the body on
+   --drawer-body-bg. Its chrome (bar rules, title, scrim exit) is the Dialog's, the Sheet's and the menu tray's. */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-drawer);
+  background: var(--hx-scrim);
+}
+
+.scrim[data-entering] {
+  animation: fadeIn var(--dur-enter) var(--ease-out);
+}
+
+.scrim[data-exiting] {
+  animation: fadeIn var(--dur-exit) linear reverse; /* the one scrim exit (Dialog, Sheet) */
+}
+
+.drawer {
+  --drawer-bar-bg: var(--bar-bg);
+  --drawer-body-bg: var(--hx-raised);
+  --ring-gap: var(--drawer-body-bg);
+  --search-max-w: none;
+  --search-grow: 1;
+
+  position: fixed;
+
+  /* A phone's open keyboard: the drawer is sized to the visible viewport while the leave ask shows (Drawer.tsx). */
+  inset-block-start: var(--drawer-vv-top, 0);
+  inset-block-end: 0;
+  inset-inline-end: 0;
+  display: flex;
+  height: var(--drawer-vv-h, auto);
+  width: min(var(--drawer-md), calc(100vw - var(--sidebar-w-collapsed)));
+  background: var(--drawer-body-bg);
+  box-shadow: var(--sh-drawer);
+  outline: none;
+}
+
+:root[data-hx-theme='dark'] .drawer {
+  border-inline-start: var(--bw) solid var(--hx-line-2);
+}
+
+.sm {
+  width: min(var(--drawer-sm), calc(100vw - var(--sidebar-w-collapsed)));
+}
+
+.lg {
+  width: min(var(--drawer-lg), calc(100vw - var(--sidebar-w-collapsed)));
+}
+
+/* A width the person set (Drawer.tsx, --drawer-w): it replaces the size's, and stays inside the viewport less the rail. */
+.sized {
+  width: min(var(--drawer-w), calc(100vw - var(--sidebar-w-collapsed)));
+}
+
+/* The resize separator on the inline-start edge: a hit strip whose last 4 px lie inside the drawer, and a 2 px ink
+   line on the edge itself on hover, drag and focus. Not drawn on phones, where the drawer is the full screen. */
+.resizer {
+  --resizer-in: 4px; /* how much of the strip lies inside the drawer; the line sits this far from the strip's end */
+
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: calc(var(--resizer-in) - 8px);
+  z-index: var(--z-raised);
+  inline-size: 8px;
+  cursor: col-resize;
+  outline: none;
+  touch-action: none;
+}
+
+/* A finger gets a thumb-wide strip: it grows outwards over the scrim, so it covers no more of the drawer's content. */
+@media (pointer: coarse) {
+  .resizer {
+    inset-inline-start: calc(var(--resizer-in) - var(--touch-min));
+    inline-size: var(--touch-min);
+  }
+}
+
+.resizer::after {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: calc(var(--resizer-in) - 1px);
+  inline-size: 2px;
+  background: transparent;
+  content: '';
+}
+
+.resizer:hover::after,
+.resizer:active::after {
+  background: var(--hx-ink);
+}
+
+/* Keyboard focus: the edge line itself in the focus colour (a ring around the strip would draw two lines). */
+.resizer:focus-visible::after {
+  inline-size: 3px;
+  inset-inline-end: calc(var(--resizer-in) - 1.5px);
+  background: var(--hx-focus);
+}
+
+.drawer[data-entering] {
+  animation: slideIn var(--dur-enter) var(--ease-out);
+}
+
+.drawer[data-exiting] {
+  animation: slideIn var(--dur-exit) var(--ease-out) reverse;
+}
+
+.dialog {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  outline: none;
+}
+
+/* The head is one grid of fixed slots, so nothing in it is placed by hand: [leading | title, subtitle | actions, ×].
+   The leading slot (a sub-flow's back arrow, or a phone's closing arrow) exists only when it holds a control. The
+   first row is the title's own line: the leading control and the × are centred on it and overhang it equally above
+   and below (the head's block padding takes the overhang), so the subtitle sits under the title at the same distance
+   on every pointer. The subtitle starts at the title's edge. The inline padding is the body's (--surface-inset); the
+   arrow's and the ×'s boxes hang outward by their glyph's inset (the one offset here), so the drawn arrow starts and
+   the drawn × ends exactly where the body's content does. */
+.head {
+  --ring-gap: var(--drawer-bar-bg);
+
+  /* A head icon button: the kit's md IconButton box (Button.module.css .iconOnly) around a 16 px glyph on its 24 grid. */
+  --head-icon-box: max(var(--btn-h), var(--icon-hit));
+  --head-icon-inset: calc((var(--head-icon-box) - var(--icon-md)) / 2);
+  --head-overhang: max(0px, calc((var(--head-icon-box) - var(--lh-box-heading)) / 2));
+
+  display: grid;
+  flex: none;
+  grid-template-areas:
+    'title trail'
+    'sub .';
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: var(--lh-box-heading) auto;
+  align-content: center;
+  align-items: center;
+  gap: 0 var(--sp-2);
+  min-height: var(--drawer-head-h);
+  padding-block: max(var(--sp-4), var(--head-overhang));
+  padding-inline: var(--pad-drawer);
+  border-block-end: var(--bw) solid var(--pop-sep); /* the one bar rule of every overlay */
+  background: var(--drawer-bar-bg);
+}
+
+.head[data-lead] {
+  grid-template-areas:
+    'lead title trail'
+    '. sub .';
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+/* The arrow's stroke starts at 4 of its 24 grid. */
+.lead {
+  grid-area: lead;
+  margin-block: calc(-1 * var(--head-overhang));
+  margin-inline-start: calc(-1 * (var(--head-icon-inset) + var(--icon-md) * 4 / 24));
+}
+
+.trail {
+  display: flex;
+  grid-area: trail;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-block: calc(-1 * var(--head-overhang));
+}
+
+/* The ×'s strokes end at 19 of its 24 grid. */
+.close {
+  margin-inline-end: calc(-1 * (var(--head-icon-inset) + var(--icon-md) * 5 / 24));
+}
+
+.title {
+  grid-area: title;
+  margin: 0;
+  overflow: hidden;
+  color: var(--hx-ink);
+  font: var(--t-heading);
+  letter-spacing: var(--tracking-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subtitle {
+  grid-area: sub;
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+
+  /* The whole subtitle shows, wrapped, and a line break written in the text shows (states/preline.test.tsx). */
+  white-space: pre-line;
+
+  /* A long name with no break (a folder, a vault key) wraps inside the header instead of painting past it. */
+  overflow-wrap: anywhere;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  --surface-inset: var(--pad-drawer);
+  --sg-bw: 0px; /* a SettingGroup in the body is bare and inset by it (SettingGroup.tsx) */
+  --sg-fill: transparent;
+  --sg-pad: 0px;
+  --sg-pane: 0px;
+  --form-surface: var(--drawer-body-bg); /* a FormSection summary stays above the footer on the body's fill */
+
+  overflow: auto;
+  padding: var(--surface-inset);
+  overscroll-behavior: contain;
+}
+
+/* A focus ring's gap takes the grey it sits on: --focus-ring is declared again where the gap changes (kit/tokens.css
+   Focus). */
+.drawer,
+.head,
+.foot {
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus);
+}
+
+/* Sticky footer: the Outcome line at the start, then Cancel and the primary at the end. */
+.foot {
+  --ring-gap: var(--drawer-bar-bg);
+
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--gap-actions);
+  min-height: var(--drawer-foot-h);
+  padding-block: var(--sp-4);
+  padding-inline: var(--pad-drawer);
+  border-block-start: var(--bw) solid var(--pop-sep);
+  background: var(--drawer-bar-bg);
+}
+
+.outcome {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.ask {
+  background: var(--hx-warn-t);
+  box-shadow: inset 0 var(--bw-2) 0 var(--hx-warn-fill);
+}
+
+/* Asked for: the bar rings once so the eye finds it, far from the close button that asked. */
+.ask[data-attention] {
+  animation: askFlash 1.6s var(--ease-out);
+}
+
+@keyframes askFlash {
+  0%,
+  45% {
+    box-shadow: inset 0 0 0 4px var(--hx-warn-fill);
+  }
+
+  100% {
+    box-shadow: inset 0 var(--bw-2) 0 var(--hx-warn-fill);
+  }
+}
+
+.askText {
+  flex: 1;
+  min-width: 0;
+  color: var(--hx-ink);
+  font: var(--t-body-strong);
+}
+
+.askButtons {
+  display: flex;
+  gap: var(--gap-actions);
+}
+
+/* A drawer drawn narrower than 480 px (set by the person; data-narrow, Drawer.tsx), or one whose footer mirrors a guided
+   setup's primary (its body under 600 px), lays its footer out as a phone does: the Outcome line and the discard ask on
+   their own row above the buttons, which share the next one. The rows wrap in reverse, so buttons whose whole labels
+   cannot share a row stack with the primary (the last) on top; the Outcome line and the ask text go last in the order,
+   which puts them on the top row (Drawer.resize.test.tsx reads these rules). */
+.drawer[data-narrow] .foot {
+  --foot-share: 1 1 auto; /* footRow: each button grows and keeps its whole label */
+
+  flex-wrap: wrap-reverse;
+}
+
+.drawer[data-narrow] .outcome,
+.drawer[data-narrow] .askText {
+  order: 1;
+}
+
+.drawer[data-narrow] .outcome:not(:empty),
+.drawer[data-narrow] .askText {
+  flex-basis: 100%;
+}
+
+.drawer[data-narrow] .outcome:empty {
+  display: none;
+}
+
+.drawer[data-narrow] .askButtons {
+  --foot-share: 1;
+
+  flex: 1;
+  flex-wrap: wrap-reverse;
+}
+
+@media (width < 600px) {
+  .drawer,
+  .sm,
+  .lg,
+  .sized {
+    width: 100vw;
+  }
+
+  .resizer {
+    display: none;
+  }
+
+  :root[data-hx-theme='dark'] .drawer {
+    border-inline-start: 0;
+  }
+
+  /* Phone: the head keeps its compact block padding (a page bar that lines up with it reads --drawer-head-h); its inline
+     padding is the body's, as everywhere. */
+  .head {
+    padding-block: max(var(--sp-2), var(--head-overhang));
+    padding-inline: var(--pad-surface);
+  }
+
+  .body {
+    --surface-inset: var(--pad-surface);
+  }
+
+  .foot {
+    --foot-share: 1 1 auto; /* footRow: each button grows and keeps its whole label */
+
+    flex-wrap: wrap-reverse; /* stacked buttons put the primary on top (as data-narrow above) */
+    padding-block: var(--sp-3) calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
+    padding-inline: var(--pad-surface);
+  }
+
+  /* Phone: the Outcome line takes its own row above the buttons; buttons share the row. An empty Outcome takes no share of it, and each
+     button keeps its whole label while the row can hold them (they wrap when it can't). */
+  .outcome:not(:empty) {
+    flex-basis: 100%;
+  }
+
+  .outcome:empty {
+    display: none;
+  }
+
+  .askText {
+    flex-basis: 100%;
+  }
+
+  .outcome,
+  .askText {
+    order: 1;
+  }
+
+  .askButtons {
+    --foot-share: 1; /* footRow: the buttons share the row */
+
+    flex: 1;
+    flex-wrap: wrap-reverse;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(var(--slide-from, 100%));
+  }
+}
+
+:dir(rtl) .drawer {
+  --slide-from: -100%;
+}
+
+/* Reduced motion: the flash has a raw duration, so it is switched off here; every --dur-* animation above is already
+   0 ms (kit/tokens.css). */
+@media (prefers-reduced-motion: reduce) {
+  .ask[data-attention] {
+    animation: none;
+    box-shadow: inset 0 0 0 3px var(--hx-warn-fill);
+  }
+
+}
+
+/* The footer's reason line: why the primary is off, or what pressing it does; it wraps rather than cuts, and on a phone
+   it takes the row above the buttons (the Outcome line's place). */
+.reason {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Forced colours repaint backgrounds, so the resizer's focus line would vanish: an outline in the system Highlight
+   colour on the strip instead. */
+@media (forced-colors: active) {
+  .resizer:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: calc(-1 * var(--bw-2));
+  }
+}

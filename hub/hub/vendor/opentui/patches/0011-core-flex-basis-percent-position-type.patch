@@ -1,0 +1,107 @@
+--- a/packages/core/src/Renderable.ts
++++ b/packages/core/src/Renderable.ts
+@@ -135,7 +135,7 @@
+   alignItems?: AlignString
+   justifyContent?: JustifyString
+   alignSelf?: AlignString
+-  flexBasis?: number | "auto" | undefined
++  flexBasis?: number | "auto" | `${number}%` | undefined
+   position?: PositionTypeString
+   overflow?: OverflowString
+   top?: number | "auto" | `${number}%`
+@@ -1338,6 +1338,11 @@
+     }
+   }
+ 
++  /** The position type set through `position` ("relative" unless set to "absolute"). */
++  get positionType(): PositionTypeString {
++    return this._positionType
++  }
++
+   set position(positionType: PositionTypeString | null | undefined) {
+     positionType ??= "relative"
+     if (!isPositionTypeType(positionType) || this._positionType === positionType) return
+@@ -1432,7 +1437,7 @@
+     this.requestRender()
+   }
+ 
+-  public set flexBasis(basis: number | "auto" | null | undefined) {
++  public set flexBasis(basis: number | "auto" | `${number}%` | null | undefined) {
+     this.setStyleValue(YogaValueKind.FlexBasis, NATIVE_EDGE_NONE, basis, isFlexBasisType)
+   }
+ 
+--- a/packages/core/src/lib/renderable.validations.ts
++++ b/packages/core/src/lib/renderable.validations.ts
+@@ -62,14 +62,14 @@
+   return isPositionType(value)
+ }
+ 
+-export function isFlexBasisType(value: any): value is number | "auto" | undefined {
++export function isFlexBasisType(value: any): value is number | "auto" | `${number}%` | undefined {
+   if (value === undefined || value === "auto") {
+     return true
+   }
+   if (typeof value === "number" && !Number.isNaN(value)) {
+     return true
+   }
+-  return false
++  return isValidPercentage(value)
+ }
+ 
+ export function isSizeType(value: any): value is number | `${number}%` | undefined {
+--- a/packages/core/src/lib/renderable.validations.test.ts
++++ b/packages/core/src/lib/renderable.validations.test.ts
+@@ -61,6 +61,8 @@
+     expect(isFlexBasisType(100)).toBe(true)
+     expect(isFlexBasisType("auto")).toBe(true)
+     expect(isFlexBasisType(undefined)).toBe(true)
++    expect(isFlexBasisType("100%")).toBe(true)
++    expect(isFlexBasisType("100")).toBe(false)
+     expect(isFlexBasisType(NaN)).toBe(false)
+   })
+ 
+--- a/packages/core/src/tests/renderable.test.ts
++++ b/packages/core/src/tests/renderable.test.ts
+@@ -375,6 +375,7 @@
+     ["getFlexGrow", (box) => box.getFlexGrow(), { flexGrow: 2 }, 2],
+     ["getFlexShrink", (box) => box.getFlexShrink(), { flexShrink: 3 }, 3],
+     ["getFlexBasis", (box) => box.getFlexBasis(), { flexBasis: 7 }, point(7)],
++    ["getFlexBasis percent", (box) => box.getFlexBasis(), { flexBasis: "100%" }, percent(100)],
+     ["getWidth", (box) => box.getWidth(), { width: "50%" }, percent(50)],
+     ["getHeight", (box) => box.getHeight(), { height: "40%" }, percent(40)],
+     ["getMinWidth", (box) => box.getMinWidth(), { minWidth: 4 }, point(4)],
+@@ -1703,3 +1704,34 @@
+     expect(root.height).toBe(newHeight)
+   })
+ })
++
++// CSS Flexbox 9.3: a wrapping row breaks its lines on each item's flex basis, a percentage one included.
++// A "100%" basis must start a line of its own, so the item after it moves to the next line.
++describe("Renderable - percentage flex basis in a wrapping row", () => {
++  test("a 100% basis item takes a line of its own", async () => {
++    const row = new BoxRenderable(testRenderer, { flexDirection: "row", flexWrap: "wrap", width: 40, columnGap: 1 })
++    const first = new BoxRenderable(testRenderer, { width: 29, height: 1, flexShrink: 0 })
++    const breaker = new BoxRenderable(testRenderer, { flexBasis: "100%", height: 0 })
++    const next = new BoxRenderable(testRenderer, { width: 6, height: 1, flexShrink: 0 })
++    row.add(first)
++    row.add(breaker)
++    row.add(next)
++    testRenderer.root.add(row)
++    await renderOnce()
++    expect(breaker.getLayout().width).toBe(40)
++    expect(next.getLayout().top).toBe(1)
++    expect(next.getLayout().left).toBe(0)
++  })
++})
++
++describe("Renderable - positionType getter", () => {
++  test("reads the position from options and later writes", () => {
++    const box = new BoxRenderable(testRenderer, { position: "absolute" })
++    expect(box.positionType).toBe("absolute")
++    box.position = "relative"
++    expect(box.positionType).toBe("relative")
++    box.position = null
++    expect(box.positionType).toBe("relative")
++    expect(new BoxRenderable(testRenderer, {}).positionType).toBe("relative")
++  })
++})

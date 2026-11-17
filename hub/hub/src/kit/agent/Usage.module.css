@@ -1,0 +1,106 @@
+/* Details → Usage: the figures, the by-model table, the requests under each turn. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-inline-size: 0;
+}
+
+.note {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.table th,
+.table td {
+  padding: var(--sp-1) var(--sp-2);
+  border-block-end: var(--bw) solid var(--hx-line);
+  text-align: start;
+  vertical-align: top;
+}
+
+/* A table data row is the shared table row height, a minimum (taller rows stay taller). */
+.table tbody tr {
+  height: var(--table-row-h);
+}
+
+.table th {
+  color: var(--hx-muted);
+  font-weight: var(--fw-medium);
+}
+
+.num {
+  text-align: end !important;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.name {
+  overflow-wrap: anywhere;
+}
+
+/* A second, muted line in a figure cell (of the tokens in, those served from the cache). */
+.sub {
+  display: block;
+  color: var(--hx-muted);
+}
+
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.turnHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.req {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-3);
+  padding: var(--sp-1) 0;
+  border-block-end: var(--bw) solid var(--hx-line);
+  font-size: var(--fs-sm);
+}
+
+.reqMain {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  min-inline-size: 0;
+}
+
+.dim {
+  color: var(--hx-muted);
+}
+
+.warn {
+  color: var(--hx-warn);
+}
+
+.bad {
+  color: var(--hx-danger);
+}

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent  [+ Get a computer]
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ Computers  Esc
+ atlas  ● Running                                         [Open terminal ⇗] [⋯]
+ SG n12 · Home base · █  Personal ·  Current computer
+
+  Overview  Connect ▸Permissions  Ports & addresses  Desktop  Network  Run
+  Programs  Backups  Storage
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ ACCESS                                                                    │█
+ │ Now: rules set outside the Hub decide who can open the programs.          │
+ │ Its project has access rules too.                                         │
+ │ hub-my-ip               IP range 203.0.113.7/32                           │
+ │ hub-my-ip may open      every program, logs                               │
+ │ Everyone not in a       Kept out                                          │
+ │ group                                                                     │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Who can open its programs                               [✦ Ask the Agent] │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

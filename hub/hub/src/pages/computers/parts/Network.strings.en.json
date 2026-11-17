@@ -1,0 +1,22 @@
+{
+  "network.tab": "Network",
+  "glance.title": "At a glance",
+  "glance.access": "Internet access",
+  "glance.access.tip": "Whether {{name}} can open new connections to the internet. Change it under Internet access below.",
+  "glance.exit": "Traffic leaves from",
+  "glance.exit.tip": "The address sites see when {{name}} connects out. Change it under Where your traffic comes out below.",
+  "glance.exit.direct": "{{name}}'s own address",
+  "glance.exit.down": "{{proxy}}, not reachable now",
+  "glance.exit.unsure": "{{proxy}}, not reported whether it works",
+  "glance.exit.unnamed": "An exit it can't read",
+  "glance.exit.stopped": "Not read while {{name}} is stopped",
+  "glance.exit.noAddress": "Not known yet",
+  "glance.fw": "Firewall",
+  "glance.fw.tip": "Rules for traffic into and out of {{name}}. They are listed under Firewall below.",
+  "glance.fw.count_one": "{{count}} rule",
+  "glance.fw.count_other": "{{count}} rules",
+  "glance.fw.max": "{{count}} of {{max}}",
+  "glance.fw.meter": "{{count}} of {{max}} firewall rules used",
+  "glance.cantTell": "Can't tell",
+  "glance.reading": "Reading…"
+}

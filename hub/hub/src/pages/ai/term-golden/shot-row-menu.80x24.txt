@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Chats   Agents   Automations   Knowledge  ▌Settings
+ ▌Models & keys   Connections & MCP   Rules & hooks
+ atlas › Models & keys
+ Models & keys                                            + Connect an account
+ atlas uses Hoody Free for everything.
+ ▌Default model  Accounts  Claude Code  Hoody AI allowance  Spending   2 ›
+ ──────────────────────────────────────────────────────────────────────────────
+ │ │ everyday work on this                                                 │ │
+ │ │ computer.                                                             │ │█
+ │ │                                                                       │ │▀
+ │ │ Bots                            Hoody Free  Included         [Change] │ │
+ │ │ Bots follow the default.                                              │ │
+ │ │                                                                       │ │
+ │ └───────────────────────────────────────────────────────────────────────┘ │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌──────────────────────────────────────────────────┌──────────────────────┐─┐
+ │ Accounts                                         │›    Replace key      │ │
+ │ The AI providers this computer can use, and how e│  ✓  Test             │ │
+ │ / Search                                         │──────────────────────│ │
+ │   Provider     How it connects            Status │     Disconnect       │ │
+ │   H Hoody AI   Included with Hoody        ● Ready└──────────────────────┘ │
+ │ › O OpenAI     Your key                   ● Ready      1 Bot            ⋯ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

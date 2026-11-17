@@ -1,0 +1,147 @@
+--- a/packages/native/src/utf8.zig
++++ b/packages/native/src/utf8.zig
+@@ -134,6 +134,35 @@
+     };
+ }
+ 
++/// hoody: whether LINE wrapping may break after the ASCII punctuation byte `b`, following the web's line-break rules
++/// (UAX #14 as browsers apply them) for the bytes around it on the same source line (`prev`/`next` null at the line's
++/// start/end; callers look across chunks). Word motion keeps every punctuation break; only line wrapping asks this.
++/// `.` `,` `;` `:` (IS) never open a break of their own ("$0.25", "4.5", "a,b"): a space after them is the break.
++/// `-` (HY) breaks only after a word and not before a digit ("5-with" may break; "-exec", "--flag", "sonnet-4" may not).
++/// `\\` (PR) and `(` `[` `{` (OP) never break after; `)` (CP) not before a letter or digit. `/` keeps its break except
++/// before a digit; `!` `?` `]` `}` keep theirs.
++pub fn asciiPunctLineBreak(prev: ?u8, b: u8, next: ?u8) bool {
++    const next_digit = if (next) |n| n >= '0' and n <= '9' else false;
++    const next_alnum = if (next) |n| (n >= '0' and n <= '9') or (n >= 'a' and n <= 'z') or (n >= 'A' and n <= 'Z') else false;
++    return switch (b) {
++        '.', ',', ';', ':' => false,
++        '-' => blk: {
++            const p = prev orelse break :blk false;
++            if (p == ' ' or p == '\t' or p == '-' or p == '(' or p == '[' or p == '{') break :blk false;
++            break :blk !next_digit;
++        },
++        '\\', '(', '[', '{' => false,
++        ')' => !next_alnum,
++        '/' => !next_digit,
++        else => true,
++    };
++}
++
++/// hoody: whether asciiPunctLineBreak's answer for `b` depends on the byte after it.
++pub fn asciiPunctLineBreakNeedsNext(b: u8) bool {
++    return b == '-' or b == ')' or b == '/';
++}
++
+ inline fn asciiLayoutWrapBreakKind(b: u8) LayoutWrapBreakKind {
+     return switch (b) {
+         ' ', '\t' => .whitespace,
+--- a/packages/native/src/text-buffer-view.zig
++++ b/packages/native/src/text-buffer-view.zig
+@@ -2032,6 +2032,12 @@
+             pending_word_width_cols: if (wrap_mode == .word) u32 else void = if (wrap_mode == .word) 0 else {},
+             pending_word_last_class: if (wrap_mode == .word) utf8.WordClass else void = if (wrap_mode == .word) .other else {},
+             source_line_has_non_whitespace: if (wrap_mode == .word) bool else void = if (wrap_mode == .word) false else {},
++            // hoody: the last byte of the previous chunk on this source line (0 = none), and a punctuation break at the
++            // end of that chunk whose answer waits for the next chunk's first byte (0 = none; utf8.asciiPunctLineBreak).
++            hoody_prev_byte: if (wrap_mode == .word) u8 else void = if (wrap_mode == .word) 0 else {},
++            hoody_chunk_prev: if (wrap_mode == .word) u8 else void = if (wrap_mode == .word) 0 else {},
++            hoody_deferred_punct: if (wrap_mode == .word) u8 else void = if (wrap_mode == .word) 0 else {},
++            hoody_deferred_prev: if (wrap_mode == .word) u8 else void = if (wrap_mode == .word) 0 else {},
+             word_chunk: if (wrap_mode == .word) ?*const TextChunk else void = if (wrap_mode == .word) null else {},
+             word_chunk_col_start: if (wrap_mode == .word) u32 else void = if (wrap_mode == .word) 0 else {},
+             word_chunk_byte_start: if (wrap_mode == .word) u32 else void = if (wrap_mode == .word) 0 else {},
+@@ -2402,6 +2408,22 @@
+                     wctx.word_chunk_byte_start = byte_end;
+                     return;
+                 }
++                // hoody: punctuation the web does not break after ("$0.25", "sonnet-4.5", "-exec") stays inside its word. At the
++                // end of a chunk an answer that needs the next byte waits for the next chunk (processWordChunk).
++                if (wrap_break.kind == .punctuation and wrap_break.byte_len == 1 and wrap_break.byte_start < chunk_bytes.len and
++                    chunk_bytes[wrap_break.byte_start] < 0x80)
++                {
++                    const i: usize = wrap_break.byte_start;
++                    const b = chunk_bytes[i];
++                    const prev: ?u8 = if (i > 0) chunk_bytes[i - 1] else if (wctx.hoody_chunk_prev != 0) wctx.hoody_chunk_prev else null;
++                    if (i + 1 == chunk_bytes.len and utf8.asciiPunctLineBreakNeedsNext(b)) {
++                        wctx.hoody_deferred_punct = b;
++                        wctx.hoody_deferred_prev = prev orelse 0;
++                        return;
++                    }
++                    const next: ?u8 = if (i + 1 < chunk_bytes.len) chunk_bytes[i + 1] else null;
++                    if (!utf8.asciiPunctLineBreak(prev, b, next)) return;
++                }
+                 if (col_end > wctx.word_chunk_col_start) {
+                     flushCompleteWordPiece(
+                         wctx,
+@@ -2490,6 +2512,18 @@
+                     finalizePendingWord(wctx);
+                     if (wctx.failed) return;
+                 }
++                // hoody: a punctuation break left open at the end of the previous chunk is decided by this chunk's first byte.
++                if (wctx.hoody_deferred_punct != 0 and chunk_bytes.len > 0) {
++                    const d = wctx.hoody_deferred_punct;
++                    wctx.hoody_deferred_punct = 0;
++                    const dprev: ?u8 = if (wctx.hoody_deferred_prev != 0) wctx.hoody_deferred_prev else null;
++                    if (utf8.asciiPunctLineBreak(dprev, d, chunk_bytes[0]) and wctx.pending_word_width_cols > 0) {
++                        finalizePendingWord(wctx);
++                        if (wctx.failed) return;
++                    }
++                }
++                wctx.hoody_chunk_prev = wctx.hoody_prev_byte;
++                if (chunk_bytes.len > 0) wctx.hoody_prev_byte = chunk_bytes[chunk_bytes.len - 1];
+                 wctx.word_chunk = chunk;
+                 wctx.word_chunk_col_start = 0;
+                 wctx.word_chunk_byte_start = 0;
+@@ -2717,6 +2751,10 @@
+                 if (comptime wrap_mode == .word) {
+                     wctx.source_line_has_non_whitespace = false;
+                     wctx.word_chunk = null;
++                    wctx.hoody_prev_byte = 0;
++                    wctx.hoody_chunk_prev = 0;
++                    wctx.hoody_deferred_punct = 0;
++                    wctx.hoody_deferred_prev = 0;
+                 }
+             }
+         };
+--- a/packages/native/src/tests/text-buffer-view_test.zig
++++ b/packages/native/src/tests/text-buffer-view_test.zig
+@@ -4618,3 +4618,38 @@
+         }
+     }
+ }
++
++// hoody: line wrapping breaks only where the web does (utf8.asciiPunctLineBreak); word motion is unchanged.
++fn hoodyLineStarts(text: []const u8, width: u32) ![]const u32 {
++    var pools = TestPools.init(std.testing.allocator);
++    defer pools.deinit();
++    var tb = try TextBuffer.init(std.testing.allocator, &pools.graphemes, &pools.links, .wcwidth);
++    defer tb.deinit();
++    var view = try TextBufferView.init(std.testing.allocator, tb);
++    defer view.deinit();
++    try tb.setText(text);
++    view.setWrapMode(.word);
++    view.setWrapWidth(width);
++    return std.testing.allocator.dupe(u32, view.getCachedLineInfo().line_start_cols);
++}
++
++test "TextBufferView word wrapping - hoody web break set" {
++    const cases = [_]struct { text: []const u8, width: u32, starts: []const u32 }{
++        .{ .text = "cost $0.25", .width = 8, .starts = &.{ 0, 5 } }, // not "$0." / "25"
++        .{ .text = "run -exec now", .width = 5, .starts = &.{ 0, 4, 10 } }, // word-initial hyphen stays
++        .{ .text = "x sonnet-4.5z", .width = 10, .starts = &.{ 0, 2, 12 } }, // no break after "." or before a digit
++        .{ .text = "self-contained", .width = 10, .starts = &.{ 0, 5 } }, // a hyphen after a word still breaks
++        .{ .text = "path/to/file", .width = 8, .starts = &.{ 0, 8 } }, // slash still breaks
++        .{ .text = "spreads (DNS).", .width = 10, .starts = &.{ 0, 8 } }, // never "spreads (" / "DNS)."
++        .{ .text = "ab [cd] e", .width = 5, .starts = &.{ 0, 3, 8 } }, // no break after an opening bracket
++        .{ .text = "ab {cd} e", .width = 5, .starts = &.{ 0, 3, 8 } },
++    };
++    for (cases) |c| {
++        const got = try hoodyLineStarts(c.text, c.width);
++        defer std.testing.allocator.free(got);
++        std.testing.expectEqualSlices(u32, c.starts, got) catch |err| {
++            std.debug.print("case {s} @ {d}\n", .{ c.text, c.width });
++            return err;
++        };
++    }
++}

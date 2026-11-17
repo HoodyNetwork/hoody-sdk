@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs                              ▸ Use with your agent  [+ Launch an app]
+ Apps on atlas: programs you open only when you need them.
+ ‹ Programs  Esc
+ Open WebUI  ● Port in use                                      See open apps █
+                                                                              █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ RIGHT NOW                                                                 │█
+ │ Open WebUI is already open, or something else is using its                │█
+ │ address.                                                                  │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+                                                                              █
+ Opens in  Web                           Source    Registry                   █
+ Started   Nov 11, 2026, 8:20 AM         Handle    b8c9…b8c9 ⧉                █
+                                                                              █
+                                                                       ⧉ copy █
+  $ open-webui serve --port 18080                                             █
+                                                                              █
+                                                                              █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │                                                                           │
+ │ Remove from this list           [Remove]                                  │
+ │ Only this row goes. Nothing on                                            │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

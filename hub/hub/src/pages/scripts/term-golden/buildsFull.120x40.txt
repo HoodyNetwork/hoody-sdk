@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                 ▸ Use with your agent   + New script
+ Computers             │  Small programs on your computers that answer an address or run on a schedule.
+ Files                 │
+ Bots                  │  ▾ Being built on this device · 3                                                            █
+ Board                 │     This device is holding 32 assistant requests: 3 for new scripts and 29 for changes to    █
+ Demo                  │     scripts. Make a script live, or discard a build or a change request, to start another.   █
+ Vault                 │     ▸ Show the change requests                                                               █
+                       │     Turn the store feed into a daily summary               ● Stopped borealis 40 minutes ago █
+On atlas ▾             │     [Open] [Discard]                                                                         █
+ Programs              │     Warn me when the disk fills up                     ● Ready to check atlas 12 minutes ago █
+ Schedules             │     [Open] [Discard]                                                                         █
+▌Scripts               │     Every Monday at 9:00, count last we… ● Building Running a code check atlas 3 minutes ago █
+ Logs                  │     [Open] [Stop] [Discard]                                                                  █
+ Tunnels               │                                                                                              █
+ Notes                 │                                                                                              █
+ AI                    │  / Search                   Status ▾  Computer ▾                                             █
+ VMs                   │  10 scripts  [Recently deleted · 2]  ↻ Refresh  View options                                 █
+                       │                                                                                              █
+Account                │      Script ↑                    Status          Address                     Calls, 24 h     █
+ Plans & Billing       │  ▾ atlas · 7                                                                                 █
+ Referrals             │  ▌   Daily digest  Idea          ● Working       /daily-digest                        30    ⋯█
+ Keys and tokens       │      Health check                ● Working       /health                           5,120    ⋯█
+ API                   │      Notify me  Idea             ● Working       /notify                               9    ⋯█
+ Notifications      26 │      Old report                  ● Turned off    /old-report                           —    ⋯█
+ Account               │      Order status                ● Failing       /orders/:id           1,290 · 61 failed    ⋯█
+                       │      Stripe webhook              ● Working       /webhooks/stripe          88 · 2 failed    ⋯
+ + Rent servers        │      Weather lookup              ● Working       /weather                 412 · 3 failed    ⋯
+ Guide                 │
+ Support               │  ▾ borealis · 3
+                       │      i Runs an older Scripts program. You can read and test its scripts. To change them,
+                       │        update the computer.
+                       │      ────────────────────────────────────────────────────────────────────────────────────────
+                       │      Daily digest  Read-only     —               /daily-digest                         —    ⋯
+                       │      Order status  Read-only     —               /orders/:id                           —    ⋯
+                       │      Weather lookup  Read-only   —               /weather                              —    ⋯
+                       │
+                       │  ▾ cedar · 0
+                       │      i Turned off. Start it to see its scripts.
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

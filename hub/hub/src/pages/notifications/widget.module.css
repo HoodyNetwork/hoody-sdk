@@ -1,0 +1,25 @@
+/* The widget's own controls on a touch screen: the notice titles and Mark all read are 44 px targets (the kit's 32 px row and
+   its text button stay as they are on a mouse). */
+.rowLink {
+  display: block;
+  overflow: hidden;
+}
+
+.rowText {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (pointer: coarse) {
+  .rowLink {
+    display: flex;
+    align-items: center;
+    min-height: var(--ctl-h);
+  }
+
+  .markAll {
+    min-height: var(--ctl-h);
+    padding-inline: var(--sp-2);
+  }
+}

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines                                                        ▸ Use with your agent
+ Computers             │  Full machines that run inside atlas.
+ Files                 │
+ Bots                  │  ▸ VMs    Images    KVM on computers
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  │ ! Cannot reach the VM service inside atlas. Check that the computer [Check again]  Details
+ Vault                 │  │   and its VM program are running, and that its access rules let you
+                       │  │   in.
+On atlas ▾             │
+ Programs              │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Schedules             │  │ This computer                                                                             │
+ Scripts               │  │ VMs need a bare-metal server, with KVM on for the computer.                               │
+ Logs                  │  │                                                                                           │
+ Tunnels               │  │ What this computer can run                                                                │
+ Notes                 │  │ ┌───────────────────────────────────────────────────────────────────────────────────────┐ │
+ AI                    │  │ │                                                                                       │ │
+▌VMs                   │  │ │ Run VMs on this computer (KVM)  [■ on ]                                               │ │
+                       │  │ │ KVM is on for this computer.                                                          │ │
+Account                │  │ │                                                                                       │ │
+ Plans & Billing       │  │ └───────────────────────────────────────────────────────────────────────────────────────┘ │
+ Referrals             │  │ Server  Bare metal                                                                        │
+ Keys and tokens       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ API                   │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Notifications      26 │  │ VMs                                                                                       │
+ Account               │  │ The VMs inside atlas cannot be shown yet.                                                 │
+                       │  │ Check that atlas is running and that its VM                                               │
+ + Rent servers        │  │ program is running inside it. Then check again.                                           │
+ Guide                 │  │  Check again                                                                              │
+ Support               │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  Questions
+                       │  ▸ What is a VM?
+                       │  ▸ Why can't my computer run VMs?
+                       │  ▸ How do I see a VM's screen?
+                       │  ▸ How do I install Windows?
+                       │  ▸ How do I reach a website that runs in a VM?
+                       │  ▸ Why did my VM stop or not start?
+                       │  ▸ Is the console line a terminal?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

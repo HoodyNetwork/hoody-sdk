@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Logs                                                     ▸ Use with your agent
+ 14 script runs in the last hour.
+   Everything    Visits    Bots    Changes  ▸ Scripts    Programs   [More ▾]
+ │ ● SG atlas · █ Personal ▾ Result ▾  When: 1 hour               [Refresh] [⋯]
+ Scripts: deploy-site.sh × [Clear all]
+ i Runs of deploy-site.sh                                     [Back to Scripts]
+   Time     Result   From    What happened                             Took
+ ▌ 08:48:00 ● OK     Scripts deploy-site.sh: ran                      4,200 ms█
+   08:07:00 ● Failed Scripts deploy-site.sh: ran                      4,510 ms█
+   07:26:00 ● OK     Scripts deploy-site.sh: ran                      4,820 ms█
+   06:45:00 ● OK     Scripts deploy-site.sh: ran                      5,130 ms█
+   06:04:00 ● OK     Scripts deploy-site.sh: ran                      5,440 ms█
+   05:23:00 ● OK     Scripts deploy-site.sh: ran                      5,750 ms█
+   04:42:00 ● Failed Scripts deploy-site.sh: ran                      6,060 ms█
+   04:01:00 ● OK     Scripts deploy-site.sh: ran                      6,370 ms░
+   03:20:00 ● OK     Scripts deploy-site.sh: ran                      6,680 ms░
+   02:39:00 ● OK     Scripts deploy-site.sh: ran                      6,990 ms░
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

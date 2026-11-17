@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                            ▸ Use with your agent  [+ New program]   + Launch an app
+ Computers             │  19 programs on atlas · 10 running · 4 need a look
+ Files                 │  ‹ Programs  Esc
+ Bots                  │  web  ● Stopped                                                                  [▷ Start] [⋯]
+ Board                 │
+ Demo                  │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Vault                 │  │ At a glance                                                                              │█
+                       │  │ Kind      Your program                                                                   │█
+On atlas ▾             │  │ State     Stopped                                                                        │█
+▌Programs              │  │ Restarts  Starts again whenever it stops                                                 │█
+ Schedules             │  │ Startup   [■ on ] Start with the computer                                                │█
+ Scripts               │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Logs                  │                                                                                              █
+ Tunnels               │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Notes                 │  │ Ports                                                                                    │█
+ AI                    │  │    Port              State          Address                           Alias              │█
+ VMs                   │  │› ▸ 3000              ● Stopped      Open port 3000 (not running yet)  shop-front        ⋯│█
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+Account                │                                                                                              █
+ Plans & Billing       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Referrals             │  │ Sandbox                                                                   [Edit sandbox] │█
+ Keys and tokens       │  │ Limits what this program can reach: files, network and resources.                        │█
+ API                   │  │ Saved policy            • Files are read-only except /hoody/storage/apps/web/data        │█
+ Notifications      26 │  │                         • Ports named: 8000 (listening is not limited in this network    │█
+ Account               │  │                           mode)                                                          │█
+                       │  │                         • New inbound IPv4 TCP connections from outside to its listening │█
+ + Rent servers        │  │                           ports only from 203.0.113.0/24; replies to its own connections │█
+ Guide                 │  │                           pass                                                           │█
+ Support               │  │                         • Each address: at most 50/s new inbound IPv4 TCP connections to │█
+                       │  │                           its listening ports (a short burst passes)                     │█
+                       │  │                         • The computer's own and the platform's connections are not      │█
+                       │  │                           filtered                                                       │█
+                       │  │                         • Other ports it listens on are not filtered (listening is not   │▀
+                       │  │                           limited in this network mode)                                  │
+                       │  │                         • Memory up to 256M                                              │
+                       │  │                         • Up to 64 processes                                             │
+                       │  │ Used at next start    Policy 3f9c1a2b7e4d ⧉                                              │
+                       │  │ Inbound firewall now  In place (1 rule)                                                  │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

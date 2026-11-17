@@ -1,0 +1,194 @@
+{
+ "namespaces": {
+  "api": {
+   "accessor": "client.api",
+   "services": {
+    "auth.tokens": {
+     "accessor": "client.api.auth.tokens",
+     "methods": {
+      "list": {
+       "operationId": "api_listAuthTokens",
+       "signature": "list()"
+      },
+      "listAll": {
+       "operationId": "api_listAuthTokens",
+       "signature": "listAll()",
+       "isPaginationHelper": "pagination_collect"
+      },
+      "listIterator": {
+       "operationId": "api_listAuthTokens",
+       "signature": "listIterator()",
+       "isPaginationHelper": "pagination_iterator"
+      },
+      "create": {
+       "operationId": "api_createAuthToken",
+       "signature": "create(data: object)"
+      },
+      "copy": {
+       "operationId": "api_copyAuthToken",
+       "signature": "copy(id: string, data: object)"
+      },
+      "update": {
+       "operationId": "api_updateAuthTokenPatch",
+       "signature": "update(id: string, data: object)"
+      }
+     }
+    },
+    "auth": {
+     "accessor": "client.api.auth",
+     "methods": {
+      "login": {
+       "operationId": "api_login",
+       "signature": "login(data: object)"
+      }
+     }
+    }
+   }
+  },
+  "browser": {
+   "accessor": "client.browser",
+   "services": {
+    "instances": {
+     "accessor": "client.browser.instances",
+     "methods": {
+      "start": {
+       "operationId": "browser_startInstance",
+       "signature": "start(options?: { browser_id?: string; chromiumVersion?: string; fingerprintId?: string; useRemoteDebuggingPort?: boolean; remoteDebuggingPort?: integer; remoteDebuggingAddress?: string; extensions?: string; extensionsDir?: string; extensionsStoreIds?: string; proxyServer?: string; proxyUsername?: string; proxyPassword?: string; proxyBypass?: string; enableQuic?: boolean; enableDnsOverHttps?: boolean; dnsOverHttpsUrl?: string; display?: string; showBrowser?: boolean; sessionName?: string; timezoneId?: string; locale?: string; userAgent?: string; viewport?: string; noViewport?: boolean; geolocation?: string; launchArguments?: array; browser?: string; firefoxVersion?: string; firefoxExecutablePath?: string; showDevtools?: boolean; userProfile?: object; stealth?: boolean; iframe?: boolean; iframe_url?: string; maximize_new_windows?: boolean })"
+      }
+     }
+    }
+   }
+  },
+  "code": {
+   "accessor": "client.code",
+   "services": {
+    "kit": {
+     "accessor": "client.code.kit",
+     "methods": {
+      "getHealth": {
+       "operationId": "code_healthCheck",
+       "signature": "getHealth()"
+      }
+     }
+    }
+   }
+  },
+  "exec": {
+   "accessor": "client.exec",
+   "services": {
+    "exec": {
+     "accessor": "client.exec",
+     "methods": {
+      "run": {
+       "operationId": "exec_executeScript",
+       "signature": "run(path: string, options?: { method?: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; query?: Record<string, unknown>; body?: unknown; headers?: Record<string, string> })"
+      }
+     }
+    }
+   }
+  },
+  "files": {
+   "accessor": "client.files",
+   "services": {
+    "downloads": {
+     "accessor": "client.files.downloads",
+     "methods": {
+      "listHistory": {
+       "operationId": "files_getDownloadHistory",
+       "signature": "listHistory(options: { download_history: string })"
+      }
+     }
+    }
+   }
+  },
+  "notifications": {
+   "accessor": "client.notifications",
+   "services": {
+    "notifications": {
+     "accessor": "client.notifications",
+     "methods": {
+      "dismiss": {
+       "operationId": "notifications_dismissNotifications",
+       "signature": "dismiss(data: object)"
+      }
+     }
+    }
+   }
+  },
+  "terminal": {
+   "accessor": "client.terminal",
+   "services": {
+    "sessions": {
+     "accessor": "client.terminal.sessions",
+     "methods": {
+      "reportDiagnostics": {
+       "operationId": "terminal_postTerminalState",
+       "signature": "reportDiagnostics(data?: object)"
+      }
+     }
+    }
+   }
+  },
+  "notes": {
+   "accessor": "client.notes",
+   "services": {
+    "kit": {
+     "accessor": "client.notes.kit",
+     "methods": {
+      "getHealth": {
+       "operationId": "notes_healthCheck",
+       "signature": "getHealth()"
+      }
+     }
+    },
+    "avatars": {
+     "accessor": "client.notes.avatars",
+     "methods": {
+      "upload": {
+       "operationId": "notes_uploadAvatar",
+       "signature": "upload(data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string)"
+      }
+     }
+    }
+   }
+  },
+  "egress": {
+   "accessor": "client.egress",
+   "services": {
+    "kit": {
+     "accessor": "client.egress.kit",
+     "methods": {
+      "getHealth": {
+       "operationId": "egress_healthCheck",
+       "signature": "getHealth()"
+      }
+     }
+    }
+   }
+  },
+  "proxyLogs": {
+   "accessor": "client.proxyLogs",
+   "services": {
+    "proxyLogs": {
+     "accessor": "client.proxyLogs",
+     "methods": {
+      "list": {
+       "operationId": "proxyLogs_listLogs",
+       "signature": "list(options?: { limit?: integer; offset?: integer; projectId?: string; computerId?: string; serviceName?: string; traceId?: string; level?: string; excludeService?: string; path?: string; status?: integer; minStatus?: integer; maxStatus?: integer; exposure?: string; includeRequestBody?: boolean; includeResponseBody?: boolean; last?: integer; afterId?: integer; beforeId?: integer; kind?: string; method?: string; source?: string; sinceMs?: integer; untilMs?: integer })"
+      },
+      "listAll": {
+       "operationId": "proxyLogs_listLogs",
+       "signature": "listAll(options?: { limit?: integer; offset?: integer; projectId?: string; computerId?: string; serviceName?: string; traceId?: string; level?: string; excludeService?: string; path?: string; status?: integer; minStatus?: integer; maxStatus?: integer; exposure?: string; includeRequestBody?: boolean; includeResponseBody?: boolean; last?: integer; afterId?: integer; beforeId?: integer; kind?: string; method?: string; source?: string; sinceMs?: integer; untilMs?: integer })",
+       "isPaginationHelper": "pagination_collect"
+      },
+      "listIterator": {
+       "operationId": "proxyLogs_listLogs",
+       "signature": "listIterator(options?: { limit?: integer; offset?: integer; projectId?: string; computerId?: string; serviceName?: string; traceId?: string; level?: string; excludeService?: string; path?: string; status?: integer; minStatus?: integer; maxStatus?: integer; exposure?: string; includeRequestBody?: boolean; includeResponseBody?: boolean; last?: integer; afterId?: integer; beforeId?: integer; kind?: string; method?: string; source?: string; sinceMs?: integer; untilMs?: integer })",
+       "isPaginationHelper": "pagination_iterator"
+      }
+     }
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,4 @@
+{
+  "propagating.created": "New links can take about a minute to start working while the address spreads (DNS).",
+  "propagating.row": "Made under a minute ago: it may still be spreading (DNS) and not answer yet."
+}

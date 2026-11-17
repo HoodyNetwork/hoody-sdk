@@ -1,0 +1,23 @@
+/* DateTimeField: the group label, then the date (YYYY-MM-DD) and the time (HH:MM) side by side; they
+   wrap under each other only when the row is narrower than both. */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.parts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.date input {
+  width: var(--field-date-w);
+}
+
+.time input {
+  width: var(--field-time-w);
+}

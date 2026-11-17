@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ New loop                                                                Esc ×
+ Home                  │   Chats   Agent┃ It repeats a prompt in one chat on atlas.
+ Computers             │   Workflows  ▌L┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  Loops   1 of 8┃ Chat * (required)
+ Bots                  │  A loop repeats┃ │ Pick a chat ▾
+ Board                 │                ┃
+ Demo                  │  / Search loops┃ Prompt * (required)
+ Vault                 │                ┃ ┃
+                       │    Loop        ┃
+On atlas ▾             │  › Check CI on ┃
+ Programs              │    Look for dep┃
+ Schedules             │    Proofread th┃ Sent into the chat on every run.
+ Scripts               │                ┃
+ Logs                  │                ┃ Every                  Unit
+ Tunnels               │                ┃ │ 30                   │ minutes ▾
+ Notes                 │                ┃
+▌AI                    │                ┃ Ends                           Stop after (runs)
+ VMs                   │                ┃ │ Never ▾                      │ 50
+                       │                ┃
+Account                │                ┃ [ ] Run once now, then on the timer
+ Plans & Billing       │                ┃
+ Referrals             │                ┃ Spending limit (US$)           Running-time limit
+ Keys and tokens       │                ┃ │ ____________________________ │ ____________________________
+ API                   │                ┃ Empty: no limit.               All runs together. Empty: no limit.
+ Notifications      26 │                ┃
+ Account               │                ┃ Running-time unit
+                       │                ┃ │ hours ▾
+ + Rent servers        │                ┃
+ Guide                 │                ┃ ▸ How long does a loop last?
+ Support               │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │  ▸ What happens┃ ─────────────────────────────────────────────────────────────────────────────
+ Typing · Esc leaves the field · Ctrl+K ┃                                                        [Cancel]   Start loop

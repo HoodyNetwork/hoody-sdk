@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                                    ▸ Use with your agent
+ Computers             │
+ Files                 │  ‹ Bots  Esc
+▌Bots                  │  Chief  ● Idle                                                              [Bot settings] [⋯]
+ Board                 │    SG atlas    Hoody Free  · Allow everything is off +2
+ Demo                  │
+ Vault                 │    Activity    Link and keys  ▸ Chat apps    Work 2
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │
+ Programs              │    ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Schedules             │    │ At a glance                                                                           │
+ Scripts               │    │ Apps             3, all paused              People           4                        │
+ Logs                  │    │ Waiting for you  Nothing                    Chats            3                        │
+ Tunnels               │    └───────────────────────────────────────────────────────────────────────────────────────┘
+ Notes                 │
+ AI                    │
+ VMs                   │    ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │    │ Chat apps                                       [▷ Resume all]  + Add a chat app  [⋯] │
+Account                │    │ Let people talk to this Bot from the chat apps they already use.                      │
+ Plans & Billing       │    │i All chat apps of this Bot are paused.                                                │
+ Referrals             │    │  App                      Kind         State       People  Needs you                  │
+ Keys and tokens       │    │› Support chat              Telegram    ● Paused         3  Nothing          [Manage] ⋯│
+ API                   │    │  Team workspace            Slack       ● Paused         0  Nothing          [Manage] ⋯│
+ Notifications      26 │    │  Community server          Discord     ● Paused         1  Nothing          [Manage] ⋯│
+ Account               │    └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

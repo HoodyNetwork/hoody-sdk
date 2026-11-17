@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Connect a laptop to atlas                                               Esc ×
+ Home                  │  Tunnels       ┃ ─────────────────────────────────────────────────────────────────────────────
+ Computers             │  Put a laptop a┃ ┌──────────────────────────────────────────────────────────────────────────┐█
+ Files                 │  sessions conne┃ │ WHAT YOU GET                                                             │█
+ Bots                  │                ┃ │ Like ngrok without a middleman: put a laptop app online straight         │█
+ Board                 │  / Search by ad┃ │ from atlas, with no outside service to pay for.                          │█
+ Demo                  │                ┃ │ Next: fix the fields with a problem                                      │█
+ Vault                 │      Shared as ┃ └──────────────────────────────────────────────────────────────────────────┘█
+                       │  ▾ Session 4f2a┃                                                                             █
+On atlas ▾             │  ›   Web addres┃                                                                             █
+ Programs              │      Web addres┃  ✓  What to connect                                                         █
+ Schedules             │      Inside thi┃                                                                             █
+ Scripts               │                ┃     What to connect                                                         █
+ Logs                  │  ▾ Session 9b1d┃     ┌─────────────────────────────────┐ ┌─────────────────────────────────┐ █
+▌Tunnels               │      Inside thi┃     │ (•) Put a laptop app online     │ │ ( ) Bring a laptop service into │ █
+ Notes                 │      Inside thi┃     │     Web pages and WebSockets,   │ │     this computer               │ █
+ AI                    │                ┃     │     at a web address.           │ │     Any TCP service, such as a  │ █
+ VMs                   │  ▾ Reconnecting┃     │                                 │ │     database.                   │ █
+                       │      Web addres┃     └─────────────────────────────────┘ └─────────────────────────────────┘ █
+Account                │                ┃     ▸ Which one should I pick?                                              █
+ Plans & Billing       │                ┃                                                                             █
+ Referrals             │                ┃  2  ┌──────────────────────────────────────────────────────────────────────┐█
+ Keys and tokens       │                ┃     │ On the laptop                                                        │█
+ API                   │                ┃     │                                                                      │█
+ Notifications      26 │                ┃     │ Host                          Port                                   │█
+ Account               │                ┃     │ │ __________________________  ┃ 0                                    │█
+                       │                ┃     │ Leave empty for this laptop.  ✗ Use a port from 1 to 65535.          │█
+ + Rent servers        │                ┃     │                                                                      │█
+ Guide                 │                ┃     │ ▸ Advanced  A fixed port, or a computer that asks for a password     │█
+ Support               │                ┃     └──────────────────────────────────────────────────────────────────────┘█
+                       │  Questions     ┃  3  Run it on the laptop                                                    █
+                       │  ▸ What is a tu┃     Fix the fields above to see the command.                                █
+                       │  ▸ Should I put┃                                                                             █
+                       │  ▸ Which port o┃     ‹ Command line ›  SDK                                                   ▀
+                       │  ▸ Which ports ┃
+                       │  ▸ When do I ti┃     ▸ If it fails
+                       │  ▸ Why did my t┃
+                       │  ▸ Why doesn't ┃  4  Online at its web address
+                       │  ▸ What does "R┃ ─────────────────────────────────────────────────────────────────────────────
+ Typing · Esc leaves the field · Ctrl+K ┃                                                                       [Close]

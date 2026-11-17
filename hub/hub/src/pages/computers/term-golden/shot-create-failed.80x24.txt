@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Get a computer                                                   Esc ×
+ Comput┃ Everything is filled in for you. Change what you like, then get
+ Your c┃ it.
+ ▸ Comp┃ ──────────────────────────────────────────────────────────────────────
+ ──────┃ ┌────────────────────────────────┐ ┌────────────────────────────────┐█
+ Comput┃ │ (•) A new computer             │ │ ( ) A copy of one of yours     │█
+ / Sear┃ │     Debian 13, set up below.   │ │     Same files as the computer │█
+ 8 comp┃ │                                │ │     you pick.                  │█
+ › █ at┃ └────────────────────────────────┘ └────────────────────────────────┘█
+    █ P┃
+   █ bo┃ ┌───────────────────────────────────────────────────────────────────┐
+    █ A┃ │ YOU GET                                                           │
+   █ ce┃ │ A new computer on n12, Singapore.                                 │
+    █ P┃ │ Size      16 cores, 64 GB RAM, shared                             │
+   █ du┃ │ System    Debian 13                                               │
+    █ L┃ │ Software  Hoody kit, Developer kit, Hoody AI                      │
+   █ em┃ └───────────────────────────────────────────────────────────────────┘
+    █ A┃
+   █ fj┃ ┌───────────────────────────────────────────────────────────────────┐
+    █ P┃ ──────────────────────────────────────────────────────────────────────
+   █ gr┃ ✗ Didn't go through
+    █ A┃ You already have a computer with that name.
+   █ ha┃ Pick another name.                             [Cancel]  Get computer
+ Tab mo┃ Details

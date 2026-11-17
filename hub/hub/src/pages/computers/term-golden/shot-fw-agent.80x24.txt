@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY       ┃ Ask the Agent about the firewall of atlas           Esc ×
+ Computers          ┃ Starts a new conversation with the Agent on atlas.
+ ▸ Computers    Serv┃ The answer shows in the Agent panel.
+ ───────────────────┃ ─────────────────────────────────────────────────────────
+ ‹ Computers  Esc   ┃  - Refuse UDP ports 27015-27030 from anywhere (turned
+ atlas  ● Running   ┃  off)
+ SG n12 · Home base ┃  {"action":"reject","protocol":"udp","description":"No
+                    ┃  game
+  Overview  Connect ┃  server","destination_port":"27015-27030","state":"disa
+  Programs  Backups ┃  bled"}
+ ───────────────────┃  Outbound rules:
+ │ [Exit addresses i┃  - Block TCP port 25 to anywhere
+ │ Sites see the exi┃  {"action":"drop","protocol":"tcp","description":"No    ▄
+ │ atlas's proxy.   ┃  outbound                                               █
+ │                  ┃  mail","destination_port":"25","destination":"0.0.0.0/0 █
+ │  Your app  →  atl┃  ","state":"enabled"}                                   █
+ │                  ┃                                                         █
+ │                  ┃ Tell the Agent what you want                            █
+ │                  ┃ ┃ Block outbound mail except to my relay                █
+ └──────────────────┃                                                         ▀
+                    ┃
+ ┌──────────────────┃ For example: block outbound mail from this computer.
+ │ Firewall ⓘ       ┃ ─────────────────────────────────────────────────────────
+ Typing · Esc leaves┃                                [Close]   ✦ Ask the Agent

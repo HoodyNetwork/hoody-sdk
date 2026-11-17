@@ -1,0 +1,5 @@
+/* Passcode lock sheet (pages/account/parts/LockSheet.tsx): the help lines under the settings. */
+.help {
+  margin: 0;
+  color: var(--hx-muted);
+}

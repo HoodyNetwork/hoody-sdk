@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Chats   Agents   Automations   Knowledge  ▌Settings
+ ▌Models & keys   Connections & MCP   Rules & hooks
+ atlas › Models & keys
+ Mode┌────────────────────────────────────────────────────────────────────┐unt
+ atla│ Use GPT-5 as the default?                                    Esc × │
+ ▌Def│ ────────────────────────────────────────────────────────────────── │
+ ────│ • Your AI helper and tasks switch to this model.                   │────
+ ┌───│ • Bots with their own model keep it: release-notes.                │──┐█
+ │ De│ • Agents with their own model keep it: reviewer.                   │  │▀
+ │ Th│ • Use of this model is billed to your OpenAI account.              │  │
+ │ ┌─│                                                                    │┐ │
+ │ │ │                                         [Cancel]   Use this model  ││ │
+ │ │ └────────────────────────────────────────────────────────────────────┘│ │
+ │ │ The model for chat and                                                │ │
+ │ │ everyday work on this                                                 │ │
+ │ │ computer.                                                             │ │
+ │ │                                                                       │ │
+ │ │ Bots                            Hoody Free  Included         [Change] │ │
+ │ │ Bots follow the default.                                              │ │
+ │ │                                                                       │ │
+ │ └───────────────────────────────────────────────────────────────────────┘ │
+ └───────────────────────────────────────────────────────────────────────────┘
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

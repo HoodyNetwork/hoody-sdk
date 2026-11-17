@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Logs                                                                    ▸ Use with your agent
+ Computers             │  14 script runs in the last hour.
+ Files                 │
+ Bots                  │    Everything    Visits    Bots    Changes  ▸ Scripts    Programs   [More ▾]
+ Board                 │  │ ● SG atlas · █ Personal ▾ Result ▾  When: 1 hour                              [Refresh] [⋯]
+ Demo                  │  Scripts: deploy-site.sh × [Clear all]
+ Vault                 │  i Runs of deploy-site.sh                                                    [Back to Scripts]
+                       │    Time     Result   From    What happened                                            Took
+On atlas ▾             │  ▌ 08:48:00 ● OK     Scripts deploy-site.sh: ran                                     4,200 ms█
+ Programs              │    08:07:00 ● Failed Scripts deploy-site.sh: ran                                     4,510 ms█
+ Schedules             │    07:26:00 ● OK     Scripts deploy-site.sh: ran                                     4,820 ms█
+ Scripts               │    06:45:00 ● OK     Scripts deploy-site.sh: ran                                     5,130 ms█
+▌Logs                  │    06:04:00 ● OK     Scripts deploy-site.sh: ran                                     5,440 ms█
+ Tunnels               │    05:23:00 ● OK     Scripts deploy-site.sh: ran                                     5,750 ms█
+ Notes                 │    04:42:00 ● Failed Scripts deploy-site.sh: ran                                     6,060 ms█
+ AI                    │    04:01:00 ● OK     Scripts deploy-site.sh: ran                                     6,370 ms░
+ VMs                   │    03:20:00 ● OK     Scripts deploy-site.sh: ran                                     6,680 ms░
+                       │    02:39:00 ● OK     Scripts deploy-site.sh: ran                                     6,990 ms░
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Referrals                                                                     [Program rules]
+ Computers             │  Invite people to Hoody. When they pay for servers by card or crypto, you earn Referral
+ Files                 │  credit.
+ Bots                  │
+ Board                 │  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓█
+ Demo                  │  ┃ Invite people, earn Referral credit                                                      ┃█
+ Vault                 │  ┃ Invite people to Hoody and earn Referral credit when they pay for servers by card or     ┃█
+                       │  ┃ crypto.                                                                                  ┃█
+On atlas ▾             │  ┃ ✓ You earn a share of what they pay for servers                                          ┃█
+ Programs              │  ┃ ✓ 10% as a Creator, from 11 customers who count                                          ┃█
+ Schedules             │  ┃ ✓ Credit pays for servers; Creators may ask to withdraw it                               ┃█
+ Scripts               │  ┃ How long you earn from each person                                                       ┃█
+ Logs                  │  ┃                                                                                          ┃█
+ Tunnels               │  ┃ When credit becomes usable                                                               ┃█
+ Notes                 │  ┃                                                                                          ┃█
+ AI                    │  ┃  Join…                                                                                   ┃█
+ VMs                   │  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛█
+                       │                                                                                              █
+Account                │
+ Plans & Billing       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+▌Referrals             │  │ What you'll get                                                                          │
+ Keys and tokens       │  │ ✓ A link to share, and codes of your own                                                 │
+ API                   │  │ ✓ Credit when the people you invite pay for servers                                      │
+ Notifications      26 │  │ ✓ Totals only: how many signed up and pay, never who                                     │
+ Account               │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+ + Rent servers        │
+ Guide                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+ Support               │  │ Levels                                                                                   │
+                       │  │ Your share depends on your level. Each purchase earns at the level of the month it's     │
+                       │  │ activated.                                                                               │
+                       │  │ ┌─────────────────────────────────────────┐  ┌─────────────────────────────────────────┐ │
+                       │  │ │ Referrer                                │  │ Creator                                 │ │
+                       │  │ │ A share                                 │  │ 10%                                     │ │
+                       │  │ │ of what the people you invite pay for   │  │ from the month after 11 or more         │ │
+                       │  │ │ servers                                 │  │ customers you referred have earned you  │ │
+                       │  │ │ ✓ From the day you join                 │  │ credit that wasn't all reversed         │ │
+                       │  │ │ ✓ Credit pays for servers               │  │ ✓ On purchases and renewals activated   │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines › web-1
+ web-1  ● Running                                               Shut down   [⋯]
+ A VM inside atlas.
+  Overview  Screen  Ports  Storage ▸Snapshots  Settings  Logs
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Snapshots                                                [Take a snapshot] │
+ │ A snapshot keeps the VM's disk as it is now, so you can go back to it.     │
+ │  Label            Taken                 Disk size Restore                  │
+ │› v1               Oct 15, 2025, 3:46 AM     20 GB ● Possible    [Restore] ⋯│
+ └────────────────────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Move this VM                                                               │
+ │ To move a VM to another computer, export a snapshot with the CLI.          │
+ │                                                                    ⧉ copy  │
+ │  $ hoody vm snapshots export create web-1 v1                               │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

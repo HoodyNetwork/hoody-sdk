@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY       ┃ New backup codes                                    Esc ×
+ Account            ┃ The backup codes you have now stop working. Use a
+ Your profile, how y┃ code from your authenticator app to confirm.
+ ▌Profile  Password ┃ ─────────────────────────────────────────────────────────
+ ───────────────────┃ Current password
+ ┌──────────────────┃ ┃
+ │ Security         ┃
+ │ ✓ Your email addr┃ 6-digit code
+ │ ✓ Two-step sign-i┃ │ [_][_][_][_][_][_]
+ │ i 11 other browse┃ The 6-digit code from your authenticator app.
+ └──────────────────┃
+ ┌──────────────────┃
+ │ Profile          ┃
+ │                  ┃
+ │ Display name     ┃
+ │                  ┃
+ │ Username         ┃
+ │                  ┃
+ │ Email            ┃
+ │                  ┃
+ │                  ┃
+ │ Member since     ┃
+ │                  ┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter op┃ [Cancel]   Make new codes

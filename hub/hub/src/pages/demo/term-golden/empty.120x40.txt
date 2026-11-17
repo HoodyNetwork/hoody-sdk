@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                          ◆ Personal ▾  No computers yet ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Demo
+ Computers             │  Everything in one list, newest first.
+ Files                 │
+ Bots                  │              ┌────────────────────────────────────────────────────────────────────┐
+ Board                 │              │ Your items live here                                               │
+▌Demo                  │              │                                                                    │
+ Vault                 │              │ An item keeps one thing you track. Create the first one to see it  │
+                       │              │ here.                                                              │
+On this computer       │              │                                                                    │
+ Programs              │              │  + New item                                                        │
+ Schedules             │              └────────────────────────────────────────────────────────────────────┘
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications         │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

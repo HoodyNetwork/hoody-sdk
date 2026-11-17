@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Files                         ▸ Use with your agent  ‹ One pane ›  Two panes
+ The folders on your computers.
+ ▸ Browse    Storage    Transfers    Use from your PC                         █
+ ─────────────────────────────────────────────────────────────────────────────█
+ [Up one folder] │ ● SG atlas · █ Personal ▾ / › home › ada                   █
+                                              [Find] [New folder] [Upload] [⋯]█
+                                                                              █
+ ◷ May have gone through                       [Check again]                  █
+ Making the folder lost may have gone through.                                █
+                                                                              █
+ / Search               Filters               7 items  ↻ Refresh  View options█
+   [ ] Name                           Size Modified               Kind ↑      █
+ › [ ] caf� Can't act on this              Oct 21, 2025, 6:13 AM  Folder     ⋯█
+   [ ] odd%dir Can't open here yet         Oct 22, 2025, 6:13 AM  Folder     ⋯█
+   [ ] projects                            Oct 23, 2025, 6:13 AM  Folder     ⋯█
+   [ ] bell\x07.txt                    3 B Oct 23, 2025, 4:13 AM  File       ⋯█
+   [ ] hosts-link                 ┌────────────────────────────────────── F6 ─┐
+   [ ] notes.txt                  │ ◷ This may have gone through    × Dismiss │
+   [ ] report.pdf                 │ The window closed before the server       │
+                                  │ confirmed it. Check before you try again. │
+ Questions                        │ [Check again]                             │
+ ▸ How do I open a computer's file└───────────────────────────────────────────┘
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+┌──────────────────────────────────────────────┐orage                                                             Esc ×
+│›✓ Amazon S3 or compatible                    │omputer checks the details with the storage before it keeps them.
+│   SFTP server                                │───────────────────────────────────────────────────────────────────────
+│   WebDAV (Nextcloud, ownCloud and others)    │──────────────────────────────────────────────────────────────────────┐
+│   MEGA                                       │E YOUR KEYS GO                                                        │
+│   Windows share (SMB)                        │, passwords and tokens you enter go only to this computer's           │
+│   FTP server                                 │s program, once, and are kept there in a private file. The            │
+│   Google Drive                               │never keeps them.                                                     │
+│   Dropbox                                    │ing is sent until you press Connect.                                  │
+│   Microsoft OneDrive                         │──────────────────────────────────────────────────────────────────────┘
+│   pCloud                                     │
+│  ↓ 93                                        │e
+└──────────────────────────────────────────────┘on S3 or compatible                                                   ▾
+ Logs                  │  │ Connected st┃
+ Tunnels               │  │ Connect clou┃ Service
+ Notes                 │  │ Keys, passwo┃ │ AWS ▾
+ AI                    │  │ are kept the┃
+ VMs                   │  │No storage co┃ Access key ID * (required)
+                       │  │Add cloud or ┃ │ ___________________________________________________________________________
+Account                │  │folder on thi┃
+ Plans & Billing       │  └─────────────┃ Secret access key * (required)
+ Referrals             │                ┃ │ ______________ [Show what you typed]
+ Keys and tokens       │                ┃
+ API                   │                ┃ Region
+ Notifications      26 │                ┃ │ ___________________________________________________________________________
+ Account               │                ┃
+                       │                ┃ Endpoint
+ + Rent servers        │                ┃ │ ___________________________________________________________________________
+ Guide                 │                ┃ Needed for services other than Amazon.
+ Support               │                ┃
+                       │  Questions     ┃
+                       │  ▸ How do I ope┃
+                       │  ▸ How do I mou┃
+                       │  ▸ Can I mount ┃
+                       │  ▸ What do I ne┃
+                       │  ▸ How do I put┃
+                       │  ▸ Which storag┃
+                       │  ▸ What happens┃
+                       │  ▸ How much can┃ ─────────────────────────────────────────────────────────────────────────────
+ Typing · Esc leaves the field · Ctrl+K ┃ [Cancel]  Connect

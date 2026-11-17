@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Chats   Agents   Automations   Knowledge  ▌Settings
+ ▌Models & keys   Connections & MCP   Rules & hooks
+ atlas › Models & keys
+ Models & keys                                            + Connect an account
+ atlas uses Hoody Free for everything.
+ ‹ 2   Claude Code  Hoody AI allowance  Spending ▌Advanced  Questions
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Advanced                                                                  │
+ │ ▾ Show advanced                                                           │
+ │   ┌─────────────────────────────────────────────────────────────────────┐ │
+ │   │                                                                     │ │
+ │   │ Helper model                    Follows the default                 │ │
+ │   │ Set on the general agent                                            │ │
+ │   │                                                                     │ │
+ │   │ Bot model                       Follows the default                 │ │
+ │   │ Set on the bot agent                                                │ │
+ │   │                                                                     │ │█
+ │   │ reviewer uses its own model     openai/gpt-5-mini                   │ │▀
+ │   │ GPT-5 mini                                                          │ │
+ │   │                                                                     │ │
+ │   │ Safety checker                  [■ on ]                             │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

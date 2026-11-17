@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing  Balance $250                                                   [+ Add funds]
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │    Plans  ▸ Bare metal    Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC                              [Pay now]
+                       │  ‹ Plans & Billing  Esc
+On atlas ▾             │  Frankfurt XL  · Pre-order                                                                   █
+ Programs              │  DE Frankfurt · delivered in about 3 days                                                    █
+ Schedules             │                                                                                              █
+ Scripts               │  Term                                                                                        █
+ Logs                  │  (•) $178 for 30 days                                                                        █
+ Tunnels               │  ( ) $419 for 90 days                                                                        █
+ Notes                 │                                                                                              █
+ AI                    │                                                                                              █
+ VMs                   │  Your order                                                                                  █
+                       │  Rental                                                                                  $149█
+Account                │  One-time setup                                                                           $29█
+▌Plans & Billing       │  ────────────────────────────────────────────────────────────────────────────────────────────█
+ Referrals             │  Total first payment                                                                     $178█
+ Keys and tokens       │                                                                                              █
+ API                   │  Delivery           Delivered within about 3 days of payment. Then about 30 minutes of setup.
+ Notifications      26 │  ────────────────────────────────────────────────────────────────────────────────────────────
+ Account               │  After the term  Held 14 days after the term. After the hold the server is released and its
+                       │                  data is deleted.
+ + Rent servers        │  ────────────────────────────────────────────────────────────────────────────────────────────
+ Guide                 │
+ Support               │  Processor                                                                     AMD EPYC 7443P
+                       │  ────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Cores                                                                  24 cores · 48 threads
+                       │  ────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Memory                                                                                256 GB
+                       │  ────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Memory type                                                                       Not listed
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Your balance covers it
+                       │                                                                        Reserve this pre-order
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

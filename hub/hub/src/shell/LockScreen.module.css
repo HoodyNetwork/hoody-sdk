@@ -1,0 +1,106 @@
+/* The lock screen: the card centred on the page background, max 360 px; above every app layer. */
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--sp-4);
+  background: var(--hx-bg);
+  overflow-y: auto;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-3);
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--hx-ink);
+}
+
+/* The word of the logo, as the sidebar's brand (Sidebar.module.css .brandText). */
+.brandText {
+  font-family: var(--font-head);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+  white-space: nowrap;
+}
+
+.title {
+  margin: 0;
+  font: var(--t-title);
+}
+
+.body {
+  margin: 0;
+  color: var(--hx-muted);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-3);
+  text-align: start;
+}
+
+.field {
+  width: 100%;
+}
+
+/* Kept even when empty so the button never jumps. */
+.error {
+  margin: 0;
+  min-height: 1.4em;
+  color: var(--hx-danger);
+  font: var(--t-small);
+}
+
+.unlock {
+  width: 100%;
+}
+
+.forgot {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+  text-align: center;
+}
+
+/* LockNotices: a lifecycle panel above the lock card (purge-failed, suspended). */
+.notice {
+  position: fixed;
+  inset-block-start: var(--sp-4);
+  inset-inline: var(--sp-4);
+  z-index: calc(var(--z-modal) + 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-inline: auto;
+  max-width: 480px;
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-2);
+  background: var(--hx-card);
+  color: var(--hx-ink);
+  text-align: center;
+}
+
+.noticeTitle {
+  margin: 0;
+  font-weight: var(--fw-semibold);
+}

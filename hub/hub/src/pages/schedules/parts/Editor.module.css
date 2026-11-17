@@ -1,0 +1,5 @@
+/* No padding of its own: the drawer's body already insets its content, so the choices line up with the drawer's title. */
+.choices { display: flex; flex-direction: column; gap: var(--sp-2); }
+.lead { margin: 0; padding-block-end: var(--sp-1); font: var(--t-body); color: var(--hx-muted); }
+.when { display: flex; flex-direction: column; gap: var(--sp-3); }
+.whenRow { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--sp-3); }

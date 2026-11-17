@@ -1,0 +1,38 @@
+.foot {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  min-inline-size: 0;
+}
+
+.foot .railPause {
+  gap: var(--rail-gap);
+  margin-inline-start: calc(var(--rail-pad) * -1);
+  padding-inline: calc(var(--rail-pad) - var(--bw));
+}
+
+/* A notice with its button: 6 px above and below, 12 px before the words, 8 px after the button, 12 px between them,
+   so the button never touches the notice's edge. */
+.warn {
+  gap: var(--sp-1) var(--sp-3);
+  padding-block: calc(var(--sp-1) + var(--sp-half));
+  padding-inline: var(--sp-3) var(--sp-2);
+  border: var(--bw) solid color-mix(in srgb, var(--hx-warn-fill) 30%, transparent);
+  border-radius: var(--r-1);
+  background: var(--hx-warn-t);
+  color: var(--hx-ink);
+  font-size: var(--fs-sm);
+}
+
+/* In a rail's foot the notice keeps 8 px from the foot's start line and 12 px from the control after it (4 px here
+   plus the foot's own 8 px gap). */
+.railWarn {
+  margin-inline: var(--sp-2) var(--sp-1);
+}
+
+.strip {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+

@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Support chat                                                     Esc ×
+ Bots  ┃ Telegram
+ ‹ Bots┃ ──────────────────────────────────────────────────────────────────────
+ Chief ┃ │ Setup                 ! In groups the Bot sees only     [How to fix]
+   SG┌────────────────────────────────────────────────────────────────────┐
+     │ Settings for Support chat                                    Esc × │
+   Ac│ ────────────────────────────────────────────────────────────────── │
+ ────│ These apply to this chat only. The rest follow the chat app.     █ │
+     │                                                                  █ │
+  ┌──│ ┌───────────────────────────────────────────────────────────────┐█ │
+  │ A│ │                                                               │█ │
+  │ A│ │ In groups, read only messages   [■ on ]                       │█ │───┐
+  │ W│ │ for the Bot                                                   │█ │   │
+  │ P│ │  Default                                                      │  │   │
+  │ C│ │                                                               │  │   │
+  └──│ │ How answers attach to the message                             │  │   │
+     │ │  Set for this chat                                            │  │] ⋯│
+     │ │ │ As a plain message ▾                      [Use the default] │  │   │
+  ┌──│ │                                                               │  │] ⋯│
+  │ C│ │ Message formatting              │ Rich text ▾                 │  │   │
+  │ L│                                                                    │───┘
+  │  │                                          [Cancel]   Save settings  │
+  │› └────────────────────────────────────────────────────────────────────┘
+ Tab mo┃

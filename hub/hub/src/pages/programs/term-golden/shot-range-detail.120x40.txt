@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                            ▸ Use with your agent  [+ New program]   + Launch an app
+ Computers             │  19 programs on atlas · 11 running · 4 need a look
+ Files                 │  ‹ Programs  Esc
+ Bots                  │  api  ● Running                                                       [↻ Restart] [■ Stop] [⋯]
+ Board                 │
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Vault                 │  │ At a glance                                                                               │
+                       │  │ Kind      Your program                                                                    │
+On atlas ▾             │  │ State     Running                                                                         │
+▌Programs              │  │ Restarts  Starts again after a crash                                                      │
+ Schedules             │  │ Startup   [□ off] Start with the computer                                                 │
+ Scripts               │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Logs                  │
+ Tunnels               │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Notes                 │  │ Ports                                                                       Start a port  │
+ AI                    │  │ 2 of 4 ports running                                                                      │
+ VMs                   │  │    Port              State          Address                      Alias                    │
+                       │  │› ▸ 8000              ● Running      Open port 8000                             [Restart] ⋯│
+Account                │  │  ▸ 8001              ● Running      Open port 8001               api-two       [Restart] ⋯│
+ Plans & Billing       │  │  ▸ 8002              ● Stopped      Open port 8002 (not runnin…                  [Start] ⋯│
+ Referrals             │  │  ▸ 8003              · not started  Open port 8003 (not runnin…  api-four        [Start] ⋯│
+ Keys and tokens       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ API                   │
+ Notifications      26 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Account               │  │ Sandbox                                                                    [Edit sandbox] │
+                       │  │ Limits what this program can reach: files, network and resources.                         │
+ + Rent servers        │  │ Saved policy            • No outgoing TCP connections                                     │
+ Guide                 │  │ Used at next start    Policy b1b2c3d4e5f6 ⧉                                               │
+ Support               │  │ Inbound firewall now  No inbound rules                                                    │
+                       │  │ Running program       Not reported. The computer does not say whether the running program │
+                       │  │                       is the sandboxed one: a policy applies when the program starts.     │
+                       │  │                                                                                           │
+                       │  │ ▸ Technical details                                                                       │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

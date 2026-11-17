@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                           ▸ Use with your agent  [+ Get a computer]
+▌Computers             │
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ Computers  Esc
+ Vault                 │  atlas  ● Running                                                        [Open terminal ⇗] [⋯]
+                       │  SG n12 · Home base · █  Personal ·  Current computer
+On atlas ▾             │
+ Programs              │  ▸Overview  Connect  Permissions  Ports & addresses  Desktop  Network  Run  Programs  Backups
+ Schedules             │   Storage
+ Scripts               │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Logs                  │  │ CPU and memory are shared with the other computers on n12; none is reserved for this     │
+ Tunnels               │  │ one. Disk space comes from the same server, and a computer can have its own disk limit.  │
+ Notes                 │  │ State        ● Running                        Memory       8 GB                          │
+ AI                    │  │ CPU          4 cores                          Disk         200 GB                        │
+ VMs                   │  │                                                                                          │
+                       │  │ SSH address  atlas.ssh.hoody.example  ⧉ copy                                             │
+Account                │  │ [□ off] Show usage                                                                       │█
+ Plans & Billing       │  │ i Off. Turn it on to read CPU, memory and disk.                                          │█
+ Referrals             │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Keys and tokens       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ API                   │  │ On atlas                                                                                 │█
+ Notifications      26 │  │ Programs    1 of 3 running ›                  Logs        What it logged ›               │
+ Account               │  │ Backups     3 snapshots ›                     Bots        Bots working here ›            │
+                       │  │ Addresses   1 of your own ›                   Board       Pin it to a board ›            │
+ + Rent servers        │  │ Files page  Open in Files ›                   SSH keys    All your SSH keys ›            │
+ Guide                 │  │ Schedules   Commands on a timer ›                                                        │
+ Support               │  └──────────────────┌─ Access ─────────────────────────────┐────────────────────────────────┘
+                       │                     │ Couldn't check                       │
+                       │                     │ We couldn't check who can reach      │
+                       │  ┌──────────────────│ atlas just now. Open the page again  │────────────────────────────────┐
+                       │  │ Access           │ to try again.                        │                                │
+                       │  │ SSH key          │ How access works                     │             Sep 13, 2026       │
+                       │  │                  │ [View access rules]                  │                                │
+                       │  │                  │ [Learn more ⇗]                       │                                │
+                       │  │                  └──────────────────────────────────────┘                                │
+                       │  │ Who can open its        [Access of atlas: Couldn't check] Couldn't check Permissions     │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

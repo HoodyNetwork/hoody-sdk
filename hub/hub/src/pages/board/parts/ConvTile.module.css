@@ -1,0 +1,49 @@
+/* A conversation tile's native body: a one-line status row, the dense transcript, and the dense composer under it. It sits on
+   the AI tab's and the Ask dock's conversation surface (card ground, page ink), never the tile body's dark program ground:
+   the transcript and composer are drawn in the page theme's tokens. */
+.root {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  block-size: 100%;
+  inline-size: 100%;
+  background: var(--hx-card);
+  color: var(--hx-ink);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-block: var(--sp-1);
+  padding-inline: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.view {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+}
+
+/* The source is opening: the tile's loader, centred in the body (never the "can't be read" card). */
+.opening {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The dense composer under the transcript: it keeps its own height; the transcript takes the rest. */
+.composer {
+  flex: none;
+  padding-inline: var(--sp-2);
+  padding-block-end: var(--sp-2);
+  min-inline-size: 0;
+}
+
+/* Live: a focus listener only (it notes typing); its children lay out as the body's own. */
+.live {
+  display: contents;
+}

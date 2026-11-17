@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Add a firewall rule                                                     Esc ×
+ Home                  │  Computers     ┃ ─────────────────────────────────────────────────────────────────────────────
+▌Computers             │                ┃ ┌───────────────────────────────────────────────────────────────────────────┐
+ Files                 │  ▸ Computers   ┃ │ WHAT THIS RULE DOES                                                       │
+ Bots                  │  ──────────────┃ │ Pick what to match; the rule shows here as a sentence.                    │
+ Board                 │                ┃ └───────────────────────────────────────────────────────────────────────────┘
+ Demo                  │  ‹ Computers  E┃
+ Vault                 │  atlas  ● Runni┃ ! This blocks ports 4, 5, 44, 45, 46, 48, 50, 55, 59, 60, 61, 74, 75, 76, 77,
+                       │  SG n12 · Home ┃   78, 3971, 3998, 3999, 23333, which the Hub's own programs use. You will be
+On atlas ▾             │                ┃   asked to type the computer's name.
+ Programs              │   Overview  Con┃
+ Schedules             │   Storage      ┃ ‹ Inbound ›  Outbound
+ Scripts               │  ──────────────┃
+ Logs                  │  ┌─────────────┃ What to do
+ Tunnels               │  │ At a glance ┃ │ Block (drop it silently) ▾
+ Notes                 │  │ Internet acc┃
+ AI                    │  │ Traffic leav┃ Protocol
+ VMs                   │  └─────────────┃ │ TCP ▾
+                       │                ┃
+Account                │  ┌─────────────┃ Ports
+ Plans & Billing       │  │ Internet acc┃ │ ___________________________________________________________________________
+ Referrals             │  │ Whether atla┃ One port (443), a range (8000-8100) or a list (80,443). This blocks direct
+ Keys and tokens       │  │ ✓ Allowed at┃ connections to port 22. SSH from Hoody keeps working: it does not pass
+ API                   │  └─────────────┃ through this firewall.
+ Notifications      26 │                ┃
+ Account               │  ┌─────────────┃ From addresses
+                       │  │ Where your t┃ │ 203.0.113.7, 198.51.100.0/24
+ + Rent servers        │  │ [Exit addres┃ IPv4 addresses or ranges (203.0.113.5, 10.0.0.0/8), separated by commas.
+ Guide                 │  │ Sites see th┃ Empty means anywhere.
+ Support               │  │  Your app  →┃ [Add my IP]
+                       │  │             ┃
+                       │  │             ┃ Description
+                       │  └─────────────┃ │ ___________________________________________________________________________
+                       │                ┃
+                       │  ┌─────────────┃ [■ on ] On
+                       │  │ Firewall ⓘ  ┃
+                       │  │ Anything not┃
+                       │  │    Action   ┃
+                       │  │▾ Inbound · 3┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ [Cancel]  Add rule

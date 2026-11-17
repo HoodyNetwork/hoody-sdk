@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Share Personal                                                                                        Esc ×
+ Home     ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Computers┃ ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐█
+ Files    ┃ │ SHARE A REALM                                                                                          │█
+ Bots     ┃ │ Give someone access to this realm's computers for a set time.                                          │█
+ Board    ┃ │ You get a short text and a sign-in link to send. They see what                                         │█
+ Demo     ┃ │ it opens and confirm before they're in.                                                                │█
+ Vault    ┃ └────────────────────────────────────────────────────────────────────────────────────────────────────────┘█
+          ┃                                                                                                           █
+On atlas ▾┃  1  Choose                                                                                                █
+ Programs ┃  2  Review                                                                                                █
+ Schedules┃                                                                                                           █
+ Scripts  ┃ Computers they can reach                                                                                  █
+ Logs     ┃ Couldn't list this realm's computers.                                                                     █
+ Tunnels  ┃                                                                                                           █
+ Notes    ┃ This gives access to every computer in this realm, now and later.                                         ▀
+ AI       ┃
+ VMs      ┃ [Try again]
+          ┃
+Account   ┃
+ Plans & B┃
+ Referrals┃ What they can do
+▌Keys and ┃ ‹ See only ›  Start and stop    Work on computers    All permissions    Custom
+ API      ┃ 2 rights · 1 shows account details
+ Notificat┃
+ Account  ┃ [ ] Computers                                          [ ] Inside computers
+          ┃ 1 of 8                                                 0 of 3
+ + Rent se┃ [x] See this realm's computers                         [ ] Run commands. Anything on the computer, secrets
+ Guide    ┃    Every share includes this.                              included, is reachable this way
+ Support  ┃                                                            Can show secrets   Can outlast the share
+          ┃ [ ] Start computers, and resume paused ones
+          ┃                                                        [ ] Add SSH keys, which keep working after the
+          ┃ [ ] Stop computers, including pause and force stop         share ends
+          ┃                                                            Can show secrets   Can outlast the share
+          ┃ [ ] Restart computers                                     Also turns on: Change a computer's settings
+          ┃
+          ┃ [ ] Read logs                                          [ ] See environment variable values
+          ┃     Can show secrets                                       Can show secrets
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tab move ┃                                                                                          [Cancel]   Review

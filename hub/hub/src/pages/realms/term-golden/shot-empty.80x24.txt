@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                     ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+ New realm
+ A separate space in your account, with its own computers, keys and settings.
+ Step 2 of 3 · Computers  ███████░░░
+  ✓ Name and colour ▸2 Computers  3 Create
+ ──────────────────────────────────────────────────────────────────────────────
+ ▸ Your choices                                                               █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Add computers (optional)                                                  │█
+ │ Each computer you pick joins this realm and keeps its other realms and    │█
+ │ its project. Skip this to start empty.                                    │█
+ │ You have no computers yet. The realm can start empty.                     │█
+ │ ▸ Does this move it out of its realms?                                    │█
+ │ ▸ Making new computers here                                               │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+                                                                              █
+ Questions                                                                    █
+ ▸ What is a realm?
+ ▸ What is in a new realm?
+ ▸ Does adding a computer here take it out of its other realms?
+ ▸ Can I make a new computer in an empty realm?
+ ──────────────────────────────────────────────────────────────────────────────
+ [Back]                                                      [Cancel]   Next →
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

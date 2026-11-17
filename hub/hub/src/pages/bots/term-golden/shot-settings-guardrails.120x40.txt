@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Settings for Chief                                                                                    Esc ×
+ Home     ┃ Model, behaviour, guardrails and voice.
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │ The Bot itself        ┌─────────────────────────────────────────────────────────────────────────────────┐
+▌Bots     ┃ │ Model                 │ Guardrails and limits                                                           │
+ Board    ┃ │ Behaviour             │ Limits on the work this Bot and its new tasks may do. They aren't instructions  │
+ Demo     ┃ │ Voice                 │ to the Bot.                                                                     │
+ Vault    ┃ │ The helpers it        │ ┌─────────────────────────────────────────────────────────────────────────────┐ │
+          ┃ │ starts                │ │                                                                             │ │
+On atlas ▾┃ │ Helpers               │ │ Rules                           │ Never delete data without asking.         │ │
+ Programs ┃ │▌Guardrails and        │ │ One rule per line. Tasks          Stay inside the shop repository.          │ │
+ Schedules┃ │ limits                │ │ already running keep the                                                    │ │
+ Scripts  ┃ │ Advanced              │ │ limits they started with.                                                   │ │
+ Logs     ┃                         │ │                                                                             │ │
+ Tunnels  ┃                         │ │ Check                           ‹ Strict (recommended) ›  Lenient    Off    │ │
+ Notes    ┃                         │ │ Work that may break a rule is                                               │ │
+ AI       ┃                         │ │ refused, and so is work that                                                │ │
+ VMs      ┃                         │ │ can't be checked.                                                           │ │
+          ┃                         │ │                                                                             │ │
+Account   ┃                         │ │ Tasks may use any computer      [■ on ]                                     │ │
+ Plans & B┃                         │ │ Turn it off to limit its tasks                                              │ │
+ Referrals┃                         │ │ to the computers you list.                                                  │ │
+ Keys and ┃                         │ │                                                                             │ │
+ API      ┃                         │ └─────────────────────────────────────────────────────────────────────────────┘ │
+ Notificat┃                         └─────────────────────────────────────────────────────────────────────────────────┘
+ Account  ┃
+          ┃
+ + Rent se┃
+ Guide    ┃
+ Support  ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tab move ┃ [Discard] [Cancel]  Save

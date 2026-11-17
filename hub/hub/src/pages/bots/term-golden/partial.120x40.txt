@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                       ▸ Use with your agent   + New Bot
+ Computers             │  Every Bot on your running computers, and the page of each one.
+ Files                 │
+▌Bots                  │  Bots             Working now    ! Need you    In chat apps
+ Board                 │  11               1              1             2
+ Demo                  │  on 1 computer    Show           Show          Show
+ Vault                 │
+                       │  / Search                   Filters                          11 Bots  ↻ Refresh  View options█
+On atlas ▾             │  i boreal: Starting. Its Bots show here when it runs.                                        █
+ Programs              │  ────────────────────────────────────────────────────────────────────────────────────────────█
+ Schedules             │  ! cinder: Couldn't read this computer's Bots.                                      Try again█
+ Scripts               │  ────────────────────────────────────────────────────────────────────────────────────────────█
+ Logs                  │                                                                                              █
+ Tunnels               │  ▌ C Chief                                                      ● Waiting for you [Answer] ⋯██
+ Notes                 │      Asked you something: answer to let it go on                                            ██
+ AI                    │       · Runs the team day: triage, approvals and summaries · atlas · Acme client            ██
+ VMs                   │       · Model Hoody Free                                                                    ██
+                       │      Telegram Slack Discord  Public link                                                    ██
+Account                │    S Support                                                            ● Working          ⋯██
+ Plans & Billing       │      … Working on it now · Answers questions about the shop and drafts replies              ██
+ Referrals             │       · atlas · Acme client · Model Hoody Free                                              ██
+ Keys and tokens       │      Discord                                                                                ██
+ API                   │    D Digest                                                  ● 2 messages waiting          ⋯██
+ Notifications      26 │      2 messages to read next · Writes the daily summary of what changed                     ██
+ Account               │       · atlas · Acme client · Model Hoody Free                                              ██
+                       │      Only here in the Hub                                                                   ██
+ + Rent servers        │    N Notes                                                                 ● Idle          ⋯██
+ Guide                 │      Last active 19 days ago · Files meeting notes where they belong · atlas · Personal     █
+ Support               │       · Model Hoody Free                                                                    █
+                       │      Only here in the Hub                                                                   █
+                       │    H Helper 1                                                              ● Idle          ⋯█
+                       │      Last active 20 days ago · Short-lived task helper · atlas · Acme client                █
+                       │       · Model Hoody Free                                                                    █
+                       │      Only here in the Hub                                                                   ░
+                       │    H Helper 3                                                              ● Idle          ⋯░
+                       │      Last active 20 days ago · Short-lived task helper · atlas · Acme client                ░
+                       │       · Model Hoody Free                                                                    ░
+                       │      Only here in the Hub                                                                   ░
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

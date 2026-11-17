@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                          ◆ Personal ▾  No computers yet ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Files
+ Computers             │  The folders on your computers.
+▌Files                 │
+ Bots                  │                 ┌──────────────────────────────────────────────────────────────┐
+ Board                 │                 │ No computers yet                                             │
+ Demo                  │                 │                                                              │
+ Vault                 │                 │ Files shows the folders on a computer. Get a computer first. │
+                       │                 │                                                              │
+On this computer       │                 │ [Get a computer]                                             │
+ Programs              │                 └──────────────────────────────────────────────────────────────┘
+ Schedules             │
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

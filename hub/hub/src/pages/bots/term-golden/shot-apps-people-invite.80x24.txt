@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Support chat                                                     Esc ×
+ Bots  ┃ Telegram
+ ‹ Bots┃ ──────────────────────────────────────────────────────────────────────
+ Chief ┃ │ Setup                 │     code.                                 │
+   SG a┃ │▌People                │ 02  Send the code to the person.          │
+       ┃ │ Chats                 │     Invite code                           │
+  ┌─ ! ┃ │ Settings              │     │ •••••••••••• (Hidden until you      │
+  │  Al┃                         │       press Show)                         │
+  │    ┃                         │        [Show] [Copy]                      │
+  │ Run┃                         │     ⚿ Send this code to the person. It    │
+  │ npm┃                         │     works once and is not shown again.    │
+  │ App┃                         │                                           │
+  │ [De┃                         │ IN THEIR CHAT APP ─────────────────────── │
+  └────┃                         │ 03  They send it to @atlas_support_bot in │▄
+  A che┃                         │     a private Telegram chat.              │█
+       ┃                         │ The code       Works once, for 15 minutes │█
+   Acti┃                         │ ───────────────────────────────────────── │█
+ ──────┃                         │ How you send it          Any way you like │█
+       ┃                         │ ───────────────────────────────────────── │█
+  ┌────┃                         │ Once it is used  They show up in this     │█
+  │ At ┃                         │                  list                     │█
+  │ App┃                         │ ───────────────────────────────────────── │█
+  │ Wai┃                         │ [Done, I sent it] [Cancel this code]      │█
+ Tab mo┃                         └───────────────────────────────────────────┘█

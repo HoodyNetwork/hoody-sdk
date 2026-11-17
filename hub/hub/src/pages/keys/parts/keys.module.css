@@ -1,0 +1,535 @@
+/* Keys page. Tokens only; layout classes for the frame, the drawers and the three tabs. */
+.frame {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+.frameFill {
+  height: 100%;
+  min-height: 0;
+}
+
+/* On a phone the list/detail page scrolls as one document (ListDetailPage): the frame grows with it, so the content
+   area's end padding (the bottom bar's strip and the floating button's room) comes after the last question instead
+   of before it. */
+@container content (width < 600px) {
+  .frameFill {
+    height: auto;
+    min-height: 100%;
+  }
+}
+.frameHead {
+  padding: var(--sp-4) var(--pad-page) 0;
+}
+
+/* The header's actions: wrap within the page header's width (its pagehead container), end-aligned. */
+.headActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  justify-content: flex-end;
+  max-width: 100cqi;
+}
+.notice {
+  padding: var(--sp-2) var(--pad-page) 0;
+}
+.body {
+  padding: var(--sp-4) var(--pad-page) var(--sp-8);
+  max-width: var(--content-max);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* The page's questions after a page-scrolling tab's body (Frame); the space is padding, never a margin. */
+.faq {
+  padding-block-start: var(--sp-6);
+  min-width: 0;
+}
+.bodyFill {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* list */
+.nameCell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+  min-width: 0;
+}
+.nameLine {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--fw-medium);
+}
+.badges {
+  display: flex;
+  gap: var(--sp-1);
+  flex-wrap: wrap;
+}
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+.faint {
+  color: var(--hx-muted);
+}
+.muted {
+  color: var(--hx-muted);
+}
+.realmChips {
+  display: flex;
+  gap: var(--sp-1);
+  flex-wrap: wrap;
+}
+.whereLinks {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.stateCell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  white-space: nowrap;
+}
+
+/* A change not confirmed (this page's: words, Check again, Stop tracking; another page's: words and its link): it
+   wraps onto lines inside the State cell. */
+.stateWrap {
+  flex-wrap: wrap;
+  white-space: normal;
+  max-inline-size: 100%;
+}
+
+/* Each part keeps to the cell and wraps its own words: a button or link wider than the column (Stop tracking, Open
+   the page that sent it) and a long Check outcome pill (May still go through). */
+.stateWrap > * {
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+.stateWrap * {
+  white-space: normal;
+}
+.stateWrap > button {
+  block-size: auto;
+}
+
+/* The Check's outcome pill (the group's first part): its words may take two lines in the 140px cell, so it grows
+   to hold them instead of keeping one tag's height. */
+.stateWrap > span:first-child {
+  block-size: auto;
+  min-block-size: var(--tag-h);
+  padding-block: var(--sp-half);
+}
+
+/* A change in flight: the words stay solid (fading them took the ink to about 3:1); only this dot pulses. */
+.pulseDot {
+  /* inline-block: inside the Shared tab's note (an inline RowNote) an inline box ignores its size and collapses to 0 px;
+     in KeysTab's flex cell it is a flex item either way. */
+  display: inline-block;
+  vertical-align: middle;
+  flex: none;
+  inline-size: 6px;
+  block-size: 6px;
+  border-radius: var(--r-round);
+  background: currentcolor;
+  animation: dot-pulse 1.2s var(--ease-in-out) infinite;
+}
+
+@keyframes dot-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulseDot {
+    animation: none;
+  }
+}
+
+.foot {
+  padding: var(--sp-3) var(--pad-page);
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+/* inspector */
+.insp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+}
+.sectionTitle {
+  margin: 0;
+  padding-block-end: var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--hx-muted);
+}
+.rightGroups {
+  display: grid;
+  gap: var(--sp-3);
+}
+.rightGroup {
+  display: grid;
+  gap: var(--sp-1);
+}
+.rightHead {
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-md);
+}
+.rightList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+}
+.rightList li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: var(--sp-6);
+}
+
+/* A key's held rights (inspector): one aligned row per right, the mark in its own column. */
+.heldGroups {
+  display: grid;
+  gap: var(--sp-4);
+}
+.heldHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-1);
+  border-bottom: var(--bw) solid var(--hx-line);
+}
+.heldTitle {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+}
+.heldList {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+}
+.heldList li {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-1) 0;
+  border-bottom: var(--bw) solid var(--hx-line);
+}
+.heldName {
+  display: grid;
+  min-width: 0;
+}
+.heldId {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--hx-muted);
+  overflow-wrap: anywhere;
+}
+.rights {
+  display: grid;
+  gap: var(--sp-3);
+}
+.rightsCount {
+  font-size: var(--fs-sm);
+  color: var(--hx-muted);
+}
+.fieldError {
+  color: var(--hx-danger);
+  font-size: var(--fs-sm);
+  margin: 0;
+}
+
+/* drawers */
+.newForm {
+  display: block;
+}
+.newCol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+.pick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-inline-start: var(--sp-4);
+}
+.addRow {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-end;
+}
+.help {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-normal);
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* shown once, pending, no secret */
+.shown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.warnLine {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  margin: 0;
+  padding: var(--sp-3);
+  background: var(--hx-warn-t);
+  border-radius: var(--r-1);
+  font-size: var(--fs-md);
+}
+.maskedCommand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.maskedLabel {
+  font-size: var(--fs-sm);
+  color: var(--hx-muted);
+}
+.maskedCode {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--hx-fill);
+  border-radius: var(--r-1);
+  overflow-x: auto;
+}
+.pending {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* ssh */
+
+/* Full width, as the other two tabs' content. */
+.ssh {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.sshValue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.sshEdit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.sshActions {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* An unconfirmed change's banner with its warned Dismiss under it. */
+.heldBanner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* shared */
+.shared {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.sharedLede {
+  margin: 0;
+  max-width: var(--measure);
+  color: var(--hx-muted);
+}
+.shareActions {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+
+  /* The table column is 260 px; in a phone's list row the status slot does not shrink, so the cell bounds itself
+     and wraps, keeping Stop and the row's line 1 in view. */
+  max-width: min(260px, 45vw);
+}
+.getList {
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  display: grid;
+  gap: var(--sp-1);
+  font-size: var(--fs-md);
+}
+
+/* A row's note (kit RowNote, which wraps) lines up with Stop at the end of the actions cell. */
+.shareNote {
+  text-align: end;
+}
+
+/* A paused share's Ends: the Paused pill, then the date. */
+.shareEnds {
+  display: inline-flex;
+  gap: var(--sp-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.shareText {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+.panel:focus {
+  outline: none;
+}
+
+.sshSub {
+  padding-block-end: var(--sp-3);
+}
+
+/* Another page's held change: its note and the link to that page. */
+.elsewhere {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+/* The banner takes the note's whole width: shrunk to its content in this column, its title wrapped one word per line
+   (Another / page) in the inspector. The link below keeps its own width. */
+.elsewhere > :first-child {
+  align-self: stretch;
+}
+
+/* The inspector's unconfirmed banner, scrolled into view after a change from the foot: clear of the sticky header, at
+   its measured height (a stacked header is taller than 64 px; DetailHeader publishes it). */
+.unknownAnchor {
+  scroll-margin-block-start: calc(var(--detail-head-live, var(--detail-head-h)) + var(--sp-2));
+}
+
+/* Share: QR code and agent prompt */
+.qrBox {
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-2) 0;
+}
+.qr {
+  width: 200px;
+  height: 200px;
+}
+.qrHidden {
+  filter: blur(6px);
+}
+.prompt {
+  margin: 0;
+  padding: var(--sp-3);
+  background: var(--hx-fill);
+  border-radius: var(--r-1);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* A share's rights: product areas side by side where they fit, one column on a phone; each right a row
+   with its tags and note under it. */
+.rightAreas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+  gap: var(--sp-6);
+  align-items: start;
+}
+.rightAreas .rightList {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: var(--sp-3);
+}
+.rightItem {
+  display: grid;
+  gap: var(--sp-1);
+}
+.rightMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  padding-inline-start: var(--sp-6);
+}
+
+/* The share's review: one card, room inside it, lists of plain lines. */
+.review {
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--hx-line);
+  border-radius: var(--r-2);
+}
+.reviewList {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding-inline-start: var(--sp-4);
+  font-size: var(--fs-sm);
+}
+.reviewArea {
+  display: grid;
+  gap: var(--sp-1);
+}
+.reviewAreaName {
+  margin: 0;
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-sm);
+}
+
+/* A right in the share Review: its words, then its tags, wrapping with a gap. */
+.reviewRight {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}

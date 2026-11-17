@@ -1,0 +1,8 @@
+/* footRow: how an overlay's footer shares its width between its actions. A footer (Dialog, Drawer, Sheet, MenuFooter)
+   takes `.row` and sets --foot-share where its buttons should grow (a phone, a narrow drawer); unset, each button keeps
+   its own width. Use it instead of a `> button` rule in the footer's own stylesheet.
+   A footer never sets a button's height, padding or touch floor: those are the Button's. */
+.row > button,
+.row > a {
+  flex: var(--foot-share, 0 1 auto); /* load-bearing: the only rule that reaches into a footer's buttons */
+}

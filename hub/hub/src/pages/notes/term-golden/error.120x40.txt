@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                      ◆ Personal ▾  Computers not loaded ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notes                                                     ▸ Use with your agent  [+ New note]
+ Computers             │  The notes on your computers. Everyone who opens Notes on a computer shares the same notes.
+ Files                 │
+ Bots                  │  / Search                   Computer ▾                                 ↻ Refresh  View options
+ Board                 │
+ Demo                  │
+ Vault                 │  ✗ Notes: atlas, borealis, granite and 1 more gave no full list of notes. cedar, dune, ember
+                       │  and 1 more aren't running.
+On this computer       │  Try again
+ Programs              │
+ Schedules             │
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+▌Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications       2 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

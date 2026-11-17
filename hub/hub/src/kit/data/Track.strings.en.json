@@ -1,0 +1,10 @@
+{
+  "track.state.done": "Done",
+  "track.state.now": "Needs you",
+  "track.state.later": "To do",
+  "track.state.wait": "Waiting",
+  "track.state.unknown": "Can't tell",
+  "track.optional": "Optional",
+  "track.open": "Show",
+  "track.state.sr": " · {{state}}"
+}

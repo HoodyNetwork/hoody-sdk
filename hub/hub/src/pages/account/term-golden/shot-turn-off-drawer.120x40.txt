@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ Turn off two-step sign-in?                          Esc ×
+ Home                  │  Account                           ┃ Your password alone will sign in to your account
+ Computers             │  Your profile, how you sign in, and┃ again. Every other session is signed out.
+ Files                 │                                    ┃ ─────────────────────────────────────────────────────────
+ Bots                  │  ▌Profile  Password  Two-step sign-┃ Current password
+ Board                 │  ──────────────────────────────────┃ ┃
+ Demo                  │  ┌─────────────────────────────────┃
+ Vault                 │  │ Security                        ┃ 6-digit code or backup code
+                       │  │ ✓ Your email address is verified┃ │ _______________________________________________________
+On atlas ▾             │  │ ✓ Two-step sign-in is on.       ┃
+ Programs              │  │ i 11 other browsers or devices a┃
+ Schedules             │  └─────────────────────────────────┃
+ Scripts               │                                    ┃
+ Logs                  │  ┌─────────────────────────────────┃
+ Tunnels               │  │ Profile                         ┃
+ Notes                 │  │                                 ┃
+ AI                    │  │ Display name                    ┃
+ VMs                   │  │                                 ┃
+                       │  │ Username                        ┃
+Account                │  │                                 ┃
+ Plans & Billing       │  │ Email                           ┃
+ Referrals             │  │                                 ┃
+ Keys and tokens       │  │ Member since                    ┃
+ API                   │  │                                 ┃
+ Notifications      26 │  │ Account ID                      ┃
+▌Account               │  │ Account deletion goes through su┃
+                       │  └─────────────────────────────────┃
+ + Rent servers        │                                    ┃
+ Guide                 │  ┌─────────────────────────────────┃
+ Support               │  │ Password                        ┃
+                       │  │                                 ┃
+                       │  │ Password                        ┃
+                       │  │ Changing it signs you out       ┃
+                       │  │ everywhere.                     ┃
+                       │  └─────────────────────────────────┃
+                       │                                    ┃
+                       │  ┌─────────────────────────────────┃
+                       │  │ Two-step sign-in                ┃
+                       │  │                                 ┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit  ┃ [Cancel]  [Turn off]

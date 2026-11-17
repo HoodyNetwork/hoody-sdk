@@ -1,0 +1,851 @@
+/* The bots page. Tokens only, logical properties, camelCase classes. The Bot pane is a size
+   container: two columns inside Activity start when the detail is 1000 px wide or more. */
+
+.mono {
+  font: var(--t-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.help {
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.time {
+  color: var(--hx-faint);
+  font: var(--t-small);
+  white-space: nowrap;
+}
+
+.sender {
+  color: var(--hx-muted);
+  font: var(--t-small);
+  overflow-wrap: anywhere;
+}
+
+.senderMark {
+  margin-inline-end: var(--sp-1);
+}
+
+/* A table cell's content (computer link, chat apps): bounded by the cell, so a long name ends in an ellipsis. */
+.cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  max-inline-size: 100%;
+}
+
+/* Chat apps: a narrow rail takes a second line, never a cut name; stacked tags keep a small gap. */
+.apps {
+  flex-wrap: wrap;
+  row-gap: var(--sp-1);
+}
+
+.cellText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.fieldLabel {
+  font: var(--t-label);
+  color: var(--hx-ink);
+}
+
+/* ── list ─────────────────────────────────────────────────────────────────────────── */
+
+.nameCell {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.note {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  max-inline-size: 100%;
+}
+
+/* A notice that is not a sentence (a held start, the sign-in form) in the stack, on the same inset as the bands. */
+.noticeBox {
+  padding: var(--sp-2) var(--band-flush-pad, var(--sp-3));
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.nameMark {
+  display: inline-flex;
+  flex: none;
+}
+
+.lockedRow {
+  display: inline-flex;
+  min-width: 0;
+  color: var(--hx-muted);
+}
+
+.lockIcon {
+  flex: none;
+  color: var(--hx-muted);
+}
+
+.stoppedList {
+  inline-size: 100%;
+  max-inline-size: 560px;
+  text-align: start;
+}
+
+/* ── the Bot pane ─────────────────────────────────────────────────────────────────── */
+
+.pane {
+  --tabs-sticky-top: var(--detail-head-h);
+  --tabs-sticky-bg: var(--hx-card);
+
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  min-width: 0;
+  container: bot-pane / inline-size;
+}
+
+.metaGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-half);
+}
+
+.hostingPopover {
+  inline-size: 320px;
+}
+
+.pinned {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-5) var(--sp-3);
+}
+
+/* The pane's tabs carry no panels (the body is .paneBody, a sibling), so the kit Tabs box is exactly as tall as its
+   bar, and a sticky bar cannot move inside a box that tall. Without its own box the bar sticks within the pane. */
+.tabsInset {
+  display: contents;
+}
+
+/* The tab strip starts at the same inline inset as the header and the body, never flush against the list.
+   The inset is on the bar (first child), so its underline and sticky ground still span the pane. */
+.tabsInset > :first-child {
+  padding-inline: var(--sp-5);
+}
+
+.paneBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--sp-4) var(--sp-5) var(--sp-6);
+}
+
+/* A narrow pane stacks the header (name and state, chips, then actions) instead of squeezing the title. */
+@container bot-pane (max-width: 640px) {
+  .head {
+    position: static;
+    flex-wrap: wrap;
+    row-gap: var(--sp-2);
+    padding-inline: var(--sp-3);
+  }
+
+  .head > :first-child {
+    flex: 1 1 100%;
+  }
+
+  /* the state chip sits at the end of the name's line; the name gives way first */
+  .head h2 {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .head > :last-child {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    margin-inline-start: 0;
+  }
+
+  /* On the tabs, not on .pane: a container query never styles its own container. The header stacks and scrolls away
+     here, so a stuck strip sits at the top. */
+  .tabsInset {
+    --tabs-sticky-top: 0;
+  }
+
+  .pinned {
+    padding-inline: var(--sp-3);
+  }
+
+  .paneBody {
+    padding-inline: var(--sp-3);
+  }
+
+  .tabsInset > :first-child {
+    padding-inline: var(--sp-3);
+  }
+}
+
+/* the waiting card: the kit GateCard and the lines under it */
+.gate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* ── Activity ─────────────────────────────────────────────────────────────────────── */
+
+/* Rows: the details (narrow pane only), the log taking the height left, then the chat box's dock. No minimum height: an
+   empty or failed log leaves no blank band under its head. */
+.activity {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: var(--sp-4);
+
+  /* The log follows its end itself (ActivityLog): the browser's scroll anchoring would move a reader at the end up when
+     the content settles, and that reads as the reader leaving the end. */
+  overflow-anchor: none;
+}
+
+/* The Activity tab's chat box (Say.tsx): the tab's last row, full width (under the log and the details rail).
+   The log has no scroll of its own: the page scrolls as one, and the dock is held at the bottom of that
+   scroll. Held there it is the visible bottom, and its own row is the tab's last, so scrolled to
+   the end the newest row sits wholly above it; it never covers the last row. Sticky stops at the main area's end padding
+   (the phone's bottom bar), as the kit's detail footer does. */
+.sayDock {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  grid-column: 1 / -1;
+  background: var(--hx-bg);
+}
+
+/* The thread's end: a running turn's working row (the kit Spinner, named), then the waiting card, directly above the chat
+   box. */
+.working {
+  display: flex;
+  padding: var(--sp-half) var(--sp-2);
+}
+
+.cardEnd {
+  scroll-margin-block-end: var(--sp-6);
+}
+
+.logCol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* The Activity tab's composer (Say.tsx): under the log, the Send button at its end. */
+.say {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-block-start: var(--sp-2);
+}
+
+.logHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.logTitle {
+  margin: 0;
+  font: var(--t-section);
+}
+
+.logArchive {
+  margin-inline-start: auto;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.older {
+  display: flex;
+  justify-content: center;
+}
+
+.log > li {
+  flex: none;
+}
+
+.log {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bubble {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  max-inline-size: 80%;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-2);
+  font: var(--t-body);
+  overflow-wrap: anywhere;
+}
+
+.bubbleUser {
+  align-self: flex-end;
+  border: var(--bw) solid var(--hx-line-2);
+  background: var(--hx-hover);
+  color: var(--hx-ink);
+}
+
+.bubbleBot {
+  align-self: flex-start;
+  border: var(--bw) solid var(--hx-line);
+  background: var(--hx-card);
+}
+
+.runtime {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 28px;
+  padding: var(--sp-half) var(--sp-2);
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.runtimeIcon {
+  flex: none;
+}
+
+.runtimeKind {
+  color: var(--hx-ink);
+  font-weight: var(--fw-medium);
+}
+
+.runtimeText {
+  flex: 1 1 200px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.runtimeWarn .runtimeIcon {
+  color: var(--hx-warn);
+}
+
+.runtimeBad .runtimeIcon,
+.runtimeBad .runtimeKind {
+  color: var(--hx-danger);
+}
+
+.runtimeRaw {
+  flex-basis: 100%;
+  font: var(--t-small);
+}
+
+/* The Details panel, opened from the header: above the log below the wide break (never over it: the waiting
+   card ends the thread, so the log stays on screen), a column beside the log on a wide pane. */
+.activityDetails {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.details {
+  min-width: 0;
+}
+
+/* A phone-wide pane: the Activity head wraps; the title and its state on the first row, the rest under them,
+   and nothing shrinks past its box (Archive is never cut). */
+@container bot-pane (width < 600px) {
+  .logHead {
+    flex-wrap: wrap;
+    row-gap: var(--sp-2);
+  }
+
+  .logHead > * {
+    min-width: 0;
+  }
+
+  .logArchive {
+    margin-inline-start: 0;
+  }
+}
+
+@container bot-pane (min-width: 1000px) {
+  .activity {
+    gap: var(--sp-6);
+  }
+
+  .activityDetails {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .activityDetails > .logCol {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  /* Held on screen beside the reader's place in the thread, under the stuck header and tab strip (the kit Tabs' own
+     offset plus its height). */
+  .details {
+    position: sticky;
+    inset-block-start: calc(var(--detail-head-live, var(--tabs-sticky-top, 0px)) + var(--tabs-h) + var(--sp-4));
+    grid-row: 1;
+    grid-column: 2;
+    align-self: start;
+  }
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.railTitle {
+  margin: 0 0 var(--sp-2);
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+/* ── tab bodies ───────────────────────────────────────────────────────────────────── */
+
+.tabBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0;
+  font: var(--t-section);
+}
+
+.freshKey {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: var(--bw) solid var(--hx-acc-edge);
+  border-radius: var(--r-2);
+  background: var(--hx-acc-soft);
+}
+
+.freshKey > :first-child {
+  flex: 1 1 280px;
+}
+
+.connect {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  max-inline-size: 720px;
+}
+
+.taskCell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* chat apps */
+
+.withMark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.appField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.appFieldLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--hx-ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.platforms {
+  display: flex;
+  justify-content: center;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-3);
+}
+
+.platform {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--hx-ink);
+}
+
+/* ── drawers ──────────────────────────────────────────────────────────────────────── */
+
+.drawerForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.drawerFooter {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.drawerFooterNote:empty {
+  display: none;
+}
+
+.drawerFooterActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+.urlPreview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--bw) solid var(--hx-line-2);
+  border-radius: var(--r-2);
+  background: var(--hx-card);
+  color: var(--hx-ink);
+  font: var(--t-mono);
+  overflow-wrap: anywhere;
+}
+
+.previewLabel {
+  color: var(--hx-muted);
+  font: var(--t-label);
+}
+
+.railHost {
+  container: rail-drawer / inline-size;
+  min-height: 100%;
+}
+
+.railDrawer {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: var(--sp-5);
+  min-height: 100%;
+}
+
+.sectionRail {
+  align-self: start;
+  position: sticky;
+  inset-block-start: 0;
+}
+
+/* A label over the rail's sections that belong together ("The Bot itself", "The helpers it starts"); not a control. */
+.sectionRailGroup {
+  padding: var(--sp-3) var(--sp-3) var(--sp-1);
+  color: var(--hx-faint);
+  font: var(--t-label);
+}
+
+.sectionRailGroup:first-child {
+  padding-block-start: 0;
+}
+
+.railDrawerBody {
+  min-width: 0;
+}
+
+@container rail-drawer (max-width: 639px) {
+  .railDrawer {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+  }
+
+  /* The strip: the kit section menu laid out as a row through its own hooks (no rail line, an underline on the current item). */
+  .sectionRail {
+    --section-menu-flow: row;
+    --section-menu-marks: 0;
+    --section-menu-current-line: var(--hx-section-bar);
+
+    position: static;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  /* In the strip a group label is a thin divider; its words stay for assistive tech. */
+  .sectionRailGroup {
+    flex: none;
+    align-self: stretch;
+    inline-size: var(--bw);
+    margin-inline: var(--sp-1);
+    padding: 0;
+    overflow: hidden;
+    background: var(--hx-line);
+    color: transparent;
+    white-space: nowrap;
+  }
+
+  .sectionRailGroup:first-child {
+    display: none;
+  }
+}
+
+.settingsBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.settingsSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.inlineOutcome {
+  min-height: var(--sp-6);
+}
+
+.ownerCode {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.finishedBar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* ── chat apps: the invite's buttons ──────────────────────────────────────────────── */
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.formStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.rightsBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.keyShare {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.keyShareNote {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--hx-muted);
+}
+
+.keyShareQr {
+  width: 200px;
+  height: 200px;
+}
+
+.keyShareQrHidden {
+  filter: blur(6px);
+}
+
+/* Chat apps: what waits on the person. */
+.waitIcon {
+  flex: none;
+  color: var(--hx-warn);
+}
+
+.flowBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--bw) solid var(--hx-line-2);
+  border-radius: var(--r-2);
+}
+
+.flowWarn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.checkIcon {
+  flex: none;
+  color: var(--hx-ok);
+}
+
+.flowDone {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+
+/* The ways in the foot: one row of marks with one gap between them, which wraps whole (never a name apart from its
+   mark), the lines one small gap apart. */
+.reachWays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  align-items: center;
+  min-width: 0;
+}
+
+/* The public link among them: a mark and its word, as a chat app's. */
+.reachLink {
+  display: inline-flex;
+  gap: var(--sp-1);
+  align-items: center;
+  white-space: nowrap;
+}
+
+/* A card's foot (how to reach the Bot): every card's foot band is 60 px high, the height of a foot with two lines of chat
+   apps (the band's line and its padding come off the words' box), its words centred in that height, so the cards of a
+   row end on the same line and the row menu sits at the same place in each. */
+.reach {
+  display: grid;
+  align-content: center;
+  min-block-size: calc(60px - var(--sp-4) - var(--bw));
+}
+
+/* The rail's status column (beside an open Bot): the status's dot and word at one width on every row, so what follows
+   starts at one x. The width is nine of the pill's monospace characters plus its dot and the dot's gap; a longer word
+   (a script whose letters are wider) widens its own row rather than being cut. */
+.railStatusTrack {
+  /* Nine characters of the status type: the longest rail word ("Needs you", "99 queued"); a longer one (a queue of 100
+     or more) widens its own row only. */
+  --rail-status-ch: 9;
+  --rail-status-w: calc(var(--rail-status-ch) * (1ch + var(--tracking-tag)) + 2 * var(--gap-dot));
+
+  display: inline-flex;
+}
+
+/* Every row's status keeps the pill's padding and edge, so its dot and word sit at one x; only a Bot waiting on the
+   person (Needs you, Paused) draws the box (line 2 clips its start side, so the box cannot hang out of the column). */
+.railStatusTrack > * {
+  min-inline-size: calc(var(--rail-status-w) + 2 * (var(--hx-tag-pad) + var(--bw)));
+}
+
+.railStatusTrack:not([data-boxed]) > * {
+  border-color: transparent;
+  background: transparent;
+}
+
+/* A rail row's line 2 after its status column: its realm, what the Bot is doing and Privacy on, starting one column gap
+   after the status, then the end track. One line in every row, so the rows share one height. */
+.railLine {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+  padding-inline-start: var(--sp-3);
+
+  /* Its width comes from the line, never from its words: a phrase that does not fit then leaves the line instead of
+     pushing it wider than the row. */
+  contain: inline-size;
+}
+
+/* The phrases take what the end track leaves. */
+.railNow {
+  flex: 1 1 0;
+}
+
+/* Phrases drawn whole or not at all: each is a nowrap flex item on a one-line box; one that does not fit moves to the
+   next line, which is clipped (the empty first item lets even the first phrase move). Never an ellipsis mid-word; a
+   phrase not drawn is still in the row's words. */
+.railWhole {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--sp-1);
+  align-content: flex-start;
+  align-items: center;
+  min-width: 0;
+  block-size: var(--sp-5);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.railWhole::before {
+  block-size: var(--sp-5);
+  content: '';
+}
+
+/* The first phrase starts at the line's start: it takes back the gap after the box's empty first item. */
+.railNow > .railPhrase:first-of-type {
+  margin-inline-start: calc(-1 * var(--sp-1));
+}
+
+.railPhrase {
+  display: inline-flex;
+  flex: none;
+  gap: var(--sp-1);
+  align-items: center;
+
+  /* The space before the line's end belongs to a drawn phrase: a line whose words all left keeps no gap before its
+     marks. The next phrase takes it back, so phrases stay one --sp-1 apart. */
+  margin-inline-end: var(--sp-2);
+}
+
+.railPhrase + .railPhrase {
+  margin-inline-start: calc(-1 * var(--sp-2));
+}
+
+/* The line's end: the chat apps' marks, end-aligned at the same x as a row's word. Whole marks or none (railWhole):
+   on a short line the last ones leave it, never one cut or drawn past it. */
+.railEnd {
+  flex: 0 1 auto;
+  justify-content: flex-end;
+}
+
+/* The first mark starts at the box's start: it takes back the gap after the box's empty first item. */
+.railEnd > :first-child {
+  margin-inline-start: calc(-1 * var(--sp-1));
+}

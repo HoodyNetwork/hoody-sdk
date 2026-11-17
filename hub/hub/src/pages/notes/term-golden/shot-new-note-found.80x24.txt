@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Notes                                      ▸ Use with your agent   + New note
+ ‹ Notes  Esc
+ Q4 plan                                           [⇗ Open outside the Hub] [⋯]
+ atlas · Changed now
+
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ ⇗ A note is a page of the Notes program in a browser frame, which a      │
+  │ terminal cannot draw.                                                    │
+  │ Open the Notes page on the web:                                          │
+  │ https://hub.example.test/auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/  │
+  │ notes                                                                    │
+  │ [c Copy link] [r QR code]                                                │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

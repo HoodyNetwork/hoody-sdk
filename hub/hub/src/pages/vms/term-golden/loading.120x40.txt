@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines                                                        ▸ Use with your agent
+ Computers             │  Full machines that run inside atlas.
+ Files                 │
+ Bots                  │  ▸ VMs    Images    KVM on computers
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ This computer                                                                             │
+On atlas ▾             │  │ VMs need a bare-metal server, with KVM on for the computer.                               │
+ Programs              │  │                                                                                           │
+ Schedules             │  │ What this computer can run                                                                │
+ Scripts               │  │ ┌───────────────────────────────────────────────────────────────────────────────────────┐ │
+ Logs                  │  │ │                                                                                       │ │
+ Tunnels               │  │ │ Run VMs on this computer (KVM)  [■ on ]                                               │ │
+ Notes                 │  │ │ KVM is on for this computer.                                                          │ │
+ AI                    │  │ │                                                                                       │ │
+▌VMs                   │  │ └───────────────────────────────────────────────────────────────────────────────────────┘ │
+                       │  │ Server  Bare metal                                                                        │
+Account                │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Plans & Billing       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Referrals             │  │ VMs                                                                                       │
+ Keys and tokens       │  │Loading…                                                                                   │
+ API                   │  │▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁               ▁▁▁▁▁▁▁▁▁▁         ▁▁▁▁▁▁▁            ▁▁▁▁▁▁▁▁         │
+ Notifications       2 │  │▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁                 ▁▁▁▁▁▁▁▁▁▁▁        ▁▁▁▁▁▁▁▁▁▁         ▁▁▁▁▁▁▁          │
+ Account               │  │▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁                  ▁▁▁▁▁▁▁▁▁          ▁▁▁▁▁▁▁▁▁▁▁        ▁▁▁▁▁▁▁▁▁▁       │
+                       │  │▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁             ▁▁▁▁▁▁▁▁▁          ▁▁▁▁▁▁▁▁▁          ▁▁▁▁▁▁▁▁▁▁▁      │
+ + Rent servers        │  │▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁            ▁▁▁▁▁▁▁▁▁▁▁▁       ▁▁▁▁▁▁▁▁▁          ▁▁▁▁▁▁▁▁▁        │
+ Guide                 │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Support               │
+                       │
+                       │  Questions
+                       │  ▸ What is a VM?
+                       │  ▸ Why can't my computer run VMs?
+                       │  ▸ How do I see a VM's screen?
+                       │  ▸ How do I install Windows?
+                       │  ▸ How do I reach a website that runs in a VM?
+                       │  ▸ Why did my VM stop or not start?
+                       │  ▸ Is the console line a terminal?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

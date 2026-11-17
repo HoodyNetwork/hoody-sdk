@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notifications
+ Computers             │  Messages about your account: computers, rentals, sign-in and keys.
+ Files                 │
+ Bots                  │    Inbox 26    Notices  ▸ Get notified
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │   What you get notified about  Where you see them ▌Browser alerts  On your phone  Questions
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │
+ Programs              │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Schedules             │  │ Browser alerts                                                                        │
+ Scripts               │  │ Alerts are optional, and they are turned on in the Hub on the web.                    │
+ Logs                  │  │ ⇗ Alerts are a browser feature: they show only while the Hub is open in a browser     │
+ Tunnels               │  │ tab, so a terminal cannot show them. (on your Hub's web address)                      │
+ Notes                 │  │ [c Copy link]                                                                         │
+ AI                    │  │ /auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/notifications                          │
+ VMs                   │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+Account                │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Plans & Billing       │  │ On your phone                                                                         │
+ Referrals             │  │ The Hub works in your phone’s browser. The bell and the Inbox can show                │
+ Keys and tokens       │  │ new notices while the Hub is open and in front.                                       │
+ API                   │  │                                                                                       │
+▌Notifications      26 │  │ Browser alerts depend on your phone’s browser. A test alert, where                    │
+ Account               │  │ offered above, shows what yours does.                                                 │
+                       │  │                                                                                       │
+ + Rent servers        │  │ iPhone and iPad · Android                                                             │
+ Guide                 │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ Support               │
+                       │
+                       │  Questions                                                                                ▄
+                       │  ▸ What am I notified about?                                                              █
+                       │  ▸ How do the count and the Inbox work?                                                   █
+                       │  ▸ How soon does a new notice show up?                                                    █
+                       │  ▸ What are browser alerts?                                                               █
+                       │  ▸ Will I be told when the Hub is closed?                                                 █
+                       │  ▸ How do I get alerts on an iPhone or iPad?                                              █
+                       │  ▸ How do I get alerts on Android?                                                        █
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

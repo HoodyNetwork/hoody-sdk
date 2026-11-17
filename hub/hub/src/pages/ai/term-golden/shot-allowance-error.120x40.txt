@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                      ◆ Personal ▾  Computers not loaded ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations   Knowledge  ▌Settings
+ Computers             │  ▌Models & keys   Connections & MCP   Rules & hooks
+ Files                 │  atlas › Models & keys
+ Bots                  │  Models & keys
+ Board                 │  Which AI this computer uses, and what it costs.
+ Demo                  │
+ Vault                 │  ! Could not load the AI settings
+                       │  Check that the computer is running, then try again.
+On this computer       │  [Try again]
+ Programs              │
+ Schedules             │  Questions
+ Scripts               │  ▸ What changes when I pick a default model?
+ Logs                  │  ▸ Where is my key kept, and can I see it again?
+ Tunnels               │  ▸ Can I use my own Claude plan?
+ Notes                 │  ▸ What is an agent, and what does its tool list do?
+▌AI                    │  ▸ What is the difference between turning a skill on and trusting it?
+ VMs                   │  ▸ What do instructions and memory add to my agents?
+                       │  ▸ What are loops, TODOs and workflows?
+Account                │  ▸ What happens to a workflow while it runs?
+ Plans & Billing       │  ▸ What do rules and hooks do, and what is a settings chat?
+ Referrals             │  ▸ What do the GitHub and MCP connections give my agents?
+ Keys and tokens       │  ▸ Why does a chat say Settle it first?
+ API                   │  ▸ What happens when I run or approve a TODO?
+ Notifications       2 │  ▸ What does cancelling a TODO run do?
+ Account               │  ▸ Why does it say this may have gone through?
+                       │  ▸ Why does it say nothing was sent?
+ + Rent servers        │  ▸ How do pausing, changing and deleting a loop work?
+ Guide                 │  ▸ Why is a fork not confirmed, and what can I do?
+ Support               │  ▸ What does Strict ask about, and what does it turn off?
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

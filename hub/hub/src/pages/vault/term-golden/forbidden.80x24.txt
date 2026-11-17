@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Vault                                                    ▸ Use with your agent
+ Tokens, passwords and settings your tools and agents read by name. The list
+ shows only names.
+ Pick another realm from the realm menu at the top (Alt+R) to try its vault.
+     ┌─────────────────────────────────────────────────────────────────────┐
+     │ This login cannot open the vault                                    │
+     │                                                                     │
+     │ This login has no access to the vault of Personal. Ask the account  │
+     │ owner, or leave the Hub, run hoody logout, and sign in with an      │
+     │ account that has it.                                                │
+     │                                                                     │
+     │ [Leave the Hub]                                                     │
+     └─────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

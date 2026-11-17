@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                      ◆ Personal ▾  Computers not loaded ▾  [A]  Ctrl+K commands · ? keys
+▌Home                  │  Good morning, Ada                                             [i What is Hoody?]  [Customize]
+ Computers             │  ■ Personal
+ Files                 │
+ Bots                  │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Board                 │  │ Pick a computer                                                                          │█
+ Demo                  │  │ Choose the computer this dashboard should show.                                          │█
+ Vault                 │  │ [All computers]                                                                          │█
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+On this computer       │                                                                                              █
+ Programs              │                                                                                              █
+ Schedules             │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Scripts               │  │ Your computer                                                                 View all › │█
+ Logs                  │  │ No computer selected                                                                     │█
+ Tunnels               │  │ Pick a computer                                                                          │█
+ Notes                 │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ AI                    │                                                                                              █
+ VMs                   │  ┌────────────────────────────────────────────┐ ┌───────────────────────────────────────────┐█
+                       │  │ Bots                            View all › │ │ Billing                        View all › │█
+Account                │  │ ◆ Chief · atlas ◆ Waiting for you [Review] │ │ $42.50                                    │█
+ Plans & Billing       │  │ i Support · atlas                i Working │ │ Wallet balance                            │█
+ Referrals             │  │ i Digest · atlas      i 2 messages waiting │ │                                           │█
+ Keys and tokens       │  │ ! Ledger · cinder                 ! Paused │ │ SERVERS                                   │█
+ API                   │  │ · Scout · cinder                    · Idle │ │ ✗ fra-7 Unpaid since Oct 20, 2… ✗ On hold │█
+ Notifications      26 │  │                                            │ │ ✓ n12                 Renews Nov 22, 2026 │█
+ Account               │  │                                            │ │ ✓ Singapore M Runs until Dec 5, 2026, th… │█
+                       │  └────────────────────────────────────────────┘ └───────────────────────────────────────────┘█
+ + Rent servers        │                                                                                              █
+ Guide                 │  ┌────────────────────────────────────────────┐ ┌───────────────────────────────────────────┐█
+ Support               │  │ Notifications                   View all › │ │ First steps                           [⋯] │█
+                       │  │ ✗ Computer atlas stopped       19 days ago │ │ █████░░░░░ 1 of 2                         │█
+                       │  │ ✓ Payment received for boreal… 19 days ago │ │ ✓ You have a computer              ✓ Done │
+                       │  │ ! Server cedar rental ends in… 19 days ago │ │ · Make an API key                         │
+                       │  │ ✓ Computer dune is running     19 days ago │ │                                           │
+                       │  │ Mark all read                              │ │ TRY NEXT                                  │
+                       │  │                                            │ │ · Make a Bot                              │
+                       │  │                                            │ │                                           │
+                       │  │                                            │ │ New to Hoody? See how it fits together    │
+                       │  └────────────────────────────────────────────┘ └───────────────────────────────────────────┘
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,270 @@
+Hoody patch rq-12230-revert.
+
+What: undoes react-query 5.105.2 #12230 ("set the observer options before subscribing", issue #12227) in useBaseQuery
+and useQueries, modern + legacy builds and src: observer.setOptions/setQueries run in an effect after
+useSyncExternalStore subscribes again, as in 5.104.5. Nothing else in 5.105.x is touched.
+
+Why: with #12230 the options effect runs before useSyncExternalStore's snapshot check, so a render that makes a new
+observer result makes another render. Two Hub paths depend on the old order:
+ 1. A select that throws (core pageOf BAD_LIST, defineQuery reads): query-core 5.105.3 queryObserver.createResult sets
+    `errorUpdatedAt = Date.now()` for a select error on every result it builds, so every render is a new snapshot and
+    the page loops to "Maximum update depth exceeded" (PageBoundary). Guard: hub/src/core/query.selecterror.test.tsx.
+ 2. A held folder copy checked by two views at once (two panes on the same computer: each pane's HeldBand runs
+    HeldTransfer -> useCopyCheck, files/changes.tsx; hash and tree reads staleTime 0): one view subscribed a render
+    late and read files again that the other had just read (24-76 extra SHA-256 reads in a 172-read check, timing
+    dependent). Guard: hub/src/pages/files/copycheck.bound.test.tsx "both panes' held bands share the fill".
+What #12230 fixed and we give up again: a read whose key changed while its tree was hidden in <Activity>
+(shell/pageHost.tsx keeps pages there) may fetch its old key once on reveal, one per such read (an agent/kit read
+asks the old computer); a generation change makes the old queryFn throw before any request, and account/realm
+changes remount the page (shell/switch.tsx). Hub ran this way on 5.104.5; no Hub code depends on the fix.
+Drop this patch only when both guards pass without it: the copy check is shared by the views of one copy
+and a throwing select no longer restamps its error time.
+
+diff --git a/build/legacy/useBaseQuery.cjs b/build/legacy/useBaseQuery.cjs
+index 659e40963892743934d9ebcac64a1bd9a81ef0df..c324fb1bffb83ebb8d777bed919121b4e6ee9c50 100644
+--- a/build/legacy/useBaseQuery.cjs
++++ b/build/legacy/useBaseQuery.cjs
+@@ -42,15 +42,16 @@ function useBaseQuery(options, Observer, queryClient) {
+ 	require_errorBoundaryUtils.useClearResetErrorBoundary(errorResetBoundary);
+ 	const [observer] = react.useState(() => new Observer(client, defaultedOptions));
+ 	const result = observer.getOptimisticResult(defaultedOptions);
+-	react.useEffect(() => {
+-		observer.setOptions(defaultedOptions);
+-	}, [defaultedOptions, observer]);
+ 	const shouldSubscribe = !isRestoring && subscribed;
+ 	react.useSyncExternalStore(react.useCallback((onStoreChange) => {
+ 		const unsubscribe = shouldSubscribe ? observer.subscribe(_tanstack_query_core.notifyManager.batchCalls(onStoreChange)) : _tanstack_query_core.noop;
+ 		observer.updateResult();
+ 		return unsubscribe;
+ 	}, [observer, shouldSubscribe]), () => observer.getCurrentResult(), () => observer.getCurrentResult());
++	// Hoody patch (rq-12230-revert): options are set after useSyncExternalStore subscribes, as before 5.105.2 #12230. See patches/@tanstack%2Freact-query@5.105.3.patch.
++	react.useEffect(() => {
++		observer.setOptions(defaultedOptions);
++	}, [defaultedOptions, observer]);
+ 	if (require_suspense.shouldSuspend(defaultedOptions, result)) throw require_suspense.fetchOptimistic(defaultedOptions, observer, errorResetBoundary);
+ 	if (require_errorBoundaryUtils.getHasError({
+ 		result,
+diff --git a/build/legacy/useBaseQuery.js b/build/legacy/useBaseQuery.js
+index 010c60ab67ab5d576df132262f6393c2f04c4182..672f4a9a5362ed1c82a673addb402f607229adae 100644
+--- a/build/legacy/useBaseQuery.js
++++ b/build/legacy/useBaseQuery.js
+@@ -39,15 +39,16 @@ function useBaseQuery(options, Observer, queryClient) {
+ 	useClearResetErrorBoundary(errorResetBoundary);
+ 	const [observer] = React.useState(() => new Observer(client, defaultedOptions));
+ 	const result = observer.getOptimisticResult(defaultedOptions);
+-	React.useEffect(() => {
+-		observer.setOptions(defaultedOptions);
+-	}, [defaultedOptions, observer]);
+ 	const shouldSubscribe = !isRestoring && subscribed;
+ 	React.useSyncExternalStore(React.useCallback((onStoreChange) => {
+ 		const unsubscribe = shouldSubscribe ? observer.subscribe(notifyManager.batchCalls(onStoreChange)) : noop;
+ 		observer.updateResult();
+ 		return unsubscribe;
+ 	}, [observer, shouldSubscribe]), () => observer.getCurrentResult(), () => observer.getCurrentResult());
++	// Hoody patch (rq-12230-revert): options are set after useSyncExternalStore subscribes, as before 5.105.2 #12230. See patches/@tanstack%2Freact-query@5.105.3.patch.
++	React.useEffect(() => {
++		observer.setOptions(defaultedOptions);
++	}, [defaultedOptions, observer]);
+ 	if (shouldSuspend(defaultedOptions, result)) throw fetchOptimistic(defaultedOptions, observer, errorResetBoundary);
+ 	if (getHasError({
+ 		result,
+diff --git a/build/legacy/useQueries.cjs b/build/legacy/useQueries.cjs
+index e7ba3193cfb13edd851ce0e43c11783c9f6738a6..e0e479ad55f0bee18ce124f4c28e03c6068d596b 100644
+--- a/build/legacy/useQueries.cjs
++++ b/build/legacy/useQueries.cjs
+@@ -162,6 +162,9 @@ function useQueries({ queries, ...options }, queryClient) {
+ 	require_errorBoundaryUtils.useClearResetErrorBoundary(errorResetBoundary);
+ 	const [observer] = react.useState(() => new _tanstack_query_core.QueriesObserver(client, defaultedQueries, options));
+ 	const [optimisticResult, getCombinedResult, trackResult] = observer.getOptimisticResult(defaultedQueries, options.combine);
++	const shouldSubscribe = !isRestoring && subscribed;
++	react.useSyncExternalStore(react.useCallback((onStoreChange) => shouldSubscribe ? observer.subscribe(_tanstack_query_core.notifyManager.batchCalls(onStoreChange)) : _tanstack_query_core.noop, [observer, shouldSubscribe]), () => observer.getCurrentResult(), () => observer.getCurrentResult());
++	// Hoody patch (rq-12230-revert): options are set after useSyncExternalStore subscribes, as before 5.105.2 #12230. See patches/@tanstack%2Freact-query@5.105.3.patch.
+ 	react.useEffect(() => {
+ 		observer.setQueries(defaultedQueries, options);
+ 	}, [
+@@ -169,8 +172,6 @@ function useQueries({ queries, ...options }, queryClient) {
+ 		options,
+ 		observer
+ 	]);
+-	const shouldSubscribe = !isRestoring && subscribed;
+-	react.useSyncExternalStore(react.useCallback((onStoreChange) => shouldSubscribe ? observer.subscribe(_tanstack_query_core.notifyManager.batchCalls(onStoreChange)) : _tanstack_query_core.noop, [observer, shouldSubscribe]), () => observer.getCurrentResult(), () => observer.getCurrentResult());
+ 	const suspensePromises = optimisticResult.some((result, index) => require_suspense.shouldSuspend(defaultedQueries[index], result)) ? optimisticResult.flatMap((result, index) => {
+ 		const opts = defaultedQueries[index];
+ 		if (opts && require_suspense.shouldSuspend(opts, result)) {
+diff --git a/build/legacy/useQueries.js b/build/legacy/useQueries.js
+index 92cff3007d39be96bd8e42fb4bbe51020a6ad0c4..9ce2005c818be5bec1baa898dc6c833ec7394168 100644
+--- a/build/legacy/useQueries.js
++++ b/build/legacy/useQueries.js
+@@ -159,6 +159,9 @@ function useQueries({ queries, ...options }, queryClient) {
+ 	useClearResetErrorBoundary(errorResetBoundary);
+ 	const [observer] = React.useState(() => new QueriesObserver(client, defaultedQueries, options));
+ 	const [optimisticResult, getCombinedResult, trackResult] = observer.getOptimisticResult(defaultedQueries, options.combine);
++	const shouldSubscribe = !isRestoring && subscribed;
++	React.useSyncExternalStore(React.useCallback((onStoreChange) => shouldSubscribe ? observer.subscribe(notifyManager.batchCalls(onStoreChange)) : noop, [observer, shouldSubscribe]), () => observer.getCurrentResult(), () => observer.getCurrentResult());
++	// Hoody patch (rq-12230-revert): options are set after useSyncExternalStore subscribes, as before 5.105.2 #12230. See patches/@tanstack%2Freact-query@5.105.3.patch.
+ 	React.useEffect(() => {
+ 		observer.setQueries(defaultedQueries, options);
+ 	}, [
+@@ -166,8 +169,6 @@ function useQueries({ queries, ...options }, queryClient) {
+ 		options,
+ 		observer
+ 	]);
+-	const shouldSubscribe = !isRestoring && subscribed;
+-	React.useSyncExternalStore(React.useCallback((onStoreChange) => shouldSubscribe ? observer.subscribe(notifyManager.batchCalls(onStoreChange)) : noop, [observer, shouldSubscribe]), () => observer.getCurrentResult(), () => observer.getCurrentResult());
+ 	const suspensePromises = optimisticResult.some((result, index) => shouldSuspend(defaultedQueries[index], result)) ? optimisticResult.flatMap((result, index) => {
+ 		const opts = defaultedQueries[index];
+ 		if (opts && shouldSuspend(opts, result)) {
+diff --git a/build/modern/useBaseQuery.cjs b/build/modern/useBaseQuery.cjs
+index 659e40963892743934d9ebcac64a1bd9a81ef0df..c324fb1bffb83ebb8d777bed919121b4e6ee9c50 100644
+--- a/build/modern/useBaseQuery.cjs
++++ b/build/modern/useBaseQuery.cjs
+@@ -42,15 +42,16 @@ function useBaseQuery(options, Observer, queryClient) {
+ 	require_errorBoundaryUtils.useClearResetErrorBoundary(errorResetBoundary);
+ 	const [observer] = react.useState(() => new Observer(client, defaultedOptions));
+ 	const result = observer.getOptimisticResult(defaultedOptions);
+-	react.useEffect(() => {
+-		observer.setOptions(defaultedOptions);
+-	}, [defaultedOptions, observer]);
+ 	const shouldSubscribe = !isRestoring && subscribed;
+ 	react.useSyncExternalStore(react.useCallback((onStoreChange) => {
+ 		const unsubscribe = shouldSubscribe ? observer.subscribe(_tanstack_query_core.notifyManager.batchCalls(onStoreChange)) : _tanstack_query_core.noop;
+ 		observer.updateResult();
+ 		return unsubscribe;
+ 	}, [observer, shouldSubscribe]), () => observer.getCurrentResult(), () => observer.getCurrentResult());
++	// Hoody patch (rq-12230-revert): options are set after useSyncExternalStore subscribes, as before 5.105.2 #12230. See patches/@tanstack%2Freact-query@5.105.3.patch.
++	react.useEffect(() => {
++		observer.setOptions(defaultedOptions);
++	}, [defaultedOptions, observer]);
+ 	if (require_suspense.shouldSuspend(defaultedOptions, result)) throw require_suspense.fetchOptimistic(defaultedOptions, observer, errorResetBoundary);
+ 	if (require_errorBoundaryUtils.getHasError({
+ 		result,
+diff --git a/build/modern/useBaseQuery.js b/build/modern/useBaseQuery.js
+index 010c60ab67ab5d576df132262f6393c2f04c4182..672f4a9a5362ed1c82a673addb402f607229adae 100644
+--- a/build/modern/useBaseQuery.js
++++ b/build/modern/useBaseQuery.js
+@@ -39,15 +39,16 @@ function useBaseQuery(options, Observer, queryClient) {
+ 	useClearResetErrorBoundary(errorResetBoundary);
+ 	const [observer] = React.useState(() => new Observer(client, defaultedOptions));
+ 	const result = observer.getOptimisticResult(defaultedOptions);
+-	React.useEffect(() => {
+-		observer.setOptions(defaultedOptions);
+-	}, [defaultedOptions, observer]);
+ 	const shouldSubscribe = !isRestoring && subscribed;
+ 	React.useSyncExternalStore(React.useCallback((onStoreChange) => {
+ 		const unsubscribe = shouldSubscribe ? observer.subscribe(notifyManager.batchCalls(onStoreChange)) : noop;
+ 		observer.updateResult();
+ 		return unsubscribe;
+ 	}, [observer, shouldSubscribe]), () => observer.getCurrentResult(), () => observer.getCurrentResult());
++	// Hoody patch (rq-12230-revert): options are set after useSyncExternalStore subscribes, as before 5.105.2 #12230. See patches/@tanstack%2Freact-query@5.105.3.patch.
++	React.useEffect(() => {
++		observer.setOptions(defaultedOptions);
++	}, [defaultedOptions, observer]);
+ 	if (shouldSuspend(defaultedOptions, result)) throw fetchOptimistic(defaultedOptions, observer, errorResetBoundary);
+ 	if (getHasError({
+ 		result,
+diff --git a/build/modern/useQueries.cjs b/build/modern/useQueries.cjs
+index e7ba3193cfb13edd851ce0e43c11783c9f6738a6..e0e479ad55f0bee18ce124f4c28e03c6068d596b 100644
+--- a/build/modern/useQueries.cjs
++++ b/build/modern/useQueries.cjs
+@@ -162,6 +162,9 @@ function useQueries({ queries, ...options }, queryClient) {
+ 	require_errorBoundaryUtils.useClearResetErrorBoundary(errorResetBoundary);
+ 	const [observer] = react.useState(() => new _tanstack_query_core.QueriesObserver(client, defaultedQueries, options));
+ 	const [optimisticResult, getCombinedResult, trackResult] = observer.getOptimisticResult(defaultedQueries, options.combine);
++	const shouldSubscribe = !isRestoring && subscribed;
++	react.useSyncExternalStore(react.useCallback((onStoreChange) => shouldSubscribe ? observer.subscribe(_tanstack_query_core.notifyManager.batchCalls(onStoreChange)) : _tanstack_query_core.noop, [observer, shouldSubscribe]), () => observer.getCurrentResult(), () => observer.getCurrentResult());
++	// Hoody patch (rq-12230-revert): options are set after useSyncExternalStore subscribes, as before 5.105.2 #12230. See patches/@tanstack%2Freact-query@5.105.3.patch.
+ 	react.useEffect(() => {
+ 		observer.setQueries(defaultedQueries, options);
+ 	}, [
+@@ -169,8 +172,6 @@ function useQueries({ queries, ...options }, queryClient) {
+ 		options,
+ 		observer
+ 	]);
+-	const shouldSubscribe = !isRestoring && subscribed;
+-	react.useSyncExternalStore(react.useCallback((onStoreChange) => shouldSubscribe ? observer.subscribe(_tanstack_query_core.notifyManager.batchCalls(onStoreChange)) : _tanstack_query_core.noop, [observer, shouldSubscribe]), () => observer.getCurrentResult(), () => observer.getCurrentResult());
+ 	const suspensePromises = optimisticResult.some((result, index) => require_suspense.shouldSuspend(defaultedQueries[index], result)) ? optimisticResult.flatMap((result, index) => {
+ 		const opts = defaultedQueries[index];
+ 		if (opts && require_suspense.shouldSuspend(opts, result)) {
+diff --git a/build/modern/useQueries.js b/build/modern/useQueries.js
+index 92cff3007d39be96bd8e42fb4bbe51020a6ad0c4..9ce2005c818be5bec1baa898dc6c833ec7394168 100644
+--- a/build/modern/useQueries.js
++++ b/build/modern/useQueries.js
+@@ -159,6 +159,9 @@ function useQueries({ queries, ...options }, queryClient) {
+ 	useClearResetErrorBoundary(errorResetBoundary);
+ 	const [observer] = React.useState(() => new QueriesObserver(client, defaultedQueries, options));
+ 	const [optimisticResult, getCombinedResult, trackResult] = observer.getOptimisticResult(defaultedQueries, options.combine);
++	const shouldSubscribe = !isRestoring && subscribed;
++	React.useSyncExternalStore(React.useCallback((onStoreChange) => shouldSubscribe ? observer.subscribe(notifyManager.batchCalls(onStoreChange)) : noop, [observer, shouldSubscribe]), () => observer.getCurrentResult(), () => observer.getCurrentResult());
++	// Hoody patch (rq-12230-revert): options are set after useSyncExternalStore subscribes, as before 5.105.2 #12230. See patches/@tanstack%2Freact-query@5.105.3.patch.
+ 	React.useEffect(() => {
+ 		observer.setQueries(defaultedQueries, options);
+ 	}, [
+@@ -166,8 +169,6 @@ function useQueries({ queries, ...options }, queryClient) {
+ 		options,
+ 		observer
+ 	]);
+-	const shouldSubscribe = !isRestoring && subscribed;
+-	React.useSyncExternalStore(React.useCallback((onStoreChange) => shouldSubscribe ? observer.subscribe(notifyManager.batchCalls(onStoreChange)) : noop, [observer, shouldSubscribe]), () => observer.getCurrentResult(), () => observer.getCurrentResult());
+ 	const suspensePromises = optimisticResult.some((result, index) => shouldSuspend(defaultedQueries[index], result)) ? optimisticResult.flatMap((result, index) => {
+ 		const opts = defaultedQueries[index];
+ 		if (opts && shouldSuspend(opts, result)) {
+diff --git a/src/useBaseQuery.ts b/src/useBaseQuery.ts
+index c89197ff5dbcecabed31dfb4431cc5bef045bf22..daa5992afb12dc2e84775b2c774d5474625f7329 100644
+--- a/src/useBaseQuery.ts
++++ b/src/useBaseQuery.ts
+@@ -104,10 +104,6 @@ export function useBaseQuery<
+   // note: this must be called before useSyncExternalStore
+   const result = observer.getOptimisticResult(defaultedOptions)
+ 
+-  React.useEffect(() => {
+-    observer.setOptions(defaultedOptions)
+-  }, [defaultedOptions, observer])
+-
+   const shouldSubscribe = !isRestoring && subscribed
+   React.useSyncExternalStore(
+     React.useCallback(
+@@ -128,6 +124,11 @@ export function useBaseQuery<
+     () => observer.getCurrentResult(),
+   )
+ 
++  // Hoody patch (rq-12230-revert): options are set after useSyncExternalStore subscribes, as before 5.105.2 #12230. See patches/@tanstack%2Freact-query@5.105.3.patch.
++  React.useEffect(() => {
++    observer.setOptions(defaultedOptions)
++  }, [defaultedOptions, observer])
++
+   // Handle suspense
+   if (shouldSuspend(defaultedOptions, result)) {
+     throw fetchOptimistic(defaultedOptions, observer, errorResetBoundary)
+diff --git a/src/useQueries.ts b/src/useQueries.ts
+index 6e51964b69429472e4530403bbe59852f1c2fbe9..f3f26993969f780f0a19db63b57331cc5841e4a3 100644
+--- a/src/useQueries.ts
++++ b/src/useQueries.ts
+@@ -431,13 +431,6 @@ export function useQueries<
+       (options as QueriesObserverOptions<TCombinedResult>).combine,
+     )
+ 
+-  React.useEffect(() => {
+-    observer.setQueries(
+-      defaultedQueries,
+-      options as QueriesObserverOptions<TCombinedResult>,
+-    )
+-  }, [defaultedQueries, options, observer])
+-
+   const shouldSubscribe = !isRestoring && subscribed
+   React.useSyncExternalStore(
+     React.useCallback(
+@@ -451,6 +444,14 @@ export function useQueries<
+     () => observer.getCurrentResult(),
+   )
+ 
++  // Hoody patch (rq-12230-revert): options are set after useSyncExternalStore subscribes, as before 5.105.2 #12230. See patches/@tanstack%2Freact-query@5.105.3.patch.
++  React.useEffect(() => {
++    observer.setQueries(
++      defaultedQueries,
++      options as QueriesObserverOptions<TCombinedResult>,
++    )
++  }, [defaultedQueries, options, observer])
++
+   const shouldAtLeastOneSuspend = optimisticResult.some((result, index) =>
+     shouldSuspend(defaultedQueries[index], result),
+   )

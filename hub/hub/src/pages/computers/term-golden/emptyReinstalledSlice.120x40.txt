@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                          ◆ Personal ▾  No computers yet ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                                               ▸ Use with your agent
+▌Computers             │  Your computers: start them, open a terminal, and manage access.
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │
+ Vault                 │
+                       │              ┌────────────────────────────────────────────────────────────────────┐
+On this computer       │              │ Your server was reinstalled                                        │
+ Programs              │              │                                                                    │
+ Schedules             │              │ The computers on it are gone. Delete them in Projects, then create │
+ Scripts               │              │ a new computer.                                                    │
+ Logs                  │              │                                                                    │
+ Tunnels               │              │ [Open Projects]  [+ Create your first computer]  [Rent a server]   │
+ Notes                 │              └────────────────────────────────────────────────────────────────────┘
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │  Questions
+                       │  ▸ What does a new computer come with?
+                       │  ▸ What are realms and projects?
+                       │  ▸ Who can open my computer's programs?
+                       │  ▸ How does the firewall work, and what does No internet block?
+                       │  ▸ How do I use a computer as a proxy, and what is an exit?
+                       │  ▸ How do I use my own domain for a web address?
+                       │  ▸ How do I get a shell on my computer?
+                       │  ▸ What is the difference between a snapshot and a zip backup?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

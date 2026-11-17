@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Connect a laptop to atlas                                               Esc ×
+ Home                  │  Tunnels       ┃ ─────────────────────────────────────────────────────────────────────────────
+ Computers             │  Put a laptop a┃ ┌──────────────────────────────────────────────────────────────────────────┐█
+ Files                 │  sessions conne┃ │ WHAT YOU GET                                                             │█
+ Bots                  │                ┃ │ Like ngrok without a middleman: put a laptop app online straight         │█
+ Board                 │  / Search by ad┃ │ from atlas, with no outside service to pay for.                          │█
+ Demo                  │                ┃ │ Next: run the command on the laptop                                      │█
+ Vault                 │      Shared as ┃ └──────────────────────────────────────────────────────────────────────────┘█
+                       │  ▾ Session 4f2a┃                                                                             █
+On atlas ▾             │  ›   Web addres┃                                                                             █
+ Programs              │      Web addres┃  ✓  What to connect                                                         █
+ Schedules             │      Inside thi┃                                                                             █
+ Scripts               │                ┃     What to connect                                                         █
+ Logs                  │  ▾ Session 9b1d┃     ┌─────────────────────────────────┐ ┌─────────────────────────────────┐ █
+▌Tunnels               │      Inside thi┃     │ (•) Put a laptop app online     │ │ ( ) Bring a laptop service into │ █
+ Notes                 │      Inside thi┃     │     Web pages and WebSockets,   │ │     this computer               │ █
+ AI                    │                ┃     │     at a web address.           │ │     Any TCP service, such as a  │ █
+ VMs                   │  ▾ Reconnecting┃     │                                 │ │     database.                   │ █
+                       │      Web addres┃     └─────────────────────────────────┘ └─────────────────────────────────┘ █
+Account                │                ┃     ▾ Which one should I pick?                                              █
+ Plans & Billing       │                ┃       Public addresses carry web traffic only: web pages and                █
+ Referrals             │                ┃       WebSockets. Bring a service in for other TCP, like a database:        █
+ Keys and tokens       │                ┃       only this computer reaches it.                                        █
+ API                   │                ┃       Both ways, compared                                                   █
+ Notifications      26 │                ┃                                                                             █
+ Account               │                ┃  ✓  On the laptop                                                           █
+                       │                ┃
+ + Rent servers        │                ┃     Host                          Port
+ Guide                 │                ┃     │ __________________________  │ 3000
+ Support               │                ┃     Leave empty for this laptop.
+                       │  Questions     ┃
+                       │  ▸ What is a tu┃     ▸ Advanced  A fixed port, or a computer that asks for a password
+                       │  ▸ Should I put┃
+                       │  ▸ Which port o┃  3  ┌──────────────────────────────────────────────────────────────────────┐
+                       │  ▸ Which ports ┃     │ Run it on the laptop                                                 │
+                       │  ▸ When do I ti┃     │ Paste these in a terminal on the laptop.                             │
+                       │  ▸ Why did my t┃     │                                                                      │
+                       │  ▸ Why doesn't ┃     │ ‹ Command line ›  SDK                                                │
+                       │  ▸ What does "R┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃                                                                       [Close]

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Account
+ Computers             │  Your profile, how you sign in, and where you are signed in.
+ Files                 │
+ Bots                  │   Profile  Password ▌Two-step sign-in  Passcode lock  Sign-in sessions  Agent sign-in   6 ›
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Vault                 │  │ Two-step sign-in                                                                      │
+                       │  │                                                                                       │
+On atlas ▾             │  │ Two-step sign-in                ● On                    [New backup codes] [Turn off] │
+ Programs              │  │ Signing in asks for a code      ! Backup codes left: 2                                │
+ Schedules             │  │ from your authenticator app,                                                          │█
+ Scripts               │  │ or a backup code.                                                                     │█
+ Logs                  │  │                                                                                       │█
+ Tunnels               │  │ Ask for a code when API keys    [■ on ] Ask for a code                                │█
+ Notes                 │  │ change                                                                                │█
+ AI                    │  │ Creating an API key, or                                                               │▀
+ VMs                   │  │ changing its access settings,                                                         │
+                       │  │ then needs a code from your                                                           │
+Account                │  │ authenticator app.                                                                    │
+ Plans & Billing       │  │ ▸ What changes when two-step sign-in is on?                                           │
+ Referrals             │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ Keys and tokens       │
+ API                   │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Notifications      26 │  │ Passcode lock                                                                         │
+▌Account               │  │                                                                                       │
+                       │  │ No passcode                                                                           │
+ + Rent servers        │  │ The terminal Hub has no                                                               │
+ Guide                 │  │ passcode lock.                                                                        │
+ Support               │  │ ⇗ A passcode locks the Hub in the browser where you set it, in the web Hub.           │
+                       │  │ [c Copy link] [r QR code]                                                             │
+                       │  │ https://hub.example.test/auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/account        │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Sign-in sessions                                                                      │
+                       │  │ Each browser or device signed in to your account. End one you do not recognise.       │
+                       │  │                                                                                       │
+                       │  │ This device's address ⓘ         PT 203.0.113.7 · Lisbon ⧉ copy (i)                    │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

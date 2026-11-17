@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Notifications
+ Messages about your account: computers, rentals, sign-in and keys.
+   Inbox 26    Notices  ▸ Get notified
+ ──────────────────────────────────────────────────────────────────────────────
+ ▌What you get notified about  Where you see them  Browser alerts   2 ›
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ What you get notified about                                               │█
+ │ Hoody writes a notice when something happens to your account.             │
+ │ Computers, servers and storage                                            │
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │
+ │ │                                                                       │ │
+ │ │ A computer failed to start.     Hub                                   │ │
+ │ │                                                                       │ │
+ │ │ A new computer finished being   Hub                                   │ │
+ │ │ created and is running.                                               │ │
+ │ │                                                                       │ │
+ │ │ Computers expired.              Hub                                   │ │
+ │ │                                                                       │ │
+ │ │ A server rental was confirmed   Hub                                   │ │
+ │ │ or extended, is ending soon,                                          │ │
+ │ │ or went into its hold period.                                         │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

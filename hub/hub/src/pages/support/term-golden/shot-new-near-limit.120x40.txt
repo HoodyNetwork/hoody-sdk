@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ New ticket                                          Esc ×
+ Home                  │  Support                           ┃ ─────────────────────────────────────────────────────────
+ Computers             │  Ask us about anything in Hoody. We┃ You have 4 of 5 tickets open.                           ⓘ
+ Files                 │                                    ┃ 9 of 10 new tickets today.
+ Bots                  │  / Search                   ‹ All ›┃ 59 of 60 new tickets in the last 30 days.
+ Board                 │  7 tickets  ↻ Refresh  View options┃ 199 of 200 messages today.
+ Demo                  │                                    ┃ 999 of 1,000 tickets kept. Old closed tickets are
+ Vault                 │    Subject                         ┃ removed over time.
+                       │  › • Computer will not start after ┃ Category * (required)
+On atlas ▾             │      Invoice shows the wrong countr┃ ┃ Choose… ▾
+ Programs              │    • Refund for the October charge ┃ Subject * (required)
+ Schedules             │      How do I add a domain?        ┃ │ _______________________________________________________
+ Scripts               │      Old question about bots       ┃
+ Logs                  │      <b>bold</b> **subject**       ┃ Message * (required)
+ Tunnels               │      A ticket with many messages   ┃ │
+ Notes                 │   7 loaded                         ┃
+ AI                    │                                    ┃
+ VMs                   │                                    ┃
+                       │                                    ┃
+Account                │                                    ┃
+ Plans & Billing       │                                    ┃
+ Referrals             │                                    ┃
+ Keys and tokens       │                                    ┃ 0 of 4,000 · Plain text. Never paste passwords, keys or
+ API                   │                                    ┃ tokens. Say what you did and what happened.
+ Notifications      26 │                                    ┃
+ Account               │                                    ┃
+                       │                                    ┃
+ + Rent servers        │                                    ┃
+ Guide                 │                                    ┃
+▌Support               │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │  Questions                         ┃
+                       │  ▸ What should I never put in a tic┃
+                       │  ▸ Why does my message look plain? ┃
+                       │  ▸ Why is there a limit on tickets?┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit  ┃ Choose a category.                [Cancel]   Send ticket

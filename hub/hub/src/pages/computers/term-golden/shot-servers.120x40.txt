@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                              ▸ Use with your agent   Browse market
+▌Computers             │  Your servers and subscriptions, and how many computers run on each.
+ Files                 │    Computers  ▸ Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Vault                 │  │ Subscriptions                                                                            │█
+                       │  │  Plan                State                         Renews                                │█
+On atlas ▾             │  │› Large               ● Active                      Renews Dec 10, 2026                   │█
+ Programs              │  │  Medium              ● Payment overdue             Ends Oct 20, 2026            [Pay now]│█
+ Schedules             │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Scripts               │                                                                                              █
+ Logs                  │  / Search servers                                        3 servers  ↻ Refresh  … More actions█
+ Tunnels               │                                                                                              █
+ Notes                 │  ▾ Free · 1                                                                                  █
+ AI                    │  ▌   ash-3                                                                                   █
+ VMs                   │      US Ashburn · i Free · Capacity —                                                        █
+                       │      AI USE                                                                                  █
+Account                │      Chat            ████░░░░░░ 40%                                                          █
+ Plans & Billing       │      Quick decisions ░░░░░░░░░░ 0%                                                           █
+ Referrals             │      Web search      █████████░ ! 90%                                                        █
+ Keys and tokens       │      Speech          Not on this server                                                      █
+ API                   │      Transcription   No reading                                                              █
+ Notifications      26 │      Get more room                                                                           █
+ Account               │                                                                                              █
+                       │  ▾ Subservers · 1                                                                            █
+ + Rent servers        │      fra-7                                                                                   █
+ Guide                 │      DE Frankfurt · 3 days left · Capacity —                                                 █
+ Support               │      AI USE
+                       │      Chat            ██████████ ✗ 100%
+                       │      Quick decisions ████████░░ ! 80%
+                       │      Web search      ██░░░░░░░░ 20%
+                       │      Speech          ░░░░░░░░░░ 0%
+                       │      Transcription   Not on this server
+                       │      [ Full: Get more AI]
+                       │
+                       │  ▾ Bare metal · 1
+                       │      n12
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

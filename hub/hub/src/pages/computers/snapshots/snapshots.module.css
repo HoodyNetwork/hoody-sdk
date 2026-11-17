@@ -1,0 +1,22 @@
+/* The Backups tab: a column of its parts, the list cell's snapshot count, and the glance's kept count beside its meter. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-variant-numeric: tabular-nums;
+  color: var(--hx-muted);
+}
+
+.kept {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-variant-numeric: tabular-nums;
+}

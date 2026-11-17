@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notifications
+ Computers             │  Notices Hoody sent you about one of your servers. Read them and reply here.
+ Files                 │
+ Bots                  │    Inbox 26  ▸ Notices    Get notified
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Notices from Hoody                                                                        │
+On atlas ▾             │  │/ Search                  Status ▾                      40 notices  ↻ Refresh  View options│
+ Programs              │  │                                                                                           │
+ Schedules             │  │  Notice                                 Server                Status        Updated ↓     │
+ Scripts               │  │▌ Outgoing spam reported from your ser…  n12                   ! Open        19 days ago   │
+ Logs                  │  │  Port scanning reported from your ser…  fra-7                 ! Open        19 days ago   │
+ Tunnels               │  │  Copyright complaint about content on…  ash-3                 ✓ Resolved    19 days ago   │
+ Notes                 │  │  Phishing page reported on your server  n12                   ! Open        19 days ago   │
+ AI                    │  │  Outgoing spam reported from your ser…  fra-7                 ! Open        20 days ago   │
+ VMs                   │  │  Port scanning reported from your ser…  ash-3                 ✓ Resolved    20 days ago   │
+                       │  │  Copyright complaint about content on…  n12                   ! Open        20 days ago   │
+Account                │  │  Phishing page reported on your server  Server name not kept  ! Open        20 days ago   │
+ Plans & Billing       │  │  Outgoing spam reported from your ser…  ash-3                 ! Open        20 days ago   │
+ Referrals             │  │  Port scanning reported from your ser…  n12                   ! Open        20 days ago   │
+ Keys and tokens       │  │  Copyright complaint about content on…  fra-7                 ✓ Resolved    20 days ago   │
+ API                   │  │  Phishing page reported on your server  ash-3                 ! Open        20 days ago   │
+▌Notifications      26 │  │  Outgoing spam reported from your ser…  n12                   ! Open        20 days ago   │
+ Account               │  │  Port scanning reported from your ser…  fra-7                 ! Open        20 days ago   │
+                       │  │  Copyright complaint about content on…  ash-3                 ! Open        20 days ago   │
+ + Rent servers        │  │  Phishing page reported on your server  n12                   ✓ Resolved    20 days ago   │
+ Guide                 │  │  Outgoing spam reported from your ser…  fra-7                 ! Open        20 days ago   │
+ Support               │  │  Port scanning reported from your ser…  ash-3                 ! Open        20 days ago   │
+                       │  │  Copyright complaint about content on…  n12                   ! Open        20 days ago   │
+                       │  │  Phishing page reported on your server  fra-7                 ! Open        21 days ago   │
+                       │  │  Outgoing spam reported from your ser…  ash-3                 ✓ Resolved    21 days ago   │
+                       │  │  Port scanning reported from your ser…  n12                   ! Open        21 days ago   │
+                       │  │  Copyright complaint about content on…  fra-7                 ! Open        21 days ago   │
+                       │  │  Phishing page reported on your server  ash-3                 ! Open        21 days ago   │
+                       │  │  Outgoing spam reported from your ser…  n12                   ! Open        21 days ago   │
+                       │  │1–25 of 40 ‹ ›                                                                             │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

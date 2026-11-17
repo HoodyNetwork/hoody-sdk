@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Use another exit                                                 Esc ×
+ Comput┃ Everything sent through atlas's proxy then leaves from that
+ ▸ Comp┃ exit: for scraping, checking a site from another region, or one
+ ──────┃ fixed IP.
+ ‹ Comp┃ ──────────────────────────────────────────────────────────────────────
+ atlas ┃ Leave from                                                           █
+ SG n12┃ ( ) atlas's own address (now) (unavailable)                          █
+       ┃     Sites see the address of atlas's server. Nothing to set up.      █
+  Overv┃ ( ) Another computer of yours                                        █
+  Progr┃     Traffic goes through that computer's proxy and leaves from its   █
+ ──────┃     current exit. With no exit or VPN of its own, that is its        █
+ │ Fire┃     server's address: pick one on another server for a different IP. █
+ └─────┃ (•) Your own proxy                                                   █
+       ┃     A SOCKS5 or HTTP(S) proxy you have, so sites see the IP you
+ ┌─────┃     chose.
+ │ Inte┃     Type
+ │ Whet┃     │ SOCKS5, names resolved by the proxy (socks5h) ▾
+ │ ✓ Al┃     Proxy host * (required)
+ └─────┃     │ _______________________________________________________________
+       ┃     A host name or an IPv4 address.
+ ┌─────┃     ! Set access rules on atlas's proxy first. Its address is the
+ │ Wher┃ ──────────────────────────────────────────────────────────────────────
+ │ [Exi┃ Enter the proxy host and the port to use
+ Tab mo┃ this exit.                                    [Cancel]  Use this exit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines                                            ▸ Use with your agent   + New VM
+ Computers             │  Full machines that run inside atlas.
+ Files                 │
+ Bots                  │  ▸ VMs    Images    KVM on computers
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ This computer                                                                            │█
+On atlas ▾             │  │ VMs need a bare-metal server, with KVM on for the computer.                              │█
+ Programs              │  │                                                                                          │█
+ Schedules             │  │ What this computer can run                                                               │█
+ Scripts               │  │ ┌──────────────────────────────────────────────────────────────────────────────────────┐ │█
+ Logs                  │  │ │                                                                                      │ │█
+ Tunnels               │  │ │ Run VMs on this computer (KVM)  [□ off]                                              │ │█
+ Notes                 │  │ │ This server does not allow                                                           │ │█
+ AI                    │  │ │ VMs, so KVM cannot be turned                                                         │ │█
+▌VMs                   │  │ │ on.                                                                                  │ │█
+                       │  │ │                                                                                      │ │█
+Account                │  │ └──────────────────────────────────────────────────────────────────────────────────────┘ │█
+ Plans & Billing       │  │ Server  Bare metal                                                                       │█
+ Referrals             │  │                                                                                          │█
+ Keys and tokens       │  │ Room for VMs                                                                             │█
+ API                   │  │ Memory for VMs          ░░░░░░░░░░            Free disk               410 GB             │█
+ Notifications      26 │  │                         0 B of 16 GB in                                                  │█
+ Account               │  │                         use                                                              │█
+                       │  │ Largest VM that can     16 GB                                                            │█
+ + Rent servers        │  │ start                                                                                    │█
+ Guide                 │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Support               │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ VMs                                                                                      │█
+                       │  │         ┌──────────────────────────────────────────────────────────────────────┐         │█
+                       │  │         │ No VMs inside atlas yet                                              │         │▀
+                       │  │         │                                                                      │         │
+                       │  │         │ A VM is a full machine that runs inside this computer, with its own  │         │
+                       │  │         │ system, memory and disk. Press New VM to make one.                   │         │
+                       │  │         └──────────────────────────────────────────────────────────────────────┘         │
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

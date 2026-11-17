@@ -1,0 +1,27 @@
+/* CardGrid: PickCards in columns of about 256 px that fill the width; a container narrower than that gets one
+   card per line. The row owns focus and the press: its own outline is off because the card draws the ring (along the
+   cut outline when it is outermost, inset when nested). */
+.grid {
+  display: grid;
+
+  /* auto-fill: an open-ended list of picks (a search can leave one or two); spare tracks keep every card one size. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(4 * var(--sp-10))), 1fr));
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+.row {
+  display: grid;
+  min-inline-size: 0;
+  cursor: pointer;
+}
+
+/* Above the global [data-focus-visible] outline (base.css) whatever order the sheets load in: the card draws the ring. */
+.row:is(:focus, :focus-visible, [data-focus-visible]) {
+  outline: none;
+}
+
+.row > :not([hidden]) {
+  display: grid;
+  min-inline-size: 0;
+}

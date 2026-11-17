@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Chats   Agents  ▌Automations   Knowledge   Settings
+  Workflows  ▌Loops   TODOs
+ Loops   1 of 8 active on atlas                         [+ New loop in a chat…]
+ A loop repeats a prompt in one chat on a timer.
+ ‹ Loops  Esc
+ Look for dependency updates  · Paused                  [Run now]  Resume  [⋯]█
+                                                                              █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ PAUSED                                                                    │█
+ │ It no longer keeps its chat open.                                         │█
+ │ If nobody has the chat open, the agent may close it, and the              │█
+ │ loop ends with it.                                                        │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+                                                                              █
+                                                                              █
+                                                                              █
+ In chat   Dependency updates                                                 █
+ Every     30 min                                                             █
+ Runs      3 of 50                                                            ▀
+ Spent     $0.04
+ Started   10 hours ago
+ Last run  12 minutes ago
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

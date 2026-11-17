@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent  [+ Get a computer]
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ Computers  Esc
+ atlas  ● Running                                         [Open terminal ⇗] [⋯]
+ SG n12 · Home base · █  Personal ·  Current computer
+
+  Overview  Connect  Permissions  Ports & addresses  Desktop  Network  Run
+  Programs  Backups ▸Storage
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ At a glance                                                               │█
+ │ Connected storage  1 connected                                            │█
+ │ Open as folders    1 open                                                 │█
+ │ Waiting to upload  Nothing                                                │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+                                                                              █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Connected storage                                          + Add storage  │
+ │ Connect cloud or network storage to this computer, then open it as a      │
+ │ folder there.                                                             │
+ │ Keys, passwords and tokens you enter go only to this computer's files     │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

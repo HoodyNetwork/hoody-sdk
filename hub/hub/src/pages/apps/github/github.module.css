@@ -1,0 +1,16 @@
+/* From GitHub (GitHubPane): the one box, a picked repository with Start, the run's live steps, its gate and its result. */
+.pane { display: flex; flex-direction: column; gap: var(--sp-3); padding-block: var(--sp-2); }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.phase { margin: 0; font: var(--t-small); color: var(--hx-muted); }
+.steps { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--sp-1); }
+.step { display: flex; gap: var(--sp-2); font: var(--t-small); min-width: 0; }
+.stepName { font-weight: var(--fw-semibold); white-space: nowrap; }
+.stepSummary { color: var(--hx-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.detail { margin: 0; font: var(--t-small); color: var(--hx-muted); overflow-wrap: anywhere; }
+
+/* What the agent does: three numbered steps, beside Start. */
+.how { margin: 0; padding-inline-start: var(--sp-5); list-style: decimal; display: flex; flex-direction: column; gap: var(--sp-1); font: var(--t-small); color: var(--hx-ink); }
+
+/* Ready (Ready.tsx), wide: what it is takes the room, the install box keeps a reading width beside it. */
+.readyWhat { flex: 1 1 0; min-width: 0; }
+.readyHow { flex: 0 1 22rem; min-width: 0; }

@@ -1,0 +1,29 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`Band: every tone reads in mono by its mark; a dismissable band closes; Notice levels 1`] = `
+"│ i neutral words                                           
+│ ! warn words                                              
+✗ danger words                                       [Close]
+! careful                                                   
+                                                            
+                                                            
+                                                            
+                                                            
+"
+`;
+
+exports[`Skeleton: nothing for 150 ms, then static bars with the words "Loading…"; immediate shows at once 1`] = `
+"Loading…                                                              
+▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁               ▁▁▁▁▁▁▁▁▁         ▁▁▁▁▁▁▁          
+▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁                 ▁▁▁▁▁▁▁▁▁▁        ▁▁▁▁▁▁▁▁▁        
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+"
+`;

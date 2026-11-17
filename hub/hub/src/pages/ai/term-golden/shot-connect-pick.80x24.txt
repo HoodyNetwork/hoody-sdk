@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Connect an account                                               Esc ×
+  Chats┃ Pick a provider. Your key stays on this computer.
+ ▌Model┃ ──────────────────────────────────────────────────────────────────────
+ atlas ┃ Connected
+ Models┃
+ atlas ┃  H Hoody AI                 [View]   O OpenAI                [Set up]
+ ▌Defau┃  2 models · Included with Hoody      2 models · ChatGPT sign-in or
+ ──────┃                                      API key
+ ┌─────┃
+ │ Defa┃
+ │ The ┃ Suggested
+ │ ┌───┃
+ │ │   ┃  A Anthropic              [Set up]   G Google Gemini         [Set up]
+ │ │ AI┃  1 model · API key                   1 model · API key
+ │ │ Th┃
+ │ │ ev┃
+ │ │ co┃  O OpenRouter             [Set up]   X Xiaomi MiMo           [Set up]
+ │ │   ┃  1 model · OpenRouter sign-in or     1 model · API key
+ │ │ Bo┃  API key
+ │ │ Bo┃
+ │ │   ┃
+ │ └───┃ Other ways
+ └─────┃ [Your own endpoint] [Claude Code]
+ Tab mo┃

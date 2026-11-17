@@ -1,0 +1,18 @@
+{
+  "_doc": "Host seams: modules whose browser-global / DOM-member sites sit on web-only paths the terminal replaces at run time (installTermEnv, installShared, the host env), so they are NOT sibling targets. graph.ts lists their sites but does not count those sites as web-only; a CSS import or a web-only package in them still does. The run-time proof is the strict-globals ledger (src/term/env/strict-globals.ts): the term harness fails any test that touches a trapped global. Seeded with the 12 core modules already inside the terminal bundle (src/term/entry.ts closure) that carry such sites. Add a module only with that proof: never to make a page go green.",
+  "files": [
+    "src/core/api.ts",
+    "src/core/applock.ts",
+    "src/core/boot-token.ts",
+    "src/core/commerce-pure.ts",
+    "src/core/commerce.ts",
+    "src/core/crypt/vault.ts",
+    "src/core/errors.ts",
+    "src/core/host-env.ts",
+    "src/core/hosts.ts",
+    "src/core/kit-io.ts",
+    "src/core/lifecycle.ts",
+    "src/core/origin.ts",
+    "src/core/session.ts"
+  ]
+}

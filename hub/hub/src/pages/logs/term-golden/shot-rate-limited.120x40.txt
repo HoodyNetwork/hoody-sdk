@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Logs                                                 ▸ Use with your agent  [See what failed]
+ Computers             │  55 events failed in the last hour.
+ Files                 │
+ Bots                  │  ▸ Everything    Visits    Bots    Changes    Scripts    Programs   [More ▾]
+ Board                 │  │ ● SG atlas · █ Personal ▾ Result ▾  When: 1 hour │ / Search
+ Demo                  │                                                                     [□ off] Live [Refresh] [⋯]
+ Vault                 │  ! Problems jumped around Nov 11, 08:46 AM (41 in a few minutes).         [Around this moment]
+                       │    Time     Result   From    What happened                                  Visitor
+On atlas ▾             │  ▌ 08:35:00          Changes Computer started
+ Programs              │    06:25:00          Changes Computer renamed
+ Schedules             │    04:15:00          Changes Realm assigned
+ Scripts               │    02:05:00          Changes SSH key replaced
+▌Logs                  │    ── Tuesday, November 10 ──
+ Tunnels               │    23:55:00          Changes Computer stopped
+ Notes                 │    21:45:00          Changes Program started
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

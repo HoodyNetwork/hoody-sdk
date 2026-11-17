@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing  Balance $250                                                   [+ Add funds]
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │    Plans  ▸ Bare metal    Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC                              [Pay now]
+                       │  ‹ Plans & Billing  Esc
+On atlas ▾             │  Frankfurt L  ● Instant delivery*                                                            █
+ Programs              │  DE Falkenstein · instant delivery*                                                          █
+ Schedules             │                                                                                              █
+ Scripts               │  Term                                                                                        █
+ Logs                  │  (•) $69 for 30 days                                                                         █
+ Tunnels               │  ( ) $189 for 90 days                                                                        █
+ Notes                 │  ( ) $690 for 365 days                                                                       █
+ AI                    │                                                                                              █
+ VMs                   │                                                                                              █
+                       │  Your order                                                                                  █
+Account                │  Rental                                                                                   $69█
+▌Plans & Billing       │  ────────────────────────────────────────────────────────────────────────────────────────────█
+ Referrals             │  Total first payment                                                                      $69█
+ Keys and tokens       │
+ API                   │  Delivery  Instant delivery*: Usually ready in 5 seconds to 60 minutes. If it takes longer
+ Notifications      26 │            than 60 minutes, you get a voucher. Then about 15 minutes of setup.
+ Account               │  ────────────────────────────────────────────────────────────────────────────────────────────
+                       │  After the term  Held 3 days after the term. After the hold the server is released and its
+ + Rent servers        │                  data is deleted.
+ Guide                 │  ────────────────────────────────────────────────────────────────────────────────────────────
+ Support               │
+                       │  Processor                                                                  AMD Ryzen 9 5950X
+                       │  ────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Cores                                                                  16 cores · 32 threads
+                       │  ────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Geekbench multi-core                                                                  46,000
+                       │  ────────────────────────────────────────────────────────────────────────────────────────────
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Your balance covers it
+                       │                                                                              Rent this server
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Logs                                 ▸ Use with your agent  [Show all results]
+ 55 events failed in the last hour.
+ ▸ Everything    Visits    Bots    Changes    Scripts    Programs   [More ▾]
+ │ ● SG atlas · █ Personal ▾ Result: Failed only ×  When: 1 hour
+ │ / Search                                          [□ off] Live [Refresh] [⋯]
+ [Clear all]
+ ! Problems jumped around Nov 11, 08:46 AM (40 in a few    [Around this moment]
+   minutes).
+ i Changes are not shown while a filter or search is on.
+   Time     Result   From   What happened                              Took
+ ▌ 08:57:06 ● Failed Visits PUT 500 Browser: changed /tab/1             220 ms█
+   08:52:55 ● Failed Visits DELETE 500 Agent: removed /health           329 ms█
+   08:48:45 ● Failed Visits GET 500 Terminal: opened /session           438 ms░
+   08:46:46 ● Failed Visits GET 500 Files: opened …/report.pdf        1,173 ms░
+   08:46:45 ● Failed Visits GET 500 Files: opened …/report.pdf        1,166 ms░
+   08:46:44 ● Failed Visits GET 500 Files: opened …/report.pdf        1,159 ms░
+   08:46:43 ● Failed Visits GET 500 Files: opened …/report.pdf        1,152 ms░
+   08:46:42 ● Failed Visits GET 500 Files: opened …/report.pdf        1,145 ms░
+   08:46:40 ● Failed Visits GET 500 Files: opened …/report.pdf        1,138 ms░
+   08:46:39 ● Failed Visits GET 500 Files: opened …/report.pdf        1,131 ms░
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

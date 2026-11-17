@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Schedules                              ▸ Use with your agent   + New schedule
+ 15 schedules on atlas · next: ping-api in 3 minutes · 4 failed today
+ Computers › · 9 programs running ›
+ / Search schedules     Filters (1)        2 schedules  ↻ Refresh  View options
+   Name                                  Next run ↑   Last result        On
+ ▌   ping-api   Web request              in 3 minutes ● Worked      [■ on ]   ⋯
+   ! POST hooks.example.org              in 20 hours  ● Failed      [■ on ]   ⋯
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,15 @@
+{
+  "note.maySent": "May have been sent: check the conversation",
+  "note.notConfirmed": "Couldn't confirm this spoken message",
+  "note.someSpeech": "Some speech may have been sent",
+  "note.damaged": "Part of the audio was lost",
+  "note.unsure": "Not sure you heard all of this",
+  "note.suspended": "The browser paused the sound. Press Hold to talk to turn it on",
+  "note.announced": "Announced: {{task}} waits for you",
+  "note.announcedBare": "Announced: a task waits for you",
+  "stop.stopped": "Answer stopped",
+  "stop.alreadyFinished": "The answer had already finished",
+  "stop.mayNotHaveStopped": "May not have stopped: check the conversation",
+  "stage.stt": "Listening",
+  "stage.tts": "Speaking"
+}

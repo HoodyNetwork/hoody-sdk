@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ New realm
+ A separate space in your account, with its own computers, keys and settings.
+ Step 1 of 3 · Name and colour  ███░░░░░░░
+ ▸1 Name and colour  2 Computers  3 Create
+ ──────────────────────────────────────────────────────────────────────────────
+              ┌──────────────────────────────────────────────────┐
+              │ A shared-access session can't create realms      │
+              │                                                  │
+              │ Sign in with your own account to create a realm. │
+              └──────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

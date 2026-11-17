@@ -1,0 +1,563 @@
+/* Billing page parts. Tokens only; layout breakpoints come from the kit's container queries. */
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  color: var(--hx-muted);
+}
+
+.faint {
+  color: var(--hx-faint);
+}
+
+.small {
+  font: var(--t-small);
+}
+
+.money {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── Sections: one column, the wallet card on top, then the sections in the settings pages' look (kit tokens only:
+   the Account and AI models heading, --t-heading in ink, and a hairline under each section) ──────────────────── */
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  min-width: 0;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+  padding-block-end: var(--sp-6);
+  border-block-end: var(--bw) solid var(--hx-line);
+  scroll-margin-block-start: var(--sp-4);
+}
+
+.section:last-child {
+  padding-block-end: 0;
+  border-block-end: 0;
+}
+
+.sectionHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+/* When the title and the actions don't fit on one row (a phone), the actions wrap under the title. */
+.sectionTitleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.sectionTitle {
+  flex: 1 1 12rem;
+  min-width: 0;
+  color: var(--hx-ink); /* the settings titles' ink and size */
+  font: var(--t-heading);
+}
+
+/* The heading takes focus only from the #plans hand-off (a script focus, never a Tab stop), as the settings titles. */
+.sectionTitle:focus {
+  outline: none;
+}
+
+.sectionActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.sectionDesc {
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--sp-4);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--hx-card);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.cardLabel {
+  flex: 1;
+  margin: 0;
+  color: var(--hx-faint);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.balance {
+  margin: 0;
+  color: var(--hx-ink);
+  font: var(--t-readout);
+  font-variant-numeric: tabular-nums;
+}
+
+.cardNote {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-1);
+}
+
+.bonusAmount {
+  margin: 0;
+  color: var(--hx-ink);
+  font: var(--t-section);
+}
+
+.bonusUser {
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* Stacked readout: the wallet card reads like the kit StatStrip cell: 14 / 20 px padding, the label
+   over the 28/34 number over the 12/16 note, 4 px apart, the label in the strip's muted text (the mock's #6b6b6b is
+   4.46:1 on the card fill, under the 4.5:1 floor, the same call as the strip's). */
+.walletBand {
+  gap: var(--sp-3);
+  padding: var(--stat-pad-y) var(--sp-5);
+}
+
+.walletLabel {
+  color: var(--hx-muted);
+}
+
+.walletTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.walletMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+/* The bonus is one line under the balance, set apart by a rule. */
+.walletBonus {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-block-start: var(--sp-3);
+  border-block-start: var(--bw) solid var(--hx-line);
+}
+
+/* Below 1180px the band is wide: the bonus's title, amount and claim sit on one row, its terms under them (wider, the bonus stays a stacked line under the balance). */
+@container detailbody (width < 1180px) {
+  .walletBonus {
+    flex-flow: row wrap;
+    align-items: center;
+    column-gap: var(--sp-4);
+  }
+
+  .walletBonus > .cardHead {
+    flex: 0 0 auto;
+  }
+
+  .walletBonus > .cardNote {
+    flex-basis: 100%;
+  }
+}
+
+/* ── Table cells ─────────────────────────────────────────────────────────────────── */
+.serverCell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.serverCell > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flag {
+  font-size: var(--fs-lg);
+  line-height: 1;
+}
+
+.planNameCell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: var(--t-body-strong);
+}
+
+.datesCell {
+  color: var(--hx-muted);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.pulse {
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+/* A pulse around something that draws nothing (in the terminal, an icon with no glyph) takes no room: the line's gap is
+   not left in front of the words. */
+.pulse:empty {
+  display: none;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* A subscription with a change in flight: only its pill's dot (the pill's first child) pulses. The words stay
+   fully opaque: fading them took the ok, warn and danger pills to about 3:1. */
+.pulseDot > :first-child {
+  animation: dot-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse,
+  .pulseDot > :first-child {
+    animation: none;
+  }
+}
+
+.rowActions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.partial {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* ── AI usage (the kit DataTable; cards when the table does not fit) ─────────────────────────────────────────── */
+.usageName {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+  min-width: 0;
+  padding-block: var(--sp-1);
+  white-space: normal;
+}
+
+.usageName > strong {
+  overflow-wrap: anywhere;
+  font: var(--t-body-strong);
+}
+
+/* The tier and its multiplier ("4× the free allowance") wrap inside their cell: never cut. */
+.usageTier {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-half) var(--sp-2);
+  padding-block: var(--sp-1);
+  white-space: normal;
+}
+
+.usageBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* A lane's words ("Not on this server", "No reading") wrap in their cell rather than being cut. */
+.lane {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  white-space: normal;
+}
+
+.laneOff {
+  color: var(--hx-faint);
+}
+
+/* A server whose usage could not be read says so under its name, in words that wrap. */
+.usageUnavailable {
+  color: var(--hx-muted);
+  font: var(--t-small);
+  overflow-wrap: anywhere;
+}
+
+/* The cards presentation: every lane, named, one per line. */
+.usageLanes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.usageLane {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  align-items: center;
+  gap: var(--sp-2);
+  font: var(--t-small);
+}
+
+/* ── Drawers ─────────────────────────────────────────────────────────────────────── */
+.drawerBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.steps {
+  display: inline-flex;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  color: var(--hx-faint);
+  font: var(--t-small);
+  list-style: none;
+}
+
+.steps [aria-current='step'] {
+  color: var(--hx-ink);
+  font-weight: var(--fw-semibold);
+}
+
+.reviewTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--hx-ink);
+  font: var(--t-heading);
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+}
+
+.line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.line:last-child {
+  border-block-end: 0;
+}
+
+.line dt {
+  color: var(--hx-muted);
+}
+
+.line dd {
+  margin: 0;
+  color: var(--hx-ink);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.lineStrong dt,
+.lineStrong dd {
+  color: var(--hx-ink);
+  font-weight: var(--fw-semibold);
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+  list-style: none;
+}
+
+.warnings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.warnings li {
+  padding: var(--sp-2) var(--sp-3);
+  border-inline-start: 2px solid var(--hx-warn-fill);
+  background: var(--hx-warn-t);
+  font: var(--t-small);
+}
+
+.short {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: var(--bw) solid var(--hx-warn-fill);
+  border-radius: var(--r-1);
+  background: var(--hx-warn-t);
+}
+
+.short > span {
+  flex: 1;
+  min-width: 0;
+}
+
+.outcomeBody {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding-block: var(--sp-4);
+}
+
+.outcomeIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: var(--bw) solid var(--hx-line-2);
+  border-radius: var(--r-1);
+  color: var(--hx-ink);
+}
+
+.outcomeIcon_ok {
+  color: var(--hx-ok);
+}
+
+.outcomeIcon_warn {
+  color: var(--hx-warn);
+}
+
+.outcomeIcon_danger {
+  color: var(--hx-danger);
+}
+
+.outcomeTitle {
+  margin: 0;
+  color: var(--hx-ink);
+  font: var(--t-heading);
+}
+
+.outcomeText {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-body);
+  max-width: 52ch;
+}
+
+.footerLock {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--hx-muted);
+  font: var(--t-body);
+}
+
+.ref {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.hint {
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.legal {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.consent {
+  margin-block-start: var(--sp-1);
+}
+
+/* The rent/reserve review's "What you get": the listing's facts before the price lines. */
+.whatYouGet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.whatYouGetTitle {
+  margin: 0;
+  font: var(--t-label);
+}
+
+/* The footer's reason for a disabled Confirm: visible text at the footer's start, on every width. */
+.footReason {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.factLines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

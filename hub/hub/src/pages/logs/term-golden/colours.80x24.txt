@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Logs                                  ▸ Use with your agent  [See what failed]
+ 55 events failed in the last hour. 19 kinds of problem.
+ ▸ Everything    Visits    Bots    Changes    Scripts    Programs   [More ▾]  █
+ │ ● █ SG atlas · █ Personal ▾ Result ▾  When: 1 hour                         █
+ │ / Search                                         [□ off] Live [Refresh] [⋯]█
+ ! Problems jumped around Nov 11, 08:46 AM (41 in a few   [Around this moment]█
+   minutes).                                                                  █
+                                         Failed 40 times Files [More actions] █
+                                         Problem 9 times Agent [More actions] █
+ What keeps going wrong ▾               Problem 9 times Screen [More actions] █
+                                      Problem 7 times Terminal [More actions] █
+                                       Problem 7 times Browser [More actions] █
+   Time     Result              From    What happened                 Took    █
+ ▌ 08:59:49 ● OK                Visits  GET 200 …/session/resize       295 ms██
+   08:59:38 ● OK                Visits  GET 200 …/session              258 ms░█
+   08:59:27 ● OK                Visits  DELETE 200 …/health            221 ms░█
+   08:59:16 ● OK                Visits  PUT 200 Browser: changed …/1   184 ms░█
+   08:59:05 ● OK                Visits  POST 200 Screen: sent /input   147 ms░█
+   08:58:54 ● OK                Visits  GET 200 Files: opened …/ada    110 ms░█
+   08:58:43 ● OK                Visits  GET 200 …/session/resize        73 ms░█
+   08:58:33 ● OK                Visits  GET 200 …/session               36 ms░
+   08:58:22 ● Not found         Visits  DELETE 404 …/health            479 ms░
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

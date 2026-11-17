@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                           ▸ Use with your agent   + Get a computer
+▌Computers             │  Your computers: start them, open a terminal, and manage access.
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  Computers 3 · 1 running · 2 stopped · 0 failed    Servers 2
+ Vault                 │
+                       │  / Search computers         Filters
+On atlas ▾             │  3 computers  [ ] Show usage  Ask the Agent  ↻ Refresh  View options
+ Programs              │
+ Schedules             │  ▌ █ atlas · Home base · Current                                                   ● Running ⋯
+ Scripts               │     █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM
+ Logs                  │
+ Tunnels               │    █ cedar · Home base                                                             ● Stopped ⋯
+ Notes                 │     █ Personal  · SG n12 · Singapore · 2 cores · 4 GB RAM
+ AI                    │
+ VMs                   │    █ fjord · Home base                                                              ● Paused ⋯
+                       │     █ Personal  · US ash-3 · Ashburn · 1 core · 2 GB RAM
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │  Questions
+                       │  ▸ What does a new computer come with?
+                       │  ▸ What are realms and projects?
+                       │  ▸ Who can open my computer's programs?
+                       │  ▸ How does the firewall work, and what does No internet block?
+                       │  ▸ How do I use a computer as a proxy, and what is an exit?
+                       │  ▸ How do I use my own domain for a web address?
+                       │  ▸ How do I get a shell on my computer?
+                       │  ▸ What is the difference between a snapshot and a zip backup?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

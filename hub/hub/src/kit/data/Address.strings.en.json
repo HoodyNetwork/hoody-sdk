@@ -1,0 +1,5 @@
+{
+  "address.copy": "Copy {{what}}",
+  "address.open": "Open {{what}} in a new tab",
+  "address.openIdle": "Open {{what}} in a new tab (it won't answer until it is started)"
+}

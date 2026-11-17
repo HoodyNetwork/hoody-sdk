@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Vault                                ▸ Use with your agent   + New entry   [⋯]
+ Tokens, passwords and settings your tools and agents read by name. The list
+ shows only names.
+ Thes┌────────────────────────────────────────────────────────────────────┐
+     │ ! Clear Personal?                                            Esc × │
+ Entr│ ────────────────────────────────────────────────────────────────── │
+ 3   │ Every entry of Personal is removed. Entries of other realms and of │
+ / Se│ Global stay.                                                       │ions
+   Na│                                                                    │
+ › db│ • 3 entries are removed.                                           │
+   de│                                                                    │
+   gi│ Type Personal to confirm                                           │
+     │ ┌────────────────────────────────────────────────────────────────┐ │
+     │ │                                                                │ │
+ Ques│ └────────────────────────────────────────────────────────────────┘ │
+ ▸ Wh│                                                                    │
+ ▸ Wh│                                            [Cancel]  [Clear vault] │
+ ▸ Ho└────────────────────────────────────────────────────────────────────┘
+ ▸ What does "Encrypt with a password" do?
+ ▸ What can I put in a name and a value?
+ ▸ What is metadata?
+ ▸ What does Export vault do?
+ Typing · Esc leaves the field · Ctrl+K commands

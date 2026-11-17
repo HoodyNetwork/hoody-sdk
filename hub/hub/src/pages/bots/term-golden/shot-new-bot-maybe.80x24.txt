@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ New Bot                                                          Esc ×
+ Bots  ┃ ──────────────────────────────────────────────────────────────────────
+ Every ┃  ░  Bot                                                    Can't tell█
+ Bots  ┃                                                                      █
+ 23    ┃ ┌───────────────────────────────────────────────────────────────────┐█
+ on 2 c┃ │ The Bot                                                           │█
+ / Sear┃ │ ┌───────────────────────────────────────────────────────────────┐ │█
+ › C Ch┃ │ │                                                               │ │█
+     As┃ │ │ Computer                        │ ● SG atlas · Acme client ▾  │ │▀
+      ·┃ │ │ The Bot runs here and starts                                  │ │
+      ·┃ │ │ its tasks here.                                               │ │
+     Te┃ │ │                                                               │ │
+   L Le┃ │ │ Name                                                          │ │
+     St┃ │ │ Its identifier will be calm-olive-panda.                      │ │
+      ·┃ │ │ │ calm-olive-panda                     [Suggest another name] │ │
+     On┃ │ │                                                               │ │
+   S Su┃ │ │ Model                                                         │ │
+     … ┃ │ │ The model that answers you. You can change it later in the    │ │
+      ·┃ ──────────────────────────────────────────────────────────────────────
+      ·┃ │ ◷ The Bot may have been made
+     Di┃ │   Don't create it again. Check the list; if it's there, you're
+ 1–20 o┃ │   done.
+       ┃ │   [Check again]  [Stop tracking]
+ Tab mo┃                                                  [Cancel]  Create Bot

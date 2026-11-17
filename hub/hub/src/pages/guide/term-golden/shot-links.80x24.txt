@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  Guide                       ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Ask your agent  Connect  Skills  Build your own ▌Every link  Bots  Tools
+  Try this  Realms  Topics  Keyboard  Look
+ │ Every program of the picked computer has its own address. Anyone with an  │
+ │ address can reach that program, so share them only with people you have   │
+ │ given access to.                                                          │
+ │ Agent           https://6a00…0001-c0a7…00a1-agent-1.n12.fixture.invalid   │
+ │                                                                           │
+ │ ⧉ copy [Open Agent]                                                       │
+ │ Terminal                                                                  │ ▄
+ │                                                                           │ ▀
+ │ https://6a00…0001-c0a7…00a1-terminal-1.n12.fixture.invalid                │
+ │                                                                           │
+ │ ⧉ copy [Open Terminal]                                                    │
+ │ Display         https://6a00…0001-c0a7…00a1-display-1.n12.fixture.invalid │
+ │                                                                           │
+ │ ⧉ copy [Open Display]                                                     │
+ │ Files           https://6a00…0001-c0a7…00a1-files-1.n12.fixture.invalid   │
+ │                                                                           │
+ │ ⧉ copy [Open Files]                                                       │
+ │ Browser         https://6a00…0001-c0a7…00a1-browser-1.n12.fixture.invalid │
+ │                                                                           │
+ │ ⧉ copy [Open Browser]                                                     │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

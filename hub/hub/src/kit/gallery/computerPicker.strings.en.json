@@ -1,0 +1,11 @@
+{
+  "title": "Computer picker",
+  "picked": "Sample computer",
+  "none": "Sample computer, none picked yet",
+  "loading": "Sample computer, list loading",
+  "long": "Sample computer with a long realm",
+  "running": "Running",
+  "stopped": "Stopped",
+  "paused": "Paused",
+  "startFirst": "Start it to pick it here"
+}

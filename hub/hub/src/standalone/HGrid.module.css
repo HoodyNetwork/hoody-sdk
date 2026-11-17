@@ -1,0 +1,129 @@
+/* The sign-in screens' backdrop (HGrid.tsx): the page grid with a small "H" in every cell, in the page ink, as faint
+   as on hoody.com (lines 2.5%, corner ticks and marks 3%), so it reads the same on the light and the dark ground. It
+   fills the screen's box, sits under the card and takes no pointer. A lit mark is the accent and the tile a cell
+   leaves behind the soft accent; both are decoration and are not drawn under reduced motion or Performance mode (the
+   rules at the end). --hgrid-tile is how strong a fresh tile is: half on the light ground, where the soft accent is a
+   pale tint, and whole on the dark one, where it is already a dark tint. */
+.grid {
+  --hgrid-tile: 0.5;
+
+  position: absolute;
+  inset: 0;
+  z-index: calc(-1 * var(--z-raised));
+  inline-size: 100%;
+  block-size: 100%;
+  pointer-events: none;
+}
+
+.line {
+  fill: none;
+  stroke: var(--hx-ink);
+  stroke-opacity: 0.025;
+}
+
+.tick {
+  fill: none;
+  stroke: var(--hx-ink);
+  stroke-opacity: 0.03;
+}
+
+.mark {
+  fill: var(--hx-ink);
+  fill-opacity: 0.03;
+}
+
+:root[data-hx-theme="dark"] .grid {
+  --hgrid-tile: 1;
+}
+
+/* The mark under the pointer: full accent, fading out. */
+.lit {
+  fill: var(--hx-acc);
+  opacity: 0;
+  animation: hgrid-fade calc(1.2 * var(--dur-4)) linear;
+}
+
+/* The chalk highlight is white and its soft tint near white, which the light ground swallows: there the lit mark and
+   the tile a cell leaves behind take the highlight's edge shade. On the dark ground both read and stay. */
+:root[data-hx-hl="chalk"]:not([data-hx-theme="dark"]) .lit,
+:root[data-hx-hl="chalk"]:not([data-hx-theme="dark"]) .tile {
+  fill: var(--hx-acc-edge);
+}
+
+/* Its five bars flicker out of step for the first second, then stay. */
+.bar {
+  animation: hgrid-flick var(--dur-3) steps(1, end) 4;
+}
+
+.bar:nth-child(2) {
+  animation-delay: calc(-1 * var(--dur-1));
+}
+
+.bar:nth-child(3) {
+  animation-delay: calc(-1 * var(--dur-0));
+}
+
+.bar:nth-child(4) {
+  animation-delay: calc(-1 * var(--dur-2));
+}
+
+.bar:nth-child(5) {
+  animation-delay: calc(-1 * (var(--dur-0) + var(--dur-1)));
+}
+
+/* A cell the pointer left: the soft accent over the whole cell, starting at the share of light its mark still had
+   (--hgrid-left, set by HGrid.tsx) and fading out. */
+.tile {
+  fill: var(--hx-acc-soft);
+  opacity: 0;
+  animation: hgrid-tile calc(5 * var(--dur-2)) linear;
+}
+
+@keyframes hgrid-tile {
+  from {
+    opacity: calc(var(--hgrid-tile) * var(--hgrid-left, 1));
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes hgrid-fade {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes hgrid-flick {
+  0% {
+    opacity: 1;
+  }
+
+  35% {
+    opacity: 0;
+  }
+
+  70% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lit,
+  .tile {
+    display: none;
+    animation: none;
+  }
+}
+
+/* Performance mode (kit/perf.ts) draws none either. */
+:root[data-hx-perf] .lit,
+:root[data-hx-perf] .tile {
+  display: none;
+  animation: none;
+}

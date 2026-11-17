@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                                    ▸ Use with your agent
+ Computers             │
+ Files                 │  ‹ Bots  Esc
+▌Bots                  │  Chief  ● Idle                                                   [Bot settings] [Details] [⋯]
+ Board                 │    SG atlas    Hoody Free  · Allow everything ┌─────────────────────────────────────────────┐
+ Demo                  │                                               │›    Copy address                            │
+ Vault                 │  ▸ Activity    Link and keys    Chat apps 2   │     Open computer                           │█
+                       │  ─────────────────────────────────────────────│     Logs                                    │█
+On atlas ▾             │                                               │─────────────────────────────────────────────│█
+ Programs              │     I opened a task to read the deploy log. It│  ↻  Restart the conversation                │█
+ Schedules             │     19 days ago                               │  ×  Clear the conversation                  │█
+ Scripts               │                                               │     Delete the archive                      │█
+ Logs                  │     i Update ·  Read deploy log  · on atlas   │─────────────────────────────────────────────│█
+ Tunnels               │     Task "Read deploy log" started on atlas.  │     Delete this Bot…                        │█
+ Notes                 │     19 days ago                               └─────────────────────────────────────────────┘█
+ AI                    │     Advanced details                                                                         █
+ VMs                   │                                                                                              █
+                       │     i Task report ·  Read deploy log  · on atlas                                             █
+Account                │     The deploy failed because the build step ran out of memory. I suggest raising the        █
+ Plans & Billing       │     limit to 2 GB.                                                                           █
+ Referrals             │     19 days ago                                                                              █
+ Keys and tokens       │                                                                                              █
+ API                   │                                            Key “website widget” · OpenAI-style link          █
+ Notifications      26 │                                            Do that, but ask me before restarting anything.
+ Account               │                                            19 days ago
+                       │
+ + Rent servers        │     Understood. I will change the limit and ask before any restart.
+ Guide                 │     19 days ago
+ Support               │
+                       │     ! The model stopped the answer
+                       │     The model provider stopped the answer. Earlier steps may have completed.
+                       │     19 days ago
+                       │     Advanced details
+                       │
+                       │     ┌────────────────────────────────────────────────────────────────────────────────────┐
+                       │     │ Message the Bot                                                                    │
+                       │     └────────────────────────────────────────────────────────────────────────────────────┘
+                       │                                                 Write a message first.  [⇗ Talk]  [Send ↵]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Referrals                                                                     [Program rules]
+ Computers             │  Invite people to Hoody. When they pay for servers by card or crypto, you earn Referral
+ Files                 │  credit.
+ Bots                  │
+ Board                 │  │ ◷ Creating fresh-one may have gone through                                                █
+ Demo                  │  │   The server didn't confirm the result. Don't send it again: check the current state      █
+ Vault                 │  │   first.                                                                                  █
+                       │  │   [Check again]  [Stop tracking]                                                          █
+On atlas ▾             │                                                                                              █
+ Programs              │                                                                                              █
+ Schedules             │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Scripts               │  │ Your links                                                                               │▀
+ Logs                  │  │ Each code is its own signup link. Every code earns you the same.                         │
+ Tunnels               │  │                                                                                          │
+ Notes                 │  │ Main code                                                                                │
+ AI                    │  │ Given when you joined. It stays with your account, can't be retired, and doesn't count   │
+ VMs                   │  │ toward your own codes.                                                                   │
+                       │  │                                                                                          │
+Account                │  │ k7m2q9xa  Main   https://api.hoody.com/auth/signup?ref=k7m2q9xa ⇗            ⧉ Copy link │
+ Plans & Billing       │  │                                                                                          │
+▌Referrals             │  │                                                                                          │
+ Keys and tokens       │  │ Your own codes                                                                           │
+ API                   │  │ 1 of 3 active · 2 more can be made now                                                   │
+ Notifications      26 │  │                                                                                          │
+ Account               │  │ maya-builds  Your own   https://api.hoody.com/auth/signup?ref=maya-builds ⇗  ⧉ copy      │
+                       │  │ [Retire…]ⓘ                                                                               │
+ + Rent servers        │  │ New code                                                                                 │
+ Guide                 │  │ │ fresh-one                                                                              │
+ Support               │  │ Available ✓                                                                              │
+                       │  │                                                                                          │
+                       │  │ [Create] ⓘ                                                                               │
+                       │  │ Up to 3 of your own codes active at a time, and 10 over the life of your account. A      │
+                       │  │ retired code still counts toward the 10. Codes that could be mistaken for Hoody or its   │
+                       │  │ offers, or are offensive, are refused.                                                   │
+                       │  │ Code rules ⇗                                                                             │
+                       │  │                                                                                          │
+                       │  │                                                                                          │
+                       │  │ Share material                                                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

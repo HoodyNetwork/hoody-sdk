@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Chats   Agents   Automations  ▌Knowledge   Settings                          █
+  Skills   Instructions  ▌Memory                                               █
+ Memory                                                                        █
+ What agents learned while working on atlas. Agents recall it when it fits the █
+ task.                                                                         █
+ Memory of                                                                     █
+ ‹ Realm Personal ›  Global                                                    █
+ │ i Realm Personal · Choosing this realm's [Use this computer]  Hide details  █
+ │   memory host… · memory on                                                  █
+                                                                               █
+   Memory on or off                                                            █
+   ┌───────────────────────────────────────────────────────────────────────┐   █
+   │                                                                       │   █
+   │ Agents remember what they       [■ on ]                               │   █
+   │ learn in realm Personal                                               │   █
+   │ Turns memory on or off for                                            │
+   │ every agent in realm Personal                                         │
+   │ on atlas. What is stored                                              │
+   │ stays.                                                                │
+   │                                                                       │
+   └───────────────────────────────────────────────────────────────────────┘
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

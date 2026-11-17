@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Scripts
+ Small programs on your computers that answer an address or run on a schedule.
+     ! atlas didn't answer
+
+     The scripts could not be read. Check that the computer is on, then try
+     again.
+
+     [Try again]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

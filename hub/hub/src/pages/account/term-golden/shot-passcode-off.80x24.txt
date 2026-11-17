@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Account
+ Your profile, how you sign in, and where you are signed in.
+ ‹ 3  ▌Passcode lock  Sign-in sessions  Agent sign-in  Security history   5 ›
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Passcode lock                                                             │
+ │                                                                           │
+ │ No passcode                                                               │
+ │ The terminal Hub has no                                                   │▄
+ │ passcode lock.                                                            │█
+ │ ⇗ A passcode locks the Hub in the browser where you set it, in the web    │
+ │ Hub.                                                                      │
+ │ [c Copy link] [r QR code]                                                 │
+ │ https://hub.example.test/auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/   │
+ │ account                                                                   │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Sign-in sessions                                                          │
+ │ Each browser or device signed in to your account. End one you do not      │
+ │ recognise.                                                                │
+ │                                                                           │
+ │ This device's address ⓘ         PT 203.0.113.7 · Lisbon ⧉ copy (i)        │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

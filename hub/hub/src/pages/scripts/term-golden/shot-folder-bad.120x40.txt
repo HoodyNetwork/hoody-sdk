@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                 ▸ Use with your agent   + New script
+ Computers             │  Small programs on your computers that answer an address or run on a schedule.
+ Files                 │
+ Bots                  │   i Folder “shop” can't be opened here. Only numbered folders, 1 to 9999, can.               █
+ Board                 │                                                                                              █
+ Demo                  │  / Search                   Status ▾  Computer ▾                                             █
+ Vault                 │  10 scripts  [Recently deleted · 2]  ↻ Refresh  View options                                 █
+                       │                                                                                              █
+On atlas ▾             │      Script ↑                    Status          Address                     Calls, 24 h     █
+ Programs              │  ▾ atlas · 7                                                                                 █
+ Schedules             │  ▌   Daily digest  Idea          ● Working       /daily-digest                        30    ⋯█
+▌Scripts               │      Health check                ● Working       /health                           5,120    ⋯█
+ Logs                  │      Notify me  Idea             ● Working       /notify                               9    ⋯█
+ Tunnels               │      Old report                  ● Turned off    /old-report                           —    ⋯█
+ Notes                 │      Order status                ● Failing       /orders/:id           1,290 · 61 failed    ⋯█
+ AI                    │      Stripe webhook              ● Working       /webhooks/stripe          88 · 2 failed    ⋯█
+ VMs                   │      Weather lookup              ● Working       /weather                 412 · 3 failed    ⋯█
+                       │                                                                                              █
+Account                │  ▾ borealis · 3                                                                              █
+ Plans & Billing       │      i Runs an older Scripts program. You can read and test its scripts. To change them,     █
+ Referrals             │        update the computer.                                                                  █
+ Keys and tokens       │      ────────────────────────────────────────────────────────────────────────────────────────█
+ API                   │      Daily digest  Read-only     —               /daily-digest                         —    ⋯█
+ Notifications      26 │      Order status  Read-only     —               /orders/:id                           —    ⋯█
+ Account               │      Weather lookup  Read-only   —               /weather                              —    ⋯█
+                       │                                                                                              █
+ + Rent servers        │  ▾ cedar · 0                                                                                 █
+ Guide                 │      i Turned off. Start it to see its scripts.                                              ▀
+ Support               │      ────────────────────────────────────────────────────────────────────────────────────────
+                       │
+                       │  ▾ harbor · 0
+                       │      i Keeps its scripts private from the Hub. Allow access in the computer's settings to see
+                       │        them.
+                       │      ────────────────────────────────────────────────────────────────────────────────────────
+                       │
+                       │  ▾ Advanced
+                       │
+                       │    Script folder                   │ 1                    [Open folder]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

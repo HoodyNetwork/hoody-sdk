@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Use with your agent                                                     Esc ×
+ Home                  │  Vault         ┃ Hoody Agent, or any agent with the Hoody skill, can list, read and
+ Computers             │  Tokens, passwo┃ write the keys in your vault through the Hoody API, when its sign-in
+ Files                 │                ┃ allows the vault.
+ Bots                  │  These entries ┃ ─────────────────────────────────────────────────────────────────────────────
+ Board                 │                ┃ ▸ Prompts    Set up    Access    Can do                                     █
+ Demo                  │  Entries here  ┃ ────────────────────────────────────────────────────────────────────────────█
+▌Vault                 │  3             ┃                                                                             █
+                       │                ┃                                                                             █
+On atlas ▾             │  / Search      ┃ Acts on                                                                     █
+ Programs              │                ┃ Realm  ■ Personal f1f1…f1f1             Vault  this realm's vault           █
+ Schedules             │    Name ↑      ┃ Names the realm so your agent acts on the right one.                        █
+ Scripts               │  › db-password ┃                                                                             █
+ Logs                  │    deploy.notes┃ Start here                                                                  █
+ Tunnels               │    github-token┃ Work with this vault                                                        █
+ Notes                 │                ┃ Your agent asks you what you want before it does anything.                  █
+ AI                    │                ┃                                                                             █
+ VMs                   │                ┃  ✦ Ask Hoody Agent   ⧉ Copy for your agent                                  █
+                       │                ┃                                                                             █
+Account                │                ┃ Two ways to use it                                                          █
+ Plans & Billing       │                ┃ Hoody Agent     No set-up. Ask Hoody Agent puts the prompt in the Agent's   █
+ Referrals             │                ┃                 message box; it waits there until you press Send.           █
+ Keys and tokens       │                ┃ Your own agent  Copy the prompt and paste it in. Set your agent up once in
+ API                   │                ┃                 Set up.
+ Notifications      26 │                ┃
+ Account               │                ┃  Use the Hoody skill.
+                       │                ┃
+ + Rent servers        │                ┃  Target
+ Guide                 │                ┃  - Realm: "Personal" (id f1f1f1f1f1f1f1f1f1f1f1f1)
+ Support               │                ┃  - Vault: this realm's vault
+                       │                ┃  If you cannot find this realm, stop and ask me.
+                       │  Questions     ┃
+                       │  ▸ What goes in┃  Steps
+                       │  ▸ What is the ┃  1. Ask me which key I want to read, add or change, and what it is for. Do
+                       │  ▸ How do I see┃  nothing else until I answer.
+                       │  ▸ What does "E┃  2. Tell me your plan in one line and wait for my OK.
+                       │  ▸ What can I p┃  3. Do it only in this vault, and never replace a key that changed since
+                       │  ▸ What is meta┃  you read it.
+                       │  ▸ What does Ex┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ Skills in the Guide                                         Hide on this page

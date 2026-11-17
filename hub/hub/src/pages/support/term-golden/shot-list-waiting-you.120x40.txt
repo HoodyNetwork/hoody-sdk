@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Support                                                                         + New ticket
+ Computers             │  Ask us about anything in Hoody. We answer here, in writing.
+ Files                 │
+ Bots                  │  / Search                     All  ‹ Waiting for you ›  Waiting for support    Closed
+ Board                 │  1 ticket  ↻ Refresh  View options
+ Demo                  │
+ Vault                 │    Subject                                 Category     Status              Last message
+                       │  ▌ • Computer will not start after resize  · Computers  ● Waiting for you   9 days ago
+On atlas ▾             │   1 loaded
+ Programs              │
+ Schedules             │
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+▌Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │  Questions
+                       │  ▸ What should I never put in a ticket?
+                       │  ▸ Why does my message look plain?
+                       │  ▸ Why is there a limit on tickets?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

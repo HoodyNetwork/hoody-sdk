@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Turn on two-step sign-in                                                Esc ×
+ Home                  │  Account       ┃ Step 1 of 2: confirm it is you
+ Computers             │  Your profile, ┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │                ┃ Current password
+ Bots                  │  ▌Profile  Pass┃ ┃
+ Board                 │  ──────────────┃
+ Demo                  │  ┌─────────────┃
+ Vault                 │  │ Security    ┃
+                       │  │ ✓ Your email┃
+On atlas ▾             │  │ ! Two-step s┃
+ Programs              │  │ i 11 other b┃
+ Schedules             │  └─────────────┃
+ Scripts               │                ┃
+ Logs                  │  ┌─────────────┃
+ Tunnels               │  │ Profile     ┃
+ Notes                 │  │             ┃
+ AI                    │  │ Display name┃
+ VMs                   │  │             ┃
+                       │  │ Username    ┃
+Account                │  │             ┃
+ Plans & Billing       │  │ Email       ┃
+ Referrals             │  │             ┃
+ Keys and tokens       │  │ Member since┃
+ API                   │  │             ┃
+ Notifications      26 │  │ Account ID  ┃
+▌Account               │  │ Account dele┃
+                       │  └─────────────┃
+ + Rent servers        │                ┃
+ Guide                 │  ┌─────────────┃
+ Support               │  │ Password    ┃
+                       │  │             ┃
+                       │  │ Password    ┃
+                       │  │ Changing it ┃
+                       │  │ everywhere. ┃
+                       │  └─────────────┃
+                       │                ┃
+                       │  ┌─────────────┃
+                       │  │ Two-step sig┃
+                       │  │             ┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ Next: add Hoody to your authenticator app.               [Cancel]   Continue

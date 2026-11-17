@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            Guide                                  ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │                              ┌──────────────────────────────────────────────────────────────┐
+ Computers             │  │ Ask your agent            │ Build your own                                               │
+ Files                 │  │ Connect                   │ The Hub has no private powers. Every page here calls Hoody's │
+ Bots                  │  │ Skills                    │ public HTTP API. Your own page, script or agent can make the │
+ Board                 │  │▌Build your own            │ same calls, within what its key or sign-in may do, so you    │
+ Demo                  │  │ Every link                │ can build the interface you want, or run your account from   │
+ Vault                 │  │ Bots                      │ your own agents.                                             │
+                       │  │ Tools                     │                                                              │
+On atlas ▾             │  │ Try this                  │ See the Hub's own calls                                      │ █
+ Programs              │  │ Realms                    │ These steps are for the web Hub, since a terminal has no     │ █
+ Schedules             │  │ Topics                    │ developer tools. To find the call behind something the Hub   │ █
+ Scripts               │  │ Keyboard                  │ shows, do it in the web Hub with the Network tab open, then  │
+ Logs                  │  │ Look                      │ give your agent the method and address.                      │
+ Tunnels               │                              │                                                              │
+ Notes                 │   [j] [k] move between       │   1. Open your browser's developer tools: F12, or            │
+ AI                    │   sections                   │      Ctrl+Shift+I on Windows and Linux, or Cmd+Option+I on   │
+ VMs                   │                              │      macOS. Chrome and Firefox both have them.               │
+                       │                              │                                                              │
+Account                │                              │   2. Open the Network tab and pick the Fetch/XHR filter (XHR │
+ Plans & Billing       │                              │      in Firefox).                                            │
+ Referrals             │                              │                                                              │
+ Keys and tokens       │                              │   3. Use the Hub as usual. Each new row is one call. Click   │
+ API                   │                              │      it to see its method, address and headers, and the JSON │
+ Notifications      26 │                              │      it answered under Response.                             │
+ Account               │                              │ lock The Authorization header carries your session token.    │
+                       │                              │      Anyone who has it can act as you until it expires:      │
+ + Rent servers        │                              │      never paste it into a chat, an issue or a screenshot.   │
+▌Guide                 │                              │                                                              │
+ Support               │                              │ Make the same call yourself             [Open the Keys page] │
+                       │                              │ These all list your computers. Use a key from the Keys page, │
+                       │                              │ never the session token.                                     │
+                       │                              │                                                              │
+                       │                              │ Make the same call yourself                       ⧉ Copy all │
+                       │                              │ 1. curl                                                      │
+                       │                              │  curl -H "Authorization: Bearer $HOODY_TOKEN"        ⧉ copy  │
+                       │                              │  https://api.hoody.com/api/v1/computers/                     │
+                       │                              │ 2. Hoody CLI                                                 │
+                       │                              │  hoody computers list                                ⧉ copy  │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

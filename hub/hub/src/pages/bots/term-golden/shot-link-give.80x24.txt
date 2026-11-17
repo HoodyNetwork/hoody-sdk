@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY       ┃ Give it a link                                      Esc ×
+ Bots               ┃ A public address for Chief. People and programs
+ ‹ Bots  Esc        ┃ call it with a key.
+ Chief  ● Idle      ┃ ─────────────────────────────────────────────────────────
+   SG atlas    Hoody┃ ┌──────────────────────────────────────────────────────┐█
+                    ┃ │ THE ADDRESS WILL BE                                  │█
+   Activity  ▸ Link ┃ │ https://quiet-amber-heron-bot.hoody.bot              │█
+ ───────────────────┃ │ Next: make a key once the link exists. Nothing is    │█
+                    ┃ │ public until you make a key.                         │█
+  ┌─────────────────┃ └──────────────────────────────────────────────────────┘█
+  │ Addresses       ┃                                                         █
+  │ A public address┃ Name in the address                                     █
+  │ No link yet     ┃ ┃  quiet-amber-heron-bot                                █
+  │ A link gives thi┃ Leave empty to use the suggested one. 8 to 48 lowercase █
+  │ and people can c┃ letters, digits or single dashes.                       █
+  │ public until you┃                                                         █
+  │ It will look lik┃ ┌──────────────────────────────────────────────────────┐█
+  │ https://quiet-am┃ │                                                      │█
+  │  + Give it a lin┃ │ Allow other websites (CORS)                  [■ on ] │█
+  └─────────────────┃ │ CORS: lets a page on another website call            │
+                    ┃ │ the link from a browser.                             │
+                    ┃ │                                                      │
+                    ┃ ─────────────────────────────────────────────────────────
+ Typing · Esc leaves┃                                    [Cancel]  Create link

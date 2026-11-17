@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Get a computer                                                   Esc ×
+ Comput┃ Something is missing. The box below says what.
+ Your c┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Comp┃ ┌───────────────────────────────────────────────────────────────────┐█
+ ──────┃ │ YOU GET                                                           │█
+       ┃ │ Not ready yet: you have no server.                                │█
+       ┃ │ Get a new server from the Server list.                            │█
+     ┌─┃ │ Size      Known once a server is picked                           │█
+     │ ┃ │ System    Debian 13                                               │█
+     │ ┃ │ Software  Hoody kit, Developer kit, Hoody AI                      │█
+     │ ┃ └───────────────────────────────────────────────────────────────────┘█
+     │ ┃                                                                      █
+     │ ┃ ┌───────────────────────────────────────────────────────────────────┐▀
+     │ ┃ │ Computer                                                          │
+     └─┃ │ ┌───────────────────────────────────────────────────────────────┐ │
+       ┃ │ │                                                               │ │
+       ┃ │ │ Name                                                          │ │
+       ┃ │ │ Suggested for you. Keep it or type your own.                  │ │
+ Questi┃ │ │ ┃ proud-rust-llama                     [Suggest another name] │ │
+ ▸ What┃ │ │                                                               │ │
+ ▸ What┃ │ │ Server                          │ Choose… ▾                   │ │
+ ▸ Who ┃ │ │ Computers on a server share     You have no server yet        │ │
+ ▸ How ┃ ──────────────────────────────────────────────────────────────────────
+ Typing┃ [Cancel]  Get computer

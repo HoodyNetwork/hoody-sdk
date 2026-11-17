@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Edit ping-api                                                           Esc ×
+ Home                  │  Schedules     ┃ Sends a web request on a timer.
+ Computers             │  15 schedules o┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  9 programs run┃
+ Bots                  │                ┃   Name (unavailable)
+ Board                 │  / Search sched┃   │ ping-api
+ Demo                  │  ‹ Any ›  Comma┃
+ Vault                 │  15 schedules  ┃   Runs
+                       │                ┃   ┃ Every few minutes ▾
+On atlas ▾             │    Name        ┃
+ Programs              │  ›   ping-api  ┃   How often
+▌Schedules             │    ! queue-drai┃   │ 5 minutes ▾
+ Scripts               │      Watch the ┃
+ Logs                  │    ! sync-photo┃   ┌───────────────────────────────────────────────────────────────────────┐
+ Tunnels               │      Nightly ba┃   │ NEXT RUNS                                                             │
+ Notes                 │      nightly-di┃   │ Checked when you save.                                                │
+ AI                    │      morning-ch┃   └───────────────────────────────────────────────────────────────────────┘
+ VMs                   │    ! POST hooks┃
+                       │      rotate-log┃
+Account                │      cleanup-tm┃
+ Plans & Billing       │    ! Unnamed lo┃
+ Referrals             │      archive   ┃
+ Keys and tokens       │      old-report┃
+ API                   │      poll.sh   ┃
+ Notifications      26 │      warm-cache┃
+ Account               │                ┃
+                       │                ┃
+ + Rent servers        │                ┃
+ Guide                 │                ┃
+ Support               │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ [Cancel]  Save

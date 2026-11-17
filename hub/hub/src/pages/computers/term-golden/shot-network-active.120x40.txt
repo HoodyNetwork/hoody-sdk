@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                           ▸ Use with your agent  [+ Get a computer]
+▌Computers             │
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ Computers  Esc
+ Vault                 │  atlas  ● Running                                                        [Open terminal ⇗] [⋯]
+                       │  SG n12 · Home base · █  Personal ·  Current computer
+On atlas ▾             │
+ Programs              │   Overview  Connect  Permissions  Ports & addresses  Desktop ▸Network  Run  Programs  Backups
+ Schedules             │   Storage
+ Scripts               │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Logs                  │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Tunnels               │  │ At a glance                                                                              │█
+ Notes                 │  │ Internet access      Allowed                  Firewall             4 of 500 █░░░░░░░░░   │█
+ AI                    │  │ Traffic leaves from  socks5h://                                                          │█
+ VMs                   │  │                      exit.example.net:1080                                               │█
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+Account                │                                                                                              █
+ Plans & Billing       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Referrals             │  │ Internet access ⓘ                                                 Block internet access  │█
+ Keys and tokens       │  │ Whether atlas can open new connections to the internet.                                  │█
+ API                   │  │ ✓ Allowed atlas can open connections to the internet.                                    │█
+ Notifications      26 │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Account               │                                                                                              █
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ + Rent servers        │  │ Where your traffic comes out                                                             │█
+ Guide                 │  │ [Exit addresses in the docs] [VPN inside a computer]  Use another exit…  [⋯]             │
+ Support               │  │ Sites see the exit, not you. A change applies to everyone who uses atlas's proxy.        │
+                       │  │                                 Exit                                                     │
+                       │  │  Your app  →  atlas's proxy  →    socks5h://                   →  The internet           │
+                       │  │                                   exit.example.net:1080           websites and services  │
+                       │  │                                 now · login set                                          │
+                       │  │                                                                                          │
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Firewall ⓘ                                            [✦ Ask the Agent]  Add a rule  [⋯] │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

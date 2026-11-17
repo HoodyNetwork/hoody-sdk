@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                                    ▸ Use with your agent
+ Computers             │
+ Files                 │  ‹ Bots  Esc
+▌Bots                  │  Chief  ● Idle                                                              [Bot settings] [⋯]
+ Board                 │    SG atlas    Hoody Free  · Allow everything is off +2
+ Demo                  │
+ Vault                 │    Activity    Link and keys  ▸ Chat apps    Work 2
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │
+ Programs              │    ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Schedules             │    │ Chat apps                                                                             │
+ Scripts               │    │ Let people talk to this Bot from the chat apps they already use.                      │
+ Logs                  │    │ No chat apps yet                                                                      │
+ Tunnels               │    │ Connect one to answer people where they already                                       │
+ Notes                 │    │ chat.                                                                                 │
+ AI                    │    │                                                                                       │
+ VMs                   │    │ Telegram  Slack  Discord                                                              │
+                       │    │  + Add a chat app                                                                     │
+Account                │    └───────────────────────────────────────────────────────────────────────────────────────┘
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

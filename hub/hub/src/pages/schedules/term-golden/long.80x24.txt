@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Schedules                              ▸ Use with your agent   + New schedule
+ 75 schedules on atlas · next: ping-api in 3 minutes · 4 failed today
+ Computers › · 9 programs running ›
+ / Search schedules     Filters           75 schedules  ↻ Refresh  View options
+   Name                            Next run ↑     Last result            On
+ ▌   ping-api   Web request        in 3 minutes   ● Worked         [■ on ]   ⋯█
+   ! queue-drain   Script          in 4 minutes   ● Failed                   ⋯█
+     Watch the build   Agent loop  in 4 minutes   ● Worked         [■ on ]   ⋯█
+   ! sync-photos   Command         in 8 minutes   ● Failed         [■ on ]   ⋯█
+     Nightly backup   Command      in 9 hours     ● Worked         [■ on ]   ⋯█
+     Nightly backup 10   Command   in 9 hours     ● Not run yet    [■ on ]   ⋯░
+     Nightly backup 11   Command   in 9 hours     ● Not run yet    [■ on ]   ⋯░
+     Nightly backup 12   Command   in 9 hours     ● Not run yet    [■ on ]   ⋯░
+     Nightly backup 13   Command   in 9 hours     ● Not run yet    [■ on ]   ⋯░
+     Nightly backup 14   Command   in 9 hours     ● Not run yet    [■ on ]   ⋯░
+     Nightly backup 15   Command   in 9 hours     ● Not run yet    [■ on ]   ⋯░
+     Nightly backup 16   Command   in 9 hours     ● Not run yet    [■ on ]   ⋯░
+     Nightly backup 17   Command   in 9 hours     ● Not run yet    [■ on ]   ⋯░
+     Nightly backup 18   Command   in 9 hours     ● Not run yet    [■ on ]   ⋯░
+     Nightly backup 19   Command   in 9 hours     ● Not run yet    [■ on ]   ⋯░
+     Nightly backup 2   Command    in 9 hours     ● Not run yet    [■ on ]   ⋯░
+ 1–50 of 75 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

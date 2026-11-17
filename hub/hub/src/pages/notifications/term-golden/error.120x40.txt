@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                      ◆ Personal ▾  Computers not loaded ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notifications
+ Computers             │  Messages about your account: computers, rentals, sign-in and keys.
+ Files                 │  ▸ Inbox    Notices    Get notified
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  / Search                   ‹ Unread ›  Archive    Kind ▾  Level ▾     ↻ Refresh  View options
+ Vault                 │
+                       │
+On this computer       │  ✗ Unread notifications: This didn't load
+ Programs              │  Try again
+ Schedules             │
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+▌Notifications       2 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │   New notices appear here and are counted beside            [How it works] [Dismiss this tip]
+                       │   Notifications in the sidebar.
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

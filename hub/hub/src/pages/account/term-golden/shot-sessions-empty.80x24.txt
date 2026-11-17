@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Account
+ Your profile, how you sign in, and where you are signed in.
+ ‹ 4  ▌Sign-in sessions  Agent sign-in  Security history  SSH keys   4 ›
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Sign-in sessions                                                          │
+ │ Each browser or device signed in to your account. End one you do not      │
+ │ recognise.                                                                │
+ │                                                                           │
+ │ This device's address ⓘ         PT 203.0.113.7 · Lisbon ⧉ copy (i)        │
+ │ / Search              Filters                       0 sessions  ↻ Refresh │█
+ │ No ended sessions.                                                        │▀
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Agent sign-in                                                             │
+ │                                                                           │
+ │ Days signed in                  │ 90                                      │
+ │ How long an agent stays signed  A whole number from 1 to 365. It applies  │
+ │ in from this device.            the next time the agent's sign-in is      │
+ │                                 renewed.                                  │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Schedules                              ▸ Use with your agent   + New schedule
+ 15 schedules on atlas · next: ping-api in 3 minutes · 4 failed today
+ Computers › · 9 programs running ›
+ ‹ Schedules  Esc
+ Unnamed loop  ● Failed                                          [Run now] [⋯]█
+  Agent loop                                                                  █
+                                                                              █
+ i Loops live in the agent's memory and end with their session. Only the last █
+   runs are shown.                                                            █
+                                                                              █
+ Schedule     Every 1 hour                                                    █
+ Status       [□ off] Paused                                                  █
+ Next run     Paused after failed runs                                        █
+ Last result  Paused after failed runs                                        █
+                                                                              █
+ History                                                                      █
+ i No history for this one.                                                   █
+                                                                              █
+ Advanced                                                                     █
+ The saved command, with the secrets we recognise hidden.                     █
+ Session  sess_02                                                             █
+ ID       loop_5e6f7a8b
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Logs                                                                    ▸ Use with your agent
+ Computers             │  Only part of these logs could be read.
+ Files                 │
+ Bots                  │  ▸ Everything    Visits    Bots    Changes    Scripts    Programs   [More ▾]
+ Board                 │  │ ● SG atlas · █ Personal ▾ Result ▾  When: 1 hour │ / Search
+ Demo                  │                                                                     [□ off] Live [Refresh] [⋯]
+ Vault                 │  ! This computer needs an update before the Hub can show its logs.                 [Try again]
+                       │    Time     Result              From    What happened                                 Took
+On atlas ▾             │  ▌ 08:59:49 ● OK                Visits  GET 200 Terminal: opened /session/resize       295 ms█
+ Programs              │    08:59:38 ● OK                Visits  GET 200 Terminal: opened /session              258 ms░
+ Schedules             │    08:59:27 ● OK                Visits  DELETE 200 Agent: removed /health              221 ms░
+ Scripts               │    08:59:16 ● OK                Visits  PUT 200 Browser: changed /tab/1                184 ms░
+▌Logs                  │    08:59:05 ● OK                Visits  POST 200 Screen: sent /input                   147 ms░
+ Tunnels               │    08:58:54 ● OK                Visits  GET 200 Files: opened /share/ada               110 ms░
+ Notes                 │    08:58:43 ● OK                Visits  GET 200 Terminal: opened /session/resize        73 ms░
+ AI                    │    08:58:33 ● OK                Visits  GET 200 Terminal: opened /session               36 ms░
+ VMs                   │    08:58:22 ● Not found         Visits  DELETE 404 Agent: removed /health              479 ms░
+                       │    08:58:11 ● OK                Visits  PUT 200 Browser: changed /tab/1                442 ms░
+Account                │  [Show older]
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

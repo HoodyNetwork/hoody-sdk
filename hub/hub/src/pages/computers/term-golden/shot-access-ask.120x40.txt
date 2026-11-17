@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ Ask the Agent about access to atlas                 Esc ×
+ Home                  │  Computers                         ┃ Starts a new conversation with the Agent on atlas.
+▌Computers             │                                    ┃ The answer shows in the Agent panel.
+ Files                 │  ▸ Computers    Servers    Projects┃ ─────────────────────────────────────────────────────────
+ Bots                  │  ──────────────────────────────────┃ YOUR REQUEST
+ Board                 │                                    ┃ Explain who can open atlas
+ Demo                  │  ‹ Computers  Esc                  ┃ The Agent explains who can open this computer's programs
+ Vault                 │  atlas  ● Running                  ┃ and from where, what is blocked, and anything risky. It
+                       │  SG n12 · Home base · █  Personal ·┃ changes nothing.
+On atlas ▾             │                                    ┃ ▸ Exact instructions sent with it
+ Programs              │   Overview  Connect ▸Permissions  P┃
+ Schedules             │   Storage                          ┃ WHAT THE AGENT READS
+ Scripts               │  ──────────────────────────────────┃  ▸ atlas: access rules
+ Logs                  │  ┌─────────────────────────────────┃ Passwords and keys are left out and ids are masked.
+ Tunnels               │  │ ACCESS                          ┃
+ Notes                 │  │ Now: only connections from 203.0┃ Tell the Agent what you want
+ AI                    │  │ Chosen here, in atlas's own rule┃ │
+ VMs                   │  └─────────────────────────────────┃
+                       │                                    ┃
+Account                │  ┌─────────────────────────────────┃ Example: only my office IP can open the terminal. The
+ Plans & Billing       │  │ Who can open its programs       ┃ Agent gets your request and these rules, without
+ Referrals             │  │ ( ) Anyone with the address     ┃ passwords or keys. It asks you to approve each change. It
+ Keys and tokens       │  │     No sign-in. Anyone who has a┃ can't add passwords or key links: use Only people or keys
+ API                   │  │     program.                    ┃ I pick for those.
+ Notifications      26 │  │ (•) Only my IP                  ┃ [Send to the Agent]
+ Account               │  │     Only connections from the ad┃
+                       │  │     turned away.                ┃
+ + Rent servers        │  │     SG 203.0.113.7 · Singapore ⧉┃
+ Guide                 │  │     ! Access rules take IPv4 add┃
+ Support               │  │       mobile data, a VPN), the p┃
+                       │  │       rule in the Hub from any n┃
+                       │  │       the Hoody API.            ┃
+                       │  │ ( ) Only these IPs              ┃
+                       │  │     Only connections from the ad┃
+                       │  │     with the link is turned away┃
+                       │  │ ( ) Only people or keys I pick  ┃
+                       │  │     Each person signs in with a ┃
+                       │  │     Everyone else is kept out.  ┃
+                       │  │ ( ) Private                     ┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit  ┃                                [Close]   ✦ Ask the Agent

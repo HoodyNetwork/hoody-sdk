@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                       ▸ Use with your agent   + New Bot
+ Computers             │  Every Bot on your running computers, and the page of each one.
+ Files                 │
+▌Bots                  │  Bots              Working now    ! Need you                         In chat apps
+ Board                 │  2                 0              3                                  2
+ Demo                  │  on 2 computers    All quiet      3 paused after a sign-in change    Show
+ Vault                 │
+                       │  / Search                   Filters                            2 Bots  ↻ Refresh  View options
+On atlas ▾             │  ‖ sunny-red-lemur: 2 Bots are paused after a sign-in change.                         [Resume]
+ Programs              │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Schedules             │  ‖ glad-silver-falcon: 1 Bot is paused after a sign-in change.                        [Resume]
+ Scripts               │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Logs                  │
+ Tunnels               │  ▌ B bright-crimson-lynx                                                              ● Idle ⋯
+ Notes                 │      Last active 19 days ago · Runs the team day: triage, approvals and summaries
+ AI                    │       · sunny-red-lemur · Acme client · Model Hoody Free
+ VMs                   │      Telegram Slack Discord  Public link
+                       │    C Chief                                                                            ● Idle ⋯
+Account                │      Last active 19 days ago · Watches deploys and reports failures
+ Plans & Billing       │       · daring-mint-walrus · Acme client · Model gpt-5
+ Referrals             │      Telegram  Public link
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │  Questions
+                       │  ▸ What is a Bot, and where does it run?
+                       │  ▸ What is the default Bot of a realm?
+                       │  ▸ What is a link, and what do keys do?
+                       │  ▸ What do Other websites (CORS) and the call limits mean?
+                       │  ▸ What does Allow everything do, and what does mixed mean?
+                       │  ▸ Who becomes the owner of a chat app, and how do others join?
+                       │  ▸ What does the warning that privacy is on mean?
+                       │  ▸ What does the Bot read in a group?
+                       │  ▸ Which model answers me, and which do the Bot's helpers use?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

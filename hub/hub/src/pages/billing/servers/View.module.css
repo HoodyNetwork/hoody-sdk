@@ -1,0 +1,48 @@
+.muted {
+  color: var(--hx-muted);
+}
+.mono {
+  font: var(--t-mono);
+}
+
+/* The Listings name cell: the server name, then its tags on a line of their own (they never squeeze the name). */
+.nameCell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+  padding-block: var(--sp-2);
+}
+
+/* The server name gives way first: it ends in an ellipsis. */
+.name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.late {
+  color: var(--hx-danger);
+}
+
+/* The Listings tab's scrolling column: the instant footnote, then the table at a usable height. */
+.withOverview {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.tableArea {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  min-height: min(560px, 80dvh);
+}
+
+/* The asterisk's explanation, next to the list it marks. */
+.footnote {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}

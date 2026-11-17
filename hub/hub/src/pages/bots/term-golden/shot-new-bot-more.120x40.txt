@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ New Bot                                                                 Esc ×
+ Home                  │  Bots          ┃ ─────────────────────────────────────────────────────────────────────────────
+ Computers             │  Every Bot on y┃ │ The Bot                                                                  │
+ Files                 │                ┃ │ ┌──────────────────────────────────────────────────────────────────────┐ │█
+▌Bots                  │  Bots          ┃ │ │                                                                      │ │█
+ Board                 │  23            ┃ │ │ Computer                        │ ● SG atlas · Acme client ▾         │ │█
+ Demo                  │  on 2 computers┃ │ │ The Bot runs here and starts                                         │ │█
+ Vault                 │                ┃ │ │ its tasks here.                                                      │ │█
+                       │  / Search      ┃ │ │                                                                      │ │█
+On atlas ▾             │                ┃ │ │ Name                                                                 │ │█
+ Programs              │  › C Chief     ┃ │ │ Its identifier will be calm-olive-panda.                             │ │█
+ Schedules             │      Asked you ┃ │ │ │ calm-olive-panda                            [Suggest another name] │ │█
+ Scripts               │       · Runs th┃ │ │                                                                      │ │█
+ Logs                  │       · Model H┃ │ │ Model                           Hoody Free  Included        [Change] │ │█
+ Tunnels               │      Telegram S┃ │ │ The model that answers you.                                          │ │█
+ Notes                 │    L Ledger    ┃ │ │ You can change it later in the                                       │ │█
+ AI                    │      Stopped at┃ │ │ Bot's Settings, under Model.                                         │ │█
+ VMs                   │       · cinder ┃ │ │                                                                      │ │█
+                       │      Only here ┃ │ └──────────────────────────────────────────────────────────────────────┘ │█
+Account                │    S Support   ┃ └──────────────────────────────────────────────────────────────────────────┘█
+ Plans & Billing       │      … Working ┃                                                                             █
+ Referrals             │       · atlas ·┃ ┌──────────────────────────────────────────────────────────────────────────┐█
+ Keys and tokens       │      Discord   ┃ │ Permissions and access                                                   │█
+ API                   │    D Digest    ┃ │ ┌──────────────────────────────────────────────────────────────────────┐ │█
+ Notifications      26 │      2 messages┃ │ │                                                                      │ │█
+ Account               │       · atlas ·┃ │ │ Allow everything                [■ on ]                              │ │█
+                       │      Only here ┃ │ │ On: it runs commands and edits                                       │ │█
+ + Rent servers        │    S Scout     ┃ │ │ files without asking. Change                                         │ │█
+ Guide                 │      Last activ┃ │ │ it on the Bot's page.                                                │ │█
+ Support               │       · Model g┃ │ │                                                                      │ │█
+                       │      Telegram  ┃ │ │ Public link                     [□ off]                              │ │█
+                       │    N Notes     ┃ │ │ Off: you talk to it in the                                           │ │▀
+                       │      Last activ┃ │ │ Hub. Add one in Link and keys.                                       │ │
+                       │       · Model H┃ │ │                                                                      │ │
+                       │      Only here ┃ │ └──────────────────────────────────────────────────────────────────────┘ │
+                       │                ┃ └──────────────────────────────────────────────────────────────────────────┘
+                       │  1–20 of 23 ‹ ›┃
+                       │                ┃ ▾ More options  Instructions for how it works and talks.
+                       │  Questions     ┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃                                                         [Cancel]  Create Bot

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ New VM inside atlas                                                                                   Esc ×
+ Home     ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Computers┃ │ WHAT YOU GET                                                                                           │▄
+ Files    ┃ │ A Linux VM inside atlas.                                                                               │█
+ Bots     ┃ │ Memory       2 GB                                    Screen       On                                   │█
+ Board    ┃ │ CPUs         2                                       Starts with  UEFI                                 │█
+ Demo     ┃ │ Disk         20 GB                                   TPM          No                                   │█
+ Vault    ┃ └────────────────────────────────────────────────────────────────────────────────────────────────────────┘█
+          ┃                                                                                                           █
+On atlas ▾┃ ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐█
+ Programs ┃ │ The VM                                                                                                 │█
+ Schedules┃ │ ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐ │█
+ Scripts  ┃ │ │                                                                                                    │ │█
+ Logs     ┃ │ │ Name                            │ new-1                                                            │ │█
+ Tunnels  ┃ │ │ Lower-case letters, digits and                                                                     │ │█
+ Notes    ┃ │ │ hyphens. It cannot be changed                                                                      │ │█
+ AI       ┃ │ │ later.                                                                                             │ │█
+▌VMs      ┃ │ │                                                                                                    │ │█
+          ┃ │ │ System                          (•) Linux                                                          │ │█
+Account   ┃ │ │ Sets the starting sizes and     ( ) Windows 11                                                     │ │█
+ Plans & B┃ │ │ what the system needs to        ( ) Windows Server                                                 │ │▀
+ Referrals┃ │ │ start.                          ( ) Other                                                          │ │
+ Keys and ┃ │ │                                                                                                    │ │
+ API      ┃ │ └────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+ Notificat┃ └────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ Account  ┃
+          ┃ ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+ + Rent se┃ │ What goes on the disk                                                                                  │
+ Guide    ┃ │ ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+ Support  ┃ │ │                                                                                                    │ │
+          ┃ │ │ Start from                      ( ) Install from an image                                          │ │
+          ┃ │ │                                 ( ) A template                                                     │ │
+          ┃ │ │                                 (•) An empty disk                                                  │ │
+          ┃ │ │                                 ( ) A copy of another VM                                           │ │
+          ┃ │ │                                 ( ) A disk file on this computer                                   │ │
+          ┃ │ │                                                                                                    │ │
+          ┃ │ └────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+          ┃ ✗ Didn't go through
+ Tab move ┃ A VM with this name exists already. Pick another name.                                 [Cancel]  Create VM

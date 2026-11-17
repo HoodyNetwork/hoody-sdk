@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing                                                                  + Add funds
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │    Plans    Bare metal  ▸ Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC                              [Pay now]
+ Vault                 │
+                       │                                                                                              █
+On atlas ▾             │    WALLET                                                                                    █
+ Programs              │    $1,234,567.89                                                                             █
+ Schedules             │    Pays for servers and plans.                                                               █
+ Scripts               │    Referral credit $123,456.40 · spent first on servers                                      █
+ Logs                  │    Owed $98,765.00 (paid from new Referral credit)                                           █
+ Tunnels               │    Referrals  What these amounts are                                                         █
+ Notes                 │                                                                                              █
+ AI                    │                                                                                              █
+ VMs                   │    GITHUB BONUS  $10.00 in Wallet credit is available.                                       █
+                       │    [Claim bonus] GitHub account: @octocat                                                    █
+Account                │    Limit: one bonus per Hoody account and one per GitHub account.                            █
+▌Plans & Billing       │                                                                                              ▀
+ Referrals             │
+ Keys and tokens       │
+ API                   │  Server subscriptions
+ Notifications      26 │  What you pay for, when it renews, and what needs you. What happens when auto-renew is off
+ Account               │
+                       │  / Search                   State ▾                                      4 servers  ↻ Refresh
+ + Rent servers        │
+ Guide                 │    Plan ↑             Server              State                           Price
+ Support               │  › Medium             DE fra-7            ● On hold                   $29.00/mo     [Pay now]
+                       │                       Frankfurt, Germany
+                       │    Medium             SG Singapore M      ● Active                    $29.00/mo   [Upgrade] ⋯
+                       │                       Singapore
+                       │    Small              #10111216           ● Setting up                $12.00/mo             ⋯
+                       │    Small              SG n12              ● Active                    $12.00/mo   [Upgrade] ⋯
+                       │                       Singapore
+                       │
+                       │
+                       │  AI usage & limits
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

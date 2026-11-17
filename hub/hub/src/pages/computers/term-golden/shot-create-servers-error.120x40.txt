@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Get a computer                                                                                        Esc ×
+ Home     ┃ Something is missing. The box below says what.
+▌Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ ┌──────────────────────────────────────────────────┐ ┌──────────────────────────────────────────────────┐ █
+ Bots     ┃ │ (•) A new computer                               │ │ ( ) A copy of one of yours                       │ █
+ Board    ┃ │     Debian 13, set up below.                     │ │     Same files as the computer you pick.         │ █
+ Demo     ┃ └──────────────────────────────────────────────────┘ └──────────────────────────────────────────────────┘ █
+ Vault    ┃                                                                                                           █
+          ┃ ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐█
+On atlas ▾┃ │ YOU GET                                                                                                │█
+ Programs ┃ │ Your servers could not be read.                                                                        │█
+ Schedules┃ │ Size      Known once a server is picked              Software  Hoody kit, Developer kit, Hoody AI      │█
+ Scripts  ┃ │ System    Debian 13                                                                                    │█
+ Logs     ┃ └────────────────────────────────────────────────────────────────────────────────────────────────────────┘█
+ Tunnels  ┃                                                                                                           █
+ Notes    ┃ ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐█
+ AI       ┃ │ Computer                                                                                               │█
+ VMs      ┃ │ ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐ │█
+          ┃ │ │                                                                                                    │ │█
+Account   ┃ │ │ Name                            │ noble-sage-raven   [Suggest another name]                        │ │█
+ Plans & B┃ │ │ Suggested for you. Keep it or                                                                      │ │█
+ Referrals┃ │ │ type your own.                                                                                     │ │█
+ Keys and ┃ │ │                                                                                                    │ │█
+ API      ┃ │ │ Server                          │ Choose… ▾                                                        │ │█
+ Notificat┃ │ │ Computers on a server share     Could not load servers                                             │ │█
+ Account  ┃ │ │ its cores, memory and disk.                                                                        │ │█
+          ┃ │ │                                                                                                    │ │█
+ + Rent se┃ │ │ Project                         │ █ Home base ▾                                                    │ │█
+ Guide    ┃ │ │ Groups computers. Its people    [+ New project in this realm]                                      │ │█
+ Support  ┃ │ │ and access rules apply to this                                                                     │ │█
+          ┃ │ │ one too.                                                                                           │ │█
+          ┃ │ │                                                                                                    │ │█
+          ┃ │ │ Realm                            █  Personal                                                       │ │█
+          ┃ │ │ Always added: you're getting                                                                       │ │█
+          ┃ │ │ this computer inside this                                                                          │ │█
+          ┃ │ │ realm.                                                                                             │ │
+          ┃ │ │                                                                                                    │ │
+          ┃ │ └────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tab move ┃ [Cancel]  Get computer

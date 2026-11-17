@@ -1,0 +1,126 @@
+/* "Being built in this browser": a quiet section above the scripts list, on both of the page's views. */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-2);
+}
+
+/* The pill's words give way (and end in an ellipsis) before the row's buttons are pushed out of the row. */
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) fit-content(40rem) auto auto auto;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  min-height: var(--row-h);
+  font: var(--t-small);
+  color: var(--hx-ink);
+}
+
+.row + .row {
+  border-top: var(--bw) solid var(--hx-line);
+}
+
+.desc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: var(--t-body);
+}
+
+.state {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.step,
+.comp,
+.age {
+  color: var(--hx-muted);
+  white-space: nowrap;
+}
+
+.step {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.actions {
+  display: flex;
+  gap: var(--sp-1);
+  justify-content: flex-end;
+}
+
+.note {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--hx-fill);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-2);
+  font: var(--t-small);
+  color: var(--hx-ink);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.changes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.change {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.changeActions {
+  display: flex;
+  gap: var(--sp-1);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* Narrow frame: each row stacks (description on two lines, then the pill and words, then the actions). Below 720 px the
+   one-line grid's fixed columns leave the description no room. */
+@container content (width < 720px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-1);
+  }
+
+  .desc {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .actions {
+    justify-content: flex-start;
+  }
+}

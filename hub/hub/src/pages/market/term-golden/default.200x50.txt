@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing  Balance $250                                                                                                                                    + Add funds
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │    Plans  ▸ Bare metal    Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC                                                                                                              [Pay now]
+                       │  ▸ Listings    Reservations 2
+On atlas ▾             │
+ Programs              │  *Usually ready in 5 seconds to 60 minutes. If it takes longer than 60 minutes, you get a voucher.
+ Schedules             │
+ Scripts               │  / Search servers                Filters                                                                                                                 12 servers  ↻ Refresh
+ Logs                  │  Whole machines for you alone, from $30/month.
+ Tunnels               │
+ Notes                 │    Server                     Location          Processor                   Cores  RAM                Disk                             Delivery                        From
+ AI                    │  ▌ Frankfurt L                DE Falkenstein    AMD Ryzen 9 5950X              16  128 GB DDR4 ECC    2 × 512 GB NVMe                  Instant delivery*    $69 for 30 days
+ VMs                   │    ✓ Featured ! 2 left
+                       │    Frankfurt M                DE Falkenstein    AMD Ryzen 7 3700X               8  64 GB DDR4 ECC     512 GB NVMe                      Instant delivery*    $39 for 30 days
+Account                │    Tokyo L                    JP Tokyo          AMD EPYC 7502P                 32  256 GB DDR4 ECC    2 × 1.92 TB NVMe + 2 × 8 TB HDD  Instant delivery*   $228 for 30 days
+▌Plans & Billing       │    ! 1 left
+ Referrals             │    Singapore M                SG Singapore      Intel Xeon E-2288G              8  64 GB DDR4 ECC     2 × 480 GB SSD                   2 h                  $89 for 30 days
+ Keys and tokens       │    Ashburn M                  US Ashburn        Intel Xeon Gold 6226R          12  96 GB DDR4 ECC     1,000 GB NVMe                    Instant delivery*    $79 for 30 days
+ API                   │    Singapore S                SG Singapore      Intel Core i5-13500             4  32 GB DDR4 ECC     500 GB NVMe                      Instant delivery*    $30 for 30 days
+ Notifications      26 │    Tokyo M                    JP Tokyo          AMD Ryzen 9 7950X              16  128 GB DDR5        2 × 1 TB NVMe                    Instant delivery*   $119 for 30 days
+ Account               │    ! 3 left
+                       │    Frankfurt S                DE Falkenstein    AMD Ryzen 7 5700X               8  64 GB DDR4 ECC     2 × 500 GB NVMe                  Instant delivery*    $34 for 30 days
+ + Rent servers        │    Frankfurt XL               DE Frankfurt      AMD EPYC 7443P                 24  256 GB             2 × 1.92 TB NVMe                 3 days              $178 for 30 days
+ Guide                 │    · Pre-order
+ Support               │    Ashburn XL                 US Ashburn        AMD EPYC 9354P                 32  512 GB             4 × 1.92 TB NVMe                 5 days              $358 for 30 days
+                       │    · Pre-order
+                       │    Singapore XL               SG Singapore      Intel Xeon E-2386G              6  64 GB              1 TB NVMe                        2 days               $83 for 30 days
+                       │    · Pre-order
+                       │    Ashburn S                  US Ashburn        Intel Xeon E-2124               2  4 GB DDR4 ECC      80 GB SSD                        Not listed              Not for sale
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

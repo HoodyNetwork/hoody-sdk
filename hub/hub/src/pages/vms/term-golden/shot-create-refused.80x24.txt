@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ New VM inside atlas                                              Esc ×
+ Virtua┃ ──────────────────────────────────────────────────────────────────────
+ Full m┃ │ │ Sets the starting sizes and     ( ) Windows 11                │ │
+ ▸ VMs ┃ │ │ what the system needs to        ( ) Windows Server            │ │
+ ──────┃ │ │ start.                          ( ) Other                     │ │
+ ┌─────┃ │ │                                                               │ │
+ │ This┃ │ └───────────────────────────────────────────────────────────────┘ │
+ │ VMs ┃ └───────────────────────────────────────────────────────────────────┘▄
+ │     ┃                                                                      █
+ │ What┃ ┌───────────────────────────────────────────────────────────────────┐█
+ │ ┌───┃ │ What goes on the disk                                             │█
+ │ │   ┃ │ ┌───────────────────────────────────────────────────────────────┐ │█
+ │ │ Ru┃ │ │                                                               │ │
+ │ │ KV┃ │ │ Start from                                                    │ │
+ │ │   ┃ │ │ ( ) Install from an image                                     │ │
+ │ └───┃ │ │ ( ) A template                                                │ │
+ │ Serv┃ │ │ (•) An empty disk                                             │ │
+ │     ┃ │ │ ( ) A copy of another VM                                      │ │
+ │ Room┃ │ │ ( ) A disk file on this computer                              │ │
+ │ Memo┃ │ │                                                               │ │
+ │ Larg┃ ──────────────────────────────────────────────────────────────────────
+ │ star┃ ✗ Didn't go through
+ │ Free┃ A VM with this name exists already. Pick another  [Cancel]  Create VM
+ Tab mo┃ name.

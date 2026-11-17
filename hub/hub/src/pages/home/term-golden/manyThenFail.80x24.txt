@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Good morning, Ada                              [i What is Hoody?]  [Customize]
+ ■ Personal · ✓ atlas (Running) · SG n12
+
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ │ Ask atlas to…                                                     [Ask] │█
+ │                                                                           │█
+ │ [Install the popular coding agents] [Keep my app running after restarts]  │█
+ │ [What is running on atlas?] [Back up my files daily] [Create a bot that…] │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Your computer                                                  View all › │
+ │ ! Couldn't read your computers The server had a       · Try again Details │
+ │   problem. Try again in a moment.                                         │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────┐ ┌────────────────────────────────────┐
+ │ Start something                    │ │ Bots                    View all › │
+ │                                    │ │ ◆ Chie… ◆ Waiting for you [Review] │
+ │ New Bot           Open the Board   │ │ i Support · atlas        i Working │
+ │ Assistants that   Programs,        │ │ i Digest · a… i 2 messages waiting │
+ │ work on your      terminals and    │ │ ! Ledger · cinder         ! Paused │
+ │ computers         displays side by │ │ · Scout · cinder            · Idle │
+ │                   side             │ │                                    │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

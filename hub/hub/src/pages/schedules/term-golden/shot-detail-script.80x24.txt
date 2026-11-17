@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Schedules                              ▸ Use with your agent   + New schedule
+ 15 schedules on atlas · next: ping-api in 3 minutes · 4 failed today
+ Computers › · 9 programs running ›
+ ‹ Schedules  Esc
+ queue-drain  ● Failed                                           [Run now] [⋯]█
+  Script                                                                      █
+                                                                              █
+ i Run now runs the same way as its timer.                                    █
+                                                                              █
+ Schedule     Every 10 minutes                                                █
+ Next run     in 4 minutes · 09:04                                            █
+ Last result  Failed                                                          █
+              queue-drain: lock held by pid 4411                              █
+              See output                                                      ▀
+
+ Next run
+ Times are in UTC.
+ in 4 minutes · 09:04
+
+ History
+     Started                 Result                                    Took
+ › ▸ Today 16:54             ● Failed · exit 1                          8 s
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,6 @@
+{
+  "export.copied": "Chat copied as Markdown",
+  "export.copiedBody": "The terminal saves no files: paste it into {{name}} or wherever you keep it.",
+  "export.notCopied": "Chat not copied",
+  "export.notCopiedBody": "This terminal did not take the copy (it may be too long). Export it from the web Hub to save it as a file."
+}

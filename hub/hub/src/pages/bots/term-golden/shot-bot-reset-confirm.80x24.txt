@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Bots                                                     ▸ Use with your agent
+ ‹ Bots  Esc
+
+   i Task ┌──────────────────────────────────────────────────────────┐
+   The dep│ Restart the conversation?                          Esc × │st
+   raising│ ──────────────────────────────────────────────────────── │
+   19 days│ The Bot starts a new conversation. The messages move to  │
+          │ its archive. Tasks it started keep running.              │
+          │                                                          │
+          │                     [Cancel]   Restart the conversation  │thing.
+          └──────────────────────────────────────────────────────────┘
+
+   Understood. I will change the limit and ask before any
+   restart.
+   19 days ago
+
+   ┌───────────────────────────────────────────────────────────────────────┐
+   │ Message the Bot                                                       │  █
+   └───────────────────────────────────────────────────────────────────────┘  █
+                                  Write a message first.  [⇗ Talk]  [Send ↵]  █
+                                                                              █
+                                                                              █
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

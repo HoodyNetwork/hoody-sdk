@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                          ◆ Personal ▾  No computers yet ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing                                                                  + Add funds
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │    Plans    Bare metal  ▸ Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │                                                                                              █
+                       │    WALLET                                                                                    █
+On this computer       │    $42.50                                                                                    █
+ Programs              │    Pays for servers and plans.                                                               █
+ Schedules             │                                                                                              █
+ Scripts               │                                                                                              █
+ Logs                  │                                                                                              █
+ Tunnels               │  Server subscriptions                                                                        █
+ Notes                 │  What you pay for, when it renews, and what needs you. What happens when auto-renew is off   █
+ AI                    │                                                                                              █
+ VMs                   │  No servers yet                                                                              █
+                       │  A paid server comes with its own computers and                                              █
+Account                │  free AI. See the plans to get one.                                                          █
+▌Plans & Billing       │  [See plans]                                                                                 █
+ Referrals             │                                                                                              █
+ Keys and tokens       │                                                                                              █
+ API                   │  AI usage & limits                                                                           █
+ Notifications         │  Each server you own has its own free AI allowance, shared by every computer on it.          █
+ Account               │  Where the allowance comes from                                                              █
+                       │                                                                                              █
+ + Rent servers        │  No server yet                                                                               █
+ Guide                 │  You don't own a server yet, so there is no                                                  █
+ Support               │  allowance to show. A server plan comes with its                                             █
+                       │  own free AI.                                                                                █
+                       │  [Get more AI]                                                                               █
+                       │                                                                                              █
+                       │  Questions                                                                                   █
+                       │  ▸ How does adding funds work?                                                               █
+                       │  ▸ What does "Stop tracking" do?                                                             █
+                       │  ▸ What happens when auto-renew is off or a renewal isn't paid?
+                       │  ▸ Can I be charged twice if I try again?
+                       │  ▸ What happens when I upgrade a server's plan?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

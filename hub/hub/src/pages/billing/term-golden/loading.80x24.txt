@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                 ◆ Personal ▾  … Loading computers… ▾  [A]  ^K · ?
+ Plans & Billing                                                   + Add funds
+ Upgrade a server, rent a whole machine, and see what you pay.
+ ▸ Plans    Bare metal    Wallet & usage
+ ──────────────────────────────────────────────────────────────────────────────
+ Plans                                                                        █
+ Each plan is a server of your own. Its computers share its cores, memory and █
+ disk. You can take the same plan more than once.
+
+ ┌────────────────────────────────────┐  Loading…
+ │ Free                   ✓ Your plan │  ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+ │ $0 / month                         │  ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+ │ Computers                        3 │  ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+ │ Hardware           Shared hardware │  ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+ │ AI allowance               Free 1× │  ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+ │                            █       │
+ │ Locations                          │
+ │ No choice of location              │
+ │ Your free server stays as it is    │
+ │ when you buy a plan.               │
+ │ Free server details                │
+ └────────────────────────────────────┘
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

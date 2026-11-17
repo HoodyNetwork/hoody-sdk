@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines › import-1
+ import-1  ● Not created                                 [Remove from the list]
+ A VM inside atlas.
+ │ ✗ Last problem: Not enough free disk in this computer.
+ ▸Overview
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Overview                                                                   │
+ │ State  ● Not created                                                       │
+ │ This VM was not created, so it has no settings.                            │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

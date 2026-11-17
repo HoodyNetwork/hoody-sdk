@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Files                                                                   ▸ Use with your agent
+ Computers             │  The folders on your computers.
+▌Files                 │    Browse    Storage    Transfers  ▸ Use from your PC                                        █
+ Bots                  │  ────────────────────────────────────────────────────────────────────────────────────────────█
+ Board                 │                                                                                              █
+ Demo                  │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Vault                 │  │ What do you want to do?                                                                  │█
+                       │  │ Pick one. The steps below are for that choice only.                                      │█
+On atlas ▾             │  │ ┌──────────────────────────┐ ┌──────────────────────────┐ ┌──────────────────────────┐   │█
+ Programs              │  │ │ ( ) Work on atlas's      │ │ (•) Open them as a       │ │ ( ) Give atlas a folder  │   │█
+ Schedules             │  │ │     files in a folder on │ │     network drive        │ │     from your PC         │   │█
+ Scripts               │  │ │     your PC              │ │     Nothing to install:  │ │     The folder shows up  │   │█
+ Logs                  │  │ │     Open, edit and save  │ │     Finder, File         │ │     inside atlas while a │   │█
+ Tunnels               │  │ │     them with your own   │ │     Explorer or GNOME    │ │     command runs on your │   │█
+ Notes                 │  │ │     programs, at any     │ │     Files. Best for a    │ │     PC. Needs the Hoody  │   │█
+ AI                    │  │ │     size. Needs the      │ │     quick look and small │ │     CLI.                 │   │█
+ VMs                   │  │ │     Hoody CLI.           │ │     files.               │ │                          │   │█
+                       │  │ └──────────────────────────┘ └──────────────────────────┘ └──────────────────────────┘   │█
+Account                │  │ ┌──────────────────────────┐                                                             │█
+ Plans & Billing       │  │ │ ( ) Do it from your code │                                                             │█
+ Referrals             │  │ │     Mount atlas's files  │                                                             │█
+ Keys and tokens       │  │ │     from JavaScript or   │                                                             │█
+ API                   │  │ │     TypeScript with the  │                                                             │█
+ Notifications      26 │  │ │     Hoody SDK.           │                                                             │▀
+ Account               │  │ └──────────────────────────┘                                                             │
+                       │  │ SFTP, scp and SSH forwarding aren't offered: the public SSH gateway refuses them.        │
+ + Rent servers        │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+ Guide                 │
+ Support               │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Open atlas's files as a network drive                                                    │
+                       │  │ Paste this address on your device.                                                       │
+                       │  │ https://••••  ⧉ copy                                                                     │
+                       │  │                                                                                          │
+                       │  │ Your device                                                                              │
+                       │  │ ‹ Mac ›  Windows    Linux    Phone                                                       │
+                       │  │ Finder opens the files as a read-only drive.                                             │
+                       │  │ 01  In Finder, choose Go > Connect to Server (Command-K).                                │
+                       │  │ 02  Paste the address in the Server Address field.                                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

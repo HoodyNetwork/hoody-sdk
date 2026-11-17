@@ -1,0 +1,433 @@
+/* Widget body pieces, Meter, Sparkline (Widgets.tsx) and PropagatingNote (Propagating.tsx).
+   Title: sentence-case text with a muted count and an optional note. */
+.title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.titleText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.count {
+  color: var(--hx-muted);
+  font-weight: var(--fw-regular);
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+  white-space: nowrap;
+}
+
+/* List */
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 32px;
+  border-block-end: var(--bw) solid var(--hx-line);
+  font-size: var(--fs-md);
+  line-height: var(--lh-box-body);
+}
+
+.row:last-child {
+  border-block-end: 0;
+}
+
+/* The row's gap spaces meta, pill and action. The marker (dot or icon) sits --gap-dot from its label; the dot is
+   centred under where a row's icon sits. */
+.dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-inline: var(--sp-1) calc(var(--gap-dot) - var(--sp-2));
+  border-radius: var(--r-round);
+  background: var(--hx-faint);
+}
+
+.icon {
+  flex: none;
+  margin-inline-end: calc(var(--gap-dot) - var(--sp-2));
+  color: var(--hx-muted);
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--hx-ink);
+  font-weight: var(--fw-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.labelLink {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* On a coarse pointer a row is --ctl-h tall (44 px there), as the kit's own rows are on touch; on a mouse it stays
+   32 px. Its link fills that height, so it is a 44 px target and no two rows' links overlap. */
+@media (pointer: coarse) {
+  .row {
+    min-height: var(--ctl-h);
+  }
+
+  .labelLink {
+    padding-block: calc((var(--ctl-h) - 1lh) / 2);
+  }
+}
+
+.meta {
+  flex: none;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.action {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+/* Tones: dots, icons, notes and stat values */
+.d_neutral {
+  background: var(--hx-faint);
+}
+
+.d_ok {
+  background: var(--hx-ok);
+}
+
+.d_warn {
+  background: var(--hx-warn-fill);
+}
+
+.d_danger {
+  background: var(--hx-danger-fill);
+}
+
+/* Blue is for links and focus only: info reads as neutral ink. */
+.d_info {
+  background: var(--hx-ink);
+}
+
+.d_accent {
+  background: var(--hx-acc);
+  box-shadow: 0 0 0 var(--bw) var(--hx-acc-edge);
+}
+
+.t_ok {
+  color: var(--hx-ok);
+}
+
+.t_warn {
+  color: var(--hx-warn);
+}
+
+.t_danger {
+  color: var(--hx-danger);
+}
+
+.t_info {
+  color: var(--hx-ink);
+}
+
+.t_accent {
+  color: var(--hx-ink);
+}
+
+.t_neutral {
+  color: inherit;
+}
+
+/* Stat */
+.stat {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.statText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.value {
+  color: var(--hx-ink);
+  font: var(--t-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.value.t_neutral {
+  color: var(--hx-ink);
+}
+
+.caption {
+  color: var(--hx-muted);
+  font-size: var(--fs-md);
+  line-height: var(--lh-box-body);
+}
+
+.chart {
+  flex: 1 1 auto;
+  min-width: 80px;
+}
+
+/* Sparkline */
+.spark {
+  display: block;
+  width: 100%;
+  height: 32px;
+  color: var(--hx-muted);
+}
+
+.s_danger {
+  color: var(--hx-danger);
+}
+
+.s_warn {
+  color: var(--hx-warn);
+}
+
+.s_ok {
+  color: var(--hx-ok);
+}
+
+.sparkLine {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.sparkArea {
+  fill: currentcolor;
+  opacity: 0.1;
+}
+
+/* Progress */
+.progress {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.track {
+  flex: 1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--r-1);
+  background: var(--hx-fill);
+}
+
+.bar {
+  display: block;
+  height: 100%;
+  background: var(--hx-ink);
+}
+
+.progressText {
+  flex: none;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Meter (usage bar): ten square blocks with 2 px gaps (`--bw-2`), cut by one mask on the
+   track (no element per block); the bar is as wide as the track and clipped to a whole number of blocks
+   (Widgets.tsx). Empty blocks are the grey, lit ones the ink; a toned meter lights the switch yellow with its dark
+   edge (tokens.css, Meters). */
+.meter {
+  position: relative;
+  display: inline-block;
+  flex: none;
+
+  /* 60 px: a whole 6 px period per block (4 px block, 2 px gap), so blocks and their edges land on whole pixels. */
+  inline-size: calc(var(--sp-10) - var(--sp-1));
+  block-size: var(--sp-2);
+  overflow: hidden;
+  border-radius: 0;
+  background: var(--hx-meter-track);
+  vertical-align: middle;
+
+  /* The mask reads only alpha: the opaque track grey draws a block, transparent cuts a gap. One value, so a toned
+     meter's strokes (below) are cut by the very same gradient. */
+  --meter-cut: repeating-linear-gradient(
+    90deg,
+    var(--hx-meter-track) 0,
+    var(--hx-meter-track) calc(10% - var(--bw-2)),
+    transparent calc(10% - var(--bw-2)),
+    transparent 10%
+  );
+
+  mask-image: var(--meter-cut);
+}
+
+.meterFill {
+  inline-size: 100%;
+}
+
+.meterBar {
+  position: absolute;
+  inset: 0;
+  background: var(--hx-meter-fill);
+
+  /* Lit from inline-start: the clip cuts away the unlit end. The bar keeps the track's own box, so
+     the toned strokes below repeat at exactly the mask's period at any width (a bar box of its own snaps differently
+     at fractional widths, and its strokes drift off the blocks by a device pixel). The cut sits 1 px inside the gap
+     before the first unlit block, which the mask hides anyway, so however the clip edge rounds no unlit block shows a
+     lit pixel. */
+  clip-path: inset(0 calc(100% - var(--meter-lit, 0%) + var(--bw)) 0 0);
+}
+
+.meterBar:dir(rtl) {
+  /* Mirrored: the unlit blocks are at inline-start, so the cut sits 1 px inside the gap that ends where the first lit
+     block begins (each block's gap follows it in the track's own left-to-right period). */
+  clip-path: inset(0 0 0 calc(100% - var(--meter-lit, 0%) - var(--bw)));
+}
+
+/* Warn and danger share the one toned look; the level is in the value text (aria-valuetext) and in the words
+   beside or naming each meter. Each lit block carries its own 1 px edge on all four sides: the bar is the edge colour,
+   and the tone is laid over it 1 px in from the top and bottom, cut by the track's own mask twice, moved 1 px right and
+   1 px left, and kept only where both hold. So the side strokes are the mask's own block edges, moved by whole pixels:
+   they land on the mask's blocks at any width (gradients of their own round their stops to device pixels apart from the
+   mask's, and one stroke per meter drifts by a device pixel at fractional widths).
+   A toned block shows fill only while it is wider than its two strokes: a track over 40 px (each 2 px block of a 40 px
+   track is all edge). The small meter is 60 px; a fill meter needs a container that wide. */
+.meter_warn,
+.meter_danger {
+  background: var(--hx-meter-edge);
+}
+
+.meter_warn::before,
+.meter_danger::before {
+  content: '';
+  position: absolute;
+  inset-block: var(--bw);
+  inset-inline: 0;
+  background: var(--hx-meter-tone);
+  mask-image: var(--meter-cut), var(--meter-cut);
+  mask-position:
+    var(--bw) 0,
+    calc(-1 * var(--bw)) 0;
+  mask-composite: intersect;
+}
+
+.meterBusy::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inline-size: 30%;
+  background: var(--hx-meter-fill);
+  animation: meter-slide 1.6s var(--ease-out) infinite;
+}
+
+@keyframes meter-slide {
+  from {
+    inset-inline-start: -30%;
+  }
+
+  to {
+    inset-inline-start: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meterBusy::after {
+    inset-inline-start: 0;
+    inline-size: 100%;
+    animation: none;
+    opacity: 0.4;
+  }
+}
+
+/* ScaleBar (a plan beside the others, the website's plan scale): one box per step, 10 x 8 px with 2 px gaps, so ten
+   steps stay inside a plan's table column. Lit boxes are the switch yellow with its dark edge (the meters' toned look,
+   3:1 against every ground by its edge); unlit ones are outlined in the switch's off line (3:1 on every surface). */
+.scale {
+  display: inline-flex;
+  flex: none;
+  gap: var(--sp-half);
+  vertical-align: middle;
+}
+
+.scaleStep {
+  box-sizing: border-box;
+  inline-size: calc(var(--sp-2) + var(--sp-half));
+  block-size: var(--sp-2);
+  border: var(--bw) solid var(--hx-switch-line);
+}
+
+.scaleLit {
+  border-color: var(--hx-meter-edge);
+  background: var(--hx-meter-tone);
+}
+
+@media (forced-colors: active) {
+  .meter {
+    forced-color-adjust: none;
+    background: GrayText;
+  }
+
+  .meterBar,
+  .meterBusy::after {
+    background: CanvasText;
+  }
+
+  .scaleStep {
+    forced-color-adjust: none;
+    border-color: CanvasText;
+    background: Canvas;
+  }
+
+  .scaleLit {
+    background: CanvasText;
+  }
+
+  .meter_warn::before,
+  .meter_danger::before {
+    display: none;
+  }
+}
+
+/* Footer */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-3);
+  font-size: var(--fs-md);
+}
+
+/* PropagatingNote (Propagating.tsx): one muted line with a clock. */
+.propagating {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}

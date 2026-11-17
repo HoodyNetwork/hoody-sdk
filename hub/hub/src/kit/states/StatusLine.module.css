@@ -1,0 +1,15 @@
+/* A muted small line. Empty, it stays in the page (so the live region stays in place) but out of the flow: absolutely
+   placed with no size, it takes no height and makes no gap in the Stack, flex row or grid around it. */
+.line {
+  max-width: 72ch;
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.line[data-empty] {
+  position: absolute;
+  inline-size: 0;
+  block-size: 0;
+  overflow: hidden;
+}

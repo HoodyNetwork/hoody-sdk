@@ -1,0 +1,6 @@
+/* A page's own `content` container (ContentRegion.tsx): the region the `@container content` rules inside it measure,
+   such as the AI tab's main region beside its rail, not the whole page region with the rail in it. */
+.region {
+  container: content / inline-size;
+  min-inline-size: 0;
+}

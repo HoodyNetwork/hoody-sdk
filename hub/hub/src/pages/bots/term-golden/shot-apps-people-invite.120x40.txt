@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Support chat                                                                                          Esc ×
+ Home     ┃ Telegram
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │ Setup                 ┌─────────────────────────────────────────────────────────────────────────────────┐
+▌Bots     ┃ │▌People                │ People                                                          + Add a person  │
+ Board    ┃ │ Chats                 │ People join by sending the owner code or a pairing code to the Bot in a private │
+ Demo     ┃ │ Settings              │ message.                                                                        │
+ Vault    ┃                         │› Ana…                                                                   [Edit] ⋯│
+          ┃                         │  Can  Owner   Talk to the Bot   Stop and steer work   Decide approvals          │
+On atlas ▾┃                         │                                                                                 │
+ Programs ┃                         │  Ben                                                                    [Edit] ⋯│
+ Schedules┃                         │  Can  Talk to the Bot   Stop and steer work                                     │
+ Scripts  ┃                         │                                                                                 │
+ Logs     ┃                         │  5151003…                                                               [Edit] ⋯│
+ Tunnels  ┃                         │  Can  Talk to the Bot                                                           │
+ Notes    ┃                         │                                                                                 │
+ AI       ┃                         └─────────────────────────────────────────────────────────────────────────────────┘
+ VMs      ┃
+          ┃
+Account   ┃                         ┌─────────────────────────────────────────────────────────────────────────────────┐
+ Plans & B┃                         │ Invite someone                                                                  │
+ Referrals┃                         │ BACK HERE ───────────────────────────────────────────────────────────────────── │
+ Keys and ┃                         │ 01  Pick their rights and create the code.                                      │
+ API      ┃                         │ 02  Send the code to the person.                                                │
+ Notificat┃                         │     Invite code                                                                 │
+ Account  ┃                         │     │ •••••••••••• (Hidden until you press Show) [Show] [Copy]                  │
+          ┃                         │     ⚿ Send this code to the person. It works once and is not shown again.       │
+ + Rent se┃                         │                                                                                 │
+ Guide    ┃                         │ IN THEIR CHAT APP ───────────────────────────────────────────────────────────── │
+ Support  ┃                         │ 03  They send it to @atlas_support_bot in a private Telegram chat.              │
+          ┃                         │ The code                                             Works once, for 15 minutes │
+          ┃                         │ ─────────────────────────────────────────────────────────────────────────────── │
+          ┃                         │ How you send it                                                Any way you like │
+          ┃                         │ ─────────────────────────────────────────────────────────────────────────────── │
+          ┃                         │ Once it is used                                       They show up in this list │
+          ┃                         │ ─────────────────────────────────────────────────────────────────────────────── │
+          ┃                         │ [Done, I sent it] [Cancel this code]                                            │
+          ┃                         └─────────────────────────────────────────────────────────────────────────────────┘
+          ┃
+ Tab move ┃

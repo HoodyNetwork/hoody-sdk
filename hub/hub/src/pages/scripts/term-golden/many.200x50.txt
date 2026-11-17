@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                                                                                                 ▸ Use with your agent   + New script
+ Computers             │  Small programs on your computers that answer an address or run on a schedule.
+ Files                 │
+ Bots                  │  / Search                        Status ▾  Computer ▾                                                              10 scripts  [Recently deleted · 2]  ↻ Refresh  View options
+ Board                 │
+ Demo                  │      Script ↑                                                Status            Address                             Calls, 24 h  Access            Runs
+ Vault                 │  ▾ atlas · 7
+                       │  ▌   Daily digest  Idea                                      ● Working         /daily-digest                                30  Open              Every day at 8:00          ⋯
+On atlas ▾             │      Health check                                            ● Working         /health                                   5,120  Open              —                          ⋯
+ Programs              │      Notify me  Idea                                         ● Working         /notify                                       9  Open              —                          ⋯
+ Schedules             │      Old report                                              ● Turned off      /old-report                                   —  Open              —                          ⋯
+▌Scripts               │      Order status                                            ● Failing         /orders/:id                   1,290 · 61 failed  Key               —                          ⋯
+ Logs                  │      Stripe webhook                                          ● Working         /webhooks/stripe                  88 · 2 failed  Key               —                          ⋯
+ Tunnels               │      Weather lookup                                          ● Working         /weather                         412 · 3 failed  Open              —                          ⋯
+ Notes                 │
+ AI                    │  ▾ borealis · 3
+ VMs                   │      i Runs an older Scripts program. You can read and test its scripts. To change them, update the computer.
+                       │      ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Account                │      Daily digest  Read-only                                 —                 /daily-digest                                 —  Open              Every day at 8:00          ⋯
+ Plans & Billing       │      Order status  Read-only                                 —                 /orders/:id                                   —  Open              —                          ⋯
+ Referrals             │      Weather lookup  Read-only                               —                 /weather                                      —  Open              —                          ⋯
+ Keys and tokens       │
+ API                   │  ▾ cedar · 0
+ Notifications      26 │      i Turned off. Start it to see its scripts.
+ Account               │      ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                       │
+ + Rent servers        │  ▾ harbor · 0
+ Guide                 │      i Keeps its scripts private from the Hub. Allow access in the computer's settings to see them.
+ Support               │      ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                       │
+                       │  ▸ Advanced
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │  Questions
+                       │  ▸ What is a script?
+                       │  ▸ Do I need to know how to code?
+                       │  ▸ What can a script do?
+                       │  ▸ How does the assistant write a script?
+                       │  ▸ How do I make a script run on a schedule?
+                       │  ▸ What is a public link, and how is its name chosen?
+                       │  ▸ How does a script key work?
+                       │  ▸ Where do I keep secrets such as passwords or API keys?
+                       │  ▸ What are magic comments, and what do the settings do?
+                       │  ▸ Can I undo a change or bring back a deleted script?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

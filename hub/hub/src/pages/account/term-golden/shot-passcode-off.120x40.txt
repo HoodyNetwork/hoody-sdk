@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Account
+ Computers             │  Your profile, how you sign in, and where you are signed in.
+ Files                 │
+ Bots                  │  ‹ 3  ▌Passcode lock  Sign-in sessions  Agent sign-in  Security history  SSH keys   4 ›
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Vault                 │  │ Passcode lock                                                                         │
+                       │  │                                                                                       │
+On atlas ▾             │  │ No passcode                                                                           │
+ Programs              │  │ The terminal Hub has no                                                               │
+ Schedules             │  │ passcode lock.                                                                        │
+ Scripts               │  │ ⇗ A passcode locks the Hub in the browser where you set it, in the web Hub.           │
+ Logs                  │  │ [c Copy link] [r QR code]                                                             │
+ Tunnels               │  │ https://hub.example.test/auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/account        │█
+ Notes                 │  └───────────────────────────────────────────────────────────────────────────────────────┘█
+ AI                    │                                                                                           █
+ VMs                   │  ┌───────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Sign-in sessions                                                                      │█
+Account                │  │ Each browser or device signed in to your account. End one you do not recognise.       │▀
+ Plans & Billing       │  │                                                                                       │
+ Referrals             │  │ This device's address ⓘ         PT 203.0.113.7 · Lisbon ⧉ copy (i)                    │
+ Keys and tokens       │  │ / Search                 Filters     12 sessions  [End all other sessions]  ↻ Refresh │
+ API                   │  │                                                                                       │
+ Notifications      26 │  │   Device             Signed in with    Last seen ↓ IP / country         Keys made     │
+▌Account               │  │ ›•Chrome on macOS    Password          19 days ago 203.0.113.24 · SG            2     │
+                       │  │    This device                                                                        │
+ + Rent servers        │  │   Firefox on Linux   Password and code 19 days ago 198.51.100.7 · DE            0   ⋯ │
+ Guide                 │  │   Safari on iPhone   Google            19 days ago 192.0.2.88 · US              0   ⋯ │
+ Support               │  │   build-server       Device sign-in    19 days ago 203.0.113.90 · SG           14   ⋯ │
+                       │  │    Hoody CLI                                                                          │
+                       │  │   Edge on Windows    GitHub            19 days ago 198.51.100.130 ·…            1   ⋯ │
+                       │  │   Chrome on Android  Password          19 days ago 192.0.2.12 · IN              0   ⋯ │
+                       │  │   Chrome on macOS    Password          19 days ago 203.0.113.24 · SG            2   ⋯ │
+                       │  │   Firefox on Linux   Password and code 19 days ago 198.51.100.7 · DE            0   ⋯ │
+                       │  │   Safari on iPhone   Google            19 days ago 192.0.2.88 · US              0   ⋯ │
+                       │  │   Script (Node.js)   Password          19 days ago 203.0.113.90 · SG            3   ⋯ │
+                       │  │    Hoody SDK                                                                          │
+                       │  │   Edge on Windows    GitHub            20 days ago 198.51.100.130 ·…            1   ⋯ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,8 @@
+{
+  "term.reason": "The Board shows live programs and web pages side by side in browser frames, which a terminal cannot draw.",
+  "term.what": "Board",
+  "term.local": "Your Boards are saved in each web browser where you made them, so this terminal has none to show.",
+  "term.view.reason": "This program runs in a browser frame on the web Board, which a terminal cannot draw.",
+  "term.view.what": "program",
+  "term.view.title": "{{name}} on {{computer}}"
+}

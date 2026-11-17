@@ -1,0 +1,60 @@
+{
+  "_doc": "Terminal page acceptance debt (scripts/term/goldens.ts). Shrink-only: `bun scripts/term/check.ts --page <id> --update` drops what is gone and never adds. Fix the cause instead of listing it.",
+  "crashes": [],
+  "placeholders": [],
+  "holes": [],
+  "traps": [],
+  "domRefused": [],
+  "domUnsupported": [],
+  "consoleErrors": [],
+  "tableFaults": [
+    "120x40|table-cut-unmarked",
+    "200x50|table-cut-unmarked",
+    "240x67|table-cut-unmarked"
+  ],
+  "waitTextDebt": [
+    {
+      "case": "shot-learn-browser-ask",
+      "text": "Turn on browser alerts",
+      "owner": "pages",
+      "reason": "browser alerts are a browser feature: the terminal draws the hand-off to the web Hub in place of the control the web shot waits for"
+    },
+    {
+      "case": "shot-learn-browser-blocked",
+      "text": "Blocked in this browser",
+      "owner": "pages",
+      "reason": "browser alerts are a browser feature: the terminal draws the hand-off to the web Hub in place of the control the web shot waits for"
+    },
+    {
+      "case": "shot-learn-browser-broken",
+      "text": "This browser cannot show them",
+      "owner": "pages",
+      "reason": "browser alerts are a browser feature: the terminal draws the hand-off to the web Hub in place of the control the web shot waits for"
+    },
+    {
+      "case": "shot-learn-browser-insecure",
+      "text": "allow alerts only on secure",
+      "owner": "pages",
+      "reason": "browser alerts are a browser feature: the terminal draws the hand-off to the web Hub in place of the control the web shot waits for"
+    },
+    {
+      "case": "shot-learn-browser-ios",
+      "text": "a browser tab cannot show alerts",
+      "owner": "pages",
+      "reason": "browser alerts are a browser feature: the terminal draws the hand-off to the web Hub in place of the control the web shot waits for"
+    },
+    {
+      "case": "shot-learn-browser-off",
+      "text": "Turn on",
+      "owner": "pages",
+      "reason": "browser alerts are a browser feature: the terminal draws the hand-off to the web Hub in place of the control the web shot waits for"
+    },
+    {
+      "case": "shot-learn-browser-on",
+      "text": "Send a test alert",
+      "owner": "pages",
+      "reason": "browser alerts are a browser feature: the terminal draws the hand-off to the web Hub in place of the control the web shot waits for"
+    }
+  ],
+  "untranslatable": 0
+}

@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ ‹ Back                                                           Esc ×
+  Chats┃ Connect an account
+ ▌Model┃ ──────────────────────────────────────────────────────────────────────
+ atlas ┃ Name * (required)
+ Models┃ │ ____________________________________________________________________
+ atlas ┃
+ ▌Defau┃ Address * (required)
+ ──────┃ │ https://
+ ┌─────┃ A public https address, for example https://api.example.com/v1.
+ │ Defa┃
+ │ The ┃ Models * (required)
+ │ ┌───┃ │
+ │ │   ┃
+ │ │ AI┃
+ │ │ Th┃
+ │ │ ev┃ One model name per line, as the endpoint names it.
+ │ │ co┃
+ │ │   ┃ ▸ Advanced
+ │ │ Bo┃
+ │ │ Bo┃ [Cancel]  Add endpoint
+ │ │   ┃
+ │ └───┃
+ └─────┃
+ Tab mo┃

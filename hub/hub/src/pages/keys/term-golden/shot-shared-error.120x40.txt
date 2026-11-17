@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Keys and tokens                                     ▸ Use with your agent   Share this realm
+ Computers             │  A key lets your agent, the CLI or the SDK act for you. Give each one its own key, with an end
+ Files                 │  date.
+ Bots                  │    API keys    SSH keys  ▸ Shared access
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │                             ! The list of shares did not load
+                       │
+On atlas ▾             │                             Couldn't load what's shared. Try again.
+ Programs              │
+ Schedules             │                             [Try again]
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │  Questions
+ AI                    │  ▸ Can I see a key's secret again?
+ VMs                   │  ▸ What is an API key for?
+                       │  ▸ Which realms does a key work in?
+Account                │  ▸ What can a key do, and what does Full mean?
+ Plans & Billing       │  ▸ When does a key stop working, and can I limit where it works from?
+ Referrals             │  ▸ How does the SSH key work?
+▌Keys and tokens       │  ▸ What does sharing a realm give someone?
+ API                   │  ▸ What do I send to the person I share with?
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

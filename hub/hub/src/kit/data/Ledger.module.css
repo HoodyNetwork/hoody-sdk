@@ -1,0 +1,136 @@
+/* Ledger: label at the start, the amount in one end-aligned column; a note under its row; the total after a rule. */
+.ledger {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  row-gap: var(--sp-1);
+  align-items: baseline;
+}
+
+.label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.amount {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.note {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.muted .amount {
+  color: var(--hx-muted);
+}
+
+.total {
+  padding-block-start: var(--sp-2);
+  border-block-start: var(--bw) solid var(--hx-line);
+  font: var(--t-body-strong);
+}
+
+/* ShortcutTable: the keys in one column sized to the widest, so every label starts on one line. */
+.shortcuts {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.shortcuts > [data-hub-heading] {
+  margin: var(--sp-2) 0 0;
+  font: var(--t-body-strong);
+}
+
+.keyTable {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.keyRow {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+
+.keys {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.keyLabel {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* A shortfall row: the label and the amount in the warning colour, a warning mark before the label. */
+.warn .label,
+.warn .amount {
+  color: var(--hx-warn);
+}
+
+.mark {
+  margin-inline-end: var(--sp-1);
+  vertical-align: -0.125em;
+}
+
+/* The attached strip: joined under the list in the notice look of a warning (Band's edge bar), one sentence
+   and one button; the button drops under the sentence when they don't fit side by side. */
+.attached {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--bw) solid var(--hx-notice-warn-line);
+
+  /* The warning edge, the notice recipe (states/Band.module.css): a transparent start border under the hazard stripe. */
+  border-inline-start: var(--bw-notice) solid transparent;
+  background: var(--hx-warn-stripe) 0 0 / var(--bw-notice) 100% no-repeat border-box, var(--hx-notice-warn);
+  color: var(--hx-notice-text);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-normal);
+}
+
+.strip:dir(rtl) {
+  background-position-x: 100%;
+}
+
+@media (forced-colors: active) {
+  .strip {
+    border-inline-start-color: CanvasText;
+  }
+}
+
+.stripText {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.stripAction {
+  flex: none;
+  margin-inline-start: auto;
+}

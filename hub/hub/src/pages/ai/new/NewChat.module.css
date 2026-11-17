@@ -1,0 +1,139 @@
+/* New chat: one centred column (760 px at every width, as the conversation's column: a wider screen gets more margin, not
+   longer lines) in the main region, the composer in it, the four ways to start under it as one strip (below). */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  inline-size: min(100%, 760px);
+  margin-inline: auto;
+  padding: var(--sp-6) var(--pad-page) var(--sp-5);
+  box-sizing: border-box;
+}
+
+/* The kit composer keeps its own padding for the dock; here it sits flush in the column. */
+.composer > * { padding: 0; }
+
+/* The chips stay on the composer's one control row: they take the room + and / leave beside Send and shrink there, their
+   labels ending in an ellipsis (the whole label stays the chip's accessible name). */
+.chips {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+/* The folder choice: its list, then the path box when another folder is typed. */
+.folder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* The composer and the four ways to start as one object: the kit composer's plate (square, open at the bottom) with the
+   strip right under it, no step between them. The strip's frame is the plate's fourth side. */
+.start {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The strip: four equal cells, each at least 132 px tall at every width (the tile height), in one panel-line
+   frame on the card fill. The lines between cells are the cells' own start borders, switched on per layout (four, two
+   or one across), so the strip paints nothing behind its cells and forced colours keep every boundary. */
+.suggestions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: minmax(132px, auto);
+  margin: 0;
+  padding: 0;
+  border: var(--bw) solid var(--hx-panel-line);
+  list-style: none;
+}
+
+.suggestions > li {
+  display: flex;
+  border: 0 solid var(--hx-start-cell-line);
+  background: var(--hx-card);
+}
+
+/* Four across: a line before every cell but a row's first, and above every row but the first. */
+.suggestions > li:not(:nth-child(4n + 1)) { border-inline-start-width: var(--bw); }
+.suggestions > li:nth-child(n + 5) { border-block-start-width: var(--bw); }
+
+/* Two across. After the rules above and no more specific than them, so these win where they hold. */
+@container content (width < 760px) {
+  .suggestions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .suggestions > li:nth-child(odd) { border-inline-start-width: 0; }
+  .suggestions > li:nth-child(n + 3) { border-block-start-width: var(--bw); }
+}
+
+/* One column on a phone-wide frame (--bp-phone). After the two-across rules: both hold there. */
+@container content (width < 600px) {
+  .suggestions { grid-template-columns: minmax(0, 1fr); }
+  .suggestions > li:nth-child(n) { border-inline-start-width: 0; }
+  .suggestions > li:nth-child(n + 2) { border-block-start-width: var(--bw); }
+}
+
+@media (forced-colors: active) {
+  .suggestions,
+  .suggestions > li { border-color: CanvasText; }
+}
+
+/* A cell: the icon above the text. */
+.sug {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: calc(var(--sp-3) + var(--sp-half));
+  border: 0;
+  background: transparent;
+  color: var(--hx-ink);
+  font: inherit;
+  text-align: start;
+}
+
+button.sug { cursor: pointer; }
+button.sug:hover:not(:disabled) { background: var(--hx-hover); }
+button.sug:disabled { color: var(--hx-muted); cursor: default; }
+
+/* The ring is drawn inside the cell: an outer ring would lie under the next cell's fill. The ring is a shadow, which
+   forced-colors mode drops: the transparent outline then takes the system colour, so focus still shows. */
+.sug:focus-visible {
+  outline: var(--bw-2) solid transparent;
+  box-shadow: var(--focus-ring-inset);
+}
+
+.sugText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+  min-width: 0;
+}
+
+.sugText > strong { font: var(--t-body-strong); }
+
+.sugText > span {
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* The card's two actions, outside a sentence: both in the action look (TextButton and a nav Link), side by side, wrapping
+   whole on a narrow card rather than breaking a label. */
+.sugLinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-3);
+}
+
+/* Each suggestion link is a target of its own: block padding makes its box at least 24 px tall (the WCAG 2.2
+   minimum), centred, so two links on neighbouring lines never share a press. No minimum height here: on a coarse
+   pointer the kit's touch floor (Link.module.css) then still gives each link 44 px. */
+.sugLinks > * {
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  padding-block: var(--sp-1);
+}

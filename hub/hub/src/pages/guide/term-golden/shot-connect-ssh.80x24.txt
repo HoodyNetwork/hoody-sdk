@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  Guide                       ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Ask your agent ▌Connect  Skills  Build your own  Every link  Bots  Tools
+  Try this  Realms  Topics  Keyboard  Look                                     █
+ │ Connect your AI. Hoody works best from the AI you already use. Connect it │
+ │ once and it gets real computers, terminals, displays, browsers and files. │
+ │   AI chats                                                                │
+ │   Coding agents   Opens the Hoody CLI and Agent without a local           │
+ │   CLI             installation.                                           │
+ │   SDK                                                                     │
+ │   HTTP API        SSH                                        ⧉ Copy all   │
+ │ ▸ SSH             1. Connect through Hoody                                │
+ │   Browser          ssh hoody.com                                ⧉ copy    │
+ │                   2. Connect to this computer                             │
+ │                    ssh atlas.ssh.hoody.network                  ⧉ copy    │
+ │                                                                           │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Skills                                                                    │
+ │ A skill is a file that teaches a coding agent how Hoody's HTTP API works: │
+ │ which calls exist and how to make them. It gives no access by itself; a   │
+ │ key or a sign-in does that.                                               │
+ │                                                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

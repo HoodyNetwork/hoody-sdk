@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                          ◆ Personal ▾  No computers yet ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notes                                                                   ▸ Use with your agent
+ Computers             │  The notes on your computers. Everyone who opens Notes on a computer shares the same notes.
+ Files                 │
+ Bots                  │               ┌─────────────────────────────────────────────────────────────────┐
+ Board                 │               │ Notes live on your computers                                    │
+ Demo                  │               │                                                                 │
+ Vault                 │               │ Notes are saved on a computer. Get a computer to start writing  │
+                       │               │ notes.                                                          │
+On this computer       │               │                                                                 │
+ Programs              │               │  Get a computer                                                 │
+ Schedules             │               └─────────────────────────────────────────────────────────────────┘
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+▌Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

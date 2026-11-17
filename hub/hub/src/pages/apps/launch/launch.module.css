@@ -1,0 +1,220 @@
+/* The launcher in its places: the Find pane (a drawer on Programs, the Board picker's panel) and a held tile. */
+.find {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-height: 0;
+}
+
+/* The Board panel's list: the pane takes its whole height, so the scroll cue (its last child, sticky) can reach the
+   bottom edge of the popover or sheet that scrolls it from anywhere in the sections. */
+.findList {
+  flex: none;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-height: 0;
+}
+
+/* Launch an app's subtitle: which computer (its colour mark, then one or two plain sentences), wrapping at any width. */
+.subtitle {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* The compact list's block: its total, the rows, Show more, and the scroll cue (a plain block, so the panel's gap
+   never spaces the cue). */
+.results {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.results > .total {
+  margin: 0 0 var(--sp-2);
+  font: var(--t-small);
+  color: var(--hx-muted);
+}
+
+/* More below: a fade pinned to the bottom of the scrolling panel while the list's end is out of view. It takes no
+   room (its height is pulled back) and never takes a pointer. */
+.fade {
+  position: sticky;
+  inset-block-end: 0;
+  flex: none;
+  height: var(--sp-8);
+
+  /* Over the content above it: its own height and the pane's gap, so it adds no height. */
+  margin-block-start: calc(-1 * (var(--sp-8) + var(--sp-3)));
+  background: linear-gradient(to bottom, transparent, var(--hx-raised));
+  pointer-events: none;
+}
+
+.end {
+  flex: none;
+  height: 1px;
+}
+
+/* The compact result list of a narrow panel: name and its source chip, Options and Open opposite. */
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-block: var(--sp-2);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.rowText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rowName {
+  overflow: hidden;
+  font-weight: var(--fw-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font: var(--t-small);
+  color: var(--hx-muted);
+}
+
+.line {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font: var(--t-body);
+  color: var(--hx-ink);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+/* A held tile: its own theme surface over the whole tile, never the app window's colours (the tile
+   body is --hx-app, dark in both themes), with every state centred in it. */
+.hold {
+  display: flex;
+  flex: 1;
+  align-items: safe center;
+  justify-content: safe center;
+  min-height: 0;
+  padding: var(--sp-4);
+  overflow: auto;
+  background: var(--hx-bg);
+  color: var(--hx-ink);
+}
+
+/* The frame every state sits in: a readable measure; the outcome banner keeps its own alignment. */
+.frame {
+  width: 100%;
+  max-width: 40ch;
+}
+
+/* The loader: the large spinner, the step as its title, the wait lines and Show, centred. */
+.loader {
+  text-align: center;
+}
+
+.loader p {
+  margin: 0;
+}
+
+.title {
+  font: var(--t-title);
+  color: var(--hx-ink);
+}
+
+.wait {
+  font: var(--t-body);
+  color: var(--hx-muted);
+}
+
+.elapsed {
+  font-variant-numeric: tabular-nums;
+}
+
+/* A coding agent: its mark, its name and maker, and Open on one line, then its answer to Open and, when it is not
+   installed, the link to its install page. */
+.agent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-block: var(--sp-3);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.agentHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* The name and its badge (Installed, Not installed, Checking…, Couldn't check): the badge wraps under a long name. */
+.agentTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  min-width: 0;
+}
+
+.agentName {
+  margin: 0;
+  overflow: hidden;
+  font: var(--t-body);
+  font-weight: var(--fw-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The launcher's parts as section cards in a host's own column (the Board's Add a program): its wrappers draw no box,
+   so its cards are spaced as the host's own. */
+.bare {
+  display: contents;
+}
+
+/* The search sources' chips inside a section card: the card's own padding and frame, none of the strip's. */
+.sources > [role='group'] {
+  padding: 0;
+  border-block-end: 0;
+}
+
+/* From GitHub in a host's own column: the pane starts and ends on the column's edges (the host pads it). */
+.hosted {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.hosted > div {
+  padding-block: 0;
+}

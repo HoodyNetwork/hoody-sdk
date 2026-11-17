@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Account
+ Computers             │  Your profile, how you sign in, and where you are signed in.
+ Files                 │
+ Bots                  │   Profile  Password ▌Two-step sign-in  Passcode lock  Sign-in sessions  Agent sign-in   6 ›
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Vault                 │  │ Two-step sign-in                                                                      │
+                       │  │                                                                                       │
+On atlas ▾             │  │ Two-step sign-in                · Off                                        Turn on  │
+ Programs              │  │ Add a code from an                                                                    │
+ Schedules             │  │ authenticator app to every                                                            │▄
+ Scripts               │  │ sign-in, so a password alone                                                          │█
+ Logs                  │  │ is not enough.                                                                        │█
+ Tunnels               │  │ ▸ What changes when two-step sign-in is on?                                           │█
+ Notes                 │  └───────────────────────────────────────────────────────────────────────────────────────┘█
+ AI                    │                                                                                           █
+ VMs                   │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Passcode lock                                                                         │
+Account                │  │                                                                                       │
+ Plans & Billing       │  │ No passcode                                                                           │
+ Referrals             │  │ The terminal Hub has no                                                               │
+ Keys and tokens       │  │ passcode lock.                                                                        │
+ API                   │  │ ⇗ A passcode locks the Hub in the browser where you set it, in the web Hub.           │
+ Notifications      26 │  │ [c Copy link] [r QR code]                                                             │
+▌Account               │  │ https://hub.example.test/auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/account        │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ + Rent servers        │
+ Guide                 │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Support               │  │ Sign-in sessions                                                                      │
+                       │  │ Each browser or device signed in to your account. End one you do not recognise.       │
+                       │  │                                                                                       │
+                       │  │ This device's address ⓘ         PT 203.0.113.7 · Lisbon ⧉ copy (i)                    │
+                       │  │ / Search                 Filters     12 sessions  [End all other sessions]  ↻ Refresh │
+                       │  │                                                                                       │
+                       │  │   Device             Signed in with    Last seen ↓ IP / country         Keys made     │
+                       │  │ ›•Chrome on macOS    Password          19 days ago 203.0.113.24 · SG            2     │
+                       │  │    This device                                                                        │
+                       │  │   Firefox on Linux   Password and code 19 days ago 198.51.100.7 · DE            0   ⋯ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

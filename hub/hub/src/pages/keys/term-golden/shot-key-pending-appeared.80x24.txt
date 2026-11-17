@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ New key                                                          Esc ×
+ Keys a┃ Made in Personal
+ A key ┃ ──────────────────────────────────────────────────────────────────────
+ key, w┃ │ ◷ The key may have been made
+ ▸ API ┃ │   The Hub got no answer. Nothing was sent a second time. If the key
+ ──────┃ │   was made, its secret can’t be shown again.
+ i Keys┃
+ / Sear┃
+ 4 keys┃ Appeared since you sent it
+   Name┃ These keys of this name appeared since you sent it. One may be yours,
+   ci  ┃ or one made elsewhere at the same time:
+ › ci-d┃ ci
+   hood┃   Key   hdy_3f9a…
+   sdk-┃   Made  Aug 29, 2004
+       ┃
+ Questi┃
+ ▸ Can ┃ What to do now
+ ▸ What┃ If one of these is yours, its secret can't be shown again: delete it
+ ▸ Whic┃ under API keys and make a new key. Check again first if you are not
+ ▸ What┃ sure.
+ ▸ When┃
+ ▸ How ┃
+ ▸ What┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃                              [Stop tracking]  [Close]   ↻ Check again

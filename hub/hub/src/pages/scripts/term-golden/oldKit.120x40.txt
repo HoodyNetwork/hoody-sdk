@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                                 ▸ Use with your agent
+ Computers             │  Small programs on your computers that answer an address or run on a schedule.
+ Files                 │
+ Bots                  │  / Search                   Status ▾                        3 scripts  ↻ Refresh  View options
+ Board                 │  i borealis: Runs an older Scripts program. You can read and test its scripts. To change them,
+ Demo                  │    update the computer.
+ Vault                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │
+On atlas ▾             │    Script ↑                    Status           Address                       Calls, 24 h
+ Programs              │  ▌ Daily digest  Read-only     —                /daily-digest                           —    ⋯
+ Schedules             │    Order status  Read-only     —                /orders/:id                             —    ⋯
+▌Scripts               │    Weather lookup  Read-only   —                /weather                                —    ⋯
+ Logs                  │
+ Tunnels               │  ▸ Advanced
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │  Questions
+ Support               │  ▸ What is a script?
+                       │  ▸ Do I need to know how to code?
+                       │  ▸ What can a script do?
+                       │  ▸ How does the assistant write a script?
+                       │  ▸ How do I make a script run on a schedule?
+                       │  ▸ What is a public link, and how is its name chosen?
+                       │  ▸ How does a script key work?
+                       │  ▸ Where do I keep secrets such as passwords or API keys?
+                       │  ▸ What are magic comments, and what do the settings do?
+                       │  ▸ Can I undo a change or bring back a deleted script?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

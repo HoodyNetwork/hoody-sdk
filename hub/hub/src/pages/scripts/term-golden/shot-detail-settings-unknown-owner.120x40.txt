@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                 ▸ Use with your agent   + New script
+ Computers             │
+ Files                 │  ‹ Scripts  Esc
+ Bots                  │  Weather lookup  ● Working                                                      [▷ Try it] [⋯]
+ Board                 │  /weather ·  atlas
+ Demo                  │
+ Vault                 │
+                       │   Overview  Code  Test ▸Settings
+On atlas ▾             │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Programs              │  i Can't tell who owns this script. The agent on this computer did not answer, so changes are█
+ Schedules             │    off until it does. Open the page again to try again.                                      █
+▌Scripts               │                                                                                              █
+ Logs                  │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Tunnels               │  │ Magic comments                                                                           │█
+ Notes                 │  │ The settings written at the top of the script: whether it runs, its schedule, its key    │█
+ AI                    │  │ and more. The list comes from this computer. Check your changes, then save them.         │█
+ VMs                   │  │ ▸ Where do these settings live?                                                          │
+                       │  │                                                                                          │
+Account                │  │ How it runs                                                                              │
+ Plans & Billing       │  │ ┌──────────────────────────────────────────────────────────────────────────────────────┐ │
+ Referrals             │  │ │                                                                                      │ │
+ Keys and tokens       │  │ │ Turned on                       [■ on ] On                                           │ │
+ API                   │  │ │ Off: the address stops                                                               │ │
+ Notifications      26 │  │ │ answering and scheduled runs                                                         │ │
+ Account               │  │ │ stop.                                                                                │ │
+                       │  │ │ @enabled                                                                             │ │
+ + Rent servers        │  │ │                                                                                      │ │
+ Guide                 │  │ │ Run on a schedule               │ Never ▾                                            │ │
+ Support               │  │ │ When the script runs by                                                              │ │
+                       │  │ │ itself, in UTC.                                                                      │ │
+                       │  │ │ @schedule                                                                            │ │
+                       │  │ │                                                                                      │ │
+                       │  │ │ Time limit per scheduled run    │ e.g. 5m                                            │ │
+                       │  │ │ Free the slot for the next                                                           │ │
+                       │  │ │ scheduled run after this long.                                                       │ │
+                       │  │ │ A number with a unit, like 90s                                                       │ │
+                       │  │ │ or 5m; 0 for no limit.                                                               │ │
+                       │  │ │ @schedule-timeout                                                                    │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

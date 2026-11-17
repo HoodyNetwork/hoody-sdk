@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing                                                                  + Add funds
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │  ▸ Plans    Bare metal    Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC                              [Pay now]
+ Vault                 │
+                       │  Plans                                                                                       █
+On atlas ▾             │  Each plan is a server of your own. Its computers share its cores, memory and disk. You can  █
+ Programs              │  take the same plan more than once.                                                          █
+ Schedules             │                                                                                              █
+ Scripts               │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Logs                  │  │                                                                                          │
+ Tunnels               │  │ Plans for                       ( ) twin-1 · Small                                       │
+ Notes                 │  │ Choose a plan to buy a new      ( ) twin-2 · Small                                       │
+ AI                    │  │ server, or pick one of yours    ( ) Singapore M · Medium                                 │
+ VMs                   │  │ to upgrade it.                  (•) A new server                                         │
+                       │  │                                                                                          │
+Account                │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+▌Plans & Billing       │
+ Referrals             │  ┌───────────────────────────────────────────┐  ┌───────────────────────────────────────────┐
+ Keys and tokens       │  │ Free                          ✓ Your plan │  │ Small                 ✓ 3 of your servers │
+ API                   │  │ $0 / month                                │  │ $12 / month                               │
+ Notifications      26 │  │ Computers                               3 │  │ Paid monthly from your wallet             │
+ Account               │  │ Hardware                  Shared hardware │  │ Computers                               3 │
+                       │  │ AI allowance                   Free 1×    │  │ CPU cores                               2 │
+ + Rent servers        │  │                                █░░░░░░░░░ │  │ Memory                               4 GB │
+ Guide                 │  │ Locations                                 │  │ Disk                                60 GB │
+ Support               │  │ No choice of location                     │  │ Hardware                  Shared hardware │
+                       │  │ Your free server stays as it is when you  │  │ AI allowance                   Plus 4×    │
+                       │  │ buy a plan.                               │  │                                ██░░░░░░░░ │
+                       │  │ Next: Small. When you need more than 3    │  │ Locations                                 │
+                       │  │ computers.                                │  │ DE Frankfurt, Germany                     │
+                       │  │ Free server details                       │  │ FI Helsinki, Finland  SG Singapore        │
+                       │  │                                           │  │ Next: Medium. When 4 GB of memory or 3    │
+                       │  │                                           │  │ computers get tight.                      │
+                       │  │                                           │  │                                           │
+                       │  │                                           │  │ [Choose Small]                            │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

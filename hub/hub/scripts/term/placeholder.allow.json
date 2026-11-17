@@ -1,0 +1,5 @@
+{
+  "_doc": "Named allowance list of the fixture flavour (scripts/term/placeholder.ts): a missing NON-visual export listed here would keep the inert hole behaviour instead of throwing TERM_UNSUPPORTED. The list only shrinks: `max` may only go down, every entry must still be a missing export (placeholder.allow.term.test.ts), and a page that uses an entry is never accepted (render.ts exits 1; the ledger reports `allowed`). A fixture render of all 25 pages uses no entry, so the list is empty and closed. Reopening it needs a reviewed change that raises max.",
+  "max": 0,
+  "entries": []
+}

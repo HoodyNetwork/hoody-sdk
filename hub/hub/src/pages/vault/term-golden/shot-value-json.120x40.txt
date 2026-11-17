@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Vault                                               ▸ Use with your agent   + New entry   [⋯]
+ Computers             │
+ Files                 │  ‹ Vault  Esc
+ Bots                  │  app.config                                                       ⧉ copy [✎ Replace value] [⋯]
+ Board                 │
+ Demo                  │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+▌Vault                 │  │ About this entry                                                                         │█
+                       │  │ Belongs to     Personal                       Updated        Oct 23, 2026, 4:40 PM       │█
+On atlas ▾             │  │ Encryption     Not marked as encrypted        Created        Oct 20, 2026, 9:15 AM       │█
+ Programs              │  │ Size           69 B                           Other details  None                        │█
+ Schedules             │  │                                                                                          │█
+ Scripts               │  │ ┌──────────────────────────────────────────────────────────────────────────────────────┐ │█
+ Logs                  │  │ │                                                                                      │ │█
+ Tunnels               │  │ │ Protect with a password         [Encrypt…]                                           │ │█
+ Notes                 │  │ │ No encryption is recorded for                                                        │ │█
+ AI                    │  │ │ this entry. To protect this                                                          │ │█
+ VMs                   │  │ │ value with a password, use                                                           │ │█
+                       │  │ │ Replace value and tick Encrypt                                                       │ │█
+Account                │  │ │ with a password.                                                                     │ │█
+ Plans & Billing       │  │ │                                                                                      │ │█
+ Referrals             │  │ └──────────────────────────────────────────────────────────────────────────────────────┘ │█
+ Keys and tokens       │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ API                   │                                                                                              █
+ Notifications      26 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Account               │  │ Value                                                                                    │█
+                       │  │ Value  ‹ Formatted ›  Raw                                                                │█
+ + Rent servers        │  │ │ {                                                                                      │█
+ Guide                 │  │     "retries": 3,                                                                        │█
+ Support               │  │     "hosts": [                                                                           │█
+                       │  │       "a.example",                                                                       │█
+                       │  │       "b.example"                                                                        │█
+                       │  │     ],                                                                                   │█
+                       │  │     "tls": {                                                                             │█
+                       │  │       "verify": true                                                                     │█
+                       │  │     }                                                                                    │█
+                       │  │   }                                                                                      │
+                       │  │   [Hide value] [Copy value]                                                              │
+                       │  │ ⚿ Read only on Show value or Copy; hiding it removes it from this page.                  │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

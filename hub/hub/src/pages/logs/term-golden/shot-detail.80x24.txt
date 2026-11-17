@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Logs                                  ▸ Use with your agent  [See what failed]
+ 55 events failed in the last hour. 19 kinds of problem.
+ ‹ Logs  Esc
+ Files: opened  ● OK                                                          █
+                                                                              █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ WHAT HAPPENED                                                             │█
+ │ OK · Nov 11, 08:46 AM · 68 ms · Visits                                    │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+                                                                              █
+ [Around this moment] [This computer]  ✦ Explain  [⋯]                         █
+                                                                              █
+                                                                              █
+ Request                                                                      █
+ Time             2026-11-11T08:46:57.000Z  ⧉ copy                            █
+ Method           GET  ⧉ copy                                                 █
+ Status           200  ⧉ copy                                                 █
+ Request ID       e3f5…5d29 ⧉                                                 █
+ Visitor address  93.184.216.225                                              ▀
+ Program          files  ⧉ copy
+
+ Address          /download/backup.tar.gz  ⧉ copy
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

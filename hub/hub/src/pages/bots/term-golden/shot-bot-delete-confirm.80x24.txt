@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Bots                                                     ▸ Use with your agent
+ ‹ Bots  Esc
+
+   i ┌────────────────────────────────────────────────────────────────────┐
+   Th│ ! Delete Chief?                                              Esc × │
+   ra│ ────────────────────────────────────────────────────────────────── │
+   19│ The Bot, its conversation and its archive are deleted. Its link    │
+     │ stops working and its keys are removed. Running tasks are stopped  │
+     │ where possible.                                                    │
+     │                                                                    │.
+     │                                                                    │
+     │ Type Chief to confirm                                              │
+   Un│ ┌────────────────────────────────────────────────────────────────┐ │
+   re│ │                                                                │ │
+   19│ └────────────────────────────────────────────────────────────────┘ │
+     │                                                                    │
+   ┌─│                                             [Cancel]  [Delete Bot] │┐
+   │ └────────────────────────────────────────────────────────────────────┘│  █
+   └───────────────────────────────────────────────────────────────────────┘  █
+                                  Write a message first.  [⇗ Talk]  [Send ↵]  █
+                                                                              █
+                                                                              █
+ Typing · Esc leaves the field · Ctrl+K commands

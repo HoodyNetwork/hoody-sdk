@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                          ◆ Personal ▾  No computers yet ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Schedules                                             ▸ Use with your agent   + New schedule
+ Computers             │  0 schedules on atlas · Computers › · 9 programs running ›
+ Files                 │
+ Bots                  │              ┌───────────────────────────────────────────────────────────────────┐
+ Board                 │              │ No schedules on atlas yet                                         │
+ Demo                  │              │                                                                   │
+ Vault                 │              │ Run a command or a web request on a timer, like a nightly backup. │
+                       │              │                                                                   │
+On this computer       │              │  New schedule   How schedules work                                │
+ Programs              │              └───────────────────────────────────────────────────────────────────┘
+▌Schedules             │
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications         │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

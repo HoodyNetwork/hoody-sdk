@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines › win11
+ win11  ● Stopped                                                   Start   [⋯]
+ A VM inside atlas.
+ ▸Ove┌────────────────────────────────────────────────────────────────────┐
+ ────│ ! Delete win11?                                              Esc × │────
+ ┌───│ ────────────────────────────────────────────────────────────────── │───┐
+ │ Ov│ This deletes the VM win11 inside atlas.                            │   │
+ │ Me│                                                                    │   │
+ │ CP│ • Its disk and everything on it are deleted.                       │   │
+ │ Di│ • Its snapshots are deleted.                                       │   │
+ │ St│ • This cannot be undone.                                           │   │
+ │ TP│                                                                    │   │
+ │ Di│ Type win11 to confirm                                              │   │
+ │ Sc│ ┌────────────────────────────────────────────────────────────────┐ │   │
+ │ Op│ │                                                                │ │   │
+ │ St│ └────────────────────────────────────────────────────────────────┘ │   │
+ │ co│                                                                    │   │
+ └───│                                              [Cancel]  [Delete VM] │───┘
+     └────────────────────────────────────────────────────────────────────┘
+
+
+
+ Typing · Esc leaves the field · Ctrl+K commands

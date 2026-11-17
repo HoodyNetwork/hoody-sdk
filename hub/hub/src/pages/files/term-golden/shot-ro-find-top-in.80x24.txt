@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Find in /home                                                    Esc ×
+ Files ┃ ──────────────────────────────────────────────────────────────────────
+ The fo┃ Other folders                                                        █
+ ▸ Brow┃                                                                      █
+ ──────┃ │ / a                                       ×  Find                  █
+ [Up on┃                                                                      █
+       ┃ 4 matches. A search looks at up to 50,000 items, so a very big folder█
+       ┃ may hold more.                                                       █
+ / Sear┃                                                                      █
+   [ ] ┃                                                                      █
+ › [ ] ┃ ada                                                            [Open]█
+   [ ] ┃ Folder                                                               █
+   [ ] ┃                                                                      █
+   [ ] ┃                                                                      █
+   [ ] ┃ ada/projects/site/config.yaml              [Show in folder] [Preview]█
+   [ ] ┃ 340 B                                                                █
+   [ ] ┃                                                                      █
+   [ ] ┃                                                                      █
+   [ ] ┃ ada/projects/README.md                     [Show in folder] [Preview]█
+       ┃ 2 KB                                                                 █
+ Questi┃                                                                      █
+ ▸ How ┃                                                                      █
+ ▸ How ┃ ada/caf�
+ Tab mo┃ Can't act on this: its name has characters the Hub can't show  [Open]

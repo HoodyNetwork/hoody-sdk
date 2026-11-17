@@ -1,0 +1,1062 @@
+/* The Board. Canvas page: the page draws its own strip, tile grid and chips. No viewport queries:
+   the strip and tiles size from the frame (container queries) and the coarse-pointer media feature. */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--hx-bg);
+  container-type: inline-size;
+}
+
+/* Another tab's value is opening: the Board stays shown, its controls busy until it opens. */
+.page[data-refreshing] {
+  cursor: progress;
+}
+
+/* A coarse pointer: 44 px controls. The head is as tall as its controls plus its own line, as with a mouse below, so
+   a control never sits over the line. */
+.coarse {
+  --board-bar-h: 44px;
+  --board-head-h: calc(44px + var(--bw));
+  --board-btn: 44px;
+}
+
+/* With a mouse a tile's head holds small controls at their own size: the kit's tile head size
+   the small control plus its line. --board-btn is a strip icon button's drawn width, which Strip's fit reads
+   as one length (it parseFloat()s the value: keep it a single var, not a max()). */
+.page:not(.coarse) {
+  --board-bar-h: var(--tabs-h);
+  --board-head-h: var(--tile-head-h);
+  --board-btn: var(--strip-btn);
+}
+
+/* ---- strip ---- */
+
+/* The Broadcast's slot and its node: no box of their own (the button and chip lay out in the strip end). */
+.endSlot,
+.portalNode {
+  display: contents;
+}
+
+/* Air between the top bar (or the notice) and the strip, as above a page header: a box of its own, so the strip row
+   stays exactly one control row high. Drawn only with the strip. */
+.stripAir {
+  flex: none;
+  block-size: var(--sp-4);
+}
+
+/* One row: the Boards (the tabs, New Board right after them), then the tools.
+   The tabs take what the tools leave and scroll; the tools keep their own widths, one line, at the row's end, and step
+   down by the room the row has (Strip.tsx stripRowNeed), so the row never wraps. Its line is the kit bar's (an inset
+   shadow), drawn across the whole row, under the tools too. */
+.stripRow {
+  display: flex;
+  flex: none;
+  align-items: stretch;
+  column-gap: var(--sp-3);
+  min-width: 0;
+  padding-inline: var(--pad-page);
+  box-shadow: inset 0 calc(-1 * var(--bw)) 0 var(--hx-folder-line);
+}
+
+.stripEnd {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-inline-start: auto;
+  padding-block-end: var(--sp-2);
+  white-space: nowrap;
+}
+
+/* The rule before Add a program: the row's action end set apart (decoration, aria-hidden). */
+.stripRule {
+  align-self: center;
+  inline-size: var(--bw);
+  block-size: var(--sp-5);
+  background: var(--hx-rule);
+}
+
+.stripEnd > * {
+  flex: none;
+}
+
+/* The note is read whole, never cut (a title is out of reach by touch): in words while the row has room for them,
+   then its short form, which opens the whole sentence on a press. */
+.note {
+  font: var(--t-small);
+  color: var(--hx-muted);
+  white-space: nowrap;
+}
+
+.noteShort {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* A touch target on a coarse pointer, as every control in the row. */
+.coarse .noteShort > button {
+  min-block-size: var(--board-btn);
+}
+
+.phoneBar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: var(--board-bar-h);
+  padding-inline: var(--sp-1);
+  border-block-start: var(--bw) solid var(--hx-line);
+  background: var(--hx-card);
+}
+
+/* The kit Tabs root, a bar only, in the Boards zone: as wide as its tabs, at most the room the tools leave. The row starts and
+   ends on the page header's inline inset (--pad-page), never against the left menu; the tile
+   area below stays edge to edge. */
+.tabsRoot {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tabsPanel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Under the strip the tile area is set in from the page: a gap under the strip's line, and the sides and bottom so far
+   in that the tiles' visible edge (the area pads its tiles by one --sp-1, model/geom.ts PAD) stands on the strip's
+   inline inset, under the first and the last control of the row. Without the strip (focus mode, phones) the area runs
+   edge to edge. Padding only: the area keeps its place in the tree, so no frame reloads when the strip comes or goes. */
+.tabsPanel.underStrip {
+  padding-block: var(--sp-3) var(--sp-4);
+  padding-inline: calc(var(--pad-page) - var(--sp-1));
+}
+
+/* ---- area ---- */
+.area {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--hx-bg);
+
+  /* Its own stacking context: Chrome's Element Capture (the broadcast's tile-only capture) delivers no frame otherwise. */
+  isolation: isolate;
+}
+
+.area:focus-visible {
+  outline: none;
+}
+
+.tile {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: var(--bw) solid var(--hx-line);
+  background: var(--hx-card);
+}
+
+.tile.active {
+  box-shadow: inset 0 0 0 var(--bw) var(--hx-ink);
+}
+
+.area:focus-visible .tile.active {
+  box-shadow: inset 0 0 0 var(--bw) var(--hx-ink), var(--focus-ring);
+}
+
+.hidden {
+  visibility: hidden;
+}
+
+.head {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-1);
+  height: var(--board-head-h);
+  padding-inline: var(--sp-2) var(--sp-half);
+  border-block-end: var(--bw) solid var(--hx-line);
+  background: var(--hx-card);
+  color: var(--hx-ink);
+  user-select: none;
+  touch-action: none;
+  cursor: grab;
+}
+
+/* The active header is a selection: neutral fill, 2 px accent top edge, ink outline on the tile. */
+.active > .head {
+  background: var(--hx-selected);
+  box-shadow: inset 0 var(--sp-half) 0 var(--hx-acc);
+}
+
+.solo > .head {
+  cursor: default;
+}
+
+/* Press and hold feedback on the header: the kit's pressClasses (kit/controls/PressFeedback.module.css). */
+
+/* Which computer: the computer's own colour, 4 px, with a 1 px ring line on its inner side so white or
+   near-black colours stay visible (decoration: the computer's name carries the identity). No colour: the line grey. */
+.stripe {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  box-sizing: border-box;
+  width: calc(var(--sp-1) + var(--bw));
+  border-inline-end: var(--bw) solid var(--hx-swatch-ring);
+  background: var(--board-computer, var(--hx-line-strong));
+}
+
+/* The stripe is a leaf with no text: only it keeps the computer colour under forced colours (the property inherits,
+   so never the header). */
+@media (forced-colors: active) {
+  .stripe {
+    forced-color-adjust: none;
+    border-inline-end-color: canvastext;
+  }
+}
+
+/* The realm chip's place in the head: at most half of it, never more than its chip. Width only; the chip is the kit's
+   (a `shrink` Button: a long name ends in "…" inside this place, and the kit keeps its touch floor). */
+.realmSlot {
+  display: flex;
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  max-inline-size: 50%;
+}
+
+/* The realm chip's popover: the realm's whole name, wrapping anywhere. */
+.realmFull {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The label hugs its text, so ⇕ and the state dot follow the name; .actions takes the rest. */
+.label {
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  gap: var(--sp-1);
+  font: var(--t-small);
+  white-space: nowrap;
+}
+
+.labelName {
+  flex: none;
+}
+
+.labelMark {
+  align-self: center;
+}
+
+.labelComputer {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--hx-muted);
+}
+
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-round);
+  background: var(--hx-muted-fill);
+}
+
+/* On a selected row the muted grey falls below 3:1 in light, so the dot takes the muted text shade there (dark
+   too: pages carry no theme rules). :where() keeps this rule no heavier than .dotLoaded and .dotSlow below, which win. */
+:where(.active > .head, .chipBtn[aria-current="true"]) .dot {
+  background: var(--hx-muted);
+}
+
+.dotLoading {
+  animation: pulse 1.2s var(--ease-in-out) infinite;
+}
+
+.dotLoaded {
+  background: var(--hx-ok);
+}
+
+.dotSlow {
+  background: var(--hx-warn-fill);
+}
+
+.dotStopped {
+  border: var(--bw) solid var(--hx-muted-fill);
+  background: transparent;
+}
+
+/* The stopped ring likewise, on a selected row. */
+:where(.active > .head, .chipBtn[aria-current="true"]) .dotStopped {
+  border-color: var(--hx-muted);
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dotLoading {
+    animation: none;
+  }
+}
+
+/* The key hint gives way first: it shrinks a hundred times faster than the title, so the title (program and computer)
+   is cut only once the hint is nearly gone. */
+.hint {
+  flex: 0 100 auto;
+  min-width: 0;
+  overflow: hidden;
+  font: var(--t-small);
+  color: var(--hx-muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Saved options: the count after the options icon: a 6 px dot, then the number. */
+.optCount {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.optDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-round);
+  background: currentcolor;
+}
+
+.narrow .hint {
+  display: none;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  margin-inline-start: auto;
+}
+
+.body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--hx-app);
+  color: var(--hx-app-ink);
+}
+
+/* A program frame takes the documents' default colour scheme: a frame document that sets none (still loading, an error
+   page) then stays see-through over the tile body's program ground, where a dark Hub's scheme would paint it on an
+   opaque white Canvas. The program paints its own colours once it loads. */
+.frame {
+  display: block;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  color-scheme: normal;
+}
+
+/* A document frame (web, port, script): a browser tab's ground, so a page that sets no colours (a JSON or text answer)
+   shows black on white in every theme, never dark on the program ground (Frame.tsx). */
+.framePage {
+  color-scheme: light;
+  background: Canvas;
+  color: CanvasText;
+}
+
+.skeleton {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+}
+
+.skeleton i {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-round);
+  background: var(--hx-app-muted);
+}
+
+/* A kit band laid over a live frame's top edge: the frame has not answered, a held lifecycle change, or an
+   agent frame that opened without a token. The band's look is the kit's; only its place is the tile's. */
+.over {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+}
+
+/* Agent sign-in: the line under the loading dots. */
+.signing {
+  position: absolute;
+  inset-block-start: calc(50% + var(--sp-3));
+  inset-inline: 0;
+  margin: 0;
+  color: var(--hx-app-muted);
+  font: var(--t-small);
+  text-align: center;
+}
+
+/* A Bot tile's body: the Bots page's tile view, a page surface (not the dark program surface), scrolling inside the tile. */
+.botView {
+  flex: 1;
+  min-height: 0;
+  padding: var(--sp-3);
+  overflow: auto;
+  background: var(--hx-bg);
+  color: var(--hx-ink);
+}
+
+/* A placeholder card's host (TileCard): the card ground over the dark program body, filling the tile; the words and
+   buttons are the kit's empty state. `safe`: a tile shorter than its card scrolls from the card's top. */
+.card {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: safe center;
+  min-height: 0;
+  overflow: auto;
+  background: var(--hx-card);
+  color: var(--hx-ink);
+}
+
+/* "Back to Board": visually hidden until focused (Tab past the program's last control). */
+.back {
+  position: absolute;
+  inset-block-end: var(--sp-2);
+  inset-inline-start: var(--sp-2);
+}
+
+.back:not(:focus-within) {
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+/* ---- empty slot ---- */
+.empty {
+  border-color: var(--hx-line-2);
+}
+
+.emptyBody {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  min-height: 0;
+  padding: var(--sp-4);
+  overflow: auto;
+  background: var(--hx-fill);
+  text-align: center;
+}
+
+.emptyHead {
+  justify-content: flex-end;
+  cursor: grab;
+}
+
+/* While the picker is open for this slot it is the slot's content: Add and the recent picks hide in
+   place (Add keeps its box, so focus goes back to it), and the picker is centred under .emptyAnchor, a zero-height
+   line across the body's top edge. */
+.emptyAnchor {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 0;
+  pointer-events: none;
+}
+
+.emptyBody[data-picking] > :not(.emptyAnchor) {
+  visibility: hidden;
+}
+
+.recents {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-2);
+}
+
+/* The Board's welcome (its only slot, empty): the slot gives up its own frame and holds three slots drawn as the Board's
+   empty slots: the big one with the welcome card, two faint ones beside it (one label each), a picture of a Board with
+   programs on it. A narrow Board shows the big one alone. Layout only: the look is the empty slot's own. */
+.welcomeSlot {
+  border: 0;
+  background: none;
+}
+
+.welcomeBody {
+  padding: 0;
+  background: none;
+}
+
+.welcome {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--sp-2);
+  align-self: stretch;
+  flex: 1;
+  min-height: 0;
+}
+
+.faint {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.faintSlot {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+@container (width < 540px) {
+  .welcome {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .faint {
+    display: none;
+  }
+}
+
+/* ---- dividers, drag ---- */
+
+/* A slot over the gap between two tiles; the kit Splitter inside draws the line and owns the keys. */
+.divSlot {
+  position: absolute;
+  z-index: var(--z-raised);
+  display: flex;
+  justify-content: center;
+}
+
+.divRow {
+  flex-direction: row;
+}
+
+.divCol {
+  flex-direction: column;
+}
+
+.divider:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* While a divider or a tile is dragged, a transparent shield covers every frame: the frame would eat the pointer. */
+.shield {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-raised);
+}
+
+/* A tile drag's shield (not a divider's): the pointer shows the tile is held wherever it goes. */
+.shieldGrab {
+  cursor: grabbing;
+}
+
+.ghost {
+  position: absolute;
+  z-index: var(--z-raised);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--bw-2) solid var(--hx-ink);
+  background: var(--hx-selected);
+  font: var(--t-small);
+  color: var(--hx-ink);
+  pointer-events: none;
+}
+
+.ratio {
+  position: absolute;
+  z-index: var(--z-raised);
+  padding: var(--sp-half) var(--sp-1);
+  background: var(--hx-raised);
+  font: var(--t-mono);
+  pointer-events: none;
+}
+
+/* ---- notice band ---- */
+.notice {
+  flex: none;
+}
+
+/* ---- chips (one tile at a time) ---- */
+.chips {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 44px;
+  padding-inline: var(--sp-1);
+  border-block-start: var(--bw) solid var(--hx-line);
+  background: var(--hx-card);
+}
+
+.chipScroller {
+  display: flex;
+  flex: 1;
+  gap: var(--sp-1);
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chipScroller::-webkit-scrollbar {
+  display: none;
+}
+
+.chipBtn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 44px;
+  max-width: 220px;
+  padding-inline: var(--sp-2);
+  border: 0;
+  border-block-start: var(--bw-2) solid transparent;
+  background: none;
+  color: var(--hx-ink);
+  font: var(--t-small);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chipBtn[aria-current="true"] {
+  border-block-start-color: var(--hx-selected-bar);
+  background: var(--hx-selected);
+}
+
+/* The chip a tile drag would drop on wears the focus ring: the kit Tabs drop-tab ring. */
+.chipBtn:focus-visible,
+.chipBtn[data-drop-target] {
+  outline: none;
+  box-shadow: var(--focus-ring-inset);
+}
+
+/* Forced colours drop the ring (box-shadow): a Highlight outline marks the focused chip and the drop chip instead, the
+   kit Tabs' own forced-colours mark, drawn inside the chip. */
+@media (forced-colors: active) {
+  .chipBtn:focus-visible,
+  .chipBtn[data-drop-target] {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: calc(-1 * var(--bw-2));
+  }
+}
+
+.chipsText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chipEmpty {
+  color: var(--hx-muted);
+}
+
+.keyboardOpen .chips {
+  display: none;
+}
+
+/* ---- picker ---- */
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-height: 0;
+  container-type: inline-size; /* the program marks follow the panel's width (below) */
+}
+
+/* The wide Add a program dialog's other steps (forms, notices, a notebook's pages) inside its frame: the width they
+ * were drawn for, never a row stretched across the frame. */
+.pickerCapped {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  inline-size: 100%;
+  max-inline-size: var(--picker-w-wide);
+}
+
+/* A long form's foot sits on the frame's bottom edge (over the body's padding), so nothing scrolls past under it. */
+.pickerCapped .formFoot {
+  inset-block-end: 0;
+  margin-block-end: calc(-1 * var(--sp-3));
+  padding-block-end: calc(var(--sp-2) + var(--sp-3));
+}
+
+/* Its lists scroll with the frame's body, never inside it. */
+.pickerCapped .list {
+  max-height: none;
+  overflow: visible;
+}
+
+/* The search field's focus holder: no box of its own. */
+.pickerSearch {
+  display: contents;
+}
+
+.pickerForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.pickerFormActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+/* A long picker form's foot (outcome + actions): pinned to the bottom of the popover or sheet while the form scrolls. */
+.formFoot {
+  position: sticky;
+  inset-block-end: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-block: var(--sp-2);
+  border-block-start: var(--bw) solid var(--hx-line);
+  background: var(--hx-raised);
+}
+
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+  font: var(--t-small);
+  color: var(--hx-muted);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  max-height: max(360px, 60dvh); /* taller when the screen has room; the popover still caps it at its own room */
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+/* A group's own list scrolls with the whole list, never inside it. */
+.list .list {
+  max-height: none;
+  overflow: visible;
+}
+
+/* A computer's step: its lists sit above and below its Apps and scroll with the panel, never inside it. Their options
+   run in two columns (down the first, then the second, as the arrows move) so the Apps stay near the top; one column
+   in a panel narrower than the Add a program popover (the 540 component breakpoint of the program marks below). */
+.listFlow {
+  flex: none;
+  max-height: none;
+  overflow: visible;
+}
+
+.listFlow .list {
+  display: block;
+  columns: 2;
+  column-gap: var(--sp-2);
+}
+
+.listFlow .option {
+  break-inside: avoid;
+}
+
+@container (width < 540px) {
+  .listFlow .list {
+    columns: 1;
+  }
+}
+
+/* A computer's Apps (the launcher), under its list: its whole height, scrolled by the popover or sheet. */
+.pickerApps {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.groupTitle {
+  padding: var(--sp-2) var(--sp-2) var(--sp-1);
+  font: var(--t-label);
+  color: var(--hx-muted);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--row-h);
+  padding-inline: var(--sp-2);
+  cursor: pointer;
+}
+
+.option[aria-selected="true"] {
+  background: var(--hx-selected);
+  box-shadow: inset var(--sp-half) 0 0 var(--hx-selected-bar);
+}
+
+.option:hover {
+  background: var(--hx-hover);
+}
+
+.optionText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.optionName {
+  overflow: hidden;
+  font: var(--t-body);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.optionDesc {
+  font: var(--t-small);
+  color: var(--hx-muted);
+}
+
+.optionMeta {
+  font: var(--t-small);
+  color: var(--hx-muted);
+}
+
+/* A computer row's line of Hoody Kit program names (.optionDesc). In a panel narrower than the Add a program popover
+   (640; the 480 Change program dialog and the phone sheet included) it would wrap: there the row is its name alone.
+   The width is the panel's own (a container query, never the viewport); 540 is a component breakpoint,
+   kept out of the phone band. */
+@container (width < 540px) {
+  .optionProgs {
+    display: none;
+  }
+}
+
+/* Recent's remove: shown on the active or hovered option; the keys use Delete. */
+
+/* Recent's remove (24 px: a 16 px icon and its padding). */
+.optionRemove {
+  display: inline-flex;
+  margin-inline-start: auto;
+  padding: var(--sp-half);
+  border-radius: var(--r-1);
+  color: var(--hx-muted);
+  cursor: pointer;
+  visibility: hidden;
+}
+.option[aria-selected="true"] .optionRemove,
+.option:hover .optionRemove {
+  visibility: visible;
+}
+.optionRemove:hover {
+  color: var(--hx-ink);
+}
+
+/* ---- program view ---- */
+.view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.viewHeadExtra {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-inline-end: var(--sp-2);
+}
+
+.already {
+  font: var(--t-small);
+  color: var(--hx-muted);
+  white-space: nowrap;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.fileInput {
+  display: none;
+}
+
+/* Virtual machine: the systems a VM runs, a wrapping row of kit Tags (names only: the kit has no OS logos). */
+.vmSystems {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ---- Add a program, a computer's step: one group of tiles at a time ---- */
+
+/* The mark of a tile: an icon or a letter in ink, no plate, in a slot the size of a Monogram lg. */
+.tileMark {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: calc(var(--sp-7) + var(--sp-1));
+  block-size: calc(var(--sp-7) + var(--sp-1));
+  color: var(--hx-ink);
+
+  /* A letter stands as tall as a glyph beside it (Icon lg). */
+  font: var(--t-heading);
+}
+
+/* One frame of a fixed height: the way here and the search in its head band, the kinds and the open kind's groups
+   under it. The groups scroll inside; the dialog never grows with them. The panel takes the dialog's own ground, so
+   the section cards and their tiles stand off it in both themes. */
+.browse {
+  --hx-plate-bg: var(--hx-raised);
+
+  /* The one gap between the body's blocks (section cards, a notice, an empty state), whoever draws them. */
+  --browse-gap: var(--sp-6);
+
+  display: flex;
+  flex-direction: column;
+  block-size: min(calc(10 * var(--sp-10)), 68dvh);
+  min-block-size: 0;
+  border: var(--bw) solid var(--hx-plate-line);
+}
+
+/* A phone's sheet: the frame takes the room under the sheet's title. */
+.browse[data-sheet] {
+  --browse-gap: var(--sp-5);
+
+  block-size: calc(100dvh - 1.5 * var(--sp-10));
+}
+
+/* What the search reaches, under the field: one small line, wrapping on a phone. */
+.browseHint {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.browseHead {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-block-end: var(--bw) solid var(--hx-plate-line);
+  background: var(--card-head);
+}
+
+/* The kit grid's own columns (about 256 px): two per line beside the rail, so a tile's name and its state tag fit. */
+.browseBody .browseGrid {
+  /* auto-fill: a card of one or two tiles (one session, one port) keeps the tile width of every other card in the frame. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(4 * var(--sp-10))), 1fr));
+
+  /* Every row of a card is as tall as its tallest tile: a two-line note never makes one row stand out. */
+  grid-auto-rows: 1fr;
+}
+
+/* In the sheet the tiles stand in one column: each is as tall as its own words, never the tallest one's. */
+.browse[data-sheet] .browseBody .browseGrid {
+  grid-auto-rows: auto;
+}
+
+/* The body's blocks stand one gap apart, set here alone: a section's own margin after a section is taken back. */
+.browse .browseBody section {
+  margin-block-start: 0;
+}
+
+.browseBody {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--browse-gap);
+  min-block-size: 0;
+  padding: var(--sp-3);
+  background: var(--hx-plate-bg);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* More below: a fade pinned to the body's bottom edge while cards sit below it, in view at every size (the phone sheet
+   too). It takes no room (its height is pulled back) and never takes a pointer. */
+.moreBelow {
+  position: sticky;
+
+  /* The body's padding: the fade sits on its border, not on its content's end. */
+  inset-block-end: calc(-1 * var(--sp-3));
+  flex: none;
+  block-size: var(--sp-10);
+  margin-block-start: calc(-1 * (var(--sp-10) + var(--browse-gap)));
+  background: linear-gradient(to bottom, transparent, var(--hx-plate-bg));
+  pointer-events: none;
+}
+
+/* The rail variant: the kinds at the start, the open kind's groups beside them. */
+.browseRail {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: calc(3 * var(--sp-10)) minmax(0, 1fr);
+  min-block-size: 0;
+}
+
+/* The tabs variant: the strip over the groups, inside the frame. */
+.browseTabs {
+  /* The strip starts on the cards' edge (the kit Tabs' own inset), its line still across the frame. */
+  --pane-inset: var(--sp-3);
+
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-block-size: 0;
+  padding-block-start: var(--sp-2);
+}
+
+/* The launcher's blocks: in the body's column, one gap apart as the picker's own cards. */
+.browseApps,
+.browseApps > .pickerApps {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--browse-gap);
+}
+
+.browseApps:empty,
+.browseApps > .pickerApps:empty {
+  display: none;
+}
+

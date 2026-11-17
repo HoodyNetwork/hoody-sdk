@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            AI                                     ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   New chat
+ Computers             │  ▌✦ Chats     Agents     Automations     Knowledge     Settings
+ Files                 │
+ Bots                  │    The agent on atlas isn't signed in.
+ Board                 │
+ Demo                  │    [Sign the agent in]
+ Vault                 │
+                       │    It signs in to your Hoody account and stays signed in until you sign out of the Hub. Its
+On atlas ▾             │    key is on the Keys page.
+ Programs              │
+ Schedules             │  Show all computers
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+▌AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │ ───────────────────────────────────────────────────────────────────────────────────────────────
+                       │  atlas · Personal                                                                [AI settings]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

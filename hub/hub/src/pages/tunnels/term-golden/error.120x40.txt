@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                      ◆ Personal ▾  Computers not loaded ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Tunnels                                           ▸ Use with your agent   + Connect a laptop
+ Computers             │  Put a laptop app online through atlas, or let atlas reach a service on your laptop.
+ Files                 │
+ Bots                  │
+ Board                 │                    ! Could not read this computer's tunnels
+ Demo                  │
+ Vault                 │                    The tunnel program did not answer. Try again in a moment.
+                       │
+On this computer       │                    [Try again]
+ Programs              │
+ Schedules             │                    ▸ Details
+ Scripts               │
+ Logs                  │
+▌Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications       2 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │  Questions
+                       │  ▸ What is a tunnel for?
+                       │  ▸ Should I put a laptop app online or bring a laptop service in?
+                       │  ▸ Which port on the computer should I use?
+                       │  ▸ Which ports does the Hub warn about?
+                       │  ▸ When do I tick the password box?
+                       │  ▸ Why did my tunnel fail to open?
+                       │  ▸ Why doesn't a web address load?
+                       │  ▸ What does "Reconnecting or closing" mean?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

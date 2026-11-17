@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                                                                                                       ▸ Use with your agent   + New Bot
+ Computers             │  Every Bot on your running computers, and the page of each one.
+ Files                 │
+▌Bots                  │  Bots              Working now    ! Need you    In chat apps
+ Board                 │  23                1              2             3
+ Demo                  │  on 2 computers    Show           Show          Show
+ Vault                 │
+                       │  / Search                        Filters                                                                                                     23 Bots  ↻ Refresh  View options█
+On atlas ▾             │                                                                                                                                                                              █
+ Programs              │  ▌ C Chief                                                                                                                                      ● Waiting for you [Answer] ⋯██
+ Schedules             │      Asked you something: answer to let it go on · Runs the team day: triage, approvals and summaries · atlas · Acme client · Model Hoody Free                              ██
+ Scripts               │      Telegram Slack Discord  Public link                                                                                                                                    ██
+ Logs                  │                                                                                                                                                                             ██
+ Tunnels               │    L Ledger                                                                                                                                              ● Paused  [Write] ⋯██
+ Notes                 │      Stopped at its limit until you write to it · Keeps the monthly numbers tidy · cinder · Personal · Model Hoody Free                                                     ██
+ AI                    │      Only here in the Hub                                                                                                                                                   ██
+ VMs                   │                                                                                                                                                                             ██
+                       │    S Support                                                                                                                                            ● Working          ⋯██
+Account                │      … Working on it now · Answers questions about the shop and drafts replies · atlas · Acme client · Model Hoody Free                                                     ██
+ Plans & Billing       │      Discord                                                                                                                                                                ██
+ Referrals             │                                                                                                                                                                             ░█
+ Keys and tokens       │    D Digest                                                                                                                                  ● 2 messages waiting          ⋯░█
+ API                   │      2 messages to read next · Writes the daily summary of what changed · atlas · Acme client · Model Hoody Free                                                            ░█
+ Notifications      26 │      Only here in the Hub                                                                                                                                                   ░█
+ Account               │                                                                                                                                                                             ░█
+                       │    S Scout                                                                                                                                                 ● Idle          ⋯░█
+ + Rent servers        │      Last active 19 days ago · Watches deploys and reports failures · cinder · Acme client · Model gpt-5                                                                    ░█
+ Guide                 │      Telegram  Public link                                                                                                                                                  ░█
+ Support               │                                                                                                                                                                             ░█
+                       │    N Notes                                                                                                                                                 ● Idle          ⋯░█
+                       │      Last active 19 days ago · Files meeting notes where they belong · atlas · Personal · Model Hoody Free                                                                  ░█
+                       │      Only here in the Hub                                                                                                                                                   ░█
+                       │                                                                                                                                                                             ░█
+                       │    H Helper 1                                                                                                                                              ● Idle          ⋯░█
+                       │      Last active 20 days ago · Short-lived task helper · atlas · Acme client · Model Hoody Free                                                                             ░█
+                       │      Only here in the Hub                                                                                                                                                   ░█
+                       │                                                                                                                                                                             ░█
+                       │    H Helper 2                                                                                                                                              ● Idle          ⋯░█
+                       │      Last active 20 days ago · Short-lived task helper · cinder · Acme client · Model Hoody Free                                                                            ░█
+                       │  1–20 of 23 ‹ ›                                                                                                                                                              █
+                       │                                                                                                                                                                              █
+                       │  Questions                                                                                                                                                                   █
+                       │  ▸ What is a Bot, and where does it run?                                                                                                                                     █
+                       │  ▸ What is the default Bot of a realm?                                                                                                                                       █
+                       │  ▸ What is a link, and what do keys do?                                                                                                                                      █
+                       │  ▸ What do Other websites (CORS) and the call limits mean?
+                       │  ▸ What does Allow everything do, and what does mixed mean?
+                       │  ▸ Who becomes the owner of a chat app, and how do others join?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Edit rotate-logs                                                        Esc ×
+ Home                  │  Schedules     ┃ Runs a command on a timer.
+ Computers             │  15 schedules o┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  9 programs run┃
+ Bots                  │                ┃   Name
+ Board                 │  / Search sched┃   ┃ rotate-logs
+ Demo                  │  ‹ Any ›  Comma┃
+ Vault                 │  15 schedules  ┃   Command
+                       │                ┃   │ Unchanged
+On atlas ▾             │    Name        ┃   Leave empty to keep the current command.
+ Programs              │  ›   ping-api  ┃
+▌Schedules             │    ! queue-drai┃   Runs
+ Scripts               │      Watch the ┃   │ Some days of the week ▾
+ Logs                  │    ! sync-photo┃
+ Tunnels               │      Nightly ba┃   Time
+ Notes                 │      nightly-di┃   │ 03:30
+ AI                    │      morning-ch┃
+ VMs                   │    ! POST hooks┃   [ ] Sun [x] Mon [ ] Tue [ ] Wed [ ] Thu [ ] Fri [ ] Sat
+                       │      rotate-log┃
+Account                │      cleanup-tm┃   ┌───────────────────────────────────────────────────────────────────────┐
+ Plans & Billing       │    ! Unnamed lo┃   │ NEXT RUNS                                                             │
+ Referrals             │      archive   ┃   │ It runs at these times.                                               │
+ Keys and tokens       │      old-report┃   │ Times are on the computer's clock.                                    │
+ API                   │      poll.sh   ┃   │ in 2 days · Oct 26, 03:30 · your Oct 25, 19:30                        │
+ Notifications      26 │      warm-cache┃   │ in 9 days · Nov 2, 03:30 · your Nov 1, 19:30                          │
+ Account               │                ┃   │ in 16 days · Nov 9, 03:30 · your Nov 8, 19:30                         │
+                       │                ┃   │ in 23 days · Nov 16, 03:30 · your Nov 15, 19:30                       │
+ + Rent servers        │                ┃   │ next month · Nov 23, 03:30 · your Nov 22, 19:30                       │
+ Guide                 │                ┃   └───────────────────────────────────────────────────────────────────────┘
+ Support               │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃ ─────────────────────────────────────────────────────────────────────────────
+ Typing · Esc leaves the field · Ctrl+K ┃ [Cancel]  Save

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines                             ▸ Use with your agent   + New VM
+ Full machines that run inside atlas.
+ ▸ VMs    Images    KVM on computers
+ ──────────────────────────────────────────────────────────────────────────────
+ │ └───────────────────────────────────────────────────────────────────────┘ │
+ │ Server  Bare metal                                                        │
+ │                                                                           │
+ │ Room for VMs                                                              │
+ │ Memory for VMs          █████░░░░░ 7.8 GB of 16 GB in use                 │
+ │ Largest VM that can     8 GB                                              │█
+ │ start                                                                     │█
+ │ Free disk               410 GB                                            │█
+ │ Running VMs             3 of 16                                           │█
+ │ VM CPUs in use          8 of 64                                           │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ VMs                                                                       │█
+ │◷ The delete of win11 may have gone through. [Check again]  [Stop tracking]│▀
+ │  It is still in the list.                                                 │
+ │/ win11               Filters                 1 VM  ↻ Refresh  View options│
+ │  Name             State ↑                    Memory       CPUs            │
+ │▌ win11            ● Stopped                    4 GB          2   [Start] ⋯│
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

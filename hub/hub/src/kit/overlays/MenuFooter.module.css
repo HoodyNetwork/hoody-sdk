@@ -1,0 +1,23 @@
+/* MenuFooter: the shared look of a menu's or picker's footer actions, sticky at the block end of the host's
+ * scroller. A host whose scroller pads its rows by the same amount inline and at the block end sets --footer-reach to
+ * that padding (ActionMenu: --pad-menu), and the footer reaches across it so no row shows under or beside it; 0 elsewhere. */
+.footer {
+  --reach: var(--footer-reach, calc(0 * var(--bw))); /* a length, so the calc()s below stay lengths */
+
+  position: sticky;
+  z-index: var(--z-raised);
+  inset-block-end: calc(-1 * var(--reach));
+  margin-block-end: calc(-1 * var(--reach));
+  margin-inline: calc(-1 * var(--reach));
+  padding: var(--pad-menu) var(--reach) var(--reach);
+  border-block-start: var(--bw) solid var(--pop-sep);
+  background: var(--pop-bg);
+}
+
+/* The group host's buttons: the primary first, side by side, wrapping when narrow. */
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-actions);
+  padding-block-start: var(--sp-2);
+}

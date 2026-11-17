@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Get a computer                                                                                        Esc ×
+ Home     ┃ Pick one of your computers. The copy starts with the same files.
+▌Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ ┌───────────────────────────────────────────────────┐ ┌───────────────────────────────────────────────────┐
+ Bots     ┃ │ ( ) A new computer                                │ │ (•) A copy of one of yours                        │
+ Board    ┃ │     Debian 13, set up below.                      │ │     Same files as the computer you pick.          │
+ Demo     ┃ └───────────────────────────────────────────────────┘ └───────────────────────────────────────────────────┘
+ Vault    ┃
+          ┃ ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+On atlas ▾┃ │ YOU GET                                                                                                 │
+ Programs ┃ │ A copy of cedar on n12, Singapore.                                                                      │
+ Schedules┃ │ Size     16 cores, 64 GB RAM, shared                 Project  Home base                                 │
+ Scripts  ┃ │ Files    Same as cedar has now                       Realm    Personal                                  │
+ Logs     ┃ └─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ Tunnels  ┃
+ Notes    ┃ ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+ AI       ┃ │ Computer                                                                                                │
+ VMs      ┃ │ ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+          ┃ │ │                                                                                                     │ │
+Account   ┃ │ │ Copy from                       ┃ ○ █ SG cedar ▾                                                    │ │
+ Plans & B┃ │ │                                                                                                     │ │
+ Referrals┃ │ │ Name                            │ cedar-copy                                                        │ │
+ Keys and ┃ │ │ Letters, numbers, dashes and                                                                        │ │
+ API      ┃ │ │ underscores, 3 to 100                                                                               │ │
+ Notificat┃ │ │ characters.                                                                                         │ │
+ Account  ┃ │ │                                                                                                     │ │
+          ┃ │ │ Server                          │ SG n12 · Singapore ▾                                              │ │
+ + Rent se┃ │ │                                                                                                     │ │
+ Guide    ┃ │ │ Project                         │ █ Home base ▾                                                     │ │
+ Support  ┃ │ │                                 [+ New project in this realm]                                       │ │
+          ┃ │ │                                                                                                     │ │
+          ┃ │ └─────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+          ┃ └─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tab move ┃ ● Unsaved changes                                                                      [Cancel]  Make copy

@@ -1,0 +1,15 @@
+{
+  "name": "Hoody Hub",
+  "short_name": "Hoody",
+  "start_url": "/auth/home",
+  "scope": "/auth/",
+  "display": "standalone",
+  "background_color": "#111112",
+  "theme_color": "#111112",
+  "icons": [
+    { "src": "/auth/pwa/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/auth/pwa/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/auth/pwa/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/auth/pwa/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

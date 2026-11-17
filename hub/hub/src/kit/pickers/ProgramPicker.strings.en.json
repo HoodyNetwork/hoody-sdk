@@ -1,0 +1,7 @@
+{
+  "placeholder": "Pick a program",
+  "loading": "Loading programs…",
+  "search": "Find a program",
+  "empty": "No programs here yet.",
+  "failed": "The program list could not be read"
+}

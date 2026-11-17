@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines › win11
+ win11  ● Stopped                                                   Start   [⋯]
+ A VM inside atlas.
+  Overview  Screen  Ports  Storage ▸Snapshots  Settings  Logs
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Snapshots                                              [+ Take a snapshot] │
+ │ A snapshot keeps the VM's disk as it is now, so you can go back to it.     │
+ │  Label            Taken              Disk size Restore                     │
+ │› clean-install    Oct 9, 2025, 8:53…     64 GB ● Possible       [Restore] ⋯│
+ │  before-drivers   Oct 14, 2025, 12:…     64 GB ● Possible       [Restore] ⋯│
+ │  old-layout       Sep 27, 2025, 7:0…     40 GB ● Not possible   [Restore] ⋯│
+ └────────────────────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Move this VM                                                               │
+ │ To move a VM to another computer, export a snapshot with the CLI.          │
+ │                                                                    ⧉ copy  │
+ │  $ hoody vm snapshots export create win11 before-drivers                   │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,49 @@
+/* ModelPickList: the virtualized model list. Heights are exact (the virtualizer's sizes are the layout's): a row is
+   --mp-row-h (set by the list from its rowHeight prop), a heading its inline height. */
+.list {
+  /* The sticky heading's ground: the card's, unless a host on another ground (a popover) sets it. */
+  --mp-head-bg: var(--hx-card);
+
+  position: relative;
+  min-width: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.group {
+  min-width: 0;
+}
+
+/* A group's heading row: ModelChooser.module.css .groupHead's look, written here so this module binds only a pure CSS
+   module (kitpure.conformance: ModelChooser.module.css has quoted attribute selectors). */
+.head {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-raised);
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
+  padding: var(--sp-1) var(--pad-row-x) 0;
+  padding-block: 0;
+  background: var(--mp-head-bg);
+  color: var(--hx-ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.row {
+  box-sizing: border-box;
+  height: var(--mp-row-h);
+  min-height: 0;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.spacer {
+  pointer-events: none;
+}

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                          ◆ Personal ▾  No computers yet ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Support
+ Computers             │  Ask us about anything in Hoody. We answer here, in writing.
+ Files                 │
+ Bots                  │  / Search                   ‹ All ›  Waiting for you    Waiting for support    Closed
+ Board                 │  0 tickets  ↻ Refresh  View options
+ Demo                  │
+ Vault                 │                         ┌──────────────────────────────────────────────┐
+                       │                         │ No tickets yet                               │
+On this computer       │                         │                                              │
+ Programs              │                         │ Tell us what you need and we'll answer here. │
+ Schedules             │                         │                                              │
+ Scripts               │                         │  + New ticket   How support works            │
+ Logs                  │                         └──────────────────────────────────────────────┘
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications         │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+▌Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │  Questions
+                       │  ▸ What should I never put in a ticket?
+                       │  ▸ Why does my message look plain?
+                       │  ▸ Why is there a limit on tickets?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

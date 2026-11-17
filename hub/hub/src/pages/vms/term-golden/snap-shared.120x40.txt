@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines                                                        ▸ Use with your agent
+ Computers             │  Full machines that run inside atlas.
+ Files                 │
+ Bots                  │  ▸ VMs    KVM on computers
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  │ i VMs need a bare-metal server. atlas is on a shared server, and  [See bare-metal servers]
+ Vault                 │  │   shared servers cannot run VMs.
+                       │
+On atlas ▾             │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Programs              │  │ This computer                                                                            │█
+ Schedules             │  │ VMs need a bare-metal server, with KVM on for the computer.                              │█
+ Scripts               │  │                                                                                          │█
+ Logs                  │  │ What this computer can run                                                               │█
+ Tunnels               │  │ ┌──────────────────────────────────────────────────────────────────────────────────────┐ │█
+ Notes                 │  │ │                                                                                      │ │█
+ AI                    │  │ │ Run VMs on this computer (KVM)  [□ off]                                              │ │█
+▌VMs                   │  │ │ Shared servers cannot run VMs,                                                       │ │█
+                       │  │ │ so KVM cannot be turned on                                                           │ │█
+Account                │  │ │ here.                                                                                │ │█
+ Plans & Billing       │  │ │                                                                                      │ │█
+ Referrals             │  │ └──────────────────────────────────────────────────────────────────────────────────────┘ │█
+ Keys and tokens       │  │ Server  Shared                                                                           │█
+ API                   │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Notifications      26 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Account               │  │ VMs                                                                                      │█
+                       │  │ atlas cannot run VMs.                                                                    │█
+ + Rent servers        │  │ VMs need a computer on a bare-metal server. The                                          │█
+ Guide                 │  │ KVM on computers tab shows which of your                                                 │█
+ Support               │  │ computers can run them.                                                                  │█
+                       │  │  See bare-metal servers                                                                  │█
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+                       │                                                                                              █
+                       │  Questions                                                                                   █
+                       │  ▸ What is a VM?                                                                             █
+                       │  ▸ Why can't my computer run VMs?                                                            █
+                       │  ▸ How do I see a VM's screen?                                                               █
+                       │  ▸ How do I install Windows?
+                       │  ▸ How do I reach a website that runs in a VM?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

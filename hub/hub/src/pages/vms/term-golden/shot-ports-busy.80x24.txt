@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Ports of win11                                                   Esc ×
+ Virtua┃ This list replaces the VM's ports. It applies when the VM next
+ win11 ┃ starts.
+ A VM i┃ ──────────────────────────────────────────────────────────────────────
+  Overv┃ │ i Ports on the computer start at 1024. The first connection after
+ ──────┃ │   the VM starts can fail: try again.
+ ┌─────┃
+ │ Port┃ │ TCP ▾          │ [−] 80                   [+]
+ │ Port┃ │ [−] 8080                 [+] [Remove port 1]
+ │  ┌──┃
+ │  │ N┃ [+ Add a port]
+ │  │  ┃
+ │  │ T┃
+ │  │ s┃
+ │  └──┃
+ └─────┃
+       ┃
+       ┃
+       ┃
+       ┃ ──────────────────────────────────────────────────────────────────────
+       ┃ ✗ Didn't go through
+       ┃ Another change of this VM is under way. Try
+       ┃ again in a moment.                               [Cancel]  Save ports
+ Tab mo┃ Details

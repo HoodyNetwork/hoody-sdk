@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                 ▸ Use with your agent   + New script
+ Computers             │  Small programs on your computers that answer an address or run on a schedule.
+ Files                 │
+ Bots                  │  / Search                   Status ▾  Computer ▾                                             █
+ Board                 │  10 scripts  [Recently deleted · 2]  ↻ Refresh  View options                                 █
+ Demo                  │                                                                                              █
+ Vault                 │      Script ↑                    Status          Address                     Calls, 24 h     █
+                       │  ▾ atlas · 7                                                                                 █
+On atlas ▾             │  ›   Daily digest  Idea          ● Working       /daily-digest                        30    ⋯█
+ Programs              │      Health check                ● Working       /health                           5,120    ⋯█
+ Schedules             │      Notify me  Idea             ● Working       /notify                               9    ⋯█
+▌Scripts               │      Old report                  ● Turned off    /old-report                           —    ⋯█
+ Logs                  │      Order status                ● Failing       /orders/:id           1,290 · 61 failed    ⋯█
+ Tunnels               │      Stripe webhook              ● Working       /webhooks/stripe          88 · 2 failed    ⋯█
+ Notes                 │      Weather lookup              ● Working       /weather                 412 · 3 failed    ⋯█
+ AI                    │                                                                                              █
+ VMs                   │  ▾ borealis · 3                                                                              █
+                       │      i Runs an older Scripts program. You can read and test its scripts. To change them,     █
+Account                │        update the computer.                                                                  █
+ Plans & Billing       │      ────────────────────────────────────────────────────────────────────────────────────────█
+ Referrals             │      Daily digest  Read-only     —               /daily-digest                         —    ⋯█
+ Keys and tokens       │      Order status  Read-only     —               /orders/:id                           —    ⋯█
+ API                   │      Weather lookup  Read-only   —               /weather                              —    ⋯█
+ Notifications      26 │                                                                                              █
+ Account               │  ▾ cedar · 0                                                                                 █
+                       │      i Turned off. Start it to see its scripts.                                              █
+ + Rent servers        │      ────────────────────────────────────────────────────────────────────────────────────────█
+ Guide                 │                                                                                              █
+ Support               │  ▾ harbor · 0                                                                                ▀
+                       │      i Keeps its scripts private from the Hub. Allow access in the computer's settings to see
+                       │        them.
+                       │      ────────────────────────────────────────────────────────────────────────────────────────
+                       │
+                       │  ▾ Advanced
+                       │
+                       │    Script folder                   │ 1                    [Open folder]
+                       │    Each folder has its own web
+                       │    address and its own scripts.
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

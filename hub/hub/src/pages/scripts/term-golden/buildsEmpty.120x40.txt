@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                                 ▸ Use with your agent
+ Computers             │  Small programs on your computers that answer an address or run on a schedule.
+ Files                 │
+ Bots                  │  ▾ Being built on this device · 1
+ Board                 │     Every Monday at 9:00, count last wee… ● Building Running a code check atlas 3 minutes ago
+ Demo                  │     [Open] [Stop] [Discard]
+ Vault                 │
+                       │
+On atlas ▾             │             ┌──────────────────────────────────────────────────────────────────────┐
+ Programs              │             │ No scripts yet                                                       │
+ Schedules             │             │                                                                      │
+▌Scripts               │             │ A script is a small program on one of your computers. Write one, or  │
+ Logs                  │             │ ask the assistant to write it for you.                               │
+ Tunnels               │             │                                                                      │
+ Notes                 │             │  + New script                                                        │
+ AI                    │             │ [Summarise text with AI] [Check a website and notify me]             │
+ VMs                   │             │ [A tiny note keeper]                                                 │
+                       │             └──────────────────────────────────────────────────────────────────────┘
+Account                │
+ Plans & Billing       │  ▸ Advanced
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │  Questions
+ Support               │  ▸ What is a script?
+                       │  ▸ Do I need to know how to code?
+                       │  ▸ What can a script do?
+                       │  ▸ How does the assistant write a script?
+                       │  ▸ How do I make a script run on a schedule?
+                       │  ▸ What is a public link, and how is its name chosen?
+                       │  ▸ How does a script key work?
+                       │  ▸ Where do I keep secrets such as passwords or API keys?
+                       │  ▸ What are magic comments, and what do the settings do?
+                       │  ▸ Can I undo a change or bring back a deleted script?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

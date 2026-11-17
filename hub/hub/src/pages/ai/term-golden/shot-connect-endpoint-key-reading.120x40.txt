@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ ‹ Back                                                                  Esc ×
+ Home                  │   Chats   Agent┃ Connect an account
+ Computers             │  ▌Models & keys┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  atlas › Models┃ My endpoint API key * (required)
+ Bots                  │  Models & keys ┃ ┃
+ Board                 │  atlas uses Hoo┃ Stored on atlas only. It is never shown again.
+ Demo                  │                ┃
+ Vault                 │  ▌Default model┃ … Reading My endpoint…
+                       │  ──────────────┃
+On atlas ▾             │  ┌─────────────┃ [Cancel]  Check and save
+ Programs              │  │ Default mode┃
+ Schedules             │  │ The model yo┃
+ Scripts               │  │ ┌───────────┃
+ Logs                  │  │ │           ┃
+ Tunnels               │  │ │ AI helper ┃
+ Notes                 │  │ │ The model ┃
+▌AI                    │  │ │ everyday w┃
+ VMs                   │  │ │ computer. ┃
+                       │  │ │           ┃
+Account                │  │ │ Bots      ┃
+ Plans & Billing       │  │ │ Bots follo┃
+ Referrals             │  │ │           ┃
+ Keys and tokens       │  │ └───────────┃
+ API                   │  └─────────────┃
+ Notifications      26 │                ┃
+ Account               │  ┌─────────────┃
+                       │  │ Accounts    ┃
+ + Rent servers        │  │ The AI provi┃
+ Guide                 │  │ / Search    ┃
+ Support               │  │             ┃
+                       │  │   Provider  ┃
+                       │  │ › H Hoody AI┃
+                       │  │   M My endpo┃
+                       │  │   O OpenAI  ┃
+                       │  └─────────────┃
+                       │                ┃
+                       │  ┌─────────────┃
+                       │  │ Claude Code ┃
+                       │  │ Use your own┃
+ Tab move · Enter open · Ctrl+K commands┃

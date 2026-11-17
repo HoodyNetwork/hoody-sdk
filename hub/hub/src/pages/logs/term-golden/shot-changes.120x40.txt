@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Logs                                                                    ▸ Use with your agent
+ Computers             │  6 changes in the last hour.
+ Files                 │
+ Bots                  │    Everything    Visits    Bots  ▸ Changes    Scripts    Programs   [More ▾]
+ Board                 │  │ ● SG atlas · █ Personal ▾ When: 1 hour                                        [Refresh] [⋯]
+ Demo                  │  [Clear all]
+ Vault                 │    Time     Result   From    What happened
+                       │  ▌ 08:35:00          Changes Computer started
+On atlas ▾             │    06:25:00          Changes Computer renamed
+ Programs              │    04:15:00          Changes Realm assigned
+ Schedules             │    02:05:00          Changes SSH key replaced
+ Scripts               │    ── Tuesday, November 10 ──
+▌Logs                  │    23:55:00          Changes Computer stopped
+ Tunnels               │    21:45:00          Changes Program started
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

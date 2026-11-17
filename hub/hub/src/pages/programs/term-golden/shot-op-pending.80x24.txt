@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs             ▸ Use with your agent  [+ New program]   + Launch an app
+ 19 programs on atlas · 11 running · 4 need a look
+ ‹ Programs  Esc
+ web  ● Running                                        [↻ Restart] [■ Stop] [⋯]
+
+ │ ◷ This may have gone through                                               █
+ │   We couldn't confirm web restarted.                                       █
+ │   [Check again]  [Stop tracking]                                           █
+                                                                              █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ At a glance                                                               │▀
+ │ Kind      Your program                                                    │
+ │ State     Running                                                         │
+ │ Up        3 days                                                          │
+ │ Restarts  Starts again whenever it stops                                  │
+ │ Startup   [■ on ] Start with the computer                                 │
+ │                   Waiting until the last action on this program is        │
+ │                   settled.                                                │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Ports                                                                     │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

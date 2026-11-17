@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Edit ci-deploy                                                   Esc ×
+ Keys a┃ Only what you change is sent. The key's secret stays the same.
+ A key ┃ ──────────────────────────────────────────────────────────────────────
+ key, w┃                                                                      █
+ ▸ API ┃ Basics                                                               █
+ ──────┃ Name                                                                 █
+ i Keys┃ ┃ ci-deploy                                                          █
+ ‹ Back┃ Name it after the agent or app that uses it.                         ▀
+ ci-dep┃
+       ┃
+       ┃ Realms
+   ┌───┃ Works in
+   │ TH┃ ┌────────────────────────────────┐ ┌────────────────────────────────┐
+   │ It┃ │ ( ) All realms (unavailable)   │ │ (•) Pick realms                │
+   └───┃ │     A realm-limited key can't  │ │     Only the realms you tick.  │
+       ┃ │     be widened; make a new key │ │                                │
+   Key ┃ │     for that.                  │ │                                │
+   Work┃ └────────────────────────────────┘ └────────────────────────────────┘
+   In t┃ ▸ Which realms can a key work in?
+   Acce┃   Realms this key works in
+   Ends┃   1 selected
+   Allo┃    [✓] Personal
+   Made┃ ──────────────────────────────────────────────────────────────────────
+ Typing┃                               No changes yet  [Cancel]   Save changes

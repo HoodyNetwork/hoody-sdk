@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ ‹ Back to Launch an app                                                 Esc ×
+ Home                  │  Programs      ┃ Options for JupyterLab
+ Computers             │  Apps on atlas:┃ Change how it opens this time.
+ Files                 │    Running prog┃ ─────────────────────────────────────────────────────────────────────────────
+ Bots                  │  ──────────────┃ Arguments
+ Board                 │                ┃ ┃
+ Demo                  │  / Search opene┃
+ Vault                 │                ┃
+                       │    Name        ┃
+On atlas ▾             │  › JupyterLab R┃ One per line, passed exactly as typed.
+▌Programs              │    htop Install┃
+ Schedules             │    Firefox Inst┃ Environment variables
+ Scripts               │    VS Code Regi┃ Name and value pairs. Values stay hidden and are never saved.
+ Logs                  │    Shared folde┃ [Add a variable]
+ Tunnels               │    btop Install┃
+ Notes                 │    sqlite-web p┃ Where it opens
+ AI                    │    Open WebUI R┃ ( ) On the display
+ VMs                   │                ┃ ( ) In a terminal
+                       │                ┃ (•) As a web page
+Account                │                ┃ Where the app opens, as far as Hoody can tell. You can change it.
+ Plans & Billing       │                ┃
+ Referrals             │                ┃
+ Keys and tokens       │                ┃
+ API                   │                ┃
+ Notifications      26 │                ┃
+ Account               │                ┃
+                       │                ┃
+ + Rent servers        │                ┃
+ Guide                 │                ┃
+ Support               │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃ ─────────────────────────────────────────────────────────────────────────────
+ Typing · Esc leaves the field · Ctrl+K ┃ [Cancel]  Open

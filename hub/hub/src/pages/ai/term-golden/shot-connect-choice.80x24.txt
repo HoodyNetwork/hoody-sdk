@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ ‹ Back                                                           Esc ×
+  Chats┃ Connect OpenAI
+ ▌Model┃ ──────────────────────────────────────────────────────────────────────
+ atlas ┃ How to connect OpenAI
+ Models┃ ( ) Sign in with ChatGPT
+ atlas ┃     Use your ChatGPT plan
+ ▌Defau┃ ( ) Use an API key
+ ──────┃     Pay as you go on your own key
+ ┌─────┃
+ │ Defa┃
+ │ The ┃
+ │ ┌───┃
+ │ │   ┃
+ │ │ AI┃
+ │ │ Th┃
+ │ │ ev┃
+ │ │ co┃
+ │ │   ┃
+ │ │ Bo┃
+ │ │ Bo┃
+ │ │   ┃
+ │ └───┃
+ └─────┃
+ Tab mo┃

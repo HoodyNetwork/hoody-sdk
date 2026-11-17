@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Get a computer                                                   Esc ×
+ Comput┃ ──────────────────────────────────────────────────────────────────────
+ Your c┃ ! A computer named noble-sage-raven may [Check again]  [Stop tracking]
+ ▸ Comp┃   already have been made. Check the
+ ──────┃   list before trying again.
+ Comput┃
+ / Sear┃
+ 8 comp┃
+ › █ at┃
+    █ P┃
+   █ bo┃
+    █ A┃
+   █ ce┃
+    █ P┃
+   █ du┃
+    █ L┃
+   █ em┃
+    █ A┃
+   █ fj┃
+    █ P┃
+   █ gr┃
+    █ A┃
+   █ ha┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Cancel]  Get computer

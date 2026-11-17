@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                     ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+ Programs                                                 ▸ Use with your agent
+ Pick a computer to see its programs.
+             ┌─────────────────────────────────────────────────────┐
+             │ No computer selected                                │
+             │                                                     │
+             │ Pick a computer in the top bar to see its programs. │
+             └─────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

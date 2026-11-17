@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                                             ▸ Use with your agent   + Launch an app
+ Computers             │  Open ports and aliases on atlas
+ Files                 │    Running programs    Apps  ▸ Ports & aliases
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  │  Alias             Goes to     Address          Your domain points to                    │
+ Vault                 │  │› shop-front        Port 3000   Open shop-front  shop-front.custom-domain.example.te…    ⋯│
+                       │  │  term-desk         terminal    Open term-desk   term-desk.custom-domain.example.test    ⋯│
+On atlas ▾             │  │  api-two           Port 8001   Open api-two     api-two.custom-domain.example.test …    ⋯│
+▌Programs              │  │  api-four          Port 8003   Open api-four    api-four.custom-domain.example.test     ⋯│
+ Schedules             │  │  agent-door        Port 15000  Open agent-door  agent-door.custom-domain.example.te…    ⋯│
+ Scripts               │  │▸ How do I use my own domain?                                                             │
+ Logs                  │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+ Tunnels               │                                                                                              ▄
+ Notes                 │  Questions                                                                                   █
+ AI                    │  ▸ What is a program, and what are Running programs and Apps?                                █
+ VMs                   │  ▸ What are the system programs, and is it safe to stop one?                                 █
+                       │  ▸ What is the difference between Keep it and Run once?                                      █
+Account                │  ▸ When does a start count as done, and what happens when a program stops?                   █
+ Plans & Billing       │  ▸ What does a sandbox limit, and what do the starting points do?                            █
+ Referrals             │  ▸ What do the network choices and allowed ranges do?                                        █
+ Keys and tokens       │  ▸ When do new sandbox limits take effect, and what does removing them do?                   █
+ API                   │  ▸ What if a change may have gone through?                                                   █
+ Notifications      26 │  ▾ Which open ports get a web address?                                                       █
+ Account               │    Each listed port has a kind:                                                              █
+                       │                                                                                              █
+ + Rent servers        │    - Web: a TCP port. It gets a web address, which carries HTTP                              █
+ Guide                 │    (WebSockets included) and nothing else. The Hub does not check                            █
+ Support               │    that the port speaks HTTP.                                                                █
+                       │    - Other: a UDP port, or a port number known for a service that                            █
+                       │    is not the web, such as 22 (SSH) or 5432 (PostgreSQL). It
+                       │    shows "No web address".
+                       │
+                       │    A program that listens only on 127.0.0.1 or ::1 is not listed
+                       │    here. Make it listen on 0.0.0.0 to have its port listed.
+                       │  ▸ Why are some ports counted but not shown?
+                       │  ▸ What is the difference between a port's address and an alias?
+                       │  ▾ How do I create an alias?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

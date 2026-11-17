@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                     ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+ Computers                                                ▸ Use with your agent
+ Your computers: start them, open a terminal, and manage access.
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+                                                                              █
+                                                                              █
+     ┌────────────────────────────────────────────────────────────────────┐   █
+     │ Your server was reinstalled                                        │   █
+     │                                                                    │   █
+     │ The computers on it are gone. Delete them in Projects, then create │   █
+     │ a new computer.                                                    │   █
+     │                                                                    │   █
+     │ [Open Projects]  [+ Create your first computer]                    │   █
+     └────────────────────────────────────────────────────────────────────┘   █
+                                                                              █
+                                                                              █
+                                                                              █
+ Questions                                                                    █
+ ▸ What does a new computer come with?                                        ▀
+ ▸ What are realms and projects?
+ ▸ Who can open my computer's programs?
+ ▸ How does the firewall work, and what does No internet block?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

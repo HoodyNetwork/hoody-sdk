@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  AI                          ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ [Back to chats] Fix the failing checkout tests       ● Needs you [⋯] [Details]
+ atlas · Personal  /home/ada/projects/shop
+ [Hoody Free]
+────────────────────────────────────────────────────────────────────────────────
+ ▸ 1 step ✓ Done
+
+ ▸ 1 step ◌ Running
+                                                                               ▄
+ ┌─ ! Needs you ─────────────────────────────────────────────────────────────┐ █
+ │  Allow this action?  Run a command (Can change files)                     │ █
+ │                                                                           │ █
+ │ Shell ⧉ copy                                                              │ █
+ │  npm install chart.js                                                     │ ▀
+ │ Allow once and Deny apply to this call only.                              │
+ Waiting for your answer                                               [■ Stop]
+ Your agent reads this after you answer the waiting approval. To decline it,
+ use Deny.
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Then add a disk chart too.                                                 │
+ └────────────────────────────────────────────────────────────────────────────┘
+ [+]  [/ Commands]  [Ask when needed]                             [Send ↵]  [▾]
+ Enter send · Alt+Enter or Ctrl+J new line · / commands · @ files · PgUp scroll
+ Typing · Esc leaves the field · Ctrl+K commands

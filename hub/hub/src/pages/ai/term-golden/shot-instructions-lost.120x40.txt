@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations  ▌Knowledge   Settings
+ Computers             │   Skills  ▌Instructions   Memory
+ Files                 │  Instructions  ● On                                                               [Read again]
+ Bots                  │  The text this realm's agents get with their instructions on this computer, and its on/off.
+ Board                 │
+ Demo                  │  ! The answer to your save didn't arrive. It may have    [Check what is saved]  Stop tracking…
+ Vault                 │    been saved. We have not sent it again.
+                       │
+On atlas ▾             │  ┌────────────────────────────────────────────────────────────────────────────────────────┐
+ Programs              │  │                                                                                        │
+ Schedules             │  │ Give agents these instructions  [■ on ]                                                │
+ Scripts               │  │ On. This text is added                                                                 │
+ Logs                  │  │ whenever an agent's                                                                    │
+ Tunnels               │  │ instructions are built, unless                                                         │
+ Notes                 │  │ the chat's or agent's prompt                                                           │
+▌AI                    │  │ settings leave it out.                                                                 │
+ VMs                   │  │                                                                                        │
+                       │  └────────────────────────────────────────────────────────────────────────────────────────┘
+Account                │
+ Plans & Billing       │  Instructions text (unavailable)
+ Referrals             │  │ Answer in English.
+ Keys and tokens       │    Keep pull requests small and explain why a change is needed.
+ API                   │    Run the tests before you say a change is done.
+ Notifications      26 │    Write the summary first.
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │  A chat picks up a change at its next turn; a helper or workflow step already running keeps
+                       │  the version it started with.
+                       │
+                       │  ● Unsaved changes                                                         [Discard]  Save
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

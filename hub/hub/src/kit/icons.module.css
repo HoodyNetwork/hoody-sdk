@@ -1,0 +1,83 @@
+.icon {
+  display: inline-block;
+  flex: none;
+  vertical-align: middle;
+}
+
+.stroke {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.75;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+.filled {
+  fill: currentcolor;
+  stroke: none;
+}
+
+.sm {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}
+
+.md {
+  width: var(--icon-md);
+  height: var(--icon-md);
+}
+
+.lg {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+}
+
+/* tone: the colours page Icons set. Colour only; omitted, the icon keeps currentcolor. */
+.toneInk {
+  color: var(--hx-ink);
+}
+
+.toneMuted {
+  color: var(--hx-muted);
+}
+
+.toneFaint {
+  color: var(--hx-faint);
+}
+
+.toneOk {
+  color: var(--hx-ok);
+}
+
+.toneWarn {
+  color: var(--hx-warn);
+}
+
+.toneDanger {
+  color: var(--hx-danger);
+}
+
+/* The quiet severity tones: a read row's mark, quieter but still 3:1 on the card. */
+.toneDangerQuiet {
+  color: var(--hx-danger-quiet);
+}
+
+.toneWarnQuiet {
+  color: var(--hx-warn-quiet);
+}
+
+/* A button's end glyphs: drawn at their own size, never stretched; directional ones flip right-to-left. A pixel glyph
+   (1 unit = 1 px) is crisp; a chevron glyph (.pxSmooth) is the 24-grid stroke icon and keeps its smooth edges. */
+.px {
+  display: block;
+  flex: none;
+  shape-rendering: crispedges;
+}
+
+.px.pxSmooth {
+  shape-rendering: geometricprecision;
+}
+
+.px[data-px-mirror]:dir(rtl) {
+  transform: scaleX(-1);
+}

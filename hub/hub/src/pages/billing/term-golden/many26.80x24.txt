@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Plans & Billing                                                   + Add funds
+ Upgrade a server, rent a whole machine, and see what you pay.
+ ▸ Plans    Bare metal    Wallet & usage
+ ──────────────────────────────────────────────────────────────────────────────
+ │ ✗ node-2: On hold — will be deleted Nov 17, 2026 UTC              [Pay now]
+ │ ✗ node-5: On hold — will be deleted Nov 17, 2026 UTC              [Pay now]
+ │ ✗ node-8: On hold — will be deleted Nov 17, 2026 UTC              [Pay now]
+ │ ! 5 more servers are held                                  [Wallet & usage]
+ Plans                                                                        ▀
+ Each plan is a server of your own. Its computers share its cores, memory and
+ disk. You can take the same plan more than once.
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │                                                                           │
+ │ Plans for                       ( ) node-1 · Small                        │
+ │ Choose a plan to buy a new      ( ) node-3 · Medium                       │
+ │ server, or pick one of yours    ( ) node-4 · Small                        │
+ │ to upgrade it.                  ( ) node-6 · Medium                       │
+ │                                 ( ) node-7 · Small                        │
+ │                                 ( ) node-9 · Medium                       │
+ │                                 ( ) node-10 · Small                       │
+ │                                 ( ) node-12 · Medium                      │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

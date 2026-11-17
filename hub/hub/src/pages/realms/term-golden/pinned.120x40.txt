@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  New realm
+ Computers             │  A separate space in your account, with its own computers, keys and settings.
+ Files                 │
+ Bots                  │  Step 1 of 3 · Name and colour  ███░░░░░░░
+ Board                 │  ▸1 Name and colour  2 Computers  3 Create
+ Demo                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │                       ┌──────────────────────────────────────────────────┐
+                       │                       │ A shared-access session can't create realms      │
+On atlas ▾             │                       │                                                  │
+ Programs              │                       │ Sign in with your own account to create a realm. │
+ Schedules             │                       └──────────────────────────────────────────────────┘
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications         │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

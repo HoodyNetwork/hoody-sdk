@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Choose a model                                                          Esc ×
+ Home                  │   Chats   Agent┃ For your AI helper and tasks
+ Computers             │  ▌Models & keys┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  atlas › Models┃ Choose a model
+ Bots                  │  Models & keys ┃
+ Board                 │  atlas uses Hoo┃ ┃ /  Search models and providers
+ Demo                  │                ┃
+ Vault                 │  ▌Default model┃ Show: Ready  Provider ▾  Can ▾  Window ▾  List price, input ▾
+                       │  ──────────────┃
+On atlas ▾             │  ┌─────────────┃ 1 of 7,078 models
+ Programs              │  │ Default mode┃
+ Schedules             │  │ The model yo┃  (•) Hoody Free Current · Recommended
+ Scripts               │  │ ┌───────────┃
+ Logs                  │  │ │           ┃ [Add to favourites]  [Your own endpoint]
+ Tunnels               │  │ │ AI helper ┃
+ Notes                 │  │ │ The model ┃
+▌AI                    │  │ │ everyday w┃
+ VMs                   │  │ │ computer. ┃
+                       │  │ │           ┃
+Account                │  │ │ Bots      ┃
+ Plans & Billing       │  │ │ Bots follo┃
+ Referrals             │  │ │           ┃
+ Keys and tokens       │  │ └───────────┃
+ API                   │  └─────────────┃
+ Notifications      26 │                ┃
+ Account               │  ┌─────────────┃
+                       │  │ Accounts    ┃
+ + Rent servers        │  │ The AI provi┃
+ Guide                 │  │ / Search    ┃
+ Support               │  │             ┃
+                       │  │   Provider  ┃
+                       │  │ › H Hoody AI┃
+                       │  │             ┃
+                       │  │ Only Hoody A┃
+                       │  └─────────────┃
+                       │                ┃
+                       │  ┌─────────────┃
+                       │  │ Claude Code ┃
+                       │  │ Use your own┃
+ Typing · Esc leaves the field · Ctrl+K ┃

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ API                                                      ▸ Use with your agent
+ Every endpoint of the Hoody API, how to call it, and its docs page.
+ ▸ Endpoints    Overview
+ ──────────────────────────────────────────────────────────────────────────────
+ / waitlist             Filters                          2 endpoints  ↻ Refresh
+       Method               Path              Summary
+ ▾ Account API · 1 resource · 2 endpoints
+   ▾ Waitlist · 2 endpoints
+ ›      PATCH               /api/v1/waitlist  Enrich an existing waitlist s…
+        POST                /api/v1/waitlist  Join the Hoody waitlist
+
+
+
+
+
+
+
+
+
+
+
+
+ Typing · Esc leaves the field · Ctrl+K commands

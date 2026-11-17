@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            AI                                     ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  [Back to chats] Plan the backup job                                      · Idle [⋯] [Details]
+ Computers             │  atlas · Personal  /home/ada
+ Files                 │  [Hoody Free]
+ Bots                  │ ───────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │  │ You 09:00 AM
+ Demo                  │  │ Plan the backup job
+ Vault                 │
+                       │  ✦ Agent on atlas
+On atlas ▾             │  ▸ 2 steps ✓ Done
+ Programs              │
+ Schedules             │  I wrote the plan to plan.md:
+ Scripts               │
+ Logs                  │  • Copy photos and projects every night at 02:00
+ Tunnels               │  • Keep the last 7 copies
+ Notes                 │  • Send a note when a copy fails
+▌AI                    │
+ VMs                   │  ⧉ Copy [⋯]
+                       │
+Account                │
+ Plans & Billing       │  │ You 09:00 AM
+ Referrals             │  │ Run it once now
+ Keys and tokens       │  ┌──────────────────────────────────────────────┐
+ API                   │  │›    Attach a file                            │
+ Notifications      26 │  │       Add images (up to 4, 4 MB each) or text│
+ Account               │  │       files (up to 24 KB)                    │
+                       │  │     From a computer…                         │Start a new one, or pick a model that can
+ + Rent servers        │  │       Attach files that are on any of your   │
+ Guide                 │  │       computers                              │
+ Support               │  │     Notes…                                   │nt's steps until someone trusts them. You
+                       │  │       Attach the text of your notes          │
+                       │  │     From a URL…                              │
+                       │  │       Attach a web page, as Markdown or as it│
+                       │  │       is                                     │
+                       │  │     Mention a file…                          │
+                       │  │       Write a file's path into the message,  │────────────────────────────────────────────┐
+                       │  │       from any computer                      │                                            │
+                       │  └──────────────────────────────────────────────┘────────────────────────────────────────────┘
+                       │  [+]  [/ Commands]  [Ask when needed]                                            [Send ↵]  [▾]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

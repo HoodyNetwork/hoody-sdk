@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Choose an agent                                                  Esc ×
+ ▌Chats┃ On atlas. Your pick is remembered for new chats. Agents Hoody
+       ┃ runs itself are not listed.
+       ┃ ──────────────────────────────────────────────────────────────────────
+ What s┃ / Search agents      Filters                       3 agents  ↻ Refresh
+ Give a┃     Agent                          What it can do  What it is for
+ comput┃ ▾ Start here · 1
+ ■ Pers┃ ▌   Work on this computer           Can act        The everyday wo…
+       ┃ ▾ Built in · 1
+       ┃     reviewer                        Can act        Reviews a chang…
+ ┌─────┃ ▾ Yours · 1
+ │ Ask ┃     shop-support                    Chat only      Answers shop qu…
+ └─────┃
+ [+ Att┃
+ [Work ┃
+ [Send ┃
+       ┃
+   Work┃
+   Star┃
+   atla┃
+       ┃
+       ┃
+       ┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃                                              [Manage agents]  [Cancel]

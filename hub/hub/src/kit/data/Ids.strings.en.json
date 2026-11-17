@@ -1,0 +1,10 @@
+{
+  "code.copyAll": "Copy all",
+  "copy.value": "Copy {{label}}",
+  "code.copyLine": "Copy {{caption}}",
+  "code.copyLinePlain": "Copy this line",
+  "code.placeholderReason": "Fill in the missing part first",
+  "code.placeholder": "Missing: {{name}}",
+  "code.region": "Code",
+  "tag.remove": "Remove {{label}}"
+}

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notes                                                     ▸ Use with your agent   + New note
+ Computers             │  The notes on your computers. Everyone who opens Notes on a computer shares the same notes.
+ Files                 │
+ Bots                  │  / Search                   Computer ▾                       10 notes  ↻ Refresh  View options
+ Board                 │
+ Demo                  │      Title                                  Section                  Changed ↓
+ Vault                 │  ▾ atlas · 6  New note
+                       │  ›   Weekly plan                            Work                     12 minutes ago          ⋯
+On atlas ▾             │      Deploy checklist                       Wo┌──────────────────────────────────────────────┐
+ Programs              │      Reading list                           Pe│i This note has no web address right now.     │
+ Schedules             │      Meeting notes: storefront review       Wo│› →  Open here                                │
+ Scripts               │      Trip ideas                             Pe│  ⇗  Open note                                │
+ Logs                  │      Backup schedule                        Pr│     Copy link                                │
+ Tunnels               │                                               │     Copy read-only link                      │
+▌Notes                 │  ▾ borealis · 4  Open Notes New note          │     Copy for an agent                        │
+ AI                    │      Staging release notes                  Wo│       A command an agent on atlas can run to │
+ VMs                   │      Customer feedback                      Wo│       read this note. An agent without access│
+                       │      Launch timeline                        Pr│       to this notebook can't read it.        │
+Account                │      Open questions                         Wo│     Put on Board                             │
+ Plans & Billing       │                                               │     Open computer                            │
+ Referrals             │    cedar This computer is stopped. Start it fr│──────────────────────────────────────────────│
+ Keys and tokens       │                                               │     Delete note…                             │
+ API                   │    dune This computer is starting. Its notes s└──────────────────────────────────────────────┘
+ Notifications      26 │
+ Account               │    ember This computer needs attention before its notes can be read. Computers
+                       │
+ + Rent servers        │    fjord This computer is stopped. Start it from Computers. Computers
+ Guide                 │
+ Support               │    granite Notes here is too old to list recent notes. Update it. Open Notes
+                       │
+                       │    harbor No notes yet. Open Notes New note
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

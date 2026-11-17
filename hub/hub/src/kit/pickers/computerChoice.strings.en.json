@@ -1,0 +1,6 @@
+{
+  "state.running": "Running",
+  "state.stopped": "Stopped",
+  "state.starting": "Starting",
+  "state.attention": "State not known"
+}

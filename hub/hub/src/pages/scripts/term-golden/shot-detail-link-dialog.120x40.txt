@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                 ▸ Use with your agent   + New script
+ Computers             │
+ Files                 │  ‹ Scripts  Esc
+ Bots                  │  Weather lookup  ● Working                                [▷ Try it] [✦ Ask the assistant] [⋯]
+ Board                 │  /weather ·  atlas
+ Demo                  │
+ Vault                 │  ▸Overview  Code  Test  Settings
+                       │ ┌────────────────────────────────────────────────────────────────────┐────────────────────────
+On atlas ▾             │ │ Make a public link                                           Esc × │──────────────────────┐█
+ Programs              │ │ ────────────────────────────────────────────────────────────────── │                      │█
+ Schedules             │ │ Anyone who has the link can run this script without signing in.    │                      │█
+▌Scripts               │ │                                                                    │                      │█
+ Logs                  │ │ Link name                                                          │                      │█
+ Tunnels               │ │ ┃ brave-breeze-wt2vse5bosm1i3r2             [Suggest another name] │                      │█
+ Notes                 │ │ 3 to 61 lowercase letters, numbers and dashes, not starting or     │ runs.                │█
+ AI                    │ │ ending with a dash.                                                │                      │█
+ VMs                   │ │ The random ending keeps the address from being guessed. A short    │                      │█
+                       │ │ name of your own can be found by anyone who tries it.              │one with the link     │█
+Account                │ │                                                                    │──────────────────────┘█
+ Plans & Billing       │ │                                              [Cancel]   Make link  │                       █
+ Referrals             │ └────────────────────────────────────────────────────────────────────┘──────────────────────┐█
+ Keys and tokens       │  │ Last 24 hours                                                      Open failures in Logs │█
+ API                   │  │  Calls                         Failed                       Typical time                 │█
+ Notifications      26 │  │  412                           ✗ 3                          38 ms                        │█
+ Account               │  │ ▃▇▅▃▇▆▄█▆▅▃▇▅▃▇▆▄█▆▅▃▇▅▃                                                                 │█
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ + Rent servers        │                                                                                              █
+ Guide                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Support               │  │ Schedule                                                                [◷ Set schedule] │█
+                       │  │ Runs  No schedule. It runs only when something calls it.                                 │▀
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Public links                                                                             │
+                       │  │ A link anyone can open, without signing in, that runs this script.       [+ Make a link] │
+                       │  │ ▸ Who can open a public link?                                                            │
+                       │  │ atlas-1.hoody.example.test                               [■ on ] On ⧉ copy [Remove link] │
+                       │  │ /weather                                                                                 │
+ Typing · Esc leaves the field · Ctrl+K commands

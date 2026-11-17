@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Edit key                                                         Esc ×
+ Bots  ┃ A key lets one person or program call the link.
+ ‹ Bots┃ ──────────────────────────────────────────────────────────────────────
+ Chief ┃ Name                                                                 █
+   SG a┃ ┃ website widget                                                     █
+       ┃ Up to 32 letters, digits, spaces, dots, dashes or underscores.       █
+   Acti┃                                                                      █
+ ──────┃ Allowed addresses                                                    █
+       ┃ │ 203.0.113.0/24                                                     █
+  ┌────┃                                                                      █
+  │ At ┃                                                                      █
+  │ Lin┃ IPv4 addresses or ranges, one per line or separated by commas (up to █
+  │ Key┃ 32). Empty means any address can use it.                             █
+  │ Lim┃ [Add my IP]                                                          █
+  │ Oth┃                                                                      █
+  └────┃ Expires on                                                           ▀
+       ┃ │ YYYY-MM-DD
+       ┃ Optional. A date you pick ends at the end of that day (UTC); leave it
+  ┌────┃ alone to keep the key's current expiry.
+  │ Key┃
+  │ Who┃ Notes
+  │ or ┃ │ Used by the shop widget
+  │  Ke┃ ──────────────────────────────────────────────────────────────────────
+ Typing┃                                                        [Cancel]  Save

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ API                                                      ▸ Use with your agent
+ Every endpoint of the Hoody API, how to call it, and its docs page.
+ ▸ Endpoints    Overview
+ ──────────────────────────────────────────────────────────────────────────────
+ / Search endpoints     Filters                       1296 endpoints  ↻ Refresh
+       Method               Path                            Summary
+ ▸ Agent · 26 resources · 352 endpoints                                       █
+ ▸ Account API · 38 resources · 305 endpoints                                 █
+ ▸ Browser · 8 resources · 31 endpoints                                       █
+ ▸ Code · 4 resources · 11 endpoints                                          █
+ ▸ Cron · 4 resources · 16 endpoints                                          █
+ ▸ cURL · 7 resources · 24 endpoints                                          █
+ ▸ Daemon · 5 resources · 25 endpoints                                        █
+ ▸ Display · 5 resources · 48 endpoints                                       █
+ ▸ Egress · 1 resource · 6 endpoints                                          █
+ ▸ Exec · 22 resources · 84 endpoints                                         █
+ ▸ Files · 15 resources · 125 endpoints                                       █
+ ▸ Notes · 16 resources · 63 endpoints                                        █
+ ▸ Notifications · 5 resources · 13 endpoints                                 ░
+ ▸ Pipe · 2 resources · 8 endpoints                                           ░
+ ▸ Proxy logs · 1 resource · 3 endpoints                                      ░
+ ▸ Run · 6 resources · 35 endpoints                                           ░
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

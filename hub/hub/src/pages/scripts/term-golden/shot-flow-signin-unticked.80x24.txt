@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ New script
+ Step 2 of 5 · Where it answers  ████░░░░░░
+  ✓ What it does ▸2 Where it answers  3 Build it  4 Check it  5 Make it live
+ ──────────────────────────────────────────────────────────────────────────────
+ │ │ (•) Only when its address is     │ │ ( ) Also on a schedule           │ │
+ │ │     called                       │ │     It also runs by itself at    │ │
+ │ │     It runs each time someone or │ │     the times you set, and still │ │
+ │ │     a program calls its address. │ │     answers its address.         │ │
+ │ └──────────────────────────────────┘ └──────────────────────────────────┘ │█
+ │ [□ off] Also make a public link                                           │█
+ │         Once the script is live, make a link anyone can open. Off by      │█
+ │         default.                                                          │█
+ │                                                                           │█
+ │   The assistant works through the agent on atlas, and that agent isn't    │
+ │   signed in yet.                                                          │
+ │                                                                           │
+ │   [ ] Sign the agent in to my Hoody account                               │
+ │       This happens when you press Build it. It stays signed in until      │
+ │       you sign out of the Hub. Its key is on the Keys page.               │
+ ──────────────────────────────────────────────────────────────────────────────
+ The assistant writes the code next. You check it before it goes live.
+ [Back]                                                    [Cancel]   Build it
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

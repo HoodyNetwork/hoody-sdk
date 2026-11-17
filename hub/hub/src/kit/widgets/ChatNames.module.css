@@ -1,0 +1,9 @@
+/* A chat app's name inside a sentence: its mark right before it, and the two never split across lines. */
+.app {
+  white-space: nowrap;
+}
+
+.mark {
+  margin-inline-end: var(--sp-1);
+  vertical-align: middle;
+}

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notifications
+ Computers             │  Messages about your account: computers, rentals, sign-in and keys.
+ Files                 │
+ Bots                  │    Inbox 26    Notices  ▸ Get notified
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  ▌What you get notified about  Where you see them  Browser alerts  On your phone  Questions
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  ┌───────────────────────────────────────────────────────────────────────────────────────┐█
+ Programs              │  │ What you get notified about                                                           │█
+ Schedules             │  │ Hoody writes a notice when something happens to your account.                         │█
+ Scripts               │  │ Computers, servers and storage                                                        │█
+ Logs                  │  │ ┌───────────────────────────────────────────────────────────────────────────────────┐ │█
+ Tunnels               │  │ │                                                                                   │ │█
+ Notes                 │  │ │ A computer failed to start.     Hub                                               │ │█
+ AI                    │  │ │                                                                                   │ │▀
+ VMs                   │  │ │ A new computer finished being   Hub                                               │ │
+                       │  │ │ created and is running.                                                           │ │
+Account                │  │ │                                                                                   │ │
+ Plans & Billing       │  │ │ Computers expired.              Hub                                               │ │
+ Referrals             │  │ │                                                                                   │ │
+ Keys and tokens       │  │ │ A server rental was confirmed   Hub                                               │ │
+ API                   │  │ │ or extended, is ending soon,                                                      │ │
+▌Notifications      26 │  │ │ or went into its hold period.                                                     │ │
+ Account               │  │ │                                                                                   │ │
+                       │  │ │ A server order is ready, is     Hub                                               │ │
+ + Rent servers        │  │ │ running late, or was refunded.                                                    │ │
+ Guide                 │  │ │                                                                                   │ │
+ Support               │  │ │ A storage share was received,   Hub                                               │ │
+                       │  │ │ is about to expire, or                                                            │ │
+                       │  │ │ expired.                                                                          │ │
+                       │  │ │                                                                                   │ │
+                       │  │ └───────────────────────────────────────────────────────────────────────────────────┘ │
+                       │  │ Paid servers                                                                          │
+                       │  │ ┌───────────────────────────────────────────────────────────────────────────────────┐ │
+                       │  │ │                                                                                   │ │
+                       │  │ │ A renewal is coming up.         Hub and email                                     │ │
+                       │  │ │                                                                                   │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

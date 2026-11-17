@@ -1,0 +1,20 @@
+/* IpAllowlistField: the address list, then Add my IP and its note on one wrapping row. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.note {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-normal);
+}

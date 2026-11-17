@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notifications
+ Computers             │  Notices Hoody sent you about one of your servers. Read them and reply here.
+ Files                 │
+ Bots                  │    Inbox 26  ▸ Notices    Get notified
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Notices from Hoody                                                                        │
+On atlas ▾             │  │/ Search                  Status ▾                                  ↻ Refresh  View options│
+ Programs              │  │                                                                                           │
+ Schedules             │  │                                                                                           │
+ Scripts               │  │✗ Notices about your servers: This didn't load                                             │
+ Logs                  │  │Try again                                                                                  │
+ Tunnels               │  │                                                                                           │
+ Notes                 │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+▌Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

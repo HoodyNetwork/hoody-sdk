@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Account
+ This account is suspended.
+ │ ✗ Your account is suspended
+ │   You can still review your sign-in sessions and security history here.
+ │   Everything else is paused until support reinstates the account.
+ ▌Sign-in sessions  Security history
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Sign-in sessions                                                          │█
+ │ Each browser or device signed in to your account. End one you do not      │█
+ │ recognise.                                                                │█
+ │                                                                           │█
+ │ This device's address ⓘ         PT 203.0.113.7 · Lisbon ⧉ copy (i)        │▀
+ │ / Search              Filters                                             │
+ │ 12 sessions  [End all other sessions]  ↻ Refresh                          │
+ │   Device                 Signed in with     Last seen ↓    Keys made      │
+ │ ›•Chrome on macOS        Password           19 days ago            2      │
+ │    This device                                                            │
+ │   Firefox on Linux       Password and code  19 days ago            0    ⋯ │
+ │   Safari on iPhone       Google             19 days ago            0    ⋯ │
+ │   build-server           Device sign-in     19 days ago           14    ⋯ │
+ │    Hoody CLI                                                              │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines                             ▸ Use with your agent   + New VM
+ Full machines that run inside atlas.
+ ▸ VMs    Images    KVM on computers
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ This computer                                                             │█
+ │ VMs need a bare-metal server, with KVM on for the computer.               │█
+ │                                                                           │█
+ │ What this computer can run                                                │█
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │█
+ │ │                                                                       │ │█
+ │ │ Run VMs on this computer (KVM)  [■ on ]                               │ │█
+ │ │ KVM is on for this computer.                                          │ │▀
+ │ │                                                                       │ │
+ │ └───────────────────────────────────────────────────────────────────────┘ │
+ │ Server  Bare metal                                                        │
+ │                                                                           │
+ │ Room for VMs                                                              │
+ │ Memory for VMs          █████░░░░░ 7.8 GB of 16 GB in use                 │
+ │ Largest VM that can     8 GB                                              │
+ │ start                                                                     │
+ │ Free disk               410 GB                                            │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

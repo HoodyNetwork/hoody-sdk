@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Notes                                      ▸ Use with your agent   + New note
+ The notes on your computers. Everyone who opens Notes on a computer shares the
+ same notes.
+ / Search ┌──────────────────────────────────────────────────────────┐w options
+     Title│ New note                                           Esc × │
+ ▾ atlas ·│ ──────────────────────────────────────────────────────── │        █
+ ›   Weekl│ On atlas, in Work. Everyone who opens Notes on this      │       ⋯█
+     Deplo│ computer will see it.                                    │       ⋯█
+     Readi│                                                          │       ⋯█
+     Meeti│ Title                                                    │       ⋯█
+     Trip │ │ Q4 plan          [Now: name it with the date and time] │       ⋯█
+     Backu│                                                          │       ⋯█
+ ▾ boreali│                                                          │        █
+     Stagi│ ✗ This didn't go through                                 │       ⋯█
+     Custo│ Notes does not let you add notes here. Nothing was       │       ⋯█
+     Launc│ added.                                                   │       ⋯█
+     Open │                                                          │       ⋯█
+   cedar T│                                                          │        █
+   dune Th│                                       [Cancel]   Create  │mputers █
+   ember T└──────────────────────────────────────────────────────────┘omputers█
+   fjord This computer is stopped. Start it from Computers. Computers         █
+   granite Notes here is too old to list recent notes. Update it. Open Notes  ░
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

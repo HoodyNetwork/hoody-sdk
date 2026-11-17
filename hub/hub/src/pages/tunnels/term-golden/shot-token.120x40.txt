@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Tunnels                                           ▸ Use with your agent   + Connect a laptop
+ Computers             │  Put a laptop app online through atlas, or let atlas reach a service on your laptop. 2
+ Files                 │  sessions connected to atlas · tunnel program running since 06:00 AM
+ Bots                  │
+ Board                 │  ‹ Tunnels  Esc
+ Demo                  │  Web address :3000  ● Connected                                             [Put on Board] [⋯]
+ Vault                 │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+On atlas ▾             │  │ Session                                                                                   │
+ Programs              │  │ Session   4f2a9c…  ⧉ copy                                                                 │
+ Schedules             │  │ Streams   3 streams of 1024                                                               │
+ Scripts               │  │ Protocol  v2                                                                              │
+ Logs                  │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+▌Tunnels               │
+ Notes                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ AI                    │  │ Web address                                                      [Access settings] [Keys] │
+ VMs                   │  │ Anyone with the address can open it, unless this computer's access settings say           │
+                       │  │ otherwise.                                                                                │
+Account                │  │ https://••••  ⧉ copy                                                                      │
+ Plans & Billing       │  │                                                                                           │
+ Referrals             │  │ ▸ Not loading?                                                                            │
+ Keys and tokens       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ API                   │
+ Notifications         │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,14 @@
+{
+  "pp.search": "Search",
+  "pp.actions": "Picker actions",
+  "pp.selected_one": "{{count}} selected",
+  "pp.selected_other": "{{count}} selected",
+  "pp.shown": "{{shown}} of {{total}} shown",
+  "pp.noMatch": "No match for \"{{q}}\".",
+  "pp.clear": "Show all",
+  "pp.groupCount": "{{title}} ({{n}})",
+  "pp.empty": "Nothing to choose from.",
+  "pp.error": "The choices didn't load.",
+  "pp.minPicked_one": "Keep at least {{count}} selected.",
+  "pp.minPicked_other": "Keep at least {{count}} selected."
+}

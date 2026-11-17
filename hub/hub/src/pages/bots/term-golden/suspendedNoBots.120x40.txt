@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                                    ▸ Use with your agent
+ Computers             │  Every Bot on your running computers, and the page of each one.
+ Files                 │
+▌Bots                  │  ‖ atlas: 2 Bots are paused after a sign-in change.                                   [Resume]
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │             ┌──────────────────────────────────────────────────────────────────────┐
+                       │             │ Make your first Bot                                                  │
+On atlas ▾             │             │                                                                      │
+ Programs              │             │ A Bot is an assistant that lives on one of your computers: it takes  │
+ Schedules             │             │ on tasks and asks you before risky steps.                            │
+ Scripts               │             │                                                                      │
+ Logs                  │             │                                                                      │
+ Tunnels               │             │                                                                      │
+ Notes                 │             │ What a Bot can do                                                    │
+ AI                    │             │                                                                      │
+ VMs                   │             │ [+ New Bot]  How to connect                                          │
+                       │             │                                                                      │
+Account                │             │ Talk to it here, in Telegram, Slack or Discord, or from any app,     │
+ Plans & Billing       │             │ agent or program that speaks HTTP, including OpenAI, Anthropic and   │
+ Referrals             │             │ MCP clients.                                                         │
+ Keys and tokens       │             └──────────────────────────────────────────────────────────────────────┘
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │  Questions
+                       │  ▸ What is a Bot, and where does it run?
+                       │  ▸ What is the default Bot of a realm?
+                       │  ▸ What is a link, and what do keys do?
+                       │  ▸ What do Other websites (CORS) and the call limits mean?
+                       │  ▸ What does Allow everything do, and what does mixed mean?
+                       │  ▸ Who becomes the owner of a chat app, and how do others join?
+                       │  ▸ What does the warning that privacy is on mean?
+                       │  ▸ What does the Bot read in a group?
+                       │  ▸ Which model answers me, and which do the Bot's helpers use?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

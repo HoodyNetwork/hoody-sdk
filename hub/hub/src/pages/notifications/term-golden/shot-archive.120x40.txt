@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notifications
+ Computers             │  Messages about your account: computers, rentals, sign-in and keys.
+ Files                 │  ▸ Inbox 26    Notices    Get notified
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  / Search                     Unread  ‹ Archive ›  Kind ▾  Level ▾
+ Vault                 │  40 notices  ↻ Refresh  View options
+                       │
+On atlas ▾             │    Level   Notice                                    Message                     When ↓
+ Programs              │  ▌ !       Storage share fancy-marten expires tomor… The share "fancy-marten" e… 20 days ago
+ Schedules             │    i       Hoody news: bright-bison                  Notifications now explain … 20 days ago
+ Scripts               │    ✗       Computer bold-moose stopped               bold-moose stopped after r… 20 days ago
+ Logs                  │    ✓       Payment received for brisk-raven          Your payment for brisk-rav… 20 days ago
+ Tunnels               │    !       Server clever-koala rental ends in 3 days Your rental of clever-koal… 21 days ago
+ Notes                 │    ✓       Computer gentle-ferret is running         gentle-ferret finished bei… 21 days ago
+ AI                    │    i       Planned maintenance for fast-ferret       The server for fast-ferret… 21 days ago
+ VMs                   │    i       Renewal coming up for fast-fox            Your paid server for fast-… 21 days ago
+                       │    !       Storage share sleek-magpie expires tomor… The share "sleek-magpie" e… 21 days ago
+Account                │    i       Hoody news: rapid-squid                   Notifications now explain … 21 days ago
+ Plans & Billing       │    ✗       Computer tidy-ibis stopped                tidy-ibis stopped after ru… 21 days ago
+ Referrals             │    ✓       Payment received for amber-crane          Your payment for amber-cra… 21 days ago
+ Keys and tokens       │    !       Server sunny-moose rental ends in 3 days  Your rental of sunny-moose… 21 days ago
+ API                   │    ✓       Computer proud-stork is running           proud-stork finished being… 21 days ago
+▌Notifications      26 │    i       Planned maintenance for epic-gazelle      The server for epic-gazell… 21 days ago
+ Account               │    i       Renewal coming up for fast-puffin         Your paid server for fast-… 21 days ago
+                       │    !       Storage share proud-llama expires tomorr… The share "proud-llama" ex… 21 days ago
+ + Rent servers        │    i       Hoody news: zesty-ocelot                  Notifications now explain … 21 days ago
+ Guide                 │    ✗       Computer noble-koala stopped              noble-koala stopped after … 21 days ago
+ Support               │    ✓       Payment received for snappy-crane         Your payment for snappy-cr… 21 days ago
+                       │    !       Server happy-yak rental ends in 3 days    Your rental of happy-yak e… 21 days ago
+                       │    ✓       Computer bold-sparrow is running          bold-sparrow finished bein… 21 days ago
+                       │    i       Planned maintenance for agile-eagle       The server for agile-eagle… 21 days ago
+                       │    i       Renewal coming up for smart-fox           Your paid server for smart… 21 days ago
+                       │    !       Storage share bright-fox expires tomorrow The share "bright-fox" exp… 21 days ago
+                       │
+                       │  1–25 of 40 ‹ ›
+                       │   New notices appear here and are counted beside            [How it works] [Dismiss this tip]
+                       │   Notifications in the sidebar.
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

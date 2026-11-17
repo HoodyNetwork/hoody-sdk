@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                               ▸ Use with your agent   + New project
+ Projects group your computers. Each computer is in one project.
+   Computers    Servers  ▸ Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ Some projects here are not in this realm. They show because computers in this█
+ realm belong to them. Rename or delete them from a realm they are in.        █
+ / Search projects                       3 projects  ↻ Refresh  … More actions█
+   █ Acme storefront  Not in this realm                                      ⋯█
+   3 computers › · No access rules · Only you ·  █ Acme client                █
+   █ Experiments  Not in this realm                                          ⋯█
+   2 computers › · No access rules · Only you ·  █ Lab                        █
+ ▌ █ Home base  First project                                                ⋯█
+   3 computers › · No access rules · Only you ·  █ Personal                   █
+                                                                              █
+ Questions                                                                    █
+ ▸ What does a new computer come with?                                        █
+ ▸ What are realms and projects?                                              █
+ ▸ Who can open my computer's programs?                                       █
+ ▸ How does the firewall work, and what does No internet block?               █
+ ▸ How do I use a computer as a proxy, and what is an exit?                   █
+ ▸ How do I use my own domain for a web address?                              █
+ ▸ How do I get a shell on my computer?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

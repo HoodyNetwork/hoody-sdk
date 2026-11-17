@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Find in /srv                                                            Esc ×
+ Home                  │  Files         ┃ ─────────────────────────────────────────────────────────────────────────────
+ Computers             │  The folders on┃ │ / app                                     ×  Find
+▌Files                 │  ▸ Browse    St┃
+ Bots                  │  ──────────────┃ ! Search is turned off for this computer's files program.
+ Board                 │                ┃
+ Demo                  │  [Up one folder┃
+ Vault                 │                ┃
+                       │  / Search      ┃
+On atlas ▾             │                ┃
+ Programs              │    [ ] Name    ┃
+ Schedules             │  › [ ] a       ┃
+ Scripts               │    [ ] app     ┃
+ Logs                  │    [ ] media   ┃
+ Tunnels               │                ┃
+ Notes                 │                ┃
+ AI                    │                ┃
+ VMs                   │                ┃
+                       │                ┃
+Account                │                ┃
+ Plans & Billing       │                ┃
+ Referrals             │                ┃
+ Keys and tokens       │                ┃
+ API                   │                ┃
+ Notifications      26 │                ┃
+ Account               │                ┃
+                       │                ┃
+ + Rent servers        │                ┃
+ Guide                 │                ┃
+ Support               │                ┃
+                       │  Questions     ┃
+                       │  ▸ How do I ope┃
+                       │  ▸ How do I mou┃
+                       │  ▸ Can I mount ┃
+                       │  ▸ What do I ne┃
+                       │  ▸ How do I put┃
+                       │  ▸ Which storag┃
+                       │  ▸ What happens┃
+                       │  ▸ How much can┃
+ Tab move · Enter open · Ctrl+K commands┃

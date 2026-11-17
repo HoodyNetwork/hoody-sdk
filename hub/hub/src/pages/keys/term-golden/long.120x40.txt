@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Keys and tokens                                            ▸ Use with your agent   + New key
+ Computers             │  A key lets your agent, the CLI or the SDK act for you. Give each one its own key, with an end
+ Files                 │  date.
+ Bots                  │  ▸ API keys 58 keys    SSH keys    Shared access 0 shares
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  i Keys that work in Personal.                                               [Show all realms]
+ Vault                 │
+                       │  / Search                   Access ▾  State: Active ×  Ends ▾                                █
+On atlas ▾             │  50 keys · 1 expired  ↻ Refresh  View options                                                █
+ Programs              │                                                                                              █
+ Schedules             │    Name ↑           Key            Works in            Ends (UTC)      State                 █
+ Scripts               │  ▌ backup-2         hdy_a708…      All realms          No end date     ● Active             ⋯█
+ Logs                  │    backup-3         hdy_fa8c…      All realms          Dec 11, 2026    ● Active             ⋯█
+ Tunnels               │    backup-5         hdy_a195…      All realms          No end date     ● Active             ⋯█
+ Notes                 │    backup-6         hdy_f519…      All realms          No end date     ● Active             ⋯█
+ AI                    │    backup-7         hdy_489e…      All realms          Jan 8, 2027     ● Active             ⋯█
+ VMs                   │    backup-8         hdy_9c22…      All realms          No end date     ● Active             ⋯█
+                       │    ci-2             hdy_f1bb…      All realms          No end date     ● Active             ⋯█
+Account                │    ci-3             hdy_4540…      All realms          No end date     ● Active             ⋯█
+ Plans & Billing       │    ci-4             hdy_98c4…      All realms          No end date     ● Active             ⋯█
+ Referrals             │    ci-5             hdy_ec48…      All realms          Dec 19, 2026    ● Active             ⋯█
+▌Keys and tokens       │    ci-6             hdy_3fcd…      All realms          No end date     ● Active             ⋯█
+ API                   │    ci-7             hdy_9351…      All realms          No end date     ● Active             ⋯█
+ Notifications      26 │    ci-8             hdy_e6d5…      All realms          No end date     ● Active             ⋯█
+ Account               │    ci-9             hdy_3a5a…      All realms          Jan 16, 2027    ● Active             ⋯█
+                       │    ci-deploy        hdy_9e37…      Personal            Jan 20, 2027    ● Active             ⋯█
+ + Rent servers        │    docs-2           hdy_cc62…      All realms          No end date     ● Active             ⋯█
+ Guide                 │    docs-3           hdy_1fe6…      All realms          No end date     ● Active             ⋯█
+ Support               │    docs-4           hdy_736a…      All realms          Dec 15, 2026    ● Active             ⋯█
+                       │    docs-5           hdy_c6ef…      All realms          No end date     ● Active             ⋯█
+                       │    docs-6           hdy_1a73…      All realms          No end date     ● Active             ⋯█
+                       │    docs-8           hdy_c17c…      All realms          Jan 12, 2027    ● Active             ⋯
+                       │    docs-9           hdy_1500…      All realms          No end date     ● Active             ⋯
+                       │    edge-2           hdy_8ff3…      All realms          Nov 29, 2026    ● Active             ⋯
+                       │    edge-3           hdy_e377…      All realms          No end date     ● Active             ⋯
+                       │    edge-4           hdy_36fb…      All realms          No end date     ● Active             ⋯
+                       │  1–25 of 50 ‹ ›
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

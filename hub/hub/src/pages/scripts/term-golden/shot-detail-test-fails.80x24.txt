@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Scripts                                  ▸ Use with your agent   + New script
+ ‹ Scripts  Esc
+ Order status  ● Failing              [▷ Try it] [✦ Fix with the assistant] [⋯]
+ /orders/:id ·  atlas
+
+  Overview  Code ▸Test  Settings
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Request                                                                   │█
+ │ Send one request to the script as it is saved, and see what it answers.   │█
+ │ Method  Address                                                           │█
+ │ │ GET ▾ │ /orders/hub-probe                                               │█
+ │                                                                           │█
+ │  ▷ Send                                                                   │█
+ │                                                                           │▀
+ │ Test name                                                                 │
+ │ │ ________________________________________________________ [Save as test] │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Answer                                                                    │
+ │ ● Failed · 500 120 ms                                                     │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  AI                          ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  New chat
+ ▌✦ Chats ●     Agents     Automations     Knowledge     Settings
+ / Search               Filters
+ 5 chats  ‹ This computer ›  All computers    ↻ Refresh
+ ▾ Needs you · 1
+ ›     Deploy the staging site                                     last month ⋯
+ ▾ Today · 2
+       Fix the failing checkout tests                           2 minutes ago ⋯
+       Review the release notes                                   3 hours ago ⋯
+        Claude Code
+ ▾ Yesterday · 1
+       Answer the support ticket                                    yesterday ⋯
+        Bot support-desk
+ ▾ Older · 1
+       Plan the backup job                                         last month ⋯
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ atlas · Personal                                                 [AI settings]
+ 1 needs you
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

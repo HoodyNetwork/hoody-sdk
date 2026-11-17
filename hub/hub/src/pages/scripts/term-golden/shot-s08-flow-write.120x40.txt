@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  New script
+ Computers             │
+ Files                 │  Step 3 of 5 · Write it  ██████░░░░
+ Bots                  │   ✓ What it does  ✓ Where it answers ▸3 Write it  4 Check it  5 Make it live
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ▸ Your script so far                                                                        █
+ Vault                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Write the code                                                                           │█
+On atlas ▾             │  │ Type or paste the code. The next step checks it.                                         │█
+ Programs              │  │ Code                                                                                     │█
+ Schedules             │  │ │ export default function (request: Request) {                                           │█
+▌Scripts               │  │     return new Response("Hello from my script");                                         │█
+ Logs                  │  │   }                                                                                      │█
+ Tunnels               │  │                                                                                          │█
+ Notes                 │  │                                                                                          │█
+ AI                    │  │                                                                                          │█
+ VMs                   │  │                                                                                          │█
+                       │  │                                                                                          │█
+Account                │  │                                                                                          │█
+ Plans & Billing       │  │                                                                                          │█
+ Referrals             │  │                                                                                          │█
+ Keys and tokens       │  │                                                                                          │█
+ API                   │  │                                                                                          │█
+ Notifications      26 │  │                                                                                          │█
+ Account               │  │                                                                                          │█
+                       │  │                                                                                          │█
+ + Rent servers        │  │                                                                                          │█
+ Guide                 │  │                                                                                          │█
+ Support               │  │ Enter new line · Tab next control                                                        │
+                       │  │ ▸ Script settings                                                                        │
+                       │  │   How the computer runs this script. Each setting is a line at the top of your code.     │
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  Questions
+                       │  ▸ What is a script?
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Next: the computer checks the code.
+                       │  [Back]                                                                   [Cancel]   Continue
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                          ◆ Personal ▾  No computers yet ▾  [A]  Ctrl+K commands · ? keys
+▌Home                  │  Good morning, Ada                                                          [i What is Hoody?]
+ Computers             │  ■ Personal
+ Files                 │
+ Bots                  │                                                                                              █
+ Board                 │                                                                                              █
+ Demo                  │                                                                                              █
+ Vault                 │             ┌────────────────────────────────────────────────────────────────────┐           █
+                       │             │ Personal has no computers yet                                      │           █
+On this computer       │             │                                                                    │           █
+ Programs              │             │ Each realm has its own computers. Get one for this realm, or show  │           █
+ Schedules             │             │ all your realms.                                                   │           █
+ Scripts               │             │                                                                    │           █
+ Logs                  │             │  Get a computer   [Show all realms]                                │           █
+ Tunnels               │             └────────────────────────────────────────────────────────────────────┘           █
+ Notes                 │                                                                                              █
+ AI                    │                                                                                              █
+ VMs                   │                                                                                              █
+                       │  ┌────────────────────────────────────────────┐ ┌───────────────────────────────────────────┐█
+Account                │  │ Bots                            View all › │ │ Billing                        View all › │█
+ Plans & Billing       │  │ ◆ Chief · atlas ◆ Waiting for you [Review] │ │ $42.50                                    │█
+ Referrals             │  │ i Support · atlas                i Working │ │ Wallet balance                            │█
+ Keys and tokens       │  │ i Digest · atlas      i 2 messages waiting │ │                                           │█
+ API                   │  │ ! Ledger · cinder                 ! Paused │ │ SERVERS                                   │█
+ Notifications      26 │  │ · Scout · cinder                    · Idle │ │ ✗ fra-7 Unpaid since Oct 20, 2… ✗ On hold │█
+ Account               │  │                                            │ │ ✓ n12                 Renews Nov 22, 2026 │█
+                       │  │                                            │ │ ✓ Singapore M Runs until Dec 5, 2026, th… │█
+ + Rent servers        │  └────────────────────────────────────────────┘ └───────────────────────────────────────────┘█
+ Guide                 │                                                                                              █
+ Support               │  ┌────────────────────────────────────────────┐ ┌───────────────────────────────────────────┐█
+                       │  │ Notifications                   View all › │ │ Your realms                               │█
+                       │  │ ✗ Computer atlas stopped       19 days ago │ │ Each realm is a separate space. Pick      │▀
+                       │  │ ✓ Payment received for boreal… 19 days ago │ │ one to see only its computers.            │
+                       │  │ ! Server cedar rental ends in… 19 days ago │ │    All realms                             │
+                       │  │ ✓ Computer dune is running     19 days ago │ │  █ Personal          Showing 3 computers  │
+                       │  │ Mark all read                              │ │  █ Acme client               3 computers  │
+                       │  │                                            │ │  █ Lab                       2 computers  │
+                       │  └────────────────────────────────────────────┘ └───────────────────────────────────────────┘
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

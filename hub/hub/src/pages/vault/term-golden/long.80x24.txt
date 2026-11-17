@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Vault                                ▸ Use with your agent   + New entry   [⋯]
+ Tokens, passwords and settings your tools and agents read by name. The list
+ shows only names.
+ These entries belong to Personal. Other realms and Global have their own.
+
+ Entries here    Size here    Account storage
+ 140             10 KB        3% of 50 MB
+ / Search               Filters           140 entries  ↻ Refresh  View options█
+   Name ↑                   Encrypted     Kind    Updated                     █
+ ▌ entry-001                ✓ Encrypted   Yours   Oct 23, 2026, 4:40 PM      ██
+   entry-002                · Not marked  Yours   Oct 23, 2026, 4:40 PM      ██
+   entry-003                · Not marked  Yours   Oct 23, 2026, 4:40 PM      ██
+   entry-004                · Not marked  Yours   Oct 23, 2026, 4:40 PM      ░█
+   entry-005                ✓ Encrypted   Yours   Oct 23, 2026, 4:40 PM      ░█
+   entry-006                · Not marked  Yours   Oct 23, 2026, 4:40 PM      ░█
+   entry-007                · Not marked  Yours   Oct 23, 2026, 4:40 PM      ░█
+   entry-008                · Not marked  Yours   Oct 23, 2026, 4:40 PM      ░
+   entry-009                ✓ Encrypted   Yours   Oct 23, 2026, 4:40 PM      ░
+   entry-010                · Not marked  Yours   Oct 23, 2026, 4:40 PM      ░
+   entry-011                · Not marked  Yours   Oct 23, 2026, 4:40 PM      ░
+   entry-012                · Not marked  Yours   Oct 23, 2026, 4:40 PM      ░
+ 1–50 of 140 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

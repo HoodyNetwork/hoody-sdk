@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs                              ▸ Use with your agent   + Launch an app
+ Apps on atlas: programs you open only when you need them.
+   Running programs  ▸ Apps    Ports & aliases
+ ──────────────────────────────────────────────────────────────────────────────
+ / Search opened apps   Filters                                       ↻ Refresh
+
+ ✗ Opened apps: This didn't load
+ Try again
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

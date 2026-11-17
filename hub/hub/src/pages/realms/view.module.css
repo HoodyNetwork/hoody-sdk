@@ -1,0 +1,22 @@
+/* The picked computers in the summary rail, by name, each with its colour mark. A long list scrolls
+   inside the rail (about 8 rows tall) instead of stretching it. */
+.picked {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: var(--sp-1) 0 0;
+  list-style: none;
+}
+
+.picked li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.scroll {
+  max-block-size: 12rem;
+  overflow-y: auto;
+}

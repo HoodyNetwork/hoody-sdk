@@ -1,0 +1,275 @@
+diff -ruN a/packages/core/src/native-abi.generated.ts b/packages/core/src/native-abi.generated.ts
+--- a/packages/core/src/native-abi.generated.ts	2026-11-11 11:27:57.829054106 +0000
++++ b/packages/core/src/native-abi.generated.ts	2026-11-11 11:47:38.004916557 +0000
+@@ -1,7 +1,7 @@
+ // Generated from packages/native/include/opentui.h and scripts/native-abi-pointers.ts.
+ // Run `bun run generate:abi` in packages/core. Do not edit.
+ // Inspect audit input: bun scripts/native-abi.ts --audit
+-// ABI audit SHA-256: 406bb976480cd08e864c56d75462bd25c27410e92a7c45491bc0319d51336abb
++// ABI audit SHA-256: 418f9f91c756f98b7784e8c984328dba05bd05136bb1bbd24b6e8341c7c88b15
+ 
+ export const nativeSymbols = {
+   ot_scene_set_hooks: { args: ["ptr", "buffer", "buffer"], returns: "i32" },
+@@ -2259,6 +2259,7 @@
+   OT_COLOR_MODE_TRUECOLOR: 1,
+   OT_COLOR_MODE_ANSI256: 2,
+   OT_COLOR_MODE_ANSI16: 3,
++  OT_COLOR_MODE_MONO: 4,
+   OT_INPUT_RESET_KEEP_REPLY: 1,
+   OT_CLIPBOARD_OPERATION_PENDING: 0,
+   OT_CLIPBOARD_OPERATION_READ: 1,
+diff -ruN a/packages/core/src/renderer.ts b/packages/core/src/renderer.ts
+--- a/packages/core/src/renderer.ts	2026-11-11 11:28:32.844276202 +0000
++++ b/packages/core/src/renderer.ts	2026-11-11 11:46:42.471183963 +0000
+@@ -175,7 +175,8 @@
+   // Raw is the default. File requires a local terminal with medium and upload ACK support.
+   kittyImageTransport?: KittyImageTransport
+ 
+-  // How colors are written. "auto" (the default) follows terminal detection. See `ColorMode`.
++  // How colors are written. See `ColorMode`. When omitted: "mono" if NO_COLOR is set to a non-empty value in the
++  // environment native detection sees (forwarded process env, or `environment`), else "auto".
+   colorMode?: ColorMode
+ 
+   // Use an in-memory native buffered output destination instead of process stdout.
+@@ -279,10 +280,13 @@
+ // - "ansi16": Write SGR 30-37 / 90-97 and 40-47 / 100-107. An indexed color 0-15 (`RGBA.fromIndex`) keeps its slot;
+ //   any other color uses the nearest of the terminal's first 16 palette entries.
+ //
++// - "mono": Write no color SGR at all. Attributes (bold, underline, reverse, ...) are still written, so focus and
++//   emphasis still read. The default when NO_COLOR (https://no-color.org) is set and `colorMode` is omitted.
++//
+ // Default colors (`RGBA.defaultForeground` / `RGBA.defaultBackground`) and transparent backgrounds write 39 / 49 in
+-// every mode. Indexed colors keep their slot in every mode but "ansi16".
+-export type ColorMode = "auto" | "truecolor" | "ansi256" | "ansi16"
+-const COLOR_MODES: readonly ColorMode[] = ["auto", "truecolor", "ansi256", "ansi16"]
++// every mode but "mono". Indexed colors keep their slot in every mode but "ansi16".
++export type ColorMode = "auto" | "truecolor" | "ansi256" | "ansi16" | "mono"
++const COLOR_MODES: readonly ColorMode[] = ["auto", "truecolor", "ansi256", "ansi16", "mono"]
+ 
+ // Controls how the renderer uses terminal space:
+ //
+@@ -881,6 +885,7 @@
+   "STY",
+   "WSL_DISTRO_NAME",
+   "WSL_INTEROP",
++  "NO_COLOR",
+ ] as const
+ 
+ // Kitty keyboard protocol flags
+@@ -1460,8 +1465,6 @@
+     this.synchronizedOutput = config.synchronizedOutput
+     const transportCode = KITTY_IMAGE_TRANSPORTS.indexOf(this.kittyTransportMode)
+     if (transportCode < 0) throw new TypeError("Invalid kittyImageTransport")
+-    const initialColorMode = config.colorMode ?? "auto"
+-    if (!COLOR_MODES.includes(initialColorMode)) throw new TypeError(`Invalid colorMode: ${String(initialColorMode)}`)
+     const useMemoryBufferedOutput = config.bufferedOutput === "memory"
+     if (config.nativeSession) {
+       if (useMemoryBufferedOutput) throw new Error("nativeSession does not support memory buffered output")
+@@ -1471,6 +1474,18 @@
+     const initialGeometry = calculateRenderGeometry(screenMode, width, height, footerHeight)
+     const remoteMode = config.remote ?? (!this._usesProcessStdout && !useMemoryBufferedOutput ? true : undefined)
+     const forwardEnvKeys = config.forwardEnvKeys ?? (remoteMode === true ? [] : DEFAULT_FORWARDED_ENV_KEYS)
++    const environment: Record<string, string> = {
++      ...Object.fromEntries(
++        forwardEnvKeys.flatMap((key) => {
++          const value = process.env[key]
++          return value === undefined ? [] : [[key, value]]
++        }),
++      ),
++      ...config.environment,
++    }
++    // https://no-color.org: a non-empty NO_COLOR asks for no color. An explicit colorMode wins.
++    const initialColorMode = config.colorMode ?? ((environment.NO_COLOR ?? "") !== "" ? "mono" : "auto")
++    if (!COLOR_MODES.includes(initialColorMode)) throw new TypeError(`Invalid colorMode: ${String(initialColorMode)}`)
+ 
+     if (rendererTracker.streamOwners.get(stdin)) {
+       throw new Error("Cannot create CliRenderer: stdin is already used by another CliRenderer")
+@@ -1494,15 +1509,7 @@
+           width: initialGeometry.renderWidth,
+           height: initialGeometry.renderHeight,
+           remote: remoteMode,
+-          environment: {
+-            ...Object.fromEntries(
+-              forwardEnvKeys.flatMap((key) => {
+-                const value = process.env[key]
+-                return value === undefined ? [] : [[key, value]]
+-              }),
+-            ),
+-            ...config.environment,
+-          },
++          environment,
+         },
+         () => {
+           try {
+diff -ruN a/packages/core/src/tests/renderer.no-color.test.ts b/packages/core/src/tests/renderer.no-color.test.ts
+--- a/packages/core/src/tests/renderer.no-color.test.ts	1970-01-01 00:00:00.000000000 +0000
++++ b/packages/core/src/tests/renderer.no-color.test.ts	2026-11-11 11:55:44.357742972 +0000
+@@ -0,0 +1,96 @@
++import { afterEach, test } from "bun:test"
++import assert from "node:assert/strict"
++import { RGBA } from "../lib/RGBA.js"
++import { TextRenderable } from "../renderables/Text.js"
++import type { CliRendererConfig } from "../renderer.js"
++import { ManualClock } from "../testing/manual-clock.js"
++import { createTestRenderer, type TestRendererSetup } from "../testing/test-renderer.js"
++import { RecordingWriteStream } from "../testing/test-streams.js"
++import { TextAttributes } from "../types.js"
++
++const setups: TestRendererSetup[] = []
++
++afterEach(async () => {
++  for (const { renderer } of setups.splice(0)) {
++    renderer.destroy()
++    await renderer.closed
++  }
++})
++
++async function setup(config: Partial<CliRendererConfig>) {
++  const stdout = new RecordingWriteStream(12, 2)
++  const target = await createTestRenderer({
++    width: 12,
++    height: 2,
++    stdout: stdout as unknown as NodeJS.WriteStream,
++    bufferedOutput: "stdout",
++    remote: true,
++    clock: new ManualClock(),
++    ...config,
++  })
++  setups.push(target)
++  await target.renderer.setupTerminal()
++  stdout.clear()
++  target.renderer.root.add(
++    new TextRenderable(target.renderer, {
++      content: "focus",
++      fg: "#ff0000",
++      bg: "#0000ff",
++      attributes: TextAttributes.BOLD | TextAttributes.UNDERLINE | TextAttributes.INVERSE,
++      selectable: false,
++    }),
++  )
++  target.renderer.root.add(
++    new TextRenderable(target.renderer, {
++      content: "slot",
++      position: "absolute",
++      top: 1,
++      fg: RGBA.fromIndex(3),
++      bg: RGBA.defaultBackground(),
++      selectable: false,
++    }),
++  )
++  await target.renderOnce()
++  return { ...target, output: stdout.text() }
++}
++
++// Any color SGR parameter: 30-39, 40-49, 90-97, 100-107 (and so 38;2 / 38;5 / 48;...).
++function colorParameters(output: string): string[] {
++  const found: string[] = []
++  for (const match of output.matchAll(/\x1b\[([0-9;]*)m/g)) {
++    for (const parameter of match[1]!.split(";")) {
++      const n = Number(parameter)
++      if (parameter !== "" && ((n >= 30 && n <= 49) || (n >= 90 && n <= 97) || (n >= 100 && n <= 107))) {
++        found.push(match[0]!)
++        break
++      }
++    }
++  }
++  return found
++}
++
++test("mono writes no color SGR but keeps bold, underline and reverse", async () => {
++  const { output, renderer } = await setup({ colorMode: "mono" })
++  assert.equal(renderer.colorMode, "mono")
++  assert.deepEqual(colorParameters(output), [])
++  assert.ok(output.includes("focus"))
++  assert.ok(output.includes("\x1b[1m"), "bold stays")
++  assert.ok(output.includes("\x1b[4m"), "underline stays")
++  assert.ok(output.includes("\x1b[7m"), "reverse stays")
++})
++
++test("NO_COLOR selects mono when colorMode is omitted", async () => {
++  const { output, renderer } = await setup({ environment: { NO_COLOR: "1" } })
++  assert.equal(renderer.colorMode, "mono")
++  assert.deepEqual(colorParameters(output), [])
++})
++
++test("an empty NO_COLOR is ignored and an explicit colorMode wins over NO_COLOR", async () => {
++  const empty = await setup({ environment: { NO_COLOR: "" } })
++  assert.equal(empty.renderer.colorMode, "auto")
++  assert.notDeepEqual(colorParameters(empty.output), [])
++  const explicit = await setup({ environment: { NO_COLOR: "1" }, colorMode: "ansi16" })
++  assert.equal(explicit.renderer.colorMode, "ansi16")
++  // The reverse attribute swaps the cell's colors in the buffer: red becomes the background.
++  assert.ok(explicit.output.includes("\x1b[101m") && explicit.output.includes("\x1b[94m"))
++})
+diff -ruN a/packages/native/include/opentui.h b/packages/native/include/opentui.h
+--- a/packages/native/include/opentui.h	2026-11-11 11:26:36.295205713 +0000
++++ b/packages/native/include/opentui.h	2026-11-11 11:46:37.102587661 +0000
+@@ -3144,6 +3144,7 @@
+ #define OT_COLOR_MODE_TRUECOLOR UINT32_C(1)
+ #define OT_COLOR_MODE_ANSI256 UINT32_C(2)
+ #define OT_COLOR_MODE_ANSI16 UINT32_C(3)
++#define OT_COLOR_MODE_MONO UINT32_C(4)
+ 
+ /* How the attached renderer writes colors. AUTO (the default) follows terminal
+  * detection. TRUECOLOR writes 38;2/48;2 for RGB colors. ANSI256 writes the nearest
+@@ -3151,7 +3152,9 @@
+  * 40-47/100-107: an indexed color 0-15 keeps its slot, any other color uses the
+  * nearest of the first 16 palette entries. Indexed colors keep their slot in
+  * every mode but ANSI16 (slots 16-255 map to the nearest of the 16 there).
+- * Default colors and transparent backgrounds write 39/49 in every mode. Requires
++ * Default colors and transparent backgrounds write 39/49 in every mode but MONO.
++ * MONO writes no color SGR at all (no 30-49, 90-107, 38/48, 39/49); attributes
++ * such as bold, underline and reverse are still written. Requires
+  * an open Session with an attached renderer; the next frame repaints every cell. */
+ ot_status ot_session_set_color_mode(ot_context *, const ot_handle *session, uint32_t mode);
+ ot_status ot_session_update_stats(ot_context *, const ot_handle *session, double overall_ms, uint32_t fps, double callback_ms);
+diff -ruN a/packages/native/src/context-abi.zig b/packages/native/src/context-abi.zig
+--- a/packages/native/src/context-abi.zig	2026-11-11 11:27:07.466447621 +0000
++++ b/packages/native/src/context-abi.zig	2026-11-11 11:46:37.113539321 +0000
+@@ -917,7 +917,7 @@
+     if (status != c.OT_OK) return status;
+     const owner = context.?;
+     const id = session_ptr orelse return sessionError(owner, error.InvalidOptions);
+-    if (mode > c.OT_COLOR_MODE_ANSI16) return sessionError(owner, error.InvalidOptions);
++    if (mode > c.OT_COLOR_MODE_MONO) return sessionError(owner, error.InvalidOptions);
+     owner.core.sessionSetColorMode(handleFromC(id.*), mode) catch |err| return sessionError(owner, err);
+     return c.OT_OK;
+ }
+@@ -3074,7 +3074,7 @@
+     try std.testing.expectEqual(c.OT_INVALID_ARGUMENT, ot_session_dump_hit_grid(handle, null));
+     try std.testing.expectEqual(c.OT_OK, ot_session_set_debug_overlay(handle, &session, 1, 3));
+     try std.testing.expectEqual(c.OT_INVALID_ARGUMENT, ot_session_set_color_mode(handle, null, c.OT_COLOR_MODE_ANSI16));
+-    try std.testing.expectEqual(c.OT_INVALID_ARGUMENT, ot_session_set_color_mode(handle, &session, c.OT_COLOR_MODE_ANSI16 + 1));
++    try std.testing.expectEqual(c.OT_INVALID_ARGUMENT, ot_session_set_color_mode(handle, &session, c.OT_COLOR_MODE_MONO + 1));
+     try std.testing.expectEqual(c.OT_WRONG_KIND, ot_session_set_color_mode(handle, &buffer, c.OT_COLOR_MODE_ANSI16));
+     try std.testing.expectEqual(c.OT_OK, ot_session_set_color_mode(handle, &session, c.OT_COLOR_MODE_ANSI16));
+     try std.testing.expectEqual(c.OT_OK, ot_session_update_stats(handle, &session, 1.5, 60, 0.25));
+diff -ruN a/packages/native/src/renderer.zig b/packages/native/src/renderer.zig
+--- a/packages/native/src/renderer.zig	2026-11-11 11:27:07.342170506 +0000
++++ b/packages/native/src/renderer.zig	2026-11-11 11:46:37.107300057 +0000
+@@ -62,6 +62,8 @@
+     truecolor = 1,
+     ansi256 = 2,
+     ansi16 = 3,
++    /// No color SGR at all; attributes (bold, underline, reverse, ...) are still written.
++    mono = 4,
+ };
+ 
+ pub const DebugOverlayCorner = enum {
+@@ -816,6 +818,8 @@
+     }
+ 
+     fn emitColor(self: *CliRenderer, writer: anytype, rgba: RGBA, is_background: bool) void {
++        // Every cell starts from an SGR reset, so writing nothing leaves the terminal's own colors.
++        if (self.color_mode == .mono) return;
+         const caps = self.terminal.getCapabilities();
+ 
+         if (ansi.intent(rgba) == .default) {
+@@ -834,6 +838,7 @@
+ 
+         switch (self.color_mode) {
+             .auto => {},
++            .mono => unreachable,
+             .ansi16 => {
+                 const index: u8 = if (ansi.intent(rgba) == .indexed and ansi.slot(rgba) < 16)
+                     ansi.slot(rgba)

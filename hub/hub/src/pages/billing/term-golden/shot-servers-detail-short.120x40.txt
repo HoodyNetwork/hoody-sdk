@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing  Balance $15                                                    [+ Add funds]
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │    Plans  ▸ Bare metal    Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC                              [Pay now]
+                       │  ‹ Plans & Billing  Esc
+On atlas ▾             │  Tokyo L  ● Instant delivery*                                                                █
+ Programs              │  JP Tokyo · instant delivery*                                                                █
+ Schedules             │                                                                                              █
+ Scripts               │  Term                                                                                        █
+ Logs                  │  (•) $228 for 30 days                                                                        █
+ Tunnels               │  ( ) $499 for 90 days                                                                        █
+ Notes                 │                                                                                              █
+ AI                    │                                                                                              █
+ VMs                   │  Your order                                                                                  █
+                       │  Rental                                                                                  $179█
+Account                │  One-time setup                                                                           $49█
+▌Plans & Billing       │  ────────────────────────────────────────────────────────────────────────────────────────────█
+ Referrals             │  Total first payment                                                                     $228█
+ Keys and tokens       │                                                                                              ▀
+ API                   │  Delivery  Instant delivery*: Usually ready in 5 seconds to 60 minutes. If it takes longer
+ Notifications      26 │            than 60 minutes, you get a voucher. Then about 15 minutes of setup.
+ Account               │  ────────────────────────────────────────────────────────────────────────────────────────────
+                       │
+ + Rent servers        │  Processor                                                                     AMD EPYC 7502P
+ Guide                 │  ────────────────────────────────────────────────────────────────────────────────────────────
+ Support               │  Cores                                                                  32 cores · 64 threads
+                       │  ────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Geekbench multi-core                                                                  56,000
+                       │  ────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Memory                                                                                256 GB
+                       │  ────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Memory type                                                                         DDR4 ECC
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  ! You're $213 short
+                       │                                                                [Add funds]   Rent this server
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

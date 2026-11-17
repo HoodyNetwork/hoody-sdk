@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                       ▸ Use with your agent   + New Bot
+ Computers             │  Every Bot on your running computers, and the page of each one.
+ Files                 │
+▌Bots                  │  Bots              Working now    ! Need you    In chat apps
+ Board                 │  23                1              2             3
+ Demo                  │  on 2 computers    Show           Show          Show
+ Vault                 │
+                       │  / Search                   Filters (2)                        0 Bots  ↻ Refresh  View options
+On atlas ▾             │  i cinder: More Bots than the list can show.
+ Programs              │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Schedules             │
+ Scripts               │
+ Logs                  │  Nothing matches these filters
+ Tunnels               │  Clear filters
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │  Questions
+                       │  ▸ What is a Bot, and where does it run?
+                       │  ▸ What is the default Bot of a realm?
+                       │  ▸ What is a link, and what do keys do?
+                       │  ▸ What do Other websites (CORS) and the call limits mean?
+                       │  ▸ What does Allow everything do, and what does mixed mean?
+                       │  ▸ Who becomes the owner of a chat app, and how do others join?
+                       │  ▸ What does the warning that privacy is on mean?
+                       │  ▸ What does the Bot read in a group?
+                       │  ▸ Which model answers me, and which do the Bot's helpers use?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

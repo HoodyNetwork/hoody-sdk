@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Account
+ Computers             │  Your profile, how you sign in, and where you are signed in.
+ Files                 │
+ Bots                  │  ‹ 4  ▌Sign-in sessions  Agent sign-in  Security history  SSH keys  Emails  Elsewhere   2 ›
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Vault                 │  │ Sign-in sessions                                                                      │
+                       │  │ Each browser or device signed in to your account. End one you do not recognise.       │
+On atlas ▾             │  │                                                                                       │
+ Programs              │  │ This device's address ⓘ         PT 203.0.113.7 · Lisbon ⧉ copy (i)                    │
+ Schedules             │  │ / Search                 Filters     12 sessions  [End all other sessions]  ↻ Refresh │
+ Scripts               │  │                                                                                       │
+ Logs                  │  │   Device             Signed in with    Last seen ↓ IP / country         Keys made     │
+ Tunnels               │  │ ›•Chrome on macOS    Password          19 days ago 203.0.113.24 · SG            2     │
+ Notes                 │  │    This device                                                                        │
+ AI                    │  │   Firefox on Linux   Password and code 19 days ago 198.51.100.7 · DE            0   ⋯ │█
+ VMs                   │  │   Safari on iPhone   Google            19 days ago 192.0.2.88 · US              0   ⋯ │█
+                       │  │   build-server       Device sign-in    19 days ago 203.0.113.90 · SG           14   ⋯ │█
+Account                │  │    Hoody CLI                                                                          │█
+ Plans & Billing       │  │   Edge on Windows    GitHub            19 days ago 198.51.100.130 ·…            1   ⋯ │█
+ Referrals             │  │   Chrome on Android  Password          19 days ago 192.0.2.12 · IN              0   ⋯ │▀
+ Keys and tokens       │  │   Chrome on macOS    Password          19 days ago 203.0.113.24 · SG            2   ⋯ │
+ API                   │  │   Firefox on Linux   Password and code 19 days ago 198.51.100.7 · DE            0   ⋯ │
+ Notifications      26 │  │   Safari on iPhone   Google            19 days ago 192.0.2.88 · US              0   ⋯ │
+▌Account               │  │   Script (Node.js)   Password          19 days ago 203.0.113.90 · SG            3   ⋯ │
+                       │  │    Hoody SDK                                                                          │
+ + Rent servers        │  │   Edge on Windows    GitHub            20 days ago 198.51.100.130 ·…            1   ⋯ │
+ Guide                 │  │   Unknown device     Password          20 days ago 192.0.2.12 · IN              0   ⋯ │
+ Support               │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Agent sign-in                                                                         │
+                       │  │                                                                                       │
+                       │  │ Days signed in                  │ 90                                                  │
+                       │  │ How long an agent stays signed  A whole number from 1 to 365. It applies the next     │
+                       │  │ in from this device.            time the agent's sign-in is renewed.                  │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

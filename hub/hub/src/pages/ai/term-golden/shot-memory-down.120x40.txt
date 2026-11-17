@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations  ▌Knowledge   Settings
+ Computers             │   Skills   Instructions  ▌Memory
+ Files                 │  Memory
+ Bots                  │  What agents learned while working on atlas. Agents recall it when it fits the task.
+ Board                 │
+ Demo                  │  Memory of
+ Vault                 │  ‹ Realm Personal ›  Global
+                       │  │ i Realm Personal · Choosing this realm's memory host… ·  [Use this computer]  Hide details
+On atlas ▾             │  │   memory on
+ Programs              │
+ Schedules             │    Memory on or off
+ Scripts               │    ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Logs                  │    │                                                                                       │
+ Tunnels               │    │ Agents remember what they       [■ on ]                                               │
+ Notes                 │    │ learn in realm Personal                                                               │
+▌AI                    │    │ Turns memory on or off for                                                            │
+ VMs                   │    │ every agent in realm Personal                                                         │
+                       │    │ on atlas. What is stored                                                              │
+Account                │    │ stays.                                                                                │
+ Plans & Billing       │    │                                                                                       │
+ Referrals             │    └───────────────────────────────────────────────────────────────────────────────────────┘
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │    Memory hosts
+ Account               │    State                Choosing a memory host   Computers             atlas · this computer
+                       │    ───────────────────────────────────────────   ───────────────────────────────────────────
+ + Rent servers        │
+ Guide                 │
+ Support               │  ! Memory for realm Personal can't be read right now
+                       │  Try again in a moment. Nothing was changed.
+                       │  [Try again]
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,18 @@
+{
+  // Node-side code of the Hub: the hub:* command scripts and the tool configs.
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["scripts", "vite.config.mts", "vite.modes.ts", "playwright.config.ts", "src/app/shots.types.ts"]
+}

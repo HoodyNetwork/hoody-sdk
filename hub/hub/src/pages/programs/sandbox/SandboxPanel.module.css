@@ -1,0 +1,10 @@
+/* The saved policy: one bullet per rule, wrapped text hangs under its own bullet. */
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  padding-inline-start: var(--sp-4);
+  list-style: disc outside;
+}

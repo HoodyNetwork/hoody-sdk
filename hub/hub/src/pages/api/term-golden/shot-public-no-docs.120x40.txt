@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  API                                                                     ▸ Use with your agent
+ Computers             │
+ Files                 │  ▸ Endpoints    Overview
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ API  Esc
+ Vault                 │  POST /api/v1/waitlist
+                       │  Join the Hoody waitlist
+On atlas ▾             │
+ Programs              │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Schedules             │  │ Authorisation                                                                             │
+ Scripts               │  │ Needs no token.                                                                           │
+ Logs                  │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Tunnels               │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Notes                 │  │ How to call it                                                                            │
+ AI                    │  │ ‹ cURL ›  fetch    Python (requests)    CLI                                               │
+ VMs                   │  │ cURL example                                                                   ⧉ Copy all │
+                       │  │  curl -X POST 'https://api.hoody.com/api/v1/waitlist' \                           ⧉ copy  │
+Account                │  │    -H 'Content-Type: application/json' \                                                  │
+ Plans & Billing       │  │    -d '{"email":"<email>"}'                                                               │
+ Referrals             │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Keys and tokens       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+▌API                   │  │ About this endpoint                                                                       │
+ Notifications      26 │  │ Operation ID  api_waitlistJoin  ⧉ copy                                                    │
+ Account               │  │ Service       Account API                                                                 │
+                       │  │ Docs          No docs page (not part of the documented API)                               │
+ + Rent servers        │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,66 @@
+/* Above the list: the page tabs, then any row outcome. */
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.note {
+  padding-inline: var(--sp-1);
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.message {
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: var(--lh-normal);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.unreadTitle {
+  font-weight: var(--fw-semibold);
+}
+
+.ellipsis {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sev {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+/* Read rows step back: quiet text beside the unread rows' semibold title and edge bar. */
+.readText {
+  color: var(--hx-muted);
+}
+
+/* The detail's mark-read answer: the done line stays while the notice is open (nothing shifts under the reader); a notice with no answer has no slot, so no empty gap in the stack. */
+.ackSlot:empty {
+  display: none;
+}
+
+/* The tip under the list: 8 px below the table's frame. A dismissed tip leaves no gap. */
+.hintRow {
+  padding-block-start: var(--sp-2);
+}
+
+.hintRow:empty {
+  display: none;
+}

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent  [+ Get a computer]
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ Computers  Esc
+ atlas  ● Running                                         [Open terminal ⇗] [⋯]
+ SG n12 · Home base · █  Personal ·  Current computer
+
+  Overview ▸Connect  Permissions  Ports & addresses  Desktop  Network  Run
+  Programs  Backups  Storage
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Program links                                                             │█
+ │ Each program has its own address. Copy it or open it.                     │█
+ │ Agent  https://••••      ⧉ copy  [QR]  [Open Agent]  [Put Agent on Board] │
+ │ Terminal  https://••••                                                    │
+ │ ⧉ copy  [QR]  [Open Terminal]  [Put Terminal on Board]                    │
+ │ Desktop  https://••••                                                     │
+ │ ⧉ copy  [QR]  [Open Desktop]  [Put Desktop on Board]                      │
+ │ Files  https://••••                                                       │
+ │ ⧉ copy  [QR]  [Mount on your device]  [Open Files]  [Put Files on Board]  │
+ │ Browser  https://••••                                                     │
+ │ ⧉ copy  [QR]  [Open Browser]  [Put Browser on Board]                      │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

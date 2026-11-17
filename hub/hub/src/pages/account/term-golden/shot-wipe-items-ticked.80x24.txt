@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Account
+ Your profile, how you sign in, and where you are signed in.
+ ▌Profile  Password  Two-step sign-in  Passcode lock  Sign-in sessions   7 ›
+ ─────────┌──────────────────────────────────────────────────────────┐─────────
+ ┌────────│ ! Remove this account's local data from this       Esc × │───────┐█
+ │ Securit│   device?                                                │       │▀
+ │ ✓ Your │ ──────────────────────────────────────────────────────── │       │
+ │ ✓ Two-s│ device before you start.                                 │       │
+ │ i 11 ot│ • Records of other accounts on this device stay: the     │eview] │
+ └────────│ Hub keeps each account's apart.                          │───────┘
+ ┌────────│ These may already have gone through. The Hub stops       │───────┐
+ │ Profile│ tracking them on this device:                            │       │
+ │        │   2 changes from Computers (still sending)             █ │       │
+ │ Display│   1 change from other pages                            █ │ name] │
+ │        │   1 question to the assistant still waiting for an     █ │       │
+ │ Usernam│   answer                                               █ │       │
+ │        │                                                        █ │       │
+ │ Email  │ [x] I understand that the Hub stops tracking these on  █ │email] │
+ │        │     this device                                        ▀ │       │
+ │        │                                                          │       │
+ │ Member │                     [Cancel]  [Remove and leave the Hub] │       │
+ │        └──────────────────────────────────────────────────────────┘       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

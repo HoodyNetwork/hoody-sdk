@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                 ▸ Use with your agent   + New script
+ Computers             │
+ Files                 │  ‹ Scripts  Esc
+ Bots                  │  Weather lookup  ● Working                                [▷ Try it] [✦ Ask the assistant] [⋯]
+ Board                 │  /weather ·  atlas
+ Demo                  │
+ Vault                 │   Overview ▸Code  Test  Settings
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  ⧉ copy
+ Programs              │  Script code (read only)
+ Schedules             │   1 │ // @label Weather lookup
+▌Scripts               │   2 │ // @description Current weather for a city.
+ Logs                  │   3 │ export default async function (request: Request) {
+ Tunnels               │   4 │   const city = new URL(request.url).searchParams.get("city") ?? "Singapore";
+ Notes                 │   5 │   const res = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);
+ AI                    │   6 │   return Response.json(await res.json());
+ VMs                   │   7 │ }
+                       │   8 │
+Account                │
+ Plans & Billing       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Referrals             │  │ Versions                                                                                  │
+ Keys and tokens       │  │ Every save is kept, newest first. Restore puts an older one back as a new save.           │
+ API                   │  │ Oct 22, 2026, 9:12 AM                                                           [Preview] │
+ Notifications      26 │  │   1.8 KB                                                                                  │
+ Account               │  │ Oct 19, 2026, 4:40 PM                                                           [Preview] │
+                       │  │   1.7 KB                                                                                  │
+ + Rent servers        │  │ Oct 15, 2026, 8:00 AM                                                           [Preview] │
+ Guide                 │  │   1.2 KB                                                                                  │
+ Support               │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  ◷ Saving may have gone through [Check again]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

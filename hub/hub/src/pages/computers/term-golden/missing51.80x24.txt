@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                             ◆ Personal ▾  ● lone-0 ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent   + Get a computer
+ Your computers: start them, open a terminal, and manage access.
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ Computers 51 · 51 running · 0 stopped · 0 failed    Servers 1                █
+ / Search computers     Filters                                               █
+ 51 computers  [ ] Show usage  Ask the Agent  ↻ Refresh  View options         █
+ ▌ █ lone-0 · · Current                                           ● Running ⋯██
+    █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                    ██
+   █ lone-1                                                       ● Running ⋯░█
+    █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                    ░█
+   █ lone-2                                                       ● Running ⋯░█
+    █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                    ░█
+   █ lone-3                                                       ● Running ⋯░█
+    █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                    ░█
+   █ lone-4                                                       ● Running ⋯░▀
+    █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                    ░
+   █ lone-5                                                       ● Running ⋯░
+    █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                    ░
+   █ lone-6                                                       ● Running ⋯░
+    █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                    ░
+ 1–50 of 51 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

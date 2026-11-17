@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Bots                                                     ▸ Use with your agent
+ ‹ Bots  Esc
+ Chief  ● Idle                                               [Bot settings] [⋯]
+   SG atlas    Hoody Free  · Allow everything is off +2
+
+   Activity  ▸ Link and keys    Chat apps 2    Work 2
+ ──────────────────────────────────────────────────────────────────────────────
+
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ Addresses                                                                │
+  │ A public address people and programs can call, protected by keys.        │
+  │ No link yet                                                              │
+  │ A link gives this Bot its own address that apps                          │
+  │ and people can call with a key. Nothing is                               │
+  │ public until you make a key.                                             │
+  │ It will look like:                                                       │
+  │ https://quiet-amber-heron-bot.hoody.bot                                  │
+  │  + Give it a link                                                        │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

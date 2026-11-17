@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            AI                                     ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  [Back to chats] Plan the backup job                                      · Idle [⋯] [Details]
+ Computers             │  atlas · Personal  /home/ada
+ Files    ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+ Bots     │ Attach files from a computer                                                               Esc × │──────────
+ Board    │ ──────────────────────────────────────────────────────────────────────────────────────────────── │
+ Demo     │ ┃ ● SG atlas · █ Personal ▾  [Places]                                                            │
+ Vault    │                                                                                                  │
+          │ [Up one folder] [Back] / / home / ada  [View options]                                            │
+On atlas ▾│                                                                                                  │
+ Programs │ │ / Filter, or type a path                     Find in subfolders                                │
+ Schedules│                                                                                                  │
+ Scripts  │  ▸  backups/                                                                          2 days ago │
+ Logs     │  ▸  projects/                                                                          yesterday │
+ Tunnels  │     notes.txt                                                                 3.2 KB · yesterday │
+ Notes    │     plan.md                                                                   1.2 KB · yesterday │
+▌AI       │     screenshot.png                                                            471 KB · yesterday │
+ VMs      │                                                                                                  │
+          │ 0 of 7 chosen                                                                                    │
+Account   │                                                                                                  │
+ Plans & B│ Each file is read once and added to this message; nothing is sent yet. Images up to 4 MB and up  │
+ Referrals│ to 3 text files of 24 KB each can be attached.                                                   │
+ Keys and │                                                                                                  │
+ API      │                                                                               [Cancel]   Attach  │
+ Notificat└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+ Account               │
+                       │  ✗ This conversation got too long for the model. Start a new one, or pick a model that can
+ + Rent servers        │  hold more.
+ Guide                 │
+ Support               │  i Hooks in this computer's settings stop the agent's steps until someone trusts them. You
+                       │  check and trust them in the Agent app.
+                       │
+                       │
+                       │
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Message your agent                                                                        │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │  [+]  [/ Commands]  [Ask when needed]                                            [Send ↵]  [▾]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,141 @@
+/* Ask dock. The shell places it: pushing at >= 1280, overlaying 768-1279,
+   a full-screen sheet below 768. */
+.dock {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: var(--dock-cur);
+  height: 100%;
+  min-height: 0;
+  border-inline-start: var(--bw) solid var(--hx-line);
+  background: var(--hx-card);
+}
+
+/* Focused from script only (no control in the panel yet, or a click on blank dock): no ring, like a page title. */
+.dock:focus {
+  outline: none;
+}
+
+.handle {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: -3px;
+  z-index: var(--z-raised);
+  width: 6px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.handle:hover,
+.handle:focus-visible {
+  background: linear-gradient(to right, transparent 2px, var(--hx-line-strong) 2px, var(--hx-line-strong) 4px, transparent 4px);
+  outline: none;
+}
+
+.handle:focus-visible {
+  background: linear-gradient(to right, transparent 2px, var(--hx-focus) 2px, var(--hx-focus) 4px, transparent 4px);
+}
+
+.head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-1);
+  height: var(--topbar-h);
+  padding: 0 var(--sp-2) 0 var(--sp-4);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.back {
+  display: none;
+}
+
+/* Target chip: realm square · state dot · computer; the realm truncates first. */
+.target {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  color: var(--hx-ink);
+  font: var(--t-body-strong);
+  white-space: nowrap;
+}
+
+.realmDot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-0);
+  background: var(--rc, var(--hx-line-strong));
+}
+
+.realmName {
+  flex: 0 1 auto;
+  min-width: 24px;
+  overflow: hidden;
+  color: var(--hx-muted);
+  text-overflow: ellipsis;
+}
+
+.sep {
+  flex: none;
+  color: var(--hx-faint);
+}
+
+.live {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-round);
+  background: var(--hx-faint);
+}
+
+.liveOn {
+  background: var(--hx-ok);
+}
+
+.computerName {
+  flex: 0 0 auto;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The Ask panel fills the body: a flex column whose own list scrolls and whose composer sticks. */
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (width < 768px) {
+  .dock {
+    width: 100%;
+    border: 0;
+  }
+
+  .handle,
+  .close {
+    display: none;
+  }
+
+  .back {
+    display: inline-flex;
+  }
+
+  .head {
+    padding-inline-start: var(--sp-1);
+  }
+}
+
+/* The Ask panel: the full height, a flex column it lays out itself. */
+.panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}

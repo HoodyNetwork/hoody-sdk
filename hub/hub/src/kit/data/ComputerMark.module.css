@@ -1,0 +1,26 @@
+/* A computer's colour mark: a rounded square, never round (round is a state dot). The inset ring keeps white,
+   near-black and surface-matching colours visible; it is decoration, not a 3:1 boundary (the name beside the mark
+   carries the identity). */
+.mark {
+  display: inline-block;
+  flex: none;
+  inline-size: 10px;
+  block-size: 10px;
+  border-radius: var(--r-swatch);
+  background: var(--computer);
+  box-shadow: inset 0 0 0 var(--bw) var(--hx-swatch-ring);
+}
+
+.md {
+  inline-size: 12px;
+  block-size: 12px;
+}
+
+/* Forced colours: the mark keeps the computer's colour (it is a leaf with no text, so nothing else is exempted) and
+   its ring takes the system text colour. */
+@media (forced-colors: active) {
+  .mark {
+    forced-color-adjust: none;
+    box-shadow: inset 0 0 0 var(--bw) canvastext;
+  }
+}

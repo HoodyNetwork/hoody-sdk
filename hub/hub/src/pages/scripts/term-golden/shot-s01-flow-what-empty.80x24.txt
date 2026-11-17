@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ New script
+ Step 1 of 5 · What it does  ██░░░░░░░░
+ ▸1 What it does  2 Where it answers  3 Build it  4 Check it  5 Make it live
+ ──────────────────────────────────────────────────────────────────────────────
+ ▸ Your script so far                                                         █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ What should it do?                                                        │█
+ │ Describe it in your own words. The assistant builds it; you check it      │█
+ │ before it goes live.                                                      │█
+ │                                                                           │▀
+ │ How to start                                                              │
+ │ ┌──────────────────────┐ ┌─────────────────────┐ ┌──────────────────────┐ │
+ │ │                      │ │                     │ │                      │ │
+ │ │  Describe it         │ │  Start from an      │ │  Write the code      │ │
+ │ │  The assistant       │ │  idea               │ │  myself              │ │
+ │ │  builds it from      │ │  Ready-made         │ │  For when you        │ │
+ │ │  your words.         │ │  scripts you set    │ │  already know the    │ │
+ │ │                      │ │  up in a minute.    │ │  code.               │ │
+ │ └──────────────────────┘ │                     │ │                      │ │
+ ──────────────────────────────────────────────────────────────────────────────
+ Next: where it answers.
+                                                           [Cancel]   Continue
+ Typing · Esc leaves the field · Ctrl+K commands

@@ -1,0 +1,556 @@
+/* Buttons: the "Slanted plates" family. Every kit button is one square plate with a cut at its bottom end.
+   Button, LinkButton and IconButton take these classes; a part that draws its own element takes them through
+   buttonClass and ButtonFace (Button.tsx), never by copying rules. The plate, its frame and its cut are one painted
+   background, never a clip-path: a clip would cut away the focus ring and an xs button's press area. */
+
+/* The plate. A variant, size or state only sets the --plate* properties; nothing else paints a button's background. */
+.button {
+  --plate: var(--hx-btn-plate);
+  --plate-line: var(--hx-btn-line);
+  --plate-h: var(--btn-h);
+  --plate-cut: var(--btn-cut);
+
+  /* The cut's leg along the gradient line, and the corner the cut sits in (the bottom end: see :dir(rtl) below). */
+  --plate-cut-at: calc(var(--plate-cut) * 0.7071);
+  --plate-angle: 315deg;
+
+  /* How the cut's diagonal is painted: a little wider than the frame, with a soft outer edge (see the background). */
+  --plate-cut-grow: var(--btn-cut-line-grow);
+  --plate-cut-soft: var(--btn-cut-line-soft);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--btn-gap);
+  block-size: var(--plate-h);
+  padding-inline: var(--btn-pad);
+
+  /* The frame is the transparent border showing the lower layer: the whole silhouette in the line colour, cut at
+     --plate-cut. The upper layer is the fill, one line width inside it on every side, the diagonal included (its stop
+     is the outer one moved by the border's diagonal, 1.414, less one line width). So the diagonal is the frame itself
+     and meets the bottom and end lines without a step. On a grey plate the diagonal is painted a little wider than
+     the frame (--plate-cut-grow) with a soft outer edge (--plate-cut-soft): a band of exactly one line between two
+     hard stops breaks up or vanishes on a plate of a fractional size or under browser zoom. */
+  border: var(--bw) solid transparent;
+  border-radius: 0;
+  background:
+    linear-gradient(var(--plate-angle), transparent calc(var(--plate-cut-at) - 0.414 * var(--bw) + var(--plate-cut-grow)), var(--plate) calc(var(--plate-cut-at) - 0.414 * var(--bw) + var(--plate-cut-grow))) padding-box,
+    linear-gradient(var(--plate-angle), transparent calc(var(--plate-cut-at) - var(--plate-cut-soft)), var(--plate-line) calc(var(--plate-cut-at) + var(--plate-cut-soft))) border-box;
+  font-family: var(--font-mono);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-regular);
+  letter-spacing: var(--btn-tracking);
+  text-transform: var(--case-caps);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+
+  /* The plate swaps at once (a gradient does not animate), so the ink swaps with it; only the focus ring eases. */
+  transition: box-shadow var(--dur-press) var(--ease-out);
+}
+
+/* The cut sits at the bottom end: the bottom left in a right-to-left page. */
+.button:dir(rtl) {
+  --plate-angle: 45deg;
+}
+
+/* One hover and one pressed step for every plate: a darker fill inside a full-ink frame, then one step darker. Variants
+   below restate only what differs. */
+.button[data-hovered] {
+  --plate: var(--hx-btn-plate-hover);
+  --plate-line: var(--hx-btn-line-hover);
+}
+
+.button[data-pressed] {
+  --plate: var(--hx-btn-plate-press);
+  --plate-line: var(--hx-btn-line-hover);
+}
+
+/* `literal`: a data label shows as written, without the theme's case and tracking. Two classes, so it outweighs the
+   toolbar size's own tracking wherever it sits in this file. */
+.button[data-literal],
+.button.toolbar[data-literal] {
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.button[data-focus-visible] {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+/* The one disabled recipe of the kit's pressables. aria-disabled reads as disabled too: such a button stays focusable to
+   say why. A busy button is aria-disabled as well and keeps its own look. */
+.button[data-disabled],
+.button[aria-disabled='true']:not([data-pending]) {
+  cursor: not-allowed;
+  opacity: var(--ctl-off-opacity);
+}
+
+.button[data-pending] {
+  cursor: progress;
+}
+
+/* Touch: on a coarse pointer a button with words is at least --touch-min both ways, as its own box, so rows make room
+   for it and no consumer adds a floor. Icon-only buttons take --icon-hit (below). Zero specificity (:where), so a page's
+   own minimum still wins. The width floor sits on the label, one per padding, because the button's own width is its
+   whole words (the max-content rule below). A bubble wraps its words, so it takes the plain floor. An xs button draws
+   at its own height and takes the rest of its press from ::after, so it has no height floor. */
+@media (pointer: coarse) {
+  :where(.button:not(.iconOnly, .xs)) {
+    min-block-size: var(--touch-min);
+  }
+
+  :where(.button.bubble) {
+    min-inline-size: var(--touch-min);
+  }
+
+  :where(.button:not(.iconOnly) > .label) {
+    min-inline-size: calc(var(--touch-min) - 2 * var(--btn-pad));
+  }
+
+  :where(.button.toolbar:not(.iconOnly) > .label) {
+    min-inline-size: calc(var(--touch-min) - 2 * var(--sp-3));
+  }
+
+  :where(.button.inStrip:not(.iconOnly) > .label) {
+    min-inline-size: calc(var(--touch-min) - 2 * var(--sp-3));
+  }
+
+  :where(.button.xs:not(.iconOnly) > .label) {
+    min-inline-size: calc(var(--touch-min) - 2 * var(--sp-1));
+  }
+}
+
+/* A button with words is never narrower than them, so a squeezed row wraps instead of cutting a label short. Zero
+   specificity: a page that sets its own minimum under a cap gets the ellipsis below, by its own choice. */
+:where(.button:not(.iconOnly, .bubble)) {
+  min-inline-size: max-content;
+}
+
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* shrink: the label is data that may be cut. The button has no minimum and is at most its parent, so the label ends in
+   an ellipsis under a parent's cap (one class outweighs the zero-weight words minimum above); its icons and glyph keep
+   their box. The coarse touch floor is the label's own and stays. */
+.shrink {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+.shrink > :not(.label) {
+  flex: none;
+}
+
+/* On a coarse pointer the shrink box keeps the touch target across: a squeezed slot cuts the label, never the press. */
+@media (pointer: coarse) {
+  .shrink {
+    min-inline-size: var(--touch-min);
+  }
+}
+
+/* The end glyph (arrow, plus, $ …): inside the plate after the label, in the label's ink. Decoration only. Its box is
+   one size for every glyph, so a button keeps its width when the busy dots take the glyph's place; the glyph itself
+   draws at its own size (the arrow 14 x 14, the plus 10 x 10, the $ 10 x 14), centred on the box, never stretched to it. */
+.glyph {
+  display: grid;
+  flex: none;
+  place-content: center;
+  place-items: center;
+  inline-size: var(--btn-glyph);
+  block-size: var(--btn-glyph);
+  margin-inline-start: calc(var(--btn-glyph-gap) - var(--btn-gap));
+}
+
+/* A start icon with no end glyph: the end padding grows, so the words sit optically centred beside the icon. */
+.button.iconStart {
+  padding-inline-end: var(--btn-pad-icon);
+}
+
+.full {
+  inline-size: 100%;
+}
+
+/* Sizes. md is the default (--btn-h, the 9 px cut) and needs no rule. */
+.sm {
+  --plate-h: var(--btn-h-sm);
+  --plate-cut: var(--btn-cut-sm);
+}
+
+/* xs: a dense row's action. A coarse pointer's press reaches --touch-min through ::after, built in, so no page sizes
+   one: it reaches --xs-press-out past the box each way, 0 on a fine pointer, where the box is the press. The reach is
+   taken from the box as drawn, so a three-dot asked at xs (drawn at the 28 px plate) presses as tall as any xs. */
+.xs {
+  --plate-h: var(--ctl-h-xs);
+  --plate-cut: var(--btn-cut-sm);
+  --xs-press-out: max(0px, calc((var(--touch-min) - var(--plate-h)) / 2 + var(--bw)));
+
+  position: relative;
+  padding-inline: var(--sp-1);
+  gap: var(--sp-1);
+}
+
+.xs::after {
+  position: absolute;
+  inset-block: calc(-1 * var(--xs-press-out));
+  inset-inline: 0;
+  content: '';
+}
+
+/* Variants: one accent plate per region (primary); every other button is the grey plate. */
+.secondary,
+.row {
+  color: var(--hx-btn-text);
+}
+
+/* --ghost-text: a place's own ink for its ghost buttons, at rest, hovered and pressed alike (the top bar). */
+.ghost {
+  color: var(--ghost-text, var(--hx-btn-text));
+}
+
+/* The accent plate keeps the exact one-line diagonal: its ink line on the accent would read heavy any wider. */
+.primary {
+  --plate: var(--hx-acc);
+  --plate-line: var(--hx-btn-primary-line);
+  --plate-cut-grow: 0px;
+  --plate-cut-soft: 0px;
+
+  color: var(--hx-acc-ink);
+}
+
+.primary[data-hovered] {
+  --plate: var(--hx-acc-hover);
+  --plate-line: var(--hx-btn-primary-line);
+}
+
+.primary[data-pressed] {
+  --plate: var(--hx-acc-press);
+  --plate-line: var(--hx-btn-primary-line);
+}
+
+/* tone="danger": the grey plate in the danger ink and frame, never a red fill. Hover and pressed share one step, the
+   darkest plate that keeps the danger ink readable. `dangerSolid` is the retired spelling of a primary in this tone. */
+.danger,
+.dangerSolid {
+  --plate-line: var(--hx-danger);
+
+  color: var(--hx-danger);
+}
+
+.danger:is([data-hovered], [data-pressed]),
+.dangerSolid:is([data-hovered], [data-pressed]) {
+  --plate: var(--hx-btn-danger-hover);
+  --plate-line: var(--hx-danger);
+}
+
+/* A disabled primary drops the accent and reads as a disabled grey plate: at half opacity the accent still looks live
+   on a dark page. After the variant rules, so it wins at equal weight. */
+.primary:is([data-disabled], [aria-disabled='true']):not([data-pending]) {
+  --plate: var(--hx-btn-plate);
+  --plate-line: var(--hx-btn-line);
+
+  color: var(--hx-btn-text);
+}
+
+/* row: a table row's main action. The grey plate at rest; the row under the pointer or keyboard lifts it to the accent,
+   so a table never stacks a column of accent buttons. Keyboard focus only (:focus-visible): a click leaves focus in the
+   row it selected. */
+tr:hover .row,
+tr:has(:focus-visible) .row,
+[role='row']:hover .row,
+[role='row']:has(:focus-visible) .row {
+  --plate: var(--hx-acc);
+  --plate-line: var(--hx-btn-primary-line);
+
+  color: var(--hx-acc-ink);
+}
+
+tr:hover .row[data-hovered],
+[role='row']:hover .row[data-hovered] {
+  --plate: var(--hx-acc-hover);
+}
+
+tr:hover .row[data-pressed],
+[role='row']:hover .row[data-pressed] {
+  --plate: var(--hx-acc-press);
+}
+
+/* bubble (Home's Ask ideas): a sentence on a plate with no frame, in the text face and never in capitals; the plate turns
+   the accent under the pointer. Two classes (.button.bubble) so it outweighs the family's size and type rules. */
+.button.bubble {
+  --plate: var(--hx-bubble-plate);
+  --plate-cut: var(--hx-bubble-cut);
+
+  position: relative;
+  block-size: auto;
+  padding-block: calc(var(--sp-2) + var(--sp-half));
+  padding-inline: calc(var(--sp-3) + var(--sp-half)) var(--sp-5);
+  border: 0;
+  background: linear-gradient(var(--plate-angle), transparent var(--plate-cut-at), var(--plate) var(--plate-cut-at));
+  color: var(--hx-ink);
+  font-family: var(--font-text);
+  font-size: var(--fs-bubble);
+  letter-spacing: normal;
+  line-height: var(--lh-snug);
+  text-align: start;
+  text-transform: none;
+  white-space: normal;
+
+  /* A long unbroken name (a computer's) wraps inside the plate, so an idea never grows wider than its row. */
+  overflow-wrap: anywhere;
+}
+
+/* The accent plate carries its own ink in both themes (the page ink on the accent would fail contrast on a dark page).
+   Written without .button: the same weight as the plate's own hover and press rules, which come earlier, so this wins. */
+.bubble[data-hovered],
+.bubble[data-pressed] {
+  --plate: var(--hx-acc);
+
+  color: var(--hx-acc-ink);
+}
+
+/* Icon-only. A square of the size's height, never under --icon-hit (the touch target on a coarse pointer). */
+.iconOnly {
+  inline-size: max(var(--plate-h), var(--icon-hit));
+  block-size: max(var(--plate-h), var(--icon-hit));
+  padding: 0;
+  color: var(--hx-btn-icon);
+}
+
+/* xs draws at its own size on every pointer; its press is the ::after above, reaching out on all four sides. */
+.iconOnly.xs {
+  inline-size: var(--plate-h);
+  block-size: var(--plate-h);
+}
+
+.iconOnly.xs::after {
+  inset-inline: calc(-1 * var(--xs-press-out));
+}
+
+/* A frameless icon button: an icon-only ghost that is not a three-dot, a toolbar control or a strip button (dialog
+   close, a field's action, the top bar). No plate and no cut at rest; the plate's fill under the pointer. The :not()
+   list is the whole rule: a new framed icon button adds its class there. */
+.iconOnly.ghost:not(.more, .toolbar, .inStrip) {
+  --plate: transparent;
+  --plate-line: transparent;
+  --plate-cut: 0px;
+
+  color: var(--ghost-text, var(--hx-muted));
+}
+
+.iconOnly.ghost:not(.more, .toolbar, .inStrip)[data-hovered] {
+  --plate: var(--hx-btn-plate);
+  --plate-line: transparent;
+
+  color: var(--ghost-text, var(--hx-ink));
+}
+
+.iconOnly.ghost:not(.more, .toolbar, .inStrip)[data-pressed] {
+  --plate: var(--hx-btn-plate-hover);
+  --plate-line: transparent;
+
+  color: var(--ghost-text, var(--hx-ink));
+}
+
+/* A three-dot (more actions) button: the small plate, whatever size it was asked for; a toolbar's keeps the toolbar's. */
+.iconOnly.more:not(.toolbar, .inStrip) {
+  --plate-h: var(--btn-h-sm);
+  --plate-cut: var(--btn-cut-sm);
+}
+
+.iconOnly.primary {
+  color: var(--hx-acc-ink);
+}
+
+.iconOnly:is(.danger, .dangerSolid) {
+  color: var(--hx-danger);
+}
+
+/* A worded toggle that is on (Button `pressed`): the pressed step, as an open toolbar control below. */
+.button.pressed:not(.iconOnly) {
+  --plate: var(--hx-btn-plate-press);
+  --plate-line: var(--hx-btn-line-hover);
+}
+
+/* A toggled icon button (aria-pressed): the pressed step, as a worded toggle. A plate is always opaque: the frame layer
+   fills the whole box under it, so a see-through plate would show the frame colour (a toggled primary went black). */
+.button.iconOnly.pressed {
+  --plate: var(--hx-btn-plate-press);
+  --plate-line: var(--hx-btn-line-hover);
+
+  color: var(--hx-ink);
+}
+
+/* A toggled frameless button keeps no frame: the selected wash over the surface, the frame layer transparent under it.
+   Heavier than the frameless rules, so it shows. */
+.iconOnly.ghost:not(.more, .toolbar, .inStrip).pressed {
+  --plate: var(--hx-selected);
+  --plate-line: transparent;
+}
+
+/* The place a drag would drop on (IconButton dropTarget): ink and an inset ring, the look of a kit Tabs drop tab; a
+   focus ring of its own stays as it is. */
+.iconOnly[data-drop-target] {
+  color: var(--hx-ink);
+}
+
+.iconOnly[data-drop-target]:not([data-focus-visible]) {
+  box-shadow: var(--focus-ring-inset);
+}
+
+/* Inside a ButtonStrip: header-height plates (32, beside the header's primary) side by side on one shared line (the
+   second drops its start edge); only the strip's last button carries the cut. Two classes, so it outweighs the size and
+   three-dot rules above. */
+.button.inStrip {
+  --plate-h: var(--btn-h);
+  --plate-cut: var(--btn-cut);
+
+  padding-inline: var(--sp-3);
+}
+
+/* Every strip button with a later strip button after it drops the cut. By the next strip BUTTON, not the next element:
+   a button disabled with a reason renders its hidden reason beside it. */
+.button.inStrip:has(~ .button.inStrip) {
+  --plate-cut: 0px;
+}
+
+.button.iconOnly.inStrip {
+  padding-inline: 0;
+}
+
+/* Every strip button after the first drops its start edge (one shared line), whatever hidden reason sits between. */
+.button.inStrip ~ .button.inStrip {
+  border-inline-start-width: 0;
+}
+
+/* Above its neighbour, which would paint over the ring otherwise. */
+.button.inStrip[data-focus-visible] {
+  z-index: var(--z-raised);
+}
+
+/* toolbar: a table toolbar's control, as tall as the search field beside it (--tb-ctl-h) with the field's inline
+   padding, in the toolbar label type (12 px, medium, --tracking-label). Last of the sizes and two classes, so it
+   outweighs a variant's or the three-dot's size. */
+.button.toolbar {
+  --plate-h: var(--tb-ctl-h);
+  --plate-cut: var(--btn-cut);
+
+  padding-inline: var(--sp-3);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--tracking-label);
+}
+
+.button.toolbar.iconOnly {
+  padding: 0;
+}
+
+/* An open toolbar control (its menu or panel is showing) holds the pressed step: the press plate and the dark frame. */
+.button.toolbar.pressed {
+  --plate: var(--hx-btn-plate-press);
+  --plate-line: var(--hx-btn-line-hover);
+}
+
+/* Forced colours drop every painted plate and every box-shadow, the kit ring included: the border becomes a system
+   line, so each button is still a box, and focus draws a Highlight outline outside it (.button[data-focus-visible]
+   above turns the outline off). A drop target takes the same outline inset, fully inside the border. */
+@media (forced-colors: active) {
+  .button {
+    border-color: ButtonText;
+  }
+
+  .button.bubble {
+    border: var(--bw) solid ButtonText;
+  }
+
+  .button[data-focus-visible] {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+
+  .iconOnly[data-drop-target] {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: calc(-1 * (var(--bw) + var(--bw-2)));
+  }
+}
+
+/* A busy button's mark, in the icon's box. */
+.spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-md);
+}
+
+/* A busy button with no mark keeps its width: the dots sit over its middle, and the label keeps its place (and stays
+   the button's name) unseen under them: clipped away, so a forced-colours page hides it too. Opacity stays the
+   disabled recipe's alone. */
+.busyOver {
+  position: relative;
+}
+
+.busyOver > .label {
+  clip-path: inset(50%);
+}
+
+.spinner.spinnerOver {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  pointer-events: none;
+}
+
+.shortcut {
+  /* No dimming: the Kbd hairline keeps it quiet, and an opacity would drop its text below 4.5:1. */
+  margin-inline-start: var(--sp-1);
+}
+
+/* Visually hidden text inside a button (an IconButton's description). */
+.srOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: calc(-1 * var(--bw));
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The kit tooltip's box. Tooltip, IconButton, Popover and Qr read this class by name: keep it here. */
+.tooltip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  max-width: 280px;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-1);
+  background: var(--hx-ink);
+  color: var(--hx-on-ink);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+  box-shadow: var(--sh-2);
+  z-index: var(--z-tooltip);
+}
+
+/* An IconButton's own tooltip body: its content, then a disabled reason under it, read top to bottom. */
+.tipStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.tooltip[data-entering] {
+  animation: fade var(--dur-enter) var(--ease-out);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}

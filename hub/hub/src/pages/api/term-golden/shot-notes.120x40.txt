@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  API                                                                     ▸ Use with your agent
+ Computers             │
+ Files                 │  ▸ Endpoints    Overview
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ API  Esc
+ Vault                 │  POST /api/v1/notes/avatars
+                       │  Upload an avatar image
+On atlas ▾             │
+ Programs              │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Schedules             │  │ Authorisation                                                                             │
+ Scripts               │  │ Notes takes its own identity header, never your account token.                            │
+ Logs                  │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Tunnels               │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Notes                 │  │ How to call it                                                                            │
+ AI                    │  │ No example for this request's shape: see the docs.                                        │
+ VMs                   │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+Account                │  │ About this endpoint                                                                       │
+ Plans & Billing       │  │ Operation ID  notes_uploadAvatar  ⧉ copy      Docs          https://docs.hoody.com/api/   │
+ Referrals             │  │ Service       Notes                                         notes/files/                  │
+ Keys and tokens       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+▌API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

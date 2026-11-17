@@ -1,0 +1,974 @@
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  color: var(--hx-muted);
+}
+
+.faint {
+  color: var(--hx-faint);
+}
+
+.flag {
+  font-size: var(--fs-lg);
+  line-height: 1;
+}
+
+.serverLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.serverLabel > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.realmChips {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Table rows keep one line (the kit's rows have a fixed height), so a realm name longer than its column ends
+   in an ellipsis, never a hard cut; the full name stays in the text (read aloud) and in the hover title. */
+.realmTag {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.realmName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.realmDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-round);
+  background: var(--realm, var(--hx-line-strong));
+
+  /* Never squeezed by a long name beside it (the Realms drawer's picker rows). */
+  flex: none;
+}
+
+.popBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  max-width: 320px;
+  font-size: var(--fs-md);
+}
+
+.popBody p {
+  margin: 0;
+}
+
+/* The colour swatch and its #RRGGBB as one press target (ColourButton), and a Tag that opens its note (OutsideTag):
+   both keep the text colour of the line they sit in, not the link colour. */
+.colourButton {
+  gap: var(--sp-2);
+  color: inherit;
+}
+
+.tagButton {
+  color: inherit;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.help {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+}
+
+.cards {
+  display: grid;
+
+  /* min(): one column when the panel is narrower than a tile, never a sideways scroll. */
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: var(--sp-3);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--hx-raised);
+}
+
+.card h4 {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+}
+
+.usageBars {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* The list's Usage cell (CPU, memory, disk): the three meters stacked, so the 140 px column holds three 60 px meters. */
+.usageStack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+}
+
+/* Usage in a panel (a tile's hint, a server's rows): the meter and its words wrap onto two lines when the
+   panel is narrow, instead of running past its edge. */
+.tileBars {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.runStatus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+.outputs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.nameCell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.nameLine {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.nameText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-inline-size: 0;
+}
+
+.zeroWrap {
+  max-inline-size: 560px;
+  margin-inline: auto;
+  padding-block: var(--sp-8);
+}
+
+.widget {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+
+  /* The launch strip (.tiles) turns into rows when the widget is narrow. */
+  container: ytiles / inline-size;
+}
+
+/* Home's "Your computer" programs as one launch strip: five joined cells in one frame, each a grey
+   head (icon over name, a new-tab mark) over a darker actions band that runs under all five. Two existing greys,
+   no white: light --hx-fill over --hx-sec-bg, dark --hx-fill over --hx-card. A cell's hover tints head and band
+   together; hover or keyboard focus adds the accent edge on top. A narrow widget gets one row per program. */
+.tiles {
+  --strip-band: var(--hx-sec-bg);
+
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--strip-band);
+  overflow: hidden;
+}
+
+:global(:root[data-hx-theme='dark']) .tiles {
+  --strip-band: var(--hx-card);
+}
+
+.stripCell {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  background: var(--hx-fill);
+}
+
+.stripCell + .stripCell {
+  border-inline-start: var(--bw) solid var(--hx-line);
+}
+
+.stripTile {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-block-size: 88px;
+  padding: var(--sp-3);
+  border: 0;
+  background: none;
+  color: var(--hx-ink);
+  text-align: center;
+  cursor: pointer;
+}
+
+.stripTile > svg:first-child {
+  inline-size: 24px;
+  block-size: 24px;
+}
+
+.stripTile strong {
+  font-weight: var(--fw-semibold);
+}
+
+.stripGo {
+  position: absolute;
+  inset-block-start: var(--sp-2);
+  inset-inline-end: var(--sp-2);
+  color: var(--hx-muted);
+}
+
+.stripTile:disabled {
+  opacity: var(--ctl-off-opacity);
+  cursor: default;
+}
+
+/* The focus ring stays ink (the accent edge alone is too faint on the grey to be the focus indicator). */
+.stripTile:focus-visible {
+  outline: var(--bw) solid var(--hx-ink);
+  outline-offset: calc(-1 * var(--sp-1));
+}
+
+.stripCell:hover > .stripTile:not(:disabled),
+.stripCell:hover > .stripActions,
+.stripCell:has(:focus-visible) > .stripTile,
+.stripCell:has(:focus-visible) > .stripActions {
+  background-image: linear-gradient(var(--hx-hover), var(--hx-hover));
+}
+
+/* The accent edge: on hover, and on keyboard focus of the tile or of one of its actions. */
+.stripCell:hover > .stripTile:not(:disabled),
+.stripCell:has(:focus-visible) > .stripTile {
+  box-shadow: inset 0 3px 0 var(--hx-acc);
+}
+
+/* Over .useActions (declared later in this file): the band centres its buttons with an even padding, no head inset. */
+.stripCell > .stripActions {
+  justify-content: center;
+  padding-inline: var(--sp-2);
+  background-color: var(--strip-band);
+}
+
+.stripCell:hover .stripActions button,
+.stripCell:focus-within .stripActions button {
+  color: var(--hx-ink);
+}
+
+/* Narrow: one row per program, the name on the left, its actions in the band on the right. Five columns need a 152 px
+   cell for the band (room for three 40 px actions, two 8 px gaps, 8 px padding each side) plus six 1 px borders: 766 px; on
+   touch (44 px actions) 164 px a cell, 826 px (the block below). */
+@container ytiles (width < 768px) {
+  .tiles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stripCell {
+    flex-direction: row;
+  }
+
+  .stripCell + .stripCell {
+    border-inline-start: 0;
+    border-block-start: var(--bw) solid var(--hx-line);
+  }
+
+  .stripTile {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--sp-3);
+    min-inline-size: 0;
+    min-block-size: 52px;
+    padding-inline: var(--sp-4);
+    text-align: start;
+  }
+
+  .stripGo {
+    position: static;
+    margin-inline-start: auto;
+  }
+
+  .stripCell:hover > .stripTile:not(:disabled),
+  .stripCell:has(:focus-visible) > .stripTile {
+    box-shadow: inset 3px 0 0 var(--hx-acc);
+  }
+
+  .stripCell > .stripActions {
+    border-block-start: 0;
+    border-inline-start: var(--bw) solid var(--hx-line);
+  }
+}
+
+/* A strip on a 320 px screen: the decorative new-tab mark goes and the head tightens, so the longest name still fits
+   beside its icon; the band keeps its spacing. */
+@container ytiles (width < 300px) {
+  .stripGo {
+    display: none;
+  }
+
+  .stripTile {
+    gap: var(--sp-2);
+    padding-inline: var(--sp-2);
+  }
+}
+
+@media (pointer: coarse) {
+  @container ytiles (768px <= width < 840px) {
+    .tiles {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .stripCell {
+      flex-direction: row;
+    }
+
+    .stripCell + .stripCell {
+      border-inline-start: 0;
+      border-block-start: var(--bw) solid var(--hx-line);
+    }
+
+    .stripTile {
+      flex-direction: row;
+      justify-content: flex-start;
+      gap: var(--sp-3);
+      min-inline-size: 0;
+      min-block-size: 52px;
+      padding-inline: var(--sp-4);
+      text-align: start;
+    }
+
+    .stripGo {
+      position: static;
+      margin-inline-start: auto;
+    }
+
+    .stripCell:hover > .stripTile:not(:disabled),
+    .stripCell:has(:focus-visible) > .stripTile {
+      box-shadow: inset 3px 0 0 var(--hx-acc);
+    }
+
+    .stripCell > .stripActions {
+      border-block-start: 0;
+      border-inline-start: var(--bw) solid var(--hx-line);
+    }
+  }
+}
+
+/* On touch the three actions grow to 44 px, so on a 320 px screen the band drops its gaps and most of its padding: the
+   targets stay whole (side by side, each glyph still 24 px from the next) and the name keeps its mouse-pointer room. */
+@media (pointer: coarse) {
+  @container ytiles (width < 300px) {
+    .stripCell > .stripActions {
+      gap: 0;
+      padding-inline: var(--sp-1);
+    }
+  }
+}
+
+.widgetFoot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+/* A footer link with a pill after its words ("10 running" then "3 need a look"): the kit's row gap between them. */
+.footLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* On a coarse pointer each footer link is a --ctl-h tall target (44 px there), so the footer grows instead of the
+   links' targets overlapping when they wrap at 390. */
+@media (pointer: coarse) {
+  .widgetFoot > :is(a, button) {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--ctl-h);
+  }
+}
+
+/* A card's title: the whole name, wrapped where it must, one step above the card's other text. */
+.nameCard {
+  min-inline-size: 0;
+  font: var(--t-section);
+  overflow-wrap: anywhere;
+}
+
+/* The project (and the Current chip) on their own line under a card's name. */
+.nameSub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.nameStrong {
+  flex: none;
+  max-inline-size: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 168 px: two tiles side by side on a phone, each wide enough for its whole actions row of 44 px touch
+   targets (see .useActions). */
+.useGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(168px, 100%), 1fr));
+
+  /* Cards keep their own height, so a tile without actions does not stretch and every head sits at the same place. */
+  align-items: start;
+  gap: var(--sp-3);
+}
+
+.useTile {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--sp-3);
+  block-size: 64px;
+  text-align: start;
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--hx-raised);
+  color: var(--hx-ink);
+  padding-inline: var(--sp-4);
+  cursor: pointer;
+}
+
+.useText {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.useTile:hover:not(:disabled) {
+  background: var(--hx-hover);
+}
+
+.useTile:focus-visible {
+  outline: var(--bw) solid var(--hx-ink);
+  outline-offset: var(--sp-half);
+}
+
+.useTile:disabled {
+  opacity: var(--ctl-off-opacity);
+  cursor: default;
+}
+
+.runRow {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.runRow > :first-child {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.outputPanel {
+  min-block-size: 240px;
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--hx-fill);
+  overflow: auto;
+}
+
+.dangerText {
+  color: var(--hx-danger);
+}
+
+.warnText {
+  color: var(--hx-warn);
+}
+
+.markedName {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.markedName strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.nowrapRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  white-space: nowrap;
+}
+
+/* A name with its id and copy button (Overview facts). */
+.idRow {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* Touch: a coarse pointer raises only the kit's default control height; the Overview's text actions (realm names,
+   Manage, Add to a realm) get the same 44 px target here, as Home does. A real box, so neighbours never overlap it. */
+@media (pointer: coarse) {
+  .touch {
+    min-block-size: var(--ctl-h);
+  }
+}
+
+/* A Servers card's AI footer: a small heading, then the lanes, then the card's one upgrade, in one column.
+   On a wide rail card (three-up meters) its parts join the kit footer's three-column grid
+   (DataTable .cardsRail, which sets the grid and its gaps): the heading across the top, a lane a cell, the upgrade in
+   the cell after the lanes. The query is the kit's: the cards' own width, never the window's. */
+.ai {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-1);
+  align-content: start;
+  min-width: 0;
+  font: var(--t-small);
+}
+
+.aiHead {
+  color: var(--hx-muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.aiLine {
+  overflow-wrap: anywhere;
+}
+
+/* A plain list of links (ServerDetail "Computers on this server"): no bullets or indent, rows on the token scale. */
+.plain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aiLanes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* One lane of a server card: name and percent on one line, the meter below it at the
+   lane's full width; a lane with no reading says so in words where the meter would be. */
+.aiLane {
+  display: grid;
+  grid-template-areas:
+    'name pct'
+    'bar bar';
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--sp-1) var(--sp-2);
+  align-items: baseline;
+  min-width: 0;
+  padding-block: calc(var(--sp-half) + var(--sp-px));
+}
+
+.aiName {
+  grid-area: name;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aiPct {
+  grid-area: pct;
+  min-width: 4ch;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.aiBar,
+.aiWords {
+  grid-area: bar;
+  min-width: 0;
+}
+
+/* The meter as a flex item, centred in the bar's 16 px, never on the text line: in a line box its top landed at a
+   fractional y, and its 1 px top and bottom strokes straddled device pixels (the meter.meter-ten-px-square spec measures a lane at its limit). */
+.aiBar {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--sp-4);
+}
+
+/* The meter's ten blocks are exact only on a whole 10 px period from a whole pixel: on a fractional period one 2 px gap
+   rasterizes to 1 px. So the lane's width is rounded down to 10 px, from the lane's own start, not 100%. */
+.aiBar > [role='meter'] {
+  inline-size: round(down, 100%, 10px);
+}
+
+.aiWords {
+  overflow-wrap: anywhere;
+}
+
+/* The wide rail's overrides come after every base rule above: same specificity, so order decides. */
+@container cards-rail (width >= 940px) {
+  .ai,
+  .aiLanes {
+    display: contents;
+  }
+
+  .aiHead,
+  .aiLine {
+    grid-column: 1 / -1;
+  }
+
+  /* The upgrade sits on the lanes' baseline with one --sp-1 under it. */
+  .aiUp {
+    align-self: end;
+    padding-block-end: var(--sp-1);
+  }
+}
+
+/* The Desktop tab: the frame fills the tab's width at a desktop's shape; while it has not loaded, a skeleton covers it
+   and the frame itself is hidden, so a blank frame never reads as a working desktop. */
+.desktopBox {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  min-height: 240px;
+  max-height: 78vh;
+}
+
+.desktopFrame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: var(--r-1);
+}
+
+.desktopBox[data-desktop='loading'] .desktopFrame {
+  visibility: hidden;
+}
+
+.desktopCover {
+  position: absolute;
+  inset: 0;
+}
+
+.desktopKeys {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+/* Overview: sections sit --sp-6 apart and keep --sp-3/--sp-4 inside. */
+.overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  container-type: inline-size;
+}
+
+/* An Open on tile with its address actions: one card, the tile on top and, for a program that
+   is ready, a row of icon actions under it, aligned with the tile's padding. The row is always laid out, so nothing
+   jumps or covers the tile on hover; it is quiet at rest and full on hover or focus (and always full on touch). */
+.useCard {
+  display: flex;
+  flex-direction: column;
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--hx-raised);
+  container-type: inline-size;
+}
+
+.useCard > .useTile {
+  flex: none;
+  inline-size: 100%;
+  border: 0;
+  background: none;
+}
+
+.useCard:hover > .useTile:not(:disabled) {
+  background: var(--hx-hover);
+}
+
+.useActions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+
+  /* A compact row: its first glyph lines up with the head's text column, which starts after the tile padding, the icon
+     and the gap; an icon button (one button height wide, `--btn-h`, or the touch target `--icon-hit` when larger)
+     insets its glyph by half the difference. */
+  padding-block: var(--sp-1);
+  padding-inline: calc(var(--sp-4) + var(--icon-md) + var(--sp-3) - (max(var(--btn-h), var(--icon-hit)) - var(--icon-md)) / 2) var(--sp-3);
+  border-block-start: var(--bw) solid var(--hx-line);
+}
+
+/* Never shrink a button below its target size. */
+.useActions > * {
+  flex: none;
+}
+
+/* A card too narrow for the aligned row (three buttons, two gaps, the inset and the end padding: 160 px, or 190 px
+   with 44 px touch targets) drops the inset and keeps an even padding, so every button keeps its full size. */
+@container (width < 160px) {
+  .useActions {
+    padding-inline: var(--sp-2);
+  }
+}
+
+@media (pointer: coarse) {
+  @container (width < 190px) {
+    .useActions {
+      padding-inline: var(--sp-2);
+    }
+  }
+}
+
+/* The kit's ghost icon buttons are muted at rest; the whole card's hover or focus brings them to full ink. */
+.useCard:hover .useActions button,
+.useCard:focus-within .useActions button {
+  color: var(--hx-ink);
+}
+
+@media (hover: none) {
+  .useActions button {
+    color: var(--hx-ink);
+  }
+}
+
+/* A tile's second line: what pressing does, with its mark (new tab, or a tab of this page). */
+.useWord {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+/* The Overview's summary sections: one column below 960 px of pane (status, what is on it, access, where it runs,
+   details: the reading order), two columns above it, status and what is on it on the start side. Each is a kit Stack,
+   so the rhythm is the kit's; only the side-by-side grid is set here. */
+@container (width >= 960px) {
+  .ovGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    column-gap: var(--sp-6);
+  }
+}
+
+/* The size upgrade under the status facts. */
+.ovUpgrade {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.realmLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  min-width: 0;
+}
+
+/* "· Manage" wraps as one piece. */
+.realmManage {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  white-space: nowrap;
+}
+
+.realmItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.realmItemName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.realmItemId {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.realmList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.realmRows {
+  display: flex;
+  flex-direction: column;
+  max-block-size: min(60vh, 420px);
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+/* On a phone the list opens as a full-screen sheet (RealmList adds this when the kit's useIsPhone says so, the same
+   test that makes the Popover a sheet): it takes the sheet's height, less its title, search and footer. */
+.realmRowsSheet {
+  max-block-size: calc(100dvh - 220px);
+}
+
+.realmRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-block-size: 40px;
+  padding-block: var(--sp-1);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.realmRow:last-child {
+  border-block-end: 0;
+}
+
+.realmRowName {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.realmRow > .faint {
+  flex: 1;
+}
+
+.realmListFoot {
+  display: flex;
+  justify-content: flex-end;
+  padding-block-start: var(--sp-3);
+  border-block-start: var(--bw) solid var(--hx-line);
+}
+
+/* Detail header, line under the name: server · project · Current computer. */
+.headLine {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: var(--sp-1);
+
+  /* Each item carries its separator in front, in a --sp-5 lead. The line starts one lead early and clips most of it,
+     so the separator of every item that begins a line (the first, and any that wrapped) is cut away: no line ends or
+     starts with a "·". The clip keeps 6 px of the lead, room for the first item's focus ring. */
+  margin-inline-start: calc(-1 * var(--sp-5));
+  clip-path: inset(calc(-1 * var(--sp-2)) calc(-1 * var(--sp-2)) calc(-1 * var(--sp-2)) calc(var(--sp-3) + var(--sp-half)));
+}
+
+.headLine:dir(rtl) {
+  clip-path: inset(calc(-1 * var(--sp-2)) calc(var(--sp-3) + var(--sp-half)) calc(-1 * var(--sp-2)) calc(-1 * var(--sp-2)));
+}
+
+.headItem {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding-inline-start: var(--sp-5);
+}
+
+.headItem::before {
+  content: '·' / '';
+  position: absolute;
+  inset-inline-start: 0;
+  inline-size: var(--sp-5);
+  text-align: center;
+  color: var(--hx-faint);
+}
+
+/* Read out, not shown: a polite status line for a result that already shows in place (Make current). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Network glance: the firewall rules used beside their Meter (the Backups glance kept count shape). */
+.meterFact {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Firewall: a direction's note on its own line in the rules table's empty state. */
+.line {
+  display: block;
+}

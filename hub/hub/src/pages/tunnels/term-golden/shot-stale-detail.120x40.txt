@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Tunnels                                           ▸ Use with your agent   + Connect a laptop
+ Computers             │  Put a laptop app online through atlas, or let atlas reach a service on your laptop. 2
+ Files                 │  sessions connected to atlas
+ Bots                  │
+ Board                 │  ‹ Tunnels  Esc
+ Demo                  │  Inside this computer :6379  · As of 09:00 AM                                              [⋯]
+ Vault                 │
+                       │  ! Could not read this computer's tunnels. Showing what was read at 09:00   Try again  Details
+On atlas ▾             │    AM.
+ Programs              │
+ Schedules             │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Scripts               │  │ Session                                                                                   │
+ Logs                  │  │ Session             9b1d7e…  ⧉ copy                                                       │
+▌Tunnels               │  │ Connection address  192.0.2.x Show  ⧉ copy                                                │
+ Notes                 │  │ Streams             0 streams of 1024                                                     │
+ AI                    │  │ Protocol            v2                                                                    │
+ VMs                   │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+Account                │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Plans & Billing       │  │ Inside this computer                                                                      │
+ Referrals             │  │ Programs on this computer connect here to reach the laptop's service; it gets no public   │
+ Keys and tokens       │  │ address.                                                                                  │
+ API                   │  │ Inside this computer  127.0.0.1:6379  ⧉ copy                                              │
+ Notifications      26 │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

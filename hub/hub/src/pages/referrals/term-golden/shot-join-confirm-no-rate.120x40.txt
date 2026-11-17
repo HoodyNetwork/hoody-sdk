@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Referrals                                                                     [Program rules]
+ Computers             │  Invite people to Hoody. When they pay for servers by card or crypto, you earn Referral
+ Files                 │  credit.
+ Bots                  │
+ Board                 │  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓█
+ Demo                  │  ┃ Invite people, earn Referral credit                                                      ┃█
+ Vault                 │  ┃ Invite people to Hoody and earn Referral credit when they pay for servers by card or     ┃█
+                       │  ┃ cr┌──────────────────────────────────────────────────────────┐                           ┃█
+On atlas ▾             │  ┃ ✓ │ Join the referral program?                         Esc × │                           ┃█
+ Programs              │  ┃ ✓ │ ──────────────────────────────────────────────────────── │                           ┃█
+ Schedules             │  ┃ ✓ │ You earn a share of what the people you invite pay for   │                           ┃█
+ Scripts               │  ┃ Ho│ servers, as Referral credit.                             │                           ┃█
+ Logs                  │  ┃   │                                                          │                           ┃█
+ Tunnels               │  ┃ Wh│ See how credit works                                     │                           ┃█
+ Notes                 │  ┃   │                                                          │                           ┃█
+ AI                    │  ┃  J│ • Referral credit pays for servers only. It is not cash: │                           ┃█
+ VMs                   │  ┗━━━│ it can't be sent to another account or moved to AI, and  │━━━━━━━━━━━━━━━━━━━━━━━━━━━┛█
+                       │      │ it can't be withdrawn, except that Creators can ask      │                            █
+Account                │      │ Hoody support about withdrawing their credit.            │
+ Plans & Billing       │  ┌───│ • You can't leave the program from the Hub.              │───────────────────────────┐
+▌Referrals             │  │ Wh│                                                          │                           │
+ Keys and tokens       │  │ ✓ │                                         [Cancel]   Join  │                           │
+ API                   │  │ ✓ └──────────────────────────────────────────────────────────┘                           │
+ Notifications      26 │  │ ✓ Totals only: how many signed up and pay, never who                                     │
+ Account               │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+ + Rent servers        │
+ Guide                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+ Support               │  │ Levels                                                                                   │
+                       │  │ Your share depends on your level. Each purchase earns at the level of the month it's     │
+                       │  │ activated.                                                                               │
+                       │  │ ┌─────────────────────────────────────────┐  ┌─────────────────────────────────────────┐ │
+                       │  │ │ Referrer                                │  │ Creator                                 │ │
+                       │  │ │ A share                                 │  │ 10%                                     │ │
+                       │  │ │ of what the people you invite pay for   │  │ from the month after 11 or more         │ │
+                       │  │ │ servers                                 │  │ customers you referred have earned you  │ │
+                       │  │ │ ✓ From the day you join                 │  │ credit that wasn't all reversed         │ │
+                       │  │ │ ✓ Credit pays for servers               │  │ ✓ On purchases and renewals activated   │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

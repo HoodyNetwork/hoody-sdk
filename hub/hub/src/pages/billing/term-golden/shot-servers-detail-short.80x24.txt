@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Plans & Billing  Balance $15                                     [+ Add funds]
+ Upgrade a server, rent a whole machine, and see what you pay.
+   Plans  ▸ Bare metal    Wallet & usage
+ ──────────────────────────────────────────────────────────────────────────────
+ │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC               [Pay now]
+ ‹ Plans & Billing  Esc
+ Tokyo L  ● Instant delivery*                                                 █
+ JP Tokyo · instant delivery*                                                 █
+                                                                              █
+ Term
+ (•) $228 for 30 days
+ ( ) $499 for 90 days
+
+
+ Your order
+ Rental                                                                   $179
+ One-time setup                                                            $49
+ ─────────────────────────────────────────────────────────────────────────────
+ Total first payment                                                      $228
+ ──────────────────────────────────────────────────────────────────────────────
+ ! You're $213 short
+                                                [Add funds]   Rent this server
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

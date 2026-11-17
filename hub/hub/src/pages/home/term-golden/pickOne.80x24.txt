@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ○ atlas ▾  [A]  ^K · ?
+ Good morning, Ada                              [i What is Hoody?]  [Customize]
+ ■ Personal · · atlas (Stopped) · SG n12
+
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ │ Ask atlas to…                                                     [Ask] │█
+ │                                                                           │█
+ │ [Install the popular coding agents] [Keep my app running after restarts]  │█
+ │ [What is running on atlas?] [Back up my files daily] [Create a bot that…] │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Your computer                                                  View all › │
+ │ atlas ● Stopped SG n12 [▷ Start]                                          │
+ │                                                                           │
+ │ Agent ⇗                                                                   │
+ │ Terminal ⇗                                                                │
+ │ Desktop ⇗                                                                 │
+ │ Files ⇗                                                                   │
+ │ Browser ⇗                                                                 │
+ │                                                                           │
+ │ Start atlas to open its programs.                           All computers │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────┐ ┌────────────────────────────────────┐
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

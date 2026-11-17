@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs                              ▸ Use with your agent   + Launch an app
+ Apps on atlas: programs you open only when you need them.
+ ‹ Programs  Esc
+ sqlite-web  ● Check needed                                                   █
+                                                                              █
+ │ ◷ Opening sqlite-web may have gone through                                 █
+ │   The computer did not confirm. Check before you open it again, so a       █
+ │   second copy is not started.                                              █
+ │   [Check again]                                                            █
+                                                                              █
+ Opens in   Web                          Source     pkgx                      █
+ Where      Terminal 15009               Variables  DB_PATH, READ_ONLY        █
+ Started    Nov 11, 2026, 8:57 AM        Handle     a7b8…a7b8 ⧉               █
+                                                                              █
+                                                                       ⧉ copy █
+  $ sqlite_web data.db
+
+
+ Stop or remove
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │                                                                           │
+ │ Stop sqlite-web                 [■ Stop]                                  │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

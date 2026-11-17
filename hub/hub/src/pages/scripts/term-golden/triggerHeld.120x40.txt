@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                 ▸ Use with your agent   + New script
+ Computers             │  Small programs on your computers that answer an address or run on a schedule.
+ Files                 │
+ Bots                  │  / Search                   Status ▾                                                         █
+ Board                 │  70 scripts  [Recently deleted · 2]  ↻ Refresh  View options                                 █
+ Demo                  │                                                                                              █
+ Vault                 │    Script ↑               Status           Address                           Calls, 24 h     █
+                       │  ▌ Job 1                  —                /jobs/job-01                    0 · 40 failed   ⋯██
+On atlas ▾             │    Job 2                  ● Working        /jobs/job-02                               37   ⋯██
+ Programs              │    Job 3                  ● Working        /jobs/job-03                               74   ⋯██
+ Schedules             │    Job 4                  ● Working        /jobs/job-04                              111   ⋯██
+▌Scripts               │    Job 5                  ● Working        /jobs/job-05                              148   ⋯██
+ Logs                  │    Job 6                  ● Working        /jobs/job-06                              185   ⋯██
+ Tunnels               │    Job 7                  ● Working        /jobs/job-07                              222   ⋯██
+ Notes                 │    Job 8                  ● Working        /jobs/job-08                              259   ⋯██
+ AI                    │    Job 9                  ● Working        /jobs/job-09                              296   ⋯██
+ VMs                   │    Job 10                 ● Failing        /jobs/job-10                  333 · 40 failed   ⋯██
+                       │    Job 11                 ● Working        /jobs/job-11                              370   ⋯██
+Account                │    Job 12                 ● Working        /jobs/job-12                              407   ⋯██
+ Plans & Billing       │    Job 13                 ● Working        /jobs/job-13                              444   ⋯██
+ Referrals             │    Job 14                 ● Working        /jobs/job-14                              481   ⋯██
+ Keys and tokens       │    Job 15                 ● Working        /jobs/job-15                              518   ⋯██
+ API                   │    Job 16                 ● Working        /jobs/job-16                              555   ⋯██
+ Notifications      26 │    Job 17                 ● Working        /jobs/job-17                              592   ⋯██
+ Account               │    Job 18                 ● Working        /jobs/job-18                              629   ⋯░█
+                       │    Job 19                 ● Failing        /jobs/job-19                  666 · 40 failed   ⋯░█
+ + Rent servers        │    Job 20                 ● Working        /jobs/job-20                              703   ⋯░█
+ Guide                 │    Job 21                 ● Working        /jobs/job-21                              740   ⋯░█
+ Support               │    Job 22                 ● Working        /jobs/job-22                              777   ⋯░
+                       │    Job 23                 ● Working        /jobs/job-23                              814   ⋯░
+                       │    Job 24                 ● Working        /jobs/job-24                              851   ⋯░
+                       │    Job 25                 ● Working        /jobs/job-25                              888   ⋯░
+                       │    Job 26                 ● Working        /jobs/job-26                               25   ⋯░
+                       │    Job 27                 ● Working        /jobs/job-27                               62   ⋯░
+                       │    Job 28                 ● Failing        /jobs/job-28                   99 · 40 failed   ⋯░
+                       │    Job 29                 ● Working        /jobs/job-29                              136   ⋯░
+                       │
+                       │  1–50 of 70 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

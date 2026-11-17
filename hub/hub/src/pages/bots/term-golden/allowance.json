@@ -1,0 +1,14 @@
+{
+  "_doc": "Terminal page acceptance debt (scripts/term/goldens.ts). Shrink-only: `bun scripts/term/check.ts --page <id> --update` drops what is gone and never adds. Fix the cause instead of listing it.",
+  "crashes": [],
+  "placeholders": [],
+  "holes": [],
+  "traps": [],
+  "domRefused": [],
+  "domUnsupported": [],
+  "consoleErrors": [
+    "ActionMenu: disabled item(s) without a reason: reset, forget, purge, delete. Give each a disabledReason, or its group a note."
+  ],
+  "tableFaults": [],
+  "untranslatable": 0
+}

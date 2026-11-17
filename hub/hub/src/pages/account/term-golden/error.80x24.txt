@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                 ◆ Personal ▾  Computers not loaded ▾  [A]  ^K · ?
+ Account
+ Your profile, how you sign in, and where you are signed in.
+ ▌Profile  Password  Two-step sign-in  Passcode lock  Sign-in sessions   6 ›
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Security                                                                  │█
+ │ ! Your email status could not be read.                        [Try again] │
+ │ ! Two-step sign-in status could not be read.                  [Try again] │
+ │ ! Sign-in sessions could not be read.                         [Try again] │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Profile                                                                   │
+ │ ! This didn't load                                                        │
+ │ [Try again]                                                               │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Password                                                                  │
+ │                                                                           │
+ │ Password                        [Change password]                         │
+ │ Changing it signs you out                                                 │
+ │ everywhere.                                                               │
+ └───────────────────────────────────────────────────────────────────────────┘
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

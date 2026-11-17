@@ -1,0 +1,207 @@
+/* StepTrail: the summary row of a turn's steps and, open, one row per step. Kit tokens only. The summary row starts at the
+   column's text edge with no rule; only the open list of rows has the start rule. */
+.trail { color: var(--hx-muted); }
+
+/* The summary row: the toggle, then (closed) a preview of the step that matters now. One line; the preview gives way first. */
+.trailHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+/* The trail toggle is the kit TextButton (its focus ring, forced colours and touch size). It is a quiet summary, not an action
+   in prose: muted, medium weight, no underline at rest; the kit's own underline returns under the pointer, on focus and when
+   pressed. A long label shrinks with an ellipsis; the outcome mark stays. */
+.trailRow {
+  flex: 0 1 auto;
+  gap: var(--sp-2);
+  max-inline-size: 100%;
+}
+
+.trailHead .trailRow { font-weight: var(--fw-medium); }
+
+.trailHead .trailRow:not([data-hovered], [data-focus-visible], [data-pressed]) {
+  color: var(--hx-muted);
+  text-decoration: none;
+}
+
+.trailText {
+  flex: 0 1 auto;
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trailMark { display: inline-flex; flex: none; }
+
+/* The preview, closed: the step's kind and what it worked on, muted, cut with an ellipsis (the open trail shows every row). */
+.trailPeek {
+  display: flex;
+  flex: 1 1 0;
+  align-items: baseline;
+  gap: var(--sp-2);
+  overflow: hidden;
+  min-width: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+  white-space: nowrap;
+}
+
+.peekTool { flex: none; font-weight: var(--fw-medium); }
+
+.peekSum {
+  flex: 0 1 auto;
+  overflow: hidden;
+  min-width: 0;
+  font-family: var(--font-mono);
+  text-overflow: ellipsis;
+}
+
+/* Mark, kind, input, time, chevron: one grid for every row, so kinds, inputs and times line up down the trail. The kind
+   column is as wide as the longest kind, up to a cap (a longer one ends in an ellipsis); the time column as wide as the
+   longest time, so times end on one edge. */
+.steps {
+  display: grid;
+  grid-template-columns: var(--sp-4) fit-content(calc(var(--sp-10) * 2)) minmax(0, 1fr) max-content var(--sp-4);
+  column-gap: var(--sp-3);
+  margin: var(--sp-1) 0 0;
+  padding: 0;
+  padding-inline-start: var(--sp-3);
+  border-inline-start: var(--bw) solid var(--hx-line-strong);
+  list-style: none;
+}
+
+.step {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+
+.steps > li + li { border-block-start: var(--bw) solid var(--hx-line); }
+
+/* The agent's own words between steps: prose in the text face under the input column, not a step row. */
+.note {
+  grid-column: 2 / -1;
+  padding-block: var(--sp-2);
+  color: var(--hx-ink);
+  font: var(--t-small);
+  overflow-wrap: anywhere;
+}
+
+/* The row is one button over the whole width: flat at rest, the list hover fill under the pointer and on keyboard focus. */
+.stepRow {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: start;
+  min-height: var(--option-row-h);
+  padding: var(--sp-2) var(--sp-2);
+  margin-inline: calc(-1 * var(--sp-2));
+  border: 0;
+  border-radius: var(--r-2);
+  background: transparent;
+  color: inherit;
+  font: var(--t-small);
+  text-align: start;
+  cursor: pointer;
+}
+
+/* Without subgrid each row lays itself out on the same fixed columns, so rows still line up (the row stretches as its
+   list item's one grid cell). */
+@supports not (grid-template-columns: subgrid) {
+  .step { grid-template-columns: minmax(0, 1fr); }
+
+  .stepRow {
+    grid-column: 1;
+    grid-template-columns: var(--sp-4) calc(var(--sp-10) * 2) minmax(0, 1fr) var(--sp-10) var(--sp-4);
+    column-gap: var(--sp-3);
+  }
+
+  .step > .stepDetail { grid-column: 1; }
+}
+
+.stepRow[data-hovered],
+.stepRow:is(:focus-visible, [data-focus-visible]) { background: var(--hx-hover); }
+.stepRow[data-pressed] { background: var(--hx-press); }
+
+.stepRow:is(:focus-visible, [data-focus-visible]) {
+  outline: none;
+  box-shadow: var(--focus-ring-inset);
+}
+
+/* A row with nothing more to show than it shows is not a button: no pointer, no fill, no chevron. */
+.stepFlat { cursor: default; }
+
+.stepMark { display: inline-flex; align-items: center; block-size: var(--lh-box-small); }
+
+.stepTool {
+  overflow: hidden;
+  min-width: 0;
+  color: var(--hx-ink);
+  font-weight: var(--fw-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stepMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+  min-width: 0;
+}
+
+/* What the step worked on: two lines at most in the row; the open row shows all of it. */
+.stepSum {
+  display: -webkit-box;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+/* Said under a command that was started in the background. */
+.stepHint { color: var(--hx-muted); }
+
+.stepErr { color: var(--hx-danger-text); overflow-wrap: anywhere; }
+
+/* A step whose result never came back: it may have run, so it is not shown as failed. */
+.stepErr.stepUnknown { color: var(--hx-ink); }
+
+.stepTime { font-variant-numeric: tabular-nums; text-align: end; white-space: nowrap; }
+.stepChevron { block-size: var(--lh-box-small); color: var(--hx-muted); }
+
+/* The open row's detail: under the input column, to the row's end. */
+.stepDetail {
+  display: flex;
+  grid-column: 2 / -1;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding-block: var(--sp-1) var(--sp-3);
+}
+
+.detailLine { margin: 0; color: var(--hx-muted); font: var(--t-small); overflow-wrap: anywhere; }
+
+.ok { color: var(--hx-ok); }
+.bad { color: var(--hx-danger); }
+.infoMark { color: var(--hx-muted); }
+
+@media (pointer: coarse) {
+  .stepRow { min-height: var(--touch-min); }
+}
+
+/* Forced colours drop box-shadow, so the ring above would vanish: an inset outline in the system Highlight colour. */
+@media (forced-colors: active) {
+  .step + .step { border-block-start-color: CanvasText; }
+
+  .steps { border-inline-start-color: CanvasText; }
+
+  .stepRow:is(:focus-visible, [data-focus-visible]) {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: calc(var(--bw-2) * -1);
+  }
+}

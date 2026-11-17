@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Account
+ Computers             │  Your profile, how you sign in, and where you are signed in.
+ Files                 │
+ Bots                  │  ‹ 5  ▌Agent sign-in  Security history  SSH keys  Emails  Elsewhere  This device  Questions
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Vault                 │  │ Agent sign-in                                                                         │
+                       │  │                                                                                       │
+On atlas ▾             │  │ Days signed in                  │ 90                                                  │
+ Programs              │  │ How long an agent stays signed  A whole number from 1 to 365. It applies the next     │
+ Schedules             │  │ in from this device.            time the agent's sign-in is renewed.                  │
+ Scripts               │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ Logs                  │
+ Tunnels               │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Notes                 │  │ Security history                                                                      │
+ AI                    │  │ Sign-ins over the last 180 days, newest first.                                        │
+ VMs                   │  │ / Search                 Filters                                 9 entries  ↻ Refresh │
+                       │  │                                                                                       │
+Account                │  │   Event                When ↓            From                       Through           │
+ Plans & Billing       │  │ › Signed in            19 days ago       203.0.113.24 · SG          Browser           │▄
+ Referrals             │  │   Signed in            20 days ago       192.0.2.88 · US            Browser           │█
+ Keys and tokens       │  │   Signed in            20 days ago       198.51.100.130 · GB        Browser           │█
+ API                   │  │   Signed in            20 days ago       203.0.113.24 · SG          Browser           │█
+ Notifications      26 │  │   Signed in            21 days ago       192.0.2.88 · US            Hoody CLI         │█
+▌Account               │  │   Signed in            21 days ago       198.51.100.130 · GB        Browser           │█
+                       │  │   Signed in            22 days ago       203.0.113.24 · SG          Browser           │
+ + Rent servers        │  │   Signed in            22 days ago       192.0.2.88 · US            Browser           │
+ Guide                 │  │   Signed in            22 days ago       198.51.100.130 · GB        Browser           │
+ Support               │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ SSH keys                                                                              │
+                       │  │ Each computer takes one SSH key, set on that computer.                                │
+                       │  │ / Search                                                       5 computers  ↻ Refresh │
+                       │  │                                                                                       │
+                       │  │   Computer ↑        Key                                                               │
+                       │  │ › atlas             ED25519 …AcctKey1                                                 │
+                       │  │                     ada@laptop                                                        │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

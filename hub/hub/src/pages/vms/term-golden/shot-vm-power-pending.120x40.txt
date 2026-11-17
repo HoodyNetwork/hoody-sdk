@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines › web-1
+ Computers             │  web-1  ● Running                                                              Shut down   [⋯]
+ Files                 │  A VM inside atlas.
+ Bots                  │
+ Board                 │  ◷ The shut-down of web-1 may have gone through.                [Check again]  [Stop tracking]
+ Demo                  │    The last read does not show it yet.
+ Vault                 │
+                       │  ▸Overview  Screen  Ports  Storage  Snapshots  Settings  Logs
+On atlas ▾             │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Programs              │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Schedules             │  │ Overview                                                                                  │
+ Scripts               │  │ Memory                  2 GB                  Disk connection         VirtIO              │
+ Logs                  │  │ CPUs                    2                     Screen                  On                  │
+ Tunnels               │  │ Disk                    20 GB                 Open ports              2                   │
+ Notes                 │  │ Starts with             UEFI                  Starts with the         Yes                 │
+ AI                    │  │ TPM                     No                    computer                                    │
+▌VMs                   │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

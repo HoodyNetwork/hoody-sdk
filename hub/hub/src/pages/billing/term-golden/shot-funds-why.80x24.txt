@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY       ┃ Add funds                                           Esc ×
+ Plans & Billing    ┃ Money you add goes to your wallet. You pay on the
+ Upgrade a server, r┃ provider's page.
+ ▸ Plans    Bare met┃ ─────────────────────────────────────────────────────────
+ ───────────────────┃ Wallet balance                                    $42.50█
+ │ ✗ fra-7: On hold ┃                                                         █
+ Plans              ┃ ┌──────────────────────────────────────────────────────┐█
+ Each plan is a serv┃ │                                                      │█
+ disk. You can take ┃ │ Pay with                                             │█
+                    ┃ │ ‹ Card ›  Crypto                                     │█
+ ┌──────────────────┃ │                                                      │█
+ │                  ┃ │ Amount                                               │█
+ │ Plans for        ┃ │ From $5.00 to $10,000.00.                            │█
+ │ Choose a plan to ┃ │   $10  ‹ $20 ›  $50    $100    Other amount          │█
+ │ server, or pick o┃ │                                                      │█
+ │ to upgrade it.   ┃ └──────────────────────────────────────────────────────┘█
+ │                  ┃                                                         █
+ └──────────────────┃ By continuing you agree to the Terms of Service and the █
+                    ┃ Privacy Policy.                                         █
+ ┌──────────────────┃
+ │ Free             ┃ ▾ How does adding funds work?
+ │ $0 / month       ┃   The amount has to be inside the range the payment
+ │ Your free server:┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter op┃ [Cancel]   Continue to payment

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines › web-1
+ web-1  ● Running                                               Shut down   [⋯]
+ A VM inside atlas.
+  Overview  Screen  Ports  Storage  Snapshots  Settings ▸Logs
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Logs                                                          [↻ Refresh] │
+ │ ‹ Console ›  Machine    Network                                           │
+ │                                                                   ⧉ copy  │
+ │  [ 0061 ] boot step 61                                                    │
+ │  [ 0062 ] boot step 62                                                    │
+ │  [ 0063 ] boot step 63                                                    │
+ │  [ 0064 ] boot step 64                                                    │
+ │  [ 0065 ] boot step 65                                                    │
+ │  [ 0066 ] boot step 66                                                    │
+ │  [ 0067 ] boot step 67                                                    │
+ │  [ 0068 ] boot step 68                                                    │
+ │  [ 0069 ] boot step 69                                                    │
+ │  [ 0070 ] boot step 70                                                    │
+ │  [ 0071 ] boot step 71                                                    │
+ │  [ 0072 ] boot step 72                                                    │
+ │  [ 0073 ] boot step 73                                                    │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

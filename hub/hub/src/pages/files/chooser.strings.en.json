@@ -1,0 +1,17 @@
+{
+  "chooser.off.stopped": "Stopped. Start it to read its files.",
+  "chooser.off.starting": "Still starting. Its files can be read once it runs.",
+  "chooser.off.attention": "Its state needs a look in Computers, so its files can't be read.",
+  "chooser.off.noAddress": "Its files can't be reached yet.",
+  "chooser.place.home": "Home folders",
+  "chooser.place.root": "Administrator's folder",
+  "chooser.place.tmp": "Temporary files",
+  "chooser.lossy": "This name has characters that can't be passed on exactly.",
+  "chooser.findTop": "Open a folder first: the top of a computer can't be searched in one go.",
+  "chooser.preview.empty": "This file is empty.",
+  "chooser.preview.off": "Pictures can't be previewed on this computer.",
+  "chooser.preview.big": "Too big to preview here.",
+  "chooser.preview.notImage": "This picture can't be shown here.",
+  "chooser.preview.notText": "This file isn't text, so it can't be previewed.",
+  "chooser.preview.gone": "This file isn't there any more."
+}

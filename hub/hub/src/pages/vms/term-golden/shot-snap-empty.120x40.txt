@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines › win11
+ Computers             │  win11  ● Stopped                                                                  Start   [⋯]
+ Files                 │  A VM inside atlas.
+ Bots                  │
+ Board                 │   Overview  Screen  Ports  Storage ▸Snapshots  Settings  Logs
+ Demo                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Snapshots                                                             [+ Take a snapshot] │
+On atlas ▾             │  │ A snapshot keeps the VM's disk as it is now, so you can go back to it.                    │
+ Programs              │  │◷ No snapshots yet                                                                         │
+ Schedules             │  │Take one before a risky change.                                                            │
+ Scripts               │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+▌VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

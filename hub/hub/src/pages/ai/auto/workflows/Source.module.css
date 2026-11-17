@@ -1,0 +1,77 @@
+/* Workflow source: the editor, its status line and the compare view (the actions are the detail's ActionBar). Kit tokens only. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.status {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.warnText {
+  color: var(--hx-ink);
+  font-size: var(--fs-sm);
+}
+
+.hint {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.diff {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.diffTitle {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.rows {
+  max-block-size: 20rem;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  gap: var(--sp-2);
+  padding-inline: var(--sp-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.mark {
+  flex: none;
+  inline-size: 1ch;
+  color: var(--hx-muted);
+}
+
+.add {
+  background: var(--hx-ok-t);
+}
+
+.del {
+  background: var(--hx-danger-t);
+}

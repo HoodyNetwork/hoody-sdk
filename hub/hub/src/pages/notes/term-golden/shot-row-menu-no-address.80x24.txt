@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Notes                                      ▸ Use with your agent   + New note
+ The notes on your computers. Everyone who opens Notes on a computer shares the
+ same notes.
+ / Search               Filters               10 notes  ↻ Refresh  View options
+     Title                             Section         Changed ↓
+ ▾ atlas · 6  New note                                                        █
+ ›   Weekly plan                       Work            12 minutes ago        ⋯█
+     Deploy checklist         ┌──────────────────────────────────────────────┐█
+     Reading list             │i This note has no web address right now.     │█
+     Meeting notes: storefront│› →  Open here                                │█
+     Trip ideas               │  ⇗  Open note                                │█
+     Backup schedule          │     Copy link                                │█
+ ▾ borealis · 4  Open Notes Ne│     Copy read-only link                      │█
+     Staging release notes    │     Copy for an agent                        │█
+     Customer feedback        │       A command an agent on atlas can run to │█
+     Launch timeline          │       read this note. An agent without access│█
+     Open questions           │       to this notebook can't read it.        │█
+   cedar This computer is stop│     Put on Board                             │█
+   dune This computer is start│     Open computer                            │█
+   ember This computer needs a│──────────────────────────────────────────────│█
+   fjord This computer is stop│     Delete note…                             │█
+   granite Notes here is too o└──────────────────────────────────────────────┘░
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

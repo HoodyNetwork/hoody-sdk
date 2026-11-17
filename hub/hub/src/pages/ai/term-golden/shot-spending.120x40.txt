@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations   Knowledge  ▌Settings
+ Computers             │  ▌Models & keys   Connections & MCP   Rules & hooks
+ Files                 │  atlas › Models & keys
+ Bots                  │  Models & keys                                                           + Connect an account
+ Board                 │  atlas uses Hoody Free for everything.
+ Demo                  │
+ Vault                 │   Default model  Accounts  Claude Code  Hoody AI allowance ▌Spending  Advanced  Questions
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Programs              │  │ Spending                                                                              │
+ Schedules             │  │ What each model has cost, as this computer recorded it.                               │
+ Scripts               │  │ ‹ 7 days ›  30 days    All time                                                       │
+ Logs                  │  │ $4.20 credit left                                                                     │
+ Tunnels               │  │                                                                                       │
+ Notes                 │  │ / Search                                                          5 models  ↻ Refresh │
+▌AI                    │  │                                                                                       │
+ VMs                   │  │     Model                  Provider     Calls        Success      Recorded cost       │
+                       │  │ ›   Hoody Free             Hoody AI     412          99%          No cost recorded    │
+Account                │  │     GPT-5                  OpenAI       63           97%          $4.82               │
+ Plans & Billing       │  │     GPT-5 mini             OpenAI       130          100%         Under $0.01         │
+ Referrals             │  │                                                                                       │
+ Keys and tokens       │  │ ▾ Other models · 2                                                                    │
+ API                   │  │     gpt-4-turbo            OpenAI       3            66%          $0.11               │
+ Notifications      26 │  │     gpt-3.5-turbo          OpenAI       9            100%         No cost recorded    │
+ Account               │  │                                                                                       │
+                       │  │ Recorded total $4.93. Your provider's own bill is the final word.                     │
+ + Rent servers        │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ Guide                 │                                                                                           ▄
+ Support               │  ┌───────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Advanced                                                                              │█
+                       │  │ ▸ Show advanced                                                                       │█
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘█
+                       │                                                                                           █
+                       │                                                                                           █
+                       │  Questions                                                                                ▀
+                       │  ▸ What changes when I pick a default model?
+                       │  ▸ Where is my key kept, and can I see it again?
+                       │  ▸ Can I use my own Claude plan?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,8 @@
+{
+  "title": "Status line",
+  "next": "Next step",
+  "s.starting": "Starting the run…",
+  "s.reading": "Reading the TODO list…",
+  "s.done": "The run started.",
+  "again": "Start over"
+}

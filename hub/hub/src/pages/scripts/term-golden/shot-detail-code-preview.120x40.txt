@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                 ▸ Use with your agent   + New script
+ Computers             │
+ Files    ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+ Bots     │ Version from Oct 22, 2026, 9:12 AM                                                         Esc × │tant] [⋯]
+ Board    │ ──────────────────────────────────────────────────────────────────────────────────────────────── │
+ Demo     │ This is what restoring it would change in the code. Nothing is restored until you press Restore  │
+ Vault    │ this version.                                                                                    │
+          │                                                                                                  │─────────
+On atlas ▾│                                                                                          ⧉ copy  │        █
+ Programs │  + // An earlier take                                                                            │        █
+ Schedules│                                                                                                  │        █
+▌Scripts  │                                                                                                  │        █
+ Logs     │                                                                                                  │        █
+ Tunnels  │                                                                                                  │        █
+ Notes    │                                                                                                  │;       █
+ AI       │                                                                                                  │        █
+ VMs      │                                                                                                  │        █
+          │                                                                                                  │        █
+Account   │                                                                                                  │        █
+ Plans & B│                                                                                                  │        █
+ Referrals│                                                                                                  │        █
+ Keys and │                                                                                                  │        █
+ API      │                                                                                                  │        █
+ Notificat│                                                                                                  │        █
+ Account  │                                                                                                  │        █
+          │                                                                                                  │        █
+ + Rent se│                                                                  [Close]   Restore this version  │        █
+ Guide    └──────────────────────────────────────────────────────────────────────────────────────────────────┘        █
+ Support               │  Enter new line · Tab next control · Ctrl+S save                                             █
+                       │                                                                                              █
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Versions                                                                                 │█
+                       │  │ Every save is kept, newest first. Restore puts an older one back as a new save.          │▀
+                       │  │ Oct 22, 2026, 9:12 AM                                                          [Preview] │
+                       │  │   1.8 KB                                                                                 │
+                       │  │ Oct 19, 2026, 4:40 PM                                                          [Preview] │
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  [Discard changes]  [✓ Save Ctrl+S]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

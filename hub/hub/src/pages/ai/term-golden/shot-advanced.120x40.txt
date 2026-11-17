@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations   Knowledge  ▌Settings
+ Computers             │  ▌Models & keys   Connections & MCP   Rules & hooks
+ Files                 │  atlas › Models & keys
+ Bots                  │  Models & keys                                                           + Connect an account
+ Board                 │  atlas uses Hoody Free for everything.
+ Demo                  │
+ Vault                 │   Default model  Accounts  Claude Code  Hoody AI allowance  Spending ▌Advanced  Questions
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  │     gpt-3.5-turbo          OpenAI       9            100%         No cost recorded    │
+ Programs              │  │                                                                                       │
+ Schedules             │  │ Recorded total $4.93. Your provider's own bill is the final word.                     │
+ Scripts               │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ Logs                  │
+ Tunnels               │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Notes                 │  │ Advanced                                                                              │
+▌AI                    │  │ ▾ Show advanced                                                                       │
+ VMs                   │  │   ┌─────────────────────────────────────────────────────────────────────────────────┐ │
+                       │  │   │                                                                                 │ │
+Account                │  │   │ Helper model                    Follows the default                             │ │
+ Plans & Billing       │  │   │ Set on the general agent                                                        │ │
+ Referrals             │  │   │                                                                                 │ │
+ Keys and tokens       │  │   │ Bot model                       Follows the default                             │ │
+ API                   │  │   │ Set on the bot agent                                                            │ │
+ Notifications      26 │  │   │                                                                                 │ │
+ Account               │  │   │ reviewer uses its own model     openai/gpt-5-mini                               │ │
+                       │  │   │ GPT-5 mini                                                                      │ │
+ + Rent servers        │  │   │                                                                                 │ │
+ Guide                 │  │   │ Safety checker                  [■ on ]                                         │ │▄
+ Support               │  │   │ On and ready.                                                                   │ │█
+                       │  │   │                                                                                 │ │█
+                       │  │   │ Checker model                   │ Hoody safety checker ▾                        │ │█
+                       │  │   │                                                                                 │ │█
+                       │  │   │ Account ids                     hoody-ai, openai                                │ │█
+                       │  │   │ The names these accounts have                                                   │ │▀
+                       │  │   │ on the computer.                                                                │ │
+                       │  │   │                                                                                 │ │
+                       │  │   └─────────────────────────────────────────────────────────────────────────────────┘ │
+                       │  │   1 Bot has guardrails the checker enforces.                                          │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

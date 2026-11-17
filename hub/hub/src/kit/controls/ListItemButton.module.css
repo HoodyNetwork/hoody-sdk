@@ -1,0 +1,92 @@
+/* ListItemButton (ListItemButton.tsx): a list row that is one button. The model chooser's option row is the measure:
+   the same height (--option-row-h with a mouse, --touch-min on a coarse pointer), padding and fills, so a list of
+   providers and a list of models read as one family. Flat at rest; the pointer and the keyboard focus give the one
+   hover fill, a press one step darker, and the keyboard focus adds the inset ring (a list clips past its edges). */
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  inline-size: 100%;
+  min-inline-size: 0;
+  position: relative;
+  min-block-size: var(--option-row-h);
+  padding: var(--pad-row-y) var(--pad-row-x);
+  border: 0;
+  border-radius: var(--r-2);
+  background: transparent;
+  color: var(--hx-ink);
+  text-align: start;
+}
+
+.item[data-hovered],
+.item:is(:focus-visible, [data-focus-visible]) {
+  background: var(--hx-hover);
+}
+
+.item[data-pressed] {
+  background: var(--hx-press);
+}
+
+.item:is(:focus-visible, [data-focus-visible]) {
+  outline: none;
+  box-shadow: var(--focus-ring-inset);
+}
+
+.item[data-disabled] {
+  cursor: not-allowed;
+  opacity: var(--ctl-off-opacity);
+}
+
+/* The leading box: one small mark's square (a Monogram or ProviderMark sm), so the names line up whatever the mark. */
+.lead {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: var(--sp-4);
+  block-size: var(--sp-4);
+}
+
+/* The name keeps its room first: the facts give way three times faster, and each ends in "…" when the row is narrow. */
+.label {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-inline-size: 0;
+}
+
+.meta {
+  flex: 0 3 auto;
+  overflow: hidden;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-inline-size: 0;
+}
+
+/* The " · " readers hear between the name and the facts; never drawn (Button.module.css .srOnly, the kit recipe). */
+.srOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: calc(-1 * var(--bw));
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (pointer: coarse) {
+  .item {
+    min-block-size: var(--touch-min);
+  }
+}
+
+/* Forced colours drop box-shadow, so the ring above would vanish: an inset outline in the system Highlight colour. */
+@media (forced-colors: active) {
+  .item:is(:focus-visible, [data-focus-visible]) {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: calc(var(--bw-2) * -1);
+  }
+}

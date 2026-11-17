@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Vault                                                    ▸ Use with your agent
+ Tokens, passwords and settings your tools and agents read by name. The list
+ shows only names.
+       ┌────────────────────────────────────────────────────────────────┐
+       │ Sign in with your account to open the vault                    │
+       │                                                                │
+       │ The vault opens when you sign in with your account. It is not  │
+       │ available with an access key.                                  │
+       │                                                                │
+       │ [Leave the Hub]                                                │
+       └────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

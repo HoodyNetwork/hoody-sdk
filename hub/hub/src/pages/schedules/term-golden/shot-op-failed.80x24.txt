@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Schedules                              ▸ Use with your agent   + New schedule
+ 15 schedules on atlas · next: ping-api in 3 minutes · 4 failed today
+ Computers › · 9 programs running ›
+ ‹ Schedules  Esc
+ sync-photos  ● Failed · exit 1                           [Edit] [Run now] [⋯]█
+  Command                                                                     █
+                                                                              █
+ │ ✗ This didn't go through                                                   █
+ │   It's paused, so it can't run now.                                        █
+ │   [Hide this note]                                                         █
+                                                                              █
+ Schedule     Every 15 minutes                                                ▀
+ Status       [■ on ] On
+ Next run     in 8 minutes · 17:08 · your 09:08
+ Last result  Failed · exit 1
+              rclone: Failed to sync: couldn't connect to remote:photos (dial
+              tcp: i/o timeout)
+              See output
+
+ Next 5 runs
+ Times are in the computer's time zone.
+ in 8 minutes · 17:08 · your 09:08
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

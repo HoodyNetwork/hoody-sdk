@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Support chat                                                                                          Esc ×
+ Home     ┃ Telegram
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │ Setup                 ┌────────────────────────────────────────────────────────────────────────────────┐█
+▌Bots     ┃ │▌People                │ People                                                         + Add a person  │█
+ Board    ┃ │ Chats                 │ People join by sending the owner code or a pairing code to the Bot in a        │█
+ Demo     ┃ │ Settings              │ private message.                                                               │█
+ Vault    ┃                         │› Ana…                                                                  [Edit] ⋯│█
+          ┃              ┌────────────────────────────────────────────────────────────────────┐ide approvals         │█
+On atlas ▾┃              │ Add a person to Support chat                                 Esc × │                      │█
+ Programs ┃              │ ────────────────────────────────────────────────────────────────── │              [Edit] ⋯│█
+ Schedules┃              │ Add someone by their ID in Telegram. They can then talk to the Bot │                      │█
+ Scripts  ┃              │ with the rights you pick.                                          │                      │█
+ Logs     ┃              │                                                                    │              [Edit] ⋯│█
+ Tunnels  ┃              │ User ID in Telegram                                                │                      │█
+ Notes    ┃              │ ┃                                                                  │                      │█
+ AI       ┃              │ The ID the chat app uses for them, not their @username.            │──────────────────────┘█
+ VMs      ┃              │                                                                    │                       █
+          ┃              │ Name (optional)                                                    │                       █
+Account   ┃              │ │ ________________________________________________________________ │──────────────────────┐█
+ Plans & B┃              │                                                                    │                      │█
+ Referrals┃              │ [□ off] Owner                                                      │      [Open Settings] │█
+ Keys and ┃              │                                                                    │                      │█
+ API      ┃              │ Rights                                                             │                      │█
+ Notificat┃              │ [x] Talk to the Bot                                                │───────────────────── │█
+ Account  ┃              │ [ ] Stop and steer work                                            │                      │█
+          ┃              │ [ ] Decide approvals                                               │                      │█
+ + Rent se┃              │                                                                    │                      │█
+ Guide    ┃              │                                             [Cancel]   Add person  │───────────────────── │█
+ Support  ┃              └────────────────────────────────────────────────────────────────────┘ram chat.             │█
+          ┃                         │ The code                                            Works once, for 15 minutes │█
+          ┃                         │ ────────────────────────────────────────────────────────────────────────────── │█
+          ┃                         │ How you send it                                               Any way you like │█
+          ┃                         │ ────────────────────────────────────────────────────────────────────────────── │█
+          ┃                         │ Once it is used                                      They show up in this list │█
+          ┃                         │ ────────────────────────────────────────────────────────────────────────────── │▀
+          ┃                         │ Rights                                                                         │
+          ┃                         │ [x] Talk to the Bot                                                            │
+          ┃                         │ [ ] Stop and steer work                                                        │
+ Typing · ┃                         │ [ ] Decide approvals                                                           │

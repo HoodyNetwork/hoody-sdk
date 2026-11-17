@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent  [+ Get a computer]
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ Compute┌──────────────────────────────────────────────────────────┐
+ atlas  ● │ Block internet access for atlas?                   Esc × │al ⇗] [⋯]
+ SG n12 · │ ──────────────────────────────────────────────────────── │
+          │ atlas can't open new connections to the internet. Once   │
+  Overview│ its open connections end, these stop working: the AI     │ Run
+  Programs│ agent, package installs, updates and the exit proxy.     │
+ ─────────│ Connections already open and inbound traffic keep        │─────────
+ ┌────────│ working, so its programs stay reachable through their    │───────┐█
+ │ At a gl│ URLs. Blocked: TCP and UDP on every port (IPv4 and IPv6) │       │█
+ │ Interne│ , and all IPv4 ICMP, ping included. Still open: DNS and  │       │█
+ │ Traffic│ DHCP with its host, IPv6 ping and rarely used protocols. │       │
+ │ Firewal│                                                          │       │
+ └────────│                                        [Cancel]   Block  │───────┘
+          └──────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Internet access ⓘ                                  Block internet access  │
+ │ Whether atlas can open new connections to the internet.                   │
+ │ ✓ Allowed atlas can open connections to the internet.                     │
+ └───────────────────────────────────────────────────────────────────────────┘
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

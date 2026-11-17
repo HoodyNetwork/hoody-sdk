@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Launch an app                                                                                         Esc ×
+ Home     ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Computers┃ Start a program on atlas. It opens in a window, a terminal or a web page.
+ Files    ┃
+ Bots     ┃ ‹ Find an app ›  From GitHub
+ Board    ┃
+ Demo     ┃ │ / jupyter                                 ×
+ Vault    ┃
+          ┃ Category: All
+On atlas ▾┃
+▌Programs ┃  ● Hoody apps: 8 ● On this computer: 1 ● Hoody list: 0 ● Nix: 4 ● pkgx: 1 ● AppImage: 0 ● Docker: 1
+ Schedules┃  [Hide libraries and plugins]
+ Scripts  ┃
+ Logs     ┃                                                                                          15 apps  ↻ Refresh
+ Tunnels  ┃
+ Notes    ┃     Name                                                 Found in            Opens in
+ AI       ┃ ▾ On this computer · 1
+ VMs      ┃     jupyter-notebook Jupyter notebook server, a termin…  · On this computer  Terminal              [Open] ⋯
+          ┃
+Account   ┃ ▾ Hoody apps · 8
+ Plans & B┃ ›   JupyterLab Notebooks in the browser                  · Hoody apps        Web                   [Open] ⋯
+ Referrals┃     VS Code A code editor in the browser                 · Hoody apps        Web                   [Open] ⋯
+ Keys and ┃     Shared folder ! Shares files Share files with a li…  · Hoody apps        Web                   [Open] ⋯
+ API      ┃     Firefox A web browser on the computer screen         · Hoody apps        Display               [Open] ⋯
+ Notificat┃     htop See what the computer is doing                  · Hoody apps        Terminal              [Open] ⋯
+ Account  ┃     btop A resource monitor                              · Hoody apps        Terminal              [Open] ⋯
+          ┃     Open WebUI Chat with local models                    · Hoody apps        Not available here
+ + Rent se┃     VLC Play any video                                   · Hoody apps        Not available here
+ Guide    ┃
+ Support  ┃ ▾ Other sources · 6
+          ┃     jupyter Multi-user version of the Jupyter notebook…  · Nix               Terminal              [Open] ⋯
+          ┃     jupyter Jupyter notebooks, a command-line tool       · pkgx              Terminal              [Open] ⋯
+          ┃     jupyterlab Jupyter lab environment notebook server…  · Nix               Might be a tool
+          ┃     jupyter-core Base package on which Jupyter project…  · Nix               Not an app
+          ┃     jupyter/base-notebook Base image for Jupyter noteb…  · Docker            Terminal              [Open] ⋯
+          ┃     jupytext-nvim Vim plugin for jupyter notebooks       · Nix               Not an app
+          ┃
+          ┃
+          ┃
+ Tab move ┃

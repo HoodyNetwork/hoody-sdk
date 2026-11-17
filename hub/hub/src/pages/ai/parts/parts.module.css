@@ -1,0 +1,290 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-inline-size: 0;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  color: var(--hx-muted);
+}
+
+.faint {
+  color: var(--hx-faint);
+}
+
+.small {
+  font-size: var(--fs-sm);
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-inline-size: 0;
+}
+
+/* One setting row: label and hint on the start side, the value and its actions on the end side. */
+.setting {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
+  padding-block: var(--sp-3);
+  border-block-end: var(--bw) solid var(--hx-line-2);
+}
+
+.setting:last-child {
+  border-block-end: 0;
+}
+
+.settingText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+  min-inline-size: 0;
+}
+
+.settingLabel {
+  font-weight: var(--fw-medium);
+}
+
+.settingValue {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.settingNote {
+  grid-column: 1 / -1;
+}
+
+@container (max-width: 599px) {
+  .setting {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .settingValue {
+    justify-content: flex-start;
+  }
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--sp-half) var(--sp-2);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  color: var(--hx-muted);
+  white-space: nowrap;
+}
+
+.tagWarn {
+  color: var(--hx-warn);
+  border-color: var(--hx-warn-fill);
+}
+
+.band {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.problem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: var(--bw) solid var(--hx-warn-fill);
+  border-radius: var(--r-2);
+  background: var(--hx-warn-t);
+}
+
+.problemHead {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-start;
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.summaryName {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.logo {
+  display: inline-grid;
+  place-items: center;
+  inline-size: var(--sp-5);
+  block-size: var(--sp-5);
+  border-radius: var(--r-1);
+  background: var(--hx-fill);
+  color: var(--hx-ink);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  flex: none;
+}
+
+.provider {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xl);
+  letter-spacing: 0.12em;
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.codeBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-2);
+  background: var(--hx-card);
+}
+
+.pick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pickGroup {
+  margin-block-start: var(--sp-3);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+  color: var(--hx-muted);
+}
+
+.pickItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  inline-size: 100%;
+  min-block-size: var(--row-h);
+  padding: var(--sp-1) var(--sp-3);
+  border: var(--bw) solid transparent;
+  border-radius: var(--r-2);
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.pickItem:hover {
+  background: var(--hx-hover);
+}
+
+.pickItem:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.pickItem[aria-current='true'] {
+  border-color: var(--hx-selected-bar);
+  background: var(--hx-selected);
+}
+
+.pickMain {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.pickChips {
+  display: inline-flex;
+  gap: var(--sp-1);
+  flex: none;
+}
+
+/* The setup terminal: its height is the page's (--setup-term-h, dragged by the kit Splitter under it). */
+.setupTermWrap {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.setupTerm {
+  display: flex;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  block-size: var(--setup-term-h, 18rem);
+}
+
+/* While the edge is dragged the frame takes no pointer, so the drag keeps reaching the separator. */
+.setupTermDrag iframe {
+  pointer-events: none;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.list {
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+}
+
+/* Numbered steps of a sign-in: the numbers show and each step has room. */
+.steps {
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  list-style: decimal;
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.advanced summary {
+  cursor: pointer;
+  font-weight: var(--fw-medium);
+  min-block-size: var(--ctl-h);
+  display: flex;
+  align-items: center;
+}
+
+.advanced summary:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.warnText {
+  color: var(--hx-warn);
+  font-size: var(--fs-sm);
+}

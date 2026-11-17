@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  Guide              ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+  Ask your agent ▌Connect  Skills  Build your own  Every link  Bots  Tools
+  Try this  Realms  Topics  Keyboard  Look                                     █
+ │ Connect your AI. Hoody works best from the AI you already use. Connect it │
+ │ once and it gets real computers, terminals, displays, browsers and files. │
+ │   AI chats                                                                │
+ │   Coding agents   CLI                ⧉ Copy all (Pick a computer first)   │
+ │ ▸ CLI             1. Install                                              │
+ │   SDK              curl -fsSL https://install.hoody.com | sh    ⧉ copy    │
+ │   HTTP API        2. Or install with npm                                  │
+ │   SSH              npm install -g hoody-sdk                     ⧉ copy    │
+ │   Browser         3. Sign in (the CLI remembers this platform)            │
+ │                    hoody login                                  ⧉ copy    │
+ │                   4. See your computers                                   │
+ │                    hoody computers list                         ⧉ copy    │
+ │                   5. Ask the agent to build something                     │
+ │                    hoody agent prompt "Build a sample HTML dashboard      │
+ │                    on this computer." -c ‹computer›                       │
+ │                    ⧉ copy (Pick a computer first)                         │
+ │                   6. Open the agent                                       │
+ │                    hoody agent ‹computer›                                 │
+ │                    ⧉ copy (Pick a computer first)                         │
+ │                   7. Sign in on the computer                              │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

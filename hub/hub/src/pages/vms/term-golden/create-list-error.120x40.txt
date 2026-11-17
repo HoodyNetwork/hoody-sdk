@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines                                            ▸ Use with your agent   + New VM
+ Computers             │  Full machines that run inside atlas.
+ Files                 │
+ Bots                  │  ▸ VMs    Images    KVM on computers
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ This computer                                                                            │█
+On atlas ▾             │  │ VMs need a bare-metal server, with KVM on for the computer.                              │█
+ Programs              │  │                                                                                          │█
+ Schedules             │  │ What this computer can run                                                               │█
+ Scripts               │  │ ┌──────────────────────────────────────────────────────────────────────────────────────┐ │█
+ Logs                  │  │ │                                                                                      │ │█
+ Tunnels               │  │ │ Run VMs on this computer (KVM)  [■ on ]                                              │ │█
+ Notes                 │  │ │ KVM is on for this computer.                                                         │ │█
+ AI                    │  │ │                                                                                      │ │█
+▌VMs                   │  │ └──────────────────────────────────────────────────────────────────────────────────────┘ │█
+                       │  │ Server  Bare metal                                                                       │█
+Account                │  │                                                                                          │█
+ Plans & Billing       │  │ Room for VMs                                                                             │█
+ Referrals             │  │ Memory for VMs          █████░░░░░            Running VMs             3 of 16            │█
+ Keys and tokens       │  │                         7.8 GB of 16 GB in    VM CPUs in use          8 of 64            │█
+ API                   │  │                         use                                                              │█
+ Notifications      26 │  │ Largest VM that can     8 GB                                                             │█
+ Account               │  │ start                                                                                    │█
+                       │  │ Free disk               410 GB                                                           │█
+ + Rent servers        │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Guide                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Support               │  │ VMs                                                                                      │█
+                       │  │ ! This didn't load                                                                       │█
+                       │  │ The server had a problem. Try again in a moment.                                         │█
+                       │  │ [Try again]                                                                              │█
+                       │  │ ▸ Details                                                                                │█
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘▀
+                       │
+                       │  Questions
+                       │  ▸ What is a VM?
+                       │  ▸ Why can't my computer run VMs?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

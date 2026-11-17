@@ -1,0 +1,9 @@
+/* The chooser at the width a page gives it (a drawer or a settings pane); narrower screens take the whole width. */
+.frame {
+  max-width: 40rem;
+  width: 100%;
+}
+
+.asked {
+  color: var(--hx-muted);
+}

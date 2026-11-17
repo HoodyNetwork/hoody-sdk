@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                 ◆ Personal ▾  … Loading computers… ▾  [A]  ^K · ?
+  Chats   Agents   Automations   Knowledge  ▌Settings
+ ▌Models & keys   Connections & MCP   Rules & hooks
+ Models & keys                                            + Connect an account
+ ▌Default model  Accounts  Claude Code  Hoody AI allowance  Spending   2 ›
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Default model                                                             │█
+ │ The model your AI helper and your Bots use unless told otherwise.         │█
+ │ Loading…                                                                  │
+ │ ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁                             │
+ │ ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁                                       │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Accounts                                                                  │
+ │ The AI providers this computer can use, and how each one connects.        │
+ │ / Search                                                        ↻ Refresh │
+ │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                          │
+ │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                          │
+ │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                          │
+ │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                          │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

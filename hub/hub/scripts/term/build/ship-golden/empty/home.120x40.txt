@@ -1,0 +1,41 @@
+ ▐━┓ HOODY HUB                                         ◆ 5f0c…fee0 ▾  No computers yet ▾  [N]  Ctrl+K commands · ? keys
+▌Home                  │  Good evening, Nobody@example.invalid                                       [i What is Hoody?]
+ Computers             │  ■ 5f0c…fee0
+ Files                 │
+ Bots                  │
+ Board                 │
+ Vault                 │
+                       │              ┌────────────────────────────────────────────────────────────────────┐
+On this computer       │              │ 5f0c…fee0 has no computers yet                                     │
+ Programs              │              │                                                                    │
+ Schedules             │              │ Each realm has its own computers. Get one for this realm, or show  │
+ Scripts               │              │ all your realms.                                                   │
+ Logs                  │              │                                                                    │
+ Tunnels               │              │  Get a computer   [Show all realms]                                │
+ Notes                 │              └────────────────────────────────────────────────────────────────────┘
+ AI                    │
+ VMs                   │
+                       │
+Account                │  ┌────────────────────────────────────────────┐ ┌────────────────────────────────────────────┐
+ Plans & Billing       │  │ Bots                            View all › │ │ Billing                         View all › │
+ Referrals             │  │ No Bots yet · New Bot                      │ │ $0.00                                      │
+ Keys and tokens       │  │                                            │ │ Wallet balance                             │
+ API                   │  │                                            │ │ ✦ No paid servers.                         │
+ Notifications         │  └────────────────────────────────────────────┘ └────────────────────────────────────────────┘
+ Account               │
+                       │  ┌────────────────────────────────────────────┐ ┌────────────────────────────────────────────┐
+ + Rent servers        │  │ Notifications                   View all › │ │ Shortcuts                                  │
+ Guide                 │  │ ! Couldn't load notifications  · Try again │ │ [Ctrl+K] Search or jump to anything        │
+ Support               │  │                                            │ │ [?]      Show this list                    │
+                       │  │                                            │ │ [ [ ]    Expand or collapse the sidebar    │
+                       │  │                                            │ │ [g] [c]  Computers                         │
+                       │  │                                            │ │ [c]      Customize this page               │
+                       │  │                                            │ │ [All shortcuts]                            │
+                       │  └────────────────────────────────────────────┘ └────────────────────────────────────────────┘
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit
+

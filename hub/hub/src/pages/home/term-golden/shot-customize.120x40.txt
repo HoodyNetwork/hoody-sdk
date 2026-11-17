@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ Customize Home                                      Esc ×
+▌Home                  │  Good morning, Ada                 ┃ Pick the cards and their order. Kept until you
+ Computers             │  ■ Personal · ✓ atlas (Running) · S┃ close the Hub.
+ Files                 │                                    ┃ ─────────────────────────────────────────────────────────
+ Bots                  │                                    ┃ ┌───────────────────────────────────────────────────────┐
+ Board                 │  ┌─────────────────────────────────┃ │ Cards on Home                                         │
+ Demo                  │  │ │ Ask atlas to…                 ┃ │ [■ on ] Your computer                         [↑] [↓] │
+ Vault                 │  │                                 ┃ │ [■ on ] Start something                       [↑] [↓] │
+                       │  │ [Install the popular coding agen┃ │ [■ on ] Bots                                  [↑] [↓] │
+On atlas ▾             │  │ [What is running on atlas?] [Bac┃ │ [■ on ] Billing                               [↑] [↓] │
+ Programs              │  └─────────────────────────────────┃ │ [■ on ] Notifications                         [↑] [↓] │
+ Schedules             │                                    ┃ │ [■ on ] Your realms                           [↑] [↓] │
+ Scripts               │  ┌─────────────────────────────────┃ │ [■ on ] Shortcuts                             [↑] [↓] │
+ Logs                  │  │ Your computer                   ┃ └───────────────────────────────────────────────────────┘
+ Tunnels               │  │ atlas ● Running SG n12 Up 5d 0h ┃
+ Notes                 │  │                                 ┃
+ AI                    │  │ Agent ⇗     ⧉ copy [QR] [Put Age┃
+ VMs                   │  │ Terminal ⇗  ⧉ copy [QR] [Put Ter┃
+                       │  │ Desktop ⇗   ⧉ copy [QR] [Put Des┃
+Account                │  │ Files ⇗     ⧉ copy [QR] [Put Fil┃
+ Plans & Billing       │  │ Browser ⇗   ⧉ copy [QR] [Put Bro┃
+ Referrals             │  │                                 ┃
+ Keys and tokens       │  │ Programs: 10 running ! 3 need a ┃
+ API                   │  └─────────────────────────────────┃
+ Notifications      26 │                                    ┃
+ Account               │  ┌─────────────────────────────────┃
+                       │  │ Start something                 ┃
+ + Rent servers        │  │                                 ┃
+ Guide                 │  │ New Bot               Open the B┃
+ Support               │  │ Assistants that work  Programs, ┃
+                       │  │ on your computers     and displa┃
+                       │  │                       side      ┃
+                       │  │                                 ┃
+                       │  │ New script            New schedu┃
+                       │  │ Saved commands you    Run someth┃
+                       │  │ can run again         hour, day ┃
+                       │  │                                 ┃
+                       │  │ MORE                            ┃
+                       │  │ Keys and tokens  Open Vault     ┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit  ┃ [Reset to default]   Done

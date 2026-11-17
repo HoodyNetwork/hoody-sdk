@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Support                                                                                                                                                         + New ticket
+ Computers             │  Ask us about anything in Hoody. We answer here, in writing.
+ Files                 │
+ Bots                  │  / Search                        ‹ All ›  Waiting for you    Waiting for support    Closed                                                  7 tickets  ↻ Refresh  View options
+ Board                 │
+ Demo                  │    Subject                                                                           Category                   Status                            Last message
+ Vault                 │  ▌ • Computer will not start after resize                                            · Computers                ● Waiting for you                 9 days ago
+                       │      Invoice shows the wrong country                                                 · Billing                  ● Waiting for support             9 days ago
+On atlas ▾             │    • Refund for the October charge                                                   · Billing                  · Closed                          9 days ago
+ Programs              │      How do I add a domain?                                                          · Networking               · Closed                          9 days ago
+ Schedules             │      Old question about bots                                                         · Bots                     · Closed for good                 9 days ago
+ Scripts               │      <b>bold</b> **subject**                                                         · Bug report               ● Waiting for support             9 days ago
+ Logs                  │      A ticket with many messages                                                     · AI                       ● Waiting for support             9 days ago
+ Tunnels               │   7 loaded
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+▌Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │  Questions
+                       │  ▸ What should I never put in a ticket?
+                       │  ▸ Why does my message look plain?
+                       │  ▸ Why is there a limit on tickets?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

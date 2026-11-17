@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                                    ▸ Use with your agent
+ Computers             │
+ Files                 │  ‹ Bots  Esc
+▌Bots                  │  Chief  ● Idle                                                             [Bot settings] [⋯]█
+ Board                 │    SG atlas    Hoody Free  · Allow everything is off +2                                      █
+ Demo                  │                                                                                              █
+ Vault                 │    Activity  ▸ Link and keys    Chat apps 2 waiting    Work 2 open                           █
+                       │  ────────────────────────────────────────────────────────────────────────────────────────────█
+On atlas ▾             │                                                                                              █
+ Programs              │    ┌──────────────────────────────────────────────────────────────────────────────────────┐  █
+ Schedules             │    │ At a glance                                                                          │  █
+ Scripts               │    │ Link                   ● Frozen                                                      │  █
+ Logs                  │    │ Keys                   3 of 20 ██░░░░░░░░                                            │  █
+ Tunnels               │    │ Limits                 60 / min per key, 120 / min in all                            │  █
+ Notes                 │    │ Other websites (CORS)  Allowed                                                       │  █
+ AI                    │    │                                                                                      │  █
+ VMs                   │    │ Why it is frozen       The account has an unpaid balance. Only Hoody can unfreeze a  │  █
+                       │    │                        link: write to Support.                                       │  █
+Account                │    └──────────────────────────────────────────────────────────────────────────────────────┘  █
+ Plans & Billing       │                                                                                              █
+ Referrals             │                                                                                              █
+ Keys and tokens       │    ┌──────────────────────────────────────────────────────────────────────────────────────┐  █
+ API                   │    │ Keys                                                                  + New key  [⋯] │  █
+ Notifications      26 │    │ Whoever holds a key can use this Bot through its link. Give each person or program   │  █
+ Account               │    │ its own.                                                                             │  █
+                       │    │  Key                Prefix           State            Allowed addresses              │  █
+ + Rent servers        │    │› website widget     hk_d5e6…         ● Active         1 address              [Edit] ⋯│  █
+ Guide                 │    │  ci checks          hk_w5v4…         ● Paused         Any address            [Edit] ⋯│  █
+ Support               │    │  old demo           hk_o9p0…         ● Expired        Any address            [Edit] ⋯│  █
+                       │    └──────────────────────────────────────────────────────────────────────────────────────┘  █
+                       │                                                                                              █
+                       │                                                                                              █
+                       │    ┌──────────────────────────────────────────────────────────────────────────────────────┐  ▀
+                       │    │ Addresses                                                  [Limits and websites] [⋯] │
+                       │    │ Where apps and people reach this Bot. Every call to the Bot needs a key.             │
+                       │    │  Address for           Address                               Works with              │
+                       │    │› Chat page             https://chief-shop-bot.hoody.bot/      Browser        [Copy] ⋯│
+                       │    │  OpenAI-compatible     https://chief-shop-bot.hoody.bot/v1    OpenAI SDK     [Copy] ⋯│
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

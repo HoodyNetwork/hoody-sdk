@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                               ▸ Use with your agent   Browse market
+ Your servers and subscriptions, and how many computers run on each.
+   Computers  ▸ Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Subscriptions                                                             │█
+ │  Plan                            State                                    │█
+ │› Large                           ● Active                                 │█
+ │  Medium                          ● Payment overdue               [Pay now]│█
+ └───────────────────────────────────────────────────────────────────────────┘█
+                                                                              ▀
+ / Search servers                        18 servers  ↻ Refresh  … More actions
+ ▾ Free · 1                                                                  █
+ ▌   ash-3                                                                   █
+     US Ashburn · i Free · Capacity —                                        █
+     AI USE                                                                  █
+     Chat            ████░░░░░░ 40%                                          █
+     Quick decisions ░░░░░░░░░░ 0%                                           █
+     Web search      █████████░ ! 90%                                        █
+     Speech          Not on this server                                      ░
+     Transcription   No reading                                              ░
+     Get more room                                                           ░
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

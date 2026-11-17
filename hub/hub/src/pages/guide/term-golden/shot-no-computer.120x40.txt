@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            Guide                         ◆ Personal ▾  No computers yet ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │                              ┌──────────────────────────────────────────────────────────────┐
+ Computers             │  │ Ask your agent            │ Connect                                                      │ █
+ Files                 │  │▌Connect                   │ Connect your AI. Hoody works best from the AI you already    │ █
+ Bots                  │  │ Skills                    │ use. Connect it once and it gets real computers, terminals,  │ █
+ Board                 │  │ Build your own            │ displays, browsers and files.                                │ ▀
+ Demo                  │  │ Every link                │   AI chats                                                   │
+ Vault                 │  │ Bots                      │   Coding agents   CLI   ⧉ Copy all (Pick a computer first)   │
+                       │  │ Tools                     │ ▸ CLI             1. Install                                 │
+On this computer       │  │ Try this                  │   SDK              curl -fsSL https://             ⧉ copy    │
+ Programs              │  │ Realms                    │   HTTP API         install.hoody.com | sh                    │
+ Schedules             │  │ Topics                    │   SSH             2. Or install with npm                     │
+ Scripts               │  │ Keyboard                  │   Browser          npm install -g hoody-sdk        ⧉ copy    │
+ Logs                  │  │ Look                      │                   3. Sign in (the CLI remembers this         │
+ Tunnels               │                              │                   platform)                                  │
+ Notes                 │   [j] [k] move between       │                    hoody login                     ⧉ copy    │
+ AI                    │   sections                   │                   4. See your computers                      │
+ VMs                   │                              │                    hoody computers list            ⧉ copy    │
+                       │                              │                   5. Ask the agent to build something        │
+Account                │                              │                    hoody agent prompt "Build a sample        │
+ Plans & Billing       │                              │                    HTML dashboard on this computer." -c      │
+ Referrals             │                              │                    ‹computer›                                │
+ Keys and tokens       │                              │                    ⧉ copy (Pick a computer first)            │
+ API                   │                              │                   6. Open the agent                          │
+ Notifications      26 │                              │                    hoody agent ‹computer›                    │
+ Account               │                              │                    ⧉ copy (Pick a computer first)            │
+                       │                              │                   7. Sign in on the computer                 │
+ + Rent servers        │                              │                    hoody agent login -c ‹computer›           │
+▌Guide                 │                              │                    ⧉ copy (Pick a computer first)            │
+ Support               │                              │                   install.hoody.com  CLI reference           │
+                       │                              │                                                              │
+                       │                              │                   Pick a computer                            │
+                       │                              │                                                              │
+                       │                              └──────────────────────────────────────────────────────────────┘
+                       │
+                       │                              ┌──────────────────────────────────────────────────────────────┐
+                       │                              │ Skills                                                       │
+                       │                              │ A skill is a file that teaches a coding agent how Hoody's    │
+                       │                              │ HTTP API works: which calls exist and how to make them. It   │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

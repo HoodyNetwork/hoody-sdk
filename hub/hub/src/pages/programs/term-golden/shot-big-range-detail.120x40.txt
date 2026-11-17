@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                            ▸ Use with your agent  [+ New program]   + Launch an app
+ Computers             │  21 programs on atlas · 11 running · 4 need a look
+ Files                 │  ‹ Programs  Esc
+ Bots                  │  shards-wide  ● Stopped                                                                    [⋯]
+ Board                 │
+ Demo                  │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Vault                 │  │ At a glance                                                                              │█
+                       │  │ Kind      Your program                                                                   │█
+On atlas ▾             │  │ State     Stopped                                                                        │█
+▌Programs              │  │ Restarts  Runs once and stays stopped                                                    │█
+ Schedules             │  │ Startup   [□ off] Start with the computer                                                │█
+ Scripts               │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Logs                  │                                                                                              █
+ Tunnels               │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Notes                 │  │ Ports                                                                      Start a port  │█
+ AI                    │  │ 0 of 40 ports running                                                                    │█
+ VMs                   │  │    Port              State          Address                       Alias                  │█
+                       │  │› ▸ 9100              · not started  Open port 9100 (not running…                [Start] ⋯│█
+Account                │  │  ▸ 9101              · not started  Open port 9101 (not running…                [Start] ⋯│█
+ Plans & Billing       │  │  ▸ 9102              · not started  Open port 9102 (not running…                [Start] ⋯│█
+ Referrals             │  │  ▸ 9103              · not started  Open port 9103 (not running…                [Start] ⋯│█
+ Keys and tokens       │  │  ▸ 9104              · not started  Open port 9104 (not running…                [Start] ⋯│█
+ API                   │  │  ▸ 9105              · not started  Open port 9105 (not running…                [Start] ⋯│█
+ Notifications      26 │  │  ▸ 9106              · not started  Open port 9106 (not running…                [Start] ⋯│█
+ Account               │  │  ▸ 9107              · not started  Open port 9107 (not running…                [Start] ⋯│█
+                       │  │  ▸ 9108              · not started  Open port 9108 (not running…                [Start] ⋯│█
+ + Rent servers        │  │  ▸ 9109              · not started  Open port 9109 (not running…                [Start] ⋯│█
+ Guide                 │  │  ▸ 9110              · not started  Open port 9110 (not running…                [Start] ⋯│█
+ Support               │  │  ▸ 9111              · not started  Open port 9111 (not running…                [Start] ⋯│█
+                       │  │  ▸ 9112              · not started  Open port 9112 (not running…                [Start] ⋯│█
+                       │  │  ▸ 9113              · not started  Open port 9113 (not running…                [Start] ⋯│█
+                       │  │  ▸ 9114              · not started  Open port 9114 (not running…                [Start] ⋯│▀
+                       │  │  ▸ 9115              · not started  Open port 9115 (not running…                [Start] ⋯│
+                       │  │Ports 9100–9115 of 40 [Previous ports] [Next ports]                                       │
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Sandbox                                                                    [Add sandbox] │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

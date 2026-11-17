@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Vault                                ▸ Use with your agent   + New entry   [⋯]
+ ‹ Vault  Esc
+ deploy.notes                                      ⧉ copy [✎ Replace value] [⋯]
+          ┌──────────────────────────────────────────────────────────┐
+ ┌────────│ ! Delete deploy.notes?                             Esc × │───────┐█
+ │ About t│ ──────────────────────────────────────────────────────── │       │█
+ │ Belongs│ The entry deploy.notes is removed from Personal. Tools   │       │█
+ │ Encrypt│ that read it stop finding it. This cannot be undone.     │       │█
+ │ Size   │                                                          │       │█
+ │ Updated│                                       [Cancel]  [Delete] │       │█
+ │ Created└──────────────────────────────────────────────────────────┘       │█
+ │ Other details  1 detail                                                   │█
+ │                                                                           │█
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │▀
+ │ │                                                                       │ │
+ │ │ Protect with a password         [Encrypt…]                            │ │
+ │ │ No encryption is recorded for                                         │ │
+ │ │ this entry. To protect this                                           │ │
+ │ │ value with a password, use                                            │ │
+ │ │ Replace value and tick Encrypt                                        │ │
+ │ │ with a password.                                                      │ │
+ │ │                                                                       │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

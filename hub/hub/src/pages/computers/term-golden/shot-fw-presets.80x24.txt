@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent  [+ Get a computer]
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ Computers  Esc
+ atlas  ● Running                                         [Open terminal ⇗] [⋯]
+ SG n12 · Home base · █  Personal ·  Current computer
+
+  Overview  Connect  Permissions  Ports & addresses  Desktop ▸Network  Run
+  Programs  Backups  Storage
+ ──────────────────────────────────────────────────────────────────────────────
+ │ [Exit addresses in the docs] [VPN inside a computer]  Use another exit…   │
+ │ Sites see the exit, not you. A c┌───────────────────────────────────────┐ │
+ │ atlas's proxy.                  │Presets                                │ │
+ │                                 │› Block inbound TCP except web…        │ │
+ │  Your app  →  atlas's proxy  →  │  Block outbound to private networks…  │ │█
+ │                                 │  Block an address…                    │ │█
+ │                                 │  Block outbound mail…                 │ │█
+ │                                 │  Block a port…                        │ │
+ └─────────────────────────────────│───────────────────────────────────────│─┘
+                                   │  Reset to no rules…                   │
+ ┌─────────────────────────────────└───────────────────────────────────────┘─┐
+ │ Firewall ⓘ                             [✦ Ask the Agent]  Add a rule  [⋯] │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

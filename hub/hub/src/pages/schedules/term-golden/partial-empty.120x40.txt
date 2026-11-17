@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Schedules                                             ▸ Use with your agent   + New schedule
+ Computers             │  No schedules found so far on atlas · Computers › · 9 programs running ›
+ Files                 │
+ Bots                  │  No schedules found
+ Board                 │  Some sources couldn't be read, so schedules may
+ Demo                  │  be missing here.
+ Vault                 │   New schedule
+                       │
+On atlas ▾             │
+ Programs              │
+▌Schedules             │
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

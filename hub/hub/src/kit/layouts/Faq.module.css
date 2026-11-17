@@ -1,0 +1,274 @@
+/* The page FAQ, drawn as the "split ledger" over the inset well: a framed well under a mono-caps QUESTIONS band, the questions two to a row
+   on a wide well and one to a row on a narrow one, one faint line between them. A question is a step above its answer
+   (14/20 semibold ink over 13/20 in the softer answer ink); an open question is one card, a lighter plate with an ink bar
+   down its start, and the focus ring wraps that card. On hover, a tint with the accent's 3 px bar. */
+.faq {
+  --ring-gap: var(--hx-faq-well);
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus);
+
+  container: faq / inline-size;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: var(--bw) solid var(--hx-faq-border);
+  background: var(--hx-faq-well);
+  scroll-margin-block-start: var(--sp-4);
+}
+
+/* The band: mono capitals (a script without capitals keeps its case, as every kit caps label) over the well's rule. */
+.title {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-5);
+  border-block-end: var(--bw) solid var(--hx-faq-bar-line);
+  background: var(--hx-faq-bar-bg);
+  color: var(--hx-ink);
+  font: var(--fw-semibold) var(--fs-sm) / var(--lh-box-small) var(--font-mono);
+  letter-spacing: var(--tracking-faq);
+  text-transform: var(--case-caps);
+}
+
+.title:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+/* One column; two on a wide well. The cells of a row stretch to the row's height, so the line between the columns runs
+   the whole row whichever question is taller or open; a question's words and chevron stay at its top, and a closed
+   cell has no fill of its own, so the stretch shows only as that line. */
+.items {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  min-width: 0;
+}
+
+/* A landing puts the item's top at its scroll margin, clear of a sticky head; its "here" pulse fades back to the well
+   (to the plate when the item is open). */
+.item {
+  --here-base: var(--hx-faq-well);
+  --disclosure-title-weight: var(--fw-semibold);
+
+  position: relative;
+  min-inline-size: 0;
+  scroll-margin-block-start: var(--sp-4);
+}
+
+.item + .item {
+  border-block-start: var(--bw) solid var(--hx-line);
+}
+
+@container faq (width >= 860px) {
+  .items {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .item + .item {
+    border-block-start: 0;
+  }
+
+  .item:nth-child(n + 3) {
+    border-block-start: var(--bw) solid var(--hx-line);
+  }
+
+  .item:nth-child(even) {
+    border-inline-start: var(--bw) solid var(--hx-line);
+  }
+}
+
+/* An open question and its answer are one card: the plate, and an ink bar down its start. The bar is a background
+   layer, never a shadow: the focus ring is the shadow. */
+.item[data-expanded] {
+  --ring-gap: var(--hx-faq-open-bg);
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus);
+  --here-base: var(--hx-faq-open-bg);
+
+  background: linear-gradient(to right, var(--hx-ink) var(--hx-faq-bar-w), transparent var(--hx-faq-bar-w)) no-repeat, var(--hx-faq-open-bg);
+}
+
+/* The bar sits at the card's start: on the right in a right-to-left page. */
+.item[data-expanded]:dir(rtl) {
+  background: linear-gradient(to left, var(--hx-ink) var(--hx-faq-bar-w), transparent var(--hx-faq-bar-w)) no-repeat, var(--hx-faq-open-bg);
+}
+
+/* With reduced motion a landing shows here.css's still tint; the card's plate would otherwise hide it. The bar stays. */
+@media (prefers-reduced-motion: reduce) {
+  .item[data-expanded][data-hub-here] {
+    background-color: var(--hx-selected);
+  }
+}
+
+/* The question: wraps, never truncates; the whole row is the hit area, at least 44 px on every pointer. The chevron sits
+   on the first line (3 px down a 20 px line for a 14 px icon), whether the question takes one line or three. */
+.item :is(h2, h3, h4, h5, h6) > button {
+  align-items: flex-start;
+  gap: var(--sp-3);
+  min-block-size: var(--table-row-h);
+  padding: var(--sp-3) var(--sp-5);
+  border-radius: 0;
+  color: var(--hx-ink);
+  font: var(--t-group);
+}
+
+.item :is(h2, h3, h4, h5, h6) > button > svg {
+  margin-block-start: calc(var(--sp-half) + var(--bw));
+}
+
+.item[data-expanded] :is(h2, h3, h4, h5, h6) > button > svg {
+  color: var(--hx-ink);
+}
+
+/* One hover signal, the tint and the bar: the question's words are not also underlined. The hover bar is a background
+   layer, never a shadow: the focus ring is the shadow, and stays while hovered. */
+.item :is(h2, h3, h4, h5, h6) > button[data-hovered] > span > span:first-child {
+  text-decoration: none;
+}
+
+.item :is(h2, h3, h4, h5, h6) > button[data-hovered] {
+  background: linear-gradient(to right, var(--hx-acc) var(--hx-faq-bar-w), transparent var(--hx-faq-bar-w)) no-repeat, var(--hx-faq-hover);
+}
+
+/* The bar sits at the question's start: on the right in a right-to-left page. */
+.item :is(h2, h3, h4, h5, h6) > button[data-hovered]:dir(rtl) {
+  background: linear-gradient(to left, var(--hx-acc) var(--hx-faq-bar-w), transparent var(--hx-faq-bar-w)) no-repeat, var(--hx-faq-hover);
+}
+
+/* A hovered open question keeps its card's plate; only the bar turns to the accent. */
+.item[data-expanded] :is(h2, h3, h4, h5, h6) > button[data-hovered] {
+  background: linear-gradient(to right, var(--hx-acc) var(--hx-faq-bar-w), transparent var(--hx-faq-bar-w)) no-repeat;
+}
+
+.item[data-expanded] :is(h2, h3, h4, h5, h6) > button[data-hovered]:dir(rtl) {
+  background: linear-gradient(to left, var(--hx-acc) var(--hx-faq-bar-w), transparent var(--hx-faq-bar-w)) no-repeat;
+}
+
+/* The focus ring of an open question wraps its whole card, question and answer, instead of a line between them. It is
+   drawn by the card's own overlay, not the card's shadow: a landing's "here" pulse (here.css) animates the card's shadow,
+   and the ring must stay through it. The overlay is inset by the ring's own 4 px, so the ring ends at the card's edge:
+   a list pane's scrollport (ListDetailPage) clips anything drawn past the FAQ, at its sides and its end. */
+.item[data-expanded]:has(:is(h2, h3, h4, h5, h6) > button[data-focus-visible]) {
+  z-index: var(--z-raised);
+}
+
+.item[data-expanded]:has(:is(h2, h3, h4, h5, h6) > button[data-focus-visible])::after {
+  position: absolute;
+  inset: var(--sp-1);
+  box-shadow: var(--focus-ring);
+  content: '';
+  pointer-events: none;
+}
+
+.item[data-expanded] :is(h2, h3, h4, h5, h6) > button[data-focus-visible] {
+  box-shadow: none;
+}
+
+/* The answer starts under the question's words: past the Disclosure's panel indent (the chevron and 8 px), the row's
+   start padding and the 4 px wider gap. On a narrow well it starts at the row's padding instead, under the chevron, so
+   a phone's answer gets the width back. The card's foot is the panel's 12 px and 4 more. */
+.body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding-block: 0 var(--sp-1);
+  padding-inline: calc(var(--sp-5) + var(--sp-3) - var(--sp-2)) var(--sp-5);
+}
+
+.answer {
+  max-inline-size: 62ch;
+  margin: 0;
+  color: var(--hx-faq-answer);
+  font: var(--t-body);
+}
+
+/* An answer in several blocks (paragraphs, a list, steps): one column at the reading width, a small gap between blocks,
+   so a long answer reads as short pieces. A list keeps its markers inside the column, in the answer's ink. */
+.blocks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+  max-inline-size: 62ch;
+}
+
+.answerList {
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  color: var(--hx-faq-answer);
+  font: var(--t-body);
+}
+
+.bullets {
+  list-style: disc outside;
+}
+
+.steps {
+  list-style: decimal outside;
+}
+
+.answerList > li + li {
+  margin-block-start: var(--sp-1);
+}
+
+@container faq (width < 600px) {
+  .title {
+    padding-inline: var(--sp-4);
+  }
+
+  .item :is(h2, h3, h4, h5, h6) > button {
+    padding-inline: var(--sp-4);
+  }
+
+  .body {
+    padding-inline: 0 var(--sp-4);
+    margin-inline-start: calc(var(--sp-4) - var(--icon-sm) - var(--sp-2));
+  }
+}
+
+/* The peek: the whole answer in a popover, read as the open card: the ink bar at its start, the answer ink, a reading
+   width. */
+.peek {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  max-inline-size: 56ch;
+  padding-inline-start: var(--sp-3);
+  background: linear-gradient(to right, var(--hx-ink) var(--hx-faq-bar-w), transparent var(--hx-faq-bar-w)) no-repeat;
+}
+
+.peek:dir(rtl) {
+  background: linear-gradient(to left, var(--hx-ink) var(--hx-faq-bar-w), transparent var(--hx-faq-bar-w)) no-repeat;
+}
+
+/* The press-catching wrapper takes no box of its own. */
+.linkWrap,
+.inText {
+  display: contents;
+}
+
+/* A FaqLink stands in running text (an empty state's line, a field's hint), so it is underlined at rest: its colour
+   alone does not tell it from the sentence (axe link-in-text-block). The peek's own action link
+   stands alone and keeps the nav look. */
+.inText > a {
+  text-decoration: underline;
+}
+
+/* Forced colors (Windows high contrast) drop box-shadow, so the focus ring above would vanish: a solid outline in the
+   system Highlight colour instead (as Button's). */
+@media (forced-colors: active) {
+  .title:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+
+  /* They also drop gradient images, so an open card's start bar (a background layer) is drawn as a border on its own
+     layer, which takes no room from the card. */
+  .item[data-expanded]::before {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    border-inline-start: var(--hx-faq-bar-w) solid CanvasText;
+    content: '';
+    pointer-events: none;
+  }
+}

@@ -1,0 +1,42 @@
+/* StaticTable (data/StaticTable.tsx): rows ruled by the line colour, headers quiet. Cells break at spaces and at the
+   soft breaks the part writes after path separators (break-word, so a column's least width is its longest piece and
+   the columns share the width by content). Only an overlong run (.longRun) breaks anywhere, so a phone never scrolls. */
+.table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font: var(--t-small);
+}
+
+.table th,
+.table td {
+  padding-block: var(--sp-2);
+  padding-inline: 0 var(--sp-4);
+  border-block-end: var(--bw) solid var(--hx-line);
+  color: var(--hx-ink);
+  overflow-wrap: break-word;
+  text-align: start;
+  vertical-align: top;
+}
+
+.table th:last-child,
+.table td:last-child {
+  padding-inline-end: 0;
+}
+
+.table thead th {
+  color: var(--hx-muted);
+  font: var(--t-label);
+}
+
+.table tbody th {
+  font-weight: inherit;
+}
+
+.mono tbody th,
+.mono tbody td {
+  font: var(--t-mono);
+}
+
+.longRun {
+  overflow-wrap: anywhere;
+}

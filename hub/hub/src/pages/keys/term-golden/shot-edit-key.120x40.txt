@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Edit ci-deploy                                                          Esc ×
+ Home                  │  Keys and token┃ Only what you change is sent. The key's secret stays the same.
+ Computers             │  A key lets you┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  date.         ┃                                                                             █
+ Bots                  │  ▸ API keys 5 k┃ Basics                                                                      █
+ Board                 │  ──────────────┃ Name                                                                        █
+ Demo                  │  i Keys that wo┃ ┃ ci-deploy                                                                 █
+ Vault                 │                ┃ Name it after the agent or app that uses it.                                █
+                       │  ‹ Back to list┃                                                                             █
+On atlas ▾             │  ci-deploy  ● A┃                                                                             █
+ Programs              │                ┃ Realms                                                                      █
+ Schedules             │                ┃ Works in                                                                    █
+ Scripts               │    ┌───────────┃ ┌───────────────────────────────────┐ ┌───────────────────────────────────┐ █
+ Logs                  │    │ THIS KEY  ┃ │ ( ) All realms (unavailable)      │ │ (•) Pick realms                   │ █
+ Tunnels               │    │ It works n┃ │     A realm-limited key can't be  │ │     Only the realms you tick.     │ █
+ Notes                 │    └───────────┃ │     widened; make a new key for   │ │                                   │ █
+ AI                    │                ┃ │     that.                         │ │                                   │ █
+ VMs                   │    Key         ┃ └───────────────────────────────────┘ └───────────────────────────────────┘ █
+                       │    Works in    ┃ ▸ Which realms can a key work in?                                           █
+Account                │    In this real┃   Realms this key works in
+ Plans & Billing       │    Access      ┃   1 selected
+ Referrals             │    Ends        ┃    [✓] Personal
+▌Keys and tokens       │                ┃        f1f1…f1f1
+ API                   │    Rights      ┃    [ ] Acme client
+ Notifications      26 │    Computers   ┃        f2f2…f2f2
+ Account               │    See computer┃    [ ] Lab
+                       │    computers.re┃        f3f3…f3f3
+ + Rent servers        │                ┃   Add a realm by its id
+ Guide                 │     Read       ┃   │ 24 characters: 0-9 and a-f [Add]
+ Support               │    Start       ┃
+                       │    computers.ac┃
+                       │                ┃ Limits
+                       │     Write      ┃ Ends
+                       │    Restart     ┃   Never    90 days    1 year  ‹ On a date ›
+                       │    computers.ac┃ End date
+                       │                ┃ │ 2027-01-20
+                       │     Write      ┃ It stops at the start of that day, UTC.
+                       │    Read logs   ┃ Allowed IPv4 addresses
+                       │    computers.ac┃ ─────────────────────────────────────────────────────────────────────────────
+ Typing · Esc leaves the field · Ctrl+K ┃                                      No changes yet  [Cancel]   Save changes

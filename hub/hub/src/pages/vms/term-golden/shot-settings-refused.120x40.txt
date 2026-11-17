@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines › win11
+ Computers             │  win11  ● Stopped                                                                  Start   [⋯]
+ Files                 │  A VM inside atlas.
+ Bots                  │
+ Board                 │   Overview  Screen  Ports  Storage  Snapshots ▸Settings  Logs
+ Demo                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │  │ │ Start with the computer         [□ off]                                              │ │
+                       │  │ │ The VM starts whenever the                                                           │ │
+On atlas ▾             │  │ │ computer does, even after you                                                        │ │
+ Programs              │  │ │ shut it down.                                                                        │ │
+ Schedules             │  │ │                                                                                      │ │
+ Scripts               │  │ │ Shut-down wait (seconds)        │ [−] 30                   [+]                       │ │
+ Logs                  │  │ │ How long a shut-down waits for                                                       │ │
+ Tunnels               │  │ │ the system before it cuts the                                                        │ │
+ Notes                 │  │ │ power. Empty: 30 seconds.                                                            │ │
+ AI                    │  │ │                                                                                      │ │
+▌VMs                   │  │ └──────────────────────────────────────────────────────────────────────────────────────┘ │
+                       │  │                                                                                          │▄
+Account                │  │ Screen                                                                                   │█
+ Plans & Billing       │  │ ┌──────────────────────────────────────────────────────────────────────────────────────┐ │█
+ Referrals             │  │ │                                                                                      │ │█
+ Keys and tokens       │  │ │ Show a screen                   [■ on ]                                              │ │█
+ API                   │  │ │ You need it to install a                                                             │ │█
+ Notifications      26 │  │ │ system and to use a desktop.                                                         │ │█
+ Account               │  │ │                                                                                      │ │█
+                       │  │ └──────────────────────────────────────────────────────────────────────────────────────┘ │█
+ + Rent servers        │  │                                                                                          │█
+ Guide                 │  │ Limits                                                                                   │█
+ Support               │  │ ┌──────────────────────────────────────────────────────────────────────────────────────┐ │█
+                       │  │ │                                                                                      │ │█
+                       │  │ │ Disk speed (MiB/s)              │ [−] No limit             [+]                       │ │█
+                       │  │ │ Shared by the disk and the                                                           │ │█
+                       │  │ │ discs. Empty: no limit.                                                              │ │█
+                       │  │ │                                                                                      │ │█
+                       │  │ │ Disk operations per second      │ [−] No limit             [+]                       │ │█
+                       │  │ │ Empty: no limit.                                                                     │ │█
+                       │  │ │                                                                                      │ │
+                       │  │ └──────────────────────────────────────────────────────────────────────────────────────┘ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

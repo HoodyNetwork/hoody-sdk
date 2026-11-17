@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Schedules                              ▸ Use with your agent   + New schedule
+ 15 schedules on atlas · next: ping-api in 3 minutes · 4 failed today
+ Computers › · 9 programs running ›
+ ‹ Schedules  Esc
+ Nightly backup  ● Worked                                 [Edit] [Run now] [⋯]█
+  Command                                                                     █
+                                                                              █
+ Schedule     Every day at 02:00                                              █
+ Status       [■ on ] On                                                      █
+ Next run     in 9 hours · 02:00 · your 18:00                                 █
+ Last result  Worked                                                          █
+                                                                              █
+ Next 5 runs                                                                  █
+ Times are in the computer's time zone.                                       ▀
+ in 9 hours · 02:00 · your 18:00
+ tomorrow · Oct 25, 02:00 · your Oct 24, 18:00
+ in 2 days · Oct 26, 02:00 · your Oct 25, 18:00
+ in 3 days · Oct 27, 02:00 · your Oct 26, 18:00
+ in 4 days · Oct 28, 02:00 · your Oct 27, 18:00
+
+ History
+     Started                 Result                                    Took
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

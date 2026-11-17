@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs             ▸ Use with your agent  [+ New program]   + Launch an app
+ 19 programs on atlas · 10 running · 4 need a look
+ ‹ Programs  Esc
+ web  ● Stopped                                                   [▷ Start] [⋯]
+
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ At a glance                                                               │█
+ │ Kind      Your program                                                    │█
+ │ State     Stopped                                                         │█
+ │ Restarts  Starts again whenever it stops                                  │█
+ │ Startup   [■ on ] Start with the computer                                 │█
+ └───────────────────────────────────────────────────────────────────────────┘▀
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Ports                                                                     │
+ │    Port             State      Address                      Alias         │
+ │› ▸ 3000             ● Stopped  Open port 3000 (not running… shop-front   ⋯│
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Sandbox                                                    [Edit sandbox] │
+ │ Limits what this program can reach: files, network and resources.         │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

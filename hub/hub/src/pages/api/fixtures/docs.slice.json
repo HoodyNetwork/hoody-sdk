@@ -1,0 +1,98 @@
+{
+ "excludeTags": [
+  "api:Waitlist"
+ ],
+ "excludeOperationIds": [
+  "terminal_getOpenApiSpecJson",
+  "terminal_getOpenApiSpecYaml",
+  "sqlite_getOpenApiJson",
+  "sqlite_getOpenApiYaml",
+  "run_getOpenApiJson",
+  "run_getOpenApiYaml",
+  "cron_getOpenApiJson",
+  "cron_getOpenApiYaml",
+  "agent_openapiJSON",
+  "agent_openapiYAML",
+  "agent_docs"
+ ],
+ "pages": [
+  {
+   "route": "/api/authentication/",
+   "tags": [
+    "api:Authentication"
+   ]
+  },
+  {
+   "route": "/api/auth-tokens/",
+   "tags": [
+    "api:Auth Tokens"
+   ]
+  },
+  {
+   "route": "/api/browser/instance-management/",
+   "tags": [
+    "browser:Instance Management"
+   ]
+  },
+  {
+   "route": "/api/code/health-monitoring/",
+   "tags": [
+    "code:health"
+   ]
+  },
+  {
+   "route": "/api/exec/script-execution/",
+   "tags": [
+    "exec:Script Execution"
+   ]
+  },
+  {
+   "route": "/api/files/downloading/",
+   "tags": [
+    "files:Download Manager"
+   ]
+  },
+  {
+   "route": "/api/files/directories/",
+   "operationIds": [
+    "files_createDirectory"
+   ]
+  },
+  {
+   "route": "/api/terminal/monitoring/",
+   "operationIds": [
+    "terminal_postTerminalState"
+   ]
+  },
+  {
+   "route": "/api/kit/notification-server/fetching/",
+   "tags": [
+    "notifications:Notifications"
+   ]
+  },
+  {
+   "route": "/api/kit/egress/",
+   "tags": [
+    "egress:egress"
+   ]
+  },
+  {
+   "route": "/api/proxy-logs/",
+   "tags": [
+    "proxyLogs:logs"
+   ]
+  },
+  {
+   "route": "/api/notes/",
+   "tags": [
+    "notes:health"
+   ]
+  },
+  {
+   "route": "/api/notes/files/",
+   "tags": [
+    "notes:avatars"
+   ]
+  }
+ ]
+}

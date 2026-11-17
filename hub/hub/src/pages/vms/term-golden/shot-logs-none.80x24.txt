@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines › web-1
+ web-1  ● Running                                               Shut down   [⋯]
+ A VM inside atlas.
+  Overview  Screen  Ports  Storage  Snapshots  Settings ▸Logs
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Logs                                                           [↻ Refresh] │
+ │ ‹ Console ›  Machine    Network                                            │
+ │ Send a line to the console                                                 │
+ │ │ _________________________________________________________________ [Send] │
+ │ Typed as written, then Enter. Not a terminal: refresh to see the answer.   │
+ │ Nothing in this log yet. It fills once the VM has run with it; refresh     │
+ │ then.                                                                      │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Choose an agent                                                                                       Esc ×
+ Home     ┃ On atlas. Your pick is remembered for new chats. Agents Hoody runs itself are not listed.
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ / Search agents               ‹ Any ›  Can act 2    Reads only 0    Chat only 1    Yours 1
+ Bots     ┃ 3 agents  ↻ Refresh
+ Board    ┃
+ Demo     ┃     Agent                                      What it can do  What it is for           Model
+ Vault    ┃ ▾ Start here · 1
+          ┃ ▌   Work on this computer  Default   Current    Can act        The everyday working a…  The chat's model
+On atlas ▾┃
+ Programs ┃ ▾ Built in · 1
+ Schedules┃     reviewer                                    Can act        Reviews a change befor…  The chat's model
+ Scripts  ┃
+ Logs     ┃ ▾ Yours · 1
+ Tunnels  ┃     shop-support                                Chat only      Answers shop questions   The chat's model
+ Notes    ┃
+▌AI       ┃
+ VMs      ┃
+          ┃
+Account   ┃
+ Plans & B┃
+ Referrals┃
+ Keys and ┃
+ API      ┃
+ Notificat┃
+ Account  ┃
+          ┃
+ + Rent se┃
+ Guide    ┃
+ Support  ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tab move ┃                                                                                   [Manage agents]  [Cancel]

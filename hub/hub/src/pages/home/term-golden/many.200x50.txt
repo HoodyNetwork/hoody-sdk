@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+▌Home                  │  Good morning, Ada                                                                                                                             [i What is Hoody?]  [Customize]
+ Computers             │  ■ Personal · ✓ atlas (Running) · SG n12
+ Files                 │
+ Bots                  │
+ Board                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+ Demo                  │  │ │ Ask atlas to…                                                                                                                                                     [Ask] │
+ Vault                 │  │                                                                                                                                                                           │
+                       │  │ [Install the popular coding agents] [Keep my app running after restarts] [What is running on atlas?] [Back up my files daily] [Create a bot that…]                        │
+On atlas ▾             │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ Programs              │
+ Schedules             │  ┌────────────────────────────────────────────────────────────────────────────────────┐ ┌────────────────────────────────────────┐ ┌─────────────────────────────────────────┐
+ Scripts               │  │ Your computer                                                           View all › │ │ Start something                        │ │ Bots                         View all › │
+ Logs                  │  │ atlas ● Running SG n12 Up 5d 0h                                                    │ │                                        │ │ ◆ Chief · a… ◆ Waiting for you [Review] │
+ Tunnels               │  │                                                                                    │ │ New Bot             Open the Board     │ │ i Support · atlas             i Working │
+ Notes                 │  │ Agent ⇗     ⧉ copy [QR] [Put Agent on Board]                                       │ │ Assistants that     Programs,          │ │ i Digest · atlas   i 2 messages waiting │
+ AI                    │  │ Terminal ⇗  ⧉ copy [QR] [Put Terminal on Board]                                    │ │ work on your        terminals and      │ │ ! Ledger · cinder              ! Paused │
+ VMs                   │  │ Desktop ⇗   ⧉ copy [QR] [Put Desktop on Board]                                     │ │ computers           displays side by   │ │ · Scout · cinder                 · Idle │
+                       │  │ Files ⇗     ⧉ copy [QR] [Put Files on Board]                                       │ │                     side               │ │                                         │
+Account                │  │ Browser ⇗   ⧉ copy [QR] [Put Browser on Board]                                     │ │                                        │ │                                         │
+ Plans & Billing       │  │                                                                                    │ │ New script          New schedule       │ │                                         │
+ Referrals             │  │ Programs: 10 running ! 3 need a look                                 All computers │ │ Saved commands you  Run something      │ │                                         │
+ Keys and tokens       │  │                                                                                    │ │ can run again       every hour, day or │ │                                         │
+ API                   │  │                                                                                    │ │                     week               │ │                                         │
+ Notifications      26 │  │                                                                                    │ │                                        │ │                                         │
+ Account               │  │                                                                                    │ │ MORE                                   │ │                                         │
+                       │  │                                                                                    │ │ Keys and tokens  Open Vault            │ │                                         │
+ + Rent servers        │  │                                                                                    │ │ Connect an AI model                    │ │                                         │
+ Guide                 │  │                                                                                    │ │ Get another computer                   │ │                                         │
+ Support               │  └────────────────────────────────────────────────────────────────────────────────────┘ └────────────────────────────────────────┘ └─────────────────────────────────────────┘
+                       │
+                       │  ┌─────────────────────────────────────────┐ ┌────────────────────────────────────────┐ ┌─────────────────────────────────────────┐ ┌────────────────────────────────────────┐
+                       │  │ Billing                      View all › │ │ Notifications               View all › │ │ Your realms                             │ │ Shortcuts                              │
+                       │  │ $42.50                                  │ │ ✗ Computer atlas stopped   19 days ago │ │ Each realm is a separate space. Pick    │ │ [Ctrl+K] Search or jump to anything    │
+                       │  │ Wallet balance                          │ │ ✓ Payment received for bo… 19 days ago │ │ one to see only its computers.          │ │ [?]      Show this list                │
+                       │  │                                         │ │ ! Server cedar rental end… 19 days ago │ │    All realms                           │ │ [ [ ]    Expand or collapse the        │
+                       │  │ SERVERS                                 │ │ ✓ Computer dune is running 19 days ago │ │  █ Personal        Showing 3 computers  │ │          sidebar                       │
+                       │  │ ✗ fra-7 Unpaid since Oct 20,… ✗ On hold │ │ Mark all read                          │ │  █ Acme client             3 computers  │ │ [g] [c]  Computers                     │
+                       │  │ ✓ n12               Renews Nov 22, 2026 │ │                                        │ │  █ Lab                     2 computers  │ │ [c]      Customize this page           │
+                       │  │ ✓ Singapore M Runs until Dec 5, 2026,…  │ │                                        │ │                                         │ │ [All shortcuts]                        │
+                       │  └─────────────────────────────────────────┘ └────────────────────────────────────────┘ └─────────────────────────────────────────┘ └────────────────────────────────────────┘
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Turn on two-step sign-in                                         Esc ×
+ Accoun┃ Step 2 of 2: add Hoody to your app
+ Your p┃ ──────────────────────────────────────────────────────────────────────
+ ▌Profi┃  1  Scan the code or type the key                                    █
+ ──────┃     Scan this code with your authenticator app, or type the key into █
+ ┌─────┃     it.                                                              █
+ │ Secu┃                                                                      █
+ │ ✓ Yo┃     Key                                                              █
+ │ ! Tw┃     The QR code needs 41 × 21 cells; this pane is smaller.           █
+ │ i 11┃     This code holds a key shown only here, so the web cannot show it:█
+ └─────┃     widen the terminal, or copy the key instead.                     █
+ ┌─────┃     ! Contains your sign-in key: anyone who scans it can make your   █
+ │ Prof┃     sign-in codes                                                    ▀
+ │     ┃     Setup key
+ │ Disp┃     │ ••••••••••••••••••• (Hidden until you press Show) [Show] [Copy]
+ │     ┃     ⚿ Type this into your app if you cannot scan.
+ │ User┃
+ │     ┃  2  Save your backup codes
+ │ Emai┃
+ │     ┃     Backup codes
+ │     ┃     │  1. ••••••••
+ │ Memb┃        2. ••••••••
+ │     ┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ Save your backup codes and tick the box first.     [Cancel]   Turn on

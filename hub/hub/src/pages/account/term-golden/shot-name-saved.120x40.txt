@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Account
+ Computers             │  Your profile, how you sign in, and where you are signed in.
+ Files                 │
+ Bots                  │  │ ✓ Display name saved.
+ Board                 │  │   [Hide this note]
+ Demo                  │  ▌Profile  Password  Two-step sign-in  Passcode lock  Sign-in sessions  Agent sign-in   6 ›
+ Vault                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐█
+On atlas ▾             │  │ Security                                                                              │█
+ Programs              │  │ ✓ Your email address is verified.                                                     │█
+ Schedules             │  │ ✓ Two-step sign-in is on.                                                             │█
+ Scripts               │  │ i 11 other browsers or devices are signed in.                                [Review] │█
+ Logs                  │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ Tunnels               │
+ Notes                 │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ AI                    │  │ Profile                                                                               │
+ VMs                   │  │                                                                                       │
+                       │  │ Display name                    Ada                             [Change display name] │
+Account                │  │                                                                                       │
+ Plans & Billing       │  │ Username                        ada                                                   │
+ Referrals             │  │                                                                                       │
+ Keys and tokens       │  │ Email                           ada@example.com ✓ Verified             [Change email] │
+ API                   │  │                                                                                       │
+ Notifications      26 │  │ Member since                    Mar 14, 2025                                          │
+▌Account               │  │                                                                                       │
+                       │  │ Account ID                      64f0…0001 ⧉                                           │
+ + Rent servers        │  │ Account deletion goes through support.                                                │
+ Guide                 │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ Support               │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Password                                                                              │
+                       │  │                                                                                       │
+                       │  │ Password                        [Change password]                                     │
+                       │  │ Changing it signs you out                                                             │
+                       │  │ everywhere.                                                                           │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ○ atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines                                                        ▸ Use with your agent
+ Computers             │  Full machines that run inside atlas.
+ Files                 │
+ Bots                  │  ▸ VMs    Images    KVM on computers
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  │ i atlas is stopped. Start it to see the VMs inside it.                    [Open Computers]
+ Vault                 │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+On atlas ▾             │  │ This computer                                                                             │
+ Programs              │  │ VMs need a bare-metal server, with KVM on for the computer.                               │
+ Schedules             │  │                                                                                           │
+ Scripts               │  │ What this computer can run                                                                │
+ Logs                  │  │ ┌───────────────────────────────────────────────────────────────────────────────────────┐ │
+ Tunnels               │  │ │                                                                                       │ │
+ Notes                 │  │ │ Run VMs on this computer (KVM)  [■ on ]                                               │ │
+ AI                    │  │ │ KVM is on for this computer.                                                          │ │
+▌VMs                   │  │ │                                                                                       │ │
+                       │  │ └───────────────────────────────────────────────────────────────────────────────────────┘ │
+Account                │  │ Server  Bare metal                                                                        │
+ Plans & Billing       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Referrals             │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Keys and tokens       │  │ VMs                                                                                       │
+ API                   │  │ Start atlas to see its VMs.                                                               │
+ Notifications      26 │  │ VMs and their images are read from the computer                                           │
+ Account               │  │ while it runs. KVM can be changed while it is                                             │
+                       │  │ stopped.                                                                                  │
+ + Rent servers        │  │  Open Computers                                                                           │
+ Guide                 │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Support               │
+                       │
+                       │  Questions
+                       │  ▸ What is a VM?
+                       │  ▸ Why can't my computer run VMs?
+                       │  ▸ How do I see a VM's screen?
+                       │  ▸ How do I install Windows?
+                       │  ▸ How do I reach a website that runs in a VM?
+                       │  ▸ Why did my VM stop or not start?
+                       │  ▸ Is the console line a terminal?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

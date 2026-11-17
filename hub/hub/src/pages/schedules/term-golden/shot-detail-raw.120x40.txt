@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Schedules                                             ▸ Use with your agent   + New schedule
+ Computers             │  15 schedules on atlas · next: ping-api in 3 minutes · 4 failed today · Computers ›
+ Files                 │  9 programs running ›
+ Bots                  │
+ Board                 │  ‹ Schedules  Esc
+ Demo                  │  poll.sh  ● No results for this one
+ Vault                 │   Hand-written   Read-only here
+                       │
+On atlas ▾             │  i A hand-written line: its runs aren't reported.
+ Programs              │
+▌Schedules             │  Schedule     Every 7 minutes
+ Scripts               │  Next run     Can't tell
+ Logs                  │  Last result  No results for this one
+ Tunnels               │
+ Notes                 │  History
+ AI                    │  i No history for this one.
+ VMs                   │
+                       │
+Account                │  Advanced
+ Plans & Billing       │  The saved command, with the secrets we recognise hidden.
+ Referrals             │  Schedule  */7 * * * *
+ Keys and tokens       │  [Show the command]
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

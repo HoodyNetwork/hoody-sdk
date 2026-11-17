@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Use with your agent                                                     Esc ×
+ Home                  │  API           ┃ Hoody Agent, or any agent with the Hoody skill, can find the endpoint
+ Computers             │  Every endpoint┃ for what you want and call it for you. It reaches your account through
+ Files                 │                ┃ the Hoody API, and each computer through the Hoody Kit inside it.
+ Bots                  │  ▸ Endpoints   ┃ ─────────────────────────────────────────────────────────────────────────────
+ Board                 │  ──────────────┃ ▸ Prompts    Set up    Access    Can do                                     █
+ Demo                  │                ┃ ────────────────────────────────────────────────────────────────────────────█
+ Vault                 │  / Search endpo┃                                                                             █
+                       │                ┃                                                                             █
+On atlas ▾             │        Method  ┃ Acts on                                                                     █
+ Programs              │  ▸ Agent · 26 r┃ Realm     ■ Personal f1f1…f1f1                                              █
+ Schedules             │                ┃ Computer  Every computer in this realm                                      █
+ Scripts               │  ▸ Account API ┃ Names the realm so your agent acts on the right one.                        █
+ Logs                  │                ┃                                                                             █
+ Tunnels               │  ▸ Browser · 8 ┃ Start here                                                                  █
+ Notes                 │                ┃ Do something through the API                                                █
+ AI                    │  ▸ Code · 4 res┃ Your agent asks you what you want before it does anything.                  █
+ VMs                   │                ┃                                                                             █
+                       │  ▸ Cron · 4 res┃  ✦ Ask Hoody Agent   ⧉ Copy for your agent                                  █
+Account                │                ┃                                                                             █
+ Plans & Billing       │  ▸ cURL · 7 res┃ Two ways to use it                                                          █
+ Referrals             │                ┃ Hoody Agent     No set-up. Ask Hoody Agent puts the prompt in the Agent's
+ Keys and tokens       │  ▸ Daemon · 5 r┃                 message box; it waits there until you press Send.
+▌API                   │                ┃ Your own agent  Copy the prompt and paste it in. Set your agent up once in
+ Notifications      26 │  ▸ Display · 5 ┃                 Set up.
+ Account               │                ┃
+                       │  ▸ Egress · 1 r┃  Use the Hoody skill.
+ + Rent servers        │                ┃
+ Guide                 │  ▸ Exec · 22 re┃  Target
+ Support               │                ┃  - Realm: "Personal" (id f1f1f1f1f1f1f1f1f1f1f1f1)
+                       │  ▸ Files · 15 r┃  - Computers: every computer in this realm
+                       │                ┃  If you cannot find this realm, stop and ask me.
+                       │  ▸ Notes · 16 r┃
+                       │                ┃  Steps
+                       │  ▸ Notification┃  1. Ask me what I want done through the Hoody API, and on which computer if
+                       │                ┃  it needs one. Do nothing else until I answer.
+                       │  ▸ Pipe · 2 res┃  2. Tell me your plan in one line and wait for my OK.
+                       │                ┃  3. Find the endpoint for it, read what it takes, and call it only on what
+                       │  ▸ Proxy logs ·┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ Skills in the Guide                                         Hide on this page

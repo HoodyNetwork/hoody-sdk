@@ -1,0 +1,15 @@
+.effects {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0 0 var(--sp-2);
+  padding-inline-start: var(--sp-4);
+  overflow-wrap: anywhere;
+}
+
+.note {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}

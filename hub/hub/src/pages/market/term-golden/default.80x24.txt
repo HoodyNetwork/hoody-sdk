@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Plans & Billing  Balance $250                                     + Add funds
+ Upgrade a server, rent a whole machine, and see what you pay.
+   Plans  ▸ Bare metal    Wallet & usage
+ ──────────────────────────────────────────────────────────────────────────────
+ │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC               [Pay now]
+ ▸ Listings    Reservations 2
+ *Usually ready in 5 seconds to 60 minutes. If it takes longer than 60        █
+ minutes, you get a voucher.                                                  █
+                                                                              █
+ / Search servers       Filters                          12 servers  ↻ Refresh█
+ Whole machines for you alone, from $30/month.                                █
+   Server                Location         RAM                           From  █
+ ▌ Frankfurt L           DE Falkenstein   128 GB DDR4 ECC    $69 for 30 days  █
+   ✓ Featured ! 2 left                                                        █
+   Frankfurt M           DE Falkenstein   64 GB DDR4 ECC     $39 for 30 days  █
+   Tokyo L               JP Tokyo         256 GB DDR4 ECC   $228 for 30 days  █
+   ! 1 left                                                                   ▀
+   Singapore M           SG Singapore     64 GB DDR4 ECC     $89 for 30 days
+   Ashburn M             US Ashburn       96 GB DDR4 ECC     $79 for 30 days
+   Singapore S           SG Singapore     32 GB DDR4 ECC     $30 for 30 days
+   Tokyo M               JP Tokyo         128 GB DDR5       $119 for 30 days
+   ! 3 left
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

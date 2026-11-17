@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                      ◆ Personal ▾  Computers not loaded ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Demo                                                                              + New item
+ Computers             │  Everything in one list, newest first.
+ Files                 │
+ Bots                  │  / Search                   Status ▾                                   ↻ Refresh  View options
+ Board                 │
+▌Demo                  │
+ Vault                 │  ✗ Demo: This didn't load
+                       │  Try again
+On this computer       │
+ Programs              │
+ Schedules             │
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications       2 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Scripts                                  ▸ Use with your agent   + New script
+ Small programs on your computers that answer an address or run on a schedule.
+ / Search               Filters                                               █
+ 70 scripts  [Recently deleted · 2]  ↻ Refresh  View options                  █
+   Script ↑                    Status           Address                       █
+ ▌ Job 1                       —                /jobs/job-01                ⋯██
+   Job 2                       ● Working        /jobs/job-02                ⋯██
+   Job 3                       ● Working        /jobs/job-03                ⋯██
+   Job 4                       ● Working        /jobs/job-04                ⋯██
+   Job 5                       ● Working        /jobs/job-05                ⋯██
+   Job 6                       ● Working        /jobs/job-06                ⋯░█
+   Job 7                       ● Working        /jobs/job-07                ⋯░█
+   Job 8                       ● Working        /jobs/job-08                ⋯░█
+   Job 9                       ● Working        /jobs/job-09                ⋯░▀
+   Job 10                      ● Failing        /jobs/job-10                ⋯░
+   Job 11                      ● Working        /jobs/job-11                ⋯░
+   Job 12                      ● Working        /jobs/job-12                ⋯░
+   Job 13                      ● Working        /jobs/job-13                ⋯░
+   Job 14                      ● Working        /jobs/job-14                ⋯░
+   Job 15                      ● Working        /jobs/job-15                ⋯░
+   Job 16                      ● Working        /jobs/job-16                ⋯░
+ 1–50 of 70 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

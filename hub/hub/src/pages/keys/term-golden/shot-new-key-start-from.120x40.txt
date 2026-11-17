@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ New key                                                                 Esc ×
+ Home                  │  Keys and token┃ Made in Personal
+ Computers             │  A key lets you┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  date.         ┃ Basics                                                                      ▄
+ Bots                  │  ▸ API keys 5 k┃ Name                                                                        █
+ Board                 │  ──────────────┃ │ __________________________________________________________________________█
+ Demo                  │  i Keys that wo┃ Name it after the agent or app that uses it.                                █
+ Vault                 │                ┃                                                                             █
+                       │  / Search      ┃                                                                             █
+On atlas ▾             │  3 keys · 1 exp┃ Realms                                                                      █
+ Programs              │                ┃                                                                             █
+ Schedules             │    Name ↑      ┃ Works in                        Only Personal                               █
+ Scripts               │  › ci-deploy   ┃ It cannot see or change                                                     █
+ Logs                  │    hoody-agent ┃ anything in other realms.                                                   █
+ Tunnels               │    sdk-readonly┃ ▸ Which realms can a key work in?                                           █
+ Notes                 │                ┃                                                                             █
+ AI                    │                ┃                                                                             █
+ VMs                   │                ┃ Limits                                                                      █
+                       │                ┃ Ends                                                                        █
+Account                │                ┃ ‹ Never ›  90 days    1 year    On a date                                   █
+ Plans & Billing       │                ┃ Allowed IPv4 addresses                                                      █
+ Referrals             │                ┃ │ 203.0.113.7, 198.51.100.0/24                                              █
+▌Keys and tokens       │                ┃ Comma separated. Empty works anywhere.                                      █
+ API                   │                ┃ [Add my IP]                                                                 ▀
+ Notifications      26 │                ┃ [ ] This key can make other keys
+ Account               │                ┃     Its keys never get more than it has.
+                       │                ┃
+ + Rent servers        │                ┃
+ Guide                 │                ┃ Access
+ Support               │                ┃ ┌───────────────────────────────────┐ ┌───────────────────────────────────┐
+                       │  Questions     ┃ │ ( ) Full                          │ │ (•) Choose rights                 │
+                       │  ▸ Can I see a ┃ │     Everything you can do in the  │ │     Only what you tick.           │
+                       │  ▸ What is an A┃ │     realms this key works in,     │ │                                   │
+                       │  ▸ Which realms┃ │     billing and payments          │ │                                   │
+                       │  ▸ What can a k┃ ┌──────────────────────┐            │ │                                   │
+                       │  ▸ When does a ┃ │›  Developer          │────────────┘ └───────────────────────────────────┘
+                       │  ▸ How does the┃ └──────────────────────┘
+                       │  ▸ What does sh┃ ┃ dev                                                                      ▾
+                       │  ▸ What do I se┃ ─────────────────────────────────────────────────────────────────────────────
+ Typing · Esc leaves the field · Ctrl+K ┃                                                          [Cancel]   Make key

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ Display name                                        Esc ×
+ Home                  │  Account                           ┃ The name the Hub shows for you. Your username and
+ Computers             │  Your profile, how you sign in, and┃ email stay the same.
+ Files                 │                                    ┃ ─────────────────────────────────────────────────────────
+ Bots                  │  ▌Profile  Password  Two-step sign-┃ │ ◷ This may have gone through
+ Board                 │  ──────────────────────────────────┃ │   This may have gone through. Check again to see
+ Demo                  │  ┌─────────────────────────────────┃ │   whether it did.
+ Vault                 │  │ Security                        ┃
+                       │  │ ✓ Your email address is verified┃ Display name (unavailable)
+On atlas ▾             │  │ ✓ Two-step sign-in is on.       ┃ │ Ada L.
+ Programs              │  │ i 11 other browsers or devices a┃
+ Schedules             │  └─────────────────────────────────┃
+ Scripts               │                                    ┃
+ Logs                  │  ┌─────────────────────────────────┃
+ Tunnels               │  │ Profile                         ┃
+ Notes                 │  │                                 ┃
+ AI                    │  │ Display name                    ┃
+ VMs                   │  │                                 ┃
+                       │  │ Username                        ┃
+Account                │  │                                 ┃
+ Plans & Billing       │  │ Email                           ┃
+ Referrals             │  │                                 ┃
+ Keys and tokens       │  │ Member since                    ┃
+ API                   │  │                                 ┃
+ Notifications      26 │  │ Account ID                      ┃
+▌Account               │  │ Account deletion goes through su┃
+                       │  └─────────────────────────────────┃
+ + Rent servers        │                                    ┃
+ Guide                 │  ┌─────────────────────────────────┃
+ Support               │  │ Password                        ┃
+                       │  │                                 ┃
+                       │  │ Password                        ┃
+                       │  │ Changing it signs you out       ┃
+                       │  │ everywhere.                     ┃
+                       │  └─────────────────────────────────┃
+                       │                                    ┃
+                       │  ┌─────────────────────────────────┃
+                       │  │ Two-step sign-in                ┃
+                       │  │                                 ┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit  ┃ [Close]   Check again

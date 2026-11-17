@@ -1,0 +1,7 @@
+/* JumpToNewest: a row in the column's flow, below the transcript (never an overlay). Kit tokens only. */
+.row {
+  display: flex;
+  flex: none;
+  justify-content: center;
+  padding: var(--sp-1) var(--conv-inset, var(--sp-4)) var(--sp-2);
+}

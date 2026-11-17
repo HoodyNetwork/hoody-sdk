@@ -1,0 +1,442 @@
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  height: 100%;
+  padding: 0 var(--sp-2) 0 var(--sp-3);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--hx-ink);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  outline: none;
+}
+
+.trigger + .trigger {
+  border-inline-start: var(--bw) solid var(--hx-line-strong);
+}
+
+.realmName {
+  max-width: 180px;
+}
+
+.computerName {
+  max-width: 200px;
+}
+
+.menuHead {
+  padding: var(--sp-2) var(--sp-2) var(--sp-1);
+  color: var(--hx-faint);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.accountPop {
+  width: 280px;
+}
+
+.accountName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trigger[data-hovered],
+.trigger[data-pressed] {
+  background: var(--hx-hover);
+}
+
+.trigger[data-focus-visible] {
+  box-shadow: var(--focus-ring-inset);
+}
+
+.triggerText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.caret {
+  flex: none;
+  color: var(--hx-faint);
+}
+
+/* In place of the caret while a realm switch runs (the kit spinner has the caret's icon-sm footprint). */
+.busy {
+  display: inline-flex;
+  flex: none;
+  color: var(--hx-faint);
+}
+
+.realmDot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-0);
+  background: var(--rc, var(--hx-line-strong));
+}
+
+.flag {
+  flex: none;
+  font-size: var(--fs-lg);
+  line-height: 1;
+}
+
+.live {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-round);
+  background: var(--hx-line-strong);
+}
+
+.liveOn {
+  background: var(--hx-ok);
+}
+
+.popover {
+  min-width: 240px;
+  max-height: 420px;
+  overflow: auto;
+  border: var(--bw) solid var(--pop-line);
+  border-radius: var(--r-1);
+  background: var(--pop-bg);
+  box-shadow: var(--sh-pop);
+  z-index: var(--z-popover);
+}
+
+.menu {
+  padding: var(--pad-menu);
+  outline: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 34px;
+  padding: var(--pad-menu) var(--pad-row-x);
+  border-radius: var(--r-1);
+  color: var(--hx-ink);
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.item[data-focused] {
+  background: var(--pop-hover);
+}
+
+.item[data-disabled] {
+  color: var(--hx-faint);
+  cursor: default;
+}
+
+.itemText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.itemSub {
+  color: var(--hx-muted);
+  font-size: var(--fs-xs);
+}
+
+/* New realm while the account's Realm limit is reached: off but still reachable (the kit's one disabled recipe), its
+   reason after it on the same line. */
+.itemOff {
+  cursor: default;
+}
+
+.itemOff > :not(.itemLine),
+.itemOff .itemLine > :not(.itemSub) {
+  opacity: var(--ctl-off-opacity);
+}
+
+.itemLine {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-width: 0;
+  white-space: nowrap;
+}
+
+/* The use against the Realm limit ("1/5"): a quiet number at the end of New realm's line. In the menu it is a control
+   after the menu's items, held over the last line's end (the line keeps that room free); in the sheet it follows New
+   realm in one row. */
+.itemCap {
+  padding-inline-end: calc(var(--pad-row-x) + var(--cap-ch, 3) * 1ch + var(--sp-3));
+}
+
+.capSlot {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 1;
+  block-size: 0;
+}
+
+.capNum {
+  position: absolute;
+  inset-block-end: var(--pad-menu);
+  inset-inline-end: calc(var(--pad-menu) + var(--pad-row-x));
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-block-size: 34px;
+  color: var(--hx-muted);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.capRow {
+  display: flex;
+  flex: 1 1 100%;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.capRow .sheetItem {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.capNumSheet {
+  position: static;
+  flex: none;
+  min-block-size: var(--touch-min);
+  min-inline-size: var(--touch-min);
+  padding-inline: var(--sp-2);
+  justify-content: center;
+}
+
+/* A realm's computer count: a quiet number at the row's end; the words are for screen readers. */
+.itemCount {
+  color: var(--hx-muted);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* No check after it (a row other than the current realm): keep the check's room, so every count lines up. */
+.itemCount:last-child {
+  margin-inline-end: calc(var(--icon-sm) + var(--sp-2));
+}
+
+
+.check {
+  color: var(--hx-ink);
+}
+
+.separator {
+  height: var(--bw);
+  margin: var(--sp-1) 0;
+  background: var(--hx-line);
+}
+
+.avatarBtn {
+  display: grid;
+  place-items: center;
+  width: calc(var(--ctl-h) + var(--sp-1)); /* 36 x 32 in the bar (44 + 4 x 44 on a coarse pointer) */
+  height: var(--ctl-h);
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  cursor: pointer;
+}
+
+.avatarBtn[data-hovered] {
+  background: var(--hx-hover);
+}
+
+.avatarBtn[data-focus-visible] {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: var(--sp-6); /* 24 x 24 */
+  height: var(--sp-6);
+  background: var(--hx-ink);
+  color: var(--hx-on-ink);
+  font-family: var(--font-head);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+
+.accountHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+/* The same head as the menu's first item, a link to Account: name over email, the name in the label's weight. */
+.accountHeadItem {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-half);
+}
+
+.accountHeadItem .accountName {
+  font-weight: var(--fw-bold);
+}
+
+@media (width < 1024px) {
+  .realmName {
+    max-width: 96px;
+  }
+}
+
+/* Phone: the two parts give way to one context chip (PhoneContext). */
+.phoneChip {
+  display: none;
+}
+
+@media (width < 768px) {
+  .realmPart,
+  .computerPart {
+    display: none;
+  }
+
+  .phoneChip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+    height: 100%; /* The bar's context zone, its compact height (44 on a coarse pointer) */
+    padding: 0 var(--sp-2) 0 var(--sp-3);
+    border: var(--bw) solid var(--hx-line-strong);
+    border-radius: var(--r-1);
+    background: var(--hx-card);
+    color: var(--hx-ink);
+    font-size: var(--fs-md);
+    font-weight: var(--fw-medium);
+    cursor: pointer;
+    outline: none;
+  }
+
+  .phoneChip[data-focus-visible] {
+    box-shadow: var(--focus-ring);
+  }
+
+  .computerName {
+    max-width: 140px;
+  }
+}
+
+.sheetScrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-drawer);
+  background: var(--hx-scrim);
+}
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  background: var(--hx-raised);
+  outline: none;
+}
+
+.sheetDialog {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  outline: none;
+}
+
+.sheetHead {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2);
+  height: var(--drawer-head-h);
+  padding-inline: var(--sp-2) var(--sp-4);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.sheetTitle {
+  margin: 0;
+  font: var(--t-heading);
+}
+
+.sheetBody {
+  flex: 1;
+  min-height: 0;
+  padding: var(--sp-2) var(--sp-2) var(--sp-6);
+  overflow: auto;
+}
+
+.sheetList {
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+}
+
+.sheetItem {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--sp-3);
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  color: var(--hx-ink);
+  font-size: var(--fs-md);
+  text-align: start;
+  cursor: pointer;
+  outline: none;
+}
+
+.sheetItem[data-pressed] {
+  background: var(--hx-press);
+}
+
+.sheetItem[data-focus-visible] {
+  box-shadow: var(--focus-ring-inset);
+}
+
+.sheetCurrent {
+  background: var(--hx-selected);
+  font-weight: var(--fw-semibold);
+}
+
+/* The sheet's footer sits below the scrolling body, in MenuFooter's look; its two links share the row and
+ * wrap when narrow. */
+.sheetFoot {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2) calc(var(--sp-2) + env(safe-area-inset-bottom));
+}
+
+.sheetFoot .sheetItem {
+  flex: 1 1 10rem;
+  width: auto;
+}
+
+/* A plain line in the sheet's computer list while the list is not known (loading, not loaded): not a control. */
+.sheetNote {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: 0 var(--sp-3);
+  color: var(--hx-faint);
+  font-size: var(--fs-md);
+}
+

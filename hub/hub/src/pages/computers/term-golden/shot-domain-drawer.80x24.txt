@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY       ┃ Use your own domain for shop                        Esc ×
+ Computers          ┃ Open this alias at an address on a domain you own,
+ ▸ Computers    Serv┃ such as app.example.com.
+ ───────────────────┃ ─────────────────────────────────────────────────────────
+ ‹ Computers  Esc   ┃ ┌──────────────────────────────────────────────────────┐█
+ atlas  ● Running   ┃ │ THE ROUTE                                            │█
+ SG n12 · Home base ┃ │ One CNAME record sends your domain to this alias.    │█
+                    ┃ │ The Hub cannot see your DNS, so it cannot check this │█
+  Overview  Connect ┃ │ record for you.                                      │█
+  Programs  Backups ┃ │ Type    CNAME                                        │█
+ ───────────────────┃ │ Name    The address you want, such as app (for       │█
+ │  node · https://•┃ │         app.example.com)                             │█
+ │  5432            ┃ │ Access  The computer's access rules still apply at   │█
+ │  postgres · No we┃ │         your domain, just as at the alias.           │█
+ │  8080            ┃ └──────────────────────────────────────────────────────┘▀
+ │  caddy · https://┃ 01  Where you manage your DNS, add a CNAME record that
+ └──────────────────┃     points to shop.example.test ⧉ copy
+                    ┃     Use a name under your domain, such as
+ ┌──────────────────┃     app.example.com. Most DNS companies don't allow this
+ │ Aliases          ┃     kind of record on the bare domain (example.com).
+ │ Short addresses t┃ 02  Turn off any proxy or CNAME flattening for this
+ │ the computer.    ┃     record
+ │› shop            ┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter op┃                                                   [Close]

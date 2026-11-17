@@ -1,0 +1,29 @@
+/* useButtonLabelsWidth's probe: laid out where the caller's Buttons sit, never seen, reached or
+   given room. The box is out of flow and empty (no gap, no scroll overflow) and clips the holder; the holder is
+   max-content, so every Button takes its whole words, and hidden. */
+.box {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  display: block;
+  inline-size: 0;
+  block-size: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.probe {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  inline-size: max-content;
+  visibility: hidden;
+  contain: layout style;
+}
+
+.item {
+  display: block;
+}

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  AI                          ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ [Back to chats] Plan the backup job                    ● Running [⋯] [Details]
+ atlas · Personal
+────────────────────────────────────────────────────────────────────────────────
+ ▸ 2 steps ✓ Done
+
+ I wrote the plan to plan.md:
+                                                                               ▄
+ • Copy photos and projects every night at 02:00                               █
+ • Keep the last 7 copies                                                      █
+ • Send a note when a copy fails                                               █
+                                                                               █
+ ⧉ Copy [⋯]                                                                    █
+                                                                               █
+                                                                               █
+ │ You 09:00 AM                                                                █
+ │ Check the disk space too                                                    █
+                                                                               █
+ Thinking…                                                             [■ Stop]
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Message your agent                                                         │
+ └────────────────────────────────────────────────────────────────────────────┘
+ [+]  [/ Commands]  [Ask when needed]                             [Send ↵]  [▾]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

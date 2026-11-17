@@ -1,0 +1,15 @@
+{
+  "title": "Trust these hooks?",
+  "body": "Once trusted, these hooks run on {{computer}}, as you, each time their event happens.",
+  "off": "{{when}} · off",
+  "none": "The agent lists no hook commands for this set.",
+  "risk": "The agent cannot check these files or addresses. Whatever they hold when a hook runs, runs too.",
+  "agree": "I trust these as well",
+  "hidden": "A command or address here holds characters a screen would hide or change. Each is shown marked, like ⟨ESC⟩ or ⟨U+200B⟩: check the exact text above before trusting, because that text is what runs.",
+  "hiddenSeen": "I have read the exact text, marks included",
+  "toolong": "A command or address here is too long to show whole, so this set cannot be trusted from this page.",
+  "hash": "Reviewed set",
+  "confirm": "Trust these hooks",
+  "confirmRisk": "Trust, including unchecked files",
+  "target": "File or address"
+}

@@ -1,0 +1,2620 @@
+/* Stylesheet of the kit DataTable: toolbar, filter chips, menus, the table itself, its list, cards, icons and rail
+   presentations, and the footer. One level-1 panel, hairlines between rows, no zebra.
+   Constraint: the list → cards → icons → rail blocks rely on source order (later blocks win at equal specificity);
+   never reorder them. */
+.wrap {
+  --band-flush-pad: var(--sp-4);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.framed {
+  --ring-gap: var(--hx-card); /* the frame's own fill; an unframed table keeps the gap of the surface around it */
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus); /* again with the gap: see kit/tokens.css Focus */
+
+  border: var(--bw) solid var(--hx-panel-line);
+  border-radius: var(--r-1);
+  background: var(--hx-card);
+}
+
+/* A framed fill table (not a rail) takes the room its region gives it, but never more than its rows: the frame ends
+   under its last row, and a long table shrinks to the region and scrolls (or pages) inside it. */
+.fill {
+  flex: 1;
+  min-height: 0;
+}
+
+.framed.fill:not(.rail) {
+  flex: 0 1 auto;
+}
+
+/* A framed table that is not a side nav's rail and not inside a card gets the cards' slanted bottom-right corner, --table-cut, through the kit's one corner: data-table-cut on the frame (the
+   shared rule in CardEdge.module.css clips it and turns its border transparent) and a CardEdge drawing the line. The
+   edge sits over the sticky header and columns, so a row scrolled under the corner never covers the slant. */
+.wrap > [data-table-edge] {
+  z-index: calc(var(--z-sticky) + 2);
+}
+
+/* A table drawn from a width plan never scrolls sideways (DataTable xFit: the plan's widths add up to the room),
+   so its scroller shows no horizontal bar; it still scrolls down. */
+.scroll[data-x='fit'] {
+  overflow-x: hidden;
+}
+
+.nothing {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+}
+
+/* An empty card that takes the table frame's place starts under the header, at the frame's full width. */
+.nothing:has(> [data-empty-place='frame']) {
+  display: block;
+  flex: 0 0 auto;
+  min-height: 0;
+  padding-block: var(--sp-6) var(--sp-7);
+}
+
+/* Toolbar: at least `--toolbar-h`, its field controls (`--tb-ctl-h`) with `--toolbar-pad-y` above and below; one row
+   that never wraps on its own. DataTable measures the row (useRowFit): while it is wider than the toolbar, controls
+   move (toolbarSteps), so nothing here may shrink below its whole width except search, which stops at its least
+   usable width. The page's end controls may take a deliberate second row (.toolbarRow2). */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--toolbar-h);
+  padding-block: var(--toolbar-pad-y);
+  padding-inline: var(--sp-2);
+  border-block-end: var(--bw) solid var(--hx-line);
+  white-space: nowrap;
+}
+
+/* Rows selected, coarse pointer: when the bulk bar and the view controls do not fit on one line (a phone), the bulk
+   bar takes its own line(s): shrunk under its `--touch-min` buttons it would run over the controls. A toolbar that
+   fits keeps one line. */
+@media (pointer: coarse) {
+  .toolbar:has(> .bulk) {
+    flex-wrap: wrap;
+    row-gap: var(--touch-gap);
+  }
+}
+
+/* A second row keeps the toolbar inset (`--toolbar-pad-y` above the first row, below the second), as one row; only
+   the rows' own gap is tighter. */
+.toolbar:has(> .toolbarRow2) {
+  flex-wrap: wrap;
+  row-gap: max(var(--sp-1), var(--touch-gap));
+}
+
+.search {
+  flex: var(--search-grow) 1 280px;
+  min-width: var(--toolbar-search-min);
+}
+
+/* The toolbar search is a toolbar control (`--tb-ctl-h`), whatever the density, outlined in the field grey. */
+.toolbar .search input {
+  height: var(--tb-ctl-h);
+  border-color: var(--hx-field-line);
+}
+
+/* The tightest step on the narrowest phones: search may give up some of its least width rather than spill. */
+.toolbar[data-fit='last'] .search {
+  min-width: var(--toolbar-search-min-tight);
+}
+
+/* With a second row the toolbar wraps, and wrapping goes by flex-basis: a 280px basis would push the first row's
+   icons onto a line of their own. Search starts from its least width there and grows to fill the first row. */
+.toolbar:has(> .toolbarRow2) .search {
+  flex: 1 1 var(--toolbar-search-min-tight);
+}
+
+.toolbarEnd {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-inline-start: auto;
+}
+
+.toolbarRow2 {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  white-space: normal;
+}
+
+/* The second filter tier (filterBar="tier"): under the toolbar row, which gives it its bottom line. The chips form one
+   flush bar: no gap, neighbours share one line (each overlaps the next by its edge), every chip grows to fill its line,
+   and the bar wraps onto further lines rather than scroll or cut a label. No cut corner inside the bar. */
+.toolbarTiered {
+  border-block-end-color: transparent;
+}
+
+.tierBar {
+  padding: 0 var(--sp-2) var(--sp-2);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.tierBar .chips {
+  flex-wrap: wrap;
+  gap: 0;
+  padding-block-end: var(--bw);
+  padding-inline-end: var(--bw);
+}
+
+.tierBar .chipWrap {
+  --plate-cut-at: 0px;
+
+  flex: 1 1 auto;
+  margin-block-end: calc(-1 * var(--bw));
+  margin-inline-end: calc(-1 * var(--bw));
+}
+
+/* The chip under the pointer or the keyboard draws over its neighbours, so its frame and focus ring show whole. */
+.tierBar .chipWrap:hover,
+.tierBar .chipWrap:focus-within {
+  position: relative;
+  z-index: var(--z-raised);
+}
+
+.tierBar .chip {
+  flex: 1 1 auto;
+  justify-content: space-between;
+}
+
+/* What a toolbar action said (toolbarNote): its own padded line under the toolbar, never inside the control row.
+   An empty live region (kept so the next note is announced) takes no room. */
+.toolbarNote {
+  padding: var(--sp-2) var(--sp-4);
+  border-block-end: var(--bw) solid var(--hx-line);
+  color: var(--hx-ink);
+  font: var(--t-small);
+}
+
+.toolbarNote > * {
+  margin: 0;
+}
+
+.toolbarNote:empty {
+  display: none;
+}
+
+.toolbarNote:has(> :only-child:empty) {
+  padding: 0;
+  border: 0;
+}
+
+.count {
+  color: var(--hx-faint);
+  font: var(--t-mono);
+  white-space: nowrap;
+}
+
+/* Narrow (a phone): the bulk buttons wrap onto a second line instead of pushing ⚙ out of the panel. */
+.bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: max(var(--sp-1), var(--touch-gap)) var(--sp-2);
+  min-width: 0;
+  padding-block: var(--sp-1);
+  padding-inline-start: var(--sp-2);
+}
+
+.bulkCount {
+  padding-inline-end: var(--sp-2);
+  white-space: nowrap;
+  color: var(--hx-ink);
+  font: var(--t-body-strong);
+}
+
+/* Grows with its words: in a narrow list pane the sentence takes two lines and Retry wraps under it. */
+.staleBand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  min-height: 36px;
+  padding: var(--sp-2) var(--sp-4);
+  border-block-end: var(--bw) solid var(--hx-line);
+  background: var(--hx-warn-t);
+  color: var(--hx-ink);
+  font: var(--t-small);
+}
+
+/* Filter chips: each chip is a toolbar control (`--tb-ctl-h`) drawn as the kit's grey button plate, cut at its bottom
+   end; a set chip shows its value and its clear button inside the same plate. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* In a DataTable toolbar the chips keep one line: the toolbar folds them into the Filters button before they would
+   wrap (a page's own toolbar, such as Logs', may still wrap them). */
+.toolbar .chips {
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+
+/* The plate is Button.module.css's recipe on the chip's own frame (a chip holds two buttons, so it cannot be one kit
+   Button): the lower layer is the frame, cut at `--btn-cut`; the upper is the fill, one line inside it. It reads the
+   button tokens and keeps the button's property names, which toolbar.table-toolbar-px-row.spec.ts reads on both. */
+.chipWrap {
+  --plate: var(--hx-btn-plate);
+  --plate-line: var(--hx-btn-line);
+  --plate-cut-at: calc(var(--btn-cut) * 0.7071);
+  --plate-angle: 315deg;
+
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: stretch;
+  height: var(--tb-ctl-h);
+  border: var(--bw) solid transparent;
+  border-radius: 0;
+  background:
+    linear-gradient(var(--plate-angle), transparent calc(var(--plate-cut-at) - 0.414 * var(--bw) + var(--btn-cut-line-grow)), var(--plate) calc(var(--plate-cut-at) - 0.414 * var(--bw) + var(--btn-cut-line-grow))) padding-box,
+    linear-gradient(var(--plate-angle), transparent calc(var(--plate-cut-at) - var(--btn-cut-line-soft)), var(--plate-line) calc(var(--plate-cut-at) + var(--btn-cut-line-soft))) border-box;
+}
+
+/* The cut sits at the bottom end: the bottom left in a right-to-left page. */
+.chipWrap:dir(rtl) {
+  --plate-angle: 45deg;
+}
+
+/* Hover and press darken the whole plate (the parts paint no fill of their own: one would cover the cut). */
+.chipWrap:has([data-hovered]) {
+  --plate: var(--hx-btn-plate-hover);
+  --plate-line: var(--hx-btn-line-hover);
+}
+
+.chipWrap:has([data-pressed]) {
+  --plate: var(--hx-btn-plate-press);
+  --plate-line: var(--hx-btn-line-hover);
+}
+
+/* Every chip is a grey plate (set or not), as a toolbar Button is. Its words take the toolbar type, as .tbWords and a
+   toolbar Button do. */
+
+.chip,
+.chipX {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding-block: 0;
+  padding-inline: var(--sp-3) var(--sp-2);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--hx-btn-text);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-box-small);
+  letter-spacing: var(--tracking-label);
+  text-transform: var(--case-caps);
+  cursor: pointer;
+}
+
+.chipX {
+  justify-content: center;
+  padding: 0 var(--sp-1);
+}
+
+@media (pointer: coarse) {
+  .chipX {
+    min-inline-size: var(--touch-min);
+  }
+}
+
+/* The toolbar's own word buttons (a toolbarActions entry with words, Clear all) are ghost Buttons of the toolbar size:
+   as tall as the search field and the chips beside them, in the toolbar type. button.tbWords restates the type, so a
+   word button keeps it wherever its size rule sits in the file order; Button's literal reset (0,2,0) still wins. */
+button.tbWords {
+  font-size: var(--fs-sm);
+  letter-spacing: var(--tracking-label);
+}
+
+.chip[data-hovered],
+.chipX[data-hovered] {
+  color: var(--hx-ink);
+}
+
+.chip[data-focus-visible],
+.chipX[data-focus-visible] {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.chipName {
+  font-weight: var(--fw-medium);
+}
+
+/* A set chip: name | value | clear, one plate. Its frame takes the button's darker line, which is what tells a set chip
+   from an unset one at a glance (no accent: a set filter is not a status). The same line is the rule between the
+   parts, so the parts stretch to the plate's full height. */
+.chipOn {
+  --plate-line: var(--hx-btn-line-hover);
+}
+
+.chipOn .chip {
+  align-items: stretch;
+  gap: 0;
+  min-inline-size: 0;
+  padding-inline: 0;
+}
+
+.chipOn .chipName {
+  display: inline-flex;
+  align-items: center;
+  padding-inline: var(--sp-3) var(--sp-2);
+  color: var(--hx-muted);
+}
+
+.chipOn .chipValue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+  padding-inline: var(--sp-2) var(--sp-3);
+  border-inline-start: var(--bw) solid var(--plate-line);
+}
+
+.chipOn .chipX {
+  padding-inline: var(--sp-2);
+  border-inline-start: var(--bw) solid var(--plate-line);
+}
+
+/* The clear button's own hover and press: one step darker than the plate under it, cut like the plate so the corner
+   stays (the button sits in the plate's cut corner). */
+.chipOn .chipX[data-hovered],
+.chipOn .chipX[data-pressed] {
+  background: linear-gradient(var(--plate-angle), transparent calc(var(--plate-cut-at) - 0.414 * var(--bw) + var(--btn-cut-line-grow)), var(--hx-btn-plate-press) calc(var(--plate-cut-at) - 0.414 * var(--bw) + var(--btn-cut-line-grow)));
+}
+
+/* A long value is cut short inside its part; the chip button's name still reads it whole. */
+.chipValueText {
+  overflow: hidden;
+  max-inline-size: 24ch;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (forced-colors: active) {
+  .chipOn .chipValue,
+  .chipOn .chipX {
+    border-inline-start-color: ButtonText;
+  }
+}
+
+/* A chip's value is data (a computer's name, a path): it keeps its own case and no tracking, the `literal` rule. */
+.chipValue {
+  color: var(--hx-ink);
+  font-weight: var(--fw-medium);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/* A filter option's mark (a computer's colour) before its value in the chip, and before its label in the menu. */
+.chipValueMarked {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.chipMark,
+.menuMark {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+/* A mark that draws nothing (no colour, or not a colour) takes no room. */
+.chipMark:empty,
+.menuMark:empty {
+  display: none;
+}
+
+.filtersPanel {
+  width: 280px;
+}
+
+.filtersDialog {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  outline: none;
+}
+
+.filtersList {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+/* Menus (view menu, chip options) */
+.popover {
+  z-index: var(--z-popover);
+  min-width: 200px;
+  max-height: 480px;
+  overflow: auto;
+  border: var(--bw) solid var(--pop-line);
+  border-radius: var(--r-1);
+  background: var(--pop-bg);
+  box-shadow: var(--sh-pop);
+}
+
+.menu {
+  padding: var(--sp-1);
+  outline: none;
+}
+
+.menuHead {
+  padding: var(--sp-2) var(--pop-row-x) var(--sp-1); /* the one group label shape every kit overlay uses */
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.menuSep {
+  height: var(--bw);
+  margin: var(--sp-1) calc(-1 * var(--sp-1));
+  border: 0;
+  background: var(--pop-sep);
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--pop-row-h);
+  padding: 0 var(--pop-row-x);
+  border-radius: var(--r-1);
+  color: var(--hx-ink);
+  font: var(--t-body);
+  cursor: default;
+  outline: none;
+}
+
+.menuItem + .menuItem {
+  margin-block-start: var(--pop-row-gap); /* rows apart by the row gap, never after a head or rule */
+}
+
+.menuItem[data-focused] {
+  background: var(--pop-hover);
+}
+
+/* Unavailable, as the kit Menu draws it: after the focused rule, so a focused unavailable item keeps the look. */
+.menuItem[data-disabled],
+.menuItem[data-disabled] .menuCheck {
+  color: var(--pop-off);
+}
+
+.menuCheck {
+  display: inline-grid;
+  width: var(--icon-md);
+  color: var(--hx-ink);
+}
+
+/* Table */
+.scroll {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* maxHeight: the rows scroll inside the frame past this height; the sticky header stays on top. */
+.capped {
+  max-block-size: var(--dt-cap);
+}
+
+.table {
+  /* A row's end padding: the last cell (the ⋯ cell, when the table has row actions) and an end-placed group extra
+     read this one value, so a group row's last control ends on the same line as the ⋯ buttons below it. */
+  --actions-pad-end: var(--sp-4);
+
+  /* A grouped table has three edges. The heading's (its chevron, at the row's inset), the
+     children's (a row's first content, under the heading's label: the chevron's lead column and its gap further in)
+     and the note's (its callout box, half way between: its own edge, never one of the other two). */
+  --group-indent: calc(var(--rail-lead) + var(--rail-gap));
+  --group-note-indent: calc(var(--group-indent) / 2);
+
+  /* A header holding a tip: the tip's hit height (`--sp-6`, `--touch-min` on a coarse pointer) plus the focus ring's reach above and
+     below; .thead th:has(.thTip) is this tall, and sticky group rows stick under it. */
+  --th-tip-h: max(var(--th-h), calc(max(var(--sp-6), var(--touch-min)) + 2 * var(--sp-1)));
+
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  color: var(--hx-ink);
+  font: var(--t-body);
+}
+
+/* The selection column: 40px with a mouse (its start padding, then the check). On a coarse pointer the check is a
+   `--touch-min` square of its own (forms/fields.module.css): the column is that square and the cell drops its start
+   padding (below), so no row check reaches into the next cell and the header's select-all is not clipped. */
+.colCheck {
+  width: max(40px, var(--touch-min));
+}
+
+.thead .th {
+  overflow: hidden;
+}
+
+.thead th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-sticky);
+  height: var(--th-h);
+  padding: 0 var(--sp-3);
+  border-block-end: var(--bw) solid var(--hx-panel-line);
+  background: var(--hx-card);
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-align: start;
+  text-transform: var(--case-caps);
+  white-space: nowrap;
+}
+
+/* A header follows its column's cells: over end-aligned figures it ends where they end, over centred cells it is
+   centred. (`.thead th` above outweighs the bare `.end` / `.center` the cell and the header share, so the header says
+   it again here.) */
+.thead th.end {
+  text-align: end;
+}
+
+.thead th.center {
+  text-align: center;
+}
+
+/* What follows an end-aligned label (its sort arrow, its tip) is drawn before it, so the label's last letter stands
+   over the figures' last digit and the arrow never pushes the label off its column's edge. */
+.thead th.end .sortBtn,
+.thead th.end .thTip {
+  flex-direction: row-reverse;
+}
+
+.srOnlyHead {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.thead th:first-child,
+.tr > td:first-child {
+  padding-inline-start: var(--sp-4);
+}
+
+.thead th:last-child,
+.tr > td:last-child {
+  padding-inline-end: var(--actions-pad-end);
+}
+
+.thead .thCheck,
+.tr > .tdCheck {
+  padding-inline: var(--sp-4) 0;
+}
+
+/* Coarse: the check is the column's whole width (.colCheck). Element-qualified so it outweighs the first column's
+   start padding (`.tr > td:first-child`, `.thead th:first-child`), which comes earlier. */
+@media (pointer: coarse) {
+  .thead th.thCheck,
+  .tr > td.tdCheck {
+    padding-inline: 0;
+  }
+}
+
+.thead .thActions,
+.tr > .tdActions {
+  padding-inline: 0 var(--sp-2);
+}
+
+.sortBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.thLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* A header label with its InfoTip after it (meta.tip). The tip's box (`--sp-6`, `--touch-min` on a coarse pointer) overhangs
+   the label's line instead of growing the header row. */
+.thTip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  max-width: 100%;
+  min-width: 0;
+  vertical-align: middle;
+}
+
+/* A header holding a tip is the tip's hit height plus the focus ring's reach (`--sp-1`) above and below, so neither
+   is cut by the clipping header cell; on a fine pointer that is the usual header height (`--th-h`). */
+.thead th:has(.thTip) {
+  height: var(--th-tip-h);
+}
+
+.sortBtn:hover {
+  color: var(--hx-ink);
+}
+
+.sortIcon {
+  flex: none;
+  opacity: 0;
+  transition: opacity var(--dur-hover) linear;
+}
+
+.sortBtn:hover .sortIcon,
+.sortBtn:focus-visible .sortIcon,
+.sortActive {
+  opacity: 1;
+}
+
+/* Touch has no hover: an unsorted column shows its sort icon faintly, so the header reads as sortable. The sorted
+   column's icon (.sortActive, the same element) keeps full strength. */
+@media (hover: none) {
+  .sortIcon {
+    opacity: 0.4;
+  }
+
+  .sortActive {
+    opacity: 1;
+  }
+}
+
+.tr {
+  height: var(--table-row-h);
+  outline: none;
+}
+
+[data-density='compact'] .tr {
+  height: var(--row-h-dense);
+}
+
+.tr > td {
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+/* rowMark: a marked row's wash and the bar (`--dt-mark-w`, `--dt-mark-w-ink`) on its first cell. Colour longhands only, so the column
+   dividers (a background image) stay. Load-bearing: the wash steps aside for a selected or active row and the bar for
+   an active row (whose own bar sits on the same cell), so selection always reads; the `:not()` makes the wash outweigh
+   `.tr:hover > td`, so hover reaches a marked row through `--mark-wash` instead. A test pins both selectors. */
+.tr[data-mark='acc'] {
+  --mark-w: var(--dt-mark-w);
+  --mark-bar: var(--dt-mark-bar-acc);
+  --mark-wash: var(--dt-mark-wash-acc);
+}
+
+.tr[data-mark='ink'] {
+  --mark-w: var(--dt-mark-w-ink);
+  --mark-bar: var(--dt-mark-bar-ink);
+  --mark-wash: var(--dt-mark-wash-ink);
+}
+
+.tr[data-mark]:hover {
+  --mark-wash: var(--hx-hover);
+}
+
+.tr[data-mark]:not(.selected, .active) > td {
+  background-color: var(--mark-wash);
+}
+
+.tr[data-mark]:not(.active) > td:first-child {
+  box-shadow: inset var(--mark-w) 0 0 var(--mark-bar);
+}
+
+/* lines='dashed': dashed row lines, the header shaded over a dashed line. */
+.ledger .tr > td {
+  border-block-end: var(--bw) dashed var(--hx-ledger-line);
+  font-variant-numeric: tabular-nums;
+}
+
+.ledger .thead th {
+  border-block-end: var(--bw) dashed var(--hx-ledger-head-line);
+  background-color: var(--hx-ledger-head-bg);
+}
+
+/* Column dividers: a faint line between data columns of a column table. None beside the checkbox or the row
+   actions, and none in the list, cards and icons presentations (all .list), which have no columns. The line is a
+   background layer, not a border: a border takes a pixel from the cell's content and cuts text sized to the column
+   (bots status "2 messages waiting"). Longhands only, so the cell's own background colour (hover, selected) stays. */
+.table:not(.list) .thead th:not(.thCheck) + th:not(.thActions),
+.table:not(.list) .tr > td:not(.tdCheck) + td:not(.tdActions) {
+  background-image: linear-gradient(var(--col-line), var(--col-line));
+  background-position: left top;
+  background-repeat: no-repeat;
+  background-size: var(--bw) 100%;
+}
+
+.table:not(.list) .thead th:not(.thCheck) + th:not(.thActions):dir(rtl),
+.table:not(.list) .tr > td:not(.tdCheck) + td:not(.tdActions):dir(rtl) {
+  background-position: right top;
+}
+
+.td {
+  overflow: hidden;
+  padding: 0 var(--sp-3);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A cell with column meta wraps: its text takes the lines it needs (words wrap, a run with no break point breaks
+   anywhere) and the row grows with it, a table row's height being its least. The block padding keeps a second line off
+   the row lines; one line of text plus the padding stays inside the row height, so a row that fits keeps its size. */
+.td[data-cell-wraps] {
+  padding-block: var(--sp-2);
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+[data-density='compact'] .td[data-cell-wraps] {
+  padding-block: var(--sp-1);
+}
+
+.end {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.center {
+  text-align: center;
+}
+
+.mono {
+  font: var(--t-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.tr:hover > td {
+  background: var(--hx-hover);
+}
+
+/* Loading rows (TableSkeletonBody) are not rows yet: no hover wash. */
+.skelRow:hover > td {
+  background-color: transparent;
+}
+
+.selected > td,
+.active > td {
+  background: var(--hx-selected);
+}
+
+.active > td:first-child {
+  box-shadow: inset var(--bw-2) 0 0 var(--hx-selected-bar);
+}
+
+/* The focused row's ring is inset (drawn by the cells): an outset outline on the row would overlap the neighbouring
+   rows' hairlines. */
+.tr:focus-visible {
+  outline: none;
+}
+
+.tr:focus-visible > td {
+  box-shadow:
+    inset 0 var(--bw-2) 0 var(--hx-focus),
+    inset 0 calc(var(--bw-2) * -1) 0 var(--hx-focus);
+}
+
+/* Load-bearing weight: `.table` lifts this over a marked row's bar (`.tr[data-mark]:not(.active) > td:first-child`),
+   which draws on the same cell; the cards and icons rules further down still win by order. */
+.table .tr:focus-visible > td:first-child {
+  box-shadow:
+    inset 0 var(--bw-2) 0 var(--hx-focus),
+    inset 0 calc(var(--bw-2) * -1) 0 var(--hx-focus),
+    inset var(--bw-2) 0 0 var(--hx-focus);
+}
+
+.tr:focus-visible > td:last-child {
+  box-shadow:
+    inset 0 var(--bw-2) 0 var(--hx-focus),
+    inset 0 calc(var(--bw-2) * -1) 0 var(--hx-focus),
+    inset calc(var(--bw-2) * -1) 0 0 var(--hx-focus);
+}
+
+/* A dense row holds its own small controls, which may be as tall as the row. The cell gives them all of it: the
+   actions cell drops the browser's default cell padding (it is not a .td), and in a compact row it draws the row's
+   line as an inset shadow, which takes no layout, so the row stays `--row-h-dense` rather than growing. The other
+   cells keep their border: the line lands on the same pixel row. A focused row's ring (td:last-child, 0,3,1) still
+   wins. The row's controls take their size from the table (DataTable rowSize: the kit's sm button at the default
+   density, xs in a compact table and a rail); no rule here sizes them. */
+.tr > .tdActions {
+  padding-block: 0;
+}
+
+[data-density='compact'] .tr > .tdActions {
+  border-block-end-width: 0;
+  box-shadow: inset 0 calc(-1 * var(--bw)) 0 var(--hx-line);
+}
+
+/* The row check on a coarse pointer: a `--touch-min` square of its own, so its cell gives it the row's height (no
+   block padding). A compact row is `--touch-min` with its line: there the check is the row less its line, so the row
+   keeps its height and its cell keeps its border (an active row's selection bar, an inset shadow, stays drawn). The
+   header's select-all fills the header (`--th-h` tall, `--touch-min` wide): a taller header would slide under the
+   sticky group rows, which stick at `--th-h`. */
+@media (pointer: coarse) {
+  .tr > .tdCheck {
+    padding-block: 0;
+  }
+
+  [data-density='compact'] .tr > .tdCheck > label {
+    min-block-size: calc(var(--touch-min) - var(--bw));
+  }
+
+  .thead th.thCheck > label {
+    min-block-size: calc(var(--th-h) - var(--bw));
+  }
+
+  /* A selecting rail: its lead column holds the check, so it is the check's width (the narrower `--rail-lead`
+     would put a `--touch-min` check over the row's text). */
+  .railLead:has([data-rail-lead] input[type='checkbox']) {
+    --rail-cols: max(var(--rail-lead), var(--touch-min)) minmax(0, 1fr) auto;
+  }
+}
+
+/* selectable 'pickOne': the row's native radio, the checkbox's size (`--icon-md`), in the ink colour when on. */
+.pickRadio {
+  width: var(--icon-md);
+  height: var(--icon-md);
+  margin: 0;
+  accent-color: var(--hx-ink);
+  cursor: pointer;
+}
+
+.rowActionsWrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-half);
+}
+
+/* An xs icon's touch press reaches past its box on each side by (`--touch-min` - `--ctl-h-xs`) / 2 (Button
+   .iconOnly.xs::after), so xs row controls stand that far apart twice over: two presses meet in the gap and none
+   covers a neighbour's box (a ⋯ beside the coarse open chevron). `--touch-min` is 0 on a mouse, so the gap stays
+   `--sp-half` there. The kit's sm button is its own touch target and needs no more. */
+.rowActionsWrap[data-row-size='xs'] {
+  gap: max(var(--sp-half), calc(var(--touch-min) - var(--ctl-h-xs)));
+}
+
+/* A row's word button (Start, Answer) stands `--sp-2` from the control beside it, as two plates do everywhere else:
+   at the wrap's `--sp-half` the button and the ⋯ read as one fused control. The column plan already keeps this room
+   (rowControlMetrics ROW_CONTROL_GAP), so no column moves. xs rows (a rail) keep their own rule above. */
+.rowActionsWrap:not([data-row-size='xs']) > span[data-row-actions]:not([data-row-open], :last-child) {
+  margin-inline-end: calc(var(--sp-2) - var(--sp-half));
+}
+
+/* The ⋯, the inline action and the coarse open are each a flex box, so the button is centred in it, not sat on a
+   text baseline with room for a descender below it (which puts an xs ⋯ in a rail above its row's middle). The hover
+   icons' own box (.rowActions) is left alone: a coarse pointer hides it. */
+.rowActionsWrap > :is([data-row-menu], [data-row-open], span[data-row-actions]) {
+  display: flex;
+  align-items: center;
+}
+
+/* The row's ⋯ (a table row's plate, a list row's plain dots) keeps its square in that flex box. */
+.rowMore {
+  flex: none;
+}
+
+.rowActions {
+  display: flex;
+  gap: var(--sp-half);
+  opacity: 0;
+  transition: opacity var(--dur-hover) linear;
+}
+
+.tr:hover .rowActions,
+.tr:focus-within .rowActions,
+.tr:focus-visible .rowActions,
+.tr:has([data-row-menu] [aria-expanded='true']) .rowActions {
+  /* The last: the row's ⋯ is open (its menu holds focus in a portal), and the menu does not list these icons. */
+  opacity: 1;
+}
+
+/* No hover: the icons never show, and DataTable lists their actions in ⋯ instead (splitActions, pointer 'coarse'). */
+@media (pointer: coarse), (hover: none) {
+  .rowActions {
+    display: none;
+  }
+}
+
+.firstCell {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.cellText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expander {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  position: relative;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  color: var(--hx-muted);
+  cursor: pointer;
+}
+
+/* The hit area: the drawn box with a mouse, a --touch-min square centred on it on a coarse pointer. A pseudo-element,
+   so the first cell's layout (and the planner's widths) is the same for both. */
+.expander::before {
+  position: absolute;
+  inset: calc((100% - max(100%, var(--touch-min))) / 2);
+  content: '';
+}
+
+.expander:hover {
+  background: var(--hx-hover);
+  color: var(--hx-ink);
+}
+
+.expanderGap {
+  display: inline-block;
+  flex: none;
+  width: var(--icon-lg);
+}
+
+/* TableGroup.note: the group's own note under its header, an inset callout, never a row's look. Its box
+   starts at the note's own edge (--group-note-indent in from the heading's) and ends at the row actions' end, with
+   space above and below; the row draws no line of its own. A Band in it is a boxed callout even when the page passed
+   `flush` (a flush Band is a row of a stack; here it is a box): its tone's fill and bar, the --bw frame in its tone's
+   line (square, as every kit box), its icon in its own lead column and its action at its end. A plain note gets the
+   calm callout box, a Band nested in it included; flush Bands are the note's direct children or none (TableGroup.note). */
+.groupNoteRow > td {
+  padding-block: var(--sp-2);
+  padding-inline: calc(var(--sp-4) + var(--group-note-indent)) var(--actions-pad-end);
+  border-block-end: 0;
+  color: var(--hx-ink);
+  font: var(--t-small);
+}
+
+.groupNote {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.groupNote > * {
+  margin: 0;
+}
+
+.groupNote:not(:has(> [data-band-flush])) {
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--bw) solid var(--hx-notice-line);
+  border-inline-start: var(--bw-notice) solid var(--hx-notice-calm-bar);
+  background: var(--hx-notice-calm);
+  color: var(--hx-notice-text);
+}
+
+.groupNote > [data-band-flush] {
+  --band-flush-pad: var(--sp-3);
+
+  border: var(--bw) solid var(--nt-line);
+}
+
+/* Cards and icons lay rows out as a grid: the note spans it, like a group header. A rail pads it as its rows (a flush
+   Band pads itself). */
+.cards .groupNoteRow,
+.icons .groupNoteRow {
+  display: block;
+  grid-column: 1 / -1;
+}
+
+.cards .groupNoteRow > td,
+.icons .groupNoteRow > td {
+  display: block;
+  padding-inline: var(--group-note-indent) 0;
+}
+
+.rail .groupNoteRow > td {
+  padding-inline: calc(var(--rail-pad) + var(--group-note-indent)) var(--rail-pad);
+}
+
+.expandedRow > td {
+  padding: 0 0 var(--sp-2);
+  border-block-end: var(--bw) solid var(--hx-line);
+  background: var(--hx-bg);
+}
+
+.expandedBody {
+  padding-inline-start: calc(var(--sp-6) + var(--sp-1));
+}
+
+/* stickyGroups: a group's header row sticks under the column header (in the list presentation, whose header
+   is for screen readers only, at the top), below the header's own layer; its opaque background covers the rows going
+   under it, and the next group's header, later in the table, draws over it. */
+.stickyGroups {
+  --group-sticky-top: var(--th-h);
+
+  /* A parent's inline header height (.groupRow > td): where its child in force sticks until the table measures the drawn
+     parent in force and sets its own (a header whose text wraps, a coarse pointer). */
+  --group-head-h: max(var(--group-row-h), calc(var(--touch-min) + var(--touch-gap)));
+}
+
+/* A header holding a tip is `--th-tip-h` tall (taller than `--th-h` on a coarse pointer): the group rows stick under
+   the header actually drawn. A list's header is screen-reader only, so its rows stay at 0.
+   Only the table's own header counts (`> .thead`): a nested table in an expanded row never moves its parent's offset. */
+.stickyGroups:not(.list):has(> .thead .thTip) {
+  --group-sticky-top: var(--th-tip-h);
+}
+
+.stickyGroups.list {
+  --group-sticky-top: 0px;
+}
+
+.stickyGroups .groupRow > td {
+  position: sticky;
+  inset-block-start: var(--group-sticky-top);
+  z-index: calc(var(--z-sticky) - 1);
+}
+
+/* On a coarse pointer the row holds a `--touch-min` action (a page's group extra, such as New note) with
+   `--touch-gap` to spare, so it never meets the row above or below.
+   The header is a heading on a band of its own (the secondary grey, a step off the rows'
+   card in either theme, opaque for stickyGroups), its label in --t-group, normal case, its count quieter after it. */
+.groupRow > td {
+  height: max(var(--group-row-h), calc(var(--touch-min) + var(--touch-gap)));
+  padding: 0 var(--sp-4);
+  border-block-end: var(--bw) solid var(--hx-line);
+  background: var(--hx-sec-bg);
+}
+
+.groupBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rail-gap);
+  height: var(--group-row-h);
+  min-block-size: var(--touch-min);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--hx-muted);
+  font: var(--t-group);
+  cursor: pointer;
+}
+
+/* The chevron in the lead column the rows' content starts after (--group-indent). */
+.groupBtn > svg {
+  inline-size: var(--rail-lead);
+}
+
+.groupBtn:hover {
+  color: var(--hx-ink);
+}
+
+.groupLabel {
+  color: var(--hx-ink);
+}
+
+.groupCount {
+  color: var(--hx-faint);
+  font: var(--t-small);
+}
+
+/* List presentation: 2-line rows, no header, no checkboxes unless selecting.
+   Line 1: lead + primary (semibold) + status right. Line 2: muted meta fields joined by " · ", wrapping whole onto
+   more lines when they do not fit (every field stays in sight), then the inline action and ⋯. */
+.list .tr {
+  height: var(--row-h-2line);
+}
+
+[data-density='compact'] .list .tr {
+  height: var(--row-h-2line-dense);
+}
+
+/* The row height is a minimum (a table row grows): a primary cell with badges under the name
+   adds a third line instead of overlapping line 2. */
+.listCell {
+  padding: var(--sp-1) var(--sp-2) var(--sp-1) var(--sp-4);
+
+  /* Line 2's `--touch-min` row actions on a coarse pointer stand (`--touch-min` - `--sp-5`) / 2 below the `--sp-5`
+     line: room for them, so they end inside their row and a tap on the next row never opens this row's ⋯. Fine
+     pointer: `--sp-1`. */
+  padding-block-end: max(var(--sp-1), calc((var(--touch-min) - var(--sp-5)) / 2));
+}
+
+.listGrid {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.listCheck {
+  display: inline-flex;
+  flex: none;
+}
+
+.listLines {
+  flex: 1;
+  min-width: 0;
+}
+
+/* `--sp-5` lines: pills and the ⋯ button overflow their line, never grow the row. Line 2 is one such line per row of
+   meta fields; a wide list keeps it one line. */
+.listLine1,
+.listLine2 {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  min-height: var(--sp-5);
+}
+
+.listLine1 {
+  align-items: flex-start;
+  padding-inline-end: var(--sp-2);
+}
+
+.listLine2 {
+  margin-block-start: var(--sp-1);
+  color: var(--hx-muted);
+  font: var(--t-small);
+
+  /* Each field brings its " · " (below); a field that starts a line hangs its separator before the line, where this
+     clip takes it off, so no line starts with a dot. Only the start side is clipped: pills, actions and focus rings
+     still overflow the other sides by `--icon-hit` (more than any overhang, a hit box on a `--sp-5` line plus its
+     ring; `--touch-min` is 0 on a fine pointer and would cut them). */
+  clip-path: inset(calc(-1 * var(--icon-hit)) calc(-1 * var(--icon-hit)) calc(-1 * var(--icon-hit)) 0);
+}
+
+.listLine2:dir(rtl) {
+  clip-path: inset(calc(-1 * var(--icon-hit)) 0 calc(-1 * var(--icon-hit)) calc(-1 * var(--icon-hit)));
+}
+
+.listLead {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+.listPrimary {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-inline-end: auto;
+  overflow: hidden;
+  font: var(--t-body-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The item name with column meta listWraps: it wraps whole onto the lines it needs, as a wrapping
+   line-2 field does (words wrap, a run with no break point breaks anywhere), never cut with an ellipsis. */
+.listPrimary[data-meta-wraps] {
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.listStatus {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+/* A status that holds a control (a tip icon, `--touch-min` on a coarse pointer, or a launcher's Options and Open) sets line 1's
+   height: the line grows to the control's hit box and centres the primary text on it, so the words beside the control
+   stay level with the name and every tap the control takes lies inside its own row, never in the row above or below. */
+.listLine1:has(> .listStatus :is(button, a[href], [role='button'])) {
+  align-items: center;
+}
+
+/* The meta fields: values keep their own look; fields wrap whole onto more lines, all in sight. The
+   run starts one separator's width before the line, so every field's " · " sits before it and a line's first one
+   hangs where .listLine2 clips it. */
+.listMeta {
+  --meta-sep: var(--sp-3);
+
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  margin-inline-start: calc(-1 * var(--meta-sep));
+  white-space: nowrap;
+}
+
+/* A word or open button in the row's actions: they can take most of a narrow line, so when the fields
+   do not all fit beside them the actions drop to their own line under the fields, at its end, and the fields keep the
+   whole width. An ⋯ alone, or actions that show only on hover, stay beside the fields. */
+.listLine2:has(> .rowActionsWrap > span[data-row-actions]) {
+  flex-wrap: wrap;
+}
+
+.listLine2:has(> .rowActionsWrap > span[data-row-actions]) > .listMeta {
+  flex: 1 1 auto;
+}
+
+.listLine2:has(> .rowActionsWrap > span[data-row-actions]) > .rowActionsWrap {
+  margin-inline-start: auto;
+}
+
+/* Each field keeps its whole width and wraps whole; only a field wider than the whole line is cut. */
+.listItem {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  height: var(--sp-5);
+  overflow: hidden;
+}
+
+/* A field that says it wraps (data-meta-wraps: chat app names in a narrow rail) takes the lines it needs; the second
+   selector outranks a controls line's fixed field height. */
+.listMeta > .listItem:has([data-meta-wraps]),
+.listMeta:has(button, a[href], [role='button']) > .listItem:has([data-meta-wraps]) {
+  height: auto;
+  min-height: var(--sp-5);
+}
+
+/* A column that wraps (column meta listWraps: the field itself carries data-meta-wraps): its content wraps inside the
+   field onto the lines it needs, never cut and never past it. The contract is a DataTable cell's (a text slot, enforced
+   by the anatomy lint): words and a Link wrap, a run with no break point (an id, a long token) breaks anywhere
+   (overflow-wrap inherits), so the field's min-content never exceeds its line; a one-line atom (Tag, StatusPill, Kbd)
+   stays whole and wraps as a unit (the value rule below). On a line holding controls the field keeps the hit height as
+   its minimum. */
+.listMeta > .listItem[data-meta-wraps] {
+  height: auto;
+  min-height: var(--sp-5);
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+/* On a line holding controls: this selector outranks that line's fixed field height (its :has(a[href]) counts). */
+.listMeta:has(button, a[href], [role='button']) > .listItem[data-meta-wraps] {
+  height: auto;
+  min-height: var(--meta-hit);
+}
+
+/* Its value flows as text (a block, not the one-line flex row): atoms (Tag, StatusPill) wrap between each other, whole,
+   and a link's words wrap with the rest. Its label (listLabel) wraps too, up to its half of the field, never cut. */
+.listMeta > .listItem[data-meta-wraps] > .listValue {
+  display: block;
+  flex: 1 1 0;
+}
+
+.listMeta > .listItem[data-meta-wraps] > .listLabel {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* Its label as an InfoTip term (meta tip): the term button wraps within the label's half too, never cut at it (its hidden
+   overflow then holds all of it), and each line starts at the label's start like any label's. The label leaves it
+   unclipped (.listLabel:has(> button)), so its focus ring keeps its reach. */
+.listMeta > .listItem[data-meta-wraps] > .listLabel > button {
+  text-align: start;
+  white-space: normal;
+}
+
+/* A line holding controls (a table whose actions fold into line 2) clips none of them: its box is a small control's
+   height (`--meta-hit`: the kit's sm button, `--icon-hit` on a coarse pointer) plus the focus ring's reach (`--sp-1`)
+   on every side, pulled back by the same margin. Every field on it is the hit height and lines sit 2 x `--sp-1` apart. Only
+   the overhang (the ring room and the space between fields) lets taps through to the row and line 1 beneath; every
+   field, whatever it holds (words to select, an input, a control), takes its own. A text-only line stays one --sp-5
+   line per row. Here the separator also keeps the ring's reach after it, and .listLine2 clips the start a ring's reach
+   out, so a line's first field shows its whole ring and still no dot. */
+.listMeta:has(button, a[href], [role='button']) {
+  --meta-hit: max(var(--sp-5), var(--ctl-h-sm), var(--icon-hit));
+  --meta-sep: calc(var(--sp-3) + var(--sp-1));
+
+  row-gap: calc(2 * var(--sp-1));
+  margin: calc(-1 * var(--sp-1));
+  margin-inline-start: calc(-1 * (var(--sp-1) + var(--meta-sep)));
+  padding: var(--sp-1);
+  pointer-events: none;
+}
+
+.listLine2:has(> .listMeta :is(button, a[href], [role='button'])) {
+  clip-path: inset(calc(-1 * var(--icon-hit)) calc(-1 * var(--icon-hit)) calc(-1 * var(--icon-hit)) calc(-1 * var(--sp-1)));
+}
+
+.listLine2:dir(rtl):has(> .listMeta :is(button, a[href], [role='button'])) {
+  clip-path: inset(calc(-1 * var(--icon-hit)) calc(-1 * var(--sp-1)) calc(-1 * var(--icon-hit)) calc(-1 * var(--icon-hit)));
+}
+
+.listMeta:has(button, a[href], [role='button']) > .listItem {
+  height: var(--meta-hit);
+  pointer-events: auto;
+}
+
+/* A field's cut is for words: a field of controls shows them whole, rings included. It does not
+   clip, so a control group wider than the line (max-width: 100%) hangs past its field, takes taps there meant for the
+   row beneath, and is cut only by .listMeta. Clipping the field at its ring room (overflow: clip with
+   overflow-clip-margin: --sp-1) would end that, but Safari has no overflow-clip-margin and would cut the focus ring at
+   the field's edge. The actions that fold here fit their field (partsactions.spec.ts checks that none hangs past it). */
+.listMeta:has(button, a[href], [role='button']) > .listItem.listItem:has(button, a[href], [role='button']) {
+  overflow: visible;
+}
+
+/* A field that fills the rest of line 2 (column meta listFill) starts from no width and grows into what the fields
+   before it and the row's actions leave: it never wraps onto a line of its own, the row's word stays beside it, and
+   line 2 stays one line. Its value spans the field, so the cell can cut its words and keep its end in place. */
+.listMeta > .listItem[data-list-fill] {
+  flex: 1 1 0;
+}
+
+.listMeta > .listItem[data-list-fill] > .listValue {
+  flex: 1 1 auto;
+}
+
+.listMeta:has(> .listItem[data-list-fill]),
+.listLine2:has(> .listMeta > .listItem[data-list-fill]) {
+  flex-wrap: nowrap;
+}
+
+/* Its line is one `--sp-5` line, as the kit's lines are: the row's word (a taller button) overflows it and never grows
+   the row, so a row with a word is as tall as one without. */
+.listLine2:has(> .listMeta > .listItem[data-list-fill]) {
+  block-size: var(--sp-5);
+}
+
+.listLine2:has(> .listMeta > .listItem[data-list-fill]) > .listMeta {
+  flex: 1 1 0;
+}
+
+/* A cell that renders nothing takes no place and no separator (no stray "· ·" on a phone). */
+.listItem:has(> .listValue:empty) {
+  display: none;
+}
+
+/* Every shown field's " · ", one --meta-sep wide; the first on each line hangs where .listLine2 clips it. */
+.listItem::before {
+  flex: none;
+  width: var(--meta-sep);
+  color: var(--hx-faint);
+  text-align: center;
+  content: "·";
+}
+
+.listMeta:has(button, a[href], [role='button']) > .listItem::before {
+  width: calc(var(--meta-sep) - var(--sp-1));
+  margin-inline-end: var(--sp-1);
+}
+
+/* A separator is drawn only between two drawn things. A fill field may leave some of its words out of sight when the
+   line is short, so it takes no " · " of its own: the cell draws one between the parts it shows. */
+.listItem[data-list-fill]::before {
+  content: none;
+}
+
+.listValue {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* An opted-in field label (column meta listLabel): quieter than its value. It never shrinks for a
+   long value (the value is the part cut); a label wider than half its field stops there with its own
+   ellipsis, so the value stays in view. */
+.listLabel {
+  flex: none;
+  min-width: 0;
+  max-width: 50%;
+  margin-inline-end: var(--sp-1);
+  overflow: hidden;
+  color: var(--hx-muted);
+  text-overflow: ellipsis;
+}
+
+/* A label that is an InfoTip term (meta.tip): the term cuts its own words, so the label does not clip the term's focus
+   ring. */
+.listLabel:has(> button) {
+  overflow: visible;
+}
+
+.listLabel > button {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+
+.pad {
+  padding: 0;
+  border: 0;
+}
+
+/* Footer (at least 48px): "Showing newest 50 of 312", Load more, the pager. */
+.footer {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 48px;
+  padding-inline: var(--sp-4) var(--sp-2);
+  border-block-start: var(--bw) solid var(--hx-line);
+}
+
+/* A cut frame: the footer's end, every row's actions cell (the plan gives that column the extra, DataTable CUT_END)
+   and a list row's cell keep `--table-cut-clear` (the slant plus the focus ring's reach), and so do a group's note row
+   and its end-placed extra, which end on the ⋯ line (--actions-pad-end above); so the last control, the
+   last row's ⋯ and their hover squares and focus rings are never clipped by the corner. Every row, so the ⋯ stay in
+   one line. Logical, so RTL keeps it at the row's end. */
+.wrap[data-table-cut] > .footer,
+.wrap[data-table-cut] .thead .thActions,
+.wrap[data-table-cut] .tr > .tdActions,
+.wrap[data-table-cut] .list .tr > .listCell,
+.wrap[data-table-cut] .table:not(.cards, .icons) .groupNoteRow > td,
+.wrap[data-table-cut] .table:not(.cards, .icons) .groupRow.groupRowEnd > td {
+  padding-inline-end: var(--table-cut-clear);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-inline-start: auto;
+}
+
+.pager .count {
+  padding-inline-end: var(--sp-2);
+}
+
+/* A pager arrow is a frameless icon button; under the pointer it takes the pager's own quieter fill. Load-bearing
+   weight: two classes, the element and two state selectors outweigh the kit's frameless hover rule. */
+.footer .pager button[data-hovered]:not([data-pressed]) {
+  --plate: var(--hx-btn-pager-hover);
+}
+
+.menuLabel {
+  min-width: 0;
+}
+
+/* A column the user keeps on but the width dropped: listed, muted. */
+.menuMuted {
+  color: var(--hx-faint);
+}
+
+.groupInner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+/* groupHeader="stacked": line 1 the title and count, line 2 the group's own start and end, with room
+   around both; the rows under a header are indented so they read as its contents. Each rule names a class the table
+   sets on its own elements, so a nested table or a row outside any group never picks it up. */
+.groupRow.groupRowStacked > td {
+  height: auto;
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.groupInner.groupInnerStacked {
+  flex-direction: column;
+  align-items: stretch;
+
+  /* The title button and the extra's controls are both touch targets: --touch-gap between them on a coarse pointer. */
+  gap: max(var(--sp-1), var(--touch-gap));
+}
+
+/* height auto lets a long title wrap; at least 24px (WCAG 2.5.8 target size) on a fine pointer, `--touch-min` on a
+   coarse one. */
+.groupBtn.groupBtnStacked {
+  align-self: flex-start;
+  height: auto;
+  min-block-size: max(24px, var(--touch-min));
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+
+/* The links and buttons on a stacked header's second line sit beside each other, so each needs its own 24px box
+   (WCAG 2.5.8 target size; the inline-in-a-sentence exception does not cover a row of controls). Fine pointer only:
+   a coarse pointer's controls keep their own touch sizes. */
+@media not (pointer: coarse) {
+  .groupInnerStacked .groupExtra :is(a[href], button) {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 24px;
+  }
+}
+
+.groupExtra {
+  display: flex;
+  min-inline-size: 0;
+}
+
+.groupExtra > * {
+  flex: 1 1 auto;
+}
+
+/* TableGroup.extraEnd: the extra sits at the row's end, inside the actions' end padding. */
+.groupRow.groupRowEnd > td {
+  padding-inline-end: var(--actions-pad-end);
+}
+
+.groupExtraEnd {
+  display: flex;
+  min-inline-size: 0;
+  margin-inline-start: auto;
+}
+
+/* An inline header: the name, the group's text and its extra
+   on one line. The extra (chips, short actions) keeps the name's line at every width: the label gives way first, ending
+   in an ellipsis, the count staying. Only the text wraps, in its own column; on a narrow header (under 600px, the
+   --bp-phone value) it takes a line of its own under the name. The header is its own container, so the rule follows
+   the header's width, not the window's. The grid has no gap (an empty text column would double it): the gaps are the
+   text's and extra's own start margins, so a header without text has one gap. The extra's column is sized
+   first: the extra's own minimum is its whole width (max-content, so a chip or button never shrinks or overflows) and
+   its 1fr column's minimum is the extra's minimum; the name and the text share only what is left after it. The minimum
+   sits on the extra, not on the column: a column minimum of max-content would also take the max-content of the text
+   that spans every column under 600px. Stacked headers keep their own rules. */
+.groupInner:not(.groupInnerStacked) {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, max-content) 1fr;
+  gap: 0;
+  align-items: center;
+  container: group-head / inline-size;
+}
+
+.groupInner:not(.groupInnerStacked) > .groupBtn {
+  grid-area: 1 / 1;
+}
+
+.groupInner:not(.groupInnerStacked) > .groupText {
+  grid-area: 1 / 2;
+  margin-inline-start: var(--sp-3);
+}
+
+.groupInner:not(.groupInnerStacked) > :is(.groupExtraInline, .groupExtraEnd) {
+  grid-area: 1 / 3;
+  min-inline-size: max-content;
+}
+
+.groupInner:not(.groupInnerStacked) > .groupExtraInline {
+  margin-inline-start: var(--sp-3);
+}
+
+/* The end extra keeps its auto start margin (it ends the line); its own start padding is the gap when the line is
+   full. */
+.groupInner:not(.groupInnerStacked) > .groupExtraEnd {
+  padding-inline-start: var(--sp-3);
+}
+
+.groupText {
+  min-inline-size: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+  overflow-wrap: anywhere;
+}
+
+.groupExtraInline {
+  display: flex;
+  align-items: center;
+  min-inline-size: 0;
+}
+
+/* A text or extra the caller's component drew nothing into (a state with no sentence) takes no room: no gap, no
+   line. */
+.groupText:empty,
+.groupExtraInline:empty,
+.groupExtraEnd:empty {
+  display: none;
+}
+
+@container group-head (width < 600px) {
+  .groupInner:not(.groupInnerStacked) > .groupText {
+    grid-area: 2 / 1 / 3 / -1;
+    margin-inline-start: 0;
+    padding-inline-start: var(--group-indent);
+    padding-block-end: var(--sp-2);
+  }
+}
+
+.groupBtn:not(.groupBtnStacked) {
+  flex: 0 1 auto;
+  min-width: 0;
+  text-align: start;
+
+  > .groupLabel {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.groupBtn > .groupCount,
+.groupBtn > svg {
+  flex: none;
+}
+
+/* Only the first content cell of a row under a group (table) or the list cell; the checkbox cell and tiles keep theirs.
+   Its own start padding plus --group-indent, so a row's content starts under its heading's label.
+   Three classes, so it wins over `.tr > td:first-child`. */
+.tr > .td.groupIndent {
+  padding-inline-start: calc(var(--sp-3) + var(--group-indent));
+}
+
+.tr > .td.groupIndent:first-child,
+.tr > .listCell.groupIndent {
+  padding-inline-start: calc(var(--sp-4) + var(--group-indent));
+}
+
+/* Nested groups (TableGroup.parent): a child group's header starts one indent in, under
+   its parent's label, and its rows two. */
+.groupRow.groupRowChild > td {
+  padding-inline-start: calc(var(--sp-4) + var(--group-indent));
+}
+
+.tr > .td.groupIndent.groupIndent2 {
+  padding-inline-start: calc(var(--sp-3) + 2 * var(--group-indent));
+}
+
+.tr > .td.groupIndent.groupIndent2:first-child,
+.tr > .listCell.groupIndent.groupIndent2 {
+  padding-inline-start: calc(var(--sp-4) + 2 * var(--group-indent));
+}
+
+/* With stickyGroups only the child in force (a child of the parent in force) sticks, right under its parent's header:
+   a sticky cell sticks within the whole table, so an earlier parent's child would stay under a later parent. */
+.stickyGroups .groupRow.groupRowChild > td {
+  position: static;
+}
+
+.stickyGroups .groupRow.groupRowChild.groupChildInForce > td {
+  position: sticky;
+  inset-block-start: calc(var(--group-sticky-top) + var(--group-head-h));
+  z-index: calc(var(--z-sticky) - 2);
+}
+
+/* Stacked group headers: the search row keeps the group headers' inset, so its search box starts where their titles start and its
+   last button ends where their actions and the rows' ⋯ end. */
+.toolbar.toolbarStacked {
+  padding-inline: var(--sp-4);
+}
+
+.menuCount {
+  margin-inline-start: auto;
+  padding-inline-start: var(--sp-3);
+  color: var(--hx-faint);
+  font: var(--t-mono);
+}
+
+/* An option with a line (FilterOption.description): the label, then the line under it, as the kit menu's labels. */
+.menuLabels {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-block: var(--sp-1);
+}
+
+.menuLine {
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* Range filter panel: two number fields, Any + Apply. */
+.rangePanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: 260px;
+}
+
+.rangeFields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+
+.rangeActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+/* Refreshing kept rows: a `--bw-2` indeterminate bar along the panel's top edge (.wrap is position: relative). */
+.refreshBar {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 0;
+  z-index: calc(var(--z-sticky) + 1);
+  height: var(--bw-2);
+  overflow: hidden;
+}
+
+.refreshBar::after {
+  position: absolute;
+  inset-block: 0;
+  width: 30%;
+  background: var(--hx-ink);
+  content: "";
+  animation: refresh-sweep 1100ms linear infinite;
+}
+
+@keyframes refresh-sweep {
+  from {
+    inset-inline-start: -30%;
+  }
+
+  to {
+    inset-inline-start: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .refreshBar::after {
+    width: 100%;
+    opacity: 0.4;
+    animation: none;
+  }
+}
+
+/* Cards presentation: the rows wrap into a grid of cards. A group
+   heading and an expanded part span the whole width. The elements carry explicit table roles (DataTable). Cards are
+   also list tables (.list), so this block comes after the list rules and wins over their fixed row heights. */
+.cards {
+  /* A group header above cards keeps the tiles' height, not a table's. */
+  --group-row-h: var(--group-row-h-tiles);
+
+  display: block;
+  table-layout: auto;
+}
+
+.cards > tbody {
+  display: grid;
+
+  /* auto-fill: an open-ended list of cards; spare tracks keep one or two cards from stretching across the row. */
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); /* 300px: a long name has room */
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--pad-card) var(--pad-card);
+}
+
+.cards .tr {
+  --card-edge: var(--hx-panel-line); /* the frame's colour, drawn by the corner edge (CardEdge) */
+
+  /* A column, so the bottom band sits at the bottom of a card stretched to its row's tallest. Its content is
+     clipped at the border box, not the padding box, so the corner edge over the transparent border shows. */
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-width: 0;
+  overflow: clip;
+  overflow-clip-margin: var(--bw);
+  border: var(--bw) solid var(--card-edge);
+  border-radius: var(--r-1);
+  background: var(--card-body);
+}
+
+[data-density='compact'] .cards .tr {
+  height: auto;
+}
+
+/* A page's own card (DataTable cardRender, such as the Computers cards): the wider track (420px), its own gap and
+   padding, and no kit border, radius, background or padding on the row: the page's card draws its own frame
+   and greys. The row keeps its focus ring. */
+.cardsCustom > tbody {
+  /* auto-fill: an open-ended list of cards, as the kit's own cards; spare tracks keep one card from stretching across
+     the row. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+  gap: var(--sp-3);
+  padding: calc(var(--sp-3) + var(--sp-half)) var(--sp-5) var(--sp-5);
+}
+
+.cardsCustom .tr,
+.cardsCustom .tr:hover,
+.cardsCustom .selected,
+.cardsCustom .active {
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* A picked or open card keeps a visible mark: the selected bar's colour around it (it has no fill of its own). */
+.cardsCustom .selected,
+.cardsCustom .active {
+  outline: var(--bw-2) solid var(--hx-selected-bar);
+  outline-offset: var(--bw);
+}
+
+.cards .tr > td,
+.cards .tr:hover > td,
+.cards .tr:focus-visible > td,
+.cards .tr:focus-visible > td:first-child,
+.cards .tr:focus-visible > td:last-child,
+.cards .active > td:first-child {
+  display: block;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* The card's one cell stays a column in every state (each selector matches one above, so it wins by order): the bottom
+   band is pushed to the card's bottom, level across a row of cards of different heights. */
+.cards .tr > td.cardCell,
+.cards .tr:hover > td.cardCell,
+.cards .tr:focus-visible > td.cardCell,
+.cards .active > td.cardCell {
+  display: flex;
+}
+
+/* The card's own padding wins over a table row's first/last-cell inset (.tr > td:first-child, `--sp-4`): the bottom
+   band bleeds by exactly `--pad-card`, so a smaller inset would leave the band, and the card's one cell, wider than the
+   card. */
+.cards .tr > td.cardCell {
+  padding: var(--sp-4) var(--pad-card) var(--pad-card);
+}
+
+/* A page's own card (cardRender): its one cell stays a flex box with no inset in every state. After the shared resets
+   above, which have the same weight (focus, active and first/last-cell rules), so it wins by order: a focused card stays
+   stretched to its row. */
+.cardsCustom .tr > td.customCardCell,
+.cardsCustom .tr:hover > td.customCardCell,
+.cardsCustom .tr:focus-visible > td.customCardCell,
+.cardsCustom .tr:focus-visible > td.customCardCell:first-child,
+.cardsCustom .tr:focus-visible > td.customCardCell:last-child,
+.cardsCustom .active > td.customCardCell,
+.cardsCustom .active > td.customCardCell:first-child {
+  display: flex;
+  flex: 1;
+  padding: 0;
+}
+
+.cards .tr:hover {
+  background: var(--hx-hover);
+}
+
+.cards .selected,
+.cards .active {
+  --card-edge: var(--hx-selected-bar);
+
+  border-color: var(--card-edge);
+  background: var(--hx-selected);
+}
+
+.cards .tr:focus-visible {
+  outline: var(--bw-2) solid var(--hx-focus);
+  outline-offset: var(--bw);
+}
+
+/* A cut card is clipped, so an outline outside it would never show: its edge draws the ring inside the frame,
+   following the corner (CardEdge cutRingPath). */
+.cards .tr[data-card-cut]:focus-visible {
+  outline: none;
+}
+
+/* The rail card (cardShape 'rail'): one card per line at the panel's width. From a 940px table, its title and fields
+   sit on a 300px rail at the start, tinted (`--hx-card-rail`) with a dashed divider (`--hx-card-rail-line`), and the
+   footer fills the rest, with no band of its own, as a three-column grid: each foot cell lays its own parts into it
+   (a page's footer takes `display: contents` under the same query). The table is the container the cards (and a
+   page's footer, by name) measure: the tbody's own track changes with it, which a container on the tbody could not
+   do. The cell keeps the card's inline padding (`--pad-card`, which the surfaces conformance test checks); the rail
+   and its parts reach the card's start edge by a negative margin of the same, and the footer's end padding takes it
+   back, so the rail is 300px from the edge and the footer is inset alike on both sides. Narrower, the cards stack,
+   with their own auto-fill track. Each selector matches one of the card-cell rules above with one more class, so it
+   wins in every state. */
+.cardsRail {
+  container: cards-rail / inline-size;
+}
+
+@container cards-rail (width >= 940px) {
+  .cardsRail > tbody {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cardsRail .tr > td.cardCell,
+  .cardsRail .tr:hover > td.cardCell,
+  .cardsRail .tr:focus-visible > td.cardCell,
+  .cardsRail .active > td.cardCell {
+    display: grid;
+    grid-template-columns: calc(300px - var(--pad-card)) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    gap: var(--sp-2) 0;
+    padding-block: 0;
+  }
+
+  .cardsRail .cardCell::before {
+    content: '';
+    grid-row: 1 / 3;
+    grid-column: 1;
+    margin-inline-start: calc(-1 * var(--pad-card));
+    background: var(--hx-card-rail);
+    border-inline-end: var(--bw) dashed var(--hx-card-rail-line);
+  }
+
+  .cardsRail .cardTop {
+    grid-row: 1;
+    grid-column: 1;
+    margin-inline-start: calc(-1 * var(--pad-card));
+    padding: var(--sp-4) var(--sp-5) 0;
+  }
+
+  .cardsRail .cardBody {
+    grid-row: 2;
+    grid-column: 1;
+    margin-inline-start: calc(-1 * var(--pad-card));
+    align-content: start;
+    padding: 0 var(--sp-5) var(--sp-5);
+  }
+
+  /* The rail has room for a field's whole value: no cut. */
+  .cardsRail .cardValue {
+    overflow: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .cardsRail .cardBottom {
+    grid-row: 1 / 3;
+    grid-column: 2;
+    align-items: start;
+    margin: 0;
+    padding: var(--sp-5) calc(var(--sp-6) + var(--sp-1));
+    padding-inline-end: calc(var(--sp-6) + var(--sp-1) - var(--pad-card));
+    border: 0;
+    background: transparent;
+  }
+
+  /* Three columns, each a whole number of pixels (the third ends up to 2px short of the end): a meter in a column
+     then starts on a whole pixel, where its blocks and gaps are exact. */
+  .cardsRail .cardFoot {
+    --rail-col-gap: calc(var(--sp-7) + var(--sp-1));
+
+    display: grid;
+    grid-template-columns: repeat(3, round(down, calc((100% - 2 * var(--rail-col-gap)) / 3), 1px));
+    gap: var(--sp-5) var(--rail-col-gap);
+    align-content: start;
+  }
+
+  .cardsRail .cardFootItem {
+    display: contents;
+  }
+}
+
+.cards .groupRow,
+.cards .expandedRow {
+  display: block;
+  grid-column: 1 / -1;
+}
+
+.cards .groupRow > td,
+.cards .expandedRow > td {
+  display: block;
+  border: 0;
+  background: transparent;
+}
+
+.cards .groupRow > td {
+  padding: 0;
+}
+
+.cardCell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+
+  /* The card padding (`--sp-4` above, `--pad-card` at the sides and below). The band below bleeds over the inline and
+     bottom padding, so a card without a band keeps its inset. */
+  padding: var(--sp-4) var(--pad-card) var(--pad-card);
+}
+
+/* The title line: the mark, the name and the status share one centre line (a name beside a taller mark sits at its
+   middle, never at its top). */
+.cardTop {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.cardTitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font: var(--t-body-strong);
+  overflow-wrap: anywhere;
+}
+
+/* The card's fields share two columns, one field per row: the labels' (as wide as the card's widest label, at most
+   half the card) and the values'. Every value then starts on one edge whatever its label's length, and a value's
+   second line starts under its first. */
+.cardBody {
+  display: grid;
+  grid-template-columns: fit-content(50%) minmax(0, 1fr);
+  gap: var(--sp-1) var(--sp-2);
+  min-width: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.cardItem {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  align-items: center;
+  min-width: 0;
+}
+
+/* The label fills the labels' column (the column, not the label, holds the half-card limit). */
+.cardItem > .listLabel {
+  max-width: none;
+}
+
+/* A field with no label takes the whole row. */
+.cardItem > .cardValue:first-child {
+  grid-column: 1 / -1;
+}
+
+/* A card that has both plain lines and label and value rows leads with its first plain line: the card's text colour
+   over the quieter lines under it. */
+.cardItem:first-child:has(> .cardValue:first-child):has(~ .cardItem > .listLabel) > .cardValue {
+  color: var(--hx-ink);
+}
+
+/* Plain lines, then facts: the first labelled field after a line with no label starts one step lower, so the card's
+   words and its label and value rows read as two groups. */
+.cardItem:has(> .cardValue:first-child) + .cardItem:has(> .listLabel) {
+  margin-block-start: var(--sp-1);
+}
+
+/* A cell that renders nothing takes no line. */
+.cardItem:has(> .cardValue:empty) {
+  display: none;
+}
+
+.cardValue {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A value that is only text is a block: text-overflow applies to a block container, never to a flex one, so a line
+   too long for the card ends in "…" instead of being cut mid-word. A value holding parts (a Tag, an icon) keeps the
+   flex row that centres them. */
+.cardValue:not(:has(*)) {
+  display: block;
+}
+
+/* A card line that wraps (column meta listWraps, as on list rows): the value flows as text onto the lines it needs,
+   never cut; a run with no break point breaks anywhere; atoms (Tag, StatusPill) wrap whole between each other. */
+.cardItem[data-meta-wraps] {
+  align-items: flex-start;
+}
+
+.cardItem[data-meta-wraps] > .cardValue {
+  display: block;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+/* The card's bottom band: the foot cells (Restart, Open terminal) at its start, the row menu at its end, so every
+   card of a row has its actions on one line. It is the card's second grey, the same band as a Panel head
+   (`--card-head` over a `--card-head-line` rule), and adds only the card padding (`--pad-card-y` in all, half above
+   and half below its controls; `--pad-card` at the sides). */
+.cardBottom {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: auto calc(-1 * var(--pad-card)) calc(-1 * var(--pad-card));
+  padding: calc(var(--pad-card-y) / 2) var(--pad-card);
+  border-block-start: var(--bw) solid var(--card-head-line);
+  background: var(--card-head);
+}
+
+.cardFoot {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.cardFootItem:empty {
+  display: none;
+}
+
+/* A footer whose cells all render nothing takes no room in the band (the row menu then sits alone at its end). */
+.cardFoot:not(:has(> .cardFootItem:not(:empty))) {
+  display: none;
+}
+
+/* No foot to show and no row menu: no band at all. */
+.cardBottom:not(:has(> .cardActions), :has(> .cardFoot > .cardFootItem:not(:empty))) {
+  display: none;
+}
+
+.cardActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-inline-start: auto;
+}
+
+/* The header band (cardShape 'band', such as the Projects cards): the title and the row menu share one band
+   (`--sp-9`) at the card's top, the card head's grey over its rule as a Panel head (.panelHead), and the fields sit
+   under it, `--sp-3` below the band and `--sp-4` above the card's end. The band reaches the card's inline edges by a
+   negative margin of `--pad-card`; the menu side keeps --sp-2 to the edge, as the bottom band's menu. Each
+   selector matches a card-cell rule above with one more class, so it wins in every state. */
+.cards .tr > td.cardCellBand {
+  gap: 0;
+  padding: 0 var(--pad-card) var(--sp-4);
+}
+
+.cardHeadBand {
+  align-items: center;
+  min-height: var(--sp-9);
+  margin-inline: calc(-1 * var(--pad-card));
+  padding-block: 0;
+  padding-inline: var(--pad-card) var(--sp-2);
+  border-block-end: var(--bw) solid var(--card-head-line);
+  background: var(--card-head);
+}
+
+.cardCellBand > .cardBody {
+  padding-block-start: var(--sp-3);
+}
+
+/* Foot cells under a header band keep their bottom band, flush with the card's `--sp-4` end padding. */
+.cardCellBand > .cardBottom {
+  margin-block-end: calc(-1 * var(--sp-4));
+}
+
+/* Icons presentation: the classic folder grid. Tiles of one width wrap into lines; the row's lead cell is
+   drawn large, its primary cell sits under it on at most two lines, the row menu at the tile's corner. Like cards, the
+   elements carry explicit table roles and the block comes after the list rules. */
+.icons {
+  /* As cards: a group header above tiles keeps its height. */
+  --group-row-h: var(--group-row-h-tiles);
+
+  display: block;
+  table-layout: auto;
+}
+
+.icons > tbody {
+  display: grid;
+
+  /* auto-fill: a folder grid keeps every tile one size; spare tracks keep a few tiles from stretching across the
+     row. */
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+}
+
+.icons .tr {
+  display: block;
+  position: relative;
+  height: auto;
+  min-width: 0;
+  border: var(--bw) solid transparent;
+  border-radius: var(--r-1);
+}
+
+[data-density='compact'] .icons .tr {
+  height: auto;
+}
+
+.icons .tr > td,
+.icons .tr:hover > td,
+.icons .tr:focus-visible > td,
+.icons .tr:focus-visible > td:first-child,
+.icons .tr:focus-visible > td:last-child,
+.icons .active > td:first-child {
+  display: flex;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.icons .clickable:hover {
+  background: var(--hx-hover);
+}
+
+.icons .selected,
+.icons .active {
+  border-color: var(--hx-selected-bar);
+  background: var(--hx-selected);
+}
+
+.icons .tr:focus-visible {
+  outline: var(--bw-2) solid var(--hx-focus);
+  outline-offset: var(--bw);
+}
+
+.icons .groupRow,
+.icons .expandedRow {
+  display: block;
+  grid-column: 1 / -1;
+}
+
+/* The folder grid's group header keeps the page's own shade, not the table group's band. */
+.icons .groupRow > td {
+  background: var(--hx-bg);
+}
+
+.tileCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+  padding: var(--sp-3) var(--sp-2) var(--sp-2);
+  text-align: center;
+}
+
+.tileArt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  color: var(--hx-muted);
+}
+
+.tileArt svg {
+  width: 40px;
+  height: 40px;
+}
+
+/* The name: two lines at most; the page shortens a long one in the middle and names it whole in a tooltip. */
+.tileName {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  font: var(--t-small);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.tileCheck {
+  position: absolute;
+  inset-block-start: var(--sp-1);
+  inset-inline-start: var(--sp-1);
+}
+
+.tileActions {
+  position: absolute;
+  inset-block-start: var(--sp-1);
+  inset-inline-end: var(--sp-1);
+
+  /* Never wider than the tile: a word button with its ⋯ wider than a narrow tile would run past the tile's start, off
+     the page on a phone, where no press reaches it. The word gives way instead (its label ends in an ellipsis, the
+     button keeps its touch floor), on the one line it shares with the ⋯, so nothing covers the tile's name. */
+  max-inline-size: calc(100% - 2 * var(--sp-1));
+}
+
+.tileActions > .rowActionsWrap,
+.tileActions > .rowActionsWrap > span[data-row-actions] {
+  min-inline-size: 0;
+}
+
+/* Drag and drop (drag.tsx): the body a drop lands in (the frame, its empty state included), the row a drop goes into,
+   and the hint beside the pointer. */
+.wrap[data-drop-over],
+.nothing[data-drop-over] {
+  outline: var(--bw-2) solid var(--hx-focus);
+  outline-offset: calc(var(--bw-2) * -1);
+}
+
+/* A drop area around a table (drag.tsx DropArea): it fills its parent as a column, so the room below a short listing
+   is the area's; under a drag it takes, the whole area is ringed just outside its edge (it holds the page's own
+   controls, which an inset line would cross), in the focus ring's shape. */
+.dropArea {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-inline-size: 0;
+  min-block-size: 0;
+}
+
+.dropArea[data-drop-over] {
+  box-shadow: var(--focus-ring);
+}
+
+.tr[data-drop-over] {
+  outline: var(--bw-2) solid var(--hx-focus);
+  outline-offset: calc(var(--bw-2) * -1);
+}
+
+/* The rows a drag carries, from its start to its end: dimmed where they are (the list keeps its place). */
+.wrap [data-row-id][data-dragging] {
+  opacity: var(--ctl-off-opacity);
+}
+
+/* What the pointer carries while rows are dragged (RowDrag.preview): the name or the count. Off-screen: the browser
+   takes its picture at dragstart, and the element is removed right after. */
+.dragGhost {
+  position: fixed;
+  inset: -1000px auto auto -1000px;
+  max-width: 280px;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-1);
+  background: var(--hx-ink);
+  color: var(--hx-on-ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-snug);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.dropHint {
+  /* Placed by the pointer's viewport coordinates (a translate), so the physical top-left corner, in any direction. */
+  position: fixed;
+  inset: 0 auto auto 0;
+  max-width: 360px; /* the longest words: a refusal sentence (Files: no copy between computers yet) */
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-1);
+  background: var(--hx-ink);
+  color: var(--hx-on-ink);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+  box-shadow: var(--sh-2);
+  z-index: var(--z-tooltip);
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The folded Filters icon shows how many filters are set in a small badge inside its box: the field look does not
+   tell set from unset. The number is the cue (inverse ink); presses go to the button. */
+.filtersIcon {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+/* A set icon-only Filters button keeps its glyph and its badge apart: `--sp-3` at the end moves the glyph toward the
+   start, clear of the badge in the end corner; logical, so RTL mirrors both. Outranks the toolbar icon button's padding 0 by weight (0,3,1 over 0,3,0). */
+.filtersIcon[data-count] > button:first-child {
+  padding-inline-end: var(--sp-3);
+}
+
+.filtersCount {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  inset-block-start: 3px;
+  inset-inline-end: 3px;
+  min-width: 14px;
+  height: 14px;
+  padding-inline: var(--sp-half);
+  border-radius: var(--r-1);
+  background: var(--hx-field-ink);
+  color: var(--hx-field-bg);
+  font: var(--t-mono);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-tight);
+  text-align: center;
+  pointer-events: none;
+}
+
+/* A mark a list-only lead column draws in list presentation (Bots' dot, Computers' mark): the cell keeps it for the
+   table. */
+.list [data-lead-dup] {
+  display: none;
+}
+
+/* What a toolbar action said, as a stack of flush bands: no box of its own, and it scrolls past a share of the screen
+   so many notices cannot push the rows away. */
+.toolbarNote:has([data-band-flush]) {
+  max-block-size: 30dvh;
+  padding: 0;
+  overflow-y: auto;
+  border-block-end: 0;
+}
+
+.rail .toolbarNote {
+  max-block-size: 30dvh;
+  overflow-y: auto;
+}
+
+/* Rail presentation (ListPane.rail, kit/tokens.css --rail-*): one grid. Lead column, text edge at pad + lead + gap, ⋯ column
+   ending at the same inset. The row's status joins line 2 (DataTable), so line 1 is the title alone. */
+.rail {
+  --band-flush-pad: var(--rail-pad);
+  --group-row-h: var(--group-row-h-rail);
+  --seg-pad-inline: var(--sp-2);
+  --toolbar-search-min: 144px;
+  --toolbar-search-min-tight: 96px;
+  --rail-cols: minmax(0, 1fr) auto;
+}
+
+.railLead {
+  --rail-cols: var(--rail-lead) minmax(0, 1fr) auto;
+}
+
+/* The search gives way, never a control: a row that does not fit steps to icons (useRowFit) instead of cutting a
+   label. */
+.rail .toolbar > :not(.search) {
+  flex-shrink: 0;
+}
+
+.rail .toolbar,
+.rail .toolbar.toolbarStacked {
+  padding-inline: var(--rail-pad);
+}
+
+.rail .table {
+  --actions-pad-end: var(--rail-pad);
+}
+
+.rail .tr > .listCell.listCell {
+  padding: var(--sp-1) var(--rail-pad);
+}
+
+.rail .listGrid {
+  display: grid;
+  grid-template-columns: var(--rail-cols);
+  column-gap: var(--rail-gap);
+  align-items: center;
+}
+
+.rail .listLead {
+  grid-column: 1;
+  justify-content: center;
+  align-self: start;
+  min-block-size: var(--sp-5);
+}
+
+.rail .listLines {
+  grid-column: -3;
+}
+
+/* A rail's inline word (line 2) and its ⋯ (the end column) are grid cells `--rail-gap` apart, and an xs ⋯'s touch
+   press reaches (`--touch-min` - `--ctl-h-xs`) / 2 past its box; the end cell takes what the gap lacks as its
+   margin, so the press stops at the word's edge. 0 on a mouse, and wherever the gap already covers the reach. */
+.rail .listGrid > .rowActionsWrap[data-row-size='xs'] {
+  margin-inline-start: max(0px, calc((var(--touch-min) - var(--ctl-h-xs)) / 2 - var(--rail-gap)));
+}
+
+.rail .listLine1 {
+  padding-inline-end: 0;
+}
+
+/* A rail's text word (railTextWord) is drawn at its line's height, so the row keeps its height; on a coarse pointer its
+   press reaches past it to --touch-min: up and down (line 2's clip leaves --icon-hit for it) and towards the line's
+   start, never past its end, where the ⋯'s own press begins. */
+@media (pointer: coarse) {
+  .rail .listLine2 [data-row-actions] [data-text-button] {
+    position: relative;
+    min-block-size: 0;
+    min-inline-size: 0;
+  }
+
+  .rail .listLine2 [data-row-actions] [data-text-button]::after {
+    position: absolute;
+    inset-block: min(0px, calc((100% - var(--touch-min)) / 2));
+    inset-inline: min(0px, calc(100% - var(--touch-min))) 0;
+    content: '';
+  }
+}
+
+/* A field that has nothing to say in a rail (data-rail-hide: an empty column's dash) takes no place and no
+   separator. */
+.rail .listItem:has([data-rail-hide]) {
+  display: none;
+}
+
+/* The cells exist even when they render nothing: a row with nothing to say on line 2 draws no line 2. */
+.rail .listLine2:not(:has(.listValue:not(:empty), [data-row-actions])) {
+  display: none;
+}
+
+.rail .groupRow > td,
+.rail .groupRow.groupRowStacked > td,
+.rail .groupRow.groupRowEnd > td {
+  padding-inline: var(--rail-pad);
+}
+
+.rail .tr > .listCell.listCell.groupIndent {
+  padding-inline-start: calc(var(--rail-pad) + var(--group-indent));
+}
+
+.rail .groupRow.groupRowChild > td {
+  padding-inline-start: calc(var(--rail-pad) + var(--group-indent));
+}
+
+.rail .tr > .listCell.listCell.groupIndent.groupIndent2 {
+  padding-inline-start: calc(var(--rail-pad) + 2 * var(--group-indent));
+}
+
+.rail .groupBtn.groupBtnStacked > .groupLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rail .groupBtn.groupBtnStacked {
+  max-inline-size: 100%;
+}
+
+.rail .groupInnerStacked .groupExtra {
+  padding-inline-start: calc(var(--rail-lead) + var(--rail-gap));
+}
+
+/* Forced colors (Windows high contrast) drop box-shadow, so the focus ring above would vanish: a solid outline in the
+   system Highlight colour instead, as Button does. */
+@media (forced-colors: active) {
+  .chip[data-focus-visible],
+  .chipX[data-focus-visible] {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+
+  /* A focused row's ring is its cells' inset shadows: the outline sits inside the row, as they do. */
+  .tr:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: calc(var(--bw-2) * -1);
+  }
+
+  /* A selected or current row is a fill and an inset bar, both dropped here: an inset outline in the system colour on
+     its first cell marks it instead (an outline is kept, takes no width from the column, and does not repaint the
+     cell's content; a border would narrow the cell). */
+  .selected > td:first-child,
+  .active > td:first-child {
+    outline: calc(var(--bw-2) * 2) solid Highlight;
+    outline-offset: calc(var(--bw-2) * -2);
+  }
+
+  /* A marked row (rowMark) loses its wash and bar the same way: the same inset outline in the text colour, on rows that
+     are neither selected nor current, so their Highlight outline stays the one shown there. */
+  .tr[data-mark]:not(.selected, .active) > td:first-child {
+    outline: calc(var(--bw-2) * 2) solid CanvasText;
+    outline-offset: calc(var(--bw-2) * -2);
+  }
+}

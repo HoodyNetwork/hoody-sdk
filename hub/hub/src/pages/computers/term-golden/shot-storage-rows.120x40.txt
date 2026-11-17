@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                           ▸ Use with your agent  [+ Get a computer]
+▌Computers             │
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ Computers  Esc
+ Vault                 │  atlas  ● Running                                                        [Open terminal ⇗] [⋯]
+                       │  SG n12 · Home base · █  Personal ·  Current computer
+On atlas ▾             │
+ Programs              │   Overview  Connect  Permissions  Ports & addresses  Desktop  Network  Run  Programs  Backups
+ Schedules             │  ▸Storage
+ Scripts               │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Logs                  │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Tunnels               │  │ At a glance                                                                               │
+ Notes                 │  │ Connected storage  1 connected                Waiting to upload  Nothing                  │
+ AI                    │  │ Open as folders    1 open                                                                 │
+ VMs                   │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+Account                │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Plans & Billing       │  │ Connected storage                                                          + Add storage  │
+ Referrals             │  │ Connect cloud or network storage to this computer, then open it as a folder there.        │
+ Keys and tokens       │  │ Keys, passwords and tokens you enter go only to this computer's files program, once, and  │
+ API                   │  │ are kept there in a private file. The Hub never keeps them.                               │
+ Notifications      26 │  │  Storage           Open as folder                 State                                   │
+ Account               │  │› SFTP server: de…  Backups box at /mnt/hoody/box  ✓ Open Sync unknown      [Check again] ⋯│
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

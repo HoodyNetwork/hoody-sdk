@@ -1,0 +1,453 @@
+{
+  "kit/perf.strings.en.json": {
+    "perf.help": "A terminal draws no shadows, animations or transitions, so this switch changes nothing here.",
+    "perf.notKept": "The Hub could not keep this setting."
+  },
+  "pages/account/strings.en.json": {
+    "mail.unsure": "No answer came back. The email may be on its way: check your inbox. To ask again, quit the Hub and start it again.",
+    "w.section": "This device",
+    "ag.rowHelp": "How long an agent stays signed in from this device.",
+    "ag.notSaved": "The Hub could not keep this setting.",
+    "faq.agentDays.a": "It is how long your agent stays signed in from this device. Enter a whole number from 1 to 365. A new value applies the next time the agent's sign-in is renewed. It is kept on this device, for this account only.",
+    "w.sectionLead": "What the Hub keeps on this device. Nothing here changes your account or your computers.",
+    "w.help": "Removes this account's saved settings, layouts, drafts and tracked changes from this device, then leaves the Hub. You stay signed in: to sign out, run hoody logout.",
+    "w.confirmTitle": "Remove this account's local data from this device?",
+    "w.bodyShort": "The Hub forgets the settings, layouts, drafts and tracked changes it keeps on this device for this account. Then you leave the Hub. It does not sign you out: to sign out, run hoody logout. Your account, your computers and your data on the server stay as they are.",
+    "w.oneTab": "Close any other Hub open for this account on this device before you start.",
+    "w.otherAccounts": "Records of other accounts on this device stay: the Hub keeps each account's apart.",
+    "w.itemsTitle": "These may already have gone through. The Hub stops tracking them on this device:",
+    "w.tick": "I understand that the Hub stops tracking these on this device",
+    "w.tabs": "The Hub could not start removing",
+    "w.tabsLead": "It could not confirm that it was safe to start. Try again.",
+    "w.check.storage": "this device's storage",
+    "faq.removeLocal.a": "The Hub forgets the saved settings, layouts, drafts and changes it is tracking on this device for this account, then you leave the Hub. It does not sign you out: this device stays signed in until you run hoody logout. Records of other accounts on this device stay, and so do your account, your computers and your data on the server. Close any other Hub open for this account first.",
+    "s.ip.label": "This device's address",
+    "s.ip.info": "The address Hoody sees for this device right now. Use it in IP allow lists for keys, bots and computer access.",
+    "s.ip.failed": "Couldn't read this device's address",
+    "s.ip.reading": "Reading this device's address",
+    "s.this": "This device",
+    "token.signOut": "Leave the Hub",
+    "ag.saved": "Saved for this device.",
+    "w.running_one": "{{count}} upload or change is still running from this Hub. Leaving the Hub stops it, and it may have gone through. Check it again afterwards.",
+    "w.running_other": "{{count}} uploads or changes are still running from this Hub. Leaving the Hub stops them, and each may have gone through. Check them again afterwards.",
+    "w.confirm": "Remove and leave the Hub",
+    "w.failed": "Leaving the Hub may already be under way. Try again.",
+    "e.sentOther": "A change to {{email}}, sent from another Hub, is waiting for confirmation. Check {{email}} for the confirm link.",
+    "e.replaced": "Another Hub sent a change to {{email}} in place of this one. Whether this one went through is unknown; only one change can wait at a time. Check again looks for the change to {{email}}.",
+    "w.payHeld": "A payment made on this device has no final answer yet. Check it in Billing first; local data can be removed once it is settled.",
+    "w.payUnreadable": "The payments saved on this device could not be read, so nothing can be removed. Check Billing, then try again.",
+    "pw.done": "Your password is changed and every session was signed out, this one too. Leave the Hub, then sign in again with the new password.",
+    "pw.signIn": "Leave the Hub",
+    "pw.unsure": "We can't tell whether the password changed. Leave the Hub, then sign in with the new password first. If that fails, use the old one.",
+    "pw.signInAgain": "Leave the Hub",
+    "w.check.databases": "the list of this device's databases",
+    "w.check.caches": "the list of this device's caches",
+    "faq.lockProtects.a": "The passcode lock is part of the Hub on the web; the Hub in a terminal has none. On the web, once locked, people who pick up your device see only the lock screen. It locks after the time you pick, and when you leave the app if you turn that on; inside a Board program it can wait up to 15 minutes longer. Each tab and window locks and unlocks on its own; Lock now locks them all. It doesn't encrypt your sign-in: someone who can read what the web Hub stores on the device (developer tools, malware, a rooted phone) can still use it. The phone may show a preview of the Hub in its app switcher. Your account on other devices is not affected.",
+    "faq.lockScope.q": "Where does the passcode apply, and what removes it?",
+    "faq.lockScope.a": "The lock belongs to the Hub on the web, in the one place you set it; the Hub in a terminal has none. There, each tab and window locks on its own, and opening the Hub again asks for the passcode. Signing out keeps the passcode there; to remove it, use Remove passcode, or the Forget action on its lock screen. After you sign in again, the Hub still asks for it. Clearing the site's data removes the lock and signs you out of the Hub there. Notices already shown on that device stay there.",
+    "pw.unsureTitle": "Leave the Hub and sign in again",
+    "check.unknownPw": "We cannot tell from here whether the password was changed. It may have been. Leave the Hub, then sign in again with the new password; if that fails, the old one still works.",
+    "check.checkLinePw": "Check again: reads your account again, but it can't show whether the password changed. Signing in after you leave the Hub shows which password works.",
+    "faq.checkAgain.a": "When the Hub can't tell whether a change went through, it keeps a note instead of calling it done or failed. Check again reads your account again to see whether the change is there; if it still can't tell, the note stays. Stop tracking makes the Hub stop following the change. It doesn't undo the change or mark it as failed, and doing the change again may apply it twice. For a password change, signing in after you leave the Hub shows which password works."
+  },
+  "pages/vault/strings.en.json": {
+    "empty.import": "Import entries…",
+    "partition.pickHint": "Pick a realm from the realm menu at the top (Alt+R) to see its own entries.",
+    "partition.pickOther": "Pick another realm from the realm menu at the top (Alt+R) to try its vault.",
+    "value.encryptedNote": "Encrypted: its password never leaves this device.",
+    "edit.encryptDesc": "Encrypted on this device before it is sent.",
+    "import.encryptDesc": "Encrypted on this device before it is sent.",
+    "notSent.unwritable": "This entry's details nest too deeply for the Hub to send. Nothing was sent. Tick Change metadata to replace or remove them.",
+    "notSent.unwritableOwn": "This metadata nests too deeply for the Hub to send. Nothing was sent. Simplify it, or clear the field to save without it.",
+    "import.unwritable": "This entry's details nest too deeply for the Hub to send. Nothing was sent. Open the entry, change its metadata there, then import again.",
+    "faq.scope.a": "Global entries are shared by every realm and by tools that run without one. The entries of a realm belong to that realm. The same name in another realm, or in Global, is a different entry. Pick a realm from the realm menu at the top (Alt+R) to see its own entries.",
+    "faq.showValue.a": "Open the entry and press Show value to show it, or Copy to copy it without showing it. The value is read only then. Hiding it or closing the entry removes it from this page; the next press reads it again. An encrypted value asks for its password first; the password never leaves this device. JSON values are shown formatted, with Raw for the exact text; Copy always copies the exact stored value. You can also show the encrypted form, to paste where a tool expects it.",
+    "faq.encrypt.a": "The value is encrypted on this device before it is sent, and tools need the password to read it. To open an encrypted value here, enter its password; the password never leaves this device. An entry shown as \"Not marked\" has no encryption recorded. To protect its value, use Replace value and tick Encrypt with a password. The Hoody SDK, CLI and agent use the same encrypted form, so they can read it with the password.",
+    "value.desc": "Read only on Show value or Copy; hiding it removes it from this page.",
+    "value.stale": "The view changed while it was being read. Press Show value again.",
+    "edit.valueDesc": "Hidden as you type. Use Show what you typed to check it.",
+    "faq.valueInput.a": "A name uses letters, digits, dot, dash and underscore, up to 100 characters. Names starting with \"hoody.\" belong to Hoody's own tools. A value is hidden as you type; use Show what you typed to check it. Line breaks are kept, so you can paste a whole key or certificate. It is saved exactly as typed, unless you encrypt it. Replacing a value overwrites the old one, and the old value is not shown here.",
+    "faq.vaultFor.a": "Values your tools and agents read by name: tokens, passwords, settings. Add a value your tools or agents should read by name; you can encrypt it with a password first. The list does not show values. In an entry, the value is read only when you press Show value or Copy, and is removed from the page when you hide it or close the entry.",
+    "access.signOut": "Leave the Hub",
+    "forbidden.body": "This login has no access to the vault of {{name}}. Ask the account owner, or leave the Hub, run hoody logout, and sign in with an account that has it.",
+    "crypto.unavailable": "The Hub cannot encrypt or decrypt on this device.",
+    "edit.why.a": "A value is saved exactly as typed, line breaks included. Encrypting happens on this device; tools then need the password. Metadata is not encrypted.",
+    "value.why.a": "The value is read only when you press Show value or Copy; hiding it or closing the entry clears it. An encrypted value's password stays on this device.",
+    "import.body": "Paste KEY=VALUE lines. The next step shows names only.",
+    "subtitle": "Tokens, passwords and settings your tools and agents read by name. The list shows only names."
+  },
+  "pages/keys/strings.en.json": {
+    "share.allEmpty.body": "A share is for one realm. Choose a realm from the realm menu at the top (Alt+R), or pick one when you make it.",
+    "mint.lateMade": "A key was made after you left the form. Its secret can't be shown; delete it under API keys if you don't need it.",
+    "out.refused.NO_SCRUB": "The Hub could not load what it needs to show a key safely. Nothing was sent. Quit the Hub and start it again.",
+    "out.refused.other": "Nothing was sent for {{what}}. Open the page again and try again.",
+    "out.refused.NO_STORAGE": "This device can't keep a record of the request, so it could be sent twice. Nothing was sent. Check that no other Hub is open for this account, then try again.",
+    "ssh.refused.other": "Nothing was sent. Open the page again and try again.",
+    "share.notSent": "Nothing was sent. Open the page again and try again.",
+    "share.noStorage": "This device can't keep a record of the request, so it could be sent twice. Nothing was sent. Check that no other Hub is open for this account, then try again.",
+    "share.lateMade": "A share was made after you left the form. It's listed under Shared now.",
+    "ssh.read.signin.body": "Leave the Hub, run hoody login, then run hoody hub again to see this computer's SSH key."
+  },
+  "shell/strings.en.json": {
+    "hint.inbox": "New notices appear here and are counted beside Notifications in the sidebar.",
+    "signout.forgetAll_one": "If you sign out, this device stops tracking it and can no longer check it for you.",
+    "signout.forgetAll_other": "If you sign out, this device stops tracking them and can no longer check them for you.",
+    "signout.forgetSome_one": "If you sign out, this device stops tracking {{count}} of them and can no longer check that one for you.",
+    "signout.forgetSome_other": "If you sign out, this device stops tracking {{count}} of them and can no longer check those for you.",
+    "signout.stillSaving": "A setting isn't saved on this device yet. If you sign out now, it's lost.",
+    "signout.plainBody": "Everything on this device is confirmed and saved now.",
+    "signout.forgetFailed": "This device couldn't stop tracking these changes, so you're still signed in. Try again.",
+    "signout.sending_one": "{{count}} change is still being sent. Signing out doesn't stop it: it stays on this device and keeps the same change blocked until its answer comes back.",
+    "signout.sending_other": "{{count}} changes are still being sent. Signing out doesn't stop them: they stay on this device and keep the same change blocked until their answers come back.",
+    "signout.changed": "Something changed on this device while you were deciding, so you're still signed in. Read the warning again, then sign out.",
+    "signout.unknown": "This device may already have stopped tracking those changes, but sign-out didn't finish, so you're still signed in. Sign out again to finish.",
+    "signout.failed": "Sign-out didn't finish on this device, so you're still signed in. Try again.",
+    "signout.asks_one": "{{count}} question to the assistant may still be answered. If you sign out, this device stops waiting for it, and its answer won't show here.",
+    "signout.asks_other": "{{count}} questions to the assistant may still be answered. If you sign out, this device stops waiting for them, and their answers won't show here.",
+    "signout.mayForgot": "This device may already have stopped tracking changes you confirmed, so it can no longer check them for you.",
+    "signout.asksStopped": "This device no longer keeps track of the questions you confirmed to the assistant, so an answer may not show here.",
+    "signout.unknownPlain": "Sign-out didn't finish, so you're still signed in. This device may already have cleared part of what it was keeping. Sign out again to finish.",
+    "notice.sendsKept_one": "{{count}} change was still being sent: it stays on this device and keeps the same change blocked until its answer comes back.",
+    "notice.sendsKept_other": "{{count}} changes were still being sent: they stay on this device and keep the same change blocked until their answers come back.",
+    "leave.title": "Work is still running from this Hub",
+    "leave.body_one": "{{count}} upload or change is still running from this Hub. If you go on, it stops, and it may have gone through. Check it again afterwards.",
+    "leave.body_other": "{{count}} uploads or changes are still running from this Hub. If you go on, they stop, and each may have gone through. Check them again afterwards.",
+    "lock.screen.wrongLeft_one": "Wrong passcode. {{count}} try left before the Hub signs out.",
+    "lock.screen.wrongLeft_other": "Wrong passcode. {{count}} tries left before the Hub signs out.",
+    "lock.screen.noVerifier": "This lock can't be opened on this device. Forget this device to remove it, then sign in again.",
+    "lock.screen.forget": "Forget this device",
+    "lock.forgot.title": "Forget this device?",
+    "lock.forgot.body": "This signs you out here and removes the passcode and other saved Hub data on this device. You'll need to sign in again.",
+    "lock.removedElsewhere": "The passcode was turned off in another Hub. Quit the Hub and start it again to continue.",
+    "lock.noWebLocks": "This device can't check your passcode safely. Forget this device to continue.",
+    "notice.purgeBody": "The Hub couldn't clear your data from this device. Try again."
+  },
+  "ask/strings.en.json": {
+    "ask.pickRealmTop": "Pick one realm from the realm menu at the top (Alt+R) to ask this computer's agent.",
+    "ask.pinned": "This agent works only in another realm. Pick that realm from the realm menu at the top (Alt+R).",
+    "ask.clearNoLocks": "The Hub can't clear the list safely right now. Nothing was changed.",
+    "ask.clearUnreadable": "Couldn't read the list on this device. Nothing was changed.",
+    "ask.clearFull": "This device's store is full. Nothing was changed.",
+    "ask.clearNothing": "Couldn't change the list. It shows what this device holds now.",
+    "ask.clearSome": "Some conversations were removed. The list shows what this device holds now.",
+    "ask.notRemembered": "This device could not keep a record of this send, so nothing was sent. Check that no other Hub is open for this account, then send again.",
+    "ask.checkEarlier": "Check the earlier sends first. This device holds as many unfinished sends as it can keep; this one was not sent.",
+    "ask.createSaving": "The chat was found, but this device could not save it yet. Check again in a moment. Your message was not sent.",
+    "ask.chatMissing": "This device has lost track of the chat, so nothing was sent. Check status looks for it.",
+    "ask.lockUnavailable": "The Hub could not make sure that nothing else is sending here, so nothing was sent. Try again in a moment.",
+    "ask.forkMarksFull": "This device can't fork more chats: too many earlier forks ran on another computer, realm or account. To fork again, use Remove all local data in Account settings.",
+    "ask.dupEarlier": "A message sent earlier is still waiting, and its text isn't kept after you quit the Hub. If this is the same message, it's already waiting.",
+    "ask.followLost": "Its text and files aren't kept after you quit the Hub. If it doesn't show in the conversation once the agent reads it, send it again.",
+    "ask.retypeSameKey": "Its text and files aren't kept after you quit the Hub. Type it again and send: it goes with the same key, so it can't run twice.",
+    "ask.sendingElsewhere": "Another Hub may still be sending this. Check again in a moment.",
+    "ask.checkOnly": "Its text and files aren't kept after you quit the Hub. Check status finds out whether it went through; it is never sent again.",
+    "ask.firstElsewhere": "This message may still be sent from another Hub. Look for it in the conversation, or stop tracking it.",
+    "ask.takenElsewhere": "Another Hub took over this conversation first, so this message was not sent. Send it again.",
+    "ask.notSentReadGone": "Nothing ran. Its text isn't kept after you quit the Hub: write it again to send it.",
+    "ask.otherTab": "Another Hub sent a message here before this one, and whether it reached the agent can't be told from here. Look for it in the conversation, or stop tracking it.",
+    "ask.attLostFirst": "A message from before you quit the Hub is still waiting for its text. Send that one first, then send these files with a new message.",
+    "ask.autoTurnUnavailable": "Automatic approval for one reply isn't available in this Hub.",
+    "ask.lostFiles": "A message from before you quit the Hub had files, which aren't kept. Check its status or look for it in the conversation first; if it didn't reach your agent, stop tracking it and send it again with its files.",
+    "ask.lostFilesOther": "Its text and files aren't kept after you quit the Hub, so it can't be sent again in its place. If it isn't in the conversation, stop tracking it and send it again with its files.",
+    "ask.lostFilesRow": "Its text and files aren't kept after you quit the Hub, so it can't be sent again in its place. Check status; if it didn't reach your agent, stop tracking it and send it again with its files.",
+    "ask.forkChanged": "This chat changed since you opened it, so nothing was made. Open it again and fork again.",
+    "ask.forkUnreadable": "The Hub could not read its saved forks. Quit the Hub and start it again."
+  },
+  "pages/ai/strings.en.json": {
+    "rules.checked.allRealms.body": "Rules, hooks and Stop everything each belong to one realm. Choose one from the realm menu at the top (Alt+R).",
+    "rules.checked.allRealms.bodyPick": "Rules, hooks and Stop everything each belong to one realm. Pick one here, or from the realm menu at the top (Alt+R).",
+    "claude.typedLogin": "The sign-in command is running in a terminal on the computer. Open it with Open outside the Hub, then finish signing in on the page Claude opens or prints; this page sees when you are signed in.",
+    "claude.typedInstall": "The install command is running in a terminal on the computer: Open outside the Hub shows it. This page sees when it is done.",
+    "def.notHeld": "Nothing was sent: this device could not keep track of the change. Try again in a moment.",
+    "ep.holdNotKept": "This device could not remember the pending endpoint. Stay on this page until it is confirmed.",
+    "err.reload": "That did not work. Quit the Hub, start it again and try again.",
+    "claude.termTab": "Open outside the Hub",
+    "def.stop.body": "Every page of this Hub stops waiting for this change. It isn't undone: it may still go through later, even over a model you choose next."
+  },
+  "pages/ai/folders/strings.en.json": {
+    "write.historyNoMessage": "This Hub no longer has the message it was sent with, so no commit is offered: compare the newest commits yourself."
+  },
+  "pages/ai/parts/Conversation.strings.en.json": {
+    "slash.copy.failed": "The copy did not go through. Use Copy under the reply. Nothing was sent."
+  },
+  "pages/scripts/strings.en.json": {
+    "build.titlePlain": "Being built on this device",
+    "build.title_one": "Being built on this device · {{count}}",
+    "build.title_other": "Being built on this device · {{count}}",
+    "build.unreadable": "Builds started on this device can't be read right now.",
+    "build.full": "This device is holding {{max}} assistant requests: {{n}} for new scripts and {{m}} for changes to scripts. Make a script live, or discard a build or a change request, to start another.",
+    "build.draftsFull": "This device is holding {{max}} drafts, and none of them can be dropped to make room. Make one live, or discard one, to start a new draft.",
+    "build.discardedKept": "Discarded, but this device couldn't remove every record of it. Discard what is still listed to free its place.",
+    "build.discardChangeFailed": "This device couldn't remove that change request. Try again.",
+    "draft.droppedOldest": "This device keeps up to 32 drafts, so your oldest draft that had no build was dropped to make room, even if another Hub had it open.",
+    "build.discardedLostBody": "No turn of it was ever recorded here, so this device can't check on it.",
+    "flow.gone.body": "New scripts are kept on the device that started them until they are built, and builds started elsewhere aren't shown here.",
+    "flow.built.refused.full": "This device is holding too many assistant requests. Make a script live, or discard a build, to start another.",
+    "flow.built.refused.unreadable": "This device's list of builds can't be read right now. Nothing was sent; try again.",
+    "flow.live.discardRefused": "The draft wasn't discarded: it changed, or this device's store can't be written. Try again.",
+    "ai.err.norecord": "This device cannot keep a record of the ask, so nothing was sent. Check that no other Hub is open for this account, then ask again.",
+    "build.discardRefused": "This build changed in another Hub, so it wasn't discarded. Its row shows where it is now.",
+    "flow.built.refused.stale": "This draft changed in another Hub. Open it again to go on.",
+    "flow.live.elsewhere": "Another Hub is making this draft live now.",
+    "ai.err.map_lost": "This fix was asked for in another Hub or before you quit the Hub, so its answer can't be put back together here. Nothing was applied. Ask for the fix again.",
+    "group.problem.unreachable": "Did not answer. Check that it is running, then open the page again.",
+    "overview.schedWhy.unknown": "Can't tell who owns this script yet, so the schedule can't be changed. Open the page again to try again.",
+    "code.unknownOwnerBody": "The agent on this computer did not answer, so changes are off until it does. Open the page again to try again.",
+    "err.BAD_REVISION": "The script changed while you were editing. Open it again and try again.",
+    "err.REVISION_MISMATCH": "The script changed while you were editing. Open it again and try again."
+  },
+  "pages/ai/agents/strings.en.json": {
+    "allRealms.body": "Agents belong to one realm. Choose a realm from the realm menu at the top (Alt+R).",
+    "held.loss": "Your unsaved changes to “{{name}}” are lost if you switch realm or leave the Hub.",
+    "model.stop.body": "Every page of this Hub stops waiting for this change. It isn't undone: it may still go through later, even over a change you make next."
+  },
+  "pages/ai/agents/Tools.strings.en.json": {
+    "noRealm": "Choose one realm from the realm menu at the top (Alt+R) to change this agent's tools."
+  },
+  "pages/ai/auto/todos/List.strings.en.json": {
+    "allRealms.body": "TODOs belong to one realm. Choose a realm from the realm menu at the top (Alt+R)."
+  },
+  "pages/ai/auto/workflows/strings.en.json": {
+    "wf.allRealms.body": "Workflows belong to one realm. Choose a realm from the realm menu at the top (Alt+R). All runs shows the runs of every realm."
+  },
+  "pages/support/strings.en.json": {
+    "send.notSent": "Nothing was sent: this device couldn't keep track of the message. Check that no other Hub is open for this account, then try again."
+  },
+  "pages/ai/knowledge/instructions/strings.en.json": {
+    "allRealms.body": "Each realm has its own instructions. Pick a realm from the realm menu at the top (Alt+R) to see and change them.",
+    "leave.body": "Your changes to the instructions aren't saved yet. They stay here while the Hub is open: come back to save them. Leaving the Hub loses them.",
+    "held.loss_one": "An instructions change you haven't seen saved stays while you switch realm, and is lost if you leave the Hub.",
+    "held.loss_other": "{{count}} instructions changes you haven't seen saved stay while you switch realm, and are lost if you leave the Hub."
+  },
+  "pages/ai/knowledge/memory/Memory.strings.en.json": {
+    "allRealms.body": "Memory is kept per realm. Pick one from the realm menu at the top (Alt+R), or show Global."
+  },
+  "pages/ai/knowledge/skills/strings.en.json": {
+    "allRealms.body": "Skills belong to one realm. Choose a realm from the realm menu at the top (Alt+R).",
+    "hub.col.sourceTip": "Where its author published the skill. It opens that page outside the Hub."
+  },
+  "pages/ai/models/claude/Transfer.strings.en.json": {
+    "noRealm": "Choose one realm from the realm menu at the top (Alt+R) to copy between its computers."
+  },
+  "pages/ai/new/NewChat.strings.en.json": {
+    "band.pickRealm": "Pick one realm from the realm menu at the top (Alt+R) to start a chat. A chat runs in one realm."
+  },
+  "pages/ai/settings/connections/Mcp.strings.en.json": {
+    "allRealms": "Pick one realm from the realm menu at the top (Alt+R) to see its MCP servers.",
+    "imp.block.incomplete": "The servers list is not complete right now, so nothing can be imported. Open the page again, then preview again."
+  },
+  "pages/ai/settings/rules/strings.en.json": {
+    "where.allRealms.body": "Each realm has its own settings. Choose one from the realm menu at the top (Alt+R) to see where its agents may work."
+  },
+  "pages/bots/strings.en.json": {
+    "newBot.realmGlobal": "All realms is selected, so this will be a Global Bot. For one realm, use the realm menu at the top (Alt+R).",
+    "workers.refused.worker_delegated_agent": "The agent did not take Claude Code here. Open the page again and try again."
+  },
+  "pages/guide/strings.en.json": {
+    "look.body": "Light or dark follows your terminal's background, read once when the Hub starts. If the terminal does not report it in time and COLORFGBG does not name it, the Hub uses dark.",
+    "build.find": "These steps are for the web Hub, since a terminal has no developer tools. To find the call behind something the Hub shows, do it in the web Hub with the Network tab open, then give your agent the method and address.",
+    "recipe.3.body": "Name a realm, then pick it from the realm menu at the top (Alt+R). Everything here follows it.",
+    "realms.lede": "One realm per client, project or experiment. Pick a realm from the realm menu at the top (Alt+R) and every list and new thing follows it. Keys can be limited to one realm, so an agent you connect for a client sees only that client.",
+    "top.sdk.desc": "Opens outside the Hub",
+    "top.docs.desc": "Opens outside the Hub",
+    "top.install.desc": "Opens outside the Hub"
+  },
+  "pages/realms/strings.en.json": {
+    "faq.switchRemove.a": "Pick a realm, or All realms, from the realm menu at the top (Alt+R). An empty realm may not reopen after the Hub starts again; pick it again from the menu. There is no Delete realm: a realm is listed while something is in it or it has a name. To remove one, take its computers, projects, servers and keys out of it, then clear its name with Rename realms… in the realm menu.",
+    "noSecure": "The Hub can't make a safe id for the realm on this device.",
+    "items.elsewhereLabel": "Held on another page",
+    "items.heldElsewhereHelp": "A Computers page, in this Hub or another, holds an earlier try for a computer here. Only that page can check or stop tracking it, so look at its realms there."
+  },
+  "kit/forms/forms.strings.en.json": {
+    "secretInput.pasteOrShow": "Type or paste"
+  },
+  "pages/files/strings.en.json": {
+    "preview.note": "Download opens the file outside the Hub, or gives you its address to open."
+  },
+  "pages/files/Upload.strings.en.json": {
+    "background": "You can close this. The upload keeps going while this Hub is running.",
+    "held.elsewhere": "Another page of this Hub is uploading to {{folder}}."
+  },
+  "pages/files/transfers/transfers.strings.en.json": {
+    "empty.body": "Uploads from this device, copies, and downloads running on the shown computers appear here.",
+    "sending.unknown": "A Files change from another page of this Hub or another Hub is on its way; the Hub can't tell which computer it is on.",
+    "state.elsewhere": "Sent from another page or Hub"
+  },
+  "pages/files/link/link.strings.en.json": {
+    "result.notSent": "Nothing was sent: this device couldn't keep a record of it first. Try again.",
+    "result.HELD": "Nothing was sent: this device is still tracking an earlier send. Try again.",
+    "check.notFound": "{{computer}} has no record of it yet. It may still arrive; check again later. Only the Hub that sent it can send it again."
+  },
+  "pages/notifications/strings.en.json": {
+    "an.notSent": "Nothing was sent: this device couldn't keep track of the reply. Try again.",
+    "an.held.elsewhere": "Another Hub on this device is still sending it. Wait for it, or check again.",
+    "h.browser.what": "Alerts are optional, and they are turned on in the Hub on the web.",
+    "token.signOut": "Leave the Hub",
+    "h.where.bell.h": "The count",
+    "h.where.bell.more": "How the count works",
+    "faq.bellInbox.q": "How do the count and the Inbox work?",
+    "faq.bellInbox.a": "The number beside Notifications in the sidebar counts your unread notices. The Hub checks for new ones from time to time while it is open and in front. Every notice stays in the Inbox until you mark it read. Read notices move to the Archive.",
+    "faq.timing.a": "New notices may take a while to appear. The Hub checks from time to time while it is open and in front.",
+    "faq.browser.a": "These alerts are part of the Hub on the web; the Hub in a terminal shows none. There, an alert is a pop-up about a new notice. It works only while the web Hub is open in a tab you are not looking at, in the place where you turned it on. An alert shows a short title and a fixed line to open the Hub, never the notice's message. Alerts are optional and are turned on in the web Hub, separately in each place you use it: turning them on in one does nothing for the others. You may be asked for permission when you turn them on. Other Hub activity, such as a Bot waiting for you, can use the same alerts."
+  },
+  "pages/computers/strings.en.json": {
+    "faq.snapshotsAndBackups.a": "A snapshot saves the whole computer as it is now, kept by Hoody, and you can start a new computer from any of them. A zip backup downloads chosen folders of the computer to your device as .zip files, one per folder; the download goes straight from the computer and runs outside the Hub. Restoring a snapshot puts the computer back to how it was when the snapshot was taken, and files and settings changed since then are lost.",
+    "current.ask.body": "The top bar then shows {{name}}. Pages that work on one computer at a time work on it. Nothing on {{name}} changes. This Hub keeps the choice until you quit it.",
+    "access.unchecked.body": "We couldn't check who can reach {{name}} just now. Open the page again to try again.",
+    "colour.tip": "This computer's colour. It marks the computer in tabs, lists and Boards. Press to change.",
+    "desktop.listDown": "Couldn't read which desktops this computer has, so only the ones this Hub knows are listed.",
+    "zero.unknown.oldBody": "This Hub still keeps a computer request from earlier, and we can't tell whether it went through. If you know it didn't, stop tracking it to create a computer.",
+    "desktop.open": "Open outside the Hub",
+    "desktop.slow.body": "It may still be starting, or it cannot be shown inside the Hub. Open it outside the Hub to see what it says.",
+    "use.newTab": "Outside the Hub",
+    "desktop.unknown.onWay": "A Stop is still on its way, maybe from another Hub. This changes when it answers.",
+    "desktop.reopened.body": "It was started again after you stopped it here, maybe from another Hub or after the computer restarted. Show it, or stop it."
+  },
+  "pages/computers/snapshots/strings.en.json": {
+    "zip.lede": "Each folder comes as one .zip, straight from {{name}}, downloaded outside the Hub.",
+    "zip.started": "Started {{when}}. The download runs outside the Hub."
+  },
+  "pages/computers/parts/AccessDrawer.strings.en.json": {
+    "acc.change.watching": "While this page is open, it reads the rules again every few seconds to show what the Agent changed."
+  },
+  "pages/computers/parts/Firewall.strings.en.json": {
+    "fw.held.elsewhere": "It was sent from another page of this Hub; it is settled there."
+  },
+  "pages/billing/strings.en.json": {
+    "buy.accountChanged": "You signed in to a different account in another Hub. Nothing was charged. Quit the Hub and start it again to continue.",
+    "buy.adopted": "Nothing was sent: another Hub already sent a request for this and its outcome is unknown. Check that request, then confirm again.",
+    "noLocks": "This device can't stop two Hubs from sending the same payment twice. Pay from the Hub on the web.",
+    "buy.storeErr": "Nothing was sent: this device couldn't save the request, which is what keeps it from ever being charged twice. Check that no other Hub is open for this account, then try again.",
+    "mkt.posting": "Charging your wallet — don't quit the Hub.",
+    "mkt.reserveNewBody": "The earlier reservation may already have gone through, so a new one could charge you twice. The Hub won't send the earlier request again.",
+    "mkt.reserveNewBodyTerm": "The earlier {{days}}-day reservation may already have gone through, so a new one could charge you twice. The Hub won't send it again.",
+    "mkt.reserveNewKept": "This device still keeps an earlier {{days}}-day reservation of this server, so nothing new was started. Check that one first.",
+    "mkt.reserveNewStoreErr": "This device couldn't stop tracking the earlier reservation, so nothing new was started. Check it, or try again.",
+    "mkt.reserveNoLocks": "This device can't stop two Hubs from sending this reservation twice, so it can't send it again or start a new one here. Check it, or use the Hub on the web.",
+    "mkt.storageFailed": "This device couldn't save the safety record this reservation needs, so nothing was sent and you were not charged. Check that no other Hub is open for this account, then try again.",
+    "subs.accountChanged": "You signed in to a different account in another Hub, so nothing here was loaded or changed. Quit the Hub and start it again to continue.",
+    "band.notSaved": "This device would not save this, so only this Hub remembers it: keep it open until you have checked.",
+    "top.notSaved": "Keep this Hub open until you have checked. This device would not save this payment, so only this Hub remembers it.",
+    "band.forgetRefused": "Couldn't stop tracking it. It is still being sent, or another Hub changed it. Check again first.",
+    "faq.retrySafe.a": "When the Hub can't confirm a purchase, payment or upgrade, it asks you to check first (Servers for a purchase). Send the same request again repeats that request, so it is never charged twice. A rental is different: Check again on an unconfirmed rental only reads it back, and renting again anyway can give you two servers and two charges. Start a new purchase on an unconfirmed reservation can charge twice too. The Hub asks you to confirm both first. If this device can't save a new request, it is not sent; if it can't stop two Hubs paying twice, the Hub asks you to pay on the web."
+  },
+  "kit/agent/Conversation.strings.en.json": {
+    "agent.d.elsewhere": "Decided in another Hub or app",
+    "result.openName": "Open {{label}} outside the Hub"
+  },
+  "pages/ai/auto/workflows/Runs.strings.en.json": {
+    "seen.unclear": "A newer run of this one is listed, but the agent's answer did not say which run this Resume started, so it may be from another Hub. It is not counted as this Resume."
+  },
+  "pages/schedules/strings.en.json": {
+    "st.loadFailed": "This part couldn't load. Open the page again and try again."
+  },
+  "pages/apps/strings.en.json": {
+    "launch.subtitle": "Start a program on {{computer}}. It opens in a window, a terminal or a web page.",
+    "cat.data.desc": "Notebooks for code and data in a web page.",
+    "gh.block.storage": "This device couldn't keep a record of the run, so nothing was sent. Try again.",
+    "gh.unreadableBody": "This device kept a record of it that the Hub can't read. Stop tracking it to start a new run.",
+    "gh.dismissStorage": "This device couldn't update its record of the run. Try Stop tracking again.",
+    "opens.web": "Opens outside the Hub",
+    "launcher.noTile": "The Board can't show {{name}} as a tile on this computer. Open it outside the Hub instead.",
+    "launcher.openTab": "Open outside the Hub",
+    "launcher.noTileTerminal": "The Board can't show the terminal of {{name}} as a tile on this computer. Open it outside the Hub instead.",
+    "gh.openTab": "Open outside the Hub",
+    "gh.noTile": "The Board can't show this one as a tile. Open it outside the Hub.",
+    "opt.opensWeb": "As a web page"
+  },
+  "kit/strings.en.json": {
+    "held.elsewhere": "It was sent from another page of this Hub or another Hub, so only that one can stop tracking it."
+  },
+  "kit/pickers/ProviderSetup.strings.en.json": {
+    "key.notHeld": "Nothing was sent: this device could not keep track of the save. Try again in a moment."
+  },
+  "kit/agent/SessionView.strings.en.json": {
+    "sv.why.approver_elsewhere": "Approvals for this chat are held by another Hub.",
+    "sv.missing.approver": "this Hub's hold on the approvals"
+  },
+  "kit/agent/Approver.strings.en.json": {
+    "approver.elsewhere": "Approvals for this chat are held by another Hub.",
+    "approver.stillHeld": "Still held by another Hub, so try again once it is closed or has been idle for a few minutes.",
+    "approver.invalid": "Another Hub now holds the approvals for this chat.",
+    "approver.required": "This Hub has to hold this chat's approvals first.",
+    "approver.expired": "This Hub's hold on the approvals ran out, so it has to be taken again."
+  },
+  "kit/agent/states/AgentStates.strings.en.json": {
+    "st.heldElsewhere": "Approvals for this chat are held by another Hub",
+    "st.heldUntil": "Approvals for this chat are held by another Hub. You can take over when its hold runs out"
+  },
+  "kit/agent/LinkMark.strings.en.json": {
+    "mark.runTab": "Run it outside the Hub",
+    "local.open": "Open outside the Hub"
+  },
+  "kit/controls/Link.strings.en.json": {
+    "ext.newTab": "(opens outside the Hub)"
+  },
+  "kit/data/Address.strings.en.json": {
+    "address.open": "Open {{what}} outside the Hub",
+    "address.openIdle": "Open {{what}} outside the Hub (it won't answer until it is started)"
+  },
+  "pages/board/strings.en.json": {
+    "tile.openNew": "Open outside the Hub",
+    "tile.screenshot": "Screenshot (outside the Hub)",
+    "tile.rawPage": "Output as a page (outside the Hub)",
+    "tile.blockedBody": "{{host}} can't be shown inside the Hub. Open it outside the Hub, or copy its link."
+  },
+  "pages/notes/strings.en.json": {
+    "action.openNoteTab": "Open outside the Hub",
+    "note.cantShow": "This note cannot be shown here. Open it outside the Hub.",
+    "toast.holdNotKept": "The Hub could not remember the pending note. Stay on this page until it is confirmed.",
+    "new.sendingOut": "This note is being created right now, in another Hub or on the Board. Check again once Notes has answered.",
+    "new.notClaimed": "The Hub could not keep track of this note here, or another Hub or the Board is creating one on this computer. Try again."
+  },
+  "pages/programs/strings.en.json": {
+    "address.aliasLink": "{{name}}: alias of port {{port}} (opens outside the Hub)"
+  },
+  "pages/vms/strings.en.json": {
+    "faq.screen.a": "Give the VM a screen in its settings, start it, then open its Screen tab. You can also open the screen outside the Hub. Copy and paste between this device and a VM does not work; type the text, or send a line to its console from the Logs tab.",
+    "screen.none.framed": "The screen is not shown inside another page. Open its address outside the Hub."
+  },
+  "pages/home/widgets/strings.en.json": {
+    "add.body": "Show a web page on Home. Pages of your own computers show inside the card; other sites get a button that opens them outside the Hub.",
+    "card.blockedBody": "Only pages of your own computers show inside Home. Open this one outside the Hub.",
+    "card.open": "Open outside the Hub",
+    "menu.open": "Open {{name}} outside the Hub",
+    "toast.notKept": "This change to your web widgets couldn't be saved."
+  },
+  "pages/apps/launch/openWith/strings.en.json": {
+    "ow.chooser.newTab": "Open outside the Hub",
+    "ow.sqlite.note": "Opens this database in the computer's SQLite Studio, outside the Hub.",
+    "w.notDurable": "This device couldn't save its note that prevents opening twice, so nothing was started.",
+    "ow.chooser.browserSection": "On this device",
+    "ow.chooser.unsaved": "Not saved on this device",
+    "ow.chooser.oversized": "Not saved: too many saved choices on this device",
+    "ow.chooser.locked": "Saved choices can't be read on this device"
+  },
+  "pages/files/Transfer.strings.en.json": {
+    "verdict.elsewhere": "This was checked on another page of this Hub or in another Hub. Look in {{folder}} to see what is there."
+  },
+  "pages/files/storage/strings.en.json": {
+    "token.step.run": "Run the command below and sign in on the page it opens",
+    "held.elsewhere": "It was sent from another page of this Hub or another Hub, so only that one can stop tracking it."
+  },
+  "pages/logs/strings.en.json": {
+    "v.notKept": "The Hub could not keep the view, so nothing was saved.",
+    "v.clearFail": "The Hub could not remove the saved views. They are still there.",
+    "v.clearAskBody": "They are saved in this Hub only. Once removed, they can't be brought back.",
+    "prog.tooBig": "This program's output is too large to show here. Export it from Logs in the web Hub."
+  },
+  "pages/home/strings.en.json": {
+    "needs.scope.account": "(sent from this Hub)"
+  },
+  "pages/programs/sandbox/strings.en.json": {
+    "sb.out.elsewhere": "A sandbox change for this program is waiting on another page of this Hub or in another Hub. Check it there.",
+    "np.out.storage": "The Hub can't keep track of the send, so nothing was sent."
+  },
+  "kit/states/strings.en.json": {
+    "err.signedOut": "Your sign-in ended. Leave the Hub, run hoody login, then run hoody hub again.",
+    "err.tokenSession": "Signed in with an access token, the Hub can't do this. Leave the Hub, run hoody login with your account, then run hoody hub again."
+  },
+  "pages/computers/parts/ExitIp.strings.en.json": {
+    "exit.held.elsewhere": "It was sent from another page of this Hub; it is settled there."
+  }
+}

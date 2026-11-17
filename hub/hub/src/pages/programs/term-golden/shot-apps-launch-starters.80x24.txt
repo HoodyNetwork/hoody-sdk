@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Launch an app                                                    Esc ×
+ Progra┃ ──────────────────────────────────────────────────────────────────────
+ Apps o┃ Start a program on atlas. It opens in a window, a terminal or a web  █
+   Runn┃ page.                                                                █
+ ──────┃                                                                      █
+ / Sear┃ ‹ Find an app ›  From GitHub                                         █
+   Name┃                                                                      █
+ › Jupy┃ │ / Search apps, programs and coding agents                          █
+   htop┃                                                                      █
+   Fire┃ Category: All
+   VS C┃
+   Shar┃ ┌───────────────────────────────────────────────────────────────────┐
+   btop┃ │ Opened recently on atlas                                      [⋯] │
+   sqli┃ │ › VS Code                                              ● Starting │
+   Open┃ │   Web · Starting…                                                 │
+       ┃ │   Firefox                                            ● Warming up │
+       ┃ │   Display · [Open display]                                        │
+       ┃ │   sqlite-web                                       ● Check needed │
+       ┃ │   Web · [Check again]                                             │
+       ┃ │   JupyterLab                                              ● Ready │
+       ┃ │   Web · [Open]                                                    │
+       ┃ │   Open WebUI                                        ● Port in use │
+       ┃ │   Web · [See open apps]                                           │
+ Tab mo┃ └───────────────────────────────────────────────────────────────────┘

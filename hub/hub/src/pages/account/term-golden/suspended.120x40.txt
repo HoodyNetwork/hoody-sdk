@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Account
+ Computers             │  This account is suspended.
+ Files                 │
+ Bots                  │  │ ✗ Your account is suspended
+ Board                 │  │   You can still review your sign-in sessions and security history here. Everything else is
+ Demo                  │  │   paused until support reinstates the account.
+ Vault                 │  ▌Sign-in sessions  Security history
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  ┌───────────────────────────────────────────────────────────────────────────────────────┐█
+ Programs              │  │ Sign-in sessions                                                                      │█
+ Schedules             │  │ Each browser or device signed in to your account. End one you do not recognise.       │█
+ Scripts               │  │                                                                                       │█
+ Logs                  │  │ This device's address ⓘ         PT 203.0.113.7 · Lisbon ⧉ copy (i)                    │█
+ Tunnels               │  │ / Search                 Filters     12 sessions  [End all other sessions]  ↻ Refresh │█
+ Notes                 │  │                                                                                       │█
+ AI                    │  │   Device             Signed in with    Last seen ↓ IP / country         Keys made     │█
+ VMs                   │  │ ›•Chrome on macOS    Password          19 days ago 203.0.113.24 · SG            2     │█
+                       │  │    This device                                                                        │█
+Account                │  │   Firefox on Linux   Password and code 19 days ago 198.51.100.7 · DE            0   ⋯ │█
+ Plans & Billing       │  │   Safari on iPhone   Google            19 days ago 192.0.2.88 · US              0   ⋯ │█
+ Referrals             │  │   build-server       Device sign-in    19 days ago 203.0.113.90 · SG           14   ⋯ │█
+ Keys and tokens       │  │    Hoody CLI                                                                          │█
+ API                   │  │   Edge on Windows    GitHub            19 days ago 198.51.100.130 ·…            1   ⋯ │█
+ Notifications      26 │  │   Chrome on Android  Password          19 days ago 192.0.2.12 · IN              0   ⋯ │█
+▌Account               │  │   Chrome on macOS    Password          19 days ago 203.0.113.24 · SG            2   ⋯ │█
+                       │  │   Firefox on Linux   Password and code 19 days ago 198.51.100.7 · DE            0   ⋯ │█
+ + Rent servers        │  │   Safari on iPhone   Google            19 days ago 192.0.2.88 · US              0   ⋯ │█
+ Guide                 │  │   Script (Node.js)   Password          19 days ago 203.0.113.90 · SG            3   ⋯ │█
+ Support               │  │    Hoody SDK                                                                          │█
+                       │  │   Edge on Windows    GitHub            20 days ago 198.51.100.130 ·…            1   ⋯ │
+                       │  │   Unknown device     Password          20 days ago 192.0.2.12 · IN              0   ⋯ │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Security history                                                                      │
+                       │  │ Sign-ins over the last 180 days, newest first.                                        │
+                       │  │ / Search                 Filters                                 9 entries  ↻ Refresh │
+                       │  │                                                                                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

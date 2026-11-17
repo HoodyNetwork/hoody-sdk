@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing                                                                  + Add funds
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │  ▸ Plans    Bare metal    Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  │ ✗ held-1: On hold — will be deleted Nov 17, 2026 UTC                             [Pay now]
+ Vault                 │  │ ✗ held-2: On hold — will be deleted Nov 17, 2026 UTC                             [Pay now]
+                       │  │ ✗ held-3: On hold — will be deleted Nov 17, 2026 UTC                             [Pay now]
+On atlas ▾             │  │ ! 2 more servers are held                                                 [Wallet & usage]
+ Programs              │
+ Schedules             │  Plans                                                                                       █
+ Scripts               │  Each plan is a server of your own. Its computers share its cores, memory and disk. You can  █
+ Logs                  │  take the same plan more than once.                                                          █
+ Tunnels               │                                                                                              █
+ Notes                 │  ┌───────────────────────────────────────────┐  ┌───────────────────────────────────────────┐
+ AI                    │  │ Free                          ✓ Your plan │  │ Small                                     │
+ VMs                   │  │ $0 / month                                │  │ $12 / month                               │
+                       │  │ Your free server: ash-3                   │  │ Paid monthly from your wallet             │
+Account                │  │ Computers                               3 │  │ Computers                               3 │
+▌Plans & Billing       │  │ Hardware                  Shared hardware │  │ CPU cores                               2 │
+ Referrals             │  │ AI allowance                   Free 1×    │  │ Memory                               4 GB │
+ Keys and tokens       │  │                                █░░░░░░░░░ │  │ Disk                                60 GB │
+ API                   │  │ Locations                                 │  │ Hardware                  Shared hardware │
+ Notifications      26 │  │ No choice of location                     │  │ AI allowance                   Plus 4×    │
+ Account               │  │ Your free server stays as it is when you  │  │                                ██░░░░░░░░ │
+                       │  │ buy a plan.                               │  │ Locations                                 │
+ + Rent servers        │  │ Next: Small. When you need more than 3    │  │ DE Frankfurt, Germany                     │
+ Guide                 │  │ computers.                                │  │ FI Helsinki, Finland  SG Singapore        │
+ Support               │  │ Free server details                       │  │ Next: Medium. When 4 GB of memory or 3    │
+                       │  │                                           │  │ computers get tight.                      │
+                       │  │                                           │  │                                           │
+                       │  │                                           │  │ [Choose Small]                            │
+                       │  └───────────────────────────────────────────┘  └───────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────┐  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+                       │  │ Medium                ✓ 5 of your servers │  ┃ Large                                     ┃
+                       │  │ $29 / month                               │  ┃ $59 / month                               ┃
+                       │  │ Paid monthly from your wallet             │  ┃ Paid monthly from your wallet             ┃
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

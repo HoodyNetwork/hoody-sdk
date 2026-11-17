@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs                              ▸ Use with your agent   + Launch an app
+ On atlas
+ ▸ Running programs    Apps    Ports & aliases
+ ──────────────────────────────────────────────────────────────────────────────
+    ! The Hub can't read its programs
+
+    Ask the owner of atlas for access, or open it from the account that owns
+    it.
+
+    [Try again]
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

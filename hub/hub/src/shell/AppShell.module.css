@@ -1,0 +1,306 @@
+/* App frame. The frame keys on the viewport; everything inside `main` keys on
+   the `content` container. */
+.shell {
+  display: grid;
+
+  /* The dock sits below the top bar: the bar spans the dock column too. */
+  grid-template-areas:
+    "side top top"
+    "side line line"
+    "side main dock";
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr) 0;
+
+  /* The switch line's row (auto) has no height while no switch shows; while one does, it moves the page down
+     rather than covering it. */
+  grid-template-rows: var(--topbar-h) auto minmax(0, 1fr);
+  height: 100dvh;
+
+  /* clip, not hidden: a script scroll (scrollIntoView) must never scroll the grid and push the top bar away. */
+  overflow: clip;
+  background: var(--hx-bg);
+}
+
+.rail {
+  grid-template-columns: var(--sidebar-w-collapsed) minmax(0, 1fr) 0;
+}
+
+/* >= 1280: the dock pushes the content (the content container shrinks). */
+.dock_push {
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr) var(--dock-cur);
+}
+
+.rail.dock_push {
+  grid-template-columns: var(--sidebar-w-collapsed) minmax(0, 1fr) var(--dock-cur);
+}
+
+.sidebar {
+  grid-area: side;
+  z-index: var(--z-sidebar);
+  min-height: 0;
+}
+
+/* The sidebar's edge handle (kit PaneSeparator, a grid item that fills this box), drawn in the sidebar over its end
+   border, its middle (the line) on the border: 8 px to grab, a touch screen's 44 (--touch-min), whose
+   inner 22 px it takes from the rows' ends. Under the collapse button, which sits on the same edge. */
+.edge {
+  --edge-grab: max(8px, var(--touch-min));
+
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: calc(var(--edge-grab) / -2);
+  z-index: var(--z-raised); /* above the nav rows, which are positioned: a press on it always resizes */
+  display: grid;
+  width: var(--edge-grab);
+}
+
+/* A touch screen's rail has no handle: its 44 px would take most of the 56 px rows. Expand, then resize. A drag that
+   crossed into the rail keeps it until the drag ends (.edgeDrag), so it can come back out. */
+@media (pointer: coarse) {
+  .rail .edge:not(.edgeDrag) {
+    display: none;
+  }
+}
+
+.topbar {
+  grid-area: top;
+  z-index: var(--z-topbar);
+}
+
+/* --shell-main-pad-end: the strip at the viewport's end that the shell's chrome covers (the phone
+   bottom bar and the safe area below it; 0 on wider screens and in focus mode). On :root, so overlays
+   portalled outside main read it too: anything pinned to the viewport's or the content's end sits
+   above it. The viewport scroll-pads by it as well, for when the document is what scrolls. */
+:root {
+  --shell-main-pad-end: 0px;
+
+  scroll-padding-block-end: var(--shell-main-pad-end);
+}
+
+/* The content area: the named `content` container and the scroll container. It keeps the covered
+   strip, plus the action button's room on phones while one is drawn (--shell-fab-room), below the content, and scrolls
+   a focused or scrolled-to element (scrollIntoView, keyboard focus) to above the strip, not under it.
+   position: relative makes it the containing block of every absolutely positioned box in a page that has no positioned
+   ancestor of its own (visually hidden text, a hidden input): without it such a box is placed against the viewport at
+   its spot deep in the scrolled content, and the document grows a second scroll past the page's end. */
+.main {
+  --shell-fab-room: 0px;
+
+  position: relative;
+  grid-area: main;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+
+  /* The room of a classic scrollbar is always kept, so a page is as wide scrolled as not, and the top bar keeps the
+     same room at its end (TopBar.module.css .bar): the two right edges line up whether the page scrolls or not. An
+     overlay scrollbar takes no room, so nothing changes there. */
+  scrollbar-gutter: stable;
+  container: content / inline-size;
+  padding-block-end: calc(var(--shell-main-pad-end) + var(--shell-fab-room));
+  scroll-padding-block-end: var(--shell-main-pad-end);
+}
+
+.main:focus-visible {
+  outline: none;
+}
+
+/* The realm switch line, a row of its own under the top bar: empty and without height while idle. */
+.switchLine {
+  grid-area: line;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-3);
+  min-width: 0;
+}
+
+.switchOn {
+  min-height: 36px;
+  padding: var(--sp-1) var(--sp-4);
+  border-block-end: var(--bw) solid var(--hx-line);
+  background: var(--hx-card);
+  color: var(--hx-ink);
+  font: var(--t-small);
+}
+
+.switchText {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-1) var(--sp-3);
+  min-width: 0;
+}
+
+.switchStill {
+  color: var(--hx-muted);
+}
+
+/* --pad-page per content class: XL/L 24, M 20, S/XS 16. */
+@container content (width < 1180px) {
+  .main > * {
+    --pad-page: 20px;
+  }
+}
+
+@container content (width < 840px) {
+  .main > * {
+    --pad-page: 16px;
+  }
+}
+
+.dock {
+  grid-area: dock;
+  z-index: var(--z-dock);
+  min-width: 0;
+  min-height: 0;
+}
+
+/* 768-1279: the dock overlays the content from the end side, no scrim, non-modal. */
+.dock_overlay .dock {
+  position: fixed;
+  inset-block: var(--topbar-h) 0;
+  inset-inline-end: 0;
+  box-shadow: var(--sh-drawer);
+}
+
+.scrim {
+  display: none;
+}
+
+.skip {
+  position: absolute;
+  inset-block-start: var(--sp-2);
+  inset-inline-start: var(--sp-2);
+  z-index: var(--z-toast);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--hx-ink);
+  color: var(--hx-on-ink);
+  transform: translateY(-200%);
+}
+
+.skip:focus {
+  transform: none;
+}
+
+/* Phone (< 768): top bar + content; sidebar = More drawer; bottom bar; dock = full sheet. */
+@media (width < 768px) {
+  .shell,
+  .rail,
+  .dock_push,
+  .dock_overlay,
+  .dock_sheet {
+    grid-template-areas:
+      "top"
+      "line"
+      "main";
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  :root {
+    --shell-main-pad-end: calc(var(--bottom-nav-h) + var(--safe-bottom));
+  }
+
+  /* The button's room, only while a page draws its floating action button (the kit's Fab, portalled to the body with
+     data-hub-fab): an open chat or any page without one keeps no empty band above the bar. */
+  :root:has([data-hub-fab]) {
+    --shell-fab-reserve: calc(var(--fab-h) + var(--sp-8));
+  }
+
+  .main {
+    --shell-fab-room: var(--shell-fab-reserve, 0px);
+
+    /* No kept scrollbar room on a phone-width window (the shell's phone layout, AppShell.tsx `phone`): the stable
+       gutter of the base rule lines the top bar's end up with the content's on the desktop layout, but here the bar's
+       end is its .end rule's, and the room only took 7 px from every page that does not scroll (a field's action
+       wrapped under its box at 390). The top bar gives its room back at the same width (TopBar.module.css). */
+    scrollbar-gutter: auto;
+  }
+
+  .sidebar {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: var(--z-drawer);
+    width: min(var(--sidebar-w-drawer), 86vw);
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition:
+      transform var(--dur-exit) var(--ease-out),
+      visibility 0s linear var(--dur-exit);
+  }
+
+  :dir(rtl) .sidebar {
+    transform: translateX(100%);
+  }
+
+  .moreOpen .sidebar {
+    transform: none;
+    visibility: visible;
+    box-shadow: var(--sh-drawer);
+    transition: transform var(--dur-enter) var(--ease-out);
+  }
+
+  .moreOpen .scrim {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-drawer) - 1);
+    display: block;
+    background: var(--hx-scrim);
+  }
+
+  /* The Ask sheet is full screen; the bottom tab bar hides while it is open. */
+  .dock_sheet .dock {
+    position: fixed;
+    inset: 0;
+  }
+}
+
+/* A canvas page (the Board) fills the content area and scrolls nothing itself. */
+.canvas {
+  overflow: hidden;
+
+  /* Nothing scrolls here, so no scrollbar room either: the canvas runs edge to edge. */
+  scrollbar-gutter: auto;
+}
+
+/* Focus mode (useChromeHidden): only the content shows. The chrome stays mounted, just not drawn. */
+.focus,
+.focus.rail,
+.focus.dock_push,
+.focus.dock_overlay,
+.focus.dock_sheet {
+  grid-template-areas: "main";
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.focus .sidebar,
+.focus .topbar,
+.focus .switchLine,
+.focus .dock,
+.focus .scrim,
+.focus .bottom {
+  display: none;
+}
+
+@media (width < 768px) {
+  /* A canvas page fills the content area itself: it keeps the bar's strip, not the button's room. */
+  .canvas {
+    --shell-fab-room: 0px;
+  }
+
+  /* A wizard has no action button: its sticky footer sits right on the bar's strip, with no empty room under it. */
+  .wizard {
+    --shell-fab-room: 0px;
+  }
+
+  /* Focus mode draws no bottom bar, so nothing is covered. */
+  :root:has(.focus) {
+    --shell-main-pad-end: 0px;
+  }
+
+  .focus .main {
+    --shell-fab-room: 0px;
+  }
+}

@@ -1,0 +1,102 @@
+--- a/packages/native/src/vendor/update-zig-deps.sh
++++ b/packages/native/src/vendor/update-zig-deps.sh
+@@ -125,6 +125,7 @@
+ git -C "$DEPS_DIR/yoga" apply "$VENDOR_DIR/zig-deps/yoga-measure-height-cap.patch"
+ git -C "$DEPS_DIR/yoga" apply "$VENDOR_DIR/zig-deps/yoga-cache-margin.patch"
+ git -C "$DEPS_DIR/yoga" apply "$VENDOR_DIR/zig-deps/yoga-flex-shrink-residue.patch"
++git -C "$DEPS_DIR/yoga" apply "$VENDOR_DIR/zig-deps/yoga-wrap-single-flex.patch"
+ 
+ find "$DEPS_DIR" -type d -exec chmod 0755 {} +
+ find "$DEPS_DIR" -type f -exec chmod 0644 {} +
+--- a/packages/native/src/vendor/zig-deps.md
++++ b/packages/native/src/vendor/zig-deps.md
+@@ -59,6 +59,10 @@
+   pass uses its zero-total fallback when the shrink total is within 1e-6 of 0 or positive, not only when
+   it is 0. After the first pass freezes every item at its minimum, float cancellation can leave such a
+   total, and dividing by it gave the items millions of cells. Remove the patch when the pin includes both.
++- `yoga-wrap-single-flex.patch` (Hoody) skips the single flexible child shortcut in a wrapping container.
++  The shortcut sets the basis of the one grow+shrink child to 0, but a wrapping container breaks its lines
++  on each item's flex basis (CSS Flexbox 9.3), so the item stayed on a line it belongs after and was
++  squeezed. Without wrap the result is unchanged.
+ 
+ `src/tests/yoga_test.zig` tests each change.
+ 
+--- a/packages/native/src/vendor/zig-deps/yoga-wrap-single-flex.patch
++++ b/packages/native/src/vendor/zig-deps/yoga-wrap-single-flex.patch
+@@ -0,0 +1,15 @@
++--- a/yoga/algorithm/CalculateLayout.cpp
+++++ b/yoga/algorithm/CalculateLayout.cpp
++@@ -563,7 +563,11 @@
++   // If there is only one child with flexGrow + flexShrink it means we can set
++   // the computedFlexBasis to 0 instead of measuring and shrinking / flexing the
++   // child to exactly match the remaining space
++-  if (sizingModeMainDim == SizingMode::StretchFit) {
+++  // OpenTUI: not in a wrapping container. Its lines break on each item's
+++  // flex basis (CSS Flexbox 9.3), so a basis of 0 would keep on the line an
+++  // item that belongs on the next one.
+++  if (sizingModeMainDim == SizingMode::StretchFit &&
+++      node->style().flexWrap() == Wrap::NoWrap) {
++     for (auto child : children) {
++       if (child->isNodeFlexible()) {
++         if (singleFlexChild != nullptr ||
+--- a/packages/native/src/vendor/zig-deps.sha256
++++ b/packages/native/src/vendor/zig-deps.sha256
+@@ -1,5 +1,5 @@
+-3c8e264a56157afdaca85c70e27af3838e6be77f38f9b926e10b3e5be03e6385  zig-deps.tar.gz
+-44de7cf60662b7632e95dcafd7ef18b949b12d12cd645c30a9354cd84147fe0d  update-zig-deps.sh
++0e0bfd2f7f16bda0ff5973ad8d2073d13156b4efba0bad2ee3538479bf530078  zig-deps.tar.gz
++78deaca802e6d9154178000eac19fb6a5974e0f7407e1d17847eeb0d3392e8ae  update-zig-deps.sh
+ 7ca5be7c38dd7fd8cdbe886d54c92b7a123dd83d1f23bf77fb6383342e7c2058  zig-deps/ghostty-build.zig
+ 51d286e9b6388e344ee2a3adbba953f96e937bca586a99d5c2069d33e6779862  zig-deps/ghostty-build.zig.zon
+ 2116b6cfc3b1100737e2c89cf73a61633256a6f3984ef86e281cf4288923ff99  zig-deps/ghostty-shared-deps.patch
+@@ -12,3 +12,4 @@
+ 43b480034b4052c62d8a3c0a90badbd11ffe8af74e5763f09e13a30ff89d8e73  zig-deps/yoga-flex-shrink-residue.patch
+ 24aa259c9f6baa64b8950ea3e13854c0cb840d97687445d5a502c4c2b981538e  zig-deps/yoga-measure-height-cap.patch
+ 0cf089ecac82b8a07ccc75e22a0141e2195425da0d04847e94aca4de7a21338b  zig-deps/yoga-node-reuse.patch
++b0fd321ba58c86c15e4148fba0c84aea395339a3d9475dc176dab3ca753a4a17  zig-deps/yoga-wrap-single-flex.patch
+--- a/packages/native/src/tests/yoga_test.zig
++++ b/packages/native/src/tests/yoga_test.zig
+@@ -980,6 +980,43 @@
+     }
+ }
+ 
++// A wrapping row breaks its lines on each item's flex basis (CSS Flexbox 9.3). Upstream's single
++// flexible child shortcut set that basis to 0, so a grow+shrink item of basis 40 stayed on a
++// 73-wide line beside 44 cells and was squeezed to 28. Without wrap the shortcut still applies.
++test "Yoga wrap-single-flex patch breaks a wrapping line on the flexible item's basis" {
++    const point = @backingInt(yoga.YogaUnit.point);
++    for ([_]struct { u32, f32, [4]f32 }{
++        // flex_wrap, the flexible item's basis, then its left, top, width, height.
++        .{ @import("context_abi_c").OT_FLEX_WRAP_WRAP, 40, .{ 0, 1, 73, 1 } },
++        .{ @import("context_abi_c").OT_FLEX_WRAP_NONE, 40, .{ 45, 0, 28, 1 } },
++        // An item that fits stays on the line, as without wrap.
++        .{ @import("context_abi_c").OT_FLEX_WRAP_WRAP, 20, .{ 45, 0, 28, 1 } },
++    }) |row| {
++        const config = yoga.yogaConfigCreate();
++        defer std.debug.assert(yoga.yogaConfigFree(config));
++        const root = yoga.yogaNodeCreateWithConfig(config);
++        defer yoga.yogaNodeFreeRecursive(root);
++        yoga.yogaNodeStyleSetEnum(root, @backingInt(yoga.YogaEnumKind.flex_direction), @backingInt(yoga.YogaFlexDirection.row));
++        yoga.yogaNodeStyleSetEnum(root, @backingInt(yoga.YogaEnumKind.flex_wrap), row[0]);
++        yoga.yogaNodeStyleSetEnum(root, @backingInt(yoga.YogaEnumKind.align_items), @import("context_abi_c").OT_ALIGN_FLEX_START);
++        yoga.yogaNodeStyleSetValue(root, @backingInt(yoga.YogaValueKind.gap), @import("context_abi_c").OT_GUTTER_COLUMN, point, 1);
++        const fixed = yoga.yogaNodeCreateWithConfig(config);
++        yoga.yogaNodeInsertChild(root, fixed, 0);
++        yoga.yogaNodeStyleSetValue(fixed, @backingInt(yoga.YogaValueKind.width), 0, point, 44);
++        yoga.yogaNodeStyleSetValue(fixed, @backingInt(yoga.YogaValueKind.height), 0, point, 1);
++        const flexible = yoga.yogaNodeCreateWithConfig(config);
++        yoga.yogaNodeInsertChild(root, flexible, 1);
++        yoga.yogaNodeStyleSetFloat(flexible, @backingInt(yoga.YogaFloatKind.flex_grow), 1);
++        yoga.yogaNodeStyleSetFloat(flexible, @backingInt(yoga.YogaFloatKind.flex_shrink), 1);
++        yoga.yogaNodeStyleSetValue(flexible, @backingInt(yoga.YogaValueKind.flex_basis), 0, point, row[1]);
++        yoga.yogaNodeStyleSetValue(flexible, @backingInt(yoga.YogaValueKind.height), 0, point, 1);
++        yoga.yogaNodeCalculateLayout(root, 73, std.math.nan(f32), @backingInt(yoga.YogaDirection.ltr));
++        var layout: yoga.ExternalYogaLayout = undefined;
++        yoga.yogaNodeGetComputedLayout(flexible, &layout);
++        try std.testing.expectEqual(row[2], [4]f32{ layout.left, layout.top, layout.width, layout.height });
++    }
++}
++
+ test "Yoga absolute-edge rounding patch is opt-in per config and keeps children inside their parents" {
+     const api = @import("context_abi_c");
+     for ([_]u32{ 0, 1 }) |enabled| {

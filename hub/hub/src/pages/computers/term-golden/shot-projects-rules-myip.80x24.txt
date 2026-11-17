@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Permissions of Acme storefront                                   Esc ×
+ Comput┃ ──────────────────────────────────────────────────────────────────────
+ Projec┃ ┌───────────────────────────────────────────────────────────────────┐
+   Comp┃ │                                                                   │
+ ──────┃ │ Change project rules                                              │
+ / Sear┃ │ ( ) No project rules                                      [Save…] │
+ › █ Ac┃ │     Each computer decides with its own rules. Computers           │
+   3 co┃ │     without rules of their own become open to anyone              │
+   █ Ex┃ │     with their address; the others lose the groups and            │
+   2 co┃ │     rules they inherited.                                         │█
+   █ Ho┃ │ (•) Only my IP                                                    │█
+   3 co┃ │     Computers without rules of their own open only from           │█
+       ┃ │     the address you use now. Computers with rules of              │█
+       ┃ │     their own inherit this group.                                 │█
+ Questi┃ │     SG 203.0.113.7 · Singapore ⧉ copy (i)                         │█
+ ▸ What┃ │     ! Access rules take IPv4 addresses only. If your IP           │█
+ ▸ What┃ │       address changes (another Wi-Fi, mobile data, a              │█
+ ▸ Who ┃ │       VPN), the programs stop opening for you. You can            │█
+ ▸ How ┃ │       still change this rule in the Hub from any                  │█
+ ▸ How ┃ │       network, once signed in: it doesn't apply to the            │█
+ ▸ How ┃ │       Hub or the Hoody API.                                       │
+ ▸ How ┃ │ ( ) Only these IPs                                                │
+ ▸ What┃ │     Computers without rules of their own open only from           │
+ Tab mo┃ │     the addresses you list. Computers with rules of               │

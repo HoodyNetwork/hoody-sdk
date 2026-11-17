@@ -1,0 +1,124 @@
+--- a/packages/core/package.json
++++ b/packages/core/package.json
+@@ -9,7 +9,7 @@
+   "types": "src/index.ts",
+   "module": "src/index.ts",
+   "main": "src/index.ts",
+-  "version": "0.8.4",
++  "version": "0.8.4-hoody.1",
+   "type": "module",
+   "imports": {
+     "#opentui/runtime-assets": {
+@@ -79,14 +79,14 @@
+     "web-tree-sitter": "0.25.10"
+   },
+   "optionalDependencies": {
+-    "@opentui/core-darwin-x64": "0.8.4",
+-    "@opentui/core-darwin-arm64": "0.8.4",
+-    "@opentui/core-linux-x64": "0.8.4",
+-    "@opentui/core-linux-arm64": "0.8.4",
+-    "@opentui/core-win32-x64": "0.8.4",
+-    "@opentui/core-win32-arm64": "0.8.4",
+-    "@opentui/core-linux-x64-musl": "0.8.4",
+-    "@opentui/core-linux-arm64-musl": "0.8.4"
++    "@opentui/core-darwin-x64": "0.8.4-hoody.1",
++    "@opentui/core-darwin-arm64": "0.8.4-hoody.1",
++    "@opentui/core-linux-x64": "0.8.4-hoody.1",
++    "@opentui/core-linux-arm64": "0.8.4-hoody.1",
++    "@opentui/core-win32-x64": "0.8.4-hoody.1",
++    "@opentui/core-win32-arm64": "0.8.4-hoody.1",
++    "@opentui/core-linux-x64-musl": "0.8.4-hoody.1",
++    "@opentui/core-linux-arm64-musl": "0.8.4-hoody.1"
+   },
+   "exports": {
+     ".": {
+--- a/packages/examples/package.json
++++ b/packages/examples/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@opentui/examples",
+-  "version": "0.8.4",
++  "version": "0.8.4-hoody.1",
+   "private": true,
+   "description": "OpenTUI examples and standalone examples executable",
+   "license": "MIT",
+--- a/packages/keymap/package.json
++++ b/packages/keymap/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@opentui/keymap",
+-  "version": "0.8.4",
++  "version": "0.8.4-hoody.1",
+   "description": "Standalone keymap package for OpenTUI",
+   "license": "MIT",
+   "repository": {
+--- a/packages/native/package.json
++++ b/packages/native/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@opentui/native",
+-  "version": "0.8.4",
++  "version": "0.8.4-hoody.1",
+   "private": true,
+   "scripts": {
+     "prepare:zig": "sh scripts/prepare-zig-deps.sh && bun scripts/build-ffmpeg.ts",
+--- a/packages/qrcode/package.json
++++ b/packages/qrcode/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@opentui/qrcode",
+-  "version": "0.8.4",
++  "version": "0.8.4-hoody.1",
+   "description": "QR code encoder and renderable for OpenTUI",
+   "license": "MIT",
+   "repository": {
+--- a/packages/react/package.json
++++ b/packages/react/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@opentui/react",
+-  "version": "0.8.4",
++  "version": "0.8.4-hoody.1",
+   "description": "React renderer for building terminal user interfaces using OpenTUI core",
+   "license": "MIT",
+   "repository": {
+--- a/packages/solid/package.json
++++ b/packages/solid/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@opentui/solid",
+-  "version": "0.8.4",
++  "version": "0.8.4-hoody.1",
+   "description": "SolidJS renderer for OpenTUI",
+   "repository": {
+     "type": "git",
+--- a/packages/ssh/package.json
++++ b/packages/ssh/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@opentui/ssh",
+-  "version": "0.8.4",
++  "version": "0.8.4-hoody.1",
+   "description": "Serve OpenTUI apps over SSH",
+   "license": "MIT",
+   "repository": {
+--- a/packages/three/package.json
++++ b/packages/three/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@opentui/three",
+-  "version": "0.8.4",
++  "version": "0.8.4-hoody.1",
+   "description": "Three.js WebGPU renderer for OpenTUI",
+   "license": "MIT",
+   "repository": {
+--- a/packages/web/package.json
++++ b/packages/web/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@opentui/web",
+-  "version": "0.8.4",
++  "version": "0.8.4-hoody.1",
+   "private": true,
+   "type": "module",
+   "scripts": {

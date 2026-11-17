@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Bots                                                     ▸ Use with your agent
+ None of your computers is running. A Bot runs on a running computer.
+    ┌──────────────────────────────────────────────────────────────────────┐  █
+    │ ▷ None of your computers is running                                  │  █
+    │                                                                      │  █
+    │ A Bot runs on a running computer. Start one to see its Bots and make │  █
+    │ new ones.                                                            │  █
+    │                                                                      │  █
+    │   Computer                                      Start                │  █
+    │ ▌ SG production-worker-eu-central-01            [Start]              │  █
+    │   DE boreal                                     [Start]              │  █
+    │   US cinder                                     [Start]              │  █
+    └──────────────────────────────────────────────────────────────────────┘  █
+                                                                              █
+ Questions                                                                    █
+ ▸ What is a Bot, and where does it run?                                      █
+ ▸ What is the default Bot of a realm?                                        █
+ ▸ What is a link, and what do keys do?                                       █
+ ▸ What do Other websites (CORS) and the call limits mean?                    █
+ ▸ What does Allow everything do, and what does mixed mean?                   █
+ ▸ Who becomes the owner of a chat app, and how do others join?
+ ▸ What does the warning that privacy is on mean?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

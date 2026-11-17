@@ -1,0 +1,5 @@
+/* A link of the summary line: one part that never breaks inside. It starts with a no-break space, and no line may break
+   before one, so the dot before the part stays on its line: a wrapped line never ends on a dot. */
+.part {
+  white-space: nowrap;
+}

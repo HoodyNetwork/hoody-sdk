@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                     ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+ Logs
+ What happened on this computer, newest first.
+                      ┌──────────────────────────────────┐
+                      │ No computer selected             │
+                      │                                  │
+                      │ Pick a computer to see its logs. │
+                      └──────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                           ▸ Use with your agent  [+ Get a computer]
+▌Computers             │
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ Computers  Esc
+ Vault                 │  atlas  ● Running                                                        [Open terminal ⇗] [⋯]
+                       │  SG n12 · Home base · █  Personal ·  Current computer
+On atlas ▾             │
+ Programs              │   Overview  Connect  Permissions ▸Ports & addresses  Desktop  Network  Run  Programs  Backups
+ Schedules             │   Storage
+ Scripts               │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Logs                  │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Tunnels               │  │ At a glance                                                           [View access rules] │
+ Notes                 │  │ Who can open  Access rules apply              Aliases       1                             │
+ AI                    │  │ Ports         2 web · 1 other                                                             │
+ VMs                   │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+Account                │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Plans & Billing       │  │ Ports                                                                                     │
+ Referrals             │  │ Every port a program listens on; only web ports get an address on the internet.           │
+ Keys and tokens       │  │  Port              Program          Address                                               │
+ API                   │  │› 3000              node             https://••••  ⧉ copy                    [Create alias]│
+ Notifications      26 │  │  5432              postgres         No web address                                        │
+ Account               │  │  8080              caddy            https://••••  ⧉ copy                    [Create alias]│
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ + Rent servers        │
+ Guide                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Support               │  │ Aliases                                                                    [Create alias] │
+                       │  │ Short addresses that point to a web port, under the same access rule as the computer.     │
+                       │  │  Alias              Goes to Address                                                       │
+                       │  │› shop               3000    https://shop.example.test  ⧉ copy      [Use your own domain] ⋯│
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                  ◆ Personal ▾  ● lone-0 ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                           ▸ Use with your agent   + Get a computer
+▌Computers             │  Your computers: start them, open a terminal, and manage access.
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  Computers 51 · 51 running · 0 stopped · 0 failed    Servers 1                               █
+ Vault                 │                                                                                              █
+                       │  / Search computers         Filters                                                          █
+On lone-0 ▾            │  51 computers  [ ] Show usage  Ask the Agent  ↻ Refresh  View options                        █
+ Programs              │                                                                                              █
+ Schedules             │  ▌ █ lone-0 · · Current                                                          ● Running ⋯██
+ Scripts               │     █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                                   ██
+ Logs                  │                                                                                             ██
+ Tunnels               │    █ lone-1                                                                      ● Running ⋯██
+ Notes                 │     █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                                   ██
+ AI                    │                                                                                             ░█
+ VMs                   │    █ lone-2                                                                      ● Running ⋯░█
+                       │     █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                                   ░█
+Account                │                                                                                             ░█
+ Plans & Billing       │    █ lone-3                                                                      ● Running ⋯░█
+ Referrals             │     █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                                   ░█
+ Keys and tokens       │                                                                                             ░█
+ API                   │    █ lone-4                                                                      ● Running ⋯░█
+ Notifications      26 │     █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                                   ░█
+ Account               │                                                                                             ░█
+                       │    █ lone-5                                                                      ● Running ⋯░█
+ + Rent servers        │     █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                                   ░█
+ Guide                 │                                                                                             ░█
+ Support               │    █ lone-6                                                                      ● Running ⋯░█
+                       │     █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                                   ░█
+                       │                                                                                             ░
+                       │    █ lone-7                                                                      ● Running ⋯░
+                       │     █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                                   ░
+                       │                                                                                             ░
+                       │    █ lone-8                                                                      ● Running ⋯░
+                       │     █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                                   ░
+                       │                                                                                             ░
+                       │  1–50 of 51 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Chats   Agents   Automations  ▌Knowledge   Settings
+  Skills  ▌Instructions   Memory
+ Instructions  ● On                                                [Read again]
+ The text this realm's agents get with their instructions on this computer, and
+ its on/off.
+ ! These instructions changed since you opened them, so  Keep mine  Load theirs
+   nothing was saved. Your text and switch are still
+   here.
+  + Write the summary first.
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │                                                                           │
+ │ Give agents these instructions  [■ on ]                                   │▄
+ │ On. This text is added                                                    │█
+ │ whenever an agent's                                                       │█
+ │ instructions are built, unless                                            │█
+ │ the chat's or agent's prompt                                              │█
+ │ settings leave it out.                                                    │▀
+ │                                                                           │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ Instructions text (unavailable)
+ │ Answer in English.
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                            ▸ Use with your agent  [+ New program]   + Launch an app
+ Computers             │  19 programs on atlas · 11 running · 4 need a look
+ Files                 │  ‹ Programs  Esc
+ Bots                  │  hoody-agent  ● Running                                               [↻ Restart] [■ Stop] [⋯]
+ Board                 │
+ Demo                  │  ▸ Why be careful with this one?
+ Vault                 │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+On atlas ▾             │  │ At a glance                                                                               │
+▌Programs              │  │ Kind      System program                                                                  │
+ Schedules             │  │ State     Running                                                                         │
+ Scripts               │  │ Up        5 days                                                                          │
+ Logs                  │  │ Restarts  Starts again whenever it stops                                                  │
+ Tunnels               │  │ Startup   Off                                                                             │
+ Notes                 │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ AI                    │
+ VMs                   │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Ports                                                                                     │
+Account                │  │ No alias for system programs: their address still shows which computer they run on.       │
+ Plans & Billing       │  │    Port              State                             Address                            │
+ Referrals             │  │› ▸ 15000             ● Running                         Open port 15000                    │
+ Keys and tokens       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ API                   │
+ Notifications      26 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Account               │  │ Sandbox                                                                                   │
+                       │  │ Limits what this program can reach: files, network and resources.                         │
+ + Rent servers        │  │ ┌───────────────────────────────────────────────────────────────────────────────────────┐ │
+ Guide                 │  │ │ RIGHT NOW                                                                             │ │
+ Support               │  │ │ System programs keep the sandbox they ship with. You can view it                      │ │
+                       │  │ │ here but not change it.                                                               │ │
+                       │  │ └───────────────────────────────────────────────────────────────────────────────────────┘ │
+                       │  │                                                                                           │
+                       │  │ Saved policy          None                                                                │
+                       │  │ Used at next start    Nothing                                                             │
+                       │  │ Inbound firewall now  No inbound rules                                                    │
+                       │  │ Running program       Not reported. The computer does not say whether the running program │
+                       │  │                       is the sandboxed one: a policy applies when the program starts.     │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

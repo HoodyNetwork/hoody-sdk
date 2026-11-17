@@ -1,0 +1,92 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.frameBox {
+  position: relative;
+}
+
+.frame {
+  display: block;
+  inline-size: 100%;
+  block-size: 20rem;
+  border: 0;
+  background: var(--hx-card);
+}
+
+.body[data-size='s'] .frame {
+  block-size: 15rem;
+}
+
+.body[data-size='l'] .frame {
+  block-size: 28rem;
+}
+
+.slow {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.address {
+  margin: 0;
+  min-inline-size: 0;
+  overflow: hidden;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.body[data-frame] .address {
+  padding: 0 var(--sp-3) var(--sp-2);
+}
+
+.card {
+  min-inline-size: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-block-size: 44px;
+  padding-inline: var(--sp-1) var(--sp-2);
+  border-block-end: var(--bw) solid var(--hx-line-2);
+}
+
+.row[data-dragging] {
+  opacity: 0.6;
+}
+
+.row[data-drop='before'] {
+  box-shadow: 0 -2px 0 var(--hx-acc);
+}
+
+.row[data-drop='after'] {
+  box-shadow: 0 2px 0 var(--hx-acc);
+}
+
+.grip {
+  display: inline-flex;
+  padding: var(--sp-1);
+  color: var(--hx-muted);
+  cursor: grab;
+  touch-action: none;
+}
+
+.row[data-dragging] .grip {
+  cursor: grabbing;
+}
+
+.rowSwitch {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

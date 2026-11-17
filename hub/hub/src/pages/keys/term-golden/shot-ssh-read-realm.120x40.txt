@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Keys and tokens                                                         ▸ Use with your agent
+ Computers             │  A key lets your agent, the CLI or the SDK act for you. Give each one its own key, with an end
+ Files                 │  date.
+ Bots                  │    API keys 5 keys  ▸ SSH keys    Shared access 0 shares
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │             ! This computer isn't in the realm you're in.
+                       │
+On atlas ▾             │             The top bar still shows a computer from another realm. Show all realms
+ Programs              │             to see it, or choose a computer in this realm.
+ Schedules             │
+ Scripts               │             [Show all realms]  Choose another computer
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │  Questions
+ VMs                   │  ▸ Can I see a key's secret again?
+                       │  ▸ What is an API key for?
+Account                │  ▸ Which realms does a key work in?
+ Plans & Billing       │  ▸ What can a key do, and what does Full mean?
+ Referrals             │  ▸ When does a key stop working, and can I limit where it works from?
+▌Keys and tokens       │  ▸ How does the SSH key work?
+ API                   │  ▸ What does sharing a realm give someone?
+ Notifications      26 │  ▸ What do I send to the person I share with?
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

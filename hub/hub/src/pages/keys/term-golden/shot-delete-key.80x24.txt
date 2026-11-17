@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Keys and tokens                             ▸ Use with your agent  [+ New key]
+ A key lets your agent, the CLI or the SDK act for you. Give each one its own
+ key, with an end date.
+ ▸ API key┌──────────────────────────────────────────────────────────┐
+ ─────────│ ! Delete ci-deploy?                                Esc × │─────────
+ i Keys th│ ──────────────────────────────────────────────────────── │l realms]
+ ‹ Back to│ Anything that uses ci-deploy stops working at once. This │
+   project│ cannot be undone.                                        │
+          │                                                          │
+    Write │                                   [Cancel]  [Delete key] │
+          └──────────────────────────────────────────────────────────┘
+   Other                                                            1 of 10
+   Events
+   resources.events
+
+    Read
+
+                                                                              █
+   Delete                                                                     █
+   ┌───────────────────────────────────────────────────────────────────────┐  █
+   │                                                                       │  ▀
+   │ Delete this key                 [Delete…]                             │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

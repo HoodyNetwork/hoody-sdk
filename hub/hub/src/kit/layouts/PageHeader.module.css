@@ -1,0 +1,468 @@
+/* PageHeader, Breadcrumbs, the phone action button (Fab) and Toolbar. One closing rule: every header ends in exactly
+   one line, its own bottom border with 16 px above it and 12 px below, or, when a tab strip follows directly
+   (tabsFollow, below), the strip's line. Under either line the content starts at the same distance (12 px: this margin,
+   or the strip's own padding in Layouts.module.css .noticeStack). The layout root supplies the inline page padding. */
+.header {
+  --crumb-row-h: 20px; /* the breadcrumb row and its folded back link: one line of the eyebrow type */
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-3);
+  padding-block-end: var(--sp-4);
+  border-block-end: var(--bw) solid var(--hx-rule);
+  container: pagehead / inline-size;
+}
+
+/* Compact (a ListDetail detail is open): the title row alone; the subtitle and the context line step aside so the list
+   and the detail get the height. */
+.sm {
+  gap: 0;
+}
+
+.sm .subtitle,
+.sm .context {
+  display: none;
+}
+
+/* A tab strip follows directly: its line closes the header, 12 px under the header's last line. */
+.tabsFollow {
+  margin-block-end: 0;
+  padding-block-end: var(--sp-3);
+  border-block-end: 0;
+}
+
+/* The title row is at least --head-row-h: a header with a button and one without are the same height. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-width: 0;
+  min-height: var(--head-row-h);
+}
+
+.leading {
+  flex: none;
+}
+
+.titles {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-half);
+  min-width: 0;
+}
+
+.titleLine {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.title {
+  overflow: hidden;
+  color: var(--hx-ink);
+  font: var(--t-title);
+  letter-spacing: var(--tracking-head);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.title:focus {
+  outline: none;
+}
+
+.title:focus-visible {
+  border-radius: var(--r-1);
+  box-shadow: var(--focus-ring);
+}
+
+.sm .title {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-box-heading);
+}
+
+.lg .title {
+  font: var(--t-display);
+}
+
+.meta {
+  display: flex;
+  flex: none;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+/* 2 px more between the title line and the lines under it. */
+.titles > .subtitle,
+.titles > .context {
+  margin-block-start: var(--sp-half);
+}
+
+.subtitle {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--hx-muted);
+  font-size: var(--fs-md);
+  line-height: var(--lh-box-body);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* The context row is never clamped and never clips: a link's tap target that grows past its line box is hit where it
+   is drawn. It sets the subtitle's type, so what it holds reads as the subtitle did. --ctx-hit is a ContextLine link's
+   target (Display.module.css .ctxLink[href]). */
+.context {
+  --ctx-hit: max(24px, var(--touch-min));
+
+  min-width: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-md);
+  line-height: var(--lh-box-body);
+}
+
+/* A control after the line starts below its links' tap targets, which reach (target - line) / 2 past the line box: the
+   targets never overlap. */
+.context > * + * {
+  margin-block-start: calc((var(--ctx-hit) - var(--lh-box-body)) / 2);
+}
+
+/* An action row (--gap-actions), at every width. */
+.actions {
+  display: flex;
+  flex: none;
+  gap: var(--gap-actions);
+  align-items: center;
+}
+
+/* Buttons side by side share one height: a small worded button among a header's actions (Use with your agent beside
+   the primary) is drawn at the header height with the header cut. Through the plate's own properties, so the touch
+   floor and the focus ring stay the Button's. */
+.actions > :is(button, a)[data-variant][data-words] {
+  --plate-h: var(--btn-h);
+  --plate-cut: var(--btn-cut);
+}
+
+/* Actions align with the title: on the one-line row the actions sit at the top, level with the title line, not centred
+   on the title block (a subtitle under the title would push them down). Only from 600 px: a narrower header wraps its
+   row (below), so the actions may take a line of their own, which keeps the row gap whole; the stacked row keeps its
+   own line too. */
+@container pagehead (width >= 600px) {
+  .row:not(.stacked) > .actions {
+    align-self: flex-start;
+    margin-block-start: calc(-1 * var(--sp-1));
+  }
+}
+
+/* Stacked (PageHeader measured its row too narrow for one line): the title (with its meta) keeps the first line and
+   wraps rather than being cut; the actions take the line below, on the end side (from the start side under 600 px,
+   below). */
+.stacked {
+  flex-wrap: wrap;
+  row-gap: var(--sp-2);
+}
+
+.stacked .titles {
+  flex-basis: 0;
+}
+
+.stacked .titleLine {
+  flex-wrap: wrap;
+  row-gap: var(--sp-1);
+}
+
+.stacked .title {
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.stacked .actions {
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+/* On their own line the actions may shrink to it: an outcome line among them (OutcomeSlot with wrap) wraps instead of
+   pushing past the header's edge. */
+.stacked .actions > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* The page's ⋯ (PageHeader `menu`): after the actions on a one-line row; on a wrapped row PageHeader draws it before
+   them, so it keeps the title row's end (the title gives way, it wraps) and the actions take the line below. */
+.menuEnd {
+  display: flex;
+  flex: none;
+  align-items: center;
+}
+
+.stacked > .menuEnd {
+  align-self: flex-start;
+}
+
+/* On the one-line row the ⋯ sits on the actions' line (they keep to the top, above): same top, centred in a button's
+   height, not centred on the title and subtitle. */
+@container pagehead (width >= 600px) {
+  .row:not(.stacked) > .menuEnd {
+    align-self: flex-start;
+    min-block-size: var(--btn-h);
+    margin-block-start: calc(-1 * var(--sp-1));
+  }
+}
+
+/* Coarse pointer: a button with words among them (Button and LinkButton carry data-variant, TextButton
+   data-text-button; IconButton carries neither) keeps the 44 px touch minimum the rule above would drop, never wider
+   than the line. A fine pointer keeps min-width 0. */
+@media (pointer: coarse) {
+  .stacked .actions > :is([data-variant], [data-text-button]) {
+    min-width: min(var(--touch-min), 100%);
+  }
+}
+
+/* Breadcrumb row: every crumb a link, the last one is the page. */
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-height: var(--crumb-row-h);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  /* The website's eyebrow: the mono face, uppercase, tracked. */
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.crumb {
+  display: flex;
+  align-items: center;
+  color: var(--hx-muted);
+}
+
+.crumbLink {
+  border-radius: var(--r-1);
+  color: var(--hx-link);
+  text-decoration: none;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* A breadcrumb link goes somewhere, so it is link blue, the same blue on hover, underlined on hover. */
+.crumbLink[data-hovered],
+.crumbLink[data-focus-visible],
+.crumbBack[data-hovered],
+.crumbBack[data-focus-visible] {
+  text-decoration: underline;
+}
+
+/* The page you are on reads as ink. Chrome stays non-blue; the one exception is a breadcrumb's links, blue as every
+   link that goes somewhere. */
+.crumbLink[data-current] {
+  color: var(--hx-ink);
+  cursor: default;
+  text-decoration: none;
+}
+
+.crumbLink[data-focus-visible],
+.crumbBack[data-focus-visible] {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.crumbSep {
+  margin-inline: var(--sp-1);
+  color: var(--hx-faint);
+}
+
+/* "‹ Parent", the folded breadcrumbs of a phone-width header (below): the only way up there. */
+.crumbBack {
+  display: none;
+  align-items: center;
+  gap: var(--sp-half);
+  min-height: var(--crumb-row-h);
+  border-radius: var(--r-1);
+  color: var(--hx-link);
+  font-size: var(--fs-sm);
+  text-decoration: none;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* On a coarse pointer the back link's touch target is --touch-min tall: a box behind it, centred on its line, so the
+   header keeps its height (as a card's View all link, Layouts.module.css). */
+@media (pointer: coarse) {
+  .crumbBack {
+    position: relative;
+  }
+
+  .crumbBack::before {
+    position: absolute;
+    inset-block: calc((var(--touch-min) - 100%) / -2);
+    inset-inline: 0;
+    content: '';
+  }
+}
+
+/* Floating action button (phone-width content). */
+.fab {
+  position: fixed;
+  inset-block-end: calc(var(--bottom-nav-h) + var(--safe-bottom) + var(--sp-4));
+  inset-inline-end: var(--sp-4);
+  z-index: var(--z-sticky);
+}
+
+/* The FAB is the kit's primary plate at its own height (--fab-h, through the button's --plate-h) with its end glyph, lifted
+   off the page it floats over. Its parts are reached by the Button's own hooks (data-btn-label, data-glyph-mark), never
+   by kit class names. Collapsed, the label goes to 0 and the padding with it, so the square root shows the glyph alone;
+   the label stays mounted, so the width can animate and the button keeps its name. */
+.fab > button {
+  --plate-h: var(--fab-h);
+
+  padding-inline: var(--sp-5);
+  box-shadow: var(--sh-2); /* the Button's own focus rule outweighs this, so the ring replaces the lift */
+  transition:
+    box-shadow var(--dur-press) var(--ease-out),
+    padding var(--dur-enter) var(--ease-out),
+    gap var(--dur-enter) var(--ease-out);
+}
+
+.fab > button > [data-btn-label] {
+  max-inline-size: 60vw;
+  transition: max-inline-size var(--dur-enter) var(--ease-out);
+}
+
+.fabSmall > button {
+  gap: 0;
+  inline-size: var(--fab-h);
+  min-inline-size: var(--fab-h);
+  padding-inline: 0;
+  transition-duration: var(--dur-press), var(--dur-exit), var(--dur-exit); /* collapsing is the exit: shorter than the expand */
+}
+
+.fabSmall > button > [data-btn-label] {
+  flex: 0 0 0;
+  max-inline-size: 0;
+  min-inline-size: 0;
+  transition-duration: var(--dur-exit);
+}
+
+.fabSmall > button > [data-glyph-mark] {
+  margin-inline-start: 0;
+}
+
+/* Toolbar (generic row of controls above content). */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--toolbar-h);
+}
+
+/* The start side grows into the free room but starts from its own width (flex-basis auto), so when start and end do
+   not fit on one line the end side wraps under it instead of squeezing the start's controls (a segmented period
+   would cut its labels). Alone on a line narrower than its controls, it still shrinks (a search box gives way). */
+.toolbarStart {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* The end side holds the row's actions: an action row (--gap-actions). */
+.toolbarEnd {
+  display: flex;
+  gap: var(--gap-actions);
+  align-items: center;
+}
+
+.toolbarWithNotice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.toolbarNotice {
+  min-width: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+  overflow-wrap: anywhere;
+}
+
+/* Below 600: the title steps down a size and wraps (a long name or greeting is never cut off with an ellipsis; a single
+   word longer than the line breaks), meta pills drop under the title when they do not fit, breadcrumbs fold to
+   "‹ Parent". Wider headers keep the one-line title above. */
+@container pagehead (width < 600px) {
+  .title {
+    font-size: var(--fs-xl);
+    line-height: var(--lh-box-heading);
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .titleLine {
+    flex-wrap: wrap;
+    row-gap: var(--sp-1);
+  }
+
+  .crumbs {
+    display: none;
+  }
+
+  .crumbBack {
+    display: inline-flex;
+  }
+
+  .row {
+    flex-wrap: wrap;
+    row-gap: var(--sp-2);
+  }
+
+  /* 240 px is PAGE_TITLE_FLOOR (PageHeader.tsx): the least a title keeps beside its actions. */
+  .titles {
+    min-width: min(100%, 240px);
+  }
+
+  /* A wrapping row with a ⋯: the title and the ⋯ share the first line (the title keeps all but the ⋯'s width), the
+     actions take the line below, from the start side (under the title they read with). */
+  .row:has(> .menuEnd) > .titles {
+    flex-basis: 0;
+    min-width: 0;
+  }
+
+  .row > .menuEnd {
+    align-self: flex-start;
+  }
+
+  .row:has(> .menuEnd) > .actions {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    min-width: 0;
+  }
+
+  /* Stacked on a phone, the actions' own line starts under the title, as every other wrapped row does. */
+  .stacked .actions {
+    justify-content: flex-start;
+  }
+}
+
+/* Forced colours drop box-shadow, so the focus rings above would vanish: a solid outline in the system Highlight
+   colour instead, as Button's. */
+@media (forced-colors: active) {
+  .crumbLink[data-focus-visible],
+  .crumbBack[data-focus-visible] {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+}

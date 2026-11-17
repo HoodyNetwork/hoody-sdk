@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Bots                                                     ▸ Use with your agent
+ None of your computers is running. A Bot runs on a running computer.
+  │ ◷ Starting atlas may have gone through
+  │   The server didn't confirm the result. Don't send it again: check the
+  │   current state first.
+  │   [Check again]  [Stop tracking]
+    ┌──────────────────────────────────────────────────────────────────────┐  █
+    │ ▷ None of your computers is running                                  │  █
+    │                                                                      │  █
+    │ A Bot runs on a running computer. Start one to see its Bots and make │  █
+    │ new ones.                                                            │  █
+    │                                                                      │  █
+    │   Computer                               Start                       │  █
+    │ › SG atlas                               [Start]                     │  █
+    │   DE boreal                              [Start]                     │  █
+    │   US cinder                              [Start]                     │  █
+    └──────────────────────────────────────────────────────────────────────┘  █
+                                                                              ▀
+ Questions
+ ▸ What is a Bot, and where does it run?
+ ▸ What is the default Bot of a realm?
+ ▸ What is a link, and what do keys do?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

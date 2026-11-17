@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Referrals                                                      [Program rules]
+ Invite people to Hoody. When they pay for servers by card or crypto, you earn
+ Referral credit.
+ ┏━━━━━━━━┌──────────────────────────────────────────────────────────┐━━━━━━━┓█
+ ┃ Invite │ Join the referral program?                         Esc × │       ┃█
+ ┃ Invite │ ──────────────────────────────────────────────────────── │ervers ┃█
+ ┃ by card│ You earn a share of what the people you invite pay for   │       ┃█
+ ┃ ✓ You e│ servers, as Referral credit.                             │       ┃
+ ┃ ✓ 10% a│                                                          │       ┃
+ ┃ ✓ Credi│ See how credit works                                     │       ┃
+ ┃ How lon│                                                          │       ┃
+ ┃        │ • Referral credit pays for servers only. It is not cash: │       ┃
+ ┃ When cr│ it can't be sent to another account or moved to AI, and  │       ┃
+ ┃        │ it can't be withdrawn, except that Creators can ask      │       ┃
+ ┃  Join… │ Hoody support about withdrawing their credit.            │       ┃
+ ┗━━━━━━━━│ • You can't leave the program from the Hub.              │━━━━━━━┛
+          │                                                          │
+          │                                         [Cancel]   Join  │
+ ┌────────└──────────────────────────────────────────────────────────┘───────┐
+ │ What you'll get                                                           │
+ │ ✓ A link to share, and codes of your own                                  │
+ │ ✓ Credit when the people you invite pay for servers                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

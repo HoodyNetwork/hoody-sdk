@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ New VM inside atlas                                              Esc ×
+ Virtua┃ ──────────────────────────────────────────────────────────────────────
+ Full m┃ ◷ A VM named new-1 may have been        [Check again]  [Stop tracking]
+ ▸ VMs ┃   created inside atlas.
+ ──────┃
+ ┌─────┃
+ │ This┃
+ │ VMs ┃
+ │     ┃
+ │ What┃
+ │ ┌───┃
+ │ │   ┃
+ │ │ Ru┃
+ │ │ KV┃
+ │ │   ┃
+ │ └───┃
+ │ Serv┃
+ │     ┃
+ │ Room┃
+ │ Memo┃
+ │ Larg┃
+ │ star┃
+ │ Free┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ ● Unsaved changes                                 [Cancel]  Create VM

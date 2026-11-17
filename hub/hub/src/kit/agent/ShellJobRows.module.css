@@ -1,0 +1,8 @@
+/* Shell job rows under Activity → Running now: the same list rhythm as the Details panel's lists. */
+.list { margin: 0; padding: 0; list-style: none; }
+.row { display: grid; gap: var(--sp-half); padding-block: var(--sp-1); }
+.name { min-width: 0; font: var(--t-mono); overflow-wrap: anywhere; }
+.muted { color: var(--hx-muted); font: var(--t-small); }
+.line { min-width: 0; color: var(--hx-muted); font: var(--t-mono); overflow-wrap: anywhere; }
+.unknown { color: var(--hx-warn); font: var(--t-small); }
+.actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }

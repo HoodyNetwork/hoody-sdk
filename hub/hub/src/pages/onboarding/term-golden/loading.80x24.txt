@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  Welcome to Hoo…  ◆ Personal ▾  … Loading compute… ▾  [A]  ^K · ?
+ Welcome to Hoody
+
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ ⇗ The tour is an animated page that plays on the web Hub.                  │
+ │ Open the tour on the web:                                                  │
+ │ https://hub.example.test/auth/home?realm=f1f1…f1f1#/onboarding             │
+ │ [c Copy link] [r QR code]                                                  │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

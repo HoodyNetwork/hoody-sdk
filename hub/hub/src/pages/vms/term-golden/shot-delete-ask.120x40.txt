@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines › win11
+ Computers             │  win11  ● Stopped                                                                  Start   [⋯]
+ Files                 │  A VM inside atlas.
+ Bots                  │
+ Board                 │  ▸Overview  Screen  Ports  Storage  Snapshots  Settings  Logs
+ Demo                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │ ┌────────────────────────────────────────────────────────────────────┐                       │
+On atlas ▾             │ │ ! Delete win11?                                              Esc × │                       │
+ Programs              │ │ ────────────────────────────────────────────────────────────────── │                       │
+ Schedules             │ │ This deletes the VM win11 inside atlas.                            │                       │
+ Scripts               │ │                                                                    │                       │
+ Logs                  │ │ • Its disk and everything on it are deleted.                       │                       │
+ Tunnels               │ │ • Its snapshots are deleted.                                       │                       │
+ Notes                 │ │ • This cannot be undone.                                           │                       │
+ AI                    │ │                                                                    │                       │
+▌VMs                   │ │ Type win11 to confirm                                              │                       │
+                       │ │ ┌────────────────────────────────────────────────────────────────┐ │                       │
+Account                │ │ │                                                                │ │───────────────────────┘
+ Plans & Billing       │ │ └────────────────────────────────────────────────────────────────┘ │
+ Referrals             │ │                                                                    │
+ Keys and tokens       │ │                                              [Cancel]  [Delete VM] │
+ API                   │ └────────────────────────────────────────────────────────────────────┘
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Typing · Esc leaves the field · Ctrl+K commands

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notifications                                                               [✓ Mark all read]
+ Computers             │  Messages about your account: computers, rentals, sign-in and keys.
+ Files                 │  ▸ Inbox 26    Notices    Get notified
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  / Search                   ‹ Unread ›  Archive    Kind ▾  Level: Needs a look ×
+ Vault                 │  10 unread  ↻ Refresh  View options
+                       │
+On atlas ▾             │    [ ] Level   Notice                              Message                     When ↓
+ Programs              │  ▌•[ ]  ✗      Computer atlas stopped              atlas stopped after runnin… 19 days ago   ⋯
+ Schedules             │   •[ ]  !      Server cedar rental ends in 3 days  Your rental of cedar ends … 19 days ago   ⋯
+ Scripts               │   •[ ]  !      Storage share granite expires tomo… The share "granite" expire… 19 days ago   ⋯
+ Logs                  │   •[ ]  ✗      Computer golden-gazelle stopped     golden-gazelle stopped aft… 20 days ago   ⋯
+ Tunnels               │   •[ ]  !      Server proud-koala rental ends in … Your rental of proud-koala… 20 days ago   ⋯
+ Notes                 │   •[ ]  !      Storage share cosmic-bison expires… The share "cosmic-bison" e… 20 days ago   ⋯
+ AI                    │   •[ ]  ✗      Computer quiet-ocelot stopped       quiet-ocelot stopped after… 20 days ago   ⋯
+ VMs                   │   •[ ]  !      Server steady-squid rental ends in… Your rental of steady-squi… 20 days ago   ⋯
+                       │   •[ ]  !      Storage share smart-wombat expires… The share "smart-wombat" e… 20 days ago   ⋯
+Account                │   •[ ]  ✗      Computer happy-finch stopped        happy-finch stopped after … 20 days ago   ⋯
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+▌Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │   New notices appear here and are counted beside            [How it works] [Dismiss this tip]
+                       │   Notifications in the sidebar.
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

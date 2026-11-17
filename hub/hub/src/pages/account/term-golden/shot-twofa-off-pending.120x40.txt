@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ Turn off two-step sign-in?                          Esc ×
+ Home                  │  Account                           ┃ Your password alone will sign in to your account
+ Computers             │  Your profile, how you sign in, and┃ again. Every other session is signed out.
+ Files                 │                                    ┃ ─────────────────────────────────────────────────────────
+ Bots                  │  ▌Profile  Password  Two-step sign-┃ │ ◷ This may have gone through
+ Board                 │  ──────────────────────────────────┃ │   The server didn't confirm the result. Don't send it
+ Demo                  │  ┌─────────────────────────────────┃ │   again: check the current state first.
+ Vault                 │  │ Security                        ┃
+                       │  │ ✓ Your email address is verified┃ Current password (unavailable)
+On atlas ▾             │  │ ✓ Two-step sign-in is on.       ┃ │ ______________
+ Programs              │  │ i 11 other browsers or devices a┃
+ Schedules             │  └─────────────────────────────────┃ 6-digit code or backup code (unavailable)
+ Scripts               │                                    ┃ │ _______________________________________________________
+ Logs                  │  ┌─────────────────────────────────┃
+ Tunnels               │  │ Profile                         ┃
+ Notes                 │  │                                 ┃
+ AI                    │  │ Display name                    ┃
+ VMs                   │  │                                 ┃
+                       │  │ Username                        ┃
+Account                │  │                                 ┃
+ Plans & Billing       │  │ Email                           ┃
+ Referrals             │  │                                 ┃
+ Keys and tokens       │  │ Member since                    ┃
+ API                   │  │                                 ┃
+ Notifications      26 │  │ Account ID                      ┃
+▌Account               │  │ Account deletion goes through su┃
+                       │  └─────────────────────────────────┃
+ + Rent servers        │                                    ┃
+ Guide                 │  ┌─────────────────────────────────┃
+ Support               │  │ Password                        ┃
+                       │  │                                 ┃
+                       │  │ Password                        ┃
+                       │  │ Changing it signs you out       ┃
+                       │  │ everywhere.                     ┃
+                       │  └─────────────────────────────────┃
+                       │                                    ┃
+                       │  ┌─────────────────────────────────┃
+                       │  │ Two-step sign-in                ┃
+                       │  │                                 ┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit  ┃ [Close]   Check again

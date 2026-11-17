@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ How to connect                                                   Esc ×
+ Comput┃ Send traffic through atlas from a browser, an app or a script.
+ ▸ Comp┃ ──────────────────────────────────────────────────────────────────────
+ ──────┃ ┌───────────────────────────────────────────────────────────────────┐█
+ ‹ Comp┃ │ PROXY ADDRESS                                                     │█
+ atlas ┃ │ Traffic sent here leaves from atlas's address, unless you set     │
+ SG n12┃ │ another exit.                                                     │
+       ┃ │ Works like a password: anyone with it can use atlas's proxy.      │
+  Overv┃ │ https://6a00…0001-c0a7…00a1-                               ⧉ copy │
+  Progr┃ │ egress-1.n12.fixture.invalid:443                                  │
+ ──────┃ │ Type     HTTPS ⧉ copy                                             │
+ │ what┃ │ Server   6a00…0001-c0a7…00a1-egress-1.n12.fixture.invalid ⧉ copy  │
+ │    A┃ │ Port     443 ⧉ copy                                               │
+ │▾ Inb┃ │ Sign-in  None. Leave user name and password empty: the address    │
+ │›    ┃ │          itself is the key.                                       │
+ │     ┃ │ Reaches  Public IPv4 addresses only, unless you set another exit  │
+ │     ┃ └───────────────────────────────────────────────────────────────────┘
+ │▾ Out┃
+ │     ┃   Use it in your browser    For scripts  ▸ Change the exit
+ └─────┃ ──────────────────────────────────────────────────────────────────────
+       ┃ To check a setup, open https://           [Close]  [Open ip.hoody.com]
+ ┌─────┃ ip.hoody.com through it. It shows the
+ │ Use ┃ address sites see: atlas's own address,
+ Tab mo┃ or its exit's if you set one.

@@ -1,0 +1,23 @@
+{
+  "title": "File chooser",
+  "about": "One chooser for a file, several files or a folder on a computer. Everything here is sample data held in this page.",
+  "open.file": "Choose one file",
+  "open.files": "Choose several files",
+  "open.folder": "Choose a folder",
+  "open.any": "Choose a file or folder",
+  "open.one": "One place, no computers",
+  "open.failed": "A folder that cannot be read",
+  "picked": "Chosen last: {{last}}",
+  "nothing": "Nothing chosen yet.",
+  "running": "Running",
+  "stopped": "Stopped",
+  "startFirst": "Stopped. Start it to read its files.",
+  "place.projects": "Projects",
+  "place.logs": "Logs",
+  "tooBig": "Too large to use here (1 MB at most)",
+  "limit": "Three files at most, each up to 1 MB.",
+  "noPreview": "No preview for this kind of file.",
+  "onlyTs": "Only .ts files can be chosen here",
+  "pickedOne": "{{from}}, written as {{written}}",
+  "findOff": "Open a folder first to search below it."
+}

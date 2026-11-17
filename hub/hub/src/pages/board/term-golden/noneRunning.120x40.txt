@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            Board                            ◆ Personal ▾  All computers ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Computers             │  │ ⇗ The Board shows live programs and web pages side by side in browser frames, which a     │
+ Files                 │  │ terminal cannot draw.                                                                     │
+ Bots                  │  │ Open the Board on the web:                                                                │
+▌Board                 │  │ https://hub.example.test/auth/home?realm=f1f1…f1f1#/board                                 │
+ Demo                  │  │ [c Copy link] [r QR code]                                                                 │
+ Vault                 │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+On this computer ▾     │  Your Boards are saved in each web browser where you made them, so this terminal has none to
+ Programs              │  show.
+ Schedules             │
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

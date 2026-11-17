@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ New ticket                                          Esc ×
+ Home                  │  Support                           ┃ ─────────────────────────────────────────────────────────
+ Computers             │  Ask us about anything in Hoody. We┃ You have 1 of 1 tickets open. ⓘ
+ Files                 │                                    ┃ Category * (required)
+ Bots                  │  / Search                   ‹ All ›┃ │ Account ▾
+ Board                 │  7 tickets  ↻ Refresh  View options┃ Subject * (required)
+ Demo                  │                                    ┃ │ Appeal
+ Vault                 │    Subject                         ┃
+                       │  › • Computer will not start after ┃ Message * (required)
+On atlas ▾             │      Invoice shows the wrong countr┃ ┃ Please look at my account again.
+ Programs              │    • Refund for the October charge ┃
+ Schedules             │      How do I add a domain?        ┃
+ Scripts               │      Old question about bots       ┃
+ Logs                  │      <b>bold</b> **subject**       ┃
+ Tunnels               │      A ticket with many messages   ┃
+ Notes                 │   7 loaded                         ┃
+ AI                    │                                    ┃
+ VMs                   │                                    ┃ 32 of 4,000 · Plain text. Never paste passwords, keys or
+                       │                                    ┃ tokens. Say what you did and what happened.
+Account                │                                    ┃ │ ✗ This didn't go through
+ Plans & Billing       │                                    ┃ │   You have reached the most tickets you can keep open
+ Referrals             │                                    ┃ │   at once. Close one you no longer need, then send
+ Keys and tokens       │                                    ┃ │   again. While your account is suspended you can keep
+ API                   │                                    ┃ │   one ticket open to appeal.
+ Notifications      26 │                                    ┃ │   ▸ Details
+ Account               │                                    ┃ │   [Hide this note]
+                       │                                    ┃
+ + Rent servers        │                                    ┃
+ Guide                 │                                    ┃
+▌Support               │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │  Questions                         ┃
+                       │  ▸ What should I never put in a tic┃
+                       │  ▸ Why does my message look plain? ┃
+                       │  ▸ Why is there a limit on tickets?┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit  ┃                                   [Cancel]   Send ticket

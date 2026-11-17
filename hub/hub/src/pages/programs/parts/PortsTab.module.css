@@ -1,0 +1,32 @@
+/* The Ports & aliases tab's aliases section: an alias's address cell, and the own-domain steps under the table. */
+
+/* The host name, whole, and its Copy: the name wraps at any point when the cell is narrower than it, never cut. */
+.address {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.host {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The fold under the flush table starts where the table's first column does (the kit DataTable's first cell: --sp-4), so
+   its chevron lines up with the alias names. */
+.ownDomain {
+  padding: var(--sp-1) var(--sp-4) var(--sp-3);
+}
+
+/* The steps, the closing lines and the question's link (a kit Stack), at a reading measure. */
+.steps {
+  max-width: 72ch;
+  padding-block-end: var(--sp-1);
+}
+
+/* The two closing lines: what else (nothing) and how to stop. */
+.afterLine {
+  margin: 0;
+}

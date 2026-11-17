@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Turn on two-step sign-in                                                Esc ×
+ Home                  │  Account       ┃ Step 2 of 2: add Hoody to your app
+ Computers             │  Your profile, ┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │                ┃  1  Scan the code or type the key                                           █
+ Bots                  │  ▌Profile  Pass┃     Scan this code with your authenticator app, or type the key into        █
+ Board                 │  ──────────────┃     it.                                                                     █
+ Demo                  │  ┌─────────────┃                                                                             █
+ Vault                 │  │ Security    ┃     Key                                                                     █
+                       │  │ ✓ Your email┃     █████████████████████████████████████████                               █
+On atlas ▾             │  │ ! Two-step s┃     █████████████████████████████████████████                               █
+ Programs              │  │ i 11 other b┃     ████ ▄▄▄▄▄ ██ █ ▀▀▄ ▄█▄ ▀▄ █ █ ▄▄▄▄▄ ████                               █
+ Schedules             │  └─────────────┃     ████ █   █ █   █▀█▀ █▄▀▄▀ ▀  █ █   █ ████                               █
+ Scripts               │                ┃     ████ █▄▄▄█ ██▄▀ ▄██▀▀▄ ▀███▄▀█ █▄▄▄█ ████                               █
+ Logs                  │  ┌─────────────┃     ████▄▄▄▄▄▄▄█▄▀ ▀ ▀▄█▄█▄▀ █ ▀▄█▄▄▄▄▄▄▄████                               █
+ Tunnels               │  │ Profile     ┃     ████▀█▀  ▀▄▄▀▄█▀▀ ▄▄▀▀ ███▀  ▀█▀▀ ▄▀█████                               █
+ Notes                 │  │             ┃     ████  ▀▀█▄▄▀ █▀▄     █▄▀█▄█ ▀ █ ▀█▀ ▄████                               █
+ AI                    │  │ Display name┃     ████▄▄▄▀▀▄▄  ▄▄▄█████████   ▄█▄▀█▄█▀▄████                               █
+ VMs                   │  │             ┃     ████▀▀▄ █▄▄█ █▄█████████████▄▄█▀ ▀ ▀█████                               █
+                       │  │ Username    ┃     ████▀ ▀██ ▄▄█▀▀▀█████████▀▀█▀▄ █ ▀█ ▀████                               █
+Account                │  │             ┃     ████▀ ▀  █▄▀▄ ▄▀███████████ ▀ ▄▀▀  █ ████                               █
+ Plans & Billing       │  │ Email       ┃     ████▀▄▀█ ▀▄▄   ▀▀▀▀▀█▀█▀▀█▀█ ██ ▀▄█▄▄████                               █
+ Referrals             │  │             ┃     ████ █ ▄██▄▄▀▄▀ ▄▀ ▄▄▀▀███  ██▄█▀▄   ████                               █
+ Keys and tokens       │  │ Member since┃     ████▄▄██▄▄▄▄ █ ▀▄  ▄▀█▄█▀▀█▄ ▄▄▄  █ ▄████                               █
+ API                   │  │             ┃     ████ ▄▄▄▄▄ █▄▀█ █▄▄▄██▀▄▄▀▀  █▄█ ▄ ▀█████                               █
+ Notifications      26 │  │ Account ID  ┃     ████ █   █ █  ███  ▀  ▀     ▄ ▄ ▄▄▀ █████                               █
+▌Account               │  │ Account dele┃     ████ █▄▄▄█ ████▄▀▄█ █▀ ▄▀  █▄▀▀█▄    ████
+                       │  └─────────────┃     ████▄▄▄▄▄▄▄████▄▄▄▄▄▄▄██▄█▄▄▄▄██▄▄███████
+ + Rent servers        │                ┃     █████████████████████████████████████████
+ Guide                 │  ┌─────────────┃     █████████████████████████████████████████
+ Support               │  │ Password    ┃     ! Contains your sign-in key: anyone who
+                       │  │             ┃     scans it can make your sign-in codes
+                       │  │ Password    ┃     Setup key
+                       │  │ Changing it ┃     │ ••••••••••••••••••• (Hidden until you press Show) [Show] [Copy]
+                       │  │ everywhere. ┃     ⚿ Type this into your app if you cannot scan.
+                       │  └─────────────┃
+                       │                ┃  2  Save your backup codes
+                       │  ┌─────────────┃
+                       │  │ Two-step sig┃     Backup codes
+                       │  │             ┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ Save your backup codes and tick the box first.            [Cancel]   Turn on

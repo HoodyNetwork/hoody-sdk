@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Keys and tokens                                     ▸ Use with your agent   Share this realm
+ Computers             │  A key lets your agent, the CLI or the SDK act for you. Give each one its own key, with an end
+ Files                 │  date.
+ Bots                  │    API keys 7 keys    SSH keys  ▸ Shared access 2 shares
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  People you share a realm with can reach every computer in it. That
+                       │  includes computers added later. They get the rights you chose for that
+On atlas ▾             │  share. Program addresses saved from them keep working after the share
+ Programs              │  ends.
+ Schedules             │
+ Scripts               │  i Showing your most recent tokens only. Older shares may not be listed.
+ Logs                  │
+ Tunnels               │  SHARED NOW
+ Notes                 │
+ AI                    │  / Search                                                    2 shares  ↻ Refresh  View options
+ VMs                   │
+                       │    Shared with ↓         Ends                          Can Stop sharing
+Account                │  › Anyone you send it t… 2026-11-14 07:00 UTC              Not managed here. [Stop sharing…]
+ Plans & Billing       │    Anyone you send it t… 2026-11-12 05:00 UTC              Not managed here. [Stop sharing…]
+ Referrals             │
+▌Keys and tokens       │
+ API                   │
+ Notifications      26 │  Questions
+ Account               │  ▸ Can I see a key's secret again?
+                       │  ▸ What is an API key for?
+ + Rent servers        │  ▸ Which realms does a key work in?
+ Guide                 │  ▸ What can a key do, and what does Full mean?
+ Support               │  ▸ When does a key stop working, and can I limit where it works from?
+                       │  ▸ How does the SSH key work?
+                       │  ▸ What does sharing a realm give someone?
+                       │  ▸ What do I send to the person I share with?
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

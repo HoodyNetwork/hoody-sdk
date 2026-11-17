@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notifications                                                               [✓ Mark all read]
+ Computers             │  Messages about your account: computers, rentals, sign-in and keys.
+ Files                 │  ‹ Notifications  Esc
+ Bots                  │  Computer atlas stopped  ✗ Error
+ Board                 │  Computers Oct 23, 2026, 2:56 AM
+ Demo                  │
+ Vault                 │
+                       │    ✗ Didn't go through                             [Try again]
+On atlas ▾             │    Couldn’t mark “Computer atlas stopped” as read.
+ Programs              │
+ Schedules             │    This one needs a look.
+ Scripts               │
+ Logs                  │    atlas stopped after running out of memory on n12. Start it again from Computers, or open
+ Tunnels               │    the logs to see what happened.
+ Notes                 │
+ AI                    │    Open Computers Open logs
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+▌Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

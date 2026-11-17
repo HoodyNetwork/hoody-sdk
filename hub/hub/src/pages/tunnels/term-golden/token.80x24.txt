@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Tunnels                            ▸ Use with your agent   + Connect a laptop
+ Put a laptop app online through atlas, or let atlas reach a service on your
+ laptop. 2 sessions connected to atlas · tunnel program running since 06:00 AM
+ / Search by address…   Filters                           6 entries  ↻ Refresh█
+     Shared as                 Address                             Port ↑     █
+ ▾ Session 4f2a9c… · 3 streams of 1024 · 3                                    █
+ ▌   Web address               https://6a00…0001-c0a7…00a1-http-…    3000    ⋯█
+     Web address               https://6a00…0001-c0a7…00a1-http-…    5173    ⋯█
+     Inside this computer      127.0.0.1:5432                        5432    ⋯█
+ ▾ Session 9b1d7e… · 0 streams of 1024 · 2                                    █
+     Inside this computer      127.0.0.2:5432                        5432    ⋯█
+     Inside this computer      127.0.0.1:6379                        6379    ⋯█
+ ▾ Reconnecting or closing · 1                                                █
+     Web address               https://6a00…0001-c0a7…00a1-http-…    8080    ⋯█
+     seen 09:00 AM                                                            █
+                                                                              █
+ Questions                                                                    █
+ ▸ What is a tunnel for?                                                      █
+ ▸ Should I put a laptop app online or bring a laptop service in?             █
+ ▸ Which port on the computer should I use?
+ ▸ Which ports does the Hub warn about?
+ ▸ When do I tick the password box?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

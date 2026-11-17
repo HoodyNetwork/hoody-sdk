@@ -1,0 +1,19 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`wide: list and detail side by side with a handle; the detail title takes the focus on open 1`] = `
+" Things                                                                                                       
+ row one                                    │ thing one                                           [Hide list] 
+ row two                                    │                                                                 
+                                            │ detail of one                                                   
+                                            │                                                                 
+                                            │                                                                 
+                                            │                                                                 
+                                            │                                                                 
+                                            │                                                                 
+                                            │                                                                 
+                                            │                                                                 
+                                            │                                                                 
+                                            │                                                                 
+                                            │                                                                 
+"
+`;

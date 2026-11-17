@@ -1,0 +1,7 @@
+{
+  "progress": "{{done}} of {{total}}",
+  "progressLabel": "{{done}} of {{total}} done",
+  "meterValue": "{{pct}}%",
+  "meterHigh": "{{pct}}%, high",
+  "meterVeryHigh": "{{pct}}%, very high"
+}

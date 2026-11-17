@@ -1,0 +1,92 @@
+/* The card corner, one rule for every card: a card marked data-card-cut is clipped to the slanted
+   outline and its CSS border turns transparent (it keeps the layout); the edge below draws the line in --card-edge,
+   the colour the card class gives its border. A card that holds a table keeps its plain square border ("any box
+   that contains a table" is not a card). Never a border plus a gradient diagonal. The attribute is named twice so the
+   rule outranks a card's own state colours (.cards .selected, .panelDanger) whatever order the modules load in. */
+:global([data-card-cut][data-card-cut]:not(:has(table, [data-table-frame]))) {
+  border-color: transparent;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--card-cut)), calc(100% - var(--card-cut)) 100%, 0 100%);
+}
+
+/* A table frame's corner (DataTable): the frame itself is cut, by --table-cut, though it holds a table;
+   a box around it still is not (the rule above). Its CardEdge (mark 'table') draws its line in the frame's own border colour. */
+:global([data-table-cut][data-table-cut]) {
+  border-color: transparent;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--table-cut)), calc(100% - var(--table-cut)) 100%, 0 100%);
+}
+
+/* Right to left, a table frame's cut sits at its inline end, the bottom left, where its rows keep --table-cut-clear
+   (DataTable.module.css); the edge's line is mirrored with it. :where keeps the base rule's weight, so the forced-colors
+   rule below still wins. */
+:global([data-table-cut][data-table-cut]:where(:dir(rtl))) {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, var(--table-cut) 100%, 0 calc(100% - var(--table-cut)));
+}
+
+:global([data-table-cut]:where(:dir(rtl))) > .edge {
+  transform: scaleX(-1);
+}
+
+/* Forced colors: a table frame keeps its square system border, with no clip and no diagonal. */
+@media (forced-colors: active) {
+  :global([data-table-cut][data-table-cut]) {
+    border-color: canvastext;
+    clip-path: none;
+  }
+
+  :global([data-table-cut]) > .edge {
+    display: none;
+  }
+}
+
+/* The card is the edge's containing block and clips at its border box, where the edge lies ("position:relative if
+   it is static"). Both at no specificity, so a card's own placement wins: sticky is a containing block as well. A card
+   class never puts a card back to static or hides its overflow (the conformance judge, judgeCards); it uses relative
+   (with its offsets set to auto) and clip instead. */
+:global(:where([data-card-cut])) {
+  position: relative;
+}
+
+/* A card holding a table is not cut (below): it keeps its overflow as it was. */
+:global(:where([data-card-cut]:not(:has(table, [data-table-frame])))) {
+  overflow: clip;
+  overflow-clip-margin: var(--bw);
+}
+
+:global([data-card-cut]:has(table, [data-table-frame])) > .edge {
+  display: none;
+}
+
+/* Over the card's border box, never hit by the pointer. */
+.edge {
+  position: absolute;
+  inset-block-start: calc(-1 * var(--bw));
+  inset-inline-start: calc(-1 * var(--bw));
+  z-index: var(--z-raised);
+  overflow: visible;
+  color: var(--card-edge, var(--hx-panel-line));
+  pointer-events: none;
+}
+
+.edge path {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1px;
+}
+
+/* A focusable card's ring (card-table rows), shown while the row has visible focus. */
+.edge .ring {
+  display: none;
+  stroke-width: var(--bw-2);
+}
+
+:global(tr[data-card-cut]:focus-visible) .ring {
+  display: inline;
+  stroke: var(--hx-focus);
+}
+
+/* A pressable card's ring (CardEdge ring, PickCard): the card carries data-card-ring and shows the ring while it has
+   visible focus; React Aria marks keyboard focus with data-focus-visible (a CardGrid row passes its own to the card). */
+:global([data-card-ring]:is(:focus-visible, [data-focus-visible])) .ring {
+  display: inline;
+  stroke: var(--hx-focus);
+}

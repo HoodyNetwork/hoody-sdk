@@ -1,0 +1,41 @@
+ ▐━┓ HOODY HUB                                     ◆ 5f0c…fee0 ▾  Computers not loaded ▾  [N]  Ctrl+K commands · ? keys
+▌Home                  │  Good evening
+ Computers             │
+ Files                 │
+ Bots                  │
+ Board                 │               ! Could not load your computers
+ Vault                 │
+                       │               Nothing on this page can be shown until the list loads. Nothing was
+On this computer       │               changed.
+ Programs              │
+ Schedules             │               [Try again]
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications         │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit
+

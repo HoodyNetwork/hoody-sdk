@@ -1,0 +1,11 @@
+{
+  "sent.you": "You",
+  "sent.agent": "Agent",
+  "sent.atSent": "Sent {{when}}",
+  "sent.atAnswered": "Answered {{when}}",
+  "sent.agentOn": "{{agent}} on {{computer}}",
+  "sent.context": "Context sent: {{what}}",
+  "sent.contextPlain": "Context sent",
+  "sent.exact": "What was sent to the Agent, as sent",
+  "sent.contextExact": "The context sent with this message"
+}

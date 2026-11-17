@@ -1,0 +1,23 @@
+/* Network > Firewall: the two rule lists. One rule a row: its sentence, then its description; tags and
+   row actions wrap under it on a phone. */
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-block-start: var(--bw) solid var(--hx-line);
+}
+
+.rule {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-3);
+  padding-block: var(--sp-2);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.sentence {
+  overflow-wrap: anywhere;
+}

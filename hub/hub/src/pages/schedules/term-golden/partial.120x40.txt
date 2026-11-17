@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Schedules                                             ▸ Use with your agent   + New schedule
+ Computers             │  At least 8 schedules on atlas · next: sync-photos in 8 minutes · 1 failed today · Computers ›
+ Files                 │  9 programs running ›
+ Bots                  │
+ Board                 │  ! This computer's Scripts program is too old to list schedules here.
+ Demo                  │  ! Agent loops: this computer doesn't let the Hub in.
+ Vault                 │
+                       │  / Search schedules
+On atlas ▾             │  ‹ Any ›  Commands 8    Scripts 0    Web requests 0    Agent loops 0    Status ▾
+ Programs              │  8 schedules  ↻ Refresh  View options
+▌Schedules             │
+ Scripts               │    Name                            Next run ↑                Last result               On
+ Logs                  │  ▌ ! sync-photos   Command         in 8 minutes              ● Failed            [■ on ]     ⋯
+ Tunnels               │      Nightly backup   Command      in 9 hours                ● Worked            [■ on ]     ⋯
+ Notes                 │      morning-check   Agent timer   in 15 hours               ● In chat           [■ on ]     ⋯
+ AI                    │      rotate-logs   Command         in 2 days                 ● Worked            [■ on ]     ⋯
+ VMs                   │      cleanup-tmp   Command         in 8 days                 ● Not run yet       [■ on ]     ⋯
+                       │      old-report   Command          Paused                    ● Worked            [□ off]     ⋯
+Account                │      poll.sh   Hand-written        Can't tell                ● No results
+ Plans & Billing       │      warm-cache   Command          When the computer starts  ● Not run yet       [■ on ]     ⋯
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

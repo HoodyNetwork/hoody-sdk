@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            Gui…  ◆ Personal ▾  ● a-computer-with-a-really-long-name-th… ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │                              ┌──────────────────────────────────────────────────────────────┐
+ Computers             │  │ Ask your agent            │ Every link                                                   │
+ Files                 │  │ Connect                   │ Every program of the picked computer has its own address.    │
+ Bots                  │  │ Skills                    │ Anyone with an address can reach that program, so share them │
+ Board                 │  │ Build your own            │ only with people you have given access to.                   │
+ Demo                  │  │▌Every link                │ Agent                                                        │
+ Vault                 │  │ Bots                      │                                                              │
+                       │  │ Tools                     │ https://6a00…0001-c0a7…00a1-agent-1.n12.fixture.invalid      │
+On a-computer-with-a-r…│  │ Try this                  │                                                              │
+ Programs              │  │ Realms                    │ ⧉ copy [Open Agent]                                          │
+ Schedules             │  │ Topics                    │ Terminal                                                     │
+ Scripts               │  │ Keyboard                  │                                                              │
+ Logs                  │  │ Look                      │ https://6a00…0001-c0a7…00a1-terminal-1.n12.fixture.invalid   │
+ Tunnels               │                              │                                                              │
+ Notes                 │   [j] [k] move between       │ ⧉ copy [Open Terminal]                                       │ ▄
+ AI                    │   sections                   │ Display                                                      │ █
+ VMs                   │                              │                                                              │ █
+                       │                              │ https://6a00…0001-c0a7…00a1-display-1.n12.fixture.invalid    │ ▀
+Account                │                              │                                                              │
+ Plans & Billing       │                              │ ⧉ copy [Open Display]                                        │
+ Referrals             │                              │ Files                                                        │
+ Keys and tokens       │                              │                                                              │
+ API                   │                              │ https://6a00…0001-c0a7…00a1-files-1.n12.fixture.invalid      │
+ Notifications      26 │                              │                                                              │
+ Account               │                              │ ⧉ copy [Open Files]                                          │
+                       │                              │ Browser                                                      │
+ + Rent servers        │                              │                                                              │
+▌Guide                 │                              │ https://6a00…0001-c0a7…00a1-browser-1.n12.fixture.invalid    │
+ Support               │                              │                                                              │
+                       │                              │ ⧉ copy [Open Browser]                                        │
+                       │                              │ Code                                                         │
+                       │                              │                                                              │
+                       │                              │ https://6a00…0001-c0a7…00a1-code-1.n12.fixture.invalid       │
+                       │                              │                                                              │
+                       │                              │ ⧉ copy [Open Code]                                           │
+                       │                              │ Notes                                                        │
+                       │                              │                                                              │
+                       │                              │ https://6a00…0001-c0a7…00a1-notes-1.n12.fixture.invalid      │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

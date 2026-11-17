@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Account
+ Computers             │  Your profile, how you sign in, and where you are signed in.
+ Files                 │
+ Bots                  │  ‹ 5   Agent sign-in  Security history  SSH keys ▌Emails  Elsewhere  This device  Questions
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Vault                 │  │ Emails                                                                                │
+                       │  │ What Hoody also sends to your email address.                                          │
+On atlas ▾             │  │                                                                                       │
+ Programs              │  │ Support replies                 [□ off]                                               │
+ Schedules             │  │ Email me when support replies                                                         │
+ Scripts               │  │ to one of my tickets. The                                                             │
+ Logs                  │  │ email names no ticket and                                                             │
+ Tunnels               │  │ shows none of its text.                                                               │
+ Notes                 │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ AI                    │
+ VMs                   │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Elsewhere                                                                             │
+Account                │  │ Other places that act on your account.                                                │
+ Plans & Billing       │  │                                                                                       │
+ Referrals             │  │ API keys                        [Open]                                                │
+ Keys and tokens       │  │ Make, rename and remove the                                                           │
+ API                   │  │ keys your tools sign in with.                                                         │
+ Notifications      26 │  │                                                                                       │
+▌Account               │  │ Billing                         [Open]                                                │
+                       │  │ Your plan, balance and                                                                │
+ + Rent servers        │  │ payments.                                                                             │
+ Guide                 │  │                                                                                       │█
+ Support               │  │ Referrals                       [Open]                                                │█
+                       │  │ Your link, codes and Referral                                                         │█
+                       │  │ credit.                                                                               │█
+                       │  │                                                                                       │█
+                       │  │ Notifications                   [Open]                                                │▀
+                       │  │ Choose what the Hub tells you                                                         │
+                       │  │ and where.                                                                            │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

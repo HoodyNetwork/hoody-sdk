@@ -1,0 +1,67 @@
+.p {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-normal);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--sp-4);
+}
+
+.tableBox {
+  display: flex;
+  height: 520px;
+  min-height: 0;
+}
+
+.twoCol {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+.twoColPlain {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--sp-5);
+}
+
+.threeCol {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--sp-4);
+}
+
+@container content (width < 900px) {
+  .twoCol {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The one-line web-address specimen: a narrow cell, so the address is cut at the end and the full text sits in a tooltip. */
+.narrowCell {
+  inline-size: 16rem;
+  max-inline-size: 100%;
+}
+
+/* The ScrollRegion specimen: short enough that its lines scroll. */
+.scrollSample {
+  max-block-size: 6rem;
+}
+
+/* The rail specimen's page column (layout=rail): the page's own padding beside the rail. */
+.railMain {
+  min-inline-size: 0;
+  padding: var(--pad-page);
+}

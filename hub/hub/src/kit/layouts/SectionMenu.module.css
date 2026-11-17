@@ -1,0 +1,87 @@
+/* Section menus. The rail look is the default. A caller changes the
+   look only through these hooks, set on its own element (a phone strip sets them in its own query), never by a class on
+   the list or an item. Each one is set by a caller (SectionMenu.tsx names them):
+     --section-menu-flow          list direction (column)
+     --section-menu-gap           gap between items (0: the rows touch)
+     --section-menu-marks         1 draws the rail and the current bar; 0 drops both and evens the item padding
+     --section-menu-row           item height (34 px, at least the touch minimum)
+     --section-menu-current-line  colour of a 2 px line under the current item (transparent), a strip's underline
+   Hover sits under :where(). The current item is two classes, so it keeps its ink while hovered. */
+.list {
+  display: flex;
+  flex-direction: var(--section-menu-flow, column);
+  gap: var(--section-menu-gap, 0);
+  border-inline-start: calc(var(--bw) * var(--section-menu-marks, 1)) dashed var(--hx-section-rail);
+}
+
+/* The 3 px bar sits over the 1 px rail: the item starts 2 px (bar less rail) before the list's content edge. In a column
+   the item stretches, so the negative margin also widens it by that much; in a row it takes its content's width. */
+.item {
+  display: flex;
+  flex: none;
+  align-items: center;
+  box-sizing: border-box;
+  height: var(--section-menu-row, max(var(--section-row-h), var(--touch-min)));
+  margin: 0;
+  margin-inline-start: calc((var(--bw) - var(--section-bar-w)) * var(--section-menu-marks, 1));
+  padding-block: 0;
+  padding-inline: calc(var(--sp-3) + (var(--sp-4) - var(--sp-3)) * var(--section-menu-marks, 1)) var(--sp-3);
+  border: 0;
+  border-inline-start: calc(var(--section-bar-w) * var(--section-menu-marks, 1)) solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--hx-section-text);
+  text-align: start;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.item:where(:hover, [data-hovered]) {
+  color: var(--hx-section-text-hover);
+}
+
+/* An anchor item never takes the global link underline (base.css a:hover): two classes beat it. */
+.item:hover,
+.item[data-hovered] {
+  text-decoration: none;
+}
+
+.item:where(:focus-visible) {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.item.current {
+  border-inline-start-color: var(--hx-section-bar);
+  box-shadow: inset 0 calc(var(--bw-2) * -1) 0 var(--section-menu-current-line, transparent);
+  color: var(--hx-section-bar);
+  font-weight: var(--fw-semibold);
+}
+
+/* A disabled item (button form): the kit's disabled opacity, and its rest fill and ink under the pointer too (two
+   classes' weight, above the hover rule). */
+.item:disabled {
+  background: transparent;
+  color: var(--hx-section-text);
+  cursor: default;
+  opacity: var(--ctl-off-opacity);
+}
+
+/* A focused current item shows the ring and keeps its mark. */
+.item.current:focus-visible {
+  box-shadow: var(--focus-ring), inset 0 calc(var(--bw-2) * -1) 0 var(--section-menu-current-line, transparent);
+}
+
+/* Forced colors (Windows high contrast) drop box-shadow, so the focus ring above would vanish: a solid outline in the
+   system Highlight colour instead (as Button's). */
+@media (forced-colors: active) {
+  .item:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+
+  .item:disabled {
+    color: GrayText;
+  }
+}

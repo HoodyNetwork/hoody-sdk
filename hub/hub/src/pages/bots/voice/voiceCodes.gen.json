@@ -1,0 +1,11 @@
+{
+  "refused": ["bad_request", "invalid_realm", "realm_scope_unsupported", "not_found", "voice_busy", "realm_blocked", "bot_owned_elsewhere", "service_unavailable", "restriction_unknown", "speech_unavailable"],
+  "rejected": ["too_long", "frame_loss", "busy", "stt_suspect"],
+  "noSpeech": ["vad"],
+  "failed": ["submit"],
+  "error": ["bad_request", "busy", "rate_limited", "protocol", "service_unavailable", "stale_utterance", "no_utterance", "wrong_mode", "server_error"],
+  "speech": ["barge_in", "cancelled", "busy", "revised", "too_long", "tts_cut", "tts_incomplete", "tts_failed", "speech_limit", "diverged", "no_marks"],
+  "failure": ["content_filter", "refusal", "max_steps"],
+  "textResult": ["bad_request", "busy", "idempotency_key_reused", "idempotency_keys_exhausted", "service_unavailable"],
+  "textDropped": ["access_revoked", "key_conflict"]
+}

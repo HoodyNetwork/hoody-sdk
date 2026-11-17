@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ Re-point the link                                   Esc ×
+ Home                  │  Bots                              ┃ Move the address of Chief to another computer.
+ Computers             │                                    ┃ ─────────────────────────────────────────────────────────
+ Files                 │  ‹ Bots  Esc                       ┃ ┌───────────────────────────────────────────────────────┐
+▌Bots                  │  Chief  ● Idle                     ┃ │ WHAT CHANGES                                          │
+ Board                 │    SG atlas    Hoody Free  · Allow ┃ │ The address and its keys stay the same. Calls start   │
+ Demo                  │                                    ┃ │ reaching the Bot on the computer you pick.            │
+ Vault                 │    Activity  ▸ Link and keys    Cha┃ └───────────────────────────────────────────────────────┘
+                       │  ──────────────────────────────────┃
+On atlas ▾             │                                    ┃ Computer
+ Programs              │    ┌───────────────────────────────┃ ›( )  SG atlas
+ Schedules             │    │ At a glance                   ┃  ( )  US cinder
+ Scripts               │    │ Link                   ● Activ┃
+ Logs                  │    │ Keys                   3 of 20┃
+ Tunnels               │    │ Limits                 60 / mi┃
+ Notes                 │    │ Other websites (CORS)  Allowed┃
+ AI                    │    └───────────────────────────────┃
+ VMs                   │                                    ┃
+                       │                                    ┃
+Account                │    ┌───────────────────────────────┃
+ Plans & Billing       │    │ Keys                          ┃
+ Referrals             │    │ Whoever holds a key can use th┃
+ Keys and tokens       │    │ its own.                      ┃
+ API                   │    │  Key                Prefix    ┃
+ Notifications      26 │    │› website widget     hk_d5e6…  ┃
+ Account               │    │  ci checks          hk_w5v4…  ┃
+                       │    │  old demo           hk_o9p0…  ┃
+ + Rent servers        │    └───────────────────────────────┃
+ Guide                 │                                    ┃
+ Support               │                                    ┃
+                       │    ┌───────────────────────────────┃
+                       │    │ Addresses                     ┃
+                       │    │ Where apps and people reach th┃
+                       │    │  Address for           Address┃
+                       │    │› Chat page             https:/┃
+                       │    │  OpenAI-compatible     https:/┃
+                       │    │  Anthropic-compatible  https:/┃
+                       │    │  MCP                   https:/┃
+                       │    │  Skill file            https:/┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit  ┃                                       [Cancel]  Re-point

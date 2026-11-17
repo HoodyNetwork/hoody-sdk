@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Account
+ Your profile, how you sign in, and where you are signed in.
+ ▌Profile  Password  Two-step sign-in  Passcode lock  Sign-in sessions   7 ›
+ ─────────┌──────────────────────────────────────────────────────────┐─────────
+ ┌────────│ ! Remove this account's local data from this       Esc × │───────┐█
+ │ Securit│   device?                                                │       │▀
+ │ ✓ Your │ ──────────────────────────────────────────────────────── │       │
+ │ ✓ Two-s│ out: to sign out, run hoody logout. Your account, your   │       │
+ │ i 11 ot│ computers and your data on the server stay as they are.  │eview] │
+ └────────│                                                        ▄ │───────┘
+ ┌────────│ What this removes                                      █ │───────┐
+ │ Profile│                                                        █ │       │
+ │        │ • Close any other Hub open for this account on this    █ │       │
+ │ Display│ device before you start.                               █ │ name] │
+ │        │ • Records of other accounts on this device stay: the   █ │       │
+ │ Usernam│ Hub keeps each account's apart.                        █ │       │
+ │        │ │ i Nothing was removed                                █ │       │
+ │ Email  │ │   The Hub could not check: the list of this device's ▀ │email] │
+ │        │ │   databases, the payments saved here.                  │       │
+ │        │                                                          │       │
+ │ Member │                     [Cancel]  [Remove and leave the Hub] │       │
+ │        └──────────────────────────────────────────────────────────┘       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

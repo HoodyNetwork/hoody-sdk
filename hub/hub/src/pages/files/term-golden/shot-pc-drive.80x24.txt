@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Files                                                    ▸ Use with your agent
+ The folders on your computers.
+   Browse    Storage    Transfers  ▸ Use from your PC                         █
+ ─────────────────────────────────────────────────────────────────────────────█
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ What do you want to do?                                                   │█
+ │ Pick one. The steps below are for that choice only.                       │█
+ │ ┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐   │▀
+ │ │ ( ) Work on atlas's │ │ (•) Open them as a  │ │ ( ) Give atlas a    │   │
+ │ │     files in a      │ │     network drive   │ │     folder from     │   │
+ │ │     folder on your  │ │     Nothing to      │ │     your PC         │   │
+ │ │     PC              │ │     install:        │ │     The folder      │   │
+ │ │     Open, edit and  │ │     Finder, File    │ │     shows up inside │   │
+ │ │     save them with  │ │     Explorer or     │ │     atlas while a   │   │
+ │ │     your own        │ │     GNOME Files.    │ │     command runs on │   │
+ │ │     programs, at    │ │     Best for a      │ │     your PC. Needs  │   │
+ │ │     any size. Needs │ │     quick look and  │ │     the Hoody CLI.  │   │
+ │ │     the Hoody CLI.  │ │     small files.    │ │                     │   │
+ │ └─────────────────────┘ └─────────────────────┘ └─────────────────────┘   │
+ │ ┌─────────────────────┐                                                   │
+ │ │ ( ) Do it from your │                                                   │
+ │ │     code            │                                                   │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ New key                                                                 Esc ×
+ Home                  │  Bots          ┃ A key lets one person or program call the link.
+ Computers             │                ┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  ‹ Bots  Esc   ┃ Name
+▌Bots                  │  Chief  ● Idle ┃ ┃ default
+ Board                 │    SG atlas    ┃ Up to 32 letters, digits, spaces, dots, dashes or underscores.
+ Demo                  │                ┃
+ Vault                 │    Activity  ▸ ┃ Allowed addresses
+                       │  ──────────────┃ │ 203.0.113.7, 198.51.100.0/24
+On atlas ▾             │                ┃
+ Programs              │    ┌───────────┃
+ Schedules             │    │ At a glanc┃ IPv4 addresses or ranges, one per line or separated by commas (up to 32).
+ Scripts               │    │ Link      ┃ Empty means any address can use it.
+ Logs                  │    │ Keys      ┃ [Add my IP]
+ Tunnels               │    │ Limits    ┃
+ Notes                 │    │ Other webs┃ Expires on
+ AI                    │    └───────────┃ │ YYYY-MM-DD
+ VMs                   │                ┃ Optional. A date you pick ends at the end of that day (UTC); leave it alone
+                       │                ┃ to keep the key's current expiry.
+Account                │    ┌───────────┃
+ Plans & Billing       │    │ Keys      ┃ Notes
+ Referrals             │    │ Whoever ho┃ │
+ Keys and tokens       │    │ its own.  ┃
+ API                   │    │  Key      ┃
+ Notifications      26 │    │› website w┃ Only you see these.
+ Account               │    │  ci checks┃
+                       │    │  old demo ┃ Note for the holder
+ + Rent servers        │    └───────────┃ │
+ Guide                 │                ┃
+ Support               │                ┃
+                       │    ┌───────────┃ Shown to whoever uses this key, as plain text. Leave empty for none.
+                       │    │ Addresses ┃
+                       │    │ Where apps┃
+                       │    │  Address f┃
+                       │    │› Chat page┃
+                       │    │  OpenAI-co┃
+                       │    │  Anthropic┃
+                       │    │  MCP      ┃
+                       │    │  Skill fil┃ ─────────────────────────────────────────────────────────────────────────────
+ Typing · Esc leaves the field · Ctrl+K ┃                                                           [Cancel]  Make key

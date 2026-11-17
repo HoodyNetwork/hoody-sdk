@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Vault                                               ▸ Use with your agent   + New entry   [⋯]
+ Computers             │  Tokens, passwords and settings your tools and agents read by name. The list shows only names.
+ Files                 │
+ Bots                  │  These entries belong to Personal. Other realms and Global have their own.
+ Board                 │
+ Demo                  │  Entries here    Size here    Account storage
+▌Vault                 │  5               337 B        3% of 50 MB
+                       │
+On atlas ▾             │  / Search                   Encryption ▾  Kind ▾            5 entries  ↻ Refresh  View options
+ Programs              │
+ Schedules             │    Name ↑                    Encrypted     Kind             Size  Updated
+ Scripts               │  ▌ deep.meta                 · Not marked  Yours            21 B  Oct 23, 2026, 4:40 PM
+ Logs                  │    enc.meta                  ✓ Encrypted   Yours           251 B  Oct 23, 2026, 4:40 PM
+ Tunnels               │    many.meta                 · Not marked  Yours            21 B  Oct 23, 2026, 4:40 PM
+ Notes                 │    plain.meta                · Not marked  Yours            22 B  Oct 23, 2026, 4:40 PM
+ AI                    │    proto.meta                · Not marked  Yours            22 B  Oct 23, 2026, 4:40 PM
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │  Questions
+                       │  ▸ What goes in the vault?
+                       │  ▸ What is the difference between Global and a realm's entries?
+                       │  ▸ How do I see or copy a value?
+                       │  ▸ What does "Encrypt with a password" do?
+                       │  ▸ What can I put in a name and a value?
+                       │  ▸ What is metadata?
+                       │  ▸ What does Export vault do?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

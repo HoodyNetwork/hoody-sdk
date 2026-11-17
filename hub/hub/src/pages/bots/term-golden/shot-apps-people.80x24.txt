@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Support chat                                                     Esc ×
+ Bots  ┃ Telegram
+ ‹ Bots┃ ──────────────────────────────────────────────────────────────────────
+ Chief ┃ │ Setup                 ┌───────────────────────────────────────────┐█
+   SG a┃ │▌People                │ People                    + Add a person  │█
+       ┃ │ Chats                 │ People join by sending the owner code or  │█
+  ┌─ ! ┃ │ Settings              │ a pairing code to the Bot in a private    │█
+  │  Al┃                         │ message.                                  │█
+  │    ┃                         │› Ana…                             [Edit] ⋯│█
+  │ Run┃                         │  Can  Owner   Talk to the Bot             │█
+  │ npm┃                         │   Stop and steer work   Decide approvals  │█
+  │ App┃                         │  Ben                              [Edit] ⋯│█
+  │ [De┃                         │  Can  Talk to the Bot                     │█
+  └────┃                         │   Stop and steer work                     │▀
+  A che┃                         │  5151003…                         [Edit] ⋯│
+       ┃                         │  Can  Talk to the Bot                     │
+   Acti┃                         └───────────────────────────────────────────┘
+ ──────┃
+       ┃
+  ┌────┃                         ┌───────────────────────────────────────────┐
+  │ At ┃                         │ Invite someone                            │
+  │ App┃                         │ BACK HERE ─────────────────────────────── │
+  │ Wai┃                         │ 01  Pick their rights and create the      │
+ Tab mo┃                         │     code.                                 │

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Account
+ Your profile, how you sign in, and where you are signed in.
+ ‹ 5  ▌Agent sign-in  Security history  SSH keys  Emails  Elsewhere   2 ›
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Agent sign-in                                                             │
+ │                                                                           │
+ │ Days signed in                  │ 90                                      │
+ │ How long an agent stays signed  A whole number from 1 to 365. It applies  │
+ │ in from this device.            the next time the agent's sign-in is      │
+ │                                 renewed.                                  │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Security history                                                          │▀
+ │ Sign-ins over the last 180 days, newest first.                            │
+ │ / Search              Filters                        9 entries  ↻ Refresh │
+ │   Event                    When ↓            From                         │
+ │ › Signed in                19 days ago       203.0.113.24 · SG            │
+ │   Signed in                20 days ago       192.0.2.88 · US              │
+ │   Signed in                20 days ago       198.51.100.130 · GB          │
+ │   Signed in                20 days ago       203.0.113.24 · SG            │
+ │   Signed in                21 days ago       192.0.2.88 · US              │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

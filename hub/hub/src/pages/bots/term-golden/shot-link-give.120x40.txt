@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ Give it a link                                      Esc ×
+ Home                  │  Bots                              ┃ A public address for Chief. People and programs
+ Computers             │                                    ┃ call it with a key.
+ Files                 │  ‹ Bots  Esc                       ┃ ─────────────────────────────────────────────────────────
+▌Bots                  │  Chief  ● Idle                     ┃ ┌───────────────────────────────────────────────────────┐
+ Board                 │    SG atlas    Hoody Free  · Allow ┃ │ THE ADDRESS WILL BE                                   │
+ Demo                  │                                    ┃ │ https://quiet-amber-heron-bot.hoody.bot               │
+ Vault                 │    Activity  ▸ Link and keys    Cha┃ │ Next: make a key once the link exists. Nothing is     │
+                       │  ──────────────────────────────────┃ │ public until you make a key.                          │
+On atlas ▾             │                                    ┃ └───────────────────────────────────────────────────────┘
+ Programs              │    ┌───────────────────────────────┃
+ Schedules             │    │ Addresses                     ┃ Name in the address
+ Scripts               │    │ A public address people and pr┃ ┃  quiet-amber-heron-bot
+ Logs                  │    │ No link yet                   ┃ Leave empty to use the suggested one. 8 to 48 lowercase
+ Tunnels               │    │ A link gives this Bot its own ┃ letters, digits or single dashes.
+ Notes                 │    │ and people can call with a key┃
+ AI                    │    │ public until you make a key.  ┃ ┌───────────────────────────────────────────────────────┐
+ VMs                   │    │ It will look like:            ┃ │                                                       │
+                       │    │ https://quiet-amber-heron-bot.┃ │ Allow other websites (CORS)                   [■ on ] │
+Account                │    │  + Give it a link             ┃ │ CORS: lets a page on another website call             │
+ Plans & Billing       │    └───────────────────────────────┃ │ the link from a browser.                              │
+ Referrals             │                                    ┃ │                                                       │
+ Keys and tokens       │                                    ┃ └───────────────────────────────────────────────────────┘
+ API                   │                                    ┃
+ Notifications      26 │                                    ┃ ▸ When should I turn CORS off?
+ Account               │                                    ┃
+                       │                                    ┃
+ + Rent servers        │                                    ┃
+ Guide                 │                                    ┃
+ Support               │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃ ─────────────────────────────────────────────────────────
+ Typing · Esc leaves the field · Ctrl+K commands            ┃                                    [Cancel]  Create link

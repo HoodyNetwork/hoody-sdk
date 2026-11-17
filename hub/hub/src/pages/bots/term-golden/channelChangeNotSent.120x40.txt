@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                       ▸ Use with your agent   + New Bot
+ Computers             │  Every Bot on your running computers, and the page of each one.
+ Files                 │
+▌Bots                  │  Bots              Working now    ! Need you    In chat apps
+ Board                 │  23                1              2             3
+ Demo                  │  on 2 computers    Show           Show          Show
+ Vault                 │
+                       │  / Search                   Filters                          23 Bots  ↻ Refresh  View options█
+On atlas ▾             │                                                                                              █
+ Programs              │  ▌ C Chief                                                      ● Waiting for you [Answer] ⋯██
+ Schedules             │      Asked you something: answer to let it go on                                            ██
+ Scripts               │       · Runs the team day: triage, approvals and summaries · atlas · Acme client            ██
+ Logs                  │       · Model Hoody Free                                                                    ██
+ Tunnels               │      Telegram Slack Discord  Public link                                                    ██
+ Notes                 │    L Ledger                                                              ● Paused  [Write] ⋯██
+ AI                    │      Stopped at its limit until you write to it · Keeps the monthly numbers tidy            ██
+ VMs                   │       · cinder · Personal · Model Hoody Free                                                ░█
+                       │      Only here in the Hub                                                                   ░█
+Account                │    S Support                                                            ● Working          ⋯░█
+ Plans & Billing       │      … Working on it now · Answers questions about the shop and drafts replies              ░█
+ Referrals             │       · atlas · Acme client · Model Hoody Free                                              ░█
+ Keys and tokens       │      Discord                                                                                ░█
+ API                   │    D Digest                                                  ● 2 messages waiting          ⋯░█
+ Notifications      26 │      2 messages to read next · Writes the daily summary of what changed                     ░█
+ Account               │       · atlas · Acme client · Model Hoody Free                                              ░█
+                       │      Only here in the Hub                                                                   ░█
+ + Rent servers        │    S Scout                                                                 ● Idle          ⋯░█
+ Guide                 │      Last active 19 days ago · Watches deploys and reports failures · cinder · Acme client  ░█
+ Support               │       · Model gpt-5                                                                         ░█
+                       │      Telegram  Public link                                                                  ░█
+                       │    N Notes                                                                 ● Idle          ⋯░█
+                       │      Last active 19 days ago · Files meeting notes where they belong · atlas · Personal     ░
+                       │       · Model Hoody Free                                                                    ░
+                       │      Only here in the Hub                                                                   ░
+                       │
+                       │  1–20 of 23 ‹ ›
+                       │
+                       │  Questions
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

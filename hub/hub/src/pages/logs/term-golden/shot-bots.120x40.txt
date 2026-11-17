@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Logs                                                 ▸ Use with your agent  [See what failed]
+ Computers             │  1 Bot call failed in the last hour. 2 kinds of problem.
+ Files                 │
+ Bots                  │    Everything    Visits  ▸ Bots    Changes    Scripts    Programs   [More ▾]
+ Board                 │  │ ● SG atlas · █ Personal ▾ Result ▾  When: 1 hour │ / Search
+ Demo                  │                                                                     [□ off] Live [Refresh] [⋯]
+ Vault                 │  [Clear all]
+                       │  What keeps going wrong ▾  Problem once Bots [More actions]   Failed once Bots [More actions]
+On atlas ▾             │    Time     Result    From What happened                           Visitor            Took
+ Programs              │  ▌ 08:38:00 ● OK      Bots Bot call: release-notes                                    1,171 ms
+ Schedules             │    08:34:00 ● OK      Bots Bot call: support-desk                                     1,118 ms
+ Scripts               │    08:30:00 ● OK      Bots Bot call: release-notes                                    1,065 ms
+▌Logs                  │    08:26:00 ● Problem Bots Bot call: support-desk                                     1,012 ms
+ Tunnels               │    08:22:00 ● OK      Bots Bot call: release-notes                                      959 ms
+ Notes                 │    08:18:00 ● Failed  Bots Bot call: support-desk                                       906 ms
+ AI                    │    08:14:00 ● OK      Bots Bot call: release-notes                                      853 ms
+ VMs                   │    08:10:00 ● OK      Bots Bot call: support-desk                                       800 ms
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

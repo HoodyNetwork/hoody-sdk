@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                       ▸ Use with your agent   + New Bot
+ Computers             │  Every Bot on your running computers, and the page of each one.
+ Files                 │
+▌Bots                  │  Bots              Working now    ! Need you    In chat apps
+ Board                 │  21                1              3             3
+ Demo                  │  on 7 computers    Show           Show          Show
+ Vault                 │
+                       │  / Search                   Filters                          21 Bots  ↻ Refresh  View options█
+On atlas ▾             │  ‖ computer-2: 1 Bot is paused after a sign-in change.                               [Resume]█
+ Programs              │  ────────────────────────────────────────────────────────────────────────────────────────────█
+ Schedules             │                                                                                              █
+ Scripts               │  ▌ C Chief                                                      ● Waiting for you [Answer] ⋯██
+ Logs                  │      Asked you something: answer to let it go on                                            ██
+ Tunnels               │       · Runs the team day: triage, approvals and summaries · atlas · Acme client            ██
+ Notes                 │       · Model Hoody Free                                                                    ██
+ AI                    │      Telegram Slack Discord  Public link                                                    ██
+ VMs                   │    L Ledger                                                              ● Paused  [Write] ⋯██
+                       │      Stopped at its limit until you write to it · Keeps the monthly numbers tidy            ██
+Account                │       · computer-4 · Personal · Model Hoody Free                                            ░█
+ Plans & Billing       │      Only here in the Hub                                                                   ░█
+ Referrals             │    S Support                                                            ● Working          ⋯░█
+ Keys and tokens       │      … Working on it now · Answers questions about the shop and drafts replies              ░█
+ API                   │       · computer-1 · Acme client · Model Hoody Free                                         ░█
+ Notifications      26 │      Discord                                                                                ░█
+ Account               │    D Digest                                                  ● 2 messages waiting          ⋯░█
+                       │      2 messages to read next · Writes the daily summary of what changed                     ░█
+ + Rent servers        │       · computer-2 · Acme client · Model Hoody Free                                         ░█
+ Guide                 │      Only here in the Hub                                                                   ░█
+ Support               │    S Scout                                                                 ● Idle          ⋯░█
+                       │      Last active 19 days ago · Watches deploys and reports failures                         ░▀
+                       │       · computer-3 · Acme client · Model gpt-5                                              ░
+                       │      Telegram  Public link                                                                  ░
+                       │    N Notes                                                                 ● Idle          ⋯░
+                       │      Last active 19 days ago · Files meeting notes where they belong · computer-5 · Personal░
+                       │       · Model Hoody Free                                                                    ░
+                       │      Only here in the Hub                                                                   ░
+                       │
+                       │  1–20 of 21 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

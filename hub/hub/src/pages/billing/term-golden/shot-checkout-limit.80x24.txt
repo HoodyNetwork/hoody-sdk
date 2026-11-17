@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Buy a plan                                                       Esc ×
+ Plans ┃ Small · $12.00 / month
+ Upgrad┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Plan┃ │ ! You have reached your limit of 3 paid servers.                   █
+ ──────┃                                                                      █
+ │ ✗ fr┃ What you get                                                         █
+ Plans ┃ CPU cores               2                                            █
+ Each p┃ Memory                  4 GB                                         █
+ disk. ┃ Disk                    60 GB                                        █
+       ┃ Computers               3                                            █
+ ┌─────┃ Disk speed              400 MiB/s read, 200 MiB/s write              █
+ │     ┃ Network                 500 Mbps                                     █
+ │ Plan┃ Snapshots per computer  3                                            █
+ │ Choo┃ Custom computer URLs    6                                            █
+ │ serv┃ Bot URLs                3                                            █
+ │ to u┃ AI allowance            ×4
+ │     ┃
+ └─────┃ Location
+       ┃ │ Automatic (best available) ▾
+ ┌─────┃ Right now that is Frankfurt, Germany. The location is set when you
+ │ Free┃ confirm.
+ │ $0 /┃
+ │ Your┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Cancel]   Confirm purchase

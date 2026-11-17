@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  New script
+ Computers             │
+ Files                 │  Step 1 of 4 · What it does  ███░░░░░░░
+ Bots                  │  ▸1 What it does  2 Where it answers  3 Check it  4 Make it live
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ▸ Your script so far                                                                        █
+ Vault                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Pick an idea                                                                             │█
+On atlas ▾             │  │ Ready-made scripts you set up in a minute.                                               │█
+ Programs              │  │                                                                                          │█
+ Schedules             │  │ How to start                                                                             │█
+▌Scripts               │  │ ┌───────────────────────────┐ ┌──────────────────────────┐ ┌───────────────────────────┐ │█
+ Logs                  │  │ │                           │ │                          │ │                           │ │█
+ Tunnels               │  │ │  Describe it              │ │  Start from an idea      │ │  Write the code myself    │ │█
+ Notes                 │  │ │  The assistant builds     │ │  Ready-made scripts you  │ │  For when you already     │ │█
+ AI                    │  │ │  it from your words.      │ │  set up in a minute.     │ │  know the code.           │ │█
+ VMs                   │  │ │                           │ │                          │ │                           │ │█
+                       │  │ └───────────────────────────┘ └──────────────────────────┘ └───────────────────────────┘ │█
+Account                │  │ ┌───────────────────────────┐ ┌──────────────────────────┐ ┌───────────────────────────┐ │█
+ Plans & Billing       │  │ │                           │ │                          │ │                           │ │█
+ Referrals             │  │ │ Summarise text with AI    │ │ Check a website and not… │ │ A tiny note keeper        │ │█
+ Keys and tokens       │  │ │ Send it some text and it  │ │ Checks an address on a   │ │ Saves and reads back one  │ │█
+ API                   │  │ │ answers with a short      │ │ schedule and tells you   │ │ small note at its         │ │█
+ Notifications      26 │  │ │ summary.                  │ │ when it stops answering. │ │ address.                  │ │█
+ Account               │  │ │                           │ │                          │ │                           │ │█
+                       │  │ └───────────────────────────┘ └──────────────────────────┘ └───────────────────────────┘ │▀
+ + Rent servers        │  │                                                                                          │
+ Guide                 │  │ ┌──────────────────────────────────────────┐ ┌─────────────────────────────────────────┐ │
+ Support               │  │ │                                          │ │                                         │ │
+                       │  │ │ A scheduled AI digest                    │ │ Turn a webhook into a notification      │ │
+                       │  │ │ Writes a short digest on a topic you     │ │ Turns a call from another service into  │ │
+                       │  │ │ choose, on a schedule.                   │ │ a notification for you.                 │ │
+                       │  │ │                                          │ │                                         │ │
+                       │  │ └──────────────────────────────────────────┘ └─────────────────────────────────────────┘ │
+                       │  │ [+18 more, built by the assistant ▾]                                                     │
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Next: where it answers.
+                       │                                                                           [Cancel]   Continue
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

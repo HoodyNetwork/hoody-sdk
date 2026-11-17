@@ -1,0 +1,101 @@
+/* SideTabs ("Light rail plate"): the rail is a fill a step off the panel with a line at its end; its rows
+   are flat, 42 px (44 px on a coarse pointer), split by one rule. The picked row takes the panel's fill, a 4 px bar at
+   its start and one line width more, so it covers the rail's end line and opens into the panel. */
+.rail {
+  display: flex;
+  flex-direction: column;
+  border-inline-end: var(--bw) solid var(--hx-plate-line);
+  background: var(--hx-plate-rail-bg);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-block-size: max(var(--plate-row-h), var(--touch-min));
+  margin: 0;
+  padding-block: 0;
+  padding-inline: var(--sp-4);
+  border: 0;
+  border-block-end: var(--bw) solid var(--hx-plate-rule);
+  border-radius: 0;
+  background: none;
+  color: var(--hx-plate-text);
+  font-family: var(--font-mono);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-regular);
+  letter-spacing: var(--btn-tracking);
+  text-align: start;
+  text-transform: var(--case-caps);
+  line-height: 1;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+  transition: box-shadow var(--dur-press) var(--ease-out);
+}
+
+/* Rules sit between rows only: the last row ends on the caller's frame, so its own rule would double that line. */
+.row:last-child {
+  border-block-end-color: transparent;
+}
+
+.row[data-hovered] {
+  background: var(--hx-hover);
+}
+
+.row[data-pressed] {
+  background: var(--hx-press);
+}
+
+.row[data-focus-visible] {
+  box-shadow: var(--focus-ring-inset);
+}
+
+/* The picked row: the panel's fill (the hover or press tint laid over it), the bar, the darker ink, and one line width
+   past the rail so the rail's end line stops at it. */
+.row[data-picked] {
+  position: relative;
+  inline-size: calc(100% + var(--bw));
+  background: var(--hx-plate-bg);
+  box-shadow: inset var(--plate-pick-bar) 0 0 var(--hx-plate-pick-bar);
+  color: var(--hx-plate-pick-text);
+  font-weight: var(--fw-semibold);
+}
+
+.row[data-picked][data-hovered] {
+  background: linear-gradient(var(--hx-hover), var(--hx-hover)), var(--hx-plate-bg);
+}
+
+.row[data-picked][data-pressed] {
+  background: linear-gradient(var(--hx-press), var(--hx-press)), var(--hx-plate-bg);
+}
+
+.row[data-picked][data-focus-visible] {
+  box-shadow: inset var(--plate-pick-bar) 0 0 var(--hx-plate-pick-bar), var(--focus-ring);
+}
+
+/* Forced colours drop fills and shadows: the picked row keeps a CanvasText bar as a real start border and its rail
+   line stays open; keyboard focus is a Highlight outline. */
+@media (forced-colors: active) {
+  .rail {
+    border-inline-end-color: canvastext;
+  }
+
+  .row {
+    border-block-end-color: graytext;
+    border-inline-start: var(--plate-pick-bar) solid transparent;
+    color: canvastext;
+  }
+
+  .row[data-picked] {
+    border-inline-start-color: canvastext;
+    background: canvas;
+  }
+
+  .row[data-focus-visible],
+  .row[data-picked][data-focus-visible] {
+    outline: var(--bw-2) solid highlight;
+    outline-offset: calc(-1 * var(--bw-2));
+  }
+}

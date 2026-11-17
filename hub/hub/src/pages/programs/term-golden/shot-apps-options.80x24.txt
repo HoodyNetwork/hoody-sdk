@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ ‹ Back to Launch an app                                          Esc ×
+ Progra┃ Options for JupyterLab
+ Apps o┃ Change how it opens this time.
+   Runn┃ ──────────────────────────────────────────────────────────────────────
+ ──────┃ Arguments
+ / Sear┃ ┃
+   Name┃
+ › Jupy┃
+   htop┃
+   Fire┃ One per line, passed exactly as typed.
+   VS C┃
+   Shar┃ Environment variables
+   btop┃ Name and value pairs. Values stay hidden and are never saved.
+   sqli┃ [Add a variable]
+   Open┃
+       ┃ Where it opens
+       ┃ ( ) On the display
+       ┃ ( ) In a terminal
+       ┃ (•) As a web page
+       ┃ Where the app opens, as far as Hoody can tell. You can change it.
+       ┃
+       ┃
+       ┃ ──────────────────────────────────────────────────────────────────────
+ Typing┃ [Cancel]  Open

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ New program                                                             Esc ×
+ Home                  │  Programs      ┃ Add program keeps it. Run now starts it once.
+ Computers             │  19 programs on┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  ▸ Running prog┃ How it runs                                                                 █
+ Bots                  │  ──────────────┃ ┌───────────────────────────────────┐ ┌───────────────────────────────────┐ █
+ Board                 │                ┃ │ (•) Keep it                       │ │ ( ) Run once                      │ █
+ Demo                  │  / Search progr┃ │     Saved on this computer. Start │ │     Starts now and isn't kept.    │ █
+ Vault                 │  19 programs  ↻┃ │     it when you like, or with the │ │     After it ends, its result     │ █
+                       │                ┃ │     computer.                     │ │     stays readable for 10         │ █
+On atlas ▾             │      Name      ┃ │                                   │ │     minutes.                      │ █
+▌Programs              │  ›   ! nightly-┃ └───────────────────────────────────┘ └───────────────────────────────────┘ █
+ Schedules             │      ! worker  ┃ ▾ Which one should I pick?                                                  █
+ Scripts               │      ! mystery ┃   Keep it for something you will start again, such as a server.             █
+ Logs                  │        api     ┃   Run once for a single job.                                                █
+ Tunnels               │        web     ┃   More about Keep it and Run once                                           █
+ Notes                 │        backup  ┃                                                                             █
+ AI                    │        docs-pre┃ Name * (required)                                                           █
+ VMs                   │        legacy-c┃ │ __________________________________________________________________________█
+                       │        report-b┃ Letters, digits, dots, dashes and underscores. Each program on this computer█
+Account                │                ┃ has its own name.                                                           █
+ Plans & Billing       │  ▾ Temporary pr┃                                                                             █
+ Referrals             │        http-ser┃ Command * (required)                                                        █
+ Keys and tokens       │                ┃ │ __________________________________________________________________________█
+ API                   │  ▸ System progr┃ The whole command line, like node server.js. For your own code; system      █
+ Notifications      26 │                ┃ services are managed elsewhere.                                             █
+ Account               │  Questions     ┃                                                                             █
+                       │  ▸ What is a pr┃ Run as * (required)                                                         █
+ + Rent servers        │  ▸ What are the┃ │ user                                                                      █
+ Guide                 │  ▸ What is the ┃ The Linux account it runs under.                                            █
+ Support               │  ▸ When does a ┃                                                                             █
+                       │  ▸ What does a ┃ Ports                                                                       █
+                       │  ▸ What do the ┃ ‹ No port ›  One port    A range: one copy per port                         █
+                       │  ▸ When do new ┃                                                                             ▀
+                       │  ▸ What if a ch┃ When it stops
+                       │  ▸ Which open p┃ ‹ Restart it after a failure ›  Always restart it    Leave it stopped
+                       │  ▸ Why are some┃
+                       │  ▸ What is the ┃ [□ off] Start with the computer
+                       │  ▸ How do I cre┃         It may also start when added.
+                       │  ▸ What happens┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃                                                       [Cancel]   Add program

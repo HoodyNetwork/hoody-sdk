@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  New script
+ Computers             │
+ Files                 │  Step 1 of 5 · What it does  ██░░░░░░░░
+ Bots                  │  ▸1 What it does  2 Where it answers  3 Write it  4 Check it  5 Make it live
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ▸ Your script so far                                                                        █
+ Vault                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ What should it do?                                                                       │█
+On atlas ▾             │  │ You write the code in step 3. Choose where it answers next.                              │█
+ Programs              │  │                                                                                          │█
+ Schedules             │  │ How to start                                                                             │█
+▌Scripts               │  │ ┌───────────────────────────┐ ┌──────────────────────────┐ ┌───────────────────────────┐ │█
+ Logs                  │  │ │                           │ │                          │ │                           │ │█
+ Tunnels               │  │ │  Start from an idea       │ │  Write the code myself   │ │  Describe it              │ │█
+ Notes                 │  │ │  Ready-made scripts you   │ │  For when you already    │ │  The agent on atlas is    │ │█
+ AI                    │  │ │  set up in a minute.      │ │  know the code.          │ │  signed in to a           │ │█
+ VMs                   │  │ │                           │ │                          │ │  different Hoody          │ │█
+                       │  │ └───────────────────────────┘ └──────────────────────────┘ │  account, so the          │ │█
+Account                │  │                                                            │  assistant can't work     │ │█
+ Plans & Billing       │  │                                                            │  for you here. To         │ │█
+ Referrals             │  │                                                            │  change that, sign it     │ │█
+ Keys and tokens       │  │                                                            │  out in the Agent app.    │ │█
+ API                   │  │                                                            │                           │ │█
+ Notifications      26 │  │                                                            └───────────────────────────┘ │█
+ Account               │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+                       │                                                                                              █
+ + Rent servers        │  Questions                                                                                   █
+ Guide                 │  ▸ What is a script?                                                                         █
+ Support               │  ▸ Do I need to know how to code?                                                            █
+                       │  ▸ What can a script do?                                                                     █
+                       │  ▸ How does the assistant write a script?                                                    █
+                       │  ▸ How do I make a script run on a schedule?                                                 █
+                       │  ▸ What is a public link, and how is its name chosen?                                        █
+                       │  ▸ How does a script key work?
+                       │  ▸ Where do I keep secrets such as passwords or API keys?
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Next: where it answers.
+                       │                                                                           [Cancel]   Continue
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

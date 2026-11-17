@@ -1,0 +1,20 @@
+{
+  "realm": "Realm {{realm}}",
+  "sep": " · ",
+  "loading": "Finding where this realm's memory is kept…",
+  "leader": "stored on {{host}} (this realm's memory host)",
+  "follower": "stored on {{host}} (this realm's memory host)",
+  "electing": "Choosing this realm's memory host…",
+  "unavailable": "Memory host unavailable right now",
+  "stuck": "Choosing a memory host is stuck",
+  "not_realm_member": "{{computer}} is not a member of realm {{realm}}",
+  "fleet_disabled": "Shared memory is off on {{computer}}; memory is local",
+  "realm_blocked": "Memory for realm {{realm}} is blocked",
+  "cold": "Memory for realm {{realm}} is not connected on {{computer}} right now. It connects while the realm is in use on {{computer}}.",
+  "unreachable": "Cannot reach memory right now",
+  "on": "memory on",
+  "off": "memory off",
+  "retry": "Try again",
+  "details": "Details",
+  "hideDetails": "Hide details"
+}

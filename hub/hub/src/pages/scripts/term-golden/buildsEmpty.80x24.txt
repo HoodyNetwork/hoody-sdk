@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Scripts                                                  ▸ Use with your agent
+ Small programs on your computers that answer an address or run on a schedule.
+ ▾ Being built on this device · 1                                             █
+    Every Monday at 9:00, count last week's new signups and post the total    █
+    ● Building Running a code check                                           █
+    atlas                                                                     █
+    3 minutes ago                                                             █
+    [Open] [Stop] [Discard]                                                   █
+                                                                              █
+                                                                              █
+    ┌──────────────────────────────────────────────────────────────────────┐  █
+    │ No scripts yet                                                       │  █
+    │                                                                      │  █
+    │ A script is a small program on one of your computers. Write one, or  │  █
+    │ ask the assistant to write it for you.                               │  ▀
+    │                                                                      │
+    │  + New script                                                        │
+    │ [Summarise text with AI] [Check a website and notify me]             │
+    │ [A tiny note keeper]                                                 │
+    └──────────────────────────────────────────────────────────────────────┘
+
+ ▸ Advanced
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

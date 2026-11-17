@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                 ◆ Personal ▾  Computers not loaded ▾  [A]  ^K · ?
+ Programs                              ▸ Use with your agent   + Launch an app
+ On atlas
+ ▸ Running programs    Apps    Ports & aliases
+ ──────────────────────────────────────────────────────────────────────────────
+                      ! This didn't load
+
+                      Couldn't read the programs on atlas.
+
+                      [Try again]
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

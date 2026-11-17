@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Add a chat app to Chief                                          Esc ×
+ Bots  ┃ The token is sent once and never shown again.
+ ‹ Bots┃ ──────────────────────────────────────────────────────────────────────
+ Chief ┃ │▌Setup                 ┌────────────────────────────────────────────┐
+   SG a┃ │ People                │ Pick the chat app                          │
+       ┃ │ Chats                 │                                            │
+   Acti┃ │ Settings              │ Chat app                                   │
+ ──────┃                         │ (•) Telegram                               │
+       ┃                         │     A bot made with BotFather.             │
+  ┌────┃                         │ ( ) Slack                                  │
+  │ At ┃                         │     An app in your workspace, with a bot   │
+  │ App┃                         │     token and an app token.                │
+  │ Wai┃                         │ ( ) Discord                                │
+  │ Peo┃                         │     An application in the developer        │
+  │ Cha┃                         │     portal.                                │
+  └────┃                         │ ────────────────────────────────────────── │
+       ┃                         │  Next                                      │
+       ┃                         └────────────────────────────────────────────┘
+  ┌────┃                          2  Make the bot and connect it
+  │ Cha┃                          3  Become the owner
+  │ Let┃
+  │  Ap┃
+  │› Su┃
+ Tab mo┃

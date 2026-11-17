@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ Copy ci-deploy                                      Esc ×
+ Home                  │  Keys and tokens                   ┃ ─────────────────────────────────────────────────────────
+ Computers             │  A key lets your agent, the CLI or ┃ Same rights, realms and addresses, with a new secret. The
+ Files                 │  date.                             ┃ original keeps working.
+ Bots                  │  ▸ API keys 5 keys    SSH keys    S┃
+ Board                 │  ──────────────────────────────────┃ Name
+ Demo                  │  i Keys that work in Personal.     ┃ ┃
+ Vault                 │                                    ┃ Leave it empty and the copy is named for you.
+                       │  ‹ Back to list  Esc               ┃
+On atlas ▾             │  ci-deploy  ● Active               ┃ Ends
+ Programs              │                                    ┃ │ Same as the key it copies ▾
+ Schedules             │                                    ┃
+ Scripts               │    ┌───────────────────────────────┃
+ Logs                  │    │ THIS KEY                      ┃
+ Tunnels               │    │ It works now.                 ┃
+ Notes                 │    └───────────────────────────────┃
+ AI                    │                                    ┃
+ VMs                   │    Key            hdy_9e37…        ┃
+                       │    Works in       Personal f1f1…f1f┃
+Account                │    In this realm  Computers Program┃
+ Plans & Billing       │    Access         Developer        ┃
+ Referrals             │    Ends           Jan 20, 2027 UTC ┃
+▌Keys and tokens       │                                    ┃
+ API                   │    Rights                          ┃
+ Notifications      26 │    Computers                       ┃
+ Account               │    See computers                   ┃
+                       │    computers.read                  ┃
+ + Rent servers        │                                    ┃
+ Guide                 │     Read                           ┃
+ Support               │    Start                           ┃
+                       │    computers.actions.start         ┃
+                       │                                    ┃
+                       │     Write                          ┃
+                       │    Restart                         ┃
+                       │    computers.actions.restart       ┃
+                       │                                    ┃
+                       │     Write                          ┃
+                       │    Read logs                       ┃
+                       │    computers.actions.logs          ┃ ─────────────────────────────────────────────────────────
+ Typing · Esc leaves the field · Ctrl+K commands            ┃                                     [Cancel]   Make copy

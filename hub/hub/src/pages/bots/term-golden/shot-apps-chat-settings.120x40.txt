@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Support chat                                                                                          Esc ×
+ Home     ┃ Telegram
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │ Setup                 ! In groups the Bot sees only commands and replies to its messages.    [How to fix]
+▌Bots     ┃ │ People
+ Board    ┃ │▌Chats
+ Demo     ┃ │ Settings              ▸ Add the Bot to a group
+ Vault    ┃
+          ┃              ┌────────────────────────────────────────────────────────────────────┐
+On atlas ▾┃              │ Settings for Support chat                                    Esc × │───────────────────────┐
+ Programs ┃              │ ────────────────────────────────────────────────────────────────── │                       │
+ Schedules┃              │ These apply to this chat only. The rest follow the chat app.     █ │ a group, when it asks │
+ Scripts  ┃              │                                                                  █ │                       │
+ Logs     ┃              │ ┌───────────────────────────────────────────────────────────────┐█ │                       │
+ Tunnels  ┃              │ │                                                               │█ │      [Chat settings] ⋯│
+ Notes    ┃              │ │ In groups, read only messages   [■ on ]                       │█ │                       │
+ AI       ┃              │ │ for the Bot                                                   │█ │                       │
+ VMs      ┃              │ │  Default                                                      │█ │                       │
+          ┃              │ │                                                               │█ │                       │
+Account   ┃              │ │ How answers attach to the message                             │█ │                       │
+ Plans & B┃              │ │  Set for this chat                                            │█ │      [Chat settings] ⋯│
+ Referrals┃              │ │ │ As a plain message ▾                      [Use the default] │█ │───────────────────────┘
+ Keys and ┃              │ │                                                               │█ │
+ API      ┃              │ │ Message formatting              │ Rich text ▾                 │█ │
+ Notificat┃              │ │  Default                                                      │█ │
+ Account  ┃              │ │                                                               │█ │
+          ┃              │ │ Messages per person per minute  │ 10                          │█ │
+ + Rent se┃              │ │  Default                        0 to 600                      │█ │
+ Guide    ┃              │ │                                                               │█ │
+ Support  ┃              │ │ Messages per person per hour    │ 20                          │█ │
+          ┃              │ │  Default                        0 to 3600                     │█ │
+          ┃              │ │                                                               │█ │
+          ┃              │ │ Messages per person per day     │ 100                         │█ │
+          ┃              │ │  Default                        0 to 20000                    │  │
+          ┃              │ │                                                               │  │
+          ┃              │ │ Messages per chat per minute    │ 20                          │  │
+          ┃              │                                                                    │
+          ┃              │                                          [Cancel]   Save settings  │
+          ┃              └────────────────────────────────────────────────────────────────────┘
+ Tab move ┃

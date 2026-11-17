@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines                                         ▸ Use with your agent
+ Full machines that run inside atlas.
+   VMs  ▸ Images    KVM on computers
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Images                                   [+ Add from a link] [Open Files] │█
+ │ Installer images (ISO) kept on this computer.                             │█
+ │  Image                       State                        Size            │█
+ │› Debian 13                   ● Ready                    3.4 GB    [Delete]│█
+ │  CCCOMA_X64FRE_EN-US_DV9     ● Ready                    6.1 GB    [Delete]│█
+ │  Ubuntu 24.04                ● Other machine type         2 GB    [Delete]│█
+ │  Unnamed image               ● Uploading                  1 GB    [Delete]│█
+ │ Already have the file? Put it on this computer with Files, then pick it   │█
+ │ when you create the VM.                                                   │█
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Downloads                                                                 │
+ │ Images being fetched from a link. A finished one shows under Images.      │
+ │  From                       State         Progress                        │
+ │› releases.ubuntu.com        ● Downloading ████░░░░░░ 38% · 988…   [Cancel]│
+ │  mirror.example.org         ● Downloading 120 MB so far           [Cancel]│
+ │  cdimage.debian.org         ● Checking    Checking the image       [Clear]│
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

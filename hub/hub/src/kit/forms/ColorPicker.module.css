@@ -1,0 +1,110 @@
+/* ColorPicker: the label, then one line: the round swatches and the hex control, whose start is the
+   browser picker's square. The control goes under the swatches only when the width runs out; the swatches wrap only
+   when even they do not fit (phone width). A checked swatch gets an ink ring outside a gap, so it reads on light and
+   dark colours. */
+.line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+/* The hit areas touch: each dot already sits inside its own (larger) target, so the dots keep their room. */
+.swatches {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* The hit area is the icon target (44 px on touch screens); the dot stays small inside it. */
+.swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--icon-hit);
+  min-height: var(--icon-hit);
+  cursor: pointer;
+  border-radius: var(--r-round);
+}
+
+.swatch[data-disabled] {
+  cursor: default;
+  opacity: var(--ctl-off-opacity);
+}
+
+.dot {
+  width: var(--swatch);
+  height: var(--swatch);
+  border: var(--bw) solid var(--hx-line-strong);
+  border-radius: var(--r-round);
+}
+
+.swatch[data-hovered] .dot {
+  border-color: var(--hx-ink);
+}
+
+.swatch[data-selected] .dot {
+  box-shadow:
+    0 0 0 var(--bw-2) var(--hx-bg),
+    0 0 0 4px var(--hx-ink);
+}
+
+/* Focus: the kit ring round the swatch's own target, outside a checked dot's ink ring (the dot paints
+   over the ring's gap). Forced colours draw an outline instead (below). */
+.swatch[data-focus-visible] {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.hex {
+  flex: none;
+}
+
+/* Room for "#RRGGBB" in the mono face (the code's own input only: the square inside the field is an input too). */
+.hex input:not([type='color']) {
+  width: var(--field-hex-w);
+}
+
+/* The picker square inside the hex field's start: the colour in force, a click opens the browser's picker. */
+.any {
+  width: var(--swatch);
+  height: var(--swatch);
+  padding: 0;
+  cursor: pointer;
+  border: var(--bw) solid var(--hx-line-strong);
+  border-radius: var(--r-1);
+  background: none;
+}
+
+.any::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.any::-webkit-color-swatch {
+  border: none;
+  border-radius: var(--r-1);
+}
+
+.any::-moz-color-swatch {
+  border: none;
+  border-radius: var(--r-1);
+}
+
+.any:disabled {
+  cursor: default;
+  opacity: var(--ctl-off-opacity);
+}
+
+.any:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+@media (forced-colors: active) {
+  .swatch[data-focus-visible],
+  .any:focus-visible {
+    outline: var(--bw-2) solid highlight;
+    outline-offset: var(--bw-2);
+  }
+}

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines › web-1
+ Computers             │  web-1  ● Running                                                              Shut down   [⋯]
+ Files                 │  A VM inside atlas.
+ Bots                  │
+ Board                 │   Overview  Screen  Ports  Storage  Snapshots  Settings ▸Logs
+ Demo                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Logs                                                                          [↻ Refresh] │
+On atlas ▾             │  │ ! This didn't load                                                                        │
+ Programs              │  │ The server had a problem. Try again in a moment.                                          │
+ Schedules             │  │ [Try again]                                                                               │
+ Scripts               │  │ ▸ Details                                                                                 │
+ Logs                  │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Tunnels               │
+ Notes                 │
+ AI                    │
+▌VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

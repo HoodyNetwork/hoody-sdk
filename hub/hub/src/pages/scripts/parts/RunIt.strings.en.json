@@ -1,0 +1,19 @@
+{
+  "run.title": "Run it from a terminal",
+  "run.lede": "Call this script with the hoody CLI or curl.",
+  "run.code": "Commands that call this script",
+  "run.key": "This script has a key: put your key in place of <your key> before you run the command. The Hub never shows your key.",
+  "run.note.folder": "The hoody CLI reaches scripts in folder 1 only, so this one has the curl line.",
+  "run.note.typed": "This script has its own options. To see its CLI command, run hoody exec --help.",
+  "run.note.typedKeyed": "The hoody CLI can't send a key to a script with its own options yet. Use the curl line.",
+  "run.note.unknownKeyed": "The Hub can't tell if the hoody CLI can send this script's key. Use the curl line.",
+  "run.note.noName": "The hoody CLI has no command for this address. Use the curl line.",
+  "run.note.clash": "Another script's address gives the same hoody CLI command, so it could call that one. Use the curl line.",
+  "run.cliCheck": "The Hub can't see every script the hoody CLI can. Before you rely on this command, check with hoody exec --help that its name is this script's.",
+  "run.fill": "This address has parts to fill in: put a value in place of each <name> before you run the command.",
+  "run.test": "Test it in a terminal",
+  "run.testOpens": "Opens a new terminal on {{computer}}. Copy a command above, paste it there and press Enter.",
+  "run.off": "{{computer}} is not running.",
+  "run.noTerminal": "The terminal address of {{computer}} is not known here.",
+  "run.note.unroutable": "This script's file name has characters an address can't carry, so nothing can call it by address."
+}

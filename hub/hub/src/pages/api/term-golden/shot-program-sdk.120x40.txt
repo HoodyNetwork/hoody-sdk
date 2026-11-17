@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  API                                                                     ▸ Use with your agent
+ Computers             │
+ Files                 │  ▸ Endpoints    Overview
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ API  Esc
+ Vault                 │  GET /api/v1/browser/start                                ‹ Placeholders ›  Current computer
+                       │  Create or retrieve browser instance
+On atlas ▾             │
+ Programs              │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Schedules             │  │ Authorisation                                                                             │
+ Scripts               │  │ A program on your computer. Its proxy permissions decide access; never send it your       │
+ Logs                  │  │ token.                                                                                    │
+ Tunnels               │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Notes                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ AI                    │  │ How to call it                                                                            │
+ VMs                   │  │   cURL  ‹ JavaScript ›  Python (requests)    CLI    URL                                   │
+                       │  │ JavaScript example                                                             ⧉ Copy all │
+Account                │  │  import { HoodyClient } from 'hoody-sdk';                                         ⧉ copy  │
+ Plans & Billing       │  │                                                                                           │
+ Referrals             │  │  const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });                     │
+ Keys and tokens       │  │  const box = await hoody.withComputer({ id: '<computer-id>', project_id:                  │
+▌API                   │  │  '<project-id>', server_name: '<server>' });                                              │
+ Notifications      26 │  │  console.log(await box.browser.instances.start());                                        │
+ Account               │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ + Rent servers        │  │ About this endpoint                                                                       │
+ Guide                 │  │ Operation ID  browser_startInstance  ⧉ copy   Docs          https://docs.hoody.com/api/   │
+ Support               │  │ Service       Browser                                       browser/instance-management/  │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

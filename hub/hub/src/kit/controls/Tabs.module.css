@@ -1,0 +1,474 @@
+/* Tabs: folder tabs. Grey tabs drawn --tabs-lift under the bar's top, on its one line; the current tab
+   white, the bar's full height (--tabs-h, taller on a coarse pointer and on a narrow screen), framed and open at the
+   bottom. Every tab's box is the bar's height (a full-height target). The edge fades are masks, which read only alpha,
+   so any opaque token serves as their solid stop. */
+.tabs {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bar {
+  display: flex;
+  align-items: stretch;
+  column-gap: var(--sp-3);
+  min-width: 0;
+
+  /* In a ListDetail pane the strip starts at the pane's inset, as the header above it;
+     the padding keeps its line and stuck ground across the pane. Elsewhere it is 0. */
+  padding-inline: var(--pane-inset, 0);
+
+  /* The line is the bar's own inset shadow, painted under its children, never a border: the strip scrolls
+     (overflow-x clips its children to its box), so only a line inside that box can pass under the current tab, whose
+     fill covers it (open at the bottom). */
+  box-shadow: inset 0 calc(-1 * var(--bw)) 0 var(--hx-folder-line);
+}
+
+/* The computer's colour band sits on the bar's top edge. The bar is its containing block (a sticky bar already
+   is one; a plain bar becomes one only when it carries a band). */
+.hasAccent {
+  position: relative;
+}
+
+.accent {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: var(--z-raised);
+  block-size: 4px;
+  background: var(--computer);
+  box-shadow: inset 0 calc(-1 * var(--bw)) 0 var(--hx-swatch-ring);
+  pointer-events: none;
+}
+
+/* Under a detail header that carries its own band (a pane at 600 px or more of content), the bar's band stays hidden:
+   exactly one band shows. */
+@container content (width >= 600px) {
+  .accent[data-accent-when='narrow'] {
+    display: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .accent {
+    forced-color-adjust: none;
+    box-shadow: inset 0 calc(-1 * var(--bw)) 0 canvastext;
+  }
+}
+
+/* A stuck bar covers what scrolls under it with the surface it sits on. Its host names that surface
+   and the bar's stuck offset: a ListDetail pane passes the card and its header's height, and below
+   600px the page ground and 0. A kit DetailHeader above the bar measures that height itself
+   (--detail-head-live: its height while it sticks, 0 once it scrolls away), which wins over the host's guess. */
+.sticky {
+  position: sticky;
+  inset-block-start: var(--detail-head-live, var(--tabs-sticky-top, 0));
+  z-index: var(--z-sticky);
+
+  /* Without a host's surface, the page ground. */
+  background: var(--tabs-sticky-bg, var(--hx-bg));
+}
+
+.strip {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+/* The chevron beside a side with more tabs, in the bar's flow so it never covers a label. */
+.more {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--strip-more-w);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--hx-muted);
+  cursor: pointer;
+}
+
+.more:hover {
+  color: var(--hx-ink);
+}
+
+/* A badge (a count, a mark) lies wholly past this side, so the chevron carries a small square of the
+   ink beside its point, and the side reads "more, and something to see" instead of hiding the count. */
+.more[data-attention] {
+  position: relative;
+  color: var(--hx-ink);
+}
+
+.more[data-attention]::after {
+  position: absolute;
+  inset-block-start: var(--sp-2);
+  inset-inline-end: var(--sp-1);
+  inline-size: 6px;
+  block-size: 6px;
+  background: currentcolor;
+  content: '';
+}
+
+/* Right to left the start side is on the right: each chevron still points toward its own side. */
+.more:dir(rtl) > * {
+  transform: scaleX(-1);
+}
+
+.scroller {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+/* With an `after` slot the tabs hug their width, so the slot sits right after the last tab; past the room they
+   shrink and scroll as ever. Only this strip's own scroller: a Tabs inside a slot keeps its own sizing. */
+.strip[data-hug] > .scroller {
+  flex: 0 1 auto;
+}
+
+.scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.fadeStart {
+  mask-image: linear-gradient(to right, transparent 0, var(--hx-ink) var(--sp-7));
+}
+
+.fadeEnd {
+  mask-image: linear-gradient(to left, transparent 0, var(--hx-ink) var(--sp-7));
+}
+
+.fadeStart.fadeEnd {
+  mask-image: linear-gradient(to right, transparent 0, var(--hx-ink) var(--sp-7), var(--hx-ink) calc(100% - var(--sp-7)), transparent 100%);
+}
+
+/* Right to left the start is the right edge: a fade drawn on the wrong side would hide the tab (and a drop bar) at the
+   end the strip has scrolled to. */
+.fadeStart:dir(rtl) {
+  mask-image: linear-gradient(to left, transparent 0, var(--hx-ink) var(--sp-7));
+}
+
+.fadeEnd:dir(rtl) {
+  mask-image: linear-gradient(to right, transparent 0, var(--hx-ink) var(--sp-7));
+}
+
+.fadeStart.fadeEnd:dir(rtl) {
+  mask-image: linear-gradient(to right, transparent 0, var(--hx-ink) var(--sp-7), var(--hx-ink) calc(100% - var(--sp-7)), transparent 100%);
+}
+
+.list {
+  display: flex;
+  gap: var(--tabs-gap);
+  width: max-content;
+  height: var(--tabs-h);
+}
+
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  padding-inline: var(--tabs-pad);
+  padding-block-start: var(--tabs-lift);
+  border: var(--bw) solid transparent;
+  border-block-start: 0;
+  border-radius: 0;
+
+  /* The grey tab: two layers. Under, the frame: --hx-folder-tab-line on the whole box from --tabs-lift down to the
+     bar's line; its last pixel stays clear, so the bar's one line shows there: painted again it would double dark's
+     translucent line. Over it, the fill on the padding box from one line under the lift, so the frame shows as a
+     hairline top edge and the side borders. Dark's frame token is the fill, so dark draws one grey. */
+  background:
+    linear-gradient(transparent calc(var(--tabs-lift) + var(--bw)), var(--hx-folder-tab) calc(var(--tabs-lift) + var(--bw))) padding-box,
+    linear-gradient(transparent var(--tabs-lift), var(--hx-folder-tab-line) var(--tabs-lift), var(--hx-folder-tab-line) calc(100% - var(--bw)), transparent calc(100% - var(--bw))) border-box;
+  color: var(--hx-folder-text);
+
+  /* Mono uppercase, as the website's tab rows; the white, framed, taller tab marks the selected one. */
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+  white-space: nowrap;
+  cursor: pointer;
+  outline: none;
+  text-decoration: none;
+  transition: color var(--dur-press) linear;
+}
+
+.tab[data-hovered] {
+  color: var(--hx-folder-on-text);
+}
+
+.tab[data-selected] {
+  padding-block-start: 0;
+  border: var(--bw) solid var(--hx-folder-line);
+  border-block-end-color: var(--hx-folder-on);
+  background: var(--hx-folder-on);
+  color: var(--hx-folder-on-text);
+}
+
+.tab[data-focus-visible] {
+  box-shadow: var(--focus-ring-inset);
+}
+
+.tab[data-disabled] {
+  color: var(--hx-faint);
+  cursor: default;
+}
+
+/* Forced colours drop shadows and gradients. Only the leaves may opt out of forced colours (the
+   accent contract), so the line becomes a real bottom border on the tab list, in a system colour the mode keeps, and
+   every tab reaches one line width over it (a negative bottom margin; the list is border-box, so the bar keeps its height): a
+   grey tab's clear bottom edge lets it show, the chosen tab's Canvas edge covers it (open at the bottom). A grey tab is
+   a GrayText frame, the chosen one CanvasText on Canvas; keyboard focus is a Highlight outline inside the frame (the
+   inset focus ring is a shadow, which forced colours remove). */
+@media (forced-colors: active) {
+  .list {
+    box-sizing: border-box;
+    border-block-end: var(--bw) solid canvastext;
+  }
+
+  .tab {
+    margin-block-end: calc(-1 * var(--bw));
+    border-color: graytext;
+    border-block-start: var(--bw) solid graytext;
+    border-block-end-color: transparent;
+    background: none;
+    color: canvastext;
+  }
+
+  .tab[data-selected] {
+    border-color: canvastext;
+    border-block-end-color: canvas;
+    background: canvas;
+  }
+
+  .tab[data-focus-visible] {
+    outline: var(--bw-2) solid highlight;
+    outline-offset: calc(-1 * (var(--bw) + var(--bw-2)));
+  }
+
+  .tab[data-disabled] {
+    color: graytext;
+  }
+}
+
+/* Touch: a tab is a full touch target both ways (the strip's height is --tabs-h, tokens.css); a short label
+   (Code, Apps) sits centred in its wider tab. */
+@media (pointer: coarse) {
+  .tab {
+    justify-content: center;
+    min-width: var(--touch-min);
+  }
+}
+
+.badge {
+  min-width: var(--kbd-h);
+  padding-inline: var(--sp-1);
+  border-radius: var(--r-1);
+  background: var(--hx-fill);
+  color: var(--hx-muted);
+  font: var(--t-mono);
+  font-size: var(--fs-xs);
+  line-height: var(--kbd-h);
+  text-align: center;
+}
+
+.end {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2);
+
+  /* Its natural width, so Tabs can tell whether it fits beside the tabs wherever it sits now. */
+  width: max-content;
+  max-width: 100%;
+}
+
+/* The tabs and the end do not fit on one row (Tabs measures both), so the end takes its own row under the
+   strip, at the bar's end, and the tab list keeps the whole width. The line moves to under the strip, still across
+   the pane's inset. */
+.bar[data-stacked] {
+  flex-direction: column;
+  box-shadow: none;
+}
+
+.bar[data-stacked] .strip {
+  margin-inline: calc(-1 * var(--pane-inset, 0px));
+  padding-inline: var(--pane-inset, 0);
+  box-shadow: inset 0 calc(-1 * var(--bw)) 0 var(--hx-folder-line);
+}
+
+.bar[data-stacked] .end {
+  flex-wrap: wrap;
+  align-self: flex-end;
+
+  /* Safe: an end wider than the bar starts at its start edge, never pushed past it. */
+  justify-content: safe flex-end;
+  padding-block: var(--sp-2);
+}
+
+/* The page's own group may give way to the bar's width (a note ellipsises, a wrapping group wraps). */
+.bar[data-stacked] .end > * {
+  min-width: 0;
+}
+
+.panel {
+  /* Its own stacking layer: a sticky table head or bar inside the panel scrolls under a stuck strip
+     (and the pane's header), never over it. */
+  isolation: isolate;
+  min-width: 0;
+  padding-block-start: var(--sp-4);
+  padding-inline: var(--pane-inset, 0);
+  outline: none;
+}
+
+/* A body the caller draws under a bar-only strip starts as far below the strip as an item's own panel does. Zero
+   weight: a caller's panelClassName that sets its own padding still wins. */
+:where(.bodyPanel) {
+  padding-block-start: var(--sp-4);
+}
+
+/* The panel already pads by the pane inset: nothing inside it adds it again. */
+.panel > * {
+  --pane-inset: 0px; /* a length, never a bare 0: SettingGroup rows compute with it */
+}
+
+/* Only when the panel itself holds keyboard focus (a panel without focusable content); never
+   because something inside it was clicked or focused. */
+.panel[data-focus-visible]:focus-visible {
+  box-shadow: var(--focus-ring-inset);
+}
+
+/* Forced colors (Windows high contrast) drop box-shadow, so the panel's ring would vanish: a solid outline in the system
+   Highlight colour instead, inset as the ring is (a strip and the pane clip past its edges).
+   Here beside its rule, not at the end: the file's last forced block is the strip's drop target (IconButton.drop.test). */
+@media (forced-colors: active) {
+  .panel[data-focus-visible]:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: calc(var(--bw-2) * -1);
+  }
+}
+
+/* Editable tabs. The rename field is drawn over its tab, outside it (a tab holds no other
+   control), at the tab's place and the label's size; Tabs sets left/top/width/height. */
+.rename {
+  position: absolute;
+  z-index: var(--z-raised);
+  box-sizing: border-box;
+  padding: 0 var(--sp-2);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--hx-bg);
+  color: var(--hx-ink);
+}
+
+.tab [draggable='true'] {
+  cursor: grab;
+}
+
+/* A drag: the dragged tab dims, and a focus-coloured bar (a border, as the focus colour is drawn) in the gap before or
+   after the tab under the pointer shows where it lands. */
+.tab[data-dragging] {
+  opacity: 0.5;
+}
+
+/* Something the page drags (a Board tile) would land on this tab: the inset focus ring and the folder's on-text only,
+   never the chosen tab's fill (a second chosen-looking tab). After [data-selected], so a drop on
+   the chosen tab keeps its own look and gains the ring. */
+.tab[data-drop-target] {
+  color: var(--hx-folder-on-text);
+  box-shadow: var(--focus-ring-inset);
+}
+
+/* Forced colours drop the ring (box-shadow) and the text colour: an inset system-colour outline marks the target
+   instead, fully inside the tab's border (offset = border + outline width, the border's own token), so a chosen tab's
+   border is never covered. A focused drop target shows the drop outline: the second selector
+   outranks the folder tabs' forced focus rule (.tab[data-focus-visible]) whatever the order. */
+@media (forced-colors: active) {
+  .tab[data-drop-target],
+  .tab[data-focus-visible][data-drop-target] {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: calc(-1 * (var(--bw) + var(--bw-2)));
+  }
+}
+
+.tab[data-drop]::before {
+  position: absolute;
+  inset-block: var(--sp-1);
+  border-inline-start: var(--bw-2) solid var(--hx-focus);
+  content: '';
+  pointer-events: none;
+}
+
+.tab[data-drop='before']::before {
+  inset-inline-start: calc(var(--tabs-gap) / -2 - var(--bw-2) / 2 - var(--bw));
+}
+
+.tab[data-drop='after']::before {
+  inset-inline-end: calc(var(--tabs-gap) / -2 - var(--bw-2) / 2 - var(--bw));
+}
+
+/* The bar is placed from the tab's padding box, inside its frame: centred in the gap means half the gap and the
+   frame out. */
+
+/* Before the first tab and after the last there is no gap, and the scroller clips what lies outside it: the bar sits
+   just inside the tab's own edge there (a strip scrolled to its end can stop a fraction of a pixel short of it). */
+.tab:first-child[data-drop='before']::before {
+  inset-inline-start: var(--bw-2);
+}
+
+.tab:last-child[data-drop='after']::before {
+  inset-inline-end: var(--bw-2);
+}
+
+/* The ⋯ of the open tab, in the strip's flow after the scroller and its chevron. */
+.tabMenu {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+/* A page's control before the tabs and after them keeps a gap from them, so its frame and cut corner never meet a tab.
+   Padding, not margin: a strip that fits itself (the Board's) sums the slots' offsetWidth, which counts padding only. */
+.tabMenu[data-tabs-before] {
+  padding-inline-end: var(--sp-2);
+}
+
+.tabMenu[data-tabs-after] {
+  padding-inline-start: var(--sp-2);
+}
+
+/* toolbarRow: the bar shares its row with toolbar controls (the Board strip). The strip is those controls' height
+   (--tb-ctl-h; a touch target on a coarse pointer) plus --sp-2, so the tabs stand on the line while the controls sit
+   --sp-2 above it: each tab keeps --sp-2 under its label (the open tab's label on the controls' text line), and the
+   before and after slots end --sp-2 above the line. A grey tab keeps its --tabs-lift top with no top border, so it keeps
+   that much more under its label, less the open tab's top border: every label on the controls' one centre line. */
+.bar[data-toolbar-row] .list {
+  height: calc(max(var(--tb-ctl-h, var(--ctl-h-sm)), var(--touch-min, 0px)) + var(--sp-2));
+}
+
+.bar[data-toolbar-row] .tab,
+.bar[data-toolbar-row] .tabMenu {
+  padding-block-end: var(--sp-2);
+}
+
+.bar[data-toolbar-row] .tab:not([data-selected]) {
+  padding-block-end: calc(var(--sp-2) + var(--tabs-lift) - var(--bw));
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

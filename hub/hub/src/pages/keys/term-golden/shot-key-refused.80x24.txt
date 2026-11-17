@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ New key                                                          Esc ×
+ Keys a┃ Made in Personal
+ A key ┃ ──────────────────────────────────────────────────────────────────────
+ key, w┃                                                                      █
+ ▸ API ┃ Basics                                                               █
+ ──────┃ Name                                                                 █
+ i Keys┃ ┃ ci                                                                 █
+ / Sear┃ ✗ You already have a key with this name. Pick another name.          █
+ 3 keys┃                                                                      █
+   Name┃                                                                      █
+ › ci-d┃ Realms                                                               █
+   hood┃                                                                      █
+   sdk-┃ Works in                        Only Personal                        █
+       ┃ It cannot see or change
+ Questi┃ anything in other realms.
+ ▸ Can ┃ ▸ Which realms can a key work in?
+ ▸ What┃
+ ▸ Whic┃
+ ▸ What┃ Limits
+ ▸ When┃ Ends
+ ▸ How ┃ ‹ Never ›  90 days    1 year    On a date
+ ▸ What┃ Allowed IPv4 addresses
+ ▸ What┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃                                                   [Cancel]   Make key

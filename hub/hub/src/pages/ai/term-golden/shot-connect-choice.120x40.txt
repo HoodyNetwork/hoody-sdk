@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ ‹ Back                                                                  Esc ×
+ Home                  │   Chats   Agent┃ Connect OpenAI
+ Computers             │  ▌Models & keys┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  atlas › Models┃ How to connect OpenAI
+ Bots                  │  Models & keys ┃ ( ) Sign in with ChatGPT
+ Board                 │  atlas uses Hoo┃     Use your ChatGPT plan
+ Demo                  │                ┃ ( ) Use an API key
+ Vault                 │  ▌Default model┃     Pay as you go on your own key
+                       │  ──────────────┃
+On atlas ▾             │  ┌─────────────┃
+ Programs              │  │ Default mode┃
+ Schedules             │  │ The model yo┃
+ Scripts               │  │ ┌───────────┃
+ Logs                  │  │ │           ┃
+ Tunnels               │  │ │ AI helper ┃
+ Notes                 │  │ │ The model ┃
+▌AI                    │  │ │ everyday w┃
+ VMs                   │  │ │ computer. ┃
+                       │  │ │           ┃
+Account                │  │ │ Bots      ┃
+ Plans & Billing       │  │ │ Bots follo┃
+ Referrals             │  │ │           ┃
+ Keys and tokens       │  │ └───────────┃
+ API                   │  └─────────────┃
+ Notifications      26 │                ┃
+ Account               │  ┌─────────────┃
+                       │  │ Accounts    ┃
+ + Rent servers        │  │ The AI provi┃
+ Guide                 │  │ / Search    ┃
+ Support               │  │             ┃
+                       │  │   Provider  ┃
+                       │  │ › H Hoody AI┃
+                       │  │   O OpenAI  ┃
+                       │  └─────────────┃
+                       │                ┃
+                       │  ┌─────────────┃
+                       │  │ Claude Code ┃
+                       │  │ Use your own┃
+                       │  │ ┌───────────┃
+ Tab move · Enter open · Ctrl+K commands┃

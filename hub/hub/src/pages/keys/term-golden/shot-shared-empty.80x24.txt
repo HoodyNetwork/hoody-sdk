@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Keys and tokens                     ▸ Use with your agent   Share this realm  █
+ A key lets your agent, the CLI or the SDK act for you. Give each one its own  █
+ key, with an end date.                                                        █
+   API keys 5 keys    SSH keys  ▸ Shared access 0 shares                       █
+ ───────────────────────────────────────────────────────────────────────────── █
+                                                                               █
+ People you share a realm with can reach every computer in it. That            █
+ includes computers added later. They get the rights you chose for that        █
+ share. Program addresses saved from them keep working after the share         █
+ ends.                                                                         █
+                                                                               █
+ SHARED NOW                                                                    █
+                                                                               █
+ Nothing shared yet                                                            █
+ Give someone access to this realm for a day, a                                █
+ week or a month. You send them a short text or a
+ sign-in link, and they confirm before anything
+ opens.
+
+
+
+ Questions
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

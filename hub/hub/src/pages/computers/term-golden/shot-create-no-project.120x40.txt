@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Get a computer                                                                                        Esc ×
+ Home     ┃ Something is missing. The box below says what.
+▌Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ ┌──────────────────────────────────────────────────┐ ┌──────────────────────────────────────────────────┐ █
+ Bots     ┃ │ (•) A new computer                               │ │ ( ) A copy of one of yours                       │ █
+ Board    ┃ │     Debian 13, set up below.                     │ │     Same files as the computer you pick.         │ █
+ Demo     ┃ └──────────────────────────────────────────────────┘ └──────────────────────────────────────────────────┘ █
+ Vault    ┃                                                                                                           █
+          ┃ ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐█
+On atlas ▾┃ │ YOU GET                                                                                                │█
+ Programs ┃ │ Not ready yet: there is no project to put it in.                                                       │█
+ Schedules┃ │ Make one under Project.                                                                                │█
+ Scripts  ┃ │ Size      16 cores, 64 GB RAM, shared                Software  Hoody kit, Developer kit, Hoody AI      │█
+ Logs     ┃ │ System    Debian 13                                                                                    │█
+ Tunnels  ┃ └────────────────────────────────────────────────────────────────────────────────────────────────────────┘█
+ Notes    ┃                                                                                                           █
+ AI       ┃ ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐█
+ VMs      ┃ │ Computer                                                                                               │█
+          ┃ │ ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐ │█
+Account   ┃ │ │                                                                                                    │ │█
+ Plans & B┃ │ │ Name                            │ noble-sage-raven   [Suggest another name]                        │ │█
+ Referrals┃ │ │ Suggested for you. Keep it or                                                                      │ │█
+ Keys and ┃ │ │ type your own.                                                                                     │ │█
+ API      ┃ │ │                                                                                                    │ │█
+ Notificat┃ │ │ Server                          │ SG n12 · Singapore ▾                                             │ │█
+ Account  ┃ │ │ Computers on a server share                                                                        │ │█
+          ┃ │ │ its cores, memory and disk.                                                                        │ │█
+ + Rent se┃ │ │                                                                                                    │ │█
+ Guide    ┃ │ │ Project                         ! This realm has no project yet,                                   │ │█
+ Support  ┃ │ │ Groups computers. Its people      so a computer cannot be made                                     │ │█
+          ┃ │ │ and access rules apply to this    here. Make a project in this                                     │ │█
+          ┃ │ │ one too.                          realm, or pick All realms in                                     │ │█
+          ┃ │ │                                   the realm menu.                                                  │ │▀
+          ┃ │ │                                 [+ New project in this realm]                                      │ │
+          ┃ │ │                                                                                                    │ │
+          ┃ │ │ Realm                            █  Personal                                                       │ │
+          ┃ │ │ Always added: you're getting                                                                       │ │
+          ┃ │ │ this computer inside this                                                                          │ │
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tab move ┃ [Cancel]  Get computer

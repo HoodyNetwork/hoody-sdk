@@ -1,0 +1,5 @@
+{
+  "term.lock.none": "The terminal Hub has no passcode lock.",
+  "term.lock.reason": "A passcode locks the Hub in the browser where you set it, in the web Hub.",
+  "term.lock.what": "passcode lock"
+}

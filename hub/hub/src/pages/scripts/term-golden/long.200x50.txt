@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                                                                                                 ▸ Use with your agent   + New script
+ Computers             │  Small programs on your computers that answer an address or run on a schedule.
+ Files                 │
+ Bots                  │  / Search                        Status ▾                                                                         70 scripts  [Recently deleted · 2]  ↻ Refresh  View options█
+ Board                 │                                                                                                                                                                              █
+ Demo                  │    Script ↑                            Status            Address                               Calls, 24 h  Access            Runs                      Computer             █
+ Vault                 │  ▌ Job 1                               —                 /jobs/job-01                        0 · 40 failed  Open              Every hour                atlas              ⋯██
+                       │    Job 2                               ● Working         /jobs/job-02                                   37  Open              —                         atlas              ⋯██
+On atlas ▾             │    Job 3                               ● Working         /jobs/job-03                                   74  Open              —                         atlas              ⋯██
+ Programs              │    Job 4                               ● Working         /jobs/job-04                                  111  Open              —                         atlas              ⋯██
+ Schedules             │    Job 5                               ● Working         /jobs/job-05                                  148  Open              Every hour                atlas              ⋯██
+▌Scripts               │    Job 6                               ● Working         /jobs/job-06                                  185  Open              —                         atlas              ⋯██
+ Logs                  │    Job 7                               ● Working         /jobs/job-07                                  222  Open              —                         atlas              ⋯██
+ Tunnels               │    Job 8                               ● Working         /jobs/job-08                                  259  Open              —                         atlas              ⋯██
+ Notes                 │    Job 9                               ● Working         /jobs/job-09                                  296  Open              Every hour                atlas              ⋯██
+ AI                    │    Job 10                              ● Failing         /jobs/job-10                      333 · 40 failed  Open              —                         atlas              ⋯██
+ VMs                   │    Job 11                              ● Working         /jobs/job-11                                  370  Open              —                         atlas              ⋯██
+                       │    Job 12                              ● Working         /jobs/job-12                                  407  Open              —                         atlas              ⋯██
+Account                │    Job 13                              ● Working         /jobs/job-13                                  444  Open              Every hour                atlas              ⋯██
+ Plans & Billing       │    Job 14                              ● Working         /jobs/job-14                                  481  Open              —                         atlas              ⋯██
+ Referrals             │    Job 15                              ● Working         /jobs/job-15                                  518  Open              —                         atlas              ⋯██
+ Keys and tokens       │    Job 16                              ● Working         /jobs/job-16                                  555  Open              —                         atlas              ⋯██
+ API                   │    Job 17                              ● Working         /jobs/job-17                                  592  Open              Every hour                atlas              ⋯██
+ Notifications      26 │    Job 18                              ● Working         /jobs/job-18                                  629  Open              —                         atlas              ⋯██
+ Account               │    Job 19                              ● Failing         /jobs/job-19                      666 · 40 failed  Open              —                         atlas              ⋯░█
+                       │    Job 20                              ● Working         /jobs/job-20                                  703  Open              —                         atlas              ⋯░█
+ + Rent servers        │    Job 21                              ● Working         /jobs/job-21                                  740  Open              Every hour                atlas              ⋯░█
+ Guide                 │    Job 22                              ● Working         /jobs/job-22                                  777  Open              —                         atlas              ⋯░█
+ Support               │    Job 23                              ● Working         /jobs/job-23                                  814  Open              —                         atlas              ⋯░█
+                       │    Job 24                              ● Working         /jobs/job-24                                  851  Open              —                         atlas              ⋯░█
+                       │    Job 25                              ● Working         /jobs/job-25                                  888  Open              Every hour                atlas              ⋯░█
+                       │    Job 26                              ● Working         /jobs/job-26                                   25  Open              —                         atlas              ⋯░█
+                       │    Job 27                              ● Working         /jobs/job-27                                   62  Open              —                         atlas              ⋯░█
+                       │    Job 28                              ● Failing         /jobs/job-28                       99 · 40 failed  Open              —                         atlas              ⋯░█
+                       │    Job 29                              ● Working         /jobs/job-29                                  136  Open              Every hour                atlas              ⋯░█
+                       │    Job 30                              ● Working         /jobs/job-30                                  173  Open              —                         atlas              ⋯░█
+                       │                                                                                                                                                                              █
+                       │  1–50 of 70 ‹ ›                                                                                                                                                              █
+                       │                                                                                                                                                                              █
+                       │  ▸ Advanced                                                                                                                                                                  █
+                       │                                                                                                                                                                              █
+                       │  Questions                                                                                                                                                                   █
+                       │  ▸ What is a script?                                                                                                                                                         █
+                       │  ▸ Do I need to know how to code?                                                                                                                                            █
+                       │  ▸ What can a script do?
+                       │  ▸ How does the assistant write a script?
+                       │  ▸ How do I make a script run on a schedule?
+                       │  ▸ What is a public link, and how is its name chosen?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

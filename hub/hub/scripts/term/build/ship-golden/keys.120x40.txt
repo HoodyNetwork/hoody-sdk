@@ -1,0 +1,41 @@
+ ▐━┓ HOODY HUB                                     ◆ 5f0c…fee0 ▾  Computers not loaded ▾  [N]  Ctrl+K commands · ? keys
+ Home                  │  Keys and tokens                                            ▸ Use with your agent   + New key
+ Computers             │  A key lets your agent, the CLI or the SDK act for you. Give each one its own key, with an end
+ Files                 │  date.
+ Bots                  │  ▸ API keys    SSH keys    Shared access
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │  i Keys that work in 5f0c…fee0.                                              [Show all realms]
+                       │
+On this computer       │  / Search                   Access ▾  State ▾  Ends ▾                  ↻ Refresh  View options
+ Programs              │
+ Schedules             │
+ Scripts               │  ✗ Keys and tokens: This didn't load
+ Logs                  │  Try again
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+▌Keys and tokens       │
+ API                   │
+ Notifications         │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │  Questions
+                       │  ▸ Can I see a key's secret again?
+                       │  ▸ What is an API key for?
+                       │  ▸ Which realms does a key work in?
+                       │  ▸ What can a key do, and what does Full mean?
+                       │  ▸ When does a key stop working, and can I limit where it works from?
+                       │  ▸ How does the SSH key work?
+                       │  ▸ What does sharing a realm give someone?
+                       │  ▸ What do I send to the person I share with?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit
+

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                                             ▸ Use with your agent  [+ Launch an app]
+ Computers             │  Apps on atlas: programs you open only when you need them.
+ Files                 │  ‹ Programs  Esc
+ Bots                  │  Open WebUI  ● Port in use                                                      See open apps
+ Board                 │
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Vault                 │  │ RIGHT NOW                                                                                 │
+                       │  │ Open WebUI is already open, or something else is using its                                │
+On atlas ▾             │  │ address.                                                                                  │
+▌Programs              │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Schedules             │
+ Scripts               │  Opens in  Web                                   Source    Registry
+ Logs                  │  Started   Nov 11, 2026, 8:20 AM                 Handle    b8c9…b8c9 ⧉
+ Tunnels               │
+ Notes                 │                                                                                        ⧉ copy
+ AI                    │   $ open-webui serve --port 18080
+ VMs                   │
+                       │
+Account                │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Plans & Billing       │  │                                                                                           │
+ Referrals             │  │ Remove from this list           [Remove]                                                  │
+ Keys and tokens       │  │ Only this row goes. Nothing on                                                            │
+ API                   │  │ the computer changes.                                                                     │
+ Notifications      26 │  │                                                                                           │
+ Account               │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ New VM inside atlas                                                                                   Esc ×
+ Home     ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Computers┃ ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐█
+ Files    ┃ │ WHAT YOU GET                                                                                           │█
+ Bots     ┃ │ A Linux VM inside atlas.                                                                               │█
+ Board    ┃ │ Next: give the VM a name.                                                                              │█
+ Demo     ┃ │ Memory       2 GB                                    Screen       On                                   │█
+ Vault    ┃ │ CPUs         2                                       Starts with  BIOS (this computer has no UEFI)     │█
+          ┃ │ Disk         20 GB                                   TPM          No                                   │█
+On atlas ▾┃ └────────────────────────────────────────────────────────────────────────────────────────────────────────┘█
+ Programs ┃                                                                                                           █
+ Schedules┃ ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐█
+ Scripts  ┃ │ The VM                                                                                                 │█
+ Logs     ┃ │ ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐ │█
+ Tunnels  ┃ │ │                                                                                                    │ │█
+ Notes    ┃ │ │ Name                            ┃                                                                  │ │█
+ AI       ┃ │ │ Lower-case letters, digits and                                                                     │ │█
+▌VMs      ┃ │ │ hyphens. It cannot be changed                                                                      │ │█
+          ┃ │ │ later.                                                                                             │ │█
+Account   ┃ │ │                                                                                                    │ │█
+ Plans & B┃ │ │ System                          (•) Linux                                                          │ │
+ Referrals┃ │ │ Sets the starting sizes and     ( ) Windows 11 (unavailable)                                       │ │
+ Keys and ┃ │ │ what the system needs to            Needs UEFI, which this computer does not have.                 │ │
+ API      ┃ │ │ start.                          ( ) Windows Server (unavailable)                                   │ │
+ Notificat┃ │ │                                     Needs UEFI, which this computer does not have.                 │ │
+ Account  ┃ │ │                                 ( ) Other                                                          │ │
+          ┃ │ │                                                                                                    │ │
+ + Rent se┃ │ └────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+ Guide    ┃ └────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ Support  ┃
+          ┃ ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+          ┃ │ What goes on the disk                                                                                  │
+          ┃ │ ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+          ┃ │ │                                                                                                    │ │
+          ┃ │ │ Start from                      (•) Install from an image                                          │ │
+          ┃ │ │                                     (•) This computer's images  ( ) A file on this computer        │ │
+          ┃ │ │                                     │ Pick an image ▾                                              │ │
+          ┃ │ │                                 ( ) An empty disk                                                  │ │
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Typing · ┃ [Cancel]  Create VM

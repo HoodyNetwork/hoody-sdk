@@ -1,0 +1,49 @@
+/* Knowledge → Memory: the toolbar stack above the list, the record's text and Details. */
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.project {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.root {
+  overflow: hidden;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.content {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--hx-muted);
+}
+
+.facts {
+  margin: 0;
+  padding-inline-start: var(--sp-4);
+  overflow-wrap: anywhere;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.hosts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            AI                                     ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  [Back to chats] Plan the backup job                                      · Idle [⋯] [Details]
+ Computers             │  atlas · Personal  /home/ada
+ Files                 │  [Hoody Free]
+ Bots                  │ ───────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │  │ You 09:00 AM
+ Demo                  │  │ Plan the backup job
+ Vault                 │
+                       │  ✦ Agent on atlas
+On atlas ▾             │  ▸ 2 steps ✓ Done
+ Programs              │
+ Schedules             │  I wrote the plan to plan.md:
+ Scripts               │
+ Logs                  │  • Copy photos and projects every night at 02:00
+ Tunnels               │  • Keep the last 7 copies
+ Notes                 │  • Send a note when a copy fails
+▌AI                    │
+ VMs                   │  ⧉ Copy [⋯]
+                       │
+Account                │
+ Plans & Billing       │  │ You 09:00 AM
+ Referrals             │  │ Run it once now
+ Keys and tokens       │
+ API                   │  ✦ Agent on atlas
+ Notifications      26 │  ▸ 3 steps ✗ Failed
+ Account               │
+                       │  ✗ This conversation got too long for the model. Start a new one, or pick a model that can
+ + Rent servers        │  hold more.
+ Guide                 │
+ Support               │  i Hooks in this computer's settings stop the agent's steps until someone trusts them. You
+                       │  check and trust them in the Agent app.
+                       │
+                       │
+                       │
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Message your agent                                                                        │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │  [+]  [/ Commands]  [Ask when needed]                                            [Send ↵]  [▾]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

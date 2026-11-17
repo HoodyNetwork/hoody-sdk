@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations   Knowledge  ▌Settings
+ Computers             │   Models & keys   Connections & MCP  ▌Rules & hooks
+ Files                 │  Rules & hooks
+ Bots                  │  The checked rules and hooks of a realm. Pause every agent on this computer, or stop
+ Board                 │  everything running in a realm.
+ Demo                  │
+ Vault                 │  Showing                                                                                     █
+                       │  ‹ This realm ›  One folder                                                                  █
+On atlas ▾             │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Programs              │  │ Rules                                                                                    │█
+ Schedules             │  │ Limits checked before a tool runs, and guidance for every chat.                          │█
+ Scripts               │  │ How rules and hooks work                                                                 │█
+ Logs                  │  │ / Search                                                  3 rules  Add a rule  ↻ Refresh │█
+ Tunnels               │  │                                                                                          │█
+ Notes                 │  │   Rule                                                Type        Applies to             │█
+▌AI                    │  │ › Never push to main; open a pull request instead.    · Limit     Tools: bash. Any…    ⋯ │▀
+ VMs                   │  │   Ask before changing a database migration, a deplo…  · Check in  Tools: write_fil…    ⋯ │
+                       │  │   Answer in British English.                          · Guidance  Any agent            ⋯ │
+Account                │  │ In this realm: 2 of 32 limits and check-ins, 1 of 32 guidance and playbooks.             │
+ Plans & Billing       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+ Referrals             │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+ Keys and tokens       │  │ Hooks                                                                                    │
+ API                   │  │ Commands that run on this computer, as you, when something happens in a chat: before a   │
+ Notifications      26 │  │ tool runs, when a chat ends, and so on.                                                  │
+ Account               │  │ / Search                               3 hooks  Add hook…  Disable all hooks…  ↻ Refresh │
+                       │  │                                                                                          │
+ + Rent servers        │  │   Hook                              Runs                       Saved in   State          │
+ Guide                 │  │ › /home/ada/.hoody/hooks/check-dan… Before a tool runs (Bash|… This realm ✓ On         ⋯ │
+ Support               │  │   prettier --write "$HOODY_TOOL_FI… After a tool runs (Write)  This realm · Off        ⋯ │
+                       │  │   Tell the team the agent finished  When the agent finishes a… This realm ✓ On         ⋯ │
+                       │  │                                                                                          │
+                       │  │ ┌──────────────────────────────────────────────────────────────────────────────────────┐ │
+                       │  │ │                                                                                      │ │
+                       │  │ │ Trust low-risk hook edits you   · Off                                                │ │
+                       │  │ │ approve                                                                              │ │
+                       │  │ │ Low-risk hook edits you                                                              │ │
+                       │  │ │ approve stay trusted when the                                                        │ │
+                       │  │ │ hooks already there were                                                             │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

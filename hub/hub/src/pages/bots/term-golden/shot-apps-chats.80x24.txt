@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Support chat                                                     Esc ×
+ Bots  ┃ Telegram
+ ‹ Bots┃ ──────────────────────────────────────────────────────────────────────
+ Chief ┃ │ Setup                 ! In groups the Bot sees only     [How to fix]
+   SG a┃ │ People                  commands and replies to its
+       ┃ │▌Chats                   messages.
+   Acti┃ │ Settings
+ ──────┃
+       ┃                         ▸ Add the Bot to a group
+  ┌────┃
+  │ At ┃
+  │ App┃                         ┌────────────────────────────────────────────┐
+  │ Wai┃                         │ Chats                                      │
+  │ Peo┃                         │ A private chat shows here when someone     │
+  │ Cha┃                         │ writes to the Bot; a group, when it asks   │
+  └────┃                         │ to join.                                   │
+       ┃                         │› Support chat… ● Approved [Chat settings] ⋯│
+       ┃                         │  Kind Group                                │
+  ┌────┃                         │  Ana           ● Approved [Chat settings] ⋯│
+  │ Cha┃                         │  Kind Direct message                       │
+  │ Let┃                         └────────────────────────────────────────────┘
+  │  Ap┃
+  │› Su┃
+ Tab mo┃

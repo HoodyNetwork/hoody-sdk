@@ -1,0 +1,11 @@
+{
+  "stillReading": "Still reading",
+  "notRead": "Read the list first",
+  "noMatch": "Nothing matches",
+  "partial": "Some items could not be read.",
+  "stale": "Showing what was read last. The newest read failed.",
+  "glance.title": "At a glance",
+  "glance.reading": "Reading…",
+  "glance.cantTell": "Can't tell",
+  "glance.atLeast": "At least {{value}}"
+}

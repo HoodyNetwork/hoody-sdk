@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Chats   Agents   Automations   Knowledge  ▌Settings
+ ▌Models & keys   Connections & MCP   Rules & hooks
+ atlas › Models & keys
+ Models & keys                                            + Connect an account
+ atlas uses A provider display name that goes on and on to prove that the table
+ row truncates it and keeps every action reachable for chat and Hoody Free for
+ Bots.
+ ▌Default model  Accounts  Claude Code  Hoody AI allowance  Spending   2 ›
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Default model                                                             │
+ │ The model your AI helper and your Bots use unless told otherwise.         │
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │
+ │ │                                                                       │ │
+ │ │ AI helper and tasks             A provider display name th…  [Change] │ │
+ │ │ The model for chat and           Your key                             │ │
+ │ │ everyday work on this                                                 │ │
+ │ │ computer.                                                             │ │
+ │ │                                                                       │ │
+ │ │ Bots                            Hoody Free  Included         [Change] │ │
+ │ │ Bots follow the default.                                              │ │
+ │ │                                                                       │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

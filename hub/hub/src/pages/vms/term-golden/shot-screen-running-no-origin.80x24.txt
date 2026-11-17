@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines › web-1
+ web-1  ● Running                                               Shut down   [⋯]
+ A VM inside atlas.
+  Overview ▸Screen  Ports  Storage  Snapshots  Settings  Logs
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Screen ⓘ                                            [Ctrl+Alt+Del] [Enter] │
+ │ Screen address  https://••••  ⧉ copy                                       │
+ │ ┌────────────────────────────────────────────────────────────────────────┐ │
+ │ │ ⇗ A VM's screen is a picture, and a terminal cannot draw it.           │ │
+ │ │ Open the screen on the web: (on your Hub's web address)                │ │
+ │ │ /auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/vms                     │ │
+ │ │ [c Copy link]                                                          │ │
+ │ └────────────────────────────────────────────────────────────────────────┘ │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

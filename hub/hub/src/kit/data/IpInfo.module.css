@@ -1,0 +1,87 @@
+/* IpInfo: one inline chip (flag or country code, the address in mono, the place, copy and details), and the
+   details list shown in the tooltip and the popover. */
+.chip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+/* The chip's gap spaces the address, place, Copy and Details; the flag (or its code) sits --gap-dot from the address
+   (the kit's dot-to-text gap). */
+.flag,
+.code {
+  margin-inline-end: calc(var(--gap-dot) - var(--sp-1));
+}
+
+.flag {
+  flex: none;
+  font-size: var(--fs-sm);
+  line-height: 1;
+}
+
+.code {
+  padding: 0 var(--sp-half);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  color: var(--hx-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--tracking-code);
+}
+
+.ip {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.place {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
+}
+
+.list dt {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.list dd {
+  margin: 0;
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.marks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+}
+
+.note {
+  margin: var(--sp-2) 0 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.tip {
+  display: block;
+}
+
+.tip .list dt,
+.tip .marks,
+.tip .note {
+  color: inherit;
+}

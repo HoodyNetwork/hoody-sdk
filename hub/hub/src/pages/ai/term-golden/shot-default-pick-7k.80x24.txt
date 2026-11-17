@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Choose a model                                                   Esc ×
+  Chats┃ For your AI helper and tasks
+ ▌Model┃ ──────────────────────────────────────────────────────────────────────
+ atlas ┃ Choose a model
+ Models┃
+ atlas ┃ ┃ /  Search models and providers
+ ▌Defau┃
+ ──────┃ Show: Ready  Provider ▾  Can ▾  Window ▾  List price, input ▾
+ ┌─────┃
+ │ Defa┃ 1 of 7,078 models
+ │ The ┃
+ │ ┌───┃  (•) Hoody Free Current · Recommended
+ │ │   ┃
+ │ │ AI┃ [Add to favourites]  [Your own endpoint]
+ │ │ Th┃
+ │ │ ev┃
+ │ │ co┃
+ │ │   ┃
+ │ │ Bo┃
+ │ │ Bo┃
+ │ │   ┃
+ │ └───┃
+ └─────┃
+ Typing┃

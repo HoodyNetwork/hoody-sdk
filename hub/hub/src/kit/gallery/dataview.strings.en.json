@@ -1,0 +1,14 @@
+{
+  "tab": "Data view",
+  "sec.server": "Server mode",
+  "sec.serverDesc": "The view filters nothing itself: it debounces the search (300 ms), writes everything to the URL and hands the page a query to fetch. The last rows stay on screen while the next answer loads (refresh bar, no skeletons).",
+  "sec.query": "The query the page fetches with",
+  "sec.queryDesc": "Exactly what view.query holds now; reload the page and it comes back from the URL.",
+  "col.name": "Name",
+  "col.state": "State",
+  "col.ram": "RAM",
+  "gb": "{{n}} GB",
+  "filter.state": "State",
+  "search": "Search computers",
+  "count": "{{count}} computers"
+}

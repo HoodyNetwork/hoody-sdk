@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines › win11
+ win11  ● Stopped                                                   Start   [⋯]
+ A VM inside atlas.
+  Overview  Screen  Ports  Storage ▸Snapshots  Settings  Logs
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Snapshots                                                [Take a snapshot] │
+ │ A snapshot keeps the VM's disk as it is now, so you can go back to it.     │
+ │ ! This didn't load                                                         │
+ │ The server had a problem. Try again in a moment.                           │
+ │ [Try again]                                                                │
+ │ ▸ Details                                                                  │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

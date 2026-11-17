@@ -1,0 +1,55 @@
+/* MarkdownViewer: a head row over a scroll region at most --viewer-h tall (the --viewer-h-* tokens, kit/tokens.css;
+   CodeBlock's maxHeight="md" reads the same --viewer-h-md). */
+.viewer {
+  container: mdviewer / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+.sm { --viewer-h: var(--viewer-h-sm); }
+.md { --viewer-h: var(--viewer-h-md); }
+.lg { --viewer-h: var(--viewer-h-lg); }
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+.label {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--fw-semibold);
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.more { display: none; }
+
+.region {
+  max-block-size: var(--viewer-h);
+}
+
+/* Prose reads in its own direction; a code fence inside it is code, always left to right (as Raw). */
+.rendered figure {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.empty,
+.note {
+  margin: 0;
+  color: var(--hx-muted);
+}
+
+/* Under 480 px of the viewer's own width: the region is never taller than 60cqb, and the head controls fold into the ⋯ menu. */
+@container mdviewer (width < 480px) {
+  .region { max-block-size: min(var(--viewer-h), 60cqb); }
+  .actions { display: none; }
+  .more { display: block; }
+}

@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Connect a laptop to atlas                                        Esc ×
+ Tunnel┃ ──────────────────────────────────────────────────────────────────────
+ Put a ┃ └───────────────────────────────────────────────────────────────────┘
+ laptop┃
+ / Sear┃                                                                      ▄
+     Sh┃  ✓  What to connect                                                  █
+ ▾ Sess┃                                                                      █
+ ›   We┃     What to connect                                                  █
+     We┃     ┌──────────────────────────────┐ ┌──────────────────────────────┐█
+     In┃     │ (•) Put a laptop app online  │ │ ( ) Bring a laptop service   │█
+ ▾ Sess┃     │     Web pages and            │ │     into this computer       │█
+     In┃     │     WebSockets, at a web     │ │     Any TCP service, such as │█
+     In┃     │     address.                 │ │     a database.              │█
+ ▾ Reco┃     └──────────────────────────────┘ └──────────────────────────────┘█
+     We┃     ▸ Which one should I pick?
+     se┃
+       ┃ ┌───────────────────────────────────────────────────────────────────┐
+ Questi┃ │ On the laptop                                                     │
+ ▸ What┃ │                                                                   │
+ ▸ Shou┃ │ Host                          Port                                │
+ ▸ Whic┃ │ │ __________________________  ┃ 0                                 │
+ ▸ Whic┃ │ Leave empty for this laptop.  ✗ Use a port from 1 to 65535.       │
+ ▸ When┃ ──────────────────────────────────────────────────────────────────────
+ Typing┃                                                                [Close]

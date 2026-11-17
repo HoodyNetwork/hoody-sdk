@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines › import-1
+ Computers             │  import-1  ● Not created                                                [Remove from the list]
+ Files                 │  A VM inside atlas.
+ Bots                  │
+ Board                 │  │ ✗ Last problem: Not enough free disk in this computer.
+ Demo                  │
+ Vault                 │  ▸Overview
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Programs              │  │ Overview                                                                                  │
+ Schedules             │  │ State  ● Not created                                                                      │
+ Scripts               │  │ This VM was not created, so it has no settings.                                           │
+ Logs                  │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Tunnels               │
+ Notes                 │
+ AI                    │
+▌VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Notifications                                                [✓ Mark all read]
+ Messages about your account: computers, rentals, sign-in and keys.
+ ▸ Inbox 26    Notices    Get notified
+ ──────────────────────────────────────────────────────────────────────────────
+ / Search               Filters (1)          10 unread  ↻ Refresh  View options
+   [ ] Level     Notice                                      When ↓
+ ▌•[ ]  ✗        Computer atlas stopped                      19 days ago      ⋯
+  •[ ]  !        Server cedar rental ends in 3 days          19 days ago      ⋯
+  •[ ]  !        Storage share granite expires tomorrow      19 days ago      ⋯
+  •[ ]  ✗        Computer golden-gazelle stopped             20 days ago      ⋯
+  •[ ]  !        Server proud-koala rental ends in 3 days    20 days ago      ⋯
+  •[ ]  !        Storage share cosmic-bison expires tomorrow 20 days ago      ⋯
+  •[ ]  ✗        Computer quiet-ocelot stopped               20 days ago      ⋯
+  •[ ]  !        Server steady-squid rental ends in 3 days   20 days ago      ⋯
+  •[ ]  !        Storage share smart-wombat expires tomorrow 20 days ago      ⋯
+  •[ ]  ✗        Computer happy-finch stopped                20 days ago      ⋯
+
+
+
+
+  New notices appear here and are counted    [How it works] [Dismiss this tip]
+  beside Notifications in the sidebar.
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

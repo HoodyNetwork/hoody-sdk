@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Buy a plan                                                       Esc ×
+ Plans ┃ Small
+ Upgrad┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Plan┃
+ ──────┃    ✓
+ │ ✗ fr┃
+ Plans ┃ This already went through earlier
+ Each p┃
+ disk. ┃ This request was already made on Nov 10, 2026 and
+       ┃ charged $12.00 then. Nothing new was charged now.
+ ┌─────┃
+ │     ┃ Your new server is in Frankfurt, Germany.
+ │ Plan┃
+ │ Choo┃
+ │ serv┃
+ │ to u┃
+ │     ┃
+ └─────┃
+       ┃
+ ┌─────┃
+ │ Free┃
+ │ $0 /┃
+ │ Your┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Done]   View servers

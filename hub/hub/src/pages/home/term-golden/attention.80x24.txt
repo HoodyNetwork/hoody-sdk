@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Good morning, Ada                              [i What is Hoody?]  [Customize]
+ ■ Personal · ✓ atlas (Running) · SG n12
+
+ ember needs a look. 1 Bot is waiting for you                                 █
+                                                                              █
+   ! Needs you    ember needs a look in Personal                      [Open]  █
+                  1 Bot is waiting for you in Personal              [Review]  █
+                                                                              █
+ ┌───────────────────────────────────────────────────────────────────────────┐▀
+ │ │ Ask atlas to…                                                     [Ask] │
+ │                                                                           │
+ │ [Install the popular coding agents] [Keep my app running after restarts]  │
+ │ [What is running on atlas?] [Back up my files daily] [Create a bot that…] │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Your computer                                                  View all › │
+ │ atlas ● Running SG n12                                                    │
+ │                                                                           │
+ │ Agent ⇗     ⧉ copy [QR] [Put Agent on Board]                              │
+ │ Terminal ⇗  ⧉ copy [QR] [Put Terminal on Board]                           │
+ │ Desktop ⇗   ⧉ copy [QR] [Put Desktop on Board]                            │
+ │ Files ⇗     ⧉ copy [QR] [Put Files on Board]                              │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

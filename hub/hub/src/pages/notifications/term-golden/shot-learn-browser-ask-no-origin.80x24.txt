@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Notifications
+ Messages about your account: computers, rentals, sign-in and keys.
+   Inbox 26    Notices  ▸ Get notified
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ 1   Where you see them ▌Browser alerts  On your phone  Questions
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Browser alerts                                                            │
+ │ Alerts are optional, and they are turned on in the Hub on the web.        │
+ │ ⇗ Alerts are a browser feature: they show only while the Hub is open in a │
+ │ browser tab, so a terminal cannot show them. (on your Hub's web address)  │
+ │ [c Copy link]                                                             │
+ │ /auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/notifications              │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ On your phone                                                             │
+ │ The Hub works in your phone’s browser. The bell and the Inbox can show    │
+ │ new notices while the Hub is open and in front.                           │
+ │                                                                           │▄
+ │ Browser alerts depend on your phone’s browser. A test alert, where        │█
+ │ offered above, shows what yours does.                                     │▀
+ │                                                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

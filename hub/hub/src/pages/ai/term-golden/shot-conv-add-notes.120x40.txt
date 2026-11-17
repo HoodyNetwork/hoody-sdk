@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            AI                                     ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  [Back to chats] Plan the backup job                                      · Idle [⋯] [Details]
+ Computers             │  atlas · Personal  /home/ada
+ Files    ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+ Bots     │ Attach notes                                                                               Esc × │──────────
+ Board    │ ──────────────────────────────────────────────────────────────────────────────────────────────── │
+ Demo     │ Pick up to 3 notes. Each note's text is attached as a text file, up to 24 KB of text a note.     │
+ Vault    │ Nothing is sent yet.                                                                             │
+          │                                                                                                  │
+On atlas ▾│ ! The notes of 1 running computer couldn't be read.                                    Try again │
+ Programs │                                                                                                  │
+ Schedules│ / Search notes                                                               10 notes  ↻ Refresh │
+ Scripts  │                                                                                                  │
+ Logs     │   [ ] Title                                          Computer              Changed ↓             │
+ Tunnels  │ › [ ] Weekly plan                                    atlas                 12 minutes ago        │
+ Notes    │   [ ] Staging release notes                          borealis              40 minutes ago        │
+▌AI       │   [ ] Deploy checklist                               atlas                 2 hours ago           │
+ VMs      │   [ ] Customer feedback                              borealis              5 hours ago           │
+          │   [ ] Reading list                                   atlas                 7 hours ago           │
+Account   │   [ ] Meeting notes: storefront review               atlas                 yesterday             │
+ Plans & B│   [ ] Launch timeline                                borealis              3 days ago            │
+ Referrals│   [ ] Trip ideas                                     atlas                 4 days ago            │
+ Keys and │   [ ] Backup schedule                                atlas                 9 days ago            │
+ API      │   [ ] Open questions                                 borealis                                    │
+ Notificat│                                                                                                  │
+ Account  │                                                                               [Cancel]   Attach  │
+          └──────────────────────────────────────────────────────────────────────────────────────────────────┘t can
+ + Rent servers        │  hold more.
+ Guide                 │
+ Support               │  i Hooks in this computer's settings stop the agent's steps until someone trusts them. You
+                       │  check and trust them in the Agent app.
+                       │
+                       │
+                       │
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Message your agent                                                                        │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │  [+]  [/ Commands]  [Ask when needed]                                            [Send ↵]  [▾]
+ Typing · Esc leaves the field · Ctrl+K commands

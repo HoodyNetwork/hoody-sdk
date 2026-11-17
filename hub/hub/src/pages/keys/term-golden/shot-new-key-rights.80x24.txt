@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ New key                                                          Esc ×
+ Keys a┃ Made in Personal
+ A key ┃ ──────────────────────────────────────────────────────────────────────
+ key, w┃ Limits
+ ▸ API ┃ Ends
+ ──────┃ ‹ Never ›  90 days    1 year    On a date
+ i Keys┃ Allowed IPv4 addresses
+ / Sear┃ │ 203.0.113.7, 198.51.100.0/24                                       ▄
+ 3 keys┃ Comma separated. Empty works anywhere.                               █
+   Name┃ [Add my IP]                                                          █
+ › ci-d┃ [ ] This key can make other keys                                     █
+   hood┃     Its keys never get more than it has.                             █
+   sdk-┃                                                                      █
+       ┃
+ Questi┃ Access
+ ▸ Can ┃ ┌────────────────────────────────┐ ┌────────────────────────────────┐
+ ▸ What┃ │ ( ) Full                       │ │ (•) Choose rights              │
+ ▸ Whic┃ │     Everything you can do in   │ │     Only what you tick.        │
+ ▸ What┃ │     the realms this key works  │ │                                │
+ ▸ When┃ │     in, billing and payments   │ │                                │
+ ▸ How ┃ │     included.                  │ │                                │
+ ▸ What┃ └────────────────────────────────┘ └────────────────────────────────┘
+ ▸ What┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃                                                   [Cancel]   Make key

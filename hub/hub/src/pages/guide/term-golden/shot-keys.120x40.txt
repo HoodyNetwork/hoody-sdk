@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            Guide                                  ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │                              ┌──────────────────────────────────────────────────────────────┐
+ Computers             │  │ Ask your agent            │ Keyboard                                                     │
+ Files                 │  │ Connect                   │ Shortcuts worth knowing.                                     │
+ Bots                  │  │ Skills                    │ Everywhere                                                   │
+ Board                 │  │ Build your own            │ [Ctrl+K]                      Search or jump to anything     │
+ Demo                  │  │ Every link                │ [?]                           Show this list                 │
+ Vault                 │  │ Bots                      │ [[]                           Expand or collapse the sidebar │
+                       │  │ Tools                     │ [Alt+J]                       Open or close Agent            │
+On atlas ▾             │  │ Try this                  │ [Alt+R]                       Switch realm                   │
+ Programs              │  │ Realms                    │ [Alt+C]                       Switch computer                │
+ Schedules             │  │ Topics                    │                                                              │
+ Scripts               │  │▌Keyboard                  │ Go to                                                        │
+ Logs                  │  │ Look                      │ [g] then [h]                  Home                           │
+ Tunnels               │                              │ [g] then [c]                  Computers                      │
+ Notes                 │   [j] [k] move between       │ [g] then [b]                  Bots                           │
+ AI                    │   sections                   │ [g] then [a]                  Apps                           │
+ VMs                   │                              │ [g] then [p]                  Programs                       │
+                       │                              │ [g] then [s]                  Schedules                      │
+Account                │                              │ [g] then [l]                  Logs                           │
+ Plans & Billing       │                              │ [g] then [n]                  Notifications                  │
+ Referrals             │                              │ [g] then [t]                  Scripts                        │
+ Keys and tokens       │                              │                                                              │
+ API                   │                              │ Lists and tables                                             │
+ Notifications      26 │                              │ [j] or [k]                    Move down or up                │
+ Account               │                              │ [Enter]                       Open the row                   │
+                       │                              │ [Space]                       Select the row                 │
+ + Rent servers        │                              │ [.]                           Open the row's menu            │
+▌Guide                 │                              │ [\]                           Hide or show the list beside a │
+ Support               │                              │                               detail                         │
+                       │                              │ [Esc]                         Close the detail or overlay    │
+                       │                              │                                                              │
+                       │                              │ Terminal                                                     │
+                       │                              │ [q]                           Leave the Hub (not while       │ ▄
+                       │                              │                               typing)                        │ █
+                       │                              │ [Ctrl+C]                      Leave the Hub; twice: leave    │ █
+                       │                              │                               without asking                 │ ▀
+                       │                              │ [Ctrl+Z]                      Suspend to the shell (fg to    │
+                       │                              │                               come back)                     │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

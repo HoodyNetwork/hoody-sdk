@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Settings for Chief                                                                                    Esc ×
+ Home     ┃ Model, behaviour, guardrails and voice.
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │ The Bot itself        ┌─────────────────────────────────────────────────────────────────────────────────┐
+▌Bots     ┃ │▌Model                 │ Model                                                         [Helpers' models] │
+ Board    ┃ │ Behaviour             │ The model the Bot itself answers you with. Helpers it starts don't use it.      │
+ Demo     ┃ │ Voice                 │ Ready to use                                                                    │
+ Vault    ┃ │ The helpers it        │                                                                                 │
+          ┃ │ starts                │ │ / Search models and providers                                                 │
+On atlas ▾┃ │ Helpers               │                                                                                 │
+ Programs ┃ │ Guardrails and        │ Showing 5 of 5                                                                  │
+ Schedules┃ │ limits                │                                                                                 │
+ Scripts  ┃ │ Advanced              │ ›(•) Agent's default                                                            │
+ Logs     ┃                         │      Uses the agent's configured model, also when that changes                  │
+ Tunnels  ┃                         │                                                                                 │
+ Notes    ┃                         │  H Hoody AI Included                                                            │
+ AI       ┃                         │  ( ) Hoody Free Recommended                                                     │
+ VMs      ┃                         │  ( ) Hoody Fast                                                                 │
+          ┃                         │                                                                                 │
+Account   ┃                         │  G Google Your key · Can't tell yet                                             │
+ Plans & B┃                         │  ( ) Gemini 3 Pro                                                               │
+ Referrals┃                         │      Can't tell if it runs here                                                 │
+ Keys and ┃                         │                                                                                 │
+ API      ┃                         │  Ensembles                                                                      │
+ Notificat┃                         │  ( ) Best of three                                                              │
+ Account  ┃                         │                                                                                 │
+          ┃                         │                                                                                 │
+ + Rent se┃                         │  More models                                                                    │
+ Guide    ┃                         │  More models are available once you set up a provider.                          │
+ Support  ┃                         │  [OpenAI] [Set up a provider]                                                   │
+          ┃                         │                                                                                 │
+          ┃                         │ ✓ Saved. It uses the agent's configured model.                                  │
+          ┃                         │ Saved changes keep the current model until its conversation restarts.           │
+          ┃                         │                                                                                 │
+          ┃                         │ ▸ Do the Bot's helpers use this model?                                          │
+          ┃                         └─────────────────────────────────────────────────────────────────────────────────┘
+          ┃
+          ┃
+          ┃
+ Tab move ┃

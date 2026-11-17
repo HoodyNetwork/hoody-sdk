@@ -1,0 +1,519 @@
+/* NumberField, Select, Combobox, RadioGroup, Form, FormFooter and TimeField (one file each in forms/), one block each.
+   PathField imports the popover and list classes for its own list. */
+
+/* NumberField */
+.number {
+  display: flex;
+  align-items: stretch;
+}
+
+.numberInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0 var(--sp-2);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: var(--fs-md);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  outline: none;
+}
+
+.unit {
+  display: flex;
+  align-items: center;
+  padding-inline-end: var(--sp-2);
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.step {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--ctl-h-md); /* square with the field it sits in */
+  border: 0;
+  background: transparent;
+  color: var(--hx-muted);
+  cursor: pointer;
+}
+
+/* The stepper and the Combobox open button are pressables inside the field box. They draw no fill of their own (the
+   kit's ghost fill is Button's alone, controls/ownButtons.test.ts): the field box shows the pointer with its border and
+   the icon takes full ink; a disabled one dims with the pressables' one recipe. A disabled field wears the field's
+   disabled look on its whole box instead, so the button keeps that ink and is not dimmed twice. */
+.step[data-hovered],
+.comboBtn[data-hovered] {
+  color: var(--hx-ink);
+}
+
+.step[data-disabled],
+.comboBtn[data-disabled] {
+  cursor: not-allowed;
+  opacity: var(--ctl-off-opacity);
+}
+
+.number[data-disabled] > .step,
+.comboInput[data-disabled] + .comboBtn {
+  color: inherit;
+  opacity: 1;
+}
+
+/* Select */
+.selectBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-2) 0 var(--field-pad-x);
+  text-align: start;
+  cursor: pointer;
+}
+
+/* A picked value longer than its field (a long option on a phone) wraps inside the trigger, which grows to hold it; a
+   value that fits keeps the one line at the field's height. The box sets the height, so this changes it with two
+   classes (.select is the Select's root), which the load order cannot undo. */
+.select .selectBtn {
+  height: auto;
+  min-height: var(--ctl-h-md);
+  padding-block: var(--sp-1);
+}
+
+/* size="toolbar": a toolbar control's height, as SearchField size="toolbar"; the look stays the field's. */
+.select_toolbar .selectBtn {
+  min-height: var(--tb-ctl-h);
+}
+
+.selectValue {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.selectValue :is(.optionText) {
+  flex-direction: row;
+}
+
+.selectValue :is(.optionDesc, .optionCheck) {
+  display: none;
+}
+
+.selectValue[data-placeholder] {
+  color: var(--hx-faint);
+}
+
+/* React Aria marks the value as a placeholder when the picked option is filtered out of its collection; the picked label keeps its ink. */
+.pickedVal {
+  display: contents;
+  color: var(--hx-ink);
+}
+
+.selectBtn[data-disabled] .pickedVal {
+  color: inherit;
+}
+
+.chev {
+  color: var(--hx-muted);
+}
+
+/* Combobox */
+.combo {
+  position: relative;
+  display: flex;
+}
+
+/* Room for the open button over the input's end: as wide as the button, so typed text never runs under it. */
+.comboInput {
+  padding-inline-end: var(--ctl-h-md);
+}
+
+.comboBtn {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  display: grid;
+  place-items: center;
+  width: var(--ctl-h-md); /* square with the field it sits in */
+  border: 0;
+  background: transparent;
+  color: var(--hx-muted);
+  cursor: pointer;
+}
+
+/* Select search, groups, more-line */
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: var(--sp-1);
+  border-bottom: var(--bw) solid var(--pop-sep);
+  background: var(--pop-band); /* the search line is a band; its field's ring gap follows it */
+  --ring-gap: var(--pop-band);
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus);
+}
+
+.searchIcon {
+  position: absolute;
+  inset-inline-start: var(--sp-3);
+  color: var(--hx-muted);
+  pointer-events: none;
+}
+
+/* A plain input, so the box's state attributes never come: its ring is the browser's own focus state. */
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0 var(--sp-2) 0 var(--sp-6);
+}
+
+.searchInput:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.section + .section {
+  margin-top: var(--sp-1);
+}
+
+/* The one group label shape: Menu groups, Select sections, PickerPanel groups. */
+.sectionHead {
+  padding: var(--sp-2) var(--pop-row-x) var(--sp-1);
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.more {
+  padding: var(--sp-2) var(--pop-row-x);
+  border-top: var(--bw) solid var(--pop-sep);
+  background: var(--pop-band);
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+/* Popover listbox */
+.listWrap {
+  display: contents;
+}
+
+.popover {
+  z-index: var(--z-popover);
+  width: var(--trigger-width);
+  min-width: 200px;
+  border: var(--bw) solid var(--pop-line);
+  border-radius: var(--r-2);
+  background: var(--pop-bg);
+  box-shadow: var(--sh-pop);
+
+  /* The list fits the popover React Aria sized to the room by its trigger (an inline max-height). The
+   * listbox scrolls (overflow: auto), so as a flex item its least height is 0 and it shrinks; the search line keeps its
+   * height. A taller list overflowed the popover, past the screen's edge or over its own trigger. */
+  display: flex;
+  flex-direction: column;
+}
+
+.listbox {
+  max-height: 320px;
+  overflow: auto;
+  padding: var(--sp-1);
+  outline: none;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--pop-row-h);
+  padding: var(--sp-1) var(--pop-row-x);
+  border-radius: var(--r-1);
+  color: var(--hx-ink);
+  cursor: default;
+  outline: none;
+}
+
+.option[data-focused] {
+  background: var(--pop-hover);
+}
+
+.option[data-selected] {
+  font-weight: var(--fw-medium);
+}
+
+/* Row gap between rows only, never after a header or a rule. */
+.option + .option {
+  margin-block-start: var(--pop-row-gap);
+}
+
+.option[data-disabled],
+.option[data-disabled] .optionCheck {
+  color: var(--pop-off);
+}
+
+/* A theme option's palette: up to three dots before its label. */
+.swatches {
+  display: inline-flex;
+  flex: none;
+  gap: var(--sp-half);
+}
+
+.swatch {
+  width: var(--sp-3);
+  height: var(--sp-3);
+  border: var(--bw) solid var(--hx-line-strong);
+  border-radius: var(--r-round);
+}
+
+.optionText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.optionLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.optionDesc {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+
+  /* A line break written in the text shows; plain text wraps (pinned by states/preline.test.tsx). */
+  white-space: pre-line;
+
+  /* A long word (a window title, a path) breaks instead of widening the option past its dialog. */
+  overflow-wrap: anywhere;
+}
+
+.optionCheck {
+  color: var(--hx-ink);
+}
+
+.empty {
+  padding: var(--sp-3);
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.pickerStatus {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* RadioGroup */
+.radios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* Two columns where there is room for two, one where there is not (never three): rows aligned. */
+.cols2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(calc(4 * var(--sp-10)), calc(50% - var(--sp-5)))), 1fr));
+  column-gap: var(--sp-5);
+}
+
+[aria-orientation='horizontal'] > .radios {
+  flex-flow: row wrap;
+}
+
+/* An option's reveal: right under the selected option, its start lined up with the option's label (past the dot). */
+.radioReveal {
+  display: grid;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding-inline-start: calc(var(--toggle-box) + var(--sp-2));
+}
+
+.radioCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.radio {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  cursor: pointer;
+}
+
+.radioCards > .radioReveal {
+  grid-column: 1 / -1;
+  padding-inline-start: 0;
+}
+
+.radioCard {
+  padding: var(--sp-3);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-2);
+  background: var(--hx-card);
+}
+
+.radioCard[data-hovered] {
+  border-color: var(--hx-line-strong);
+}
+
+.radioCard[data-selected] {
+  border-color: var(--hx-ink);
+  background: var(--hx-selected);
+  box-shadow: inset 0 0 0 var(--bw) var(--hx-ink);
+}
+
+.radioDot {
+  flex: none;
+  width: var(--toggle-box);
+  height: var(--toggle-box);
+  margin-block-start: var(--sp-half);
+  border: var(--bw) solid var(--ctl-line-toggle);
+  border-radius: var(--r-round);
+  background: var(--hx-card);
+}
+
+.radio[data-selected] .radioDot {
+  border: 5px solid var(--hx-ink);
+}
+
+.radio[data-focus-visible] .radioDot {
+  box-shadow: var(--focus-ring);
+}
+
+.radio[data-disabled] {
+  cursor: not-allowed;
+  opacity: var(--ctl-off-opacity);
+}
+
+/* Form */
+.form {
+  --form-gap: var(--sp-4); /* read by a FormSection in the column */
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  max-width: var(--form-max);
+}
+
+/* Form layout="inline": one row that wraps, its controls bottom-aligned so a button sits level with a labelled field. */
+.form_inline {
+  --form-gap: 0px;
+
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
+  max-width: none;
+}
+
+/* Form layout="bare": no gap and no cap; the page lays out what is inside. */
+.form_bare {
+  --form-gap: 0px;
+
+  display: block;
+  max-width: none;
+}
+
+/* FormFooter: the state (Unsaved changes / the Outcome line) on the left, buttons on the right. On a narrow footer
+   the state takes its own row above the buttons. */
+.footer {
+  container: footer / inline-size;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  width: 100%;
+}
+
+.footerState {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  min-width: 0;
+  min-height: var(--btn-h); /* level with the footer's buttons */
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.footerDirty {
+  color: var(--hx-muted);
+}
+
+.footerActions {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap-reverse; /* buttons never shrink below their words, so a row that cannot hold them
+                              stacks them, the submit (the last) on top; one row while they fit */
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  margin-inline-start: auto;
+}
+
+@container footer (width < 440px) {
+  .footerState {
+    flex-basis: 100%;
+  }
+
+  .footerActions {
+    flex: 1 1 100%;
+  }
+}
+
+/* TimeField: its input is --field-time-w wide; the error line keeps its room so the form does not jump. */
+.time {
+  width: max-content;
+  max-width: 100%;
+}
+
+.time input {
+  width: var(--field-time-w);
+}
+
+.time:not([data-invalid]) {
+  padding-block-end: calc(var(--sp-4) + var(--sp-1));
+}
+
+/* A finger: taller rows, and the popover never wider than the screen; a radio option is a 44 px target, like a Button. */
+@media (pointer: coarse) {
+  .option {
+    min-height: var(--ctl-h);
+  }
+
+  .radio {
+    min-block-size: var(--touch-min);
+  }
+}
+
+@media (width < 600px) {
+  .popover {
+    max-width: calc(100vw - var(--sp-4));
+  }
+
+  .listbox {
+    max-height: min(320px, 50vh);
+  }
+}
+
+/* Forced colours do not paint box-shadow, so the focus ring above gets a solid system outline (the same rule as
+   Button's; measured by kit/focus.forced.spec.ts). */
+@media (forced-colors: active) {
+  .searchInput:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+
+  /* The focused option is a fill only, which forced colours repaint: an inset outline marks it instead. */
+  .option[data-focused] {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: calc(-1 * var(--bw-2));
+  }
+}

@@ -1,0 +1,46 @@
+/* EnvRows: environment variables as name/value rows in a fieldset; the label, description and error take the field
+   family's text styles. */
+
+/* No fieldset frame or inset (the browser's 2 px margin would set it in from the fields around it). The legend takes
+   the field label's classes (fields.module.css .label .legend), so it lines up with a TextField's or RadioGroup's label. */
+.envEditor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* As a field: a legend is not one of the fieldset's flex items, so the column gap never follows it. It keeps the
+   field label's own distance to its control (fields.module.css .field: --sp-1), not zero. */
+.envEditor .fieldLegend {
+  margin-block-end: var(--sp-1);
+}
+
+/* titled: the legend takes a SettingGroup title's look (SettingGroup.module.css, .wrap > [data-hub-heading]). */
+.titled legend {
+  margin-block-end: var(--sp-2);
+  font: var(--t-group);
+}
+
+.help {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+}
+
+.envRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  gap: var(--sp-2);
+  align-items: start;
+}
+
+.envError {
+  margin: 0;
+  color: var(--hx-danger);
+  font: var(--t-small);
+}

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs                              ▸ Use with your agent   + Launch an app
+ On atlas
+ ▸ Running programs    Apps    Ports & aliases
+ ──────────────────────────────────────────────────────────────────────────────
+     ! Update this computer
+
+     atlas runs an older version that can't list its programs here. Update
+     the computer to manage them.
+
+      How to update
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

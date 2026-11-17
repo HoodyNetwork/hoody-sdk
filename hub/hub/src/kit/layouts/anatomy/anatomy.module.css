@@ -1,0 +1,404 @@
+/* The anatomy family: SectionGroup, AnatomySection, SubSection, ItemList, ActionBar, InlineActions, SuggestionActions and
+   ReasonButton. Only four spacing roles set its vertical rhythm, the tokens --gap-category, --gap-between-sections,
+   --gap-block and --gap-line (kit/tokens.css holds the desktop values). The phone values are restated on the family's
+   roots at the end of this file, under the content container's query, because :root cannot answer a container query.
+   The card frame itself is Layouts.module.css .panel with the cut corner (CardEdge). Logical properties only. */
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-between-sections);
+  min-width: 0;
+}
+
+/* Between categories: the larger break and a hairline. */
+.group + .group {
+  margin-block-start: calc(var(--gap-category) - var(--gap-between-sections));
+  padding-block-start: var(--gap-category);
+  border-block-start: var(--bw) solid var(--hx-line);
+}
+
+.groupHead > [data-hub-heading] {
+  color: var(--hx-ink);
+  font: var(--t-heading);
+}
+
+/* Sections that follow each other outside a group are spaced as inside one. A parent that sets the gap itself (a
+   group below, a DetailPage's main column in Layouts.module.css) takes this margin back. */
+.section + .section {
+  margin-block-start: var(--gap-between-sections);
+}
+
+.group > .section + .section {
+  margin-block-start: 0;
+}
+
+.titleLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-line) var(--sp-2);
+  min-width: 0;
+}
+
+.titleLine > [data-hub-heading] {
+  min-width: 0;
+  color: var(--hx-ink);
+  font: var(--t-section);
+  overflow-wrap: anywhere;
+}
+
+.count {
+  color: var(--hx-muted);
+  font: var(--t-section);
+  font-variant-numeric: tabular-nums;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-block);
+}
+
+.notices,
+.keep {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-block);
+  min-width: 0;
+}
+
+.promise,
+.note {
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* In a flush body (a table edge to edge) the promise and the note keep the card's inset, as a panel notice does. */
+.inset {
+  padding-inline: var(--pad-card);
+}
+
+.note.inset:last-child {
+  padding-block-end: var(--sp-3);
+}
+
+.firstUse {
+  min-width: 0;
+}
+
+/* SubSection: flat, inside a Section's body. */
+.sub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-block);
+  min-width: 0;
+}
+
+.subHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+/* A group's title is its own step: above a field's label (12 px medium), below the Section's title. */
+.sub .titleLine > [data-hub-heading] {
+  font: var(--t-group);
+}
+
+/* The description sits on the title: one line step under it, not a block away. */
+.sub > .subHead + p {
+  margin-block-start: calc(var(--gap-line) - var(--gap-block));
+}
+
+/* Sibling groups: a rule between them with the same room on both sides, more than the gap between the fields inside
+   one. The first group takes none. The margin tops the holder's own gap up to the
+   same room above the rule: a holder that publishes its gap (--form-gap) is read, any other counts as a block gap. */
+.sub + .sub {
+  margin-block-start: max(0px, calc(var(--sp-5) - var(--form-gap, var(--gap-block))));
+  padding-block-start: var(--sp-5);
+  border-block-start: var(--bw) solid var(--pop-sep);
+}
+
+/* ActionBar: one group of actions, an action row (--gap-actions); it wraps rather than cutting a label. */
+.bar {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-actions);
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* InlineActions: never folded, so a row that runs out of room wraps; the same action-row gap. --inline-touch is the
+   touch minimum on a coarse pointer, 0 with a mouse. */
+.inline {
+  --inline-touch: 0px;
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-actions);
+  min-width: 0;
+}
+
+/* Each item may be no wider than the row: a disabled action's item is ReasonButton's wrapper, not the button, so the
+   bound sits on the item itself too. */
+.inline > * {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+@media (pointer: coarse) {
+  .inline {
+    --inline-touch: var(--touch-min);
+  }
+}
+
+/* SuggestionActions: its visible name, then the list. The list is an `.inline` row (wraps, each item bounded, a long
+   label wraps its words) without a list's own marks or inset. */
+.suggest {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.suggestLabel {
+  font: var(--t-small);
+  color: var(--hx-muted);
+}
+
+.suggestList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* One action whose words alone are wider than the row (a "Use <address>" of a 200-character address) wraps its own
+   words instead of running past the row's edge, and keeps all of them: the label is data, so it is never cut to an
+   ellipsis. The control grows to its lines from its usual height: the plate height its size gives it (the Button's own
+   --plate-h, read on the button itself), or --touch-min on a coarse pointer when that is taller. Each selector outranks
+   the Button rule it replaces (its max-content minimum and its touch floor are :where(), its height one class); the
+   label is reached by the Button's own hook, data-btn-label. */
+.inline :is(a[href], button) {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  block-size: auto;
+  min-block-size: max(var(--plate-h), var(--inline-touch));
+  padding-block: var(--sp-1);
+  line-height: var(--lh-box-body);
+  white-space: normal;
+  text-align: start;
+}
+
+.inline :is(a[href], button) > [data-btn-label] {
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+/* ReasonButton: the button's description is always there (visually hidden); while shown, a copy sits under the button
+   in a fixed layer on <body> (placed by ReasonButton.tsx, kept inside the viewport), so no clipping card cuts it. */
+.reasonWrap {
+  display: inline-flex;
+}
+
+.reason {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  width: max-content;
+  max-width: min(280px, calc(100vw - 16px));
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-1);
+  background: var(--hx-ink);
+  color: var(--hx-on-ink);
+  font: var(--t-small);
+  box-shadow: var(--sh-2);
+}
+
+.reasonHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ItemList: plain rows, a hairline between them. */
+.items {
+  --item-indent: var(--sp-6);
+
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  min-width: 0;
+  padding-block: var(--gap-block);
+}
+
+.item + .item {
+  border-block-start: var(--bw) solid var(--hx-line);
+}
+
+/* Nested rows (a branch's steps): a row's nested list takes a line of its own under the row and moves in, its first
+   hairline included, so the rule shows where the branch starts. The parent's bottom space is the nested list's own. */
+.itemParent {
+  flex-wrap: wrap;
+  row-gap: var(--gap-block);
+  padding-block-end: 0;
+}
+
+.itemsNested {
+  flex-basis: 100%;
+  margin-inline-start: var(--item-indent);
+}
+
+.itemsNested > .item:first-child {
+  border-block-start: var(--bw) solid var(--hx-line);
+}
+
+.itemLead {
+  flex: none;
+  margin-block-start: var(--sp-half);
+  color: var(--hx-muted);
+}
+
+.itemMark {
+  flex: none;
+  min-width: 2ch;
+  color: var(--hx-muted);
+  font: var(--t-body-strong);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.itemMain {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
+  gap: var(--gap-line);
+  min-width: 0;
+}
+
+.itemTitleLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  min-width: 0;
+}
+
+.itemTitle,
+.itemOpen {
+  min-width: 0;
+  color: var(--hx-ink);
+  font: var(--t-body-strong);
+  overflow-wrap: anywhere;
+}
+
+/* A data title (mono): the code font, as written, without the theme's case and tracking. */
+.itemMono {
+  font-family: var(--font-mono);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.itemOpen {
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.itemOpen[data-hovered] {
+  text-decoration: underline;
+}
+
+.itemOpen[data-focus-visible] {
+  border-radius: var(--r-1);
+  box-shadow: var(--focus-ring);
+}
+
+/* Forced colours drop box-shadow, so the ring above would vanish: a solid outline in the system Highlight colour. */
+@media (forced-colors: active) {
+  .itemOpen[data-focus-visible] {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+}
+
+.itemMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* A row's actions: an action row (--gap-actions). */
+.itemActions {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-actions);
+}
+
+/* The phone values of the two larger gaps: smaller breaks. Restated on every root of the family, and on `.rhythm`, the
+   class a container outside the family takes when it draws these parts (a SettingsPage section with the anatomy
+   slots), so each part reads them wherever it sits. Row actions move under their titles. */
+@container content (width < 600px) {
+  .group,
+  .section,
+  .sub,
+  .items,
+  .rhythm {
+    --gap-category: var(--sp-6);
+    --gap-between-sections: var(--sp-5);
+  }
+
+  .items {
+    --item-indent: var(--sp-4);
+  }
+
+  .item {
+    flex-wrap: wrap;
+  }
+
+  .itemActions {
+    flex-basis: 100%;
+  }
+}
+
+/* Touch: the row's open control is a full-height target. */
+@media (pointer: coarse) {
+  .itemOpen {
+    min-height: var(--ctl-h);
+  }
+}
+
+/* Glance: a fact's words, then its limit's Meter, on one line while they fit. */
+.glanceMeter {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-variant-numeric: tabular-nums;
+}

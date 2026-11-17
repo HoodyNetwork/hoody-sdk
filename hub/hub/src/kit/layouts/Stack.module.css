@@ -1,0 +1,55 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  min-width: 0;
+}
+
+.wrap {
+  flex-wrap: wrap;
+}
+
+/* Each gap is also published as --form-gap: a FormSection in the column takes it off its own section gap. */
+.g0 { gap: var(--sp-0); --form-gap: 0px; } /* a length: --sp-0 is a bare 0, which a calc() cannot subtract */
+.g1 { gap: var(--sp-1); --form-gap: var(--sp-1); }
+.g2 { gap: var(--sp-2); --form-gap: var(--sp-2); }
+.g3 { gap: var(--sp-3); --form-gap: var(--sp-3); }
+.g4 { gap: var(--sp-4); --form-gap: var(--sp-4); }
+.g5 { gap: var(--sp-5); --form-gap: var(--sp-5); }
+.g6 { gap: var(--sp-6); --form-gap: var(--sp-6); }
+.g7 { gap: var(--sp-7); --form-gap: var(--sp-7); }
+.g8 { gap: var(--sp-8); --form-gap: var(--sp-8); }
+
+/* Touch: wrapped lines of buttons leave at least --touch-gap between them (8 on a coarse pointer, 0
+   otherwise, so a fine pointer keeps the row's own gap). */
+.wrap.g0 { row-gap: var(--touch-gap); } /* --sp-0 is 0 */
+.wrap.g1 { row-gap: max(var(--sp-1), var(--touch-gap)); }
+
+.p_none { padding: var(--sp-0); }
+.p_sm { padding: var(--sp-2); }
+.p_md { padding: var(--sp-4); }
+
+/* The page padding, as the archetypes' root (Layouts.module.css .page): a page built on a Stack ends as they do. */
+.p_page { padding: var(--sp-4) var(--pad-page) var(--sp-9); }
+
+.a_start { align-items: flex-start; }
+.a_center { align-items: center; }
+.a_end { align-items: flex-end; }
+.a_stretch { align-items: stretch; }
+
+.j_start { justify-content: flex-start; }
+.j_center { justify-content: center; }
+.j_end { justify-content: flex-end; }
+.j_between { justify-content: space-between; }
+
+/* A kit Section never adds its outer margin to its parent's gap. Sections that follow each other are one
+   --gap-between-sections apart (anatomy.module.css); as direct children of a Stack the Stack's gap is part of that
+   step, so the Section's margin is only what is left of it (nothing when the gap is already as large). */
+.stack > :global([data-hub-section='']) + :global([data-hub-section='']) {
+  margin-block-start: max(0px, calc(var(--gap-between-sections) - var(--form-gap, 0px)));
+}

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                      ◆ Personal ▾  Computers not loaded ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  New realm
+ Computers             │  A separate space in your account, with its own computers, keys and settings.
+ Files                 │
+ Bots                  │  Step 2 of 3 · Computers  ███████░░░
+ Board                 │   ✓ Name and colour ▸2 Computers  3 Create
+ Demo                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │  ▸ Your choices
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+On this computer       │  │ Add computers (optional)                                                                  │
+ Programs              │  │ Each computer you pick joins this realm and keeps its other realms and its project. Skip  │
+ Schedules             │  │ this to start empty.                                                                      │
+ Scripts               │  │ ! We couldn't list your computers. You can still create the realm empty.                  │
+ Logs                  │  │ The server had a problem. Try again in a moment.                                          │
+ Tunnels               │  │ [Try again]                                                                               │
+ Notes                 │  │ ▸ Details                                                                                 │
+ AI                    │  │ ▸ Does this move it out of its realms?                                                    │
+ VMs                   │  │ ▸ Making new computers here                                                               │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+Account                │
+ Plans & Billing       │  Questions
+ Referrals             │  ▸ What is a realm?
+ Keys and tokens       │  ▸ What is in a new realm?
+ API                   │  ▸ Does adding a computer here take it out of its other realms?
+ Notifications       2 │  ▸ Can I make a new computer in an empty realm?
+ Account               │  ▸ How do keys and shares work with a realm?
+                       │  ▸ What else belongs to a realm?
+ + Rent servers        │  ▸ Does a realm cost anything?
+ Guide                 │  ▸ Where are the name and colour kept?
+ Support               │  ▸ How do I switch realms, or remove one I don't need?
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  [Back]                                                                     [Cancel]   Next →
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

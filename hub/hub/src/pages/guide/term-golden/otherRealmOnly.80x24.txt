@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                     ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+ Guide                                                                         █
+ How to use Hoody: ask your agent, connect your own tools, and find every
+ link.
+ ▌Ask your agent  Connect  Skills  Build your own  Every link  Bots  Tools
+  Try this  Realms  Topics  Keyboard  Look
+
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Ask your agent                    [Show the welcome again]  ✦ Open Agent  │
+ │ Every computer comes with its own agent. Tell it what to build, watch its │
+ │ progress, and answer its questions in the Agent panel.                    │
+ │ Alt+J opens or closes the Agent panel from any page.                      │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Connect                                                                   │
+ │ Connect your AI. Hoody works best from the AI you already use. Connect it │
+ │ once and it gets real computers, terminals, displays, browsers and files. │
+ │ ▸ AI chats                                                                │
+ │   Coding agents   Paste this into an AI that can open links. It can       │
+ │   CLI             guide you through connecting Hoody.                     │
+ │   SDK                                                                     │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

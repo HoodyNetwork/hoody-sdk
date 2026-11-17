@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Permissions of Acme storefront                                          Esc ×
+ Home                  │  Computers     ┃ ─────────────────────────────────────────────────────────────────────────────
+▌Computers             │  Projects group┃   Overview  ▸ Access rules    People    Computers                           █
+ Files                 │    Computers   ┃ ────────────────────────────────────────────────────────────────────────────█
+ Bots                  │  ──────────────┃                                                                             █
+ Board                 │                ┃ ┌──────────────────────────────────────────────────────────────────────────┐█
+ Demo                  │  / Search proje┃ │ Who can open the programs of Acme storefront's computers                 │█
+ Vault                 │                ┃ │ For a computer without rules of its own, this decides who gets in. For a │█
+                       │  › █ Acme store┃ │ computer with rules of its own, these groups are added to its rules.     │█
+On atlas ▾             │    3 computers ┃ │ ┌──────────────────────────────────────────────────────────────────────┐ │█
+ Programs              │                ┃ │ │ IN FORCE NOW                                                         │ │█
+ Schedules             │    █ Experiment┃ │ │ No project rules. Each computer decides with its own rules.          │ │█
+ Scripts               │    2 computers ┃ │ └──────────────────────────────────────────────────────────────────────┘ │█
+ Logs                  │                ┃ └──────────────────────────────────────────────────────────────────────────┘█
+ Tunnels               │    █ Home base ┃                                                                             █
+ Notes                 │    3 computers ┃ ┌──────────────────────────────────────────────────────────────────────────┐█
+ AI                    │                ┃ │                                                                          │█
+ VMs                   │                ┃ │ Change project rules                                                     │█
+                       │                ┃ │ ( ) No project rules                                             [Save…] │█
+Account                │                ┃ │     Each computer decides with its own rules. Computers without          │█
+ Plans & Billing       │                ┃ │     rules of their own become open to anyone with their                  │█
+ Referrals             │                ┃ │     address; the others lose the groups and rules they                   │█
+ Keys and tokens       │                ┃ │     inherited.                                                           │█
+ API                   │                ┃ │ (•) Only my IP                                                           │█
+ Notifications      26 │                ┃ │     Computers without rules of their own open only from the              │█
+ Account               │                ┃ │     address you use now. Computers with rules of their own               │█
+                       │                ┃ │     inherit this group.                                                  │█
+ + Rent servers        │                ┃ │     SG 203.0.113.7 · Singapore ⧉ copy (i)                                │█
+ Guide                 │                ┃ │     ! Access rules take IPv4 addresses only. If your IP address          │█
+ Support               │                ┃ │       changes (another Wi-Fi, mobile data, a VPN), the programs          │█
+                       │  Questions     ┃ │       stop opening for you. You can still change this rule in            │█
+                       │  ▸ What does a ┃ │       the Hub from any network, once signed in: it doesn't               │█
+                       │  ▸ What are rea┃ │       apply to the Hub or the Hoody API.                                 │█
+                       │  ▸ Who can open┃ │ ( ) Only these IPs                                                       │█
+                       │  ▸ How does the┃ │     Computers without rules of their own open only from the              │█
+                       │  ▸ How do I use┃ │     addresses you list. Computers with rules of their own                │█
+                       │  ▸ How do I use┃ │     inherit these groups.                                                │█
+                       │  ▸ How do I get┃ │ ( ) Private                                                              │
+                       │  ▸ What is the ┃ │     Computers without rules of their own can't be opened by              │
+ Tab move · Enter open · Ctrl+K commands┃ │     address. Computers with rules of their own lose the groups           │

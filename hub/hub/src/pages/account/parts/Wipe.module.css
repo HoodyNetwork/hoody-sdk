@@ -1,0 +1,17 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0 0 var(--sp-3) var(--sp-5);
+  font-size: var(--fs-sm);
+}
+
+.faint {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.banner {
+  padding-block-end: var(--sp-3);
+}

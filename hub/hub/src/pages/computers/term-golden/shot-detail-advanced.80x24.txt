@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent  [+ Get a computer]
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ Computers  Esc
+ atlas  ● Running                                         [Open terminal ⇗] [⋯]
+ SG n12 · Home base · █  Personal ·  Current computer
+
+  Overview  Connect  Permissions ▸Ports & addresses  Desktop  Network  Run
+  Programs  Backups  Storage
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ At a glance                                           [View access rules] │█
+ │ Who can open  Access rules apply                                          │█
+ │ Ports         2 web · 1 other                                             │█
+ │ Aliases       1                                                           │█
+ └───────────────────────────────────────────────────────────────────────────┘▀
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Ports                                                                     │
+ │ Every port a program listens on; only web ports get an address on the     │
+ │ internet.                                                                 │
+ │› 3000                                                  Web  [Create alias]│
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

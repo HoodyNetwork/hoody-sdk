@@ -1,0 +1,286 @@
+/* IntroPanel: the text column at the start, the dotted map with the computer's card at the end. Tokens only; the
+   stage is laid out in px because it is one picture: the map, the pin, the card and the ways keep their places. */
+.card {
+  min-height: 0;
+  overflow: clip; /* at the border box, where the card's corner edge lies */
+}
+
+.root {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 532px;
+  block-size: 248px;
+  overflow: hidden;
+  outline: none;
+}
+
+.text {
+  position: relative;
+  z-index: var(--z-raised);
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  padding: var(--sp-6) 0 var(--sp-6) var(--sp-7);
+}
+
+.eyebrow {
+  margin: 0 0 var(--sp-3);
+  color: var(--hx-muted-text);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.lead {
+  margin: 0;
+  color: var(--hx-ink);
+  font: var(--t-title);
+  letter-spacing: var(--tracking-head);
+  white-space: pre-line; /* one phrase a line: the text carries the breaks */
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-block-start: auto;
+}
+
+/* Hide, on its own plate over the map's corner. */
+.hide {
+  position: absolute;
+  inset-block-start: var(--sp-4);
+  inset-inline-end: var(--sp-4);
+  z-index: var(--z-raised);
+  display: inline-flex;
+  background: var(--card-body);
+}
+
+/* ── The stage: one picture, always drawn left to right ───────────────────── */
+.stage {
+  position: relative;
+  direction: ltr;
+  min-inline-size: 0;
+}
+
+.stageIn {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  inline-size: 572px;
+}
+
+.map {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: -1px;
+  inline-size: 574px;
+  block-size: 248px;
+  mask-image: linear-gradient(90deg, transparent 0, var(--hx-frame) 120px);
+}
+
+.land {
+  fill: var(--hx-ink);
+  opacity: 0.19;
+}
+
+/* The ways in, wired to the pin. */
+.wire {
+  fill: none;
+  stroke: var(--hx-ink);
+  stroke-width: 1.6;
+  stroke-dasharray: 5 5;
+  opacity: 0.55;
+}
+
+.pinLine {
+  fill: none;
+  stroke: var(--hx-ink);
+  stroke-width: 1.6;
+  opacity: 0.6;
+}
+
+.pin {
+  fill: var(--hx-selected-bar);
+}
+
+.halo {
+  fill: var(--hx-selected-bar);
+  opacity: 0.16;
+}
+
+.way {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  inline-size: 32px;
+  block-size: 32px;
+  border: var(--bw) solid var(--hx-panel-line);
+  background: var(--card-body);
+  color: var(--hx-ink);
+}
+
+.way0 {
+  inset-block-start: 29px;
+  inset-inline-start: 91px;
+}
+
+.way1 {
+  inset-block-start: 64px;
+  inset-inline-start: 136px;
+}
+
+.way2 {
+  inset-block-start: 36px;
+  inset-inline-start: 270px;
+}
+
+/* The computer's card, small. */
+.mini {
+  position: absolute;
+  inset-block-start: 101px;
+  inset-inline-start: 114px;
+  inline-size: 300px;
+  border: var(--bw) solid var(--hx-panel-line);
+  background: var(--card-body);
+}
+
+.miniHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+  block-size: 32px;
+  padding: 0 var(--sp-3);
+  border-block-end: var(--bw) solid var(--hx-line);
+  background: var(--hx-fill);
+}
+
+.miniName {
+  overflow: hidden;
+  color: var(--hx-ink);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+  block-size: 46px;
+  border: var(--bw) solid var(--hx-line);
+  color: var(--hx-ink);
+}
+
+.tile + .tile {
+  border-inline-start: 0;
+}
+
+.tileLit {
+  border-color: var(--hx-acc);
+  background: var(--hx-acc);
+  color: var(--hx-acc-ink);
+}
+
+.tileName {
+  max-inline-size: 100%;
+  overflow: hidden;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Narrower than the two columns: the text above a map strip ─────────────── */
+@container content (width < 1000px) {
+  .root {
+    display: flex;
+    flex-direction: column;
+    block-size: auto;
+  }
+
+  .text {
+    padding: var(--sp-6) var(--sp-6) var(--sp-5);
+  }
+
+  .lead {
+    font-size: var(--fs-2xl);
+    line-height: var(--lh-tight);
+  }
+
+  .actions {
+    margin-block-start: var(--sp-5);
+  }
+
+  .hide {
+    inset-block-start: var(--sp-3);
+    inset-inline-end: var(--sp-3);
+  }
+
+  .stage {
+    flex: none;
+    block-size: 200px;
+    overflow: hidden;
+  }
+
+  .stageIn {
+    inset-inline: 0 auto;
+    inline-size: 356px;
+  }
+
+  .map {
+    inset-block-start: -8px;
+    inset-inline-start: -76px;
+    inline-size: 539px;
+    block-size: 233px;
+    mask-image: linear-gradient(90deg, transparent, var(--hx-frame) 100px, var(--hx-frame) calc(100% - 80px), transparent), linear-gradient(180deg, transparent 8px, var(--hx-frame) 44px);
+    mask-composite: intersect;
+  }
+
+  .way0 {
+    inset-block-start: 18px;
+    inset-inline-start: 8px;
+  }
+
+  .way1 {
+    inset-block-start: 51px;
+    inset-inline-start: 50px;
+  }
+
+  .way2 {
+    inset-block-start: 24px;
+    inset-inline-start: 177px;
+  }
+
+  .mini {
+    inset-block-start: 88px;
+    inset-inline-start: 20px;
+  }
+}
+
+@container content (width < 600px) {
+  .text {
+    padding: var(--sp-5) var(--sp-4) var(--sp-4);
+  }
+
+  .lead {
+    font-size: var(--fs-xl);
+  }
+
+  .eyebrow {
+    margin-block-end: var(--sp-4);
+    padding-inline-end: var(--sp-10); /* clear of Hide */
+  }
+}

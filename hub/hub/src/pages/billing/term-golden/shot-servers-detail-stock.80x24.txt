@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Plans & Billing  Balance $250                                    [+ Add funds]
+ Upgrade a server, rent a whole machine, and see what you pay.
+   Plans  ▸ Bare metal    Wallet & usage
+ ──────────────────────────────────────────────────────────────────────────────
+ │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC               [Pay now]
+ ‹ Plans & Billing  Esc
+ Frankfurt L  ● Instant delivery*                                             █
+ DE Falkenstein · instant delivery*                                           █
+                                                                              ▀
+ Term
+ (•) $69 for 30 days
+ ( ) $189 for 90 days
+ ( ) $690 for 365 days
+
+
+ Your order
+ Rental                                                                    $69
+ ─────────────────────────────────────────────────────────────────────────────
+ Total first payment                                                       $69
+ ──────────────────────────────────────────────────────────────────────────────
+ Your balance covers it
+                                                              Rent this server
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

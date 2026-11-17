@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY       ┃ Link settings                                       Esc ×
+ Bots               ┃ Browser access, limits and removing the link.
+ ‹ Bots  Esc        ┃ ─────────────────────────────────────────────────────────
+ Chief  ● Idle      ┃ Browser access                                          █
+   SG atlas    Hoody┃ ┌──────────────────────────────────────────────────────┐█
+                    ┃ │                                                      │█
+   Activity  ▸ Link ┃ │ Allow other websites (CORS)                  [■ on ] │█
+ ───────────────────┃ │ CORS: lets a page on another website call            │█
+                    ┃ │ the link from a browser.                             │█
+  ┌─────────────────┃ │                                                      │█
+  │ At a glance     ┃ └──────────────────────────────────────────────────────┘█
+  │ Link            ┃                                                         ▀
+  │ Keys            ┃ Limits
+  │ Limits          ┃ ┌──────────────────────────────────────────────────────┐
+  │ Other websites (┃ │                                                      │
+  └─────────────────┃ │ Calls per minute, each key                           │
+                    ┃ │ 1 to 600                                             │
+                    ┃ │ │ 60                                                 │
+  ┌─────────────────┃ │                                                      │
+  │ Keys            ┃ │ Calls per minute, all keys                           │
+  │ Whoever holds a ┃ │ 1 to 3000                                            │
+  │ or program its o┃ │ │ 120                                                │
+  │  Key            ┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter op┃                                           [Cancel]  Save

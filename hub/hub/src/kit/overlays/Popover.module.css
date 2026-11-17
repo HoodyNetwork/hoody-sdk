@@ -1,0 +1,215 @@
+/* Popover (anchored, non-modal frame) and Sheet (the phone full-screen surface). The popover draws the one frame of
+   every floating surface (--pop-line, --pop-bg, --sh-pop); the Sheet's head, title, bar rules and scrim exit are the
+   Drawer's and the Dialog's. */
+.popover {
+  --ring-gap: var(--pop-bg);
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus); /* again with the gap: see kit/tokens.css Focus */
+  --search-max-w: none;
+  --search-grow: 1;
+
+  z-index: var(--z-popover);
+  display: flex;
+  flex-direction: column;
+  width: min(var(--popover-w), calc(100vw - 2 * var(--sp-4)));
+  max-height: var(--visual-viewport-height, 100vh); /* no fixed cap: React Aria's inline max-height (the room on its side of the trigger) wins once placed */
+  overflow: auto;
+  border: var(--bw) solid var(--pop-line);
+  border-radius: var(--r-1);
+  background: var(--pop-bg);
+  box-shadow: var(--sh-pop);
+  outline: none;
+}
+
+.sm {
+  width: min(var(--popover-w-sm), calc(100vw - 2 * var(--sp-4)));
+}
+
+.lg {
+  width: min(var(--popover-w-lg), calc(100vw - 2 * var(--sp-4)));
+}
+
+.picker {
+  width: min(var(--picker-w), calc(100vw - 2 * var(--sp-4)));
+}
+
+/* A wide picker (ComputerPicker), its one-line rows naming the place and realm beside the name. */
+.wide {
+  width: min(var(--picker-w-wide), calc(100vw - 2 * var(--sp-4)));
+}
+
+.browse {
+  width: min(var(--picker-w-browse), calc(100vw - 2 * var(--sp-4)));
+}
+
+.bell {
+  width: min(var(--bell-w), calc(100vw - 2 * var(--sp-4)));
+}
+
+.popover[data-entering] {
+  animation: popoverIn var(--dur-enter) var(--ease-out);
+}
+
+.popover[data-exiting] {
+  animation: fadeIn var(--dur-exit) linear reverse;
+}
+
+.popover[data-placement='top'] {
+  --pop-from: -4px;
+}
+
+.dialog {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  --surface-inset: var(--pad-surface);
+
+  gap: var(--sp-3);
+  min-height: 0;
+  padding: var(--surface-inset);
+  outline: none;
+}
+
+.flush {
+  --surface-inset: 0;
+
+  gap: 0;
+  padding: 0;
+}
+
+.title {
+  margin: 0;
+  color: var(--hx-ink);
+  font: var(--t-section);
+}
+
+.flush > .title {
+  padding: var(--sp-3) var(--pad-surface);
+  border-block-end: var(--bw) solid var(--pop-sep);
+  background: var(--pop-band); /* a titled popover's head is a band, flush to the frame; it holds no control */
+}
+
+/* Sheet: full screen, slides in from the inline end like the phone Drawer. At --z-drawer, so a Dialog opens over it;
+   one opened from inside a Dialog takes the Dialog's layer and, mounted later, draws above it. */
+.sheetScrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-drawer);
+  background: var(--hx-scrim);
+}
+
+.sheetScrim[data-over-dialog] {
+  z-index: var(--z-modal);
+}
+
+.sheetScrim[data-entering] {
+  animation: fadeIn var(--dur-enter) var(--ease-out);
+}
+
+/* The one scrim exit (Dialog, Drawer). React Aria keeps the overlay mounted only while the scrim itself animates, so
+   this is also what lets the sheet's own slide-out below be seen. */
+.sheetScrim[data-exiting] {
+  animation: fadeIn var(--dur-exit) linear reverse;
+}
+
+.sheet {
+  --ring-gap: var(--hx-raised);
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus); /* again with the gap: see kit/tokens.css Focus */
+  --search-max-w: none;
+  --search-grow: 1;
+
+  position: fixed;
+  inset: 0;
+  display: flex;
+  background: var(--hx-raised);
+  outline: none;
+}
+
+.sheet[data-entering] {
+  animation: slideIn var(--dur-enter) var(--ease-out);
+}
+
+.sheet[data-exiting] {
+  animation: slideIn var(--dur-exit) var(--ease-out) reverse;
+}
+
+.sheetDialog {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  outline: none;
+}
+
+.sheetHead {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--drawer-head-h);
+  padding-block: calc(var(--sp-2) + env(safe-area-inset-top, 0px)) var(--sp-2);
+  padding-inline: var(--sp-2) var(--pad-surface);
+  border-block-end: var(--bw) solid var(--pop-sep);
+  background: var(--bar-bg); /* the sheet's head is a bar (its Close sits on it, so the ring gap follows) */
+  --ring-gap: var(--bar-bg);
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus);
+}
+
+.sheetTitle {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--hx-ink);
+  font: var(--t-heading);
+  letter-spacing: var(--tracking-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheetBody {
+  flex: 1;
+  min-height: 0;
+  --surface-inset: var(--pad-surface);
+
+  overflow: auto;
+  padding: var(--surface-inset);
+  overscroll-behavior: contain;
+}
+
+.sheetFoot {
+  display: flex;
+  flex: none;
+  gap: var(--gap-actions);
+  padding-block: var(--sp-3) calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
+  padding-inline: var(--pad-surface);
+  border-block-start: var(--bw) solid var(--pop-sep);
+  background: var(--bar-bg);
+  --ring-gap: var(--bar-bg);
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus);
+  --foot-share: 1; /* footRow: the buttons share the row */
+}
+
+@keyframes popoverIn {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--pop-from, 4px)));
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(var(--slide-from, 100%));
+  }
+}
+
+:dir(rtl) .sheet {
+  --slide-from: -100%;
+}
+
+/* No reduced-motion block: every animation above runs on a --dur-* token, which is 0 ms then (kit/tokens.css). */

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Vault                                               ▸ Use with your agent   + New entry   [⋯]
+ Computers             │  Tokens, passwords and settings your tools and agents read by name. The list shows only names.
+ Files                 │
+ Bots                  │  These entries belong to Personal. Other realms and Global have their own.
+ Board                 │
+ Demo                  │  Entries here    Size here    Account storage
+▌Vault                 │  3               327 B        3% of 50 MB
+                       │ ┌────────────────────────────────────────────────────────────────────┐
+On atlas ▾             │ │ ! Clear Personal?                                            Esc × │ ↻ Refresh  View options
+ Programs              │ │ ────────────────────────────────────────────────────────────────── │
+ Schedules             │ │ Every entry of Personal is removed. Entries of other realms and of │ted
+ Scripts               │ │ Global stay.                                                       │23, 2026, 4:40 PM
+ Logs                  │ │                                                                    │23, 2026, 4:40 PM
+ Tunnels               │ │ • 3 entries are removed.                                           │23, 2026, 4:40 PM
+ Notes                 │ │                                                                    │
+ AI                    │ │ Type Personal to confirm                                           │
+ VMs                   │ │ ┌────────────────────────────────────────────────────────────────┐ │
+                       │ │ │                                                                │ │
+Account                │ │ └────────────────────────────────────────────────────────────────┘ │
+ Plans & Billing       │ │                                                                    │
+ Referrals             │ │                                            [Cancel]  [Clear vault] │
+ Keys and tokens       │ └────────────────────────────────────────────────────────────────────┘
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │  Questions
+                       │  ▸ What goes in the vault?
+                       │  ▸ What is the difference between Global and a realm's entries?
+                       │  ▸ How do I see or copy a value?
+                       │  ▸ What does "Encrypt with a password" do?
+                       │  ▸ What can I put in a name and a value?
+                       │  ▸ What is metadata?
+                       │  ▸ What does Export vault do?
+ Typing · Esc leaves the field · Ctrl+K commands

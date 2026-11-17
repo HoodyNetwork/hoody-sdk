@@ -1,0 +1,11 @@
+/* ButtonStrip only lays its buttons side by side: each button draws its own plate and line (Button.module.css
+   .inStrip), so the line between two is the first one's end edge, drawn once. */
+.strip {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.strip:empty {
+  display: none;
+}

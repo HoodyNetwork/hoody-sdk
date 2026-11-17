@@ -1,0 +1,249 @@
+/* "Use with your agent": a quiet ghost control, and its side drawer (the whole screen on a phone). Kit tokens only. */
+.trigger {
+  color: var(--hx-muted);
+}
+
+/* Footer: the Guide link at the start, then the quiet Hide at the end. */
+.footStart {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+}
+
+.footEnd {
+  display: flex;
+  flex: none;
+  align-items: center;
+}
+
+/* The tab strip sticks flush to the top of the drawer's scroller (over the body's own padding), on the drawer's ground,
+   so a scrolled prompt never shows above it. */
+.tabs {
+  --tabs-sticky-top: calc(-1 * var(--surface-inset, 0px));
+  --tabs-sticky-bg: var(--drawer-body-bg);
+}
+
+.panel {
+  padding-block: var(--sp-5) var(--sp-2);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.lead {
+  margin: 0;
+  max-width: 64ch;
+  color: var(--hx-ink);
+  font: var(--t-body);
+  text-wrap: pretty;
+}
+
+/* What the prompts act on: a labelled card over the facts, the why line under them. */
+.actsOn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--bw) solid var(--hx-line);
+  background: var(--hx-card);
+}
+
+.actsOnLabel {
+  color: var(--hx-muted);
+  font: var(--t-label);
+  text-transform: var(--case-caps);
+  letter-spacing: var(--tracking-label);
+}
+
+.why {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.named {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  align-items: center;
+  min-width: 0;
+}
+
+.name {
+  overflow-wrap: anywhere;
+}
+
+/* The example prompts: one card each, title and Copy on top, the whole prompt under it in body type (it is English for
+   an agent, never the code look) and never cut. */
+.prompts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.prompt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-1) var(--sp-3) var(--sp-3);
+  border: var(--bw) solid var(--hx-line-2);
+}
+
+.promptHead {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--icon-hit);
+}
+
+.promptTitle {
+  min-width: 0;
+  color: var(--hx-ink);
+  font: var(--t-body-strong);
+}
+
+.promptText {
+  margin: 0;
+  padding-inline-end: var(--sp-2);
+  color: var(--hx-ink);
+  font: var(--t-body);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+  align-items: center;
+}
+
+/* The realm's colour square beside its name (the colour is the person's, set per realm in this browser). */
+.realmMark {
+  flex: none;
+  inline-size: 10px;
+  block-size: 10px;
+  border: var(--bw) solid var(--hx-line);
+  background: var(--hx-card);
+}
+
+/* Inside the hero, under its actions: what each of the two ways does. */
+.howto {
+  padding-block-end: var(--sp-2);
+  border-block-end: var(--bw) solid var(--hx-line-2);
+}
+
+/* The main prompt: the tab's hero, an accent edge, its title, Ask Hoody Agent and Copy, the two ways, then the whole prompt. */
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: var(--bw) solid var(--hx-line);
+  border-inline-start: var(--bw-notice) solid var(--hx-acc-edge);
+  background: var(--hx-raised);
+}
+
+.heroHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.kicker {
+  color: var(--hx-muted);
+  font: var(--t-label);
+  text-transform: var(--case-caps);
+  letter-spacing: var(--tracking-label);
+}
+
+.heroTitle {
+  margin: 0;
+  color: var(--hx-ink);
+  font: var(--t-section);
+}
+
+.heroSub {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.startersHead {
+  margin-block-start: var(--sp-2);
+  color: var(--hx-muted);
+  font: var(--t-label);
+  text-transform: var(--case-caps);
+  letter-spacing: var(--tracking-label);
+}
+
+.promptActions {
+  display: inline-flex;
+  flex: none;
+  gap: var(--sp-1);
+  align-items: center;
+}
+
+/* A starter's prompt: the same words a copy gives, quieter than the main one. */
+.starterText {
+  margin: 0;
+  padding-inline-end: var(--sp-2);
+  color: var(--hx-muted);
+  font: var(--t-small);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+/* Can do: two parts (this page, everywhere else), each under a quiet caps label; the second holds a few titled groups. */
+.canPart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.canHead {
+  color: var(--hx-muted);
+  font: var(--t-label);
+  text-transform: var(--case-caps);
+  letter-spacing: var(--tracking-label);
+}
+
+.canGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.canGroupHead {
+  color: var(--hx-ink);
+  font: var(--t-label);
+}
+
+@media (forced-colors: active) {
+  .actsOn,
+  .prompt,
+  .hero {
+    border-color: CanvasText;
+  }
+
+  .realmMark {
+    forced-color-adjust: none;
+  }
+}

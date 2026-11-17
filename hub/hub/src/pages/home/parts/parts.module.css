@@ -1,0 +1,189 @@
+.keys {
+  display: contents;
+}
+
+.setup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  max-inline-size: var(--measure);
+}
+
+.setupBody {
+  color: var(--hx-muted);
+}
+
+.pickRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.hint {
+  color: var(--hx-faint);
+  font-size: var(--fs-sm);
+}
+
+/* Ask strip */
+.askCard {
+  min-height: 0;
+}
+
+/* The card's handoff while the dock is open: one line, then Focus Ask right after it (at the start, so a dock
+   that covers the page's end edge at narrow widths never hides the button). */
+.askOpen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.askOpenText {
+  margin: 0;
+  color: var(--hx-muted);
+}
+
+/* What happened to a quick ask that did not go through: under the box, or across the handoff line. */
+.askNote {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--hx-warn);
+  font: var(--t-small);
+}
+
+/* Empty: kept in the page (a live region announces what is added later), drawn as nothing. */
+.askNoteEmpty {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.ask {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.askRow {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-2);
+}
+
+.askField {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The ideas wrap onto more rows; nothing scrolls sideways, so nothing is clipped. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Empty realm */
+.canvas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-6);
+  grid-column: 1 / -1;
+  padding-block: var(--sp-8);
+}
+
+/* Setup */
+.setupPanel {
+  min-height: 0;
+}
+
+.loadMore {
+  display: block;
+}
+
+@container (width < 600px) {
+  /* Phone width: three placeholders fit the screen, so the loading page never needs a scroll. */
+  .loadMore {
+    display: none;
+  }
+}
+
+.stepper {
+  display: flex;
+  gap: var(--sp-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: stage;
+}
+
+.stepperItem {
+  display: flex;
+  counter-increment: stage;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* The stage's number in a ring: the order of the stages, never a claim about which one is done. */
+.stepperMark {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--icon-lg);
+  block-size: var(--icon-lg);
+  border: var(--bw) solid var(--hx-line-strong);
+  border-radius: var(--r-round);
+  font-size: var(--fs-sm);
+}
+
+.stepperMark::before {
+  content: counter(stage);
+}
+
+@container content (width < 640px) {
+  .stepper {
+    flex-direction: column;
+    gap: var(--sp-3);
+  }
+}
+
+/* Widget bodies */
+
+/* Ask is at least 160 px wide. Its height is the kit toolbar size, as high as the field beside it. */
+.askBtn {
+  min-inline-size: 160px;
+}
+
+/* No box of its own: What is Hoody? and Customize are the kit header's action items, spaced by its gap. */
+.customizeFull {
+  display: contents;
+}
+
+.customizeMenu {
+  display: none;
+}
+
+.reopenPhone {
+  display: none;
+}
+
+@container content (width < 640px) {
+  .customizeFull {
+    display: none;
+  }
+
+  .customizeMenu {
+    display: inline-flex;
+  }
+
+  .reopenPhone {
+    display: block;
+  }
+}
+

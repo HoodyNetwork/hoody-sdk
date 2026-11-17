@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs                              ▸ Use with your agent  [+ Launch an app]
+ Apps on atlas: programs you open only when you need them.
+ ‹ Programs  Esc
+ htop  ● Ready                                                           Open █
+                                                                              █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ RIGHT NOW                                                                 │█
+ │ htop is ready.                                                            │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+                                                                              █
+ Opens in  Terminal                      Source    Installed                  █
+ Where     Terminal 15004                Handle    b2c3…b2c3 ⧉                █
+ Started   Nov 11, 2026, 7:30 AM                                              █
+
+                                                                       ⧉ copy
+  $ /usr/bin/htop
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │                                                                           │
+ │ Board                           [Put on Board]                            │
+ │ Shows it as a tile on your                                                │
+ │ Board.                                                                    │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

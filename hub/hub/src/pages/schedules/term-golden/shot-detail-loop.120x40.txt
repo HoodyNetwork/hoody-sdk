@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Schedules                                             ▸ Use with your agent   + New schedule
+ Computers             │  15 schedules on atlas · next: ping-api in 3 minutes · 4 failed today · Computers ›
+ Files                 │  9 programs running ›
+ Bots                  │
+ Board                 │  ‹ Schedules  Esc
+ Demo                  │  Unnamed loop  ● Failed                                                          [Run now] [⋯]
+ Vault                 │   Agent loop
+                       │
+On atlas ▾             │  i Loops live in the agent's memory and end with their session. Only the last runs are shown.
+ Programs              │
+▌Schedules             │  Schedule     Every 1 hour
+ Scripts               │  Status       [□ off] Paused
+ Logs                  │  Next run     Paused after failed runs
+ Tunnels               │  Last result  Paused after failed runs
+ Notes                 │
+ AI                    │  History
+ VMs                   │  i No history for this one.
+                       │
+Account                │
+ Plans & Billing       │  Advanced
+ Referrals             │  The saved command, with the secrets we recognise hidden.
+ Keys and tokens       │  Session  sess_02
+ API                   │  ID       loop_5e6f7a8b
+ Notifications      26 │  [Show the prompt]
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

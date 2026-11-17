@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Account
+ Your profile, how you sign in, and where you are signed in.
+ ‹ 2  ▌Two-step sign-in  Passcode lock  Sign-in sessions  Agent sign-in   6 ›
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Two-step sign-in                                                          │
+ │                                                                           │▄
+ │ Two-step sign-in                ● On · Backup codes left: 8               │█
+ │ Signing in asks for a code                                                │
+ │ from your authenticator app,    │ ◷ This may have gone through            │
+ │ or a backup code.               │   The server didn't confirm the         │
+ │                                 │   result. Don't send it again: check    │
+ │                                 │   the current state first.              │
+ │                                 │   [Check again]                         │
+ │                                                                           │
+ │ Ask for a code when API keys    [■ on ] Ask for a code                    │
+ │ change                                                                    │
+ │ Creating an API key, or                                                   │
+ │ changing its access settings,                                             │
+ │ then needs a code from your                                               │
+ │ authenticator app.                                                        │
+ │ ▸ What changes when two-step sign-in is on?                               │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

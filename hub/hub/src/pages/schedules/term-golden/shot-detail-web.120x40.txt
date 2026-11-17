@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Schedules                                             ▸ Use with your agent   + New schedule
+ Computers             │  15 schedules on atlas · next: ping-api in 3 minutes · 4 failed today · Computers ›
+ Files                 │  9 programs running ›
+ Bots                  │
+ Board                 │  ‹ Schedules  Esc
+ Demo                  │  ping-api  ● Worked                                                                 [Edit] [⋯]
+ Vault                 │   Web request
+                       │
+On atlas ▾             │  Schedule     Every 5 minutes
+ Programs              │  Status       [■ on ] On
+▌Schedules             │  Next run     in 3 minutes · 09:03
+ Scripts               │  Last result  Worked
+ Logs                  │
+ Tunnels               │  Next run
+ Notes                 │  Times are in UTC.
+ AI                    │  in 3 minutes · 09:03
+ VMs                   │
+                       │
+Account                │  History
+ Plans & Billing       │      Started                       Result                                              Took
+ Referrals             │  ›   Today 13:00                   ● Worked                                             4 s
+ Keys and tokens       │      Yesterday 13:00               ● Worked                                             7 s
+ API                   │      Oct 21 13:00                  ● Worked                                             5 s
+ Notifications      26 │
+ Account               │
+                       │  Advanced
+ + Rent servers        │  The saved command, with the secrets we recognise hidden.
+ Guide                 │  Schedule  0 */5 * * * *
+ Support               │  [Show the command]
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

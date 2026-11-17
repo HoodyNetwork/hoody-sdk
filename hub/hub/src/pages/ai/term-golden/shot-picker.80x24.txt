@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Choose a model                                                   Esc ×
+  Chats┃ For your AI helper and tasks
+ ▌Model┃ ──────────────────────────────────────────────────────────────────────
+ atlas ┃ Choose a model
+ Models┃
+ atlas ┃ ┃ /  Search models and providers
+ ▌Defau┃
+ ──────┃ Show: Ready  Provider ▾  Can ▾  Window ▾  List price, input ▾
+ ┌─────┃
+ │ Defa┃ 3 of 7 models
+ │ The ┃
+ │ ┌───┃  (•) Hoody Free Current · Recommended
+ │ │   ┃
+ │ │ AI┃  O OpenAI Ready · 2 models
+ │ │ Th┃  ( ) GPT-5
+ │ │ ev┃  ( ) GPT-5 mini
+ │ │ co┃
+ │ │   ┃ [Add to favourites]  [Your own endpoint]
+ │ │ Bo┃
+ │ │ Bo┃
+ │ │   ┃
+ │ └───┃
+ └─────┃
+ Typing┃

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Settings for Chief                                                                                    Esc ×
+ Home     ┃ Model, behaviour, guardrails and voice.
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │ The Bot itself        ┌─────────────────────────────────────────────────────────────────────────────────┐
+▌Bots     ┃ │▌Model                 │ Model                                                         [Helpers' models] │
+ Board    ┃ │ Behaviour             │ The model the Bot itself answers you with. Helpers it starts don't use it.      │
+ Demo     ┃ │ Voice                 │ Ready to use                                                                    │
+ Vault    ┃ │ The helpers it        │                                                                                 │
+          ┃ │ starts                │ ┃ / gemini                                  ×                                   │
+On atlas ▾┃ │ Helpers               │                                                                                 │
+ Programs ┃ │ Guardrails and        │ Showing 1 of 1                                                                  │
+ Schedules┃ │ limits                │                                                                                 │
+ Scripts  ┃ │ Advanced              │  Can't tell yet · 1                                                             │
+ Logs     ┃                         │  ( ) Gemini 3 Pro                                                               │
+ Tunnels  ┃                         │      Can't tell if it runs here                                                 │
+ Notes    ┃                         │                                                                                 │
+ AI       ┃                         │ ▸ Do the Bot's helpers use this model?                                          │
+ VMs      ┃                         └─────────────────────────────────────────────────────────────────────────────────┘
+          ┃
+Account   ┃
+ Plans & B┃
+ Referrals┃
+ Keys and ┃
+ API      ┃
+ Notificat┃
+ Account  ┃
+          ┃
+ + Rent se┃
+ Guide    ┃
+ Support  ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+ Typing · ┃

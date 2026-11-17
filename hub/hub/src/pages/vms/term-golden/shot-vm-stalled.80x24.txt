@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines › stuck
+ stuck  ● Running                                              [Power off]  [⋯]
+ A VM inside atlas.
+ │ ! This VM stopped answering. Power off is the only way to stop it now;
+ │   anything it has not saved is lost.
+ ▸Overview  Screen  Ports  Storage  Snapshots  Settings  Logs
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Overview                                                                   │
+ │ Memory                  1 GB                                               │
+ │ CPUs                    1                                                  │
+ │ Disk                    20 GB                                              │
+ │ Starts with             UEFI                                               │
+ │ TPM                     No                                                 │
+ │ Disk connection         VirtIO                                             │
+ │ Screen                  On                                                 │
+ │ Open ports              0                                                  │
+ │ Starts with the         No                                                 │
+ │ computer                                                                   │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

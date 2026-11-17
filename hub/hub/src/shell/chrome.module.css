@@ -1,0 +1,29 @@
+/* The focus-mode restore button: bottom-right at an 8 px inset, lifted above the page's own bottom row
+   (--restore-lift, set from useChromeHidden's `lift`), a kit IconButton xs at the kit's own sizes (24 px drawn; on a
+   coarse pointer its press is 44, the kit's own, so there the inset is at least the kit's --xs-press-out and the whole
+   press is on the screen).
+   It fades to 40 % after 2 s without the pointer near and is back at once on hover, focus or approach. */
+.restore {
+  position: fixed;
+  inset-block-end: calc(max(var(--sp-2), var(--xs-press-out)) + var(--restore-lift, 0px));
+  inset-inline-end: max(var(--sp-2), var(--xs-press-out));
+  z-index: var(--z-toast);
+  opacity: 1;
+  transition: opacity var(--dur-hover) var(--ease-out);
+}
+
+.restore[data-dim] {
+  opacity: 0.4;
+}
+
+.restore:hover,
+.restore:focus-within {
+  opacity: 1;
+}
+
+/* Phones and touch screens of any width: no hover to bring it back, so it stays at full opacity. */
+@media (width < 768px), (pointer: coarse), (hover: none) {
+  .restore[data-dim] {
+    opacity: 1;
+  }
+}

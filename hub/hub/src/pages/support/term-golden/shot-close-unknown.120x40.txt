@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Support                                                                        [+ New ticket]
+ Computers             │
+ Files                 │  ‹ Support  Esc
+ Bots                  │  Invoice shows the wrong country  ● Waiting for support                                    [⋯]
+ Board                 │  · Billing 0000…a1b4
+ Demo                  │
+ Vault                 │  │ ◷ This may have gone through
+                       │  │   Still open when checked at 09:00 AM: the close may still land, or a reply opened it
+On atlas ▾             │  │   again.
+ Programs              │  │   Check again only reads the ticket.
+ Schedules             │  │   ▸ Details
+ Scripts               │  │   [Check again]  [Stop tracking]
+ Logs                  │
+ Tunnels               │   You Nov 2, 2026, 12:00 PM
+ Notes                 │   The invoice for October lists Germany, but my billing address is in Austria.
+ AI                    │
+ VMs                   │  We'll answer here. You'll get a notice when we reply.
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+▌Support               │
+                       │
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Your reply
+                       │  │
+                       │
+                       │
+                       │
+                       │  0 of 4,000 · Plain text. Never paste passwords, keys or tokens.
+                       │                                                                                          Send
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

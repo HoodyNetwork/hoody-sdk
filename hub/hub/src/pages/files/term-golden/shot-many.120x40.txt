@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Files                                        ▸ Use with your agent  ‹ One pane ›  Two panes
+ Computers             │  The folders on your computers.
+▌Files                 │  ▸ Browse    Storage    Transfers    Use from your PC                                        █
+ Bots                  │  ────────────────────────────────────────────────────────────────────────────────────────────█
+ Board                 │                                                                                              █
+ Demo                  │  [Up one folder] │ ● SG atlas            ▾ / › srv › media [Find] [+ New folder] [Upload] [⋯]█
+ Vault                 │                                                                                              █
+                       │  / Search                   Kind ▾                         120 items  ↻ Refresh  View options█
+On atlas ▾             │                                                                                              █
+ Programs              │    [ ] Name                                  Size  Modified                 Kind ↑           █
+ Schedules             │  ▌ [ ] photo-001.jpg                       176 KB  Oct 23, 2025, 6:13 AM    File           ⋯██
+ Scripts               │    [ ] photo-002.jpg                       184 KB  Oct 23, 2025, 5:13 AM    File           ⋯██
+ Logs                  │    [ ] photo-003.jpg                       191 KB  Oct 23, 2025, 4:13 AM    File           ⋯██
+ Tunnels               │    [ ] photo-004.jpg                       199 KB  Oct 23, 2025, 3:13 AM    File           ⋯██
+ Notes                 │    [ ] photo-005.jpg                       207 KB  Oct 23, 2025, 2:13 AM    File           ⋯██
+ AI                    │    [ ] photo-006.jpg                       214 KB  Oct 23, 2025, 1:13 AM    File           ⋯██
+ VMs                   │    [ ] photo-007.jpg                       222 KB  Oct 23, 2025, 12:13 AM   File           ⋯██
+                       │    [ ] photo-008.jpg                       230 KB  Oct 22, 2025, 11:13 PM   File           ⋯██
+Account                │    [ ] photo-009.jpg                       238 KB  Oct 22, 2025, 10:13 PM   File           ⋯██
+ Plans & Billing       │    [ ] photo-010.jpg                       245 KB  Oct 22, 2025, 9:13 PM    File           ⋯██
+ Referrals             │    [ ] photo-011.jpg                       253 KB  Oct 22, 2025, 8:13 PM    File           ⋯██
+ Keys and tokens       │    [ ] photo-012.jpg                       261 KB  Oct 22, 2025, 7:13 PM    File           ⋯██
+ API                   │    [ ] photo-013.jpg                       269 KB  Oct 22, 2025, 6:13 PM    File           ⋯██
+ Notifications      26 │    [ ] photo-014.jpg                       276 KB  Oct 22, 2025, 5:13 PM    File           ⋯██
+ Account               │    [ ] photo-015.jpg                       284 KB  Oct 22, 2025, 4:13 PM    File           ⋯░█
+                       │    [ ] photo-016.jpg                       292 KB  Oct 22, 2025, 3:13 PM    File           ⋯░█
+ + Rent servers        │    [ ] photo-017.jpg                       300 KB  Oct 22, 2025, 2:13 PM    File           ⋯░█
+ Guide                 │    [ ] photo-018.jpg                       307 KB  Oct 22, 2025, 1:13 PM    File           ⋯░█
+ Support               │    [ ] photo-019.jpg                       315 KB  Oct 22, 2025, 12:13 PM   File           ⋯░█
+                       │    [ ] photo-020.jpg                       323 KB  Oct 22, 2025, 11:13 AM   File           ⋯░█
+                       │    [ ] photo-021.jpg                       330 KB  Oct 22, 2025, 10:13 AM   File           ⋯░
+                       │    [ ] photo-022.jpg                       338 KB  Oct 22, 2025, 9:13 AM    File           ⋯░
+                       │    [ ] photo-023.jpg                       346 KB  Oct 22, 2025, 8:13 AM    File           ⋯░
+                       │    [ ] photo-024.jpg                       354 KB  Oct 22, 2025, 7:13 AM    File           ⋯░
+                       │    [ ] photo-025.jpg                       361 KB  Oct 22, 2025, 6:13 AM    File           ⋯░
+                       │    [ ] photo-026.jpg                       369 KB  Oct 22, 2025, 5:13 AM    File           ⋯░
+                       │
+                       │  1–50 of 120 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

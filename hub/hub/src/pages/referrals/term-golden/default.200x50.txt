@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Referrals                                                                                                                                                     [Program rules]
+ Computers             │  Invite people to Hoody. When they pay for servers by card or crypto, you earn Referral credit.
+ Files                 │
+ Bots                  │  ┌───────────────────────────────────────────────────────────────────────────────────┐  ┌───────────────────────────────────────────────────────────────────────────────────┐█
+ Board                 │  │ Your links                                                                        │  │ Referral credit                                                                   │█
+ Demo                  │  │ Each code is its own signup link. Every code earns you the same.                  │  │ Available                                                                         │█
+ Vault                 │  │                                                                                   │  │ $12.40                                                                            │█
+                       │  │ Main code                                                                         │  │ Spent first on servers.                                                           │█
+On atlas ▾             │  │ Given when you joined. It stays with your account, can't be retired, and doesn't  │  │ On hold                                                                     $8.00 │█
+ Programs              │  │ count toward your own codes.                                                      │  │   Next credit due 3 Dec                                                           │█
+ Schedules             │  │                                                                                   │  │   Processing or a review can make it arrive later; refunds can reduce or reverse  │█
+ Scripts               │  │ k7m2q9xa  Main   https://api.hoody.com/auth/signup?ref=k7m2q9xa ⇗     ⧉ Copy link │  │   credit.                                                                         │█
+ Logs                  │  │                                                                                   │  │   Why credit is held                                                              │█
+ Tunnels               │  │                                                                                   │  │ Reversed                                                                    $0.00 │█
+ Notes                 │  │ Your own codes                                                                    │  │ Withdrawal  Creators only. You're a Referrer. How withdrawal works                │█
+ AI                    │  │ 1 of 3 active · 2 more can be made now                                            │  └───────────────────────────────────────────────────────────────────────────────────┘█
+ VMs                   │  │                                                                                   │                                                                                       █
+                       │  │ maya-builds  Your own                                                             │                                                                                       █
+Account                │  │ https://api.hoody.com/auth/signup?ref=maya-builds ⇗  ⧉ copy            [Retire…]ⓘ │                                                                                       █
+ Plans & Billing       │  │ New code                                                                          │                                                                                       █
+▌Referrals             │  │ │ _______________________________________________________________________________ │                                                                                       █
+ Keys and tokens       │  │                                                                                   │                                                                                       █
+ API                   │  │ [Create] ⓘ                                                                        │
+ Notifications      26 │  │ Up to 3 of your own codes active at a time, and 10 over the life of your account. │
+ Account               │  │ A retired code still counts toward the 10. Codes that could be mistaken for Hoody │
+                       │  │ or its offers, or are offensive, are refused.                                     │
+ + Rent servers        │  │ Code rules ⇗                                                                      │
+ Guide                 │  │                                                                                   │
+ Support               │  │                                                                                   │
+                       │  │ Share material                                                                    │
+                       │  │ Logos, banners and text you can use when you share Hoody.                         │
+                       │  │                                                                                   │
+                       │  │ Media kit ⇗                                                                       │
+                       │  │ A new account can become your referral when it's created through one of your      │
+                       │  │ links, or with one of your codes typed at signup. A link opened while signed out  │
+                       │  │ is remembered in the browser for up to 7 days, or until someone signs in. An      │
+                       │  │ earlier remembered code stays; one typed at signup replaces it. A retired or      │
+                       │  │ blocked code refers no one, and none of your codes does while your account isn't  │
+                       │  │ earning; the Program rules list the other exceptions.                             │
+                       │  └───────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Levels                                                                                                                                                                   │
+                       │  │ Your share depends on your level. Each purchase earns at the level of the month it's activated.                                                                          │
+                       │  │ ┌─────────────────────────────────────────────────────┐  ┌────────────────────────────────────────────────────┐  ┌─────────────────────────────────────────────────────┐ │
+                       │  │ │ Referrer                     Your level this month  │  │ Creator                                Next level  │  │ Where you stand                                     │ │
+                       │  │ │ 5%                                                  │  │ 10%                                                │  │ < 3 of 11 needed                                    │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

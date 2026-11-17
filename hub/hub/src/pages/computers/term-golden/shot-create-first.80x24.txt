@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Get a computer                                                   Esc ×
+ Comput┃ Everything is filled in for you. Change what you like, then get
+ Your c┃ it.
+ ▸ Comp┃ ──────────────────────────────────────────────────────────────────────
+ ──────┃ ┌───────────────────────────────────────────────────────────────────┐█
+       ┃ │ YOU GET                                                           │█
+       ┃ │ A new computer on n12, Singapore.                                 │█
+       ┃ │ Size      16 cores, 64 GB RAM, shared                             │█
+       ┃ │ System    Debian 13                                               │█
+       ┃ │ Software  Hoody kit, Developer kit, Hoody AI                      │█
+       ┃ └───────────────────────────────────────────────────────────────────┘█
+       ┃                                                                      █
+       ┃ ┌───────────────────────────────────────────────────────────────────┐█
+       ┃ │ Computer                                                          │
+       ┃ │ ┌───────────────────────────────────────────────────────────────┐ │
+       ┃ │ │                                                               │ │
+       ┃ │ │ Name                                                          │ │
+ Questi┃ │ │ Suggested for you. Keep it or type your own.                  │ │
+ ▸ What┃ │ │ ┃ proud-rust-llama                     [Suggest another name] │ │
+ ▸ What┃ │ │                                                               │ │
+ ▸ Who ┃ │ │ Server                          │ SG n12 · Singapore ▾        │ │
+ ▸ How ┃ │ │ Computers on a server share                                   │ │
+ ▸ How ┃ ──────────────────────────────────────────────────────────────────────
+ Typing┃ [Cancel]  Get computer

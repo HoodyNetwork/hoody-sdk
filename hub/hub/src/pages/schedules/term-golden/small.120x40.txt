@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Schedules                                             ▸ Use with your agent   + New schedule
+ Computers             │  2 schedules on atlas · next: Nightly backup in 9 hours · Computers › · 3 programs running ›
+ Files                 │
+ Bots                  │  / Search schedules
+ Board                 │  ‹ Any ›  Commands 2    Scripts 0    Web requests 0    Agent loops 0    Status ▾
+ Demo                  │  2 schedules  ↻ Refresh  View options
+ Vault                 │
+                       │    Name                           Next run ↑                Last result                On
+On atlas ▾             │  ▌   Nightly backup   Command     in 9 hours                ● Worked             [■ on ]     ⋯
+ Programs              │      rotate-logs   Command        in 2 days                 ● Worked             [■ on ]     ⋯
+▌Schedules             │
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

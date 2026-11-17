@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  ▌Chats   Agents   Automations   Knowledge   Settings
+ Computers             │
+ Files                 │
+ Bots                  │  What should we do?
+ Board                 │  Give an agent a task on atlas, or just chat with a model. To use another computer, pick it in
+ Demo                  │  the top bar.
+ Vault                 │  ■ Personal · ✓ atlas (Running)
+                       │
+On atlas ▾             │
+ Programs              │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Schedules             │  │ Ask anything, or describe a task…                                                         │
+ Scripts               │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Logs                  │  [+ Attach a file]  [/ Commands]
+ Tunnels               │  [Work on this computer] [Hoody Free] [Options · Allow everything]
+ Notes                 │  [Send ↵]
+▌AI                    │  Enter send · Alt+Enter or Ctrl+J new line · / commands · @ files · PgUp scroll
+ VMs                   │
+                       │    Work on this            ✦                      Work in a folder        Do it every day
+Account                │    computer                Just chat              Pick a project          Ask your agent on
+ Plans & Billing       │    Start with the          Start a chat with      folder: its chats,      atlas: "Schedule
+ Referrals             │    General agent on        the Just chat          edits and               every morning at
+ Keys and tokens       │    atlas.                  agent.                 repository in one       8, check my
+ API                   │                                                   place.                  backups and tell
+ Notifications      26 │                                                                           me if one failed".
+ Account               │                                                                           Or keep a TODO.
+                       │                                                                           Ask the agent
+ + Rent servers        │                                                                           New TODO
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Typing · Esc leaves the field · Ctrl+K commands

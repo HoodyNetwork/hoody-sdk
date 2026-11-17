@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ API                                                      ▸ Use with your agent
+ ▸ Endpoints    Overview
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ API  Esc
+ POST /api/v1/waitlist
+ Join the Hoody waitlist
+
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Authorisation                                                             │█
+ │ Needs no token.                                                           │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ How to call it                                                            │█
+ │ ‹ cURL ›  fetch    Python (requests)    CLI                               │█
+ │ cURL example                                                   ⧉ Copy all │█
+ │  curl -X POST 'https://api.hoody.com/api/v1/waitlist' \           ⧉ copy  │█
+ │    -H 'Content-Type: application/json' \                                  │█
+ │    -d '{"email":"<email>"}'                                               │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+ ┌───────────────────────────────────────────────────────────────────────────┐▀
+ │ About this endpoint                                                       │
+ │ Operation ID  api_waitlistJoin  ⧉ copy                                    │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

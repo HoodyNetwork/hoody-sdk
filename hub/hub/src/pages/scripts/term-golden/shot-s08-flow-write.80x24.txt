@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ New script
+ Step 3 of 5 · Write it  ██████░░░░
+  ✓ What it does  ✓ Where it answers ▸3 Write it  4 Check it  5 Make it live
+ ──────────────────────────────────────────────────────────────────────────────
+ ▸ Your script so far                                                         █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Write the code                                                            │█
+ │ Type or paste the code. The next step checks it.                          │█
+ │ Code                                                                      │█
+ │ │ export default function (request: Request) {                            │█
+ │     return new Response("Hello from my script");                          │
+ │   }                                                                       │
+ │                                                                           │
+ │                                                                           │
+ │                                                                           │
+ │                                                                           │
+ │                                                                           │
+ │                                                                           │
+ │                                                                           │
+ ──────────────────────────────────────────────────────────────────────────────
+ Next: the computer checks the code.
+ [Back]                                                    [Cancel]   Continue
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

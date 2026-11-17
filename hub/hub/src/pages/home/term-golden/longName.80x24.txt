@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY    ◆ Personal ▾  ● production-build-runner-singap… ▾  [A]  ^K · ?
+ Good morning, Ada                              [i What is Hoody?]  [Customize]
+ ■ Personal · ✓ production-build-runner-singapore-01 (Running) · SG n12
+
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ │ Ask production-build-runner-singapore-01 to…                      [Ask] │█
+ │                                                                           │█
+ │ [Install the popular coding agents] [Keep my app running after restarts]  │█
+ │ [What is running on production-build-runner-singapore-01?]                │█
+ │ [Back up my files daily] [Create a bot that…]                             │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Your computer                                                  View all › │
+ │ production-build-runner-singapore-01 ● Running SG n12 Up 5d 0h            │
+ │                                                                           │
+ │ Agent ⇗     ⧉ copy [QR] [Put Agent on Board]                              │
+ │ Terminal ⇗  ⧉ copy [QR] [Put Terminal on Board]                           │
+ │ Desktop ⇗   ⧉ copy [QR] [Put Desktop on Board]                            │
+ │ Files ⇗     ⧉ copy [QR] [Put Files on Board]                              │
+ │ Browser ⇗   ⧉ copy [QR] [Put Browser on Board]                            │
+ │                                                                           │
+ │ Programs: 10 running ! 3 need a look                        All computers │
+ └───────────────────────────────────────────────────────────────────────────┘
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

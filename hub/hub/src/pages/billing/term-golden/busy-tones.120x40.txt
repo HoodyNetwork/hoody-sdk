@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing                                                                  + Add funds
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │  ▸ Plans    Bare metal    Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC                              [Pay now]
+ Vault                 │
+                       │  Plans                                                                                       █
+On atlas ▾             │  Each plan is a server of your own. Its computers share its cores, memory and disk. You can  █
+ Programs              │  take the same plan more than once.                                                          █
+ Schedules             │                                                                                              █
+ Scripts               │  ┌───────────────────────────────────────────┐  ┌───────────────────────────────────────────┐█
+ Logs                  │  │ Free                          ✓ Your plan │  │ Small                 ✓ 2 of your servers │
+ Tunnels               │  │ $0 / month                                │  │ $12 / month                               │
+ Notes                 │  │ Your free server: ash-3                   │  │ Paid monthly from your wallet             │
+ AI                    │  │ Computers                               3 │  │ Computers                               3 │
+ VMs                   │  │ Hardware                  Shared hardware │  │ CPU cores                               2 │
+                       │  │ AI allowance                   Free 1×    │  │ Memory                               4 GB │
+Account                │  │                                █░░░░░░░░░ │  │ Disk                                60 GB │
+▌Plans & Billing       │  │ Locations                                 │  │ Hardware                  Shared hardware │
+ Referrals             │  │ No choice of location                     │  │ AI allowance                   Plus 4×    │
+ Keys and tokens       │  │ Your free server stays as it is when you  │  │                                ██░░░░░░░░ │
+ API                   │  │ buy a plan.                               │  │ Locations                                 │
+ Notifications      26 │  │ Next: Small. When you need more than 3    │  │ DE Frankfurt, Germany                     │
+ Account               │  │ computers.                                │  │ FI Helsinki, Finland  SG Singapore        │
+                       │  │ Free server details                       │  │ Next: Medium. When 4 GB of memory or 3    │
+ + Rent servers        │  │                                           │  │ computers get tight.                      │
+ Guide                 │  │                                           │  │                                           │
+ Support               │  │                                           │  │ [Choose Small]                            │
+                       │  └───────────────────────────────────────────┘  └───────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────┐  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+                       │  │ Medium                ✓ 1 of your servers │  ┃ Large                                     ┃
+                       │  │ $29 / month                               │  ┃ $59 / month                               ┃
+                       │  │ Paid monthly from your wallet             │  ┃ Paid monthly from your wallet             ┃
+                       │  │ Computers                               8 │  ┃ Computers                              16 ┃
+                       │  │ CPU cores                               4 │  ┃ CPU cores                               8 ┃
+                       │  │ Memory                               8 GB │  ┃ Memory                              16 GB ┃
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

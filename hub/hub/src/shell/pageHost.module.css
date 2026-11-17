@@ -1,0 +1,51 @@
+/* A page's slot draws nothing itself: the page lays out as a direct child of the content area. A kept page's slot is
+   hidden by its Activity. */
+.slot {
+  display: contents;
+}
+
+/* The pending line (NavPending): a zero-height first child of the content area that sticks to its top, so it takes no
+   room and never moves the page; its bar appears only past 150 ms. */
+.pending {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-raised);
+  block-size: 0;
+}
+
+.pending::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 0;
+  block-size: 2px;
+  background: var(--hx-ink);
+  opacity: 0;
+  transform-origin: 0 50%;
+  animation:
+    pending-show var(--dur-enter) linear 150ms forwards,
+    pending-grow 2400ms var(--ease-out) 150ms forwards;
+}
+
+@keyframes pending-show {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pending-grow {
+  from {
+    transform: scaleX(0.1);
+  }
+
+  to {
+    transform: scaleX(0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pending::after {
+    transform: none;
+    animation: pending-show 0ms linear 150ms forwards;
+  }
+}

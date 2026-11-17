@@ -1,0 +1,27 @@
+/* stylelint-disable selector-attribute-quotes -- ConversationView.tsx is a pure kit module: kitpure C0 takes attribute values unquoted */
+
+/* The conversation frame fills the space the page gives it; the frame rule is kit/agent/SplitLayout's. The thread's column
+   width and side inset, as SessionView's (a test keeps them equal): the composer lane below reads them. */
+.root {
+  --conv-col: 760px;
+  --conv-inset: var(--sp-6);
+
+  height: 100%;
+  min-height: 0;
+}
+
+.root[data-size=xs] { --conv-inset: var(--sp-4); }
+
+/* The composer under the thread, as wide as the thread's column and centred like it: the lane's side padding and the
+   composer's own (--sp-3, .composerWrap) add up to the column's inset, so the box's edges line up with the transcript's
+   text at every size. */
+.composerLane {
+  box-sizing: border-box;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 100%;
+  max-width: calc(var(--conv-col) + 2 * var(--conv-inset));
+  margin-inline: auto;
+  padding-inline: calc(var(--conv-inset) - var(--sp-3));
+}

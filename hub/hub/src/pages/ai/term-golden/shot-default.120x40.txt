@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations   Knowledge  ▌Settings
+ Computers             │  ▌Models & keys   Connections & MCP   Rules & hooks
+ Files                 │  atlas › Models & keys
+ Bots                  │  Models & keys                                                           + Connect an account
+ Board                 │  atlas uses Hoody Free for everything.
+ Demo                  │
+ Vault                 │  ▌Default model  Accounts  Claude Code  Hoody AI allowance  Spending  Advanced  Questions
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  ┌───────────────────────────────────────────────────────────────────────────────────────┐█
+ Programs              │  │ Default model                                                                         │█
+ Schedules             │  │ The model your AI helper and your Bots use unless told otherwise.                     │█
+ Scripts               │  │ ┌───────────────────────────────────────────────────────────────────────────────────┐ │█
+ Logs                  │  │ │                                                                                   │ │█
+ Tunnels               │  │ │ AI helper and tasks             Hoody Free  Included                     [Change] │ │█
+ Notes                 │  │ │ The model for chat and                                                            │ │█
+▌AI                    │  │ │ everyday work on this                                                             │ │
+ VMs                   │  │ │ computer.                                                                         │ │
+                       │  │ │                                                                                   │ │
+Account                │  │ │ Bots                            Hoody Free  Included                     [Change] │ │
+ Plans & Billing       │  │ │ Bots follow the default.                                                          │ │
+ Referrals             │  │ │                                                                                   │ │
+ Keys and tokens       │  │ └───────────────────────────────────────────────────────────────────────────────────┘ │
+ API                   │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ Notifications      26 │
+ Account               │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Accounts                                                                              │
+ + Rent servers        │  │ The AI providers this computer can use, and how each one connects.                    │
+ Guide                 │  │ / Search                                                        2 accounts  ↻ Refresh │
+ Support               │  │                                                                                       │
+                       │  │   Provider        How it connects               Status          Used by               │
+                       │  │ › H Hoody AI      Included with Hoody           ● Ready         2 Bots                │
+                       │  │   O OpenAI        Your key                      ● Ready         1 Bot               ⋯ │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Claude Code                                                                           │
+                       │  │ Use your own Claude plan through Claude Code on this computer.                        │
+                       │  │ ┌───────────────────────────────────────────────────────────────────────────────────┐ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

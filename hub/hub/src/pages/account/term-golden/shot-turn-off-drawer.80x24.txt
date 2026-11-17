@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY       ┃ Turn off two-step sign-in?                          Esc ×
+ Account            ┃ Your password alone will sign in to your account
+ Your profile, how y┃ again. Every other session is signed out.
+ ▌Profile  Password ┃ ─────────────────────────────────────────────────────────
+ ───────────────────┃ Current password
+ ┌──────────────────┃ ┃
+ │ Security         ┃
+ │ ✓ Your email addr┃ 6-digit code or backup code
+ │ ✓ Two-step sign-i┃ │ _______________________________________________________
+ │ i 11 other browse┃
+ └──────────────────┃
+ ┌──────────────────┃
+ │ Profile          ┃
+ │                  ┃
+ │ Display name     ┃
+ │                  ┃
+ │ Username         ┃
+ │                  ┃
+ │ Email            ┃
+ │                  ┃
+ │                  ┃
+ │ Member since     ┃
+ │                  ┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter op┃ [Cancel]  [Turn off]

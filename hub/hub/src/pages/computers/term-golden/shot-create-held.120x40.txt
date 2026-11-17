@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Get a computer                                                                                        Esc ×
+ Home     ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+▌Computers┃ ! A computer named noble-sage-raven may already have been made. Check the    [Check again]  [Stop tracking]
+ Files    ┃   list before trying again.
+ Bots     ┃
+ Board    ┃
+ Demo     ┃
+ Vault    ┃
+          ┃
+On atlas ▾┃
+ Programs ┃
+ Schedules┃
+ Scripts  ┃
+ Logs     ┃
+ Tunnels  ┃
+ Notes    ┃
+ AI       ┃
+ VMs      ┃
+          ┃
+Account   ┃
+ Plans & B┃
+ Referrals┃
+ Keys and ┃
+ API      ┃
+ Notificat┃
+ Account  ┃
+          ┃
+ + Rent se┃
+ Guide    ┃
+ Support  ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tab move ┃ [Cancel]  Get computer

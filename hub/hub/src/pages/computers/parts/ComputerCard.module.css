@@ -1,0 +1,276 @@
+/* One computer in the cards view : head and footer on --hx-cc-head, body on
+   --hx-cc-body, no inner borders; the frame and its 16 px slanted corner are the kit CutFrame. */
+.card {
+  flex: 1;
+  transition: transform 0.15s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card:hover {
+    transform: none;
+    transition: none;
+  }
+}
+
+.inner {
+  background: var(--hx-cc-body);
+}
+
+.head {
+  display: flex;
+  gap: calc(var(--sp-2) + var(--sp-px));
+  align-items: center;
+  min-block-size: 20px;
+  padding: var(--sp-4) var(--sp-5) var(--sp-3);
+  background: var(--hx-cc-head);
+}
+
+.card[data-bad] .head {
+  background: var(--hx-cc-head-bad);
+}
+
+/* The name: never cut to an ellipsis, two lines at most (the full name is its title). */
+.name {
+  display: -webkit-box;
+  flex: 1;
+  min-inline-size: 0;
+  margin: 0;
+  overflow: hidden;
+  font: 650 14px/1.25 var(--font-head);
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+/* The state tag is the kit StatusPill: its box, type, dot and tone are the kit's; the card only places it. */
+.state {
+  display: inline-flex;
+  flex: none;
+}
+
+/* Project and Current: after the name, in the head's band, muted (no new colours). */
+.sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-5) var(--sp-3);
+  color: var(--hx-dim);
+  font: var(--t-small);
+  background: var(--hx-cc-head);
+}
+
+.card[data-bad] .sub {
+  background: var(--hx-cc-head-bad);
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+}
+
+.realms {
+  display: flex;
+  gap: calc(var(--sp-1) + var(--sp-half));
+  align-items: center;
+  min-block-size: 24px;
+  min-inline-size: 0;
+}
+
+.realms .chip {
+  display: inline-flex;
+  gap: calc(var(--sp-1) + var(--sp-half));
+  align-items: center;
+  min-inline-size: 0;
+  block-size: 24px;
+  padding: 0 var(--sp-2);
+  font: 500 11px/1 var(--font-mono);
+  color: var(--hx-ink);
+  background: var(--hx-raised);
+  border: 0;
+  border-radius: var(--r-0);
+}
+
+.realms .chip > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.more {
+  flex: none;
+  block-size: 24px;
+  padding: 0 var(--sp-2);
+  font: 600 11px/1 var(--font-mono);
+  color: var(--hx-acc-ink);
+  background: var(--hx-acc);
+}
+
+.none {
+  display: inline-flex;
+  align-items: center;
+  block-size: 24px;
+  color: var(--hx-dim);
+  font: var(--t-body);
+}
+
+.pop ul {
+  display: grid;
+  gap: calc(var(--sp-1) + var(--sp-half));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pop li {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+  font: 500 12px/1.3 var(--font-mono);
+}
+
+.popTitle {
+  margin: 0 0 var(--sp-2);
+  color: var(--hx-dim);
+  font: 500 10px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.where {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+  font: 400 14px/1.3 var(--font-text);
+}
+
+.label {
+  flex: none;
+  margin-inline-end: var(--sp-half);
+  color: var(--hx-dim);
+  font: 500 10px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.specs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(var(--sp-3) + var(--sp-half));
+}
+
+.spec {
+  display: flex;
+  gap: calc(var(--sp-2) + var(--sp-half));
+  align-items: center;
+  min-inline-size: 0;
+  padding: var(--sp-2) calc(var(--sp-2) + var(--sp-half));
+  color: var(--hx-cc-icon);
+  background: var(--hx-raised);
+}
+
+.spec svg {
+  flex: none;
+}
+
+.spec .cut {
+  fill: var(--hx-raised);
+}
+
+.spec div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--sp-1) + var(--sp-half));
+  align-items: baseline;
+  min-inline-size: 0;
+}
+
+.spec b {
+  color: var(--hx-ink);
+  font: 650 18px/1 var(--font-head);
+}
+
+.spec span {
+  color: var(--hx-dim);
+  font: 500 10px/1.2 var(--font-mono);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.usage {
+  display: grid;
+  gap: calc(var(--sp-1) + var(--sp-half) + var(--sp-px));
+}
+
+.bar {
+  display: grid;
+  grid-template-columns: 34px 1fr 34px;
+  gap: var(--sp-2);
+  align-items: center;
+  color: var(--hx-dim);
+  font: 500 10px/1 var(--font-mono);
+  text-transform: uppercase;
+}
+
+.bar em {
+  color: var(--hx-ink);
+  font-style: normal;
+  text-align: end;
+}
+
+.meter {
+  inline-size: 100%;
+}
+
+.barEmpty {
+  display: block;
+  block-size: 8px;
+  background: var(--hx-raised);
+}
+
+/* The footer wraps when its controls can't fit (a phone card with a long access word): the actions keep to the end of
+   the next line, never clipped by the frame. */
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  justify-content: space-between;
+  min-block-size: 58px;
+  padding: var(--sp-3) var(--sp-5) var(--sp-4);
+  background: var(--hx-cc-head);
+}
+
+.acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+  justify-content: flex-end;
+  margin-inline-start: auto;
+}
+
+/* Access, Restart, Start, Resume: 136 px, the label centred. */
+.wide {
+  inline-size: 136px;
+}
+
+/* The access button grows to its whole word ("Has access rules"): a cut word would hide what is set (the kit's
+   whole-words minimum), so it takes no 136 px floor. */
+.access {
+  flex: none;
+}
+
+.note {
+  color: var(--hx-dim);
+  font: var(--t-small);
+}

@@ -1,0 +1,8 @@
+{
+  "tabs.actions": "Tab actions: {{name}}",
+  "tabs.rename": "Rename",
+  "tabs.renameLabel": "Rename {{name}}",
+  "tabs.moveLeft": "Move left",
+  "tabs.moveRight": "Move right",
+  "tabs.moved": "{{name}} moved to place {{n}} of {{total}}"
+}

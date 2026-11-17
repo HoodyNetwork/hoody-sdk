@@ -1,0 +1,4463 @@
+{
+ "catalogVersion": 1,
+ "programs": [
+  "agent",
+  "terminal",
+  "display",
+  "files",
+  "browser",
+  "code",
+  "sqlite",
+  "notes"
+ ],
+ "services": {
+  "agent": {
+   "segment": "agent-{index}",
+   "index": {
+    "min": 1,
+    "max": 19999,
+    "default": 1,
+    "selects": "instance",
+    "publicMeaning": "agent number, 1 or more"
+   }
+  },
+  "terminal": {
+   "segment": "terminal-{index}",
+   "index": {
+    "min": 1,
+    "max": 65535,
+    "default": 1,
+    "selects": "instance",
+    "publicMeaning": "session number. With 24-character project and computer ids, numbers above 9999 make a host label longer than 63 characters, which the SDK refuses (HOST_LABEL_TOO_LONG)."
+   }
+  },
+  "display": {
+   "segment": "display-{index}",
+   "index": {
+    "min": 1,
+    "max": 61535,
+    "default": 1,
+    "selects": "instance",
+    "publicMeaning": "display number"
+   }
+  },
+  "files": {
+   "segment": "files-{index}",
+   "index": {
+    "min": 1,
+    "max": 9999,
+    "default": 1,
+    "selects": "none",
+    "publicMeaning": "Any index opens the same file manager."
+   }
+  },
+  "browser": {
+   "segment": "browser-{index}",
+   "index": {
+    "min": 1,
+    "max": 9999,
+    "default": 1,
+    "selects": "instance",
+    "publicMeaning": "browser instance number"
+   }
+  },
+  "code": {
+   "segment": "code-{index}",
+   "index": {
+    "min": 1,
+    "max": 58535,
+    "default": 1,
+    "selects": "instance",
+    "publicMeaning": "Editor instance number, 1 or more. Each number is a separate editor instance with its own folder and state."
+   }
+  },
+  "sqlite": {
+   "segment": "sqlite-{index}",
+   "index": {
+    "min": 1,
+    "max": 9999,
+    "default": 1,
+    "selects": "none",
+    "publicMeaning": "Any index opens the same instance."
+   }
+  },
+  "notes": {
+   "segment": "notes-{index}",
+   "index": {
+    "min": 1,
+    "max": 9999,
+    "default": 1,
+    "selects": "none",
+    "publicMeaning": "Any index opens the same instance."
+   }
+  }
+ },
+ "kits": {
+  "agent": {
+   "ui": "app",
+   "views": [
+    "agent.webui"
+   ],
+   "refused": {
+    "terminal_id": {
+     "class": "forced",
+     "reasonCode": "forced",
+     "replacement": "serviceIndex"
+    },
+    "display": {
+     "class": "forced",
+     "reasonCode": "forced",
+     "replacement": "serviceIndex"
+    },
+    "agent": {
+     "class": "forced",
+     "reasonCode": "forced",
+     "replacement": "view"
+    },
+    "cwd_auto_create": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "shell": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "user": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "cmd": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "arg": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "reset": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "pid": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "env": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "startup_script": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "welcome": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "debug": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "env_inject": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "desktop": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "redirect": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "onboarding": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "desktop_env": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "cwd": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "readonly": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "ssh_host": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "ssh_user": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "ssh_port": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "ssh_password": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "ssh_key": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "socks5_host": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "socks5_port": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "socks5_user": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "socks5_pass": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "redirect_delay": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "wait_timeout": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "ephemeral": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    }
+   },
+   "publicDescription": "The Hoody agent's interactive interface and API reference.",
+   "defaultView": "agent.webui"
+  },
+  "terminal": {
+   "ui": "app",
+   "views": [
+    "terminal.session"
+   ],
+   "refused": {
+    "terminal_id": {
+     "class": "forced",
+     "reasonCode": "forced",
+     "replacement": "serviceIndex"
+    },
+    "display": {
+     "class": "forced",
+     "reasonCode": "forced",
+     "replacement": "serviceIndex"
+    },
+    "cwd_auto_create": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "shell": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "user": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "cmd": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "arg": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "reset": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "pid": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "env": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "startup_script": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "welcome": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "debug": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "env_inject": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "desktop": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "redirect": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "agent": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "ephemeral": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "desktop_env": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "ssh_host": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "ssh_user": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "ssh_port": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "ssh_password": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "ssh_key": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "socks5_host": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "socks5_port": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "socks5_user": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "socks5_pass": {
+     "class": "excluded",
+     "reasonCode": "credential"
+    },
+    "redirect_delay": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "wait_timeout": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    }
+   },
+   "publicDescription": "Web terminal sessions in the browser.",
+   "defaultView": "terminal.session"
+  },
+  "display": {
+   "ui": "app",
+   "views": [
+    "display.client"
+   ],
+   "refused": {
+    "displayId": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "node": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "project_id": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "computer_id": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "url_display_id": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "ssl": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "webtransport": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "path": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "action": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "display": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "override_height": {
+     "class": "excluded",
+     "reasonCode": "not-supported"
+    },
+    "keyboard_layout": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "open_url": {
+     "class": "dead",
+     "reasonCode": "not-supported"
+    },
+    "notification_server_url": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "web_notifications": {
+     "class": "dead",
+     "reasonCode": "not-supported"
+    },
+    "notification_connection_type": {
+     "class": "dead",
+     "reasonCode": "not-supported"
+    },
+    "sharing": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "steal": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "app": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "remote_logging": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "insecure": {
+     "class": "excluded",
+     "reasonCode": "auth"
+    },
+    "debug_main": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "debug_keyboard": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "debug_geometry": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "debug_mouse": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "debug_clipboard": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "debug_draw": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "debug_audio": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "debug_network": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "debug_file": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    }
+   },
+   "publicDescription": "Web viewer for one remote display.",
+   "defaultView": "display.client"
+  },
+  "files": {
+   "ui": "app",
+   "views": [
+    "files.root",
+    "files.folder",
+    "files.editor",
+    "files.search"
+   ],
+   "refused": {
+    "json": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "simple": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "hash": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "sha256": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "base64": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "view": {
+     "class": "excluded",
+     "reasonCode": "not-read-only"
+    },
+    "download": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "content-type": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "history": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "at": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "revision": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "diff": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "from_seq": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "from_ts": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "to_seq": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "to_ts": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "after_id": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    },
+    "limit": {
+     "class": "nonUi",
+     "reasonCode": "non-ui"
+    }
+   },
+   "publicDescription": "A file manager for the computer: folder listings, search, a code editor and a read-only viewer.",
+   "defaultView": "files.folder"
+  },
+  "browser": {
+   "ui": "app",
+   "views": [
+    "browser.status",
+    "browser.display"
+   ],
+   "refused": {
+    "display": {
+     "class": "forced",
+     "reasonCode": "forced",
+     "replacement": "serviceIndex"
+    }
+   },
+   "publicDescription": "Status page of the headless or headful browser service, and a full-page view of its display.",
+   "defaultView": "browser.status"
+  },
+  "code": {
+   "ui": "app",
+   "views": [
+    "code.root",
+    "code.editor",
+    "code.extension"
+   ],
+   "refused": {
+    "id": {
+     "class": "forced",
+     "reasonCode": "forced",
+     "replacement": "serviceIndex"
+    },
+    "restart": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "welcome-iframe-url": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "page-loader-path": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "proxy-domain": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    },
+    "app-name": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    }
+   },
+   "publicDescription": "A VS Code editor in the browser, opened on a folder of the computer, optionally focused on a single extension.",
+   "defaultView": "code.editor"
+  },
+  "sqlite": {
+   "ui": "app",
+   "views": [
+    "sqlite.overview",
+    "sqlite.tables",
+    "sqlite.query",
+    "sqlite.kvStore",
+    "sqlite.history",
+    "sqlite.pragmas"
+   ],
+   "refused": {
+    "sql": {
+     "class": "dead",
+     "reasonCode": "not-supported"
+    }
+   },
+   "publicDescription": "Hoody SQLite studio: browse tables, run queries and manage key-value data.",
+   "defaultView": "sqlite.overview"
+  },
+  "notes": {
+   "ui": "app",
+   "views": [
+    "notes.home",
+    "notes.create",
+    "notes.notebook",
+    "notes.notebookHome",
+    "notes.node",
+    "notes.modal",
+    "notes.alias",
+    "notes.files",
+    "notes.uploads",
+    "notes.downloads",
+    "notes.users",
+    "notes.settings",
+    "notes.account"
+   ],
+   "refused": {
+    "widgetId": {
+     "class": "excluded",
+     "reasonCode": "mutating"
+    }
+   },
+   "publicDescription": "Hoody Notes: notebooks, pages and databases in the browser. Whether a framed Notes page shares its local cache with Notes open in a tab depends on the browser: a frame embedded by another site usually gets separate storage. Separate caches exchange changes, offline edits included, once they sync with the server. Offline edits survive a reload only when the browser gives Notes persistent storage; where it does not, Notes runs from memory and unsynced edits are lost on reload.",
+   "defaultView": "notes.home"
+  }
+ },
+ "views": {
+  "agent.webui": {
+   "kit": "agent",
+   "view": "webui",
+   "service": "agent",
+   "program": "agent",
+   "ui": "app",
+   "default": true,
+   "label": "Agent",
+   "publicDescription": "The agent's interactive interface in a browser terminal. Opening it starts the agent if it is not running.",
+   "path": "/",
+   "params": {
+    "title": {
+     "wire": "title",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "maxLength": 200,
+     "publicDescription": "Browser tab title. HTML tags are removed."
+    },
+    "fontSize": {
+     "wire": "fontSize",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 8,
+     "max": 72,
+     "publicDescription": "Font size in pixels."
+    },
+    "backgroundColor": {
+     "wire": "backgroundColor",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "Background colour: a hex colour (#RGB, #RRGGBB, #RRGGBBAA) or a CSS colour name."
+    },
+    "panel": {
+     "wire": "panel",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^https?://",
+     "format": "uri",
+     "publicDescription": "An http(s) URL to show in a side panel next to the terminal."
+    },
+    "panel-visible": {
+     "wire": "panel-visible",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Show the side panel on load."
+    },
+    "panel-position": {
+     "wire": "panel-position",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "left",
+      "right",
+      "top",
+      "bottom"
+     ],
+     "publicDescription": "Where the side panel sits."
+    },
+    "panel-width": {
+     "wire": "panel-width",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "Initial side-panel width, in pixels (400px) or percent, for a left or right panel."
+    },
+    "panel-height": {
+     "wire": "panel-height",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "Initial side-panel height, in pixels (300px) or percent, for a top or bottom panel."
+    },
+    "panel-resizable": {
+     "wire": "panel-resizable",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Allow resizing the side panel by dragging."
+    },
+    "panel-width-pct": {
+     "wire": "panel-width-pct",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 5,
+     "max": 95,
+     "publicDescription": "Initial side-panel width as a percentage of the window. Takes precedence over panel-width."
+    },
+    "panel-height-pct": {
+     "wire": "panel-height-pct",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 5,
+     "max": 95,
+     "publicDescription": "Initial side-panel height as a percentage of the window. Takes precedence over panel-height."
+    },
+    "fontFamily": {
+     "wire": "fontFamily",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "CSS font-family list for terminal text."
+    },
+    "fontWeight": {
+     "wire": "fontWeight",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "normal",
+      "bold",
+      "100",
+      "200",
+      "300",
+      "400",
+      "500",
+      "600",
+      "700",
+      "800",
+      "900"
+     ],
+     "publicDescription": "Font weight for normal text."
+    },
+    "fontWeightBold": {
+     "wire": "fontWeightBold",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "normal",
+      "bold",
+      "100",
+      "200",
+      "300",
+      "400",
+      "500",
+      "600",
+      "700",
+      "800",
+      "900"
+     ],
+     "publicDescription": "Font weight for bold text."
+    },
+    "lineHeight": {
+     "wire": "lineHeight",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 1,
+     "publicDescription": "Line height as a multiple of the font size."
+    },
+    "letterSpacing": {
+     "wire": "letterSpacing",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "publicDescription": "Extra spacing between characters, in whole pixels."
+    },
+    "cursorBlink": {
+     "wire": "cursorBlink",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Make the cursor blink."
+    },
+    "cursorStyle": {
+     "wire": "cursorStyle",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "block",
+      "underline",
+      "bar"
+     ],
+     "publicDescription": "Cursor shape when the terminal has focus."
+    },
+    "cursorWidth": {
+     "wire": "cursorWidth",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 1,
+     "publicDescription": "Cursor width in pixels when the cursor style is bar."
+    },
+    "cursorInactiveStyle": {
+     "wire": "cursorInactiveStyle",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "outline",
+      "block",
+      "bar",
+      "underline",
+      "none"
+     ],
+     "publicDescription": "Cursor shape when the terminal does not have focus."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "serialize": "json",
+     "publicDescription": "Colour theme as a JSON object (foreground, background, cursor, and the 16 ANSI colours)."
+    },
+    "minimumContrastRatio": {
+     "wire": "minimumContrastRatio",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 1,
+     "max": 21,
+     "publicDescription": "Minimum contrast ratio between text and background; colours are adjusted to meet it."
+    },
+    "drawBoldTextInBrightColors": {
+     "wire": "drawBoldTextInBrightColors",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Draw bold text in the bright colour variants."
+    },
+    "scrollback": {
+     "wire": "scrollback",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 0,
+     "max": 100000,
+     "publicDescription": "Number of lines kept above the visible screen."
+    },
+    "scrollSensitivity": {
+     "wire": "scrollSensitivity",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 1,
+     "publicDescription": "Scroll speed multiplier."
+    },
+    "fastScrollSensitivity": {
+     "wire": "fastScrollSensitivity",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 1,
+     "publicDescription": "Scroll speed multiplier while Alt is held."
+    },
+    "smoothScrollDuration": {
+     "wire": "smoothScrollDuration",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 0,
+     "publicDescription": "Smooth-scroll duration in milliseconds; 0 scrolls instantly."
+    },
+    "screenReaderMode": {
+     "wire": "screenReaderMode",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Enable screen-reader support."
+    },
+    "disableResizeOverlay": {
+     "wire": "disableResizeOverlay",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Do not show the size overlay while the window is resized."
+    },
+    "unicodeVersion": {
+     "wire": "unicodeVersion",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "graphemes",
+      "11"
+     ],
+     "publicDescription": "Character-width rules: graphemes (default, emoji-aware) or 11."
+    },
+    "rendererType": {
+     "wire": "rendererType",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "dom",
+      "canvas",
+      "webgl"
+     ],
+     "publicDescription": "Renderer used to draw the terminal: webgl (the default; Firefox uses dom), dom, or canvas (drawn with WebGL). Phones, tablets and other touch-screen devices use dom even when webgl or canvas is asked for. Try dom if text renders wrongly with WebGL on a particular browser or GPU."
+    },
+    "parent_keys": {
+     "wire": "parent_keys",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hand two keyboard chords to the page that frames the terminal: Ctrl+Alt+B and Ctrl+Alt with an arrow key are not sent to the terminal, and that page receives a hoody-parent-key message naming the chord (escape, left, right, up or down), sent only to its own origin. Without a framing page the keys work as usual."
+    },
+    "parent_origin": {
+     "wire": "parent_origin",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^https?://",
+     "format": "uri",
+     "publicDescription": "The origin of the page that frames the terminal, such as https://app.example.com, for parent_keys. Used when the browser sends no referrer naming that page. The terminal keeps the origin it uses in its own address, so its own reloads keep reaching that page. Ignored unless it is an http or https origin."
+    }
+   },
+   "required": [],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": true,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "terminal.session": {
+   "kit": "terminal",
+   "view": "session",
+   "service": "terminal",
+   "program": "terminal",
+   "ui": "app",
+   "default": true,
+   "label": "Terminal session",
+   "publicDescription": "A browser terminal attached to one session. Opening it starts a shell if the session is not running; a terminal that belongs to a daemon program attaches to that program instead and never starts a shell.",
+   "path": "/",
+   "params": {
+    "cwd": {
+     "wire": "cwd",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "Starting directory for a new session. The directory must already exist."
+    },
+    "readonly": {
+     "wire": "readonly",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Open the session read-only: output is shown, keyboard input is blocked."
+    },
+    "title": {
+     "wire": "title",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "maxLength": 200,
+     "publicDescription": "Browser tab title. HTML tags are removed."
+    },
+    "fontSize": {
+     "wire": "fontSize",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 8,
+     "max": 72,
+     "publicDescription": "Font size in pixels."
+    },
+    "backgroundColor": {
+     "wire": "backgroundColor",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "Background colour: a hex colour (#RGB, #RRGGBB, #RRGGBBAA) or a CSS colour name."
+    },
+    "panel": {
+     "wire": "panel",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^https?://",
+     "format": "uri",
+     "publicDescription": "An http(s) URL to show in a side panel next to the terminal."
+    },
+    "panel-visible": {
+     "wire": "panel-visible",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Show the side panel on load."
+    },
+    "panel-position": {
+     "wire": "panel-position",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "left",
+      "right",
+      "top",
+      "bottom"
+     ],
+     "publicDescription": "Where the side panel sits."
+    },
+    "panel-width": {
+     "wire": "panel-width",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "Initial side-panel width, in pixels (400px) or percent, for a left or right panel."
+    },
+    "panel-height": {
+     "wire": "panel-height",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "Initial side-panel height, in pixels (300px) or percent, for a top or bottom panel."
+    },
+    "panel-resizable": {
+     "wire": "panel-resizable",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Allow resizing the side panel by dragging."
+    },
+    "panel-width-pct": {
+     "wire": "panel-width-pct",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 5,
+     "max": 95,
+     "publicDescription": "Initial side-panel width as a percentage of the window. Takes precedence over panel-width."
+    },
+    "panel-height-pct": {
+     "wire": "panel-height-pct",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 5,
+     "max": 95,
+     "publicDescription": "Initial side-panel height as a percentage of the window. Takes precedence over panel-height."
+    },
+    "hide-toolbar": {
+     "wire": "hide-toolbar",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the terminal toolbar."
+    },
+    "fontFamily": {
+     "wire": "fontFamily",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "CSS font-family list for terminal text."
+    },
+    "fontWeight": {
+     "wire": "fontWeight",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "normal",
+      "bold",
+      "100",
+      "200",
+      "300",
+      "400",
+      "500",
+      "600",
+      "700",
+      "800",
+      "900"
+     ],
+     "publicDescription": "Font weight for normal text."
+    },
+    "fontWeightBold": {
+     "wire": "fontWeightBold",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "normal",
+      "bold",
+      "100",
+      "200",
+      "300",
+      "400",
+      "500",
+      "600",
+      "700",
+      "800",
+      "900"
+     ],
+     "publicDescription": "Font weight for bold text."
+    },
+    "lineHeight": {
+     "wire": "lineHeight",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 1,
+     "publicDescription": "Line height as a multiple of the font size."
+    },
+    "letterSpacing": {
+     "wire": "letterSpacing",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "publicDescription": "Extra spacing between characters, in whole pixels."
+    },
+    "cursorBlink": {
+     "wire": "cursorBlink",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Make the cursor blink."
+    },
+    "cursorStyle": {
+     "wire": "cursorStyle",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "block",
+      "underline",
+      "bar"
+     ],
+     "publicDescription": "Cursor shape when the terminal has focus."
+    },
+    "cursorWidth": {
+     "wire": "cursorWidth",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 1,
+     "publicDescription": "Cursor width in pixels when the cursor style is bar."
+    },
+    "cursorInactiveStyle": {
+     "wire": "cursorInactiveStyle",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "outline",
+      "block",
+      "bar",
+      "underline",
+      "none"
+     ],
+     "publicDescription": "Cursor shape when the terminal does not have focus."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "serialize": "json",
+     "publicDescription": "Colour theme as a JSON object (foreground, background, cursor, and the 16 ANSI colours)."
+    },
+    "minimumContrastRatio": {
+     "wire": "minimumContrastRatio",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 1,
+     "max": 21,
+     "publicDescription": "Minimum contrast ratio between text and background; colours are adjusted to meet it."
+    },
+    "drawBoldTextInBrightColors": {
+     "wire": "drawBoldTextInBrightColors",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Draw bold text in the bright colour variants."
+    },
+    "scrollback": {
+     "wire": "scrollback",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 0,
+     "max": 100000,
+     "publicDescription": "Number of lines kept above the visible screen."
+    },
+    "scrollSensitivity": {
+     "wire": "scrollSensitivity",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 1,
+     "publicDescription": "Scroll speed multiplier."
+    },
+    "fastScrollSensitivity": {
+     "wire": "fastScrollSensitivity",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 1,
+     "publicDescription": "Scroll speed multiplier while Alt is held."
+    },
+    "smoothScrollDuration": {
+     "wire": "smoothScrollDuration",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 0,
+     "publicDescription": "Smooth-scroll duration in milliseconds; 0 scrolls instantly."
+    },
+    "screenReaderMode": {
+     "wire": "screenReaderMode",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Enable screen-reader support."
+    },
+    "disableResizeOverlay": {
+     "wire": "disableResizeOverlay",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Do not show the size overlay while the window is resized."
+    },
+    "unicodeVersion": {
+     "wire": "unicodeVersion",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "graphemes",
+      "11"
+     ],
+     "publicDescription": "Character-width rules: graphemes (default, emoji-aware) or 11."
+    },
+    "rendererType": {
+     "wire": "rendererType",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "dom",
+      "canvas",
+      "webgl"
+     ],
+     "publicDescription": "Renderer used to draw the terminal: webgl (the default; Firefox uses dom), dom, or canvas (drawn with WebGL). Phones, tablets and other touch-screen devices use dom even when webgl or canvas is asked for. Try dom if text renders wrongly with WebGL on a particular browser or GPU."
+    },
+    "parent_keys": {
+     "wire": "parent_keys",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hand two keyboard chords to the page that frames the terminal: Ctrl+Alt+B and Ctrl+Alt with an arrow key are not sent to the terminal, and that page receives a hoody-parent-key message naming the chord (escape, left, right, up or down), sent only to its own origin. Without a framing page the keys work as usual."
+    },
+    "parent_origin": {
+     "wire": "parent_origin",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^https?://",
+     "format": "uri",
+     "publicDescription": "The origin of the page that frames the terminal, such as https://app.example.com, for parent_keys. Used when the browser sends no referrer naming that page. The terminal keeps the origin it uses in its own address, so its own reloads keep reaching that page. Ignored unless it is an http or https origin."
+    }
+   },
+   "required": [],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": true,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "display.client": {
+   "kit": "display",
+   "view": "client",
+   "service": "display",
+   "program": "display",
+   "ui": "app",
+   "default": true,
+   "label": "Display",
+   "publicDescription": "Opens the display in the web viewer.",
+   "path": "/",
+   "params": {
+    "decorations": {
+     "wire": "decorations",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Show window title bars and buttons. Set false for a frameless look."
+    },
+    "toolbar": {
+     "wire": "toolbar",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Show the toolbar. false hides it, exactly as menu=false does."
+    },
+    "menu": {
+     "wire": "menu",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Show the menu button. false hides it, exactly as toolbar=false does."
+    },
+    "maximize_new_windows": {
+     "wire": "maximize_new_windows",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Open new application windows maximized. On by default; off by default when decorations is false or 0, since a window without a title bar has nothing to restore it from. Set false to keep the centred placement. On a desktop smaller than 1024 pixels in either direction new windows fill the screen whatever this says; dialogs, menus and fixed-size windows are never maximized."
+    },
+    "readonly": {
+     "wire": "readonly",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "View-only mode: keyboard and mouse input is not sent."
+    },
+    "dark_mode": {
+     "wire": "dark_mode",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Use the dark colour scheme."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "passthrough",
+     "enum": [
+      "light",
+      "dark",
+      "system"
+     ],
+     "publicDescription": "Colour scheme of the viewer: `light`, `dark`, or `system` to follow the device. The default is `system`. If dark_mode is also set, `system` wins over it and `dark_mode=true` wins over `light`."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "passthrough",
+     "enum": [
+      "oc-1",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme of the viewer interface. The default is `oc-1`."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "passthrough",
+     "pattern": "^[a-zA-Z0-9 _-]+$",
+     "publicDescription": "Font family of the viewer interface, by name, for example `Inter` or `IBM Plex Mono`. Letters, digits, spaces, underscores and hyphens only. A name the browser cannot find falls back to Inter. By default the viewer uses its own font."
+    },
+    "encoding": {
+     "wire": "encoding",
+     "in": "query",
+     "type": "string",
+     "class": "passthrough",
+     "enum": [
+      "auto",
+      "webp",
+      "jpeg",
+      "png",
+      "rgb"
+     ],
+     "publicDescription": "Encoding the viewer asks the server to use for window updates. Defaults to `webp`, which keeps text sharp. `auto` lets the server choose, and it may switch busy windows to a video encoding that looks blurry. The server only uses an encoding that both ends support."
+    },
+    "quality_mode": {
+     "wire": "quality_mode",
+     "in": "query",
+     "type": "string",
+     "class": "passthrough",
+     "enum": [
+      "auto",
+      "best",
+      "reduced"
+     ],
+     "publicDescription": "How the viewer picks image quality, the same choice as the Image Quality menu. `auto` (the default) uses full quality and switches to a lower one while the connection is detected as slow, then back; each switch reconnects the viewer, so it needs reconnect to be on (with reconnect off the viewer stays at full quality). `best` always uses full quality. `reduced` uses a lower quality, for picture formats that have one: png, rgb and avif encodings stay as they are. Any other value counts as `auto`. A fixed quality overrides it."
+    },
+    "quality": {
+     "wire": "quality",
+     "in": "query",
+     "type": "integer",
+     "class": "passthrough",
+     "min": 0,
+     "max": 100,
+     "publicDescription": "Fixed image quality for this viewer, 0 to 100. Unset, quality_mode decides, and a fixed quality wins over it. It also hides the Image Quality choice in the menu. Lossless encodings (png, rgb) ignore it."
+    },
+    "offscreen": {
+     "wire": "offscreen",
+     "in": "query",
+     "type": "boolean",
+     "class": "passthrough",
+     "publicDescription": "Decode and paint in a Web Worker (offscreen canvas). On by default in Chrome and Chromium over https and in Firefox 108 or later; never on Safari or other WebKit browsers, where it stays off even if you ask for it. false turns it off."
+    },
+    "scroll": {
+     "wire": "scroll",
+     "in": "query",
+     "type": "boolean",
+     "class": "passthrough",
+     "publicDescription": "Let the server send region copies instead of new pixels when a window scrolls, which keeps scrolling smooth. On by default except in Safari. Without this parameter the viewer offers it only to a server it has already found safe for it, and only with reconnect on; true or false forces the choice."
+    },
+    "bandwidth_limit": {
+     "wire": "bandwidth_limit",
+     "in": "query",
+     "type": "integer",
+     "class": "passthrough",
+     "min": 0,
+     "publicDescription": "Bandwidth limit for this viewer in bits per second; 0 means unlimited."
+    },
+    "override_width": {
+     "wire": "override_width",
+     "in": "query",
+     "type": "string",
+     "class": "passthrough",
+     "publicDescription": "Width in pixels of the desktop the viewer asks for; the page scales it to fit the window. `auto` (the default) uses the window's own width."
+    },
+    "vrefresh": {
+     "wire": "vrefresh",
+     "in": "query",
+     "type": "integer",
+     "class": "passthrough",
+     "publicDescription": "Screen refresh rate in Hz sent to the server. Unset, or -1, the viewer measures it and uses 60 when it cannot."
+    },
+    "suspend_inactive_tab": {
+     "wire": "suspend_inactive_tab",
+     "in": "query",
+     "type": "boolean",
+     "class": "passthrough",
+     "publicDescription": "Pause updates while the browser tab is hidden."
+    },
+    "sound": {
+     "wire": "sound",
+     "in": "query",
+     "type": "boolean",
+     "class": "passthrough",
+     "publicDescription": "Play the session's audio in the viewer."
+    },
+    "audio_codec": {
+     "wire": "audio_codec",
+     "in": "query",
+     "type": "string",
+     "class": "passthrough",
+     "publicDescription": "Preferred audio codec."
+    },
+    "keyboard": {
+     "wire": "keyboard",
+     "in": "query",
+     "type": "boolean",
+     "class": "passthrough",
+     "publicDescription": "Show the on-screen keyboard from the start. On by default in mobile browsers and off elsewhere; the keyboard button in the menu opens and closes it either way."
+    },
+    "swap_keys": {
+     "wire": "swap_keys",
+     "in": "query",
+     "type": "boolean",
+     "class": "passthrough",
+     "publicDescription": "Swap the Ctrl and Cmd (Meta) keys. On by default on macOS and off elsewhere."
+    },
+    "scroll_speed": {
+     "wire": "scroll_speed",
+     "in": "query",
+     "type": "number",
+     "class": "passthrough",
+     "min": 0.2,
+     "max": 3,
+     "publicDescription": "Scroll speed multiplier for a mouse wheel. 1 is normal. The default is 1; the page keeps it between 0.2 and 3."
+    },
+    "touchpad_scroll_scale": {
+     "wire": "touchpad_scroll_scale",
+     "in": "query",
+     "type": "number",
+     "class": "passthrough",
+     "min": 0.2,
+     "max": 2,
+     "publicDescription": "Scroll speed multiplier for a touchpad. Lower values make scrolling less sensitive. The default is 0.85; the page keeps it between 0.2 and 2."
+    },
+    "clipboard": {
+     "wire": "clipboard",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "enum": [
+      false
+     ],
+     "publicDescription": "Set false to turn clipboard sharing off for this viewer."
+    },
+    "clipboard_preferred_format": {
+     "wire": "clipboard_preferred_format",
+     "in": "query",
+     "type": "string",
+     "class": "passthrough",
+     "enum": [
+      "text/plain",
+      "text/html",
+      "UTF8_STRING"
+     ],
+     "publicDescription": "Preferred clipboard format."
+    },
+    "clipboard_poll": {
+     "wire": "clipboard_poll",
+     "in": "query",
+     "type": "boolean",
+     "class": "passthrough",
+     "enum": [
+      false
+     ],
+     "publicDescription": "Set false to stop the viewer polling your local clipboard for changes to send to the session. Polling is on by default, except in Firefox, and in Safari over https."
+    },
+    "printing": {
+     "wire": "printing",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "enum": [
+      false
+     ],
+     "publicDescription": "Set false to turn print forwarding off."
+    },
+    "file_transfer": {
+     "wire": "file_transfer",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "enum": [
+      false
+     ],
+     "publicDescription": "Set false to turn file transfer off."
+    },
+    "video": {
+     "wire": "video",
+     "in": "query",
+     "type": "boolean",
+     "class": "passthrough",
+     "publicDescription": "Allow video encodings."
+    },
+    "display_notifications": {
+     "wire": "display_notifications",
+     "in": "query",
+     "type": "boolean",
+     "class": "passthrough",
+     "publicDescription": "Show notifications inside the display view."
+    },
+    "reconnect": {
+     "wire": "reconnect",
+     "in": "query",
+     "type": "boolean",
+     "class": "passthrough",
+     "publicDescription": "Reconnect automatically after a lost connection."
+    },
+    "reconnect_count": {
+     "wire": "reconnect_count",
+     "in": "query",
+     "type": "integer",
+     "class": "passthrough",
+     "min": 1,
+     "max": 1000,
+     "publicDescription": "How many quick reconnect attempts the viewer makes after a connection that worked is lost, before it stops. The default is 30. Needs reconnect to be on."
+    },
+    "soft_giveup_attempts": {
+     "wire": "soft_giveup_attempts",
+     "in": "query",
+     "type": "integer",
+     "class": "passthrough",
+     "min": 1,
+     "max": 1000,
+     "publicDescription": "Failed attempts to reach a display that has not connected yet before the viewer reports that it cannot connect and moves to slow retries. The default is 30. The time limit soft_giveup_ms counts too, whichever comes first."
+    },
+    "soft_giveup_ms": {
+     "wire": "soft_giveup_ms",
+     "in": "query",
+     "type": "integer",
+     "class": "passthrough",
+     "min": 1000,
+     "max": 3600000,
+     "publicDescription": "Milliseconds of failed attempts to reach a display that has not connected yet before the viewer reports that it cannot connect and moves to slow retries. The default is 90000."
+    },
+    "slow_retry_delay": {
+     "wire": "slow_retry_delay",
+     "in": "query",
+     "type": "integer",
+     "class": "passthrough",
+     "min": 2000,
+     "max": 300000,
+     "publicDescription": "Milliseconds between the slow retries that follow that report. The default is 15000."
+    },
+    "slow_retry_max_ms": {
+     "wire": "slow_retry_max_ms",
+     "in": "query",
+     "type": "integer",
+     "class": "passthrough",
+     "min": 0,
+     "max": 7200000,
+     "publicDescription": "Milliseconds, counted from the first attempt, after which a viewer that has never connected stops its slow retries and closes. It is checked only once the first-connection give-up (soft_giveup_attempts, soft_giveup_ms) has happened, and does not apply after a connection that worked is lost (reconnect_count covers that). 0 removes this limit only. The default is 1200000 (20 minutes)."
+    },
+    "floating_menu": {
+     "wire": "floating_menu",
+     "in": "query",
+     "type": "boolean",
+     "class": "passthrough",
+     "publicDescription": "Show the floating menu. false hides it together with the menu button."
+    },
+    "clock": {
+     "wire": "clock",
+     "in": "query",
+     "type": "boolean",
+     "class": "passthrough",
+     "publicDescription": "Show the server clock."
+    },
+    "scroll_reverse_y": {
+     "wire": "scroll_reverse_y",
+     "in": "query",
+     "type": "string",
+     "class": "passthrough",
+     "enum": [
+      "auto",
+      "true",
+      "false"
+     ],
+     "publicDescription": "Reverse vertical scrolling: auto, true or false."
+    },
+    "scroll_reverse_x": {
+     "wire": "scroll_reverse_x",
+     "in": "query",
+     "type": "boolean",
+     "class": "passthrough",
+     "publicDescription": "Reverse horizontal scrolling."
+    },
+    "title_show_hoody": {
+     "wire": "title_show_hoody",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Show Hoody in the page title."
+    },
+    "title_show_display_id": {
+     "wire": "title_show_display_id",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Show the display number in the page title."
+    },
+    "record": {
+     "wire": "record",
+     "in": "query",
+     "type": "boolean",
+     "class": "passthrough",
+     "publicDescription": "Start recording the display in the browser about two seconds after the recorder is ready, which is after the viewer has painted the display for the first time (or 4 seconds after it began waiting for that paint, if nothing paints). mp4 and webm recordings normally stream to a browser download; some browsers download only after recording stops, and if the viewer falls back to buffering, use its Download menu after stopping. A gif downloads automatically after rendering. See record_format, record_codec and record_fps. The default is off."
+    },
+    "record_format": {
+     "wire": "record_format",
+     "in": "query",
+     "type": "string",
+     "class": "passthrough",
+     "enum": [
+      "mp4",
+      "webm",
+      "gif"
+     ],
+     "publicDescription": "File format of the recording started by record: `mp4`, `webm` or `gif`. The default is `mp4`."
+    },
+    "record_codec": {
+     "wire": "record_codec",
+     "in": "query",
+     "type": "string",
+     "class": "passthrough",
+     "enum": [
+      "h264",
+      "h265",
+      "vp8",
+      "vp9"
+     ],
+     "publicDescription": "Video codec of the recording: `h264` or `h265` for mp4, `vp8` or `vp9` for webm. The default is `h264` for mp4 and `vp9` (else `vp8`) for webm. A codec the format or the browser does not support is replaced by another codec of the same format when the browser has one; when it has none (no mp4 codec, or no webm support), recording does not start and the viewer does not switch to another format. gif has no codec."
+    },
+    "record_fps": {
+     "wire": "record_fps",
+     "in": "query",
+     "type": "integer",
+     "class": "passthrough",
+     "min": 1,
+     "max": 60,
+     "publicDescription": "Frames per second of the recording, 1 to 60. The default is 30, or 10 for gif."
+    },
+    "parent_keys": {
+     "wire": "parent_keys",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hand two keyboard chords to the page that frames the viewer: Ctrl+Alt+B and Ctrl+Alt with an arrow key are not sent to the display, and that page receives a hoody-parent-key message naming the chord (escape, left, right, up or down), sent only to its own origin. Without a framing page the keys work as usual."
+    },
+    "parent_origin": {
+     "wire": "parent_origin",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^https?://",
+     "format": "uri",
+     "publicDescription": "The origin of the page that frames the viewer, such as https://app.example.com, for parent_keys. Used when the browser sends no referrer naming that page. The viewer keeps the origin it uses in its own address, so its own reloads and reconnects keep reaching that page. Ignored unless it is an http or https origin."
+    }
+   },
+   "required": [],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "supported",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "files.root": {
+   "kit": "files",
+   "view": "root",
+   "service": "files",
+   "program": "files",
+   "ui": "app",
+   "default": false,
+   "label": "Root folder",
+   "publicDescription": "The listing of the computer root folder, with upload, rename and delete controls for the user.",
+   "path": "/",
+   "params": {
+    "sort": {
+     "wire": "sort",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "name",
+      "mtime",
+      "size"
+     ],
+     "publicDescription": "Sort the listing by name, modification time or size."
+    },
+    "order": {
+     "wire": "order",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "asc",
+      "desc"
+     ],
+     "publicDescription": "Sort direction. Only desc changes the order; asc is the default."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "oc-1",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme of the page."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "publicDescription": "Light or dark colour scheme. Without it the page follows the system setting."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "ibm-plex-mono",
+      "cascadia-code",
+      "fira-code",
+      "hack",
+      "inconsolata",
+      "intel-one-mono",
+      "iosevka",
+      "jetbrains-mono",
+      "meslo-lgs",
+      "roboto-mono",
+      "source-code-pro",
+      "ubuntu-mono"
+     ],
+     "publicDescription": "Monospace font of the editor and listing."
+    },
+    "fontSize": {
+     "wire": "fontSize",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 8,
+     "max": 72,
+     "publicDescription": "Editor font size in pixels, 8 to 72."
+    },
+    "embedderOrigin": {
+     "wire": "embedderOrigin",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^https?://",
+     "format": "uri",
+     "publicDescription": "Origin of the embedding page, such as https://app.example.com. The page then accepts theme and layout messages from it and tells it when it is ready."
+    },
+    "chromeless": {
+     "wire": "chromeless",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the header, sidebar, preview, footer and borders at once. Each can be turned back on with its own option set to false."
+    },
+    "borderless": {
+     "wire": "borderless",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the page borders."
+    },
+    "hideHeader": {
+     "wire": "hideHeader",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the header bar."
+    },
+    "hideSidebar": {
+     "wire": "hideSidebar",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the sidebar."
+    },
+    "hidePreview": {
+     "wire": "hidePreview",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the preview pane."
+    },
+    "hideFooter": {
+     "wire": "hideFooter",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the footer."
+    },
+    "embedBg": {
+     "wire": "embedBg",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "transparent"
+     ],
+     "publicDescription": "Set to transparent to let the embedding page's background show through."
+    }
+   },
+   "required": [],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "files.folder": {
+   "kit": "files",
+   "view": "folder",
+   "service": "files",
+   "program": "files",
+   "ui": "app",
+   "default": true,
+   "label": "Folder",
+   "publicDescription": "The listing of a folder, with upload, rename and delete controls for the user.",
+   "path": "/{path}",
+   "params": {
+    "path": {
+     "wire": "path",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "encoder": "path-segments",
+     "publicDescription": "Absolute path inside the computer, starting with /. Each segment is percent-encoded; the slashes between segments are kept."
+    },
+    "sort": {
+     "wire": "sort",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "name",
+      "mtime",
+      "size"
+     ],
+     "publicDescription": "Sort the listing by name, modification time or size."
+    },
+    "order": {
+     "wire": "order",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "asc",
+      "desc"
+     ],
+     "publicDescription": "Sort direction. Only desc changes the order; asc is the default."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "oc-1",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme of the page."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "publicDescription": "Light or dark colour scheme. Without it the page follows the system setting."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "ibm-plex-mono",
+      "cascadia-code",
+      "fira-code",
+      "hack",
+      "inconsolata",
+      "intel-one-mono",
+      "iosevka",
+      "jetbrains-mono",
+      "meslo-lgs",
+      "roboto-mono",
+      "source-code-pro",
+      "ubuntu-mono"
+     ],
+     "publicDescription": "Monospace font of the editor and listing."
+    },
+    "fontSize": {
+     "wire": "fontSize",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 8,
+     "max": 72,
+     "publicDescription": "Editor font size in pixels, 8 to 72."
+    },
+    "embedderOrigin": {
+     "wire": "embedderOrigin",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^https?://",
+     "format": "uri",
+     "publicDescription": "Origin of the embedding page, such as https://app.example.com. The page then accepts theme and layout messages from it and tells it when it is ready."
+    },
+    "chromeless": {
+     "wire": "chromeless",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the header, sidebar, preview, footer and borders at once. Each can be turned back on with its own option set to false."
+    },
+    "borderless": {
+     "wire": "borderless",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the page borders."
+    },
+    "hideHeader": {
+     "wire": "hideHeader",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the header bar."
+    },
+    "hideSidebar": {
+     "wire": "hideSidebar",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the sidebar."
+    },
+    "hidePreview": {
+     "wire": "hidePreview",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the preview pane."
+    },
+    "hideFooter": {
+     "wire": "hideFooter",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the footer."
+    },
+    "embedBg": {
+     "wire": "embedBg",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "transparent"
+     ],
+     "publicDescription": "Set to transparent to let the embedding page's background show through."
+    }
+   },
+   "required": [
+    "path"
+   ],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "files.editor": {
+   "kit": "files",
+   "view": "editor",
+   "service": "files",
+   "program": "files",
+   "ui": "app",
+   "default": false,
+   "label": "Editor",
+   "publicDescription": "A text file opened in the code editor. Changes are saved only when the user saves.",
+   "path": "/{path}",
+   "params": {
+    "path": {
+     "wire": "path",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "encoder": "path-segments",
+     "publicDescription": "Absolute path inside the computer, starting with /. Each segment is percent-encoded; the slashes between segments are kept."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "oc-1",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme of the page."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "publicDescription": "Light or dark colour scheme. Without it the page follows the system setting."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "ibm-plex-mono",
+      "cascadia-code",
+      "fira-code",
+      "hack",
+      "inconsolata",
+      "intel-one-mono",
+      "iosevka",
+      "jetbrains-mono",
+      "meslo-lgs",
+      "roboto-mono",
+      "source-code-pro",
+      "ubuntu-mono"
+     ],
+     "publicDescription": "Monospace font of the editor and listing."
+    },
+    "fontSize": {
+     "wire": "fontSize",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 8,
+     "max": 72,
+     "publicDescription": "Editor font size in pixels, 8 to 72."
+    },
+    "embedderOrigin": {
+     "wire": "embedderOrigin",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^https?://",
+     "format": "uri",
+     "publicDescription": "Origin of the embedding page, such as https://app.example.com. The page then accepts theme and layout messages from it and tells it when it is ready."
+    },
+    "chromeless": {
+     "wire": "chromeless",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the header, sidebar, preview, footer and borders at once. Each can be turned back on with its own option set to false."
+    },
+    "borderless": {
+     "wire": "borderless",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the page borders."
+    },
+    "hideHeader": {
+     "wire": "hideHeader",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the header bar."
+    },
+    "hideFooter": {
+     "wire": "hideFooter",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the footer."
+    },
+    "embedBg": {
+     "wire": "embedBg",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "transparent"
+     ],
+     "publicDescription": "Set to transparent to let the embedding page's background show through."
+    }
+   },
+   "required": [
+    "path"
+   ],
+   "const": {},
+   "flags": [
+    "edit"
+   ],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "files.search": {
+   "kit": "files",
+   "view": "search",
+   "service": "files",
+   "program": "files",
+   "ui": "app",
+   "default": false,
+   "label": "Search",
+   "publicDescription": "Search results for a text inside a folder and its subfolders.",
+   "path": "/{directory}",
+   "params": {
+    "directory": {
+     "wire": "directory",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "encoder": "path-segments",
+     "publicDescription": "Absolute path of the folder to search in, starting with /, encoded like path."
+    },
+    "q": {
+     "wire": "q",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "Search text. Lists the entries below the folder whose names match."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "oc-1",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme of the page."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "publicDescription": "Light or dark colour scheme. Without it the page follows the system setting."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "ibm-plex-mono",
+      "cascadia-code",
+      "fira-code",
+      "hack",
+      "inconsolata",
+      "intel-one-mono",
+      "iosevka",
+      "jetbrains-mono",
+      "meslo-lgs",
+      "roboto-mono",
+      "source-code-pro",
+      "ubuntu-mono"
+     ],
+     "publicDescription": "Monospace font of the editor and listing."
+    },
+    "fontSize": {
+     "wire": "fontSize",
+     "in": "query",
+     "type": "integer",
+     "class": "typed",
+     "min": 8,
+     "max": 72,
+     "publicDescription": "Editor font size in pixels, 8 to 72."
+    },
+    "embedderOrigin": {
+     "wire": "embedderOrigin",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^https?://",
+     "format": "uri",
+     "publicDescription": "Origin of the embedding page, such as https://app.example.com. The page then accepts theme and layout messages from it and tells it when it is ready."
+    },
+    "chromeless": {
+     "wire": "chromeless",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the header, sidebar, preview, footer and borders at once. Each can be turned back on with its own option set to false."
+    },
+    "borderless": {
+     "wire": "borderless",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the page borders."
+    },
+    "hideHeader": {
+     "wire": "hideHeader",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the header bar."
+    },
+    "hideSidebar": {
+     "wire": "hideSidebar",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the sidebar."
+    },
+    "hidePreview": {
+     "wire": "hidePreview",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the preview pane."
+    },
+    "hideFooter": {
+     "wire": "hideFooter",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the footer."
+    },
+    "embedBg": {
+     "wire": "embedBg",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "transparent"
+     ],
+     "publicDescription": "Set to transparent to let the embedding page's background show through."
+    }
+   },
+   "required": [
+    "directory",
+    "q"
+   ],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "browser.status": {
+   "kit": "browser",
+   "view": "status",
+   "service": "browser",
+   "program": "browser",
+   "ui": "app",
+   "default": true,
+   "label": "Status",
+   "publicDescription": "Lists the running browser instances with links to their display and developer tools.",
+   "path": "/",
+   "params": {
+    "maximize_new_windows": {
+     "wire": "maximize_new_windows",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Open new browser windows maximized in the display. On by default."
+    }
+   },
+   "required": [],
+   "const": {
+    "start": false
+   },
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "supported",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "browser.display": {
+   "kit": "browser",
+   "view": "display",
+   "service": "browser",
+   "program": "browser",
+   "ui": "app",
+   "default": false,
+   "label": "Display",
+   "publicDescription": "Shows the browser's display full-page.",
+   "path": "/",
+   "params": {
+    "maximize_new_windows": {
+     "wire": "maximize_new_windows",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Open new browser windows maximized in the display. On by default."
+    },
+    "iframe_url": {
+     "wire": "iframe_url",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^https?://",
+     "format": "uri",
+     "publicDescription": "Web address shown in the full-page frame instead of the browser's own display. Must start with http:// or https://."
+    }
+   },
+   "required": [],
+   "const": {
+    "view": "display",
+    "start": false
+   },
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "supported",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "code.root": {
+   "kit": "code",
+   "view": "root",
+   "service": "code",
+   "program": "code",
+   "ui": "app",
+   "default": false,
+   "label": "Editor (default folder)",
+   "publicDescription": "The editor opened on the default workspace folder the platform sets. Opening it starts the editor instance when it is not running yet.",
+   "path": "/api/v1/code",
+   "params": {
+    "locale": {
+     "wire": "locale",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+     "publicDescription": "Display language of the editor, as a language tag such as en or pt-BR. Applies when the instance starts."
+    },
+    "page-loader": {
+     "wire": "page-loader",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Show a loading overlay while a newly started editor initialises. Applies when the instance starts."
+    },
+    "disable-walkthroughs": {
+     "wire": "disable-walkthroughs",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the editor's walkthrough pages. Applies when the instance starts."
+    },
+    "hoody-code": {
+     "wire": "hoody-code",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Load the Hoody page integration scripts, such as tab-title sync. Applies when the instance starts."
+    }
+   },
+   "required": [],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": true,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "code.editor": {
+   "kit": "code",
+   "view": "editor",
+   "service": "code",
+   "program": "code",
+   "ui": "app",
+   "default": true,
+   "label": "Editor",
+   "publicDescription": "The editor opened on a folder. Opening it starts the editor instance when it is not running yet.",
+   "path": "/api/v1/code",
+   "params": {
+    "folder": {
+     "wire": "folder",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^/",
+     "publicDescription": "Absolute path of the folder to open. It applies when the editor instance starts; a running instance keeps the folder it was started with."
+    },
+    "locale": {
+     "wire": "locale",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+     "publicDescription": "Display language of the editor, as a language tag such as en or pt-BR. Applies when the instance starts."
+    },
+    "page-loader": {
+     "wire": "page-loader",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Show a loading overlay while a newly started editor initialises. Applies when the instance starts."
+    },
+    "disable-walkthroughs": {
+     "wire": "disable-walkthroughs",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the editor's walkthrough pages. Applies when the instance starts."
+    },
+    "hoody-code": {
+     "wire": "hoody-code",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Load the Hoody page integration scripts, such as tab-title sync. Applies when the instance starts."
+    }
+   },
+   "required": [
+    "folder"
+   ],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": true,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "code.extension": {
+   "kit": "code",
+   "view": "extension",
+   "service": "code",
+   "program": "code",
+   "ui": "app",
+   "default": false,
+   "label": "Extension",
+   "publicDescription": "The editor in extension-only mode: only the chosen extension's view is shown. Opening it starts the editor instance when it is not running yet.",
+   "path": "/api/v1/code",
+   "params": {
+    "folder": {
+     "wire": "folder",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^/",
+     "publicDescription": "Absolute path of the folder to open. It applies when the editor instance starts; a running instance keeps the folder it was started with."
+    },
+    "extension": {
+     "wire": "extension",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[a-zA-Z0-9-]+\\.[a-zA-Z0-9-]+$",
+     "publicDescription": "Extension identifier in PUBLISHER.NAME form. Opens the editor in extension-only mode, showing only that extension's view."
+    },
+    "locale": {
+     "wire": "locale",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+     "publicDescription": "Display language of the editor, as a language tag such as en or pt-BR. Applies when the instance starts."
+    },
+    "page-loader": {
+     "wire": "page-loader",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Show a loading overlay while a newly started editor initialises. Applies when the instance starts."
+    },
+    "disable-walkthroughs": {
+     "wire": "disable-walkthroughs",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Hide the editor's walkthrough pages. Applies when the instance starts."
+    },
+    "hoody-code": {
+     "wire": "hoody-code",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Load the Hoody page integration scripts, such as tab-title sync. Applies when the instance starts."
+    }
+   },
+   "required": [
+    "extension"
+   ],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": true,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "sqlite.overview": {
+   "kit": "sqlite",
+   "view": "overview",
+   "service": "sqlite",
+   "program": "sqlite",
+   "ui": "app",
+   "default": true,
+   "label": "Overview",
+   "publicDescription": "Opens the database overview.",
+   "path": "/",
+   "params": {
+    "db": {
+     "wire": "db",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "Path of the database file to open. A missing file is reported as an error, never created."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark",
+      "system"
+     ],
+     "publicDescription": "Force the light or dark colour scheme, or follow the system."
+    },
+    "embed": {
+     "wire": "embed",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Compact chrome for embedding: a thin navigation bar instead of the full header."
+    }
+   },
+   "required": [],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "sqlite.tables": {
+   "kit": "sqlite",
+   "view": "tables",
+   "service": "sqlite",
+   "program": "sqlite",
+   "ui": "app",
+   "default": false,
+   "label": "Tables",
+   "publicDescription": "Opens the table browser, optionally with one table selected.",
+   "path": "/tables",
+   "params": {
+    "table": {
+     "wire": "table",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "Table to select. On the key-value view it names the key-value table (default kv_store)."
+    },
+    "db": {
+     "wire": "db",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "Path of the database file to open. A missing file is reported as an error, never created."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark",
+      "system"
+     ],
+     "publicDescription": "Force the light or dark colour scheme, or follow the system."
+    },
+    "embed": {
+     "wire": "embed",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Compact chrome for embedding: a thin navigation bar instead of the full header."
+    }
+   },
+   "required": [],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "sqlite.query": {
+   "kit": "sqlite",
+   "view": "query",
+   "service": "sqlite",
+   "program": "sqlite",
+   "ui": "app",
+   "default": false,
+   "label": "Query editor",
+   "publicDescription": "Opens the SQL query editor. Nothing runs until you run a query.",
+   "path": "/query",
+   "params": {
+    "db": {
+     "wire": "db",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "Path of the database file to open. A missing file is reported as an error, never created."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark",
+      "system"
+     ],
+     "publicDescription": "Force the light or dark colour scheme, or follow the system."
+    },
+    "embed": {
+     "wire": "embed",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Compact chrome for embedding: a thin navigation bar instead of the full header."
+    }
+   },
+   "required": [],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "sqlite.kvStore": {
+   "kit": "sqlite",
+   "view": "kvStore",
+   "service": "sqlite",
+   "program": "sqlite",
+   "ui": "app",
+   "default": false,
+   "label": "Key-value store",
+   "publicDescription": "Opens the key-value store browser.",
+   "path": "/kv-store",
+   "params": {
+    "table": {
+     "wire": "table",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "Table to select. On the key-value view it names the key-value table (default kv_store)."
+    },
+    "db": {
+     "wire": "db",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "Path of the database file to open. A missing file is reported as an error, never created."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark",
+      "system"
+     ],
+     "publicDescription": "Force the light or dark colour scheme, or follow the system."
+    },
+    "embed": {
+     "wire": "embed",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Compact chrome for embedding: a thin navigation bar instead of the full header."
+    }
+   },
+   "required": [],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "sqlite.history": {
+   "kit": "sqlite",
+   "view": "history",
+   "service": "sqlite",
+   "program": "sqlite",
+   "ui": "app",
+   "default": false,
+   "label": "History",
+   "publicDescription": "Opens the query history.",
+   "path": "/history",
+   "params": {
+    "db": {
+     "wire": "db",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "Path of the database file to open. A missing file is reported as an error, never created."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark",
+      "system"
+     ],
+     "publicDescription": "Force the light or dark colour scheme, or follow the system."
+    },
+    "embed": {
+     "wire": "embed",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Compact chrome for embedding: a thin navigation bar instead of the full header."
+    }
+   },
+   "required": [],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "sqlite.pragmas": {
+   "kit": "sqlite",
+   "view": "pragmas",
+   "service": "sqlite",
+   "program": "sqlite",
+   "ui": "app",
+   "default": false,
+   "label": "Pragmas",
+   "publicDescription": "Opens the database pragma settings. Nothing changes until you save.",
+   "path": "/pragmas",
+   "params": {
+    "db": {
+     "wire": "db",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "publicDescription": "Path of the database file to open. A missing file is reported as an error, never created."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark",
+      "system"
+     ],
+     "publicDescription": "Force the light or dark colour scheme, or follow the system."
+    },
+    "embed": {
+     "wire": "embed",
+     "in": "query",
+     "type": "boolean",
+     "class": "typed",
+     "publicDescription": "Compact chrome for embedding: a thin navigation bar instead of the full header."
+    }
+   },
+   "required": [],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "notes.home": {
+   "kit": "notes",
+   "view": "home",
+   "service": "notes",
+   "program": "notes",
+   "ui": "app",
+   "default": true,
+   "label": "Home",
+   "publicDescription": "Opens the last used locally available notebook, or the first available one. On a first visit, with no notebook stored in this browser, Notes needs the server to set one up.",
+   "path": "/",
+   "params": {
+    "mode": {
+     "wire": "mode",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "readonly",
+      "readwrite"
+     ],
+     "publicDescription": "Share presentation. Either value hides the sidebar. readonly shows the notebook's content and management views as a viewer sees them; your own account settings and appearance preferences stay editable. readwrite keeps the editing controls your permissions allow, including section and channel role overrides. Neither changes permissions."
+    },
+    "sidebar": {
+     "wire": "sidebar",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "hidden"
+     ],
+     "publicDescription": "Set to hidden to hide the notebook sidebar."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "oc-1",
+      "hc-black",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme id."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "publicDescription": "Light or dark colour scheme, over the saved preference. A page set to light or dark in its own appearance keeps it."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "ibm-plex-mono",
+      "jetbrains-mono",
+      "fira-code",
+      "cascadia-code",
+      "hack",
+      "source-code-pro",
+      "inconsolata",
+      "roboto-mono",
+      "ubuntu-mono",
+      "intel-one-mono",
+      "meslo-lgs",
+      "iosevka"
+     ],
+     "publicDescription": "Monospace font id."
+    }
+   },
+   "required": [],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "notes.create": {
+   "kit": "notes",
+   "view": "create",
+   "service": "notes",
+   "program": "notes",
+   "ui": "app",
+   "default": false,
+   "label": "Create notebook",
+   "publicDescription": "Opens the form for creating a new notebook; only submitting the form creates one. Like any Notes page, the first visit may set up the default notebook and your user in it.",
+   "path": "/create",
+   "params": {
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "oc-1",
+      "hc-black",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme id."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "publicDescription": "Light or dark colour scheme, over the saved preference. A page set to light or dark in its own appearance keeps it."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "ibm-plex-mono",
+      "jetbrains-mono",
+      "fira-code",
+      "cascadia-code",
+      "hack",
+      "source-code-pro",
+      "inconsolata",
+      "roboto-mono",
+      "ubuntu-mono",
+      "intel-one-mono",
+      "meslo-lgs",
+      "iosevka"
+     ],
+     "publicDescription": "Monospace font id."
+    }
+   },
+   "required": [],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "notes.notebook": {
+   "kit": "notes",
+   "view": "notebook",
+   "service": "notes",
+   "program": "notes",
+   "ui": "app",
+   "default": false,
+   "label": "Notebook",
+   "publicDescription": "Opens a notebook at its last visited location, or its home page.",
+   "path": "/notebook/{userId}",
+   "params": {
+    "userId": {
+     "wire": "userId",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[0-9a-z]{24,28}$",
+     "publicDescription": "Your own user id in the notebook to open, as the viewing identity knows it (not the notebook id, and not another member's user id: an id the viewer does not have opens Notes home instead). New ids are 24 lowercase hexadecimal characters; older ids may be up to 28 lowercase letters and digits."
+    },
+    "mode": {
+     "wire": "mode",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "readonly",
+      "readwrite"
+     ],
+     "publicDescription": "Share presentation. Either value hides the sidebar. readonly shows the notebook's content and management views as a viewer sees them; your own account settings and appearance preferences stay editable. readwrite keeps the editing controls your permissions allow, including section and channel role overrides. Neither changes permissions."
+    },
+    "sidebar": {
+     "wire": "sidebar",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "hidden"
+     ],
+     "publicDescription": "Set to hidden to hide the notebook sidebar."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "oc-1",
+      "hc-black",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme id."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "publicDescription": "Light or dark colour scheme, over the saved preference. A page set to light or dark in its own appearance keeps it."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "ibm-plex-mono",
+      "jetbrains-mono",
+      "fira-code",
+      "cascadia-code",
+      "hack",
+      "source-code-pro",
+      "inconsolata",
+      "roboto-mono",
+      "ubuntu-mono",
+      "intel-one-mono",
+      "meslo-lgs",
+      "iosevka"
+     ],
+     "publicDescription": "Monospace font id."
+    }
+   },
+   "required": [
+    "userId"
+   ],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "notes.notebookHome": {
+   "kit": "notes",
+   "view": "notebookHome",
+   "service": "notes",
+   "program": "notes",
+   "ui": "app",
+   "default": false,
+   "label": "Notebook home",
+   "publicDescription": "Opens the home page of a notebook.",
+   "path": "/notebook/{userId}/home",
+   "params": {
+    "userId": {
+     "wire": "userId",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[0-9a-z]{24,28}$",
+     "publicDescription": "Your own user id in the notebook to open, as the viewing identity knows it (not the notebook id, and not another member's user id: an id the viewer does not have opens Notes home instead). New ids are 24 lowercase hexadecimal characters; older ids may be up to 28 lowercase letters and digits."
+    },
+    "mode": {
+     "wire": "mode",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "readonly",
+      "readwrite"
+     ],
+     "publicDescription": "Share presentation. Either value hides the sidebar. readonly shows the notebook's content and management views as a viewer sees them; your own account settings and appearance preferences stay editable. readwrite keeps the editing controls your permissions allow, including section and channel role overrides. Neither changes permissions."
+    },
+    "sidebar": {
+     "wire": "sidebar",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "hidden"
+     ],
+     "publicDescription": "Set to hidden to hide the notebook sidebar."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "oc-1",
+      "hc-black",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme id."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "publicDescription": "Light or dark colour scheme, over the saved preference. A page set to light or dark in its own appearance keeps it."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "ibm-plex-mono",
+      "jetbrains-mono",
+      "fira-code",
+      "cascadia-code",
+      "hack",
+      "source-code-pro",
+      "inconsolata",
+      "roboto-mono",
+      "ubuntu-mono",
+      "intel-one-mono",
+      "meslo-lgs",
+      "iosevka"
+     ],
+     "publicDescription": "Monospace font id."
+    }
+   },
+   "required": [
+    "userId"
+   ],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "notes.node": {
+   "kit": "notes",
+   "view": "node",
+   "service": "notes",
+   "program": "notes",
+   "ui": "app",
+   "default": false,
+   "label": "Page",
+   "publicDescription": "Opens one page or node of a notebook.",
+   "path": "/notebook/{userId}/{nodeId}",
+   "params": {
+    "userId": {
+     "wire": "userId",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[0-9a-z]{24,28}$",
+     "publicDescription": "Your own user id in the notebook to open, as the viewing identity knows it (not the notebook id, and not another member's user id: an id the viewer does not have opens Notes home instead). New ids are 24 lowercase hexadecimal characters; older ids may be up to 28 lowercase letters and digits."
+    },
+    "nodeId": {
+     "wire": "nodeId",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[0-9a-z]{24,28}$",
+     "publicDescription": "Id of the page or node to open. New ids are 24 lowercase hexadecimal characters; older ids may be up to 28 lowercase letters and digits."
+    },
+    "mode": {
+     "wire": "mode",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "readonly",
+      "readwrite"
+     ],
+     "publicDescription": "Share presentation. Either value hides the sidebar. readonly shows the notebook's content and management views as a viewer sees them; your own account settings and appearance preferences stay editable. readwrite keeps the editing controls your permissions allow, including section and channel role overrides. Neither changes permissions."
+    },
+    "sidebar": {
+     "wire": "sidebar",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "hidden"
+     ],
+     "publicDescription": "Set to hidden to hide the notebook sidebar."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "oc-1",
+      "hc-black",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme id."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "publicDescription": "Light or dark colour scheme, over the saved preference. A page set to light or dark in its own appearance keeps it."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "ibm-plex-mono",
+      "jetbrains-mono",
+      "fira-code",
+      "cascadia-code",
+      "hack",
+      "source-code-pro",
+      "inconsolata",
+      "roboto-mono",
+      "ubuntu-mono",
+      "intel-one-mono",
+      "meslo-lgs",
+      "iosevka"
+     ],
+     "publicDescription": "Monospace font id."
+    }
+   },
+   "required": [
+    "userId",
+    "nodeId"
+   ],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "notes.modal": {
+   "kit": "notes",
+   "view": "modal",
+   "service": "notes",
+   "program": "notes",
+   "ui": "app",
+   "default": false,
+   "label": "Page with modal",
+   "publicDescription": "Opens a page with another node shown in a modal over it.",
+   "path": "/notebook/{userId}/{nodeId}/modal/{modalNodeId}",
+   "params": {
+    "userId": {
+     "wire": "userId",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[0-9a-z]{24,28}$",
+     "publicDescription": "Your own user id in the notebook to open, as the viewing identity knows it (not the notebook id, and not another member's user id: an id the viewer does not have opens Notes home instead). New ids are 24 lowercase hexadecimal characters; older ids may be up to 28 lowercase letters and digits."
+    },
+    "nodeId": {
+     "wire": "nodeId",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[0-9a-z]{24,28}$",
+     "publicDescription": "Id of the page or node to open. New ids are 24 lowercase hexadecimal characters; older ids may be up to 28 lowercase letters and digits."
+    },
+    "modalNodeId": {
+     "wire": "modalNodeId",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[0-9a-z]{24,28}$",
+     "publicDescription": "Id of the node shown in a modal over the page. New ids are 24 lowercase hexadecimal characters; older ids may be up to 28 lowercase letters and digits."
+    },
+    "mode": {
+     "wire": "mode",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "readonly",
+      "readwrite"
+     ],
+     "publicDescription": "Share presentation. Either value hides the sidebar. readonly shows the notebook's content and management views as a viewer sees them; your own account settings and appearance preferences stay editable. readwrite keeps the editing controls your permissions allow, including section and channel role overrides. Neither changes permissions."
+    },
+    "sidebar": {
+     "wire": "sidebar",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "hidden"
+     ],
+     "publicDescription": "Set to hidden to hide the notebook sidebar."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "oc-1",
+      "hc-black",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme id."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "publicDescription": "Light or dark colour scheme, over the saved preference. A page set to light or dark in its own appearance keeps it."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "ibm-plex-mono",
+      "jetbrains-mono",
+      "fira-code",
+      "cascadia-code",
+      "hack",
+      "source-code-pro",
+      "inconsolata",
+      "roboto-mono",
+      "ubuntu-mono",
+      "intel-one-mono",
+      "meslo-lgs",
+      "iosevka"
+     ],
+     "publicDescription": "Monospace font id."
+    }
+   },
+   "required": [
+    "userId",
+    "nodeId",
+    "modalNodeId"
+   ],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "notes.alias": {
+   "kit": "notes",
+   "view": "alias",
+   "service": "notes",
+   "program": "notes",
+   "ui": "app",
+   "default": false,
+   "label": "Page by alias",
+   "publicDescription": "Opens the page with the given alias if it is available in this browser. If it is not, Notes waits while the first sync runs, for up to 30 seconds. If the page is still not available, Notes opens the notebook home.",
+   "path": "/notebook/{userId}/alias/{alias}",
+   "params": {
+    "userId": {
+     "wire": "userId",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[0-9a-z]{24,28}$",
+     "publicDescription": "Your own user id in the notebook to open, as the viewing identity knows it (not the notebook id, and not another member's user id: an id the viewer does not have opens Notes home instead). New ids are 24 lowercase hexadecimal characters; older ids may be up to 28 lowercase letters and digits."
+    },
+    "alias": {
+     "wire": "alias",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "maxLength": 48,
+     "pattern": "^[a-z0-9_-]{1,48}$",
+     "publicDescription": "Page alias (lowercase letters, digits, '_' and '-', up to 48 characters). Opens the matching page available in this browser, or the notebook home if it is still not available after waiting up to 30 seconds for the first sync."
+    },
+    "mode": {
+     "wire": "mode",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "readonly",
+      "readwrite"
+     ],
+     "publicDescription": "Share presentation. Either value hides the sidebar. readonly shows the notebook's content and management views as a viewer sees them; your own account settings and appearance preferences stay editable. readwrite keeps the editing controls your permissions allow, including section and channel role overrides. Neither changes permissions."
+    },
+    "sidebar": {
+     "wire": "sidebar",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "hidden"
+     ],
+     "publicDescription": "Set to hidden to hide the notebook sidebar."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "oc-1",
+      "hc-black",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme id."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "publicDescription": "Light or dark colour scheme, over the saved preference. A page set to light or dark in its own appearance keeps it."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "ibm-plex-mono",
+      "jetbrains-mono",
+      "fira-code",
+      "cascadia-code",
+      "hack",
+      "source-code-pro",
+      "inconsolata",
+      "roboto-mono",
+      "ubuntu-mono",
+      "intel-one-mono",
+      "meslo-lgs",
+      "iosevka"
+     ],
+     "publicDescription": "Monospace font id."
+    }
+   },
+   "required": [
+    "userId",
+    "alias"
+   ],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "notes.files": {
+   "kit": "notes",
+   "view": "files",
+   "service": "notes",
+   "program": "notes",
+   "ui": "app",
+   "default": false,
+   "label": "Files",
+   "publicDescription": "Opens the file tree of a notebook.",
+   "path": "/notebook/{userId}/files",
+   "params": {
+    "userId": {
+     "wire": "userId",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[0-9a-z]{24,28}$",
+     "publicDescription": "Your own user id in the notebook to open, as the viewing identity knows it (not the notebook id, and not another member's user id: an id the viewer does not have opens Notes home instead). New ids are 24 lowercase hexadecimal characters; older ids may be up to 28 lowercase letters and digits."
+    },
+    "mode": {
+     "wire": "mode",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "readonly",
+      "readwrite"
+     ],
+     "publicDescription": "Share presentation. Either value hides the sidebar. readonly shows the notebook's content and management views as a viewer sees them; your own account settings and appearance preferences stay editable. readwrite keeps the editing controls your permissions allow, including section and channel role overrides. Neither changes permissions."
+    },
+    "sidebar": {
+     "wire": "sidebar",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "hidden"
+     ],
+     "publicDescription": "Set to hidden to hide the notebook sidebar."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "oc-1",
+      "hc-black",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme id."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "publicDescription": "Light or dark colour scheme, over the saved preference. A page set to light or dark in its own appearance keeps it."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "ibm-plex-mono",
+      "jetbrains-mono",
+      "fira-code",
+      "cascadia-code",
+      "hack",
+      "source-code-pro",
+      "inconsolata",
+      "roboto-mono",
+      "ubuntu-mono",
+      "intel-one-mono",
+      "meslo-lgs",
+      "iosevka"
+     ],
+     "publicDescription": "Monospace font id."
+    }
+   },
+   "required": [
+    "userId"
+   ],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "notes.uploads": {
+   "kit": "notes",
+   "view": "uploads",
+   "service": "notes",
+   "program": "notes",
+   "ui": "app",
+   "default": false,
+   "label": "Uploads",
+   "publicDescription": "Opens the uploads list of a notebook.",
+   "path": "/notebook/{userId}/uploads",
+   "params": {
+    "userId": {
+     "wire": "userId",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[0-9a-z]{24,28}$",
+     "publicDescription": "Your own user id in the notebook to open, as the viewing identity knows it (not the notebook id, and not another member's user id: an id the viewer does not have opens Notes home instead). New ids are 24 lowercase hexadecimal characters; older ids may be up to 28 lowercase letters and digits."
+    },
+    "mode": {
+     "wire": "mode",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "readonly",
+      "readwrite"
+     ],
+     "publicDescription": "Share presentation. Either value hides the sidebar. readonly shows the notebook's content and management views as a viewer sees them; your own account settings and appearance preferences stay editable. readwrite keeps the editing controls your permissions allow, including section and channel role overrides. Neither changes permissions."
+    },
+    "sidebar": {
+     "wire": "sidebar",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "hidden"
+     ],
+     "publicDescription": "Set to hidden to hide the notebook sidebar."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "oc-1",
+      "hc-black",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme id."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "publicDescription": "Light or dark colour scheme, over the saved preference. A page set to light or dark in its own appearance keeps it."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "ibm-plex-mono",
+      "jetbrains-mono",
+      "fira-code",
+      "cascadia-code",
+      "hack",
+      "source-code-pro",
+      "inconsolata",
+      "roboto-mono",
+      "ubuntu-mono",
+      "intel-one-mono",
+      "meslo-lgs",
+      "iosevka"
+     ],
+     "publicDescription": "Monospace font id."
+    }
+   },
+   "required": [
+    "userId"
+   ],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "notes.downloads": {
+   "kit": "notes",
+   "view": "downloads",
+   "service": "notes",
+   "program": "notes",
+   "ui": "app",
+   "default": false,
+   "label": "Downloads",
+   "publicDescription": "Opens the downloads list of a notebook.",
+   "path": "/notebook/{userId}/downloads",
+   "params": {
+    "userId": {
+     "wire": "userId",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[0-9a-z]{24,28}$",
+     "publicDescription": "Your own user id in the notebook to open, as the viewing identity knows it (not the notebook id, and not another member's user id: an id the viewer does not have opens Notes home instead). New ids are 24 lowercase hexadecimal characters; older ids may be up to 28 lowercase letters and digits."
+    },
+    "mode": {
+     "wire": "mode",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "readonly",
+      "readwrite"
+     ],
+     "publicDescription": "Share presentation. Either value hides the sidebar. readonly shows the notebook's content and management views as a viewer sees them; your own account settings and appearance preferences stay editable. readwrite keeps the editing controls your permissions allow, including section and channel role overrides. Neither changes permissions."
+    },
+    "sidebar": {
+     "wire": "sidebar",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "hidden"
+     ],
+     "publicDescription": "Set to hidden to hide the notebook sidebar."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "oc-1",
+      "hc-black",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme id."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "publicDescription": "Light or dark colour scheme, over the saved preference. A page set to light or dark in its own appearance keeps it."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "ibm-plex-mono",
+      "jetbrains-mono",
+      "fira-code",
+      "cascadia-code",
+      "hack",
+      "source-code-pro",
+      "inconsolata",
+      "roboto-mono",
+      "ubuntu-mono",
+      "intel-one-mono",
+      "meslo-lgs",
+      "iosevka"
+     ],
+     "publicDescription": "Monospace font id."
+    }
+   },
+   "required": [
+    "userId"
+   ],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "notes.users": {
+   "kit": "notes",
+   "view": "users",
+   "service": "notes",
+   "program": "notes",
+   "ui": "app",
+   "default": false,
+   "label": "Users",
+   "publicDescription": "Opens the member list of a notebook.",
+   "path": "/notebook/{userId}/users",
+   "params": {
+    "userId": {
+     "wire": "userId",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[0-9a-z]{24,28}$",
+     "publicDescription": "Your own user id in the notebook to open, as the viewing identity knows it (not the notebook id, and not another member's user id: an id the viewer does not have opens Notes home instead). New ids are 24 lowercase hexadecimal characters; older ids may be up to 28 lowercase letters and digits."
+    },
+    "mode": {
+     "wire": "mode",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "readonly",
+      "readwrite"
+     ],
+     "publicDescription": "Share presentation. Either value hides the sidebar. readonly shows the notebook's content and management views as a viewer sees them; your own account settings and appearance preferences stay editable. readwrite keeps the editing controls your permissions allow, including section and channel role overrides. Neither changes permissions."
+    },
+    "sidebar": {
+     "wire": "sidebar",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "hidden"
+     ],
+     "publicDescription": "Set to hidden to hide the notebook sidebar."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "oc-1",
+      "hc-black",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme id."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "publicDescription": "Light or dark colour scheme, over the saved preference. A page set to light or dark in its own appearance keeps it."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "ibm-plex-mono",
+      "jetbrains-mono",
+      "fira-code",
+      "cascadia-code",
+      "hack",
+      "source-code-pro",
+      "inconsolata",
+      "roboto-mono",
+      "ubuntu-mono",
+      "intel-one-mono",
+      "meslo-lgs",
+      "iosevka"
+     ],
+     "publicDescription": "Monospace font id."
+    }
+   },
+   "required": [
+    "userId"
+   ],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "notes.settings": {
+   "kit": "notes",
+   "view": "settings",
+   "service": "notes",
+   "program": "notes",
+   "ui": "app",
+   "default": false,
+   "label": "Notebook settings",
+   "publicDescription": "Opens the settings of a notebook.",
+   "path": "/notebook/{userId}/settings",
+   "params": {
+    "userId": {
+     "wire": "userId",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[0-9a-z]{24,28}$",
+     "publicDescription": "Your own user id in the notebook to open, as the viewing identity knows it (not the notebook id, and not another member's user id: an id the viewer does not have opens Notes home instead). New ids are 24 lowercase hexadecimal characters; older ids may be up to 28 lowercase letters and digits."
+    },
+    "mode": {
+     "wire": "mode",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "readonly",
+      "readwrite"
+     ],
+     "publicDescription": "Share presentation. Either value hides the sidebar. readonly shows the notebook's content and management views as a viewer sees them; your own account settings and appearance preferences stay editable. readwrite keeps the editing controls your permissions allow, including section and channel role overrides. Neither changes permissions."
+    },
+    "sidebar": {
+     "wire": "sidebar",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "hidden"
+     ],
+     "publicDescription": "Set to hidden to hide the notebook sidebar."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "oc-1",
+      "hc-black",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme id."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "publicDescription": "Light or dark colour scheme, over the saved preference. A page set to light or dark in its own appearance keeps it."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "ibm-plex-mono",
+      "jetbrains-mono",
+      "fira-code",
+      "cascadia-code",
+      "hack",
+      "source-code-pro",
+      "inconsolata",
+      "roboto-mono",
+      "ubuntu-mono",
+      "intel-one-mono",
+      "meslo-lgs",
+      "iosevka"
+     ],
+     "publicDescription": "Monospace font id."
+    }
+   },
+   "required": [
+    "userId"
+   ],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  },
+  "notes.account": {
+   "kit": "notes",
+   "view": "account",
+   "service": "notes",
+   "program": "notes",
+   "ui": "app",
+   "default": false,
+   "label": "Account settings",
+   "publicDescription": "Opens the account settings for a notebook's account. The display name and avatar choice are kept in this browser for the signed-in identity and do not sync to other browsers or to a frame with separate storage; the avatar image itself is uploaded to the server.",
+   "path": "/notebook/{userId}/account",
+   "params": {
+    "userId": {
+     "wire": "userId",
+     "in": "path",
+     "type": "string",
+     "class": "typed",
+     "pattern": "^[0-9a-z]{24,28}$",
+     "publicDescription": "Your own user id in the notebook to open, as the viewing identity knows it (not the notebook id, and not another member's user id: an id the viewer does not have opens Notes home instead). New ids are 24 lowercase hexadecimal characters; older ids may be up to 28 lowercase letters and digits."
+    },
+    "mode": {
+     "wire": "mode",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "readonly",
+      "readwrite"
+     ],
+     "publicDescription": "Share presentation. Either value hides the sidebar. readonly shows the notebook's content and management views as a viewer sees them; your own account settings and appearance preferences stay editable. readwrite keeps the editing controls your permissions allow, including section and channel role overrides. Neither changes permissions."
+    },
+    "sidebar": {
+     "wire": "sidebar",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "hidden"
+     ],
+     "publicDescription": "Set to hidden to hide the notebook sidebar."
+    },
+    "theme": {
+     "wire": "theme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "oc-1",
+      "hc-black",
+      "aura",
+      "ayu",
+      "carbonfox",
+      "catppuccin",
+      "dracula",
+      "gruvbox",
+      "monokai",
+      "nightowl",
+      "nord",
+      "onedarkpro",
+      "shadesofpurple",
+      "solarized",
+      "tokyonight",
+      "vesper"
+     ],
+     "publicDescription": "Colour theme id."
+    },
+    "colorScheme": {
+     "wire": "colorScheme",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "publicDescription": "Light or dark colour scheme, over the saved preference. A page set to light or dark in its own appearance keeps it."
+    },
+    "font": {
+     "wire": "font",
+     "in": "query",
+     "type": "string",
+     "class": "typed",
+     "enum": [
+      "ibm-plex-mono",
+      "jetbrains-mono",
+      "fira-code",
+      "cascadia-code",
+      "hack",
+      "source-code-pro",
+      "inconsolata",
+      "roboto-mono",
+      "ubuntu-mono",
+      "intel-one-mono",
+      "meslo-lgs",
+      "iosevka"
+     ],
+     "publicDescription": "Monospace font id."
+    }
+   },
+   "required": [
+    "userId"
+   ],
+   "const": {},
+   "flags": [],
+   "freeQuery": false,
+   "frameable": "yes",
+   "alias": "refused",
+   "spawns": false,
+   "mutating": false,
+   "forwardsQuery": true
+  }
+ }
+}

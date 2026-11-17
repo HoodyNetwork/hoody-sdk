@@ -1,0 +1,235 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-block-start: 12vh;
+  background: var(--hx-scrim);
+}
+
+.overlay[data-entering] {
+  animation: fade var(--dur-enter) var(--ease-out);
+}
+
+.modal {
+  width: min(640px, calc(100vw - 32px));
+  border: var(--bw) solid var(--hx-line-2);
+  border-radius: var(--r-2);
+  background: var(--hx-raised);
+  box-shadow: var(--sh-pop);
+  overflow: hidden;
+}
+
+.dialog {
+  /* The palette pads its list like every kit menu (--pad-menu) on all four sides. The bottom inset sits
+     outside the scrolling list, so a scrolled row never runs flush into the bottom edge. */
+  --surface-inset: var(--pad-menu);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: 60vh;
+  padding-block-end: var(--surface-inset);
+  outline: none;
+}
+
+/* The search row is 40 px like every text field: its separator is an inset shadow, which takes no
+   layout height (a bottom border made the row 41). */
+.field {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  block-size: var(--ctl-h);
+  padding: 0 var(--sp-4);
+  box-shadow: inset 0 calc(-1 * var(--bw)) 0 var(--hx-line);
+}
+
+.fieldIcon {
+  color: var(--hx-faint);
+}
+
+.input {
+  flex: 1;
+  height: var(--ctl-h); /* a search field is 40 px like every text field */
+  border: 0;
+  background: transparent;
+  font-size: var(--fs-lg);
+  outline: none;
+}
+
+.input::-webkit-search-cancel-button {
+  display: none;
+}
+
+/* Forced colours drop box-shadow: keep the separator in system ink. The adjust is inherited, so the row's children
+   go back to auto and keep their system colours. */
+@media (forced-colors: active) {
+  .field {
+    forced-color-adjust: none;
+    box-shadow: inset 0 calc(-1 * var(--bw)) 0 canvastext;
+  }
+
+  .field > * {
+    forced-color-adjust: auto;
+  }
+}
+
+.menu {
+  flex: 1;
+  min-height: 0;
+  padding: var(--surface-inset) var(--surface-inset) 0;
+  overflow: auto;
+  outline: none;
+}
+
+.section + .section {
+  margin-block-start: var(--sp-2);
+}
+
+.sectionHead {
+  padding: var(--sp-1) var(--sp-2);
+  color: var(--hx-faint);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+/* The first section's label starts at the list's inset, as the rows do: no space of its own above it. */
+.section:first-child .sectionHead {
+  padding-block-start: 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: 36px;
+  padding: 0 var(--pad-row-x);
+  border-radius: var(--r-1);
+  color: var(--hx-muted);
+  cursor: pointer;
+  outline: none;
+}
+
+.item[data-focused] {
+  background: var(--hx-selected);
+  color: var(--hx-ink);
+}
+
+.itemLabel {
+  color: var(--hx-ink);
+}
+
+/* A deep row: its label, then its place (its page, and the section of a setting) at the row's end in the row's muted ink.
+   Both stay on one line, the place cut first; a phone stacks the place under the label and the row grows to fit. */
+.item:has(.itemText) {
+  height: auto;
+  min-height: 36px;
+}
+
+.itemText {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.itemText > .itemLabel,
+.where {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.where {
+  flex: 0 1 auto;
+  max-width: 50%;
+  margin-inline-start: auto;
+}
+
+@media (width < 768px) {
+  .itemText {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding-block: var(--sp-1);
+  }
+
+  .itemText > .itemLabel {
+    white-space: normal;
+  }
+
+  .where {
+    max-width: none;
+    margin-inline-start: 0;
+  }
+}
+
+/* A row's keys at its end: a page's g-jump, or a This page key. */
+.keys {
+  display: inline-flex;
+  gap: var(--sp-1);
+  margin-inline-start: auto;
+}
+
+.empty {
+  padding: var(--sp-6);
+  color: var(--hx-muted);
+  text-align: center;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.close {
+  display: none;
+}
+
+/* XS: full screen; the keys mean nothing without a keyboard. */
+@media (width < 600px) {
+  .overlay {
+    padding-block-start: 0;
+  }
+
+  .modal {
+    width: 100vw;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .dialog {
+    height: 100%;
+    max-height: none;
+  }
+
+  /* The Close button (40 px) sits inside the 40 px search row, never over the results. */
+  .close {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: var(--sp-2);
+    display: block;
+  }
+
+  /* At the sheet's top edge an outward ring would be clipped by the modal: draw it inside the button. */
+  .close button[data-focus-visible] {
+    box-shadow: var(--focus-ring-inset);
+  }
+
+  .field {
+    padding-inline-end: var(--sp-10);
+  }
+
+  .keys {
+    display: none;
+  }
+}

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Bots                                                     ▸ Use with your agent
+ ‹ Bots  Esc
+ Chief  ● Idle                                              [Bot settings] [⋯]█
+   SG atlas    Hoody Free  · Allow everything is off +2                       █
+                                                                              █
+   Activity  ▸ Link and keys    Chat apps 2    Work 2                         █
+ ─────────────────────────────────────────────────────────────────────────────█
+                                                                              █
+  ┌─────────────────────────────────────────────────────────────────────────┐ █
+  │ At a glance                                                             │ █
+  │ Link                   ● Active                                         │ █
+  │ Keys                   3 of 20 ██░░░░░░░░                               │ █
+  │ Limits                 60 / min per key, 120 / min in all               │
+  │ Other websites (CORS)  Allowed                                          │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ Keys                                                     + New key  [⋯] │
+  │ Whoever holds a key can use this Bot through its link. Give each person │
+  │ or program its own.                                                     │
+  │  Key                        Prefix           State                      │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

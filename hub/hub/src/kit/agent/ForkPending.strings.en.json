@@ -1,0 +1,14 @@
+{
+  "fp.title": "Fork from reply {{n}}",
+  "fp.titleWhole": "Fork of this chat",
+  "fp.titleBad": "Fork (details unreadable)",
+  "fp.making": "Forking…",
+  "fp.unconfirmed": "Not confirmed yet.",
+  "fp.checking": "Checking…",
+  "fp.result": "{{title}}: checked",
+  "fp.check": "Check again",
+  "fp.hide": "Hide",
+  "fp.hidden": "Hidden",
+  "fp.more": "About unconfirmed forks",
+  "fp.elsewhere": "{{computer}} · {{realm}}: {{n}} unconfirmed"
+}

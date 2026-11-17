@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ New key                                                                 Esc ×
+ Home                  │  Keys and token┃ Made in Personal
+ Computers             │  A key lets you┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  date.         ┃ │ ◷ The key may have been made
+ Bots                  │  ▸ API keys 6 k┃ │   The Hub got no answer. Nothing was sent a second time. If the key was
+ Board                 │  ──────────────┃ │   made, its secret can’t be shown again.
+ Demo                  │  i Keys that wo┃
+ Vault                 │                ┃
+                       │  / Search      ┃ Appeared since you sent it
+On atlas ▾             │  4 keys · 1 exp┃ These keys of this name appeared since you sent it. One may be yours, or one
+ Programs              │                ┃ made elsewhere at the same time:
+ Schedules             │    Name ↑      ┃
+ Scripts               │    ci          ┃ ci
+ Logs                  │  › ci-deploy   ┃   Key   hdy_3f9a…
+ Tunnels               │    hoody-agent ┃   Made  Aug 29, 2004
+ Notes                 │    sdk-readonly┃
+ AI                    │                ┃
+ VMs                   │                ┃ What to do now
+                       │                ┃ If one of these is yours, its secret can't be shown again: delete it under
+Account                │                ┃ API keys and make a new key. Check again first if you are not sure.
+ Plans & Billing       │                ┃
+ Referrals             │                ┃
+▌Keys and tokens       │                ┃
+ API                   │                ┃
+ Notifications      26 │                ┃
+ Account               │                ┃
+                       │                ┃
+ + Rent servers        │                ┃
+ Guide                 │                ┃
+ Support               │                ┃
+                       │  Questions     ┃
+                       │  ▸ Can I see a ┃
+                       │  ▸ What is an A┃
+                       │  ▸ Which realms┃
+                       │  ▸ What can a k┃
+                       │  ▸ When does a ┃
+                       │  ▸ How does the┃
+                       │  ▸ What does sh┃
+                       │  ▸ What do I se┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃                                     [Stop tracking]  [Close]   ↻ Check again

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Plans & Billing                                                   + Add funds
+ Upgrade a server, rent a whole machine, and see what you pay.
+ ▸ Plans    Bare metal    Wallet & usage
+ ──────────────────────────────────────────────────────────────────────────────
+ │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC               [Pay now]
+ │ Plans             Free · Small · Medium · Large · Bare metal              │
+ │ Your own tools    Docker, Podman, Kubernetes and nearly any tool like     │
+ │                   them, on every plan.                                    │
+ │ Virtual machines  With their own kernel and OS, on bare metal only.       │
+ │ Sites             As many sites as your computers can run. Connect your   │
+ │                   own domains, HTTPS included.                            │
+ │                                                                           │
+ │ ▸ Bot URLs                                                                │
+ │   One shareable address for one Bot. Each person or agent gets its own    │
+ │   named key.                                                              │█
+ │                                                                           │
+ │ ▸ Full SSH access  Four ways into a terminal.                             │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Free has useful limits                                                    │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

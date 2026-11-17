@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  Keys and tokens             ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ ─────────────────────────────────────────────────────────────────────────────
+
+ Each computer holds one key. Pick another computer in the top bar to change   █
+ its own. ┌──────────────────────────────────────────────────────────┐         █
+          │ ! Remove the SSH key from atlas?                   Esc × │         █
+ ┌────────│ ──────────────────────────────────────────────────────── │───────┐ █
+ │        │ Whoever holds the matching private key can no longer log │       │ █
+ │ Compute│ in to atlas with ssh.                                    │       │ █
+ │        │                                                          │       │ █
+ │ Current│                                   [Cancel]  [Remove key] │place] │ █
+ │        └──────────────────────────────────────────────────────────┘       │ █
+ │                                                                           │ █
+ │ Connect                         Connect with                              │ █
+ │                                 ssh atlas.ssh.hoody.example  ⧉ copy       │ ▀
+ │                                                                           │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+
+ Remove
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │                                                                           │
+ │ Take this key off atlas         [Remove…]                                 │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

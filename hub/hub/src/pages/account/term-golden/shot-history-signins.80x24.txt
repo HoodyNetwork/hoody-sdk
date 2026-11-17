@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Account
+ Your profile, how you sign in, and where you are signed in.
+ ‹ 6  ▌Security history  SSH keys  Emails  Elsewhere  This device  Questions
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Security history                                                          │
+ │ Sign-ins over the last 180 days, newest first.                            │
+ │ / Search              Filters                        9 entries  ↻ Refresh │
+ │   Event                    When ↓            From                         │
+ │ › Signed in                19 days ago       203.0.113.24 · SG            │
+ │   Signed in                20 days ago       192.0.2.88 · US              │
+ │   Signed in                20 days ago       198.51.100.130 · GB          │
+ │   Signed in                20 days ago       203.0.113.24 · SG            │
+ │   Signed in                21 days ago       192.0.2.88 · US              │█
+ │   Signed in                21 days ago       198.51.100.130 · GB          │▀
+ │   Signed in                22 days ago       203.0.113.24 · SG            │
+ │   Signed in                22 days ago       192.0.2.88 · US              │
+ │   Signed in                22 days ago       198.51.100.130 · GB          │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ SSH keys                                                                  │
+ │ Each computer takes one SSH key, set on that computer.                    │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

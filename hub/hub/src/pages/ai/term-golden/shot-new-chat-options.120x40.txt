@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Options for this chat                                                   Esc ×
+ Home                  │  ▌Chats   Agent┃ On atlas. Approvals and Runs with are remembered for new chats; the
+ Computers             │                ┃ folder is for this chat only.
+ Files                 │                ┃ ─────────────────────────────────────────────────────────────────────────────
+ Bots                  │  What should we┃ ┌───────────────────────────────────────────────────────────────────────────┐
+ Board                 │  Give an agent ┃ │                                                                           │
+ Demo                  │  the top bar.  ┃ │ Folder                          ┃ Home folder ▾                           │
+ Vault                 │  ■ Personal · ✓┃ │ Fixed once the chat starts.                                               │
+                       │                ┃ │ Folder access (home folder or                                             │
+On atlas ▾             │                ┃ │ whole computer) is fixed when                                             │
+ Programs              │  ┌─────────────┃ │ its first turn starts.                                                    │
+ Schedules             │  │ Ask anything┃ │                                                                           │
+ Scripts               │  └─────────────┃ │ Approvals                       ‹ Default ›  Strict                       │
+ Logs                  │  [+ Attach a fi┃ │ This chat starts with Allow                                               │
+ Tunnels               │  [Work on this ┃ │ everything on: it approves                                                │
+ Notes                 │  [Send ↵]      ┃ │ actions for you, though some                                              │
+▌AI                    │                ┃ │ can still ask. Turn it off in                                             │
+ VMs                   │    Work on this┃ │ the chat, or pick Strict here.                                            │
+                       │    computer    ┃ │                                                                           │
+Account                │    Start with t┃ │ Runs with                                                                 │
+ Plans & Billing       │    General agen┃ │ The model chip picks the model.                                           │
+ Referrals             │    atlas.      ┃ │ ‹ Hoody models ›  Claude Code                                             │
+ Keys and tokens       │                ┃ │ ! Could not check Claude Code on atlas.                       Check again │
+ API                   │                ┃ │                                                                           │
+ Notifications      26 │                ┃ └───────────────────────────────────────────────────────────────────────────┘
+ Account               │                ┃ ▸ What never asks under Strict?
+                       │                ┃
+ + Rent servers        │                ┃
+ Guide                 │                ┃
+ Support               │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃                                                                         Done

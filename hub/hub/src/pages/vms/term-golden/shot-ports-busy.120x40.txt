@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Ports of win11                                                                                        Esc ×
+ Home     ┃ This list replaces the VM's ports. It applies when the VM next starts.
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │ i Ports on the computer start at 1024. The first connection after the VM starts can fail: try again.
+ Bots     ┃
+ Board    ┃ │ TCP ▾          │ [−] 80                   [+] │ [−] 8080                 [+] [Remove port 1]
+ Demo     ┃
+ Vault    ┃ [+ Add a port]
+          ┃
+On atlas ▾┃
+ Programs ┃
+ Schedules┃
+ Scripts  ┃
+ Logs     ┃
+ Tunnels  ┃
+ Notes    ┃
+ AI       ┃
+▌VMs      ┃
+          ┃
+Account   ┃
+ Plans & B┃
+ Referrals┃
+ Keys and ┃
+ API      ┃
+ Notificat┃
+ Account  ┃
+          ┃
+ + Rent se┃
+ Guide    ┃
+ Support  ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+          ┃ ✗ Didn't go through                                            Details
+ Tab move ┃ Another change of this VM is under way. Try again in a moment.                        [Cancel]  Save ports

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                       ▸ Use with your agent   + New Bot
+ Computers             │  Every Bot on your running computers, and the page of each one.
+ Files                 │
+▌Bots                  │  Bots             Working now    ! Need you    In chat apps
+ Board                 │  4                1              13            2
+ Demo                  │  on 1 computer    Show           Show          Show
+ Vault                 │
+                       │  / Search                   Filters                           4 Bots  ↻ Refresh  View options█
+On atlas ▾             │  i a-computer-name-that-goes-on-and-on-and-on-to-sixty-three-chars: More Bots than the list  █
+ Programs              │    can show.                                                                                 █
+ Schedules             │  ────────────────────────────────────────────────────────────────────────────────────────────█
+ Scripts               │  ‖ a-computer-name-that-goes-on-and-on-and-on-to-sixty-three-chars: 12 Bots are      [Resume]█
+ Logs                  │    paused after a sign-in change.                                                            █
+ Tunnels               │  ────────────────────────────────────────────────────────────────────────────────────────────█
+ Notes                 │  ! cinder-production-worker-eu-central-01: Couldn't read this computer's Bots.      Try again█
+ AI                    │  ────────────────────────────────────────────────────────────────────────────────────────────█
+ VMs                   │                                                                                              █
+                       │  ▌ C Chief with a very long Bot name that keeps going past the…  ● Waiting for you [Answer] ⋯█
+Account                │      Asked you something: answer to let it go on                                             █
+ Plans & Billing       │       · Runs the team day: triage, approvals and summaries                                   █
+ Referrals             │       · a-computer-name-that-goes-on-and-on-and-on-to-sixty-three-chars · Acme client        █
+ Keys and tokens       │       · Model Hoody Free                                                                     █
+ API                   │      Telegram Slack Discord  Public link                                                     █
+ Notifications      26 │    S Support                                                             ● Working          ⋯█
+ Account               │      … Working on it now · Answers questions about the shop and drafts replies               █
+                       │       · a-computer-name-that-goes-on-and-on-and-on-to-sixty-three-chars · Acme client        █
+ + Rent servers        │       · Model Hoody Free                                                                     █
+ Guide                 │      Discord                                                                                 █
+ Support               │    D Digest with a very long Bot name that keeps going past…  ● 2 messages waiting          ⋯█
+                       │      2 messages to read next · Writes the daily summary of what changed                      ▀
+                       │       · a-computer-name-that-goes-on-and-on-and-on-to-sixty-three-chars · Acme client
+                       │       · Model Hoody Free
+                       │      Only here in the Hub
+                       │    N Notes                                                                  ● Idle          ⋯
+                       │      Last active 19 days ago · Files meeting notes where they belong
+                       │       · a-computer-name-that-goes-on-and-on-and-on-to-sixty-three-chars · Personal
+                       │       · Model Hoody Free
+                       │      Only here in the Hub
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

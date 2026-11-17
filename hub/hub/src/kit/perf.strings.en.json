@@ -1,0 +1,8 @@
+{
+  "perf.label": "Performance mode",
+  "perf.help": "Turns off shadows, animations and transitions in this browser. Pages draw faster and nothing moves on its own.",
+  "perf.on": "Performance mode on",
+  "perf.off": "Performance mode off",
+  "perf.undo": "Undo",
+  "perf.notKept": "This browser can't save the setting, so it lasts until you reload this tab."
+}

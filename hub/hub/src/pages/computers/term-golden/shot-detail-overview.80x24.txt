@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent  [+ Get a computer]
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ Computers  Esc
+ atlas  ● Running                                         [Open terminal ⇗] [⋯]
+ SG n12 · Home base · █  Personal ·  Current computer
+
+ ▸Overview  Connect  Permissions  Ports & addresses  Desktop  Network  Run
+  Programs  Backups  Storage
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐▀
+ │ Open on atlas                                                             │
+ │                                                                           │
+ │   Terminal                                                                │
+ │   Outside the Hub ⇗                                                       │
+ │                                                                           │
+ │     ⧉ copy [QR] [Put Terminal on Board]                                   │
+ │                                                                           │
+ │                                                                           │
+ │   Desktop                                                                 │
+ │   Outside the Hub ⇗                                                       │
+ │                                                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

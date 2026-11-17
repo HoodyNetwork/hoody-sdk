@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations   Knowledge  ▌Settings
+ Computers             │  ▌Models & keys   Connections & MCP   Rules & hooks
+ Files                 │  atlas › Models & keys
+ Bots                  │  Models & keys                                                           + Connect an account
+ Board                 │  atlas uses Hoody Free for everything.
+ Demo                  │
+ Vault                 │  ▌Default model  Accounts  Claude Code  Hoody AI allowance  Spending  Advanced  Questions
+                       │  ────┌──────────────────────────────────────────────────────────┐─────────────────────────────
+On atlas ▾             │  ┌───│ ! Remove the key for OpenAI?                       Esc × │────────────────────────┐█
+ Programs              │  │ De│ ──────────────────────────────────────────────────────── │                        │█
+ Schedules             │  │ Th│ Anything using this account stops working. Nothing       │se.                     │█
+ Scripts               │  │ ┌─│ switches to another AI by itself.                        │──────────────────────┐ │█
+ Logs                  │  │ │ │                                                          │                      │ │█
+ Tunnels               │  │ │ │ • 1 Bot uses this account.                               │             [Change] │ │█
+ Notes                 │  │ │ │ • Agents with their own model on this account: reviewer. │                      │ │█
+▌AI                    │  │ │ │                                                          │                      │ │
+ VMs                   │  │ │ │ ◷ This may have gone through                             │                      │ │
+                       │  │ │ │ Stop tracking only if it did not go through.             │                      │ │
+Account                │  │ │ │                                                          │             [Change] │ │
+ Plans & Billing       │  │ │ │ [Check again]                                            │                      │ │
+ Referrals             │  │ │ │ Stop tracking                                            │                      │ │
+ Keys and tokens       │  │ └─│                                                          │──────────────────────┘ │
+ API                   │  └───│                                   [Cancel]  [Remove key] │────────────────────────┘
+ Notifications      26 │      └──────────────────────────────────────────────────────────┘
+ Account               │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Accounts                                                                              │
+ + Rent servers        │  │ The AI providers this computer can use, and how each one connects.                    │
+ Guide                 │  │ / Search                                                        2 accounts  ↻ Refresh │
+ Support               │  │                                                                                       │
+                       │  │   Provider        How it connects               Status          Used by               │
+                       │  │   H Hoody AI      Included with Hoody           ● Ready         2 Bots                │
+                       │  │ › O OpenAI        Your key                      ● Ready         1 Bot               ⋯ │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Claude Code                                                                           │
+                       │  │ Use your own Claude plan through Claude Code on this computer.                        │
+                       │  │ ┌───────────────────────────────────────────────────────────────────────────────────┐ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

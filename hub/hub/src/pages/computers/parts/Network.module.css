@@ -1,0 +1,133 @@
+.wrap {
+  container-type: inline-size;
+}
+
+.flow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A stopped computer's flow: quieter in the muted text token, never an opacity (55% took muted text to 2.2:1 on the
+   light card). Not the kit's disabled recipe: this is a diagram, no control. */
+.faded {
+  color: var(--hx-muted);
+}
+
+.box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--bw) solid var(--hx-line-strong);
+  border-radius: var(--r-1);
+  background: var(--hx-card);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+}
+
+.exit {
+  flex: 1 1 auto;
+}
+
+.caption {
+  color: var(--hx-muted);
+  font-size: var(--fs-xs);
+}
+
+.boxMain {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Each part of the line gives way and wraps beside the others; the dot keeps its size (below). */
+.boxMain > span {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.boxMain > .dot,
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-round);
+  background: var(--hx-ok);
+}
+
+.tags {
+  color: var(--hx-muted);
+  font-size: var(--fs-xs);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.danger {
+  border-color: var(--hx-danger-fill);
+  background: var(--hx-danger-t);
+  color: var(--hx-danger);
+}
+
+.arrow {
+  display: inline-flex;
+  flex: none;
+  color: var(--hx-muted);
+}
+
+.arrowDown {
+  display: none;
+}
+
+.dashed .arrowRight,
+.dashed .arrowDown {
+  opacity: 0.5;
+}
+
+.broken {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--hx-danger);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@container (width < 480px) {
+  .flow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .arrow,
+  .broken {
+    align-self: center;
+  }
+
+  .arrowRight {
+    display: none;
+  }
+
+  .arrowDown {
+    display: inline-flex;
+  }
+}
+

@@ -1,0 +1,13 @@
+/* The VM's screen: a frame that keeps a monitor's shape inside the section and never grows past the window. */
+.box {
+  inline-size: 100%;
+  aspect-ratio: 16 / 10;
+  min-block-size: 240px;
+  max-block-size: 78vh;
+}
+
+.frame {
+  inline-size: 100%;
+  block-size: 100%;
+  border: 0;
+}

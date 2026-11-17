@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Account
+ Computers             │  Your profile, how you sign in, and where you are signed in.
+ Files                 │
+ Bots                  │  ▌Profile  Password  Two-step sign-in  Passcode lock  Sign-in sessions  Agent sign-in   6 ›
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────┐█
+ Vault                 │  │ Security                                                                              │█
+                       │  │ ✓ Your email address is verified.                                                     │█
+On atlas ▾             │  │ ✓ Two-step sign-in is on.                                                             │█
+ Programs              │  │ i 11 other browsers or devices are signed in.                                [Review] │█
+ Schedules             │  └───────────────────────────────────────────────────────────────────────────────────────┘▀
+ Scripts               │
+ Logs                  │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Tunnels               │  │ Profile                                                                               │
+ Notes                 │  │                                                                                       │
+ AI                    │  │ Display name                    Ada                             [Change display name] │
+ VMs                   │  │                                                                                       │
+                       │  │ Username                        ada                                                   │
+Account                │  │                                                                                       │
+ Plans & Billing       │  │ Email                           ada@example.com ✓ Verified             [Change email] │
+ Referrals             │  │                                                                                       │
+ Keys and tokens       │  │ Change email                    Waiting for confirmation at           [Cancel change] │
+ API                   │  │                                 someone.else@example.com until Oct                    │
+ Notifications      26 │  │                                 24, 2026.                                             │
+▌Account               │  │                                                                                       │
+                       │  │ Member since                    Mar 14, 2025                                          │
+ + Rent servers        │  │                                                                                       │
+ Guide                 │  │ Account ID                      64f0…0001 ⧉                                           │
+ Support               │  │ Account deletion goes through support.                                                │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Password                                                                              │
+                       │  │                                                                                       │
+                       │  │ Password                        [Change password]                                     │
+                       │  │ Changing it signs you out                                                             │
+                       │  │ everywhere.                                                                           │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

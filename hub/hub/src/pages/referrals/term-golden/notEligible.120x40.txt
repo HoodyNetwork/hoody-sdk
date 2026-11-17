@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Referrals                                                                     [Program rules]
+ Computers             │  Invite people to Hoody. When they pay for servers by card or crypto, you earn Referral
+ Files                 │  credit.
+ Bots                  │
+ Board                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Demo                  │  │ Join after a paid purchase                                                               │█
+ Vault                 │  │ Join after your first paid server purchase.                                              │█
+                       │  │ Which purchases count                                                                    │█
+On atlas ▾             │  │                                                                                          │█
+ Programs              │  │  See plans                                                                               │█
+ Schedules             │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Scripts               │                                                                                              █
+ Logs                  │                                                                                              █
+ Tunnels               │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Notes                 │  │ What you earn                                                                            │█
+ AI                    │  │ ✓ You earn 5% of what they pay for servers                                               │█
+ VMs                   │  │ ✓ 10% as a Creator, from 11 customers who count                                          │█
+                       │  │ ✓ Credit pays for servers; Creators may ask to withdraw it                               │█
+Account                │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Plans & Billing       │
+▌Referrals             │
+ Keys and tokens       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+ API                   │  │ Levels                                                                                   │
+ Notifications      26 │  │ Your share depends on your level. Each purchase earns at the level of the month it's     │
+ Account               │  │ activated.                                                                               │
+                       │  │ ┌─────────────────────────────────────────┐  ┌─────────────────────────────────────────┐ │
+ + Rent servers        │  │ │ Referrer                                │  │ Creator                                 │ │
+ Guide                 │  │ │ 5%                                      │  │ 10%                                     │ │
+ Support               │  │ │ of what the people you invite pay for   │  │ from the month after 11 or more         │ │
+                       │  │ │ servers                                 │  │ customers you referred have earned you  │ │
+                       │  │ │ ✓ From the day you join                 │  │ credit that wasn't all reversed         │ │
+                       │  │ │ ✓ Credit pays for servers               │  │ ✓ On purchases and renewals activated   │ │
+                       │  │ │                                         │  │   in a month you're a Creator; credit   │ │
+                       │  │ │                                         │  │   you already earned stays as it is     │ │
+                       │  │ │                                         │  │ ✓ Credit pays for servers               │ │
+                       │  │ │                                         │  │ ✓ Ask Hoody support about withdrawing   │ │
+                       │  │ │                                         │  │   your credit                           │ │
+                       │  │ └─────────────────────────────────────────┘  └─────────────────────────────────────────┘ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

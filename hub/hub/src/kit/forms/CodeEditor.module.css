@@ -1,0 +1,314 @@
+/* CodeEditor: a framed <textarea> with a line gutter, a find row, a colour mirror and a problems list.
+   The mirror block (.mirror, .text) depends on equal glyph metrics in both layers: change fonts, padding and line
+   height in both or in neither. */
+
+/* Frame */
+.editor {
+  container: code-editor / inline-size;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-2);
+  background: var(--hx-input-bg);
+}
+
+/* The textarea fills the frame, so the frame draws its ring; a focused toolbar button draws its own. */
+.editor:has(.text:focus-visible) {
+  box-shadow: var(--focus-ring);
+}
+
+/* Tools row and find row */
+
+.tools,
+.find {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: max(var(--sp-1), var(--touch-gap));
+  min-height: var(--row-h);
+
+  /* Half the touch gap above and below (0 with a fine pointer): the tools row and the find row under it, each holding
+     44 px buttons on a coarse pointer, keep the touch gap between them. */
+  padding-block: calc(var(--touch-gap) / 2);
+  padding-inline: var(--sp-2);
+  border-bottom: var(--bw) solid var(--hx-line);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.status {
+  padding-inline: var(--sp-2);
+  color: var(--hx-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.findInput {
+  flex: 1 1 160px;
+  min-width: 0;
+  max-width: var(--search-max-w);
+  appearance: none;
+  height: var(--ctl-h-md); /* one field row, as every text field (pinned by fields.height.css.test.ts) */
+  padding-inline: var(--sp-2);
+  border: var(--bw) solid var(--ctl-line-field);
+  border-radius: var(--r-1);
+  background: var(--field-bg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+.findInput:hover {
+  border-color: var(--field-line-hover);
+}
+
+.findInput:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.count {
+  padding-inline: var(--sp-2);
+  min-width: 72px;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.aa {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+.body {
+  --code-lh: 20px;
+
+  display: flex;
+  overflow: hidden;
+  flex: 1 1 auto;
+  min-height: calc(var(--rows, 18) * var(--code-lh) + 2 * var(--sp-2));
+}
+
+.gutterClip {
+  overflow: hidden;
+  flex: 0 0 auto;
+  min-width: 48px;
+  padding-block: var(--sp-2);
+  border-inline-end: var(--bw) solid var(--hx-line);
+  background: var(--hx-bg);
+}
+
+.gutter {
+  will-change: transform;
+}
+
+.num {
+  position: relative;
+  height: var(--code-lh);
+  padding-inline: var(--sp-3) var(--sp-2);
+  color: var(--hx-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  line-height: var(--code-lh);
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.current {
+  color: var(--hx-ink);
+}
+
+.marked {
+  color: var(--hx-danger);
+  font-weight: var(--fw-medium);
+}
+
+.mark {
+  position: absolute;
+  top: 50%;
+  inset-inline-start: var(--sp-1);
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-round);
+  background: var(--hx-danger-fill);
+  transform: translateY(-50%);
+}
+
+.text {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  line-height: var(--code-lh);
+  white-space: pre;
+  resize: none;
+  tab-size: 2;
+}
+
+/* The textarea and its colour mirror (with lang). The mirror also carries .text, the one class that lays out the
+   code's characters (font, size, padding, line-height, white-space, tab-size), so each of its glyphs sits under the
+   same glyph of the textarea; .mirror only places it under the textarea, scrolled by sync(). */
+.pane {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* The textarea paints above the mirror (both carry .text; this rule and the next have the same weight, so order decides). */
+.pane .text {
+  position: relative;
+}
+
+/* Pinned in the body: the glyph metrics, wrapping and alignment of the textarea (with or without
+   lang) and the mirror, at two-class weight. A caller's rule on the editor's textarea (the scripts editor's `.editor
+   textarea { line-height: 1.5 }`, one class and one type) would otherwise move the caret's lines off the gutter's numbers
+   (sized by --code-lh) and off the coloured ones. A heavier caller rule (two classes and a type, or !important) still
+   wins: callers style the editor through its props and their own box only, never its textarea's text. The start paddings
+   place glyphs; the end paddings stay each layer's own. */
+.body .text {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+  font-style: normal;
+  font-stretch: normal;
+  font-kerning: none;
+  font-variant-ligatures: none;
+  font-feature-settings: normal;
+  line-height: var(--code-lh);
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-indent: 0;
+  text-transform: none;
+  tab-size: 2;
+  white-space: pre;
+  text-align: start;
+  padding-block-start: var(--sp-2);
+  padding-inline-start: var(--sp-3);
+}
+
+/* A token keeps its colour only: a comment's italic (Ids.module.css .hl_com) can change a glyph's advance in some
+   fonts, which would shift the rest of its line off the caret's. */
+.pane > .mirror span {
+  font-style: normal;
+  font-weight: inherit;
+}
+
+.pane .mirror {
+  position: absolute;
+  inset: 0;
+  min-width: 0;
+  overflow: hidden;
+
+  /* The mirror has no scrollbars, so it is a scrollbar wider and taller than the textarea's text box: room past the
+     end on both axes lets it reach every offset the textarea reaches (the start padding, which places glyphs, stays). */
+  padding-block-end: calc(var(--sp-2) + var(--sp-7));
+  padding-inline-end: calc(var(--sp-3) + var(--sp-7));
+  color: var(--hx-ink);
+  pointer-events: none;
+}
+
+.text:focus,
+.text:focus-visible {
+  outline: none;
+}
+
+.readOnly .text {
+  color: var(--hx-muted);
+}
+
+/* Coloured: the mirror shows the characters, the textarea keeps the caret and the selection. */
+.text.painted {
+  color: transparent;
+  caret-color: var(--hx-ink);
+}
+
+.problems {
+  border-top: var(--bw) solid var(--hx-line);
+}
+
+.problemsHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3) 0;
+  font: var(--t-body-strong);
+}
+
+.problemsIcon {
+  color: var(--hx-danger);
+}
+
+.problemList {
+  overflow: auto;
+  max-height: 160px;
+  padding: var(--sp-1) var(--sp-1) var(--sp-2);
+}
+
+.problem {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: var(--touch-min); /* 0 with a mouse; a thumb gets the full target */
+  padding: var(--sp-1) var(--sp-2);
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  text-align: start;
+}
+
+.problem:hover:not(:disabled) {
+  background: var(--hx-hover);
+}
+
+.problem:focus-visible {
+  box-shadow: var(--focus-ring-inset); /* inset: the list clips an outer ring */
+  outline: none;
+}
+
+.problem:disabled {
+  cursor: default;
+}
+
+.problemLine {
+  flex: 0 0 auto;
+  min-width: 64px;
+  color: var(--hx-muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+.problemMsg {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Narrow: the shortcut chips go, the words stay (the toolbar keeps one line). */
+@container code-editor (width < 600px) {
+  .tools [class*="shortcut"] {
+    display: none;
+  }
+}
+
+/* Forced colours do not paint box-shadow, so each ring above gets a solid system outline. */
+@media (forced-colors: active) {
+  .editor:has(.text:focus-visible),
+  .findInput:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+
+  .problem:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: calc(-1 * var(--bw-2));
+  }
+}

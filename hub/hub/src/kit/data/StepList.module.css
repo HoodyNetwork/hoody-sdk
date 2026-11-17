@@ -1,0 +1,110 @@
+/* StepList: groups of numbered one-line actions. The group label is mono caps with a rule to the place's link; a row
+   is the mono number, the action (and its muted note), and an optional control at the end. Under 600 px of the list's
+   own width the control drops under the text. */
+.stepList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.where {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.whereLabel {
+  flex: none;
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: var(--case-caps);
+}
+
+.rule {
+  flex: 1;
+  min-width: var(--sp-4);
+  border-block-start: var(--bw) solid var(--hx-plate-rule);
+}
+
+.open {
+  flex: none;
+  max-width: 60%;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: var(--sp-6) minmax(0, 1fr);
+  gap: 0 var(--sp-2);
+  align-items: baseline;
+  padding-block: var(--sp-1);
+  min-width: 0;
+}
+
+/* A row with a control centres on it: the number, the text and the control share one middle line. */
+.withAct {
+  grid-template-columns: var(--sp-6) minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.num {
+  color: var(--hx-faint);
+  font: var(--t-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+  min-width: 0;
+}
+
+.text {
+  color: var(--hx-ink);
+  font: var(--t-body);
+  overflow-wrap: anywhere;
+}
+
+.note {
+  color: var(--hx-muted);
+  font: var(--t-small);
+  overflow-wrap: anywhere;
+}
+
+.act {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+/* On a narrow panel the row's control drops under its text, in the text's column. */
+@container (width < 600px) {
+  .withAct {
+    grid-template-columns: var(--sp-6) minmax(0, 1fr);
+  }
+
+  .withAct .act {
+    grid-column: 2;
+    justify-content: flex-start;
+    padding-block-start: var(--sp-1);
+  }
+}

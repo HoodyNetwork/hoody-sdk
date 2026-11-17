@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ Edit item                                           Esc ×
+ Home                  │  Demo                              ┃ ─────────────────────────────────────────────────────────
+ Computers             │                                    ┃ Name (unavailable)
+ Files                 │  ‹ Demo  Esc                       ┃ │ atlas-2
+ Bots                  │  boreal-1  ● Active                ┃
+ Board                 │  Ben Okafor                        ┃
+▌Demo                  │                                    ┃
+ Vault                 │  ▸Overview  Activity               ┃
+                       │  ──────────────────────────────────┃
+On atlas ▾             │  Details                           ┃
+ Programs              │  Owner    Ben Okafor               ┃
+ Schedules             │  Updated  Oct 22, 2026, 5:00 AM    ┃
+ Scripts               │                                    ┃
+ Logs                  │                                    ┃
+ Tunnels               │                                    ┃
+ Notes                 │                                    ┃
+ AI                    │                                    ┃
+ VMs                   │                                    ┃
+                       │                                    ┃
+Account                │                                    ┃
+ Plans & Billing       │                                    ┃
+ Referrals             │                                    ┃
+ Keys and tokens       │                                    ┃
+ API                   │                                    ┃
+ Notifications      26 │                                    ┃
+ Account               │                                    ┃
+                       │                                    ┃
+ + Rent servers        │                                    ┃
+ Guide                 │                                    ┃
+ Support               │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit  ┃ ◷ May have gone through             [Close]  Check again

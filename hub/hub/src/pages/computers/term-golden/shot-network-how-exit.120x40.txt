@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ How to connect                                                          Esc ×
+ Home                  │  Computers     ┃ Send traffic through atlas from a browser, an app or a script.
+▌Computers             │                ┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  ▸ Computers   ┃ ┌──────────────────────────────────────────────────────────────────────────┐█
+ Bots                  │  ──────────────┃ │ PROXY ADDRESS                                                            │█
+ Board                 │                ┃ │ Traffic sent here leaves from atlas's address, unless you set            │█
+ Demo                  │  ‹ Computers  E┃ │ another exit.                                                            │█
+ Vault                 │  atlas  ● Runni┃ │ Works like a password: anyone with it can use atlas's proxy.             │█
+                       │  SG n12 · Home ┃ │ https://6a00…0001-c0a7…00a1-egress-1.n12.fixture.invalid:443 ⧉ copy      │█
+On atlas ▾             │                ┃ │ Type     HTTPS ⧉ copy                                                    │█
+ Programs              │   Overview  Con┃ │ Server   6a00…0001-c0a7…00a1-egress-1.n12.fixture.invalid ⧉ copy         │█
+ Schedules             │   Storage      ┃ │ Port     443 ⧉ copy                                                      │█
+ Scripts               │  ──────────────┃ │ Sign-in  None. Leave user name and password empty: the address itself is │▀
+ Logs                  │  └─────────────┃ │          the key.                                                        │
+ Tunnels               │                ┃ │ Reaches  Public IPv4 addresses only, unless you set another exit         │
+ Notes                 │  ┌─────────────┃ └──────────────────────────────────────────────────────────────────────────┘
+ AI                    │  │ Where your t┃
+ VMs                   │  │ [Exit addres┃   Use it in your browser    For scripts  ▸ Change the exit
+                       │  │ Sites see th┃ ────────────────────────────────────────────────────────────────────────────
+Account                │  │  Your app  →┃
+ Plans & Billing       │  │             ┃
+ Referrals             │  │             ┃ Other ways to change the exit
+ Keys and tokens       │  └─────────────┃ Sites see atlas's address by default. There are three ways to change that.
+ API                   │                ┃ The first is what Use another exit… sets on the Network tab.
+ Notifications      26 │  ┌─────────────┃
+ Account               │  │ Firewall ⓘ  ┃
+                       │  │ Anything not┃ Through a proxy you already have              [Upstream proxies in the docs]
+ + Rent servers        │  │    Action   ┃ Set it as atlas's exit (socks5h, socks5, http or https). While it can't be
+ Guide                 │  │▾ Inbound · 3┃ used, requests are refused, never sent from atlas's own address.
+ Support               │  │›    Block   ┃
+                       │  │     Refuse  ┃ Upstream proxy                                                    ⧉ Copy all
+                       │  │     Allow   ┃ 1. Use a proxy (put its address in place of PROXY_HOST:1080)
+                       │  │             ┃  $ curl --noproxy '*' -X PUT -H 'Content-Type: text/plain' --data-   ⧉ copy
+                       │  │▾ Outbound · ┃  binary 'socks5h://PROXY_HOST:1080' "https://6a00…0001-c0a7…00a1-
+                       │  │     Block   ┃  egress-1.n12.fixture.invalid:443/api/v1/egress/upstream"
+                       │  └─────────────┃ ─────────────────────────────────────────────────────────────────────────────
+                       │                ┃ To check a setup, open https://ip.hoody.com      [Close]  [Open ip.hoody.com]
+                       │  ┌─────────────┃ through it. It shows the address sites see:
+                       │  │ Use atlas as┃ atlas's own address, or its exit's if you set
+ Tab move · Enter open · Ctrl+K commands┃ one.

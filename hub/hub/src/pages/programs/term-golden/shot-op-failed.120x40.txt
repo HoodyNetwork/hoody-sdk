@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                            ▸ Use with your agent  [+ New program]   + Launch an app
+ Computers             │  19 programs on atlas · 11 running · 4 need a look
+ Files                 │  ‹ Programs  Esc
+ Bots                  │  docs-preview  ● Stopped                                                         [▷ Start] [⋯]
+ Board                 │
+ Demo                  │  │ ✗ This didn't go through
+ Vault                 │  │   docs-preview was stopped but did not start again.
+                       │  │   [Hide this note]
+On atlas ▾             │
+▌Programs              │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Schedules             │  │ At a glance                                                                               │
+ Scripts               │  │ Kind       Your program                                                                   │
+ Logs                  │  │ State      Stopped                                                                        │
+ Tunnels               │  │ Restarts   Runs once and stays stopped                                                    │
+ Notes                 │  │ Startup    [□ off] Start with the computer                                                │
+ AI                    │  │ Last stop  Stopped yesterday · exit 0                                                     │
+ VMs                   │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+Account                │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Plans & Billing       │  │ Sandbox                                                                     [Add sandbox] │
+ Referrals             │  │ Limits what this program can reach: files, network and resources.                         │
+ Keys and tokens       │  │ Saved policy          None                                                                │
+ API                   │  │ Used at next start    Nothing                                                             │
+ Notifications      26 │  │ Inbound firewall now  Rules of an earlier run stay until it stops                         │
+ Account               │  │ Running program       Not reported. The computer does not say whether the running program │
+                       │  │                       is the sandboxed one: a policy applies when the program starts.     │
+ + Rent servers        │  │                                                                                           │
+ Guide                 │  │ ▸ Technical details                                                                       │
+ Support               │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

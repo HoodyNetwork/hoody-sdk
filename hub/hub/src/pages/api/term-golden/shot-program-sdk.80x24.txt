@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ API                                                      ▸ Use with your agent
+ ▸ Endpoints    Overview
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ API  Esc
+ GET /api/v1/browser/start                 ‹ Placeholders ›  Current computer
+ Create or retrieve browser instance
+
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Authorisation                                                             │█
+ │ A program on your computer. Its proxy permissions decide access; never    │█
+ │ send it your token.                                                       │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ How to call it                                                            │█
+ │   cURL  ‹ JavaScript ›  Python (requests)    CLI    URL                   │█
+ │ JavaScript example                                             ⧉ Copy all │█
+ │  import { HoodyClient } from 'hoody-sdk';                         ⧉ copy  │▀
+ │                                                                           │
+ │  const hoody = new HoodyClient({ baseURL: 'https://                       │
+ │  api.hoody.com' });                                                       │
+ │  const box = await hoody.withComputer({ id: '<computer-id>',              │
+ │  project_id: '<project-id>', server_name: '<server>' });                  │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

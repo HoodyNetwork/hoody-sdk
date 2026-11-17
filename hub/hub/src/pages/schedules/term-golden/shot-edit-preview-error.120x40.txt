@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Edit night-sweep                                                        Esc ×
+ Home                  │  Schedules     ┃ Runs a command on a timer.
+ Computers             │  16 schedules o┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  9 programs run┃
+ Bots                  │                ┃   Name
+ Board                 │  / Search sched┃   ┃ night-sweep
+ Demo                  │  ‹ Any ›  Comma┃
+ Vault                 │  16 schedules  ┃   Command
+                       │                ┃   │ Unchanged
+On atlas ▾             │    Name        ┃   Leave empty to keep the current command.
+ Programs              │  ›   ping-api  ┃
+▌Schedules             │    ! queue-drai┃   Runs
+ Scripts               │      Watch the ┃   │ Custom ▾
+ Logs                  │    ! sync-photo┃
+ Tunnels               │      Nightly ba┃
+ Notes                 │      nightly-di┃   Cron expression
+ AI                    │      morning-ch┃   ┃ 0 24 * * *
+ VMs                   │    ! POST hooks┃   ✗ Hour must be 0 to 23.
+                       │      rotate-log┃
+Account                │      cleanup-tm┃   ✗ Hour must be 0 to 23.
+ Plans & Billing       │    ! Unnamed lo┃
+ Referrals             │      archive   ┃
+ Keys and tokens       │      night-swee┃
+ API                   │      old-report┃
+ Notifications      26 │      poll.sh   ┃
+ Account               │      warm-cache┃
+                       │                ┃
+ + Rent servers        │                ┃
+ Guide                 │                ┃
+ Support               │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃ ─────────────────────────────────────────────────────────────────────────────
+ Typing · Esc leaves the field · Ctrl+K ┃ [Cancel]  Save

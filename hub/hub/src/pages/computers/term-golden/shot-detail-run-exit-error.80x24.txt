@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent  [+ Get a computer]
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ Computers  Esc
+ atlas  ● Running                                         [Open terminal ⇗] [⋯]
+ SG n12 · Home base · █  Personal ·  Current computer
+
+  Overview  Connect  Permissions  Ports & addresses  Desktop  Network ▸Run
+  Programs  Backups  Storage
+ ──────────────────────────────────────────────────────────────────────────────
+ computers
+
+ ┃ nope       [History]  ▷ Run
+                                                                              █
+ Runs once on the computer. Press Enter to run.                               █
+                                                                              █
+                                                                              █
+                                                                     ⧉ copy   █
+    bash: nope: command not found                                             ▀
+
+
+ Exit code 127 40 ms · Folder not reported
+ Typing · Esc leaves the field · Ctrl+K commands

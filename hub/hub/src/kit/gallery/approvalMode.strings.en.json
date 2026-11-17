@@ -1,0 +1,8 @@
+{
+  "chipTitle": "Approval mode",
+  "chipDesc": "The chip a chat's composer shows: the mode the approvals read gives, one chip per state. Its menu offers the three states the agent has. Sample data; nothing is sent anywhere.",
+  "liveTitle": "Approval mode, working sample",
+  "liveDesc": "Choose a state from the menu: the sample answers at once, as a read that shows the change. Allow everything first opens its danger confirm, which names the computer and what the switch covers; the chat that opened it owns it.",
+  "openConfirm": "Show the confirm",
+  "computer": "atlas"
+}

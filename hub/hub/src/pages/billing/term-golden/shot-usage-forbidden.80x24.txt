@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Plans & Billing                                                   + Add funds
+ Upgrade a server, rent a whole machine, and see what you pay.
+   Plans    Bare metal  ▸ Wallet & usage
+ ──────────────────────────────────────────────────────────────────────────────
+ │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC               [Pay now]
+ › Medium             DE fra-7            ● On hold                  [Pay now]
+                      Frankfurt, Germany
+   Medium             SG Singapore M      ● Active                 [Upgrade] ⋯
+                      Singapore
+   Small              #10111216           ● Setting up                       ⋯
+   Small              SG n12              ● Active                 [Upgrade] ⋯
+                      Singapore
+                                                                              █
+                                                                              █
+ AI usage & limits                                                            █
+ Each server you own has its own free AI allowance, shared by every computer  █
+ on it.                                                                       █
+ Where the allowance comes from                                               █
+
+ ! AI usage isn't shown for this sign-in.
+ No answer from the server. Check your connection, then try again.
+ ▸ Details
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

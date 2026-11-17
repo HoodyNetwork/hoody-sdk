@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Account
+ Your profile, how you sign in, and where you are signed in.
+ ‹ 6   Security history  SSH keys  Emails  Elsewhere ▌This device  Questions
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ This device                                                               │
+ │ What the Hub keeps on this device. Nothing here changes your account or   │
+ │ your computers.                                                           │
+ │                                                                           │
+ │ Language                        [English ▾]                               │
+ │ The language the Hub is                                                   │
+ │ written in.                                                               │
+ │                                                                           │
+ │ Performance mode                [□ off]                                   │
+ │ A terminal draws no shadows,                                              │
+ │ animations or transitions, so                                             │
+ │ this switch changes nothing                                               │
+ │ here.                                                                     │
+ │                                                                           │
+ │ Remove all local data           [Remove local data]                       │█
+ │ Removes this account's saved                                              │▀
+ │ settings, layouts, drafts and                                             │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

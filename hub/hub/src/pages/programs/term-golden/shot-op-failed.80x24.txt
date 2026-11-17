@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs             ▸ Use with your agent  [+ New program]   + Launch an app
+ 19 programs on atlas · 11 running · 4 need a look
+ ‹ Programs  Esc
+ docs-preview  ● Stopped                                          [▷ Start] [⋯]
+
+ │ ✗ This didn't go through                                                   █
+ │   docs-preview was stopped but did not start again.                        █
+ │   [Hide this note]                                                         █
+                                                                              █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ At a glance                                                               │█
+ │ Kind       Your program                                                   │█
+ │ State      Stopped                                                        │█
+ │ Restarts   Runs once and stays stopped                                    │█
+ │ Startup    [□ off] Start with the computer                                │█
+ │ Last stop  Stopped yesterday · exit 0                                     │█
+ └───────────────────────────────────────────────────────────────────────────┘▀
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Sandbox                                                     [Add sandbox] │
+ │ Limits what this program can reach: files, network and resources.         │
+ │ Saved policy          None                                                │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

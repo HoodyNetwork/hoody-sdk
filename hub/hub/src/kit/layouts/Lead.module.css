@@ -1,0 +1,15 @@
+.lead {
+  margin: 0;
+  color: var(--hx-ink);
+  font-family: var(--font-head);
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  text-wrap: balance;
+}
+
+@container content (width < 600px) {
+  .lead {
+    font-size: var(--fs-xl);
+  }
+}

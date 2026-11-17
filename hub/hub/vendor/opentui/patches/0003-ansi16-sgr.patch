@@ -1,0 +1,500 @@
+diff -ruN a/packages/core/scripts/native-abi-pointers.ts b/packages/core/scripts/native-abi-pointers.ts
+--- a/packages/core/scripts/native-abi-pointers.ts	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/core/scripts/native-abi-pointers.ts	2026-11-11 11:27:24.085145831 +0000
+@@ -212,6 +212,7 @@
+   ot_session_resize_renderer: { 0: context, 1: buffer },
+   ot_session_draw_buffer: { 0: context, 1: buffer, 2: buffer },
+   ot_session_set_debug_overlay: { 0: context, 1: buffer },
++  ot_session_set_color_mode: { 0: context, 1: buffer },
+   ot_session_update_stats: { 0: context, 1: buffer },
+   ot_session_update_memory_stats: { 0: context, 1: buffer },
+   ot_session_dump_hit_grid: { 0: context, 1: buffer },
+diff -ruN a/packages/core/src/native-abi.generated.ts b/packages/core/src/native-abi.generated.ts
+--- a/packages/core/src/native-abi.generated.ts	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/core/src/native-abi.generated.ts	2026-11-11 11:27:57.829054106 +0000
+@@ -1,7 +1,7 @@
+ // Generated from packages/native/include/opentui.h and scripts/native-abi-pointers.ts.
+ // Run `bun run generate:abi` in packages/core. Do not edit.
+ // Inspect audit input: bun scripts/native-abi.ts --audit
+-// ABI audit SHA-256: 61704f3ef5fdee13b9e9a1433455ba749b2aeea20cc6f47558d751852db9d6c4
++// ABI audit SHA-256: 406bb976480cd08e864c56d75462bd25c27410e92a7c45491bc0319d51336abb
+ 
+ export const nativeSymbols = {
+   ot_scene_set_hooks: { args: ["ptr", "buffer", "buffer"], returns: "i32" },
+@@ -249,6 +249,7 @@
+   ot_session_draw_buffer: { args: ["ptr", "buffer", "buffer", "i32", "i32"], returns: "i32" },
+   ot_scene_frame_draw_buffer: { args: ["ptr", "buffer", "buffer", "buffer", "i32", "i32"], returns: "i32" },
+   ot_session_set_debug_overlay: { args: ["ptr", "buffer", "u32", "u32"], returns: "i32" },
++  ot_session_set_color_mode: { args: ["ptr", "buffer", "u32"], returns: "i32" },
+   ot_session_update_stats: { args: ["ptr", "buffer", "f64", "u32", "f64"], returns: "i32" },
+   ot_session_update_memory_stats: { args: ["ptr", "buffer", "u32", "u32", "u32"], returns: "i32" },
+   ot_session_dump_hit_grid: { args: ["ptr", "buffer"], returns: "i32" },
+@@ -2254,6 +2255,10 @@
+   OT_SCENE_RECORD_GRAYSCALE_FOREGROUND: 1,
+   OT_SCENE_RECORD_GRAYSCALE_BACKGROUND: 2,
+   OT_SCENE_RECORD_GRAYSCALE_SUPERSAMPLED: 4,
++  OT_COLOR_MODE_AUTO: 0,
++  OT_COLOR_MODE_TRUECOLOR: 1,
++  OT_COLOR_MODE_ANSI256: 2,
++  OT_COLOR_MODE_ANSI16: 3,
+   OT_INPUT_RESET_KEEP_REPLY: 1,
+   OT_CLIPBOARD_OPERATION_PENDING: 0,
+   OT_CLIPBOARD_OPERATION_READ: 1,
+diff -ruN a/packages/core/src/renderer.ts b/packages/core/src/renderer.ts
+--- a/packages/core/src/renderer.ts	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/core/src/renderer.ts	2026-11-11 11:28:32.844276202 +0000
+@@ -175,6 +175,9 @@
+   // Raw is the default. File requires a local terminal with medium and upload ACK support.
+   kittyImageTransport?: KittyImageTransport
+ 
++  // How colors are written. "auto" (the default) follows terminal detection. See `ColorMode`.
++  colorMode?: ColorMode
++
+   // Use an in-memory native buffered output destination instead of process stdout.
+   // Intended for test helpers that need native rendering without terminal I/O.
+   bufferedOutput?: NativeBufferedOutput
+@@ -265,6 +268,22 @@
+   onDestroy?: () => void
+ }
+ 
++// Controls how colors are written to the terminal:
++//
++// - "auto": Follow terminal detection (24-bit when reported, else the 256 palette when reported, else 24-bit).
++//
++// - "truecolor": Write 24-bit SGR (38;2 / 48;2) for RGB colors.
++//
++// - "ansi256": Write the nearest of the 256 palette entries (38;5 / 48;5).
++//
++// - "ansi16": Write SGR 30-37 / 90-97 and 40-47 / 100-107. An indexed color 0-15 (`RGBA.fromIndex`) keeps its slot;
++//   any other color uses the nearest of the terminal's first 16 palette entries.
++//
++// Default colors (`RGBA.defaultForeground` / `RGBA.defaultBackground`) and transparent backgrounds write 39 / 49 in
++// every mode. Indexed colors keep their slot in every mode but "ansi16".
++export type ColorMode = "auto" | "truecolor" | "ansi256" | "ansi16"
++const COLOR_MODES: readonly ColorMode[] = ["auto", "truecolor", "ansi256", "ansi16"]
++
+ // Controls how the renderer uses terminal space:
+ //
+ // - "alternate-screen": Use the terminal's alternate screen buffer.
+@@ -1111,6 +1130,7 @@
+   private nativeKittyKeyboardFlags = 0
+   private kittyTransportMode: KittyImageTransport = "raw"
+   private readonly synchronizedOutput?: SynchronizedOutput
++  private _colorMode: ColorMode = "auto"
+   private kittyTransportTimer: TimerHandle | null = null
+   private _lastSceneTimeMs = 0
+ 
+@@ -1440,6 +1460,8 @@
+     this.synchronizedOutput = config.synchronizedOutput
+     const transportCode = KITTY_IMAGE_TRANSPORTS.indexOf(this.kittyTransportMode)
+     if (transportCode < 0) throw new TypeError("Invalid kittyImageTransport")
++    const initialColorMode = config.colorMode ?? "auto"
++    if (!COLOR_MODES.includes(initialColorMode)) throw new TypeError(`Invalid colorMode: ${String(initialColorMode)}`)
+     const useMemoryBufferedOutput = config.bufferedOutput === "memory"
+     if (config.nativeSession) {
+       if (useMemoryBufferedOutput) throw new Error("nativeSession does not support memory buffered output")
+@@ -1515,6 +1537,7 @@
+     }
+     this.lib = this.nativeSession.renderLib
+     try {
++      this.applyColorMode(initialColorMode)
+       const kittyConfig = config.useKittyKeyboard ?? {}
+       this.nativeKittyKeyboardFlags = buildKittyKeyboardFlags(kittyConfig)
+ 
+@@ -4517,6 +4540,24 @@
+     this.emit(CliRenderEvents.DEBUG_OVERLAY_TOGGLE, this.debugOverlay.enabled)
+   }
+ 
++  /** How colors are written. See `ColorMode`. */
++  public get colorMode(): ColorMode {
++    return this._colorMode
++  }
++
++  public set colorMode(mode: ColorMode) {
++    this.applyColorMode(mode)
++    this.forceFullRepaintRequested = true
++    this.requestRender()
++  }
++
++  private applyColorMode(mode: ColorMode): void {
++    const code = COLOR_MODES.indexOf(mode)
++    if (code < 0) throw new TypeError(`Invalid colorMode: ${String(mode)}`)
++    this.lib.sessionSetColorMode(this.nativeSession.context, this.nativeSession.session, code)
++    this._colorMode = mode
++  }
++
+   public configureDebugOverlay(options: { enabled?: boolean; corner?: DebugOverlayCorner }): void {
+     const enabled = options.enabled ?? this.debugOverlay.enabled
+     const corner = options.corner ?? this.debugOverlay.corner
+@@ -5952,8 +5993,12 @@
+   }
+ 
+   private shouldSyncNativePaletteState(): boolean {
++    // A palette color mode picks the nearest of the terminal's own palette entries, so it needs them too.
++    const paletteMode = this._colorMode === "ansi16" || this._colorMode === "ansi256"
+     return Boolean(
+-      this._terminalIsSetup && !this._isDestroyed && this._capabilities?.ansi256 && !this._capabilities?.rgb,
++      this._terminalIsSetup &&
++        !this._isDestroyed &&
++        (paletteMode || (this._capabilities?.ansi256 && !this._capabilities?.rgb)),
+     )
+   }
+ 
+diff -ruN a/packages/core/src/tests/renderer.color-mode.test.ts b/packages/core/src/tests/renderer.color-mode.test.ts
+--- a/packages/core/src/tests/renderer.color-mode.test.ts	1970-01-01 00:00:00.000000000 +0000
++++ b/packages/core/src/tests/renderer.color-mode.test.ts	2026-11-11 11:28:48.644607332 +0000
+@@ -0,0 +1,107 @@
++import { afterEach, test } from "bun:test"
++import assert from "node:assert/strict"
++import { RGBA } from "../lib/RGBA.js"
++import { TextRenderable } from "../renderables/Text.js"
++import type { ColorMode } from "../renderer.js"
++import { ManualClock } from "../testing/manual-clock.js"
++import { createTestRenderer, type TestRendererSetup } from "../testing/test-renderer.js"
++import { RecordingWriteStream } from "../testing/test-streams.js"
++
++const setups: TestRendererSetup[] = []
++
++afterEach(async () => {
++  for (const { renderer } of setups.splice(0)) {
++    renderer.destroy()
++    await renderer.closed
++  }
++})
++
++// A remote terminal that reported nothing: "auto" writes 24-bit colors there.
++async function setup(colorMode?: ColorMode) {
++  const stdout = new RecordingWriteStream(12, 2)
++  const target = await createTestRenderer({
++    width: 12,
++    height: 2,
++    stdout: stdout as unknown as NodeJS.WriteStream,
++    bufferedOutput: "stdout",
++    remote: true,
++    clock: new ManualClock(),
++    ...(colorMode === undefined ? {} : { colorMode }),
++  })
++  setups.push(target)
++  await target.renderer.setupTerminal()
++  stdout.clear()
++  const take = () => {
++    const text = stdout.text()
++    stdout.clear()
++    return text
++  }
++  return { ...target, take }
++}
++
++function draw(target: TestRendererSetup) {
++  target.renderer.root.add(
++    new TextRenderable(target.renderer, { content: "red", fg: "#ff0000", bg: "#0000ff", selectable: false }),
++  )
++  target.renderer.root.add(
++    new TextRenderable(target.renderer, {
++      content: "slot",
++      position: "absolute",
++      top: 1,
++      fg: RGBA.fromIndex(3),
++      bg: RGBA.defaultBackground(),
++      selectable: false,
++    }),
++  )
++}
++
++const TRUECOLOR = /\x1b\[(38|48);2;/
++const SGR16 = (code: number) => `\x1b[${code}m`
++
++test("auto keeps 24-bit colors on a terminal that reported nothing", async () => {
++  const target = await setup()
++  assert.equal(target.renderer.colorMode, "auto")
++  draw(target)
++  await target.renderOnce()
++  assert.match(target.take(), /\x1b\[38;2;255;0;0m/)
++})
++
++test("ansi16 writes SGR 30-37/90-97 and 40-47/100-107, never 38;2 or 38;5", async () => {
++  const target = await setup("ansi16")
++  draw(target)
++  await target.renderOnce()
++  const output = target.take()
++  assert.doesNotMatch(output, TRUECOLOR)
++  assert.doesNotMatch(output, /\x1b\[(38|48);5;/)
++  assert.ok(output.includes(SGR16(91)), "#ff0000 is bright red (palette 9)")
++  assert.ok(output.includes(SGR16(104)), "#0000ff background is bright blue (palette 12)")
++  assert.ok(output.includes(SGR16(33)), "RGBA.fromIndex(3) keeps its slot")
++  assert.ok(output.includes("\x1b[49m"), "a default background stays SGR 49")
++})
++
++test("ansi256 writes palette indexes", async () => {
++  const target = await setup("ansi256")
++  draw(target)
++  await target.renderOnce()
++  const output = target.take()
++  assert.doesNotMatch(output, TRUECOLOR)
++  assert.match(output, /\x1b\[38;5;9m/)
++  assert.match(output, /\x1b\[38;5;3m/)
++})
++
++test("colorMode can change at runtime and repaints with the new mode", async () => {
++  const target = await setup("truecolor")
++  draw(target)
++  await target.renderOnce()
++  assert.match(target.take(), TRUECOLOR)
++  target.renderer.colorMode = "ansi16"
++  assert.equal(target.renderer.colorMode, "ansi16")
++  await target.renderOnce()
++  const output = target.take()
++  assert.ok(output.includes(SGR16(91)))
++  assert.doesNotMatch(output, TRUECOLOR)
++})
++
++test("an unknown colorMode is refused", async () => {
++  await assert.rejects(setup("bogus" as ColorMode), TypeError)
++})
+diff -ruN a/packages/core/src/zig.ts b/packages/core/src/zig.ts
+--- a/packages/core/src/zig.ts	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/core/src/zig.ts	2026-11-11 11:27:24.138950727 +0000
+@@ -6529,6 +6529,13 @@
+     )
+   }
+ 
++  public sessionSetColorMode(context: NativeContextHandle, session: SessionHandle, mode: number): void {
++    const handle = encodeContextHandle(context, session)
++    const code = toSafeFFIU32Length(mode, "Session color mode")
++    const pointer = this.nativeContextPointer(context, "ot_session_set_color_mode")
++    nativeResult("ot_session_set_color_mode", this.opentui.symbols.ot_session_set_color_mode(pointer, handle, code))
++  }
++
+   public sessionUpdateStats(
+     context: NativeContextHandle,
+     session: SessionHandle,
+diff -ruN a/packages/native/include/opentui.h b/packages/native/include/opentui.h
+--- a/packages/native/include/opentui.h	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/native/include/opentui.h	2026-11-11 11:26:36.295205713 +0000
+@@ -3139,6 +3139,21 @@
+  * (or '.') with best-effort file I/O through Context I/O, to
+  * hitgrid_<timestamp>.txt in the working directory. */
+ ot_status ot_session_set_debug_overlay(ot_context *, const ot_handle *session, uint32_t enabled, uint32_t corner);
++
++#define OT_COLOR_MODE_AUTO UINT32_C(0)
++#define OT_COLOR_MODE_TRUECOLOR UINT32_C(1)
++#define OT_COLOR_MODE_ANSI256 UINT32_C(2)
++#define OT_COLOR_MODE_ANSI16 UINT32_C(3)
++
++/* How the attached renderer writes colors. AUTO (the default) follows terminal
++ * detection. TRUECOLOR writes 38;2/48;2 for RGB colors. ANSI256 writes the nearest
++ * of the 256 palette entries (38;5/48;5). ANSI16 writes SGR 30-37/90-97 and
++ * 40-47/100-107: an indexed color 0-15 keeps its slot, any other color uses the
++ * nearest of the first 16 palette entries. Indexed colors keep their slot in
++ * every mode but ANSI16 (slots 16-255 map to the nearest of the 16 there).
++ * Default colors and transparent backgrounds write 39/49 in every mode. Requires
++ * an open Session with an attached renderer; the next frame repaints every cell. */
++ot_status ot_session_set_color_mode(ot_context *, const ot_handle *session, uint32_t mode);
+ ot_status ot_session_update_stats(ot_context *, const ot_handle *session, double overall_ms, uint32_t fps, double callback_ms);
+ ot_status ot_session_update_memory_stats(ot_context *, const ot_handle *session, uint32_t heap_used, uint32_t heap_total, uint32_t array_buffers);
+ ot_status ot_session_dump_hit_grid(ot_context *, const ot_handle *session);
+diff -ruN a/packages/native/src/ansi.zig b/packages/native/src/ansi.zig
+--- a/packages/native/src/ansi.zig	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/native/src/ansi.zig	2026-11-11 11:26:36.302216723 +0000
+@@ -222,6 +222,23 @@
+     return u8RgbToRgba(gray_value, gray_value, gray_value);
+ }
+ 
++test "16-color SGR uses 30-37/90-97 and 40-47/100-107" {
++    var buffer: [16]u8 = undefined;
++    for ([_]struct { index: u8, fg: []const u8, bg: []const u8 }{
++        .{ .index = 0, .fg = "\x1b[30m", .bg = "\x1b[40m" },
++        .{ .index = 7, .fg = "\x1b[37m", .bg = "\x1b[47m" },
++        .{ .index = 8, .fg = "\x1b[90m", .bg = "\x1b[100m" },
++        .{ .index = 15, .fg = "\x1b[97m", .bg = "\x1b[107m" },
++    }) |row| {
++        var writer = std.Io.Writer.fixed(&buffer);
++        try ANSI.fg16Output(&writer, row.index);
++        try std.testing.expectEqualStrings(row.fg, writer.buffered());
++        writer = std.Io.Writer.fixed(&buffer);
++        try ANSI.bg16Output(&writer, row.index);
++        try std.testing.expectEqualStrings(row.bg, writer.buffered());
++    }
++}
++
+ /// Squared Euclidean distance between two colors in RGB space (ignores alpha).
+ pub fn colorDistanceSquared(a: RGBA, b: RGBA) f32 {
+     const dr = @as(f32, @floatFromInt(red(a))) - @as(f32, @floatFromInt(red(b)));
+@@ -277,6 +294,20 @@
+         writer.writeAll("\x1b[49m") catch return AnsiError.WriteFailed;
+     }
+ 
++    /// One of the 16 ANSI colors as a foreground: 30-37 for slots 0-7, 90-97 for 8-15.
++    pub fn fg16Output(writer: anytype, index: u8) AnsiError!void {
++        std.debug.assert(index < 16);
++        const code: u8 = if (index < 8) 30 + index else 90 + (index - 8);
++        writer.print("\x1b[{d}m", .{code}) catch return AnsiError.WriteFailed;
++    }
++
++    /// One of the 16 ANSI colors as a background: 40-47 for slots 0-7, 100-107 for 8-15.
++    pub fn bg16Output(writer: anytype, index: u8) AnsiError!void {
++        std.debug.assert(index < 16);
++        const code: u8 = if (index < 8) 40 + index else 100 + (index - 8);
++        writer.print("\x1b[{d}m", .{code}) catch return AnsiError.WriteFailed;
++    }
++
+     // Text attribute constants
+     pub const bold = "\x1b[1m";
+     pub const dim = "\x1b[2m";
+diff -ruN a/packages/native/src/context-abi.zig b/packages/native/src/context-abi.zig
+--- a/packages/native/src/context-abi.zig	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/native/src/context-abi.zig	2026-11-11 11:27:07.466447621 +0000
+@@ -912,6 +912,16 @@
+     return c.OT_OK;
+ }
+ 
++pub fn ot_session_set_color_mode(context: ?*ContextHandle, session_ptr: ?*const c.ot_handle, mode: u32) callconv(.c) c.ot_status {
++    const status = sessionContextStatus(context);
++    if (status != c.OT_OK) return status;
++    const owner = context.?;
++    const id = session_ptr orelse return sessionError(owner, error.InvalidOptions);
++    if (mode > c.OT_COLOR_MODE_ANSI16) return sessionError(owner, error.InvalidOptions);
++    owner.core.sessionSetColorMode(handleFromC(id.*), mode) catch |err| return sessionError(owner, err);
++    return c.OT_OK;
++}
++
+ pub fn ot_session_update_stats(context: ?*ContextHandle, session_ptr: ?*const c.ot_handle, overall_ms: f64, fps: u32, callback_ms: f64) callconv(.c) c.ot_status {
+     const status = sessionContextStatus(context);
+     if (status != c.OT_OK) return status;
+@@ -3063,6 +3073,10 @@
+     try std.testing.expectEqual(c.OT_WRONG_KIND, ot_session_update_memory_stats(handle, &buffer, 1, 2, 3));
+     try std.testing.expectEqual(c.OT_INVALID_ARGUMENT, ot_session_dump_hit_grid(handle, null));
+     try std.testing.expectEqual(c.OT_OK, ot_session_set_debug_overlay(handle, &session, 1, 3));
++    try std.testing.expectEqual(c.OT_INVALID_ARGUMENT, ot_session_set_color_mode(handle, null, c.OT_COLOR_MODE_ANSI16));
++    try std.testing.expectEqual(c.OT_INVALID_ARGUMENT, ot_session_set_color_mode(handle, &session, c.OT_COLOR_MODE_ANSI16 + 1));
++    try std.testing.expectEqual(c.OT_WRONG_KIND, ot_session_set_color_mode(handle, &buffer, c.OT_COLOR_MODE_ANSI16));
++    try std.testing.expectEqual(c.OT_OK, ot_session_set_color_mode(handle, &session, c.OT_COLOR_MODE_ANSI16));
+     try std.testing.expectEqual(c.OT_OK, ot_session_update_stats(handle, &session, 1.5, 60, 0.25));
+     try std.testing.expectEqual(c.OT_OK, ot_session_update_memory_stats(handle, &session, 1, 2, 3));
+     const config: c.ot_scene_frame_options = .{
+diff -ruN a/packages/native/src/context.zig b/packages/native/src/context.zig
+--- a/packages/native/src/context.zig	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/native/src/context.zig	2026-11-11 11:27:14.268246286 +0000
+@@ -942,6 +942,16 @@
+         attached.setDebugOverlay(enabled, @fromBackingInt(@intCast(corner)));
+     }
+ 
++    pub fn sessionSetColorMode(self: *Context, handle: Handle, mode: u32) Error!void {
++        try self.beginMutation();
++        defer self.mutating = false;
++        const value = try self.getSession(handle);
++        try value.checkOpen();
++        const attached = value.renderer orelse return error.RendererNotAttached;
++        const color_mode = std.enums.fromInt(renderer.ColorMode, mode) orelse return error.InvalidOptions;
++        attached.setColorMode(color_mode);
++    }
++
+     pub fn sessionUpdateStats(self: *Context, handle: Handle, overall_ms: f64, fps: u32, callback_ms: f64) Error!void {
+         try self.beginMutation();
+         defer self.mutating = false;
+diff -ruN a/packages/native/src/renderer.zig b/packages/native/src/renderer.zig
+--- a/packages/native/src/renderer.zig	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/native/src/renderer.zig	2026-11-11 11:27:07.342170506 +0000
+@@ -56,6 +56,14 @@
+     WriteFailed,
+ };
+ 
++/// How colors are written (opentui.h OT_COLOR_MODE_*). `auto` follows terminal detection.
++pub const ColorMode = enum(u8) {
++    auto = 0,
++    truecolor = 1,
++    ansi256 = 2,
++    ansi16 = 3,
++};
++
+ pub const DebugOverlayCorner = enum {
+     topLeft,
+     topRight,
+@@ -441,6 +449,7 @@
+     last_rendered_palette_epoch: ?u32 = null,
+     force_full_repaint: bool = false,
+     palette_index_cache: std.AutoHashMapUnmanaged(u64, u8) = .empty,
++    color_mode: ColorMode = .auto,
+     sixelCache: std.AutoHashMapUnmanaged(SixelCacheKey, SixelCacheEntry) = .empty,
+     sixelCacheBytes: usize = 0,
+     sixelCacheClock: u64 = 0,
+@@ -769,9 +778,23 @@
+         }
+     }
+ 
++    /// Selects how colors are written and repaints every cell on the next frame.
++    pub fn setColorMode(self: *CliRenderer, mode: ColorMode) void {
++        if (self.color_mode == mode) return;
++        self.color_mode = mode;
++        self.force_full_repaint = true;
++    }
++
+     fn cachedNearestPaletteIndex(self: *CliRenderer, rgba: RGBA) u8 {
++        return self.cachedNearestPaletteIndexIn(rgba, self.palette_rgba.len);
++    }
++
++    /// The nearest of the first `count` palette entries (256, or 16 for the ANSI16 color mode).
++    fn cachedNearestPaletteIndexIn(self: *CliRenderer, rgba: RGBA, count: usize) u8 {
++        std.debug.assert(count == 16 or count == self.palette_rgba.len);
+         const rgb24 = ansi.rgbaToRgb24(rgba);
+-        const key = (@as(u64, self.palette_epoch) << 24) | @as(u64, rgb24);
++        // The epoch fills bits 24-55; bit 56 keeps the 16-entry answers apart from the 256-entry ones.
++        const key = (@as(u64, @intFromBool(count == 16)) << 56) | (@as(u64, self.palette_epoch) << 24) | @as(u64, rgb24);
+ 
+         if (self.palette_index_cache.get(key)) |cached| {
+             return cached;
+@@ -780,7 +803,7 @@
+         var best_index: u8 = 0;
+         var best_distance = std.math.inf(f32);
+ 
+-        for (self.palette_rgba, 0..) |candidate, index| {
++        for (self.palette_rgba[0..count], 0..) |candidate, index| {
+             const distance = ansi.colorDistanceSquared(rgba, candidate);
+             if (distance < best_distance) {
+                 best_distance = distance;
+@@ -809,6 +832,45 @@
+             return;
+         }
+ 
++        switch (self.color_mode) {
++            .auto => {},
++            .ansi16 => {
++                const index: u8 = if (ansi.intent(rgba) == .indexed and ansi.slot(rgba) < 16)
++                    ansi.slot(rgba)
++                else
++                    self.cachedNearestPaletteIndexIn(rgba, 16);
++                if (is_background) {
++                    ansi.ANSI.bg16Output(writer, index) catch {};
++                } else {
++                    ansi.ANSI.fg16Output(writer, index) catch {};
++                }
++                return;
++            },
++            .ansi256 => {
++                const index: u8 = if (ansi.intent(rgba) == .indexed) ansi.slot(rgba) else self.cachedNearestPaletteIndex(rgba);
++                if (is_background) {
++                    ansi.ANSI.bgIndexedColorOutput(writer, index) catch {};
++                } else {
++                    ansi.ANSI.fgIndexedColorOutput(writer, index) catch {};
++                }
++                return;
++            },
++            .truecolor => {
++                if (ansi.intent(rgba) == .indexed) {
++                    if (is_background) {
++                        ansi.ANSI.bgIndexedColorOutput(writer, ansi.slot(rgba)) catch {};
++                    } else {
++                        ansi.ANSI.fgIndexedColorOutput(writer, ansi.slot(rgba)) catch {};
++                    }
++                } else if (is_background) {
++                    ansi.ANSI.bgColorOutput(writer, ansi.red(rgba), ansi.green(rgba), ansi.blue(rgba)) catch {};
++                } else {
++                    ansi.ANSI.fgColorOutput(writer, ansi.red(rgba), ansi.green(rgba), ansi.blue(rgba)) catch {};
++                }
++                return;
++            },
++        }
++
+         if (ansi.intent(rgba) == .indexed and caps.ansi256) {
+             const index = ansi.slot(rgba);
+             if (is_background) {

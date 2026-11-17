@@ -1,0 +1,15 @@
+{
+  "viewer.rendered": "Rendered",
+  "viewer.raw": "Raw",
+  "viewer.view": "How {{label}} shows",
+  "viewer.copy": "Copy {{label}}",
+  "viewer.copyShort": "Copy",
+  "viewer.download": "Download {{file}}",
+  "viewer.downloadShort": "Download",
+  "viewer.more": "Actions for {{label}}",
+  "viewer.empty": "This file is empty",
+  "viewer.failed": "Couldn't read this file",
+  "viewer.withheld": "The whole text is withheld because it could hold a secret. Copy and Download hold this placeholder, not the text.",
+  "viewer.tooLong": "Shown as text: too long to render here",
+  "viewer.saveRefused": "This file is too large to download here"
+}

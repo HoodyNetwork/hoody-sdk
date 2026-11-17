@@ -1,0 +1,21 @@
+{
+  "cp.hex": "Hex code",
+  "cp.hexPlaceholder": "#RRGGBB",
+  "cp.any": "Any colour",
+  "cp.hexInvalid": "Use a hex code such as #4ECDC4 or #4CC.",
+  "cp.c.FF6B6B": "Coral",
+  "cp.c.4ECDC4": "Turquoise",
+  "cp.c.45B7D1": "Sky blue",
+  "cp.c.96CEB4": "Sage",
+  "cp.c.FFEAA7": "Cream",
+  "cp.c.DDA0DD": "Plum",
+  "cp.c.98D8C8": "Mint",
+  "cp.c.F7DC6F": "Sunflower",
+  "cp.c.BB8FCE": "Lavender",
+  "cp.c.85C1E9": "Light blue",
+  "cp.c.82E0AA": "Light green",
+  "cp.c.F8C471": "Apricot",
+  "cp.c.F1948A": "Salmon",
+  "cp.c.AED6F1": "Powder blue",
+  "cp.c.A9DFBF": "Pale green"
+}

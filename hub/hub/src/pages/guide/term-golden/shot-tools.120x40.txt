@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            Guide                                  ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │                              ┌──────────────────────────────────────────────────────────────┐
+ Computers             │  │ Ask your agent            │ Tools                                                        │
+ Files                 │  │ Connect                   │ The tools, for when you want to see or touch. Each one opens │
+ Bots                  │  │ Skills                    │ on the computer picked in the top bar: atlas.                │
+ Board                 │  │ Build your own            │ Agent                                                        │
+ Demo                  │  │ Every link                │ Your AI next to your files. Watch it, steer it.              │
+ Vault                 │  │ Bots                      │ Open  [Put Agent on Board]  Docs                             │
+                       │  │▌Tools                     │                                                              │
+On atlas ▾             │  │ Try this                  │ Terminal                                                     │
+ Programs              │  │ Realms                    │ A full shell in a tab, shared with your agent.               │
+ Schedules             │  │ Topics                    │ Open  [Put Terminal on Board]  Docs                          │
+ Scripts               │  │ Keyboard                  │                                                              │
+ Logs                  │  │ Look                      │ Display                                                      │
+ Tunnels               │                              │ The computer's desktop, live, on any device.                 │
+ Notes                 │   [j] [k] move between       │ Open  [Put Display on Board]  Docs                           │
+ AI                    │   sections                   │                                                              │
+ VMs                   │                              │ Files                                                        │
+                       │                              │ Browse, edit and download what is on disk.                   │
+Account                │                              │ Open  [Put Files on Board]  Docs                             │
+ Plans & Billing       │                              │                                                              │
+ Referrals             │                              │ Browser                                                      │
+ Keys and tokens       │                              │ A real browser your agent can drive.                         │
+ API                   │                              │ Open  [Put Browser on Board]  Docs                           │
+ Notifications      26 │                              │                                                              │ █
+ Account               │                              │ Board                                                        │ █
+                       │                              │ Your own grid of tools, side by side.                        │ █
+ + Rent servers        │                              │ Open                                                         │
+▌Guide                 │                              │                                                              │
+ Support               │                              │ Bots                                                         │
+                       │                              │ Give your agent a link, a QR and keys.                       │
+                       │                              │ Open  Docs                                                   │
+                       │                              │                                                              │
+                       │                              │ More programs                                                │
+                       │                              │ Code, SQLite, Pipe, Exec, Cron and others. Open any of them  │
+                       │                              │ from Programs.                                               │
+                       │                              │ Browse programs  [Put Code on Board]  [Put SQLite on Board]  │
+                       │                              └──────────────────────────────────────────────────────────────┘
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

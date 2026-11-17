@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Connect a laptop to atlas                                               Esc ×
+ Home                  │  Tunnels       ┃ ─────────────────────────────────────────────────────────────────────────────
+ Computers             │  Put a laptop a┃ ┌──────────────────────────────────────────────────────────────────────────┐█
+ Files                 │  sessions conne┃ │ WHAT YOU GET                                                             │█
+ Bots                  │                ┃ │ Like ngrok without a middleman: put a laptop app online straight         │█
+ Board                 │  / Search by ad┃ │ from atlas, with no outside service to pay for.                          │█
+ Demo                  │                ┃ │ Next: run the command on the laptop                                      │█
+ Vault                 │      Shared as ┃ └──────────────────────────────────────────────────────────────────────────┘█
+                       │  ▾ Session 4f2a┃                                                                             █
+On atlas ▾             │  ›   Web addres┃                                                                             █
+ Programs              │      Web addres┃  ✓  What to connect                                                         █
+ Schedules             │      Inside thi┃                                                                             █
+ Scripts               │                ┃     What to connect                                                         █
+ Logs                  │  ▾ Session 9b1d┃     ┌─────────────────────────────────┐ ┌─────────────────────────────────┐ █
+▌Tunnels               │      Inside thi┃     │ (•) Put a laptop app online     │ │ ( ) Bring a laptop service into │ █
+ Notes                 │      Inside thi┃     │     Web pages and WebSockets,   │ │     this computer               │ █
+ AI                    │                ┃     │     at a web address.           │ │     Any TCP service, such as a  │ █
+ VMs                   │  ▾ Reconnecting┃     │                                 │ │     database.                   │ █
+                       │      Web addres┃     └─────────────────────────────────┘ └─────────────────────────────────┘ █
+Account                │                ┃     ▸ Which one should I pick?                                              █
+ Plans & Billing       │                ┃                                                                             █
+ Referrals             │                ┃  ✓  On the laptop                                                           █
+ Keys and tokens       │                ┃                                                                             █
+ API                   │                ┃     Host                          Port                                      █
+ Notifications      26 │                ┃     │ __________________________  │ 3000                                    █
+ Account               │                ┃     Leave empty for this laptop.                                            █
+                       │                ┃                                                                             █
+ + Rent servers        │                ┃     ▸ Advanced  A fixed port, or a computer that asks for a password        ▀
+ Guide                 │                ┃
+ Support               │                ┃  3  ┌──────────────────────────────────────────────────────────────────────┐
+                       │  Questions     ┃     │ Run it on the laptop                                                 │
+                       │  ▸ What is a tu┃     │ Paste these in a terminal on the laptop.                             │
+                       │  ▸ Should I put┃     │                                                                      │
+                       │  ▸ Which port o┃     │ ‹ Command line ›  SDK                                                │
+                       │  ▸ Which ports ┃     │                                                                      │
+                       │  ▸ When do I ti┃     │ Command line                                              ⧉ Copy all │
+                       │  ▸ Why did my t┃     │ 1. Install                                                           │
+                       │  ▸ Why doesn't ┃     │  $ curl -fsSL https://install.hoody.com | sh                 ⧉ copy  │
+                       │  ▸ What does "R┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃                                                                       [Close]

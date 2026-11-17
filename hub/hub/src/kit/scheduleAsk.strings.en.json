@@ -1,0 +1,6 @@
+{
+  "prompt": "Schedule ",
+  "ex.backups": "every morning at 8, check my backups and tell me if one failed",
+  "ex.disk": "every hour, tell me when the disk is more than 90% full",
+  "ex.logs": "every Monday at 9, sum up last week's errors in the logs"
+}

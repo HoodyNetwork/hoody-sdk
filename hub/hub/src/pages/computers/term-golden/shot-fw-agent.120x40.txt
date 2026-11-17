@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ Ask the Agent about the firewall of atlas           Esc ×
+ Home                  │  Computers                         ┃ Starts a new conversation with the Agent on atlas.
+▌Computers             │                                    ┃ The answer shows in the Agent panel.
+ Files                 │  ▸ Computers    Servers    Projects┃ ─────────────────────────────────────────────────────────
+ Bots                  │  ──────────────────────────────────┃
+ Board                 │                                    ┃  Firewall of the computer atlas. Evaluation (from the
+ Demo                  │  ‹ Computers  Esc                  ┃  Hoody API): drop (Block) and reject (Refuse) rules
+ Vault                 │  atlas  ● Running                  ┃  apply before allow rules whatever their order, and
+                       │  SG n12 · Home base · █  Personal ·┃  unmatched traffic is allowed in both directions. So    █
+On atlas ▾             │                                    ┃  allow rules alone restrict nothing.                    █
+ Programs              │   Overview  Connect  Permissions  P┃  4 rules, at most 500 on this computer.                 █
+ Schedules             │   Storage                          ┃  Inbound rules:                                         █
+ Scripts               │  ──────────────────────────────────┃  - Block TCP port 3306 from 198.51.100.0/24             █
+ Logs                  │  ┌─────────────────────────────────┃  {"action":"drop","protocol":"tcp","description":"Old   █
+ Tunnels               │  │ At a glance                     ┃  office","destination_port":"3306","source":"198.51.100 █
+ Notes                 │  │ Internet access      Allowed    ┃  .0/24","state":"enabled"}                              █
+ AI                    │  │ Traffic leaves from  atlas's own┃  - Allow TCP ports 80, 443 from anywhere                █
+ VMs                   │  └─────────────────────────────────┃  {"action":"allow","protocol":"tcp","description":"Web" █
+                       │                                    ┃  ,"destination_port":"80,443","source":"0.0.0.0/0","sta █
+Account                │  ┌─────────────────────────────────┃  te":"enabled"}                                         █
+ Plans & Billing       │  │ Internet access ⓘ               ┃  - Refuse UDP ports 27015-27030 from anywhere (turned   █
+ Referrals             │  │ Whether atlas can open new conne┃  off)                                                   █
+ Keys and tokens       │  │ ✓ Allowed atlas can open connect┃  {"action":"reject","protocol":"udp","description":"No  █
+ API                   │  └─────────────────────────────────┃  game                                                   █
+ Notifications      26 │                                    ┃  server","destination_port":"27015-27030","state":"disa █
+ Account               │  ┌─────────────────────────────────┃  bled"}                                                 █
+                       │  │ Where your traffic comes out    ┃  Outbound rules:                                        █
+ + Rent servers        │  │ [Exit addresses in the docs] [VP┃  - Block TCP port 25 to anywhere                        █
+ Guide                 │  │ Sites see the exit, not you. A c┃  {"action":"drop","protocol":"tcp","description":"No    █
+ Support               │  │  Your app  →  atlas's proxy  →  ┃  outbound                                               █
+                       │  │                                 ┃  mail","destination_port":"25","destination":"0.0.0.0/0 █
+                       │  │                                 ┃  ","state":"enabled"}                                   █
+                       │  └─────────────────────────────────┃                                                         █
+                       │                                    ┃ Tell the Agent what you want                            ▀
+                       │  ┌─────────────────────────────────┃ ┃ Block outbound mail except to my relay
+                       │  │ Firewall ⓘ                      ┃
+                       │  │ Anything not blocked is allowed.┃
+                       │  │    Action          Traffic      ┃ For example: block outbound mail from this computer.
+                       │  │▾ Inbound · 3                    ┃ ─────────────────────────────────────────────────────────
+ Typing · Esc leaves the field · Ctrl+K commands            ┃                                [Close]   ✦ Ask the Agent

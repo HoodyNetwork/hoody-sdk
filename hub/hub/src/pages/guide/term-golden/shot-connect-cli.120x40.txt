@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            Guide                                  ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │                              ┌──────────────────────────────────────────────────────────────┐
+ Computers             │  │ Ask your agent            │ Connect                                                      │ █
+ Files                 │  │▌Connect                   │ Connect your AI. Hoody works best from the AI you already    │ █
+ Bots                  │  │ Skills                    │ use. Connect it once and it gets real computers, terminals,  │ █
+ Board                 │  │ Build your own            │ displays, browsers and files.                                │
+ Demo                  │  │ Every link                │   AI chats                                                   │
+ Vault                 │  │ Bots                      │   Coding agents   CLI                           ⧉ Copy all   │
+                       │  │ Tools                     │ ▸ CLI             1. Install                                 │
+On atlas ▾             │  │ Try this                  │   SDK              curl -fsSL https://             ⧉ copy    │
+ Programs              │  │ Realms                    │   HTTP API         install.hoody.com | sh                    │
+ Schedules             │  │ Topics                    │   SSH             2. Or install with npm                     │
+ Scripts               │  │ Keyboard                  │   Browser          npm install -g hoody-sdk        ⧉ copy    │
+ Logs                  │  │ Look                      │                   3. Sign in (the CLI remembers this         │
+ Tunnels               │                              │                   platform)                                  │
+ Notes                 │   [j] [k] move between       │                    hoody login                     ⧉ copy    │
+ AI                    │   sections                   │                   4. See your computers                      │
+ VMs                   │                              │                    hoody computers list            ⧉ copy    │
+                       │                              │                   5. Ask the agent to build something        │
+Account                │                              │                    hoody agent prompt "Build a     ⧉ copy    │
+ Plans & Billing       │                              │                    sample HTML dashboard on this             │
+ Referrals             │                              │                    computer." -c c0a7…00a1                   │
+ Keys and tokens       │                              │                   6. Open the agent                          │
+ API                   │                              │                    hoody agent c0a7…00a1           ⧉ copy    │
+ Notifications      26 │                              │                   7. Sign in on the computer                 │
+ Account               │                              │                    hoody agent login -c c0a7…00a1  ⧉ copy    │
+                       │                              │                   install.hoody.com  CLI reference           │
+ + Rent servers        │                              │                                                              │
+▌Guide                 │                              └──────────────────────────────────────────────────────────────┘
+ Support               │
+                       │                              ┌──────────────────────────────────────────────────────────────┐
+                       │                              │ Skills                                                       │
+                       │                              │ A skill is a file that teaches a coding agent how Hoody's    │
+                       │                              │ HTTP API works: which calls exist and how to make them. It   │
+                       │                              │ gives no access by itself; a key or a sign-in does that.     │
+                       │                              │                                                              │
+                       │                              │ Install the skill                                            │
+                       │                              │ Run one of these in the folder where you use your agent. The │
+                       │                              │ tool asks which of your agents to add the skill to.          │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

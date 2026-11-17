@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+▌Home                  │  Good morning, Ada                                             [i What is Hoody?]  [Customize]
+ Computers             │  ■ Personal · ✓ atlas (Running) · SG n12
+ Files                 │
+ Bots                1 │  ember needs a look. 1 Bot is waiting for you                                                █
+ Board                 │                                                                                              █
+ Demo                  │                                                                                              █
+ Vault                 │    ! Needs you    ember needs a look in Personal                                     [Open]  █
+                       │                   1 Bot is waiting for you in Personal                             [Review]  █
+On atlas ▾             │                                                                                              █
+ Programs              │                                                                                              █
+ Schedules             │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Scripts               │  │ │ Ask atlas to…                                                                    [Ask] │█
+ Logs                  │  │                                                                                          │█
+ Tunnels               │  │ [Install the popular coding agents] [Keep my app running after restarts]                 │█
+ Notes                 │  │ [What is running on atlas?] [Back up my files daily] [Create a bot that…]                │█
+ AI                    │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ VMs                   │                                                                                              █
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+Account                │  │ Your computer                                                                 View all › │█
+ Plans & Billing       │  │ atlas ● Running SG n12                                                                   │█
+ Referrals             │  │                                                                                          │█
+ Keys and tokens       │  │ Agent ⇗     ⧉ copy [QR] [Put Agent on Board]                                             │█
+ API                   │  │ Terminal ⇗  ⧉ copy [QR] [Put Terminal on Board]                                          │
+ Notifications      26 │  │ Desktop ⇗   ⧉ copy [QR] [Put Desktop on Board]                                           │
+ Account               │  │ Files ⇗     ⧉ copy [QR] [Put Files on Board]                                             │
+                       │  │ Browser ⇗   ⧉ copy [QR] [Put Browser on Board]                                           │
+ + Rent servers        │  │                                                                                          │
+ Guide                 │  │ Programs: 0 running ! 1 needs a look                                       All computers │
+ Support               │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌────────────────────────────────────────────┐ ┌───────────────────────────────────────────┐
+                       │  │ Start something                            │ │ Bots                           View all › │
+                       │  │                                            │ │ ◆ Chief · atl… ◆ Waiting for you [Review] │
+                       │  │ New Bot               Open the Board       │ │ i Support · atlas               i Working │
+                       │  │ Assistants that work  Programs, terminals  │ │ i Digest · atlas     i 2 messages waiting │
+                       │  │ on your computers     and displays side by │ │ ! Ledger · cinder                ! Paused │
+                       │  │                       side                 │ │ · Scout · cinder                   · Idle │
+                       │  │                                            │ │                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

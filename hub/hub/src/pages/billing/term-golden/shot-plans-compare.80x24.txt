@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Plans & Billing                                                   + Add funds
+ Upgrade a server, rent a whole machine, and see what you pay.
+ ▸ Plans    Bare metal    Wallet & usage
+ ──────────────────────────────────────────────────────────────────────────────
+ │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC               [Pay now]
+ │ [Choose Medium]                    │  ┃  Choose Large                     ┃
+ └────────────────────────────────────┘  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃ Bare metal                                                                ┃▄
+ ┃ A whole machine for you alone                                             ┃▀
+ ┃ From $30 a month                                                          ┃
+ ┃ Hardware         Dedicated hardware   Locations                           ┃
+ ┃                                           Pick a listing and its location ┃
+ ┃ Cores                          4–32   Memory                 32 GB–512 GB ┃
+ ┃ Disk                500 GB–19.75 TB   Countries                         4 ┃
+ ┃                                                                           ┃
+ ┃ [Browse machines →]                                                       ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+ Compare plans
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,363 @@
+/* Dialog: the centred modal (top at 20vh, --dialog-w / -lg, at most 70vh; xl for code and tables, from 600 px wide
+   85vh tall with its top at 7.5vh). The header and the footer stay put and only the body scrolls. Its frame is the one
+   frame of every floating surface, and its bar rule, title and scrim exit are the Drawer's, the Sheet's and the tray's. */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20vh var(--sp-4) var(--sp-4);
+  background: var(--hx-scrim);
+}
+
+.scrim[data-entering] {
+  animation: fadeIn var(--dur-enter) var(--ease-out);
+}
+
+.scrim[data-exiting] {
+  animation: fadeIn var(--dur-exit) linear reverse; /* the one scrim exit (Drawer, Sheet) */
+}
+
+.modal {
+  --ring-gap: var(--hx-raised);
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus); /* again with the gap: see kit/tokens.css Focus */
+  --search-max-w: none;
+  --search-grow: 1;
+  --surface-inset: var(--pad-surface-lg);
+  --sg-bw: 0px; /* a SettingGroup in the dialog is bare and inset by it (SettingGroup.tsx) */
+  --sg-fill: transparent;
+  --sg-pad: 0px;
+  --sg-pane: 0px;
+
+  display: flex;
+  width: min(var(--dialog-w), 100%);
+  max-height: 70vh;
+  border: var(--bw) solid var(--pop-line); /* one frame for every floating surface, dialogs included (popsurfaces.test.ts) */
+  border-radius: var(--r-2);
+  background: var(--hx-raised);
+  box-shadow: var(--sh-pop);
+  outline: none;
+}
+
+.lg {
+  width: min(var(--dialog-w-lg), 100%);
+}
+
+/* xl: a dialog that holds code or a table, and only then (app/conformance.dialogsize.test.ts). */
+.xl {
+  width: min(var(--dialog-w-xl), 100%);
+}
+
+/* From 600 px wide an xl dialog may be 85vh tall, so its top moves up to 7.5vh to fit. Phones keep 20vh and 70vh. */
+@media (width >= 600px) {
+  .scrimXl {
+    padding-block-start: 7.5vh;
+  }
+
+  .xl {
+    max-height: 85vh;
+  }
+}
+
+/* A dialog that holds form sections (kit/forms/FormSection) grows with its form, up to the same 85vh, so a form that
+   fits the window shows whole and does not scroll. The space above it gives way first: 20vh as every dialog while the
+   form is short, down to 7.5vh as it grows. Phones keep 20vh and 70vh. */
+@media (width >= 600px) {
+  .scrim:has([data-form-section]) {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding-block-start: 0;
+  }
+
+  .scrim:has([data-form-section])::before {
+    flex: 0 1 20vh;
+    min-block-size: 7.5vh;
+    content: "";
+  }
+
+  .modal:has([data-form-section]) {
+    flex: none;
+    max-height: 85vh;
+  }
+}
+
+.modal[data-entering] {
+  animation: popIn var(--dur-enter) var(--ease-out);
+}
+
+.dialog {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  outline: none;
+}
+
+/* The dialog's column: only .scroll scrolls, so the title, the close x and the buttons never leave the view. */
+.form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Header: the mark, the title and the close x. It stays put, and it sits above the body that scrolls under it, so the
+   x's ring and the hairline are never covered. The hairline is the footer's rule (--pop-sep), drawn only while the body
+   is scrolled; the -1 px margin hands its pixel back, so it adds no height. */
+.head {
+  position: relative;
+  z-index: var(--z-raised);
+  display: flex;
+  flex: none;
+  gap: var(--sp-3);
+  margin-block-end: calc(var(--bw) * -1);
+  padding: var(--pad-surface-lg) var(--pad-surface-lg) 0;
+  border-block-end: var(--bw) solid transparent;
+}
+
+.head[data-scrolled] {
+  border-block-end-color: var(--pop-sep);
+}
+
+.mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--ctl-h-sm);
+  height: var(--ctl-h-sm);
+  border-radius: var(--r-1);
+  background: var(--hx-danger-t);
+  color: var(--hx-danger);
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The header's close x, beside the title and never over it (the title wraps in .text). Its box (--ctl-h) is centred on
+   the title's first line and overhangs it equally above and below, so it adds no height to the header. */
+.close {
+  flex: none;
+  align-self: flex-start;
+  margin-block: calc((var(--ctl-h-sm) - var(--ctl-h)) / 2);
+  margin-inline-end: calc(var(--sp-2) * -1);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  min-height: var(--ctl-h-sm);
+  margin: 0;
+  color: var(--hx-ink);
+  font: var(--t-heading);
+  letter-spacing: var(--tracking-title);
+  overflow-wrap: anywhere;
+}
+
+/* The mark sits before the name and never shrinks or wraps away; the name wraps beside it. */
+.titleMark {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  margin-inline-end: var(--sp-2);
+}
+
+.titleText {
+  min-width: 0;
+}
+
+/* The one scroll box: the body text, the fields and the outcome. The space above the footer is its end padding, so it
+   scrolls with the rows and the last row never runs into the footer. */
+.scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-block-end: var(--pad-surface-lg);
+}
+
+.body {
+  margin-block-start: var(--sp-2);
+  padding-inline: var(--pad-surface-lg);
+  color: var(--hx-muted);
+  font: var(--t-body);
+  overflow-wrap: anywhere;
+
+  /* A line break written in the text shows; plain text wraps (states/preline.test.tsx). */
+  white-space: pre-line;
+}
+
+.body :is(code, kbd, samp) {
+  color: var(--hx-ink);
+  font: var(--t-mono);
+}
+
+/* Beside the danger mark, where the title starts: the mark's width and the header's gap. */
+.bodyMarked {
+  padding-inline-start: calc(var(--pad-surface-lg) + var(--ctl-h-sm) + var(--sp-3));
+}
+
+.extra {
+  --form-gap: var(--sp-3); /* read by a FormSection in the column */
+
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--pad-surface-lg) 0;
+}
+
+/* The FAQ link after the body and the consequences: one line, set apart from the buttons by the dialog's own gap. */
+.faq {
+  flex: none;
+  padding: var(--sp-3) var(--pad-surface-lg) 0;
+  font: var(--t-body);
+}
+
+/* The outcome takes focus when the control that had it goes away (it is read out); a ring only for keyboard. */
+.outcomeSlot {
+  outline: none;
+}
+
+.outcomeSlot:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+/* The page's recovery actions on a pending outcome (outcomeActions): one action row under the outcome. */
+.outcomeActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-actions);
+  margin-block-start: var(--sp-2);
+}
+
+/* What an outcome action did, announced politely. Always drawn (an empty paragraph takes no height), so a screen reader
+   hears its words when they arrive. */
+.outcomeNote {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* Why Escape does nothing while the dialog sends or checks (announced); takes no room while empty. Under the scroll box,
+   so it shows wherever the body is scrolled. */
+.escHint {
+  flex: none;
+  margin: 0;
+  padding: 0 var(--pad-surface-lg) var(--sp-3);
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.escHint:empty {
+  padding: 0;
+}
+
+/* Footer (--savebar-h): Cancel, then the action, at the inline end, under the scroll box. */
+.buttons {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--gap-actions);
+  min-height: var(--savebar-h);
+  padding-inline: var(--pad-surface-lg);
+  border-block-start: var(--bw) solid var(--pop-sep);
+  background: var(--bar-bg); /* the footer is a bar, opaque (popsurfaces.test.ts) */
+  --ring-gap: var(--bar-bg);
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus);
+}
+
+.consequences {
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  color: var(--hx-ink);
+  font: var(--t-body);
+  list-style: disc;
+}
+
+.typeField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.typeLabel {
+  color: var(--hx-ink);
+  font: var(--t-small);
+}
+
+.typeInput {
+  height: var(--ctl-h);
+  padding: 0 var(--sp-3);
+  border: var(--bw) solid var(--hx-line-strong);
+  border-radius: var(--r-1);
+  background: var(--hx-card);
+  color: var(--hx-ink);
+  font: var(--t-mono);
+}
+
+:root[data-hx-theme='dark'] .typeInput {
+  background: var(--hx-bg);
+}
+
+.typeInput::placeholder {
+  color: var(--hx-faint);
+}
+
+/* Neutral, like every input: the disabled Delete already reads as the gate. */
+.typeInput[data-focus-visible],
+.typeInput[data-focused] {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+/* Phones: the full width less the scrim's padding, the same top and max height as wider screens, buttons side by side.
+   A taller body scrolls inside the dialog. */
+@media (width < 600px) {
+  .modal,
+  .lg,
+  .xl {
+    --pad-surface-lg: var(--pad-surface);
+
+    width: 100%;
+  }
+
+  /* Labels never shrink, so two buttons that cannot share the row wrap, in reverse: the action (the last) stacks above
+     Cancel. Each button still takes the whole row it is on. */
+  .buttons {
+    --foot-share: 1; /* footRow: the buttons share the row */
+
+    flex-wrap: wrap-reverse;
+    padding-block: var(--sp-1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+/* Forced colours drop box-shadow, so the focus ring above would vanish: a solid outline in the system Highlight colour
+   instead, as Button's (kit/focus.forced.spec.ts). */
+@media (forced-colors: active) {
+  .typeInput[data-focus-visible],
+  .typeInput[data-focused],
+  .outcomeSlot:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+}

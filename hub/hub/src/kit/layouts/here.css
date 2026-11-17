@@ -1,0 +1,35 @@
+/* The kit's "here" tint, a global stylesheet of its own: a :global rule in a CSS module would give every module that binds
+   it (Section binds Layouts.module.css) a load-time effect (kitpure.conformance). Layouts.tsx imports it right after
+   Layouts.module.css, so it still follows the card rules it tints (Faq's and the settings cards'). */
+
+/* "Here": a section-nav jump that moves nothing tints the section for a moment.
+   Global, so a page's own sections (Guide) get it too; the tint reaches past the section by
+   --sp-2 through its shadow, so nothing moves. Reduced motion zeroes --dur-loop: the tint then
+   shows still and goes when the mark does (HERE_MS in Layouts.tsx). A surface with its own fill (a settings card)
+   names it in --here-base, so the tint starts and ends on that fill instead of blanking it. */
+[data-hub-here] {
+  border-radius: var(--r-1);
+  animation: hub-here var(--dur-loop) var(--ease-in-out);
+}
+
+@keyframes hub-here {
+  0%,
+  100% {
+    background-color: var(--here-base, transparent);
+    box-shadow: 0 0 0 var(--sp-2) transparent;
+  }
+
+  20%,
+  65% {
+    background-color: var(--hx-selected);
+    box-shadow: 0 0 0 var(--sp-2) var(--hx-selected);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-hub-here] {
+    animation: none;
+    background-color: var(--hx-selected);
+    box-shadow: 0 0 0 var(--sp-2) var(--hx-selected);
+  }
+}

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ Link settings                                       Esc ×
+ Home                  │  Bots                              ┃ Browser access, limits and removing the link.
+ Computers             │                                    ┃ ─────────────────────────────────────────────────────────
+ Files                 │  ‹ Bots  Esc                       ┃ Browser access                                          █
+▌Bots                  │  Chief  ● Idle                     ┃ ┌──────────────────────────────────────────────────────┐█
+ Board                 │    SG atlas    Hoody Free  · Allow ┃ │                                                      │█
+ Demo                  │                                    ┃ │ Allow other websites (CORS)                  [■ on ] │█
+ Vault                 │    Activity  ▸ Link and keys    Cha┃ │ CORS: lets a page on another website call            │█
+                       │  ──────────────────────────────────┃ │ the link from a browser.                             │█
+On atlas ▾             │                                    ┃ │                                                      │█
+ Programs              │    ┌───────────────────────────────┃ └──────────────────────────────────────────────────────┘█
+ Schedules             │    │ At a glance                   ┃                                                         █
+ Scripts               │    │ Link                   ● Activ┃ Limits                                                  █
+ Logs                  │    │ Keys                   3 of 20┃ ┌──────────────────────────────────────────────────────┐█
+ Tunnels               │    │ Limits                 60 / mi┃ │                                                      │█
+ Notes                 │    │ Other websites (CORS)  Allowed┃ │ Calls per minute, each key                           │█
+ AI                    │    └───────────────────────────────┃ │ 1 to 600                                             │█
+ VMs                   │                                    ┃ │ │ 60                                                 │█
+                       │                                    ┃ │                                                      │█
+Account                │    ┌───────────────────────────────┃ │ Calls per minute, all keys                           │█
+ Plans & Billing       │    │ Keys                          ┃ │ 1 to 3000                                            │█
+ Referrals             │    │ Whoever holds a key can use th┃ │ │ 120                                                │█
+ Keys and tokens       │    │ its own.                      ┃ │                                                      │█
+ API                   │    │  Key                Prefix    ┃ │ Calls at once, each key                              │█
+ Notifications      26 │    │› website widget     hk_d5e6…  ┃ │ 1 to 16                                              │█
+ Account               │    │  ci checks          hk_w5v4…  ┃ │ │ 4                                                  │█
+                       │    │  old demo           hk_o9p0…  ┃ │                                                      │█
+ + Rent servers        │    └───────────────────────────────┃ │ Calls at once, all keys                              │█
+ Guide                 │                                    ┃ │ 1 to 32                                              │█
+ Support               │                                    ┃ │ │ 8                                                  │█
+                       │    ┌───────────────────────────────┃ │                                                      │█
+                       │    │ Addresses                     ┃ └──────────────────────────────────────────────────────┘█
+                       │    │ Where apps and people reach th┃
+                       │    │  Address for           Address┃ ▸ What do CORS and the limits do?
+                       │    │› Chat page             https:/┃
+                       │    │  OpenAI-compatible     https:/┃
+                       │    │  Anthropic-compatible  https:/┃ Delete the link
+                       │    │  MCP                   https:/┃ ┌──────────────────────────────────────────────────────┐
+                       │    │  Skill file            https:/┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit  ┃                                           [Cancel]  Save

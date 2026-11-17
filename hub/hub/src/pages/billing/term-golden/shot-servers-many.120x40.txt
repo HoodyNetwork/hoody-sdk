@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing  Balance $250                                                    + Add funds
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │    Plans  ▸ Bare metal    Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC                              [Pay now]
+                       │  ▸ Listings    Reservations 2
+On atlas ▾             │
+ Programs              │  *Usually ready in 5 seconds to 60 minutes. If it takes longer than 60 minutes, you get a
+ Schedules             │  voucher.
+ Scripts               │
+ Logs                  │  / Search servers           Filters                                      12 servers  ↻ Refresh
+ Tunnels               │  Whole machines for you alone, from $30/month.
+ Notes                 │
+ AI                    │    Server                 Location               Cores  RAM                            From
+ VMs                   │  ▌ Frankfurt L            DE Falkenstein            16  128 GB DDR4 ECC     $69 for 30 days
+                       │    ✓ Featured ! 2 left
+Account                │    Frankfurt M            DE Falkenstein             8  64 GB DDR4 ECC      $39 for 30 days
+▌Plans & Billing       │    Tokyo L                JP Tokyo                  32  256 GB DDR4 ECC    $228 for 30 days
+ Referrals             │    ! 1 left
+ Keys and tokens       │    Singapore M            SG Singapore               8  64 GB DDR4 ECC      $89 for 30 days
+ API                   │    Ashburn M              US Ashburn                12  96 GB DDR4 ECC      $79 for 30 days
+ Notifications      26 │    Singapore S            SG Singapore               4  32 GB DDR4 ECC      $30 for 30 days
+ Account               │    Tokyo M                JP Tokyo                  16  128 GB DDR5        $119 for 30 days
+                       │    ! 3 left
+ + Rent servers        │    Frankfurt S            DE Falkenstein             8  64 GB DDR4 ECC      $34 for 30 days
+ Guide                 │    Frankfurt XL           DE Frankfurt              24  256 GB             $178 for 30 days
+ Support               │    · Pre-order
+                       │    Ashburn XL             US Ashburn                32  512 GB             $358 for 30 days
+                       │    · Pre-order
+                       │    Singapore XL           SG Singapore               6  64 GB               $83 for 30 days
+                       │    · Pre-order
+                       │    Ashburn S              US Ashburn                 2  4 GB DDR4 ECC          Not for sale
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

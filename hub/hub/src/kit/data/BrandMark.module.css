@@ -1,0 +1,22 @@
+/* The Hoody Hub logo: one SVG in the text colour, its height from a token and its width from the drawing (the
+   viewBox keeps the brand's proportions). sm is the sidebar's and the lock screen's (--brand-h, 24 px, inside the
+   48 px brand row); lg is an auth card's (--icon-xl, 32 px). */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  min-inline-size: 0;
+  color: var(--hx-ink);
+}
+
+.art {
+  display: block;
+  flex: none;
+  inline-size: auto;
+  block-size: var(--brand-h);
+  fill: currentcolor;
+}
+
+/* Two classes, so the lg height wins whatever order the stylesheets load in. */
+.lg .art {
+  block-size: var(--icon-xl);
+}

@@ -1,0 +1,41 @@
+ ▐━┓ HOODY HUB                                         ◆ 5f0c…fee0 ▾  No computers yet ▾  [N]  Ctrl+K commands · ? keys
+ Home                  │  Schedules
+ Computers             │
+ Files                 │                            ┌───────────────────────────────────────┐
+ Bots                  │                            │ No computer selected                  │
+ Board                 │                            │                                       │
+ Vault                 │                            │ Pick a computer to see its schedules. │
+                       │                            └───────────────────────────────────────┘
+On this computer       │
+ Programs              │
+▌Schedules             │
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications         │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit
+

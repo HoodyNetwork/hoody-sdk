@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Edit rotate-logs                                                 Esc ×
+ Schedu┃ Runs a command on a timer.
+ 15 sch┃ ──────────────────────────────────────────────────────────────────────
+ Comput┃                                                                      █
+ / Sear┃   Name                                                               █
+   Name┃   ┃ rotate-logs                                                      █
+ ›   pi┃                                                                      █
+   ! qu┃   Command                                                            █
+     Wa┃   │ Unchanged                                                        █
+   ! sy┃   Leave empty to keep the current command.                           █
+     Ni┃                                                                      █
+     ni┃   Runs                                                               █
+     mo┃   │ Some days of the week ▾                                          █
+   ! PO┃                                                                      █
+     ro┃   Time                                                               █
+     cl┃   │ 03:30                                                            █
+   ! Un┃
+     ar┃   [ ] Sun [x] Mon [ ] Tue [ ] Wed [ ] Thu [ ] Fri [ ] Sat
+     ol┃
+     po┃   ┌───────────────────────────────────────────────────────────────┐
+     wa┃   │ NEXT RUNS                                                     │
+       ┃   │ It runs at these times.                                       │
+       ┃ ──────────────────────────────────────────────────────────────────────
+ Typing┃ [Cancel]  Save

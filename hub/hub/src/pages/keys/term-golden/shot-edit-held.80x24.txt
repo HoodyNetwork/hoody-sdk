@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Keys and tokens                             ▸ Use with your agent  [+ New key]
+ A key lets your agent, the CLI or the SDK act for you. Give each one its own
+ key, with an end date.
+ ▸ API keys 5 keys    SSH keys    Shared access 0 shares
+ ──────────────────────────────────────────────────────────────────────────────
+ i Keys that work in Personal.                                [Show all realms]
+ ‹ Back to list  Esc
+ ci-deploy  ● Not confirmed          [Pause] [Copy with a new secret…]  Edit… █
+                                                                              █
+                                                                              █
+   ┌───────────────────────────────────────────────────────────────────────┐
+   │ THIS KEY                                                              │
+   │ Its last change is not confirmed yet.                                 │
+   └───────────────────────────────────────────────────────────────────────┘
+
+   │ ◷ The change may have gone through
+   │   The Hub could not confirm the change to ci-deploy. It may have gone
+   │   through; the list shows what is true now.
+   │   [Check again]
+
+   [Stop tracking]
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

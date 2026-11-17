@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Community server                                                 Esc ×
+ Bots  ┃ Discord
+ ‹ Bots┃ ──────────────────────────────────────────────────────────────────────
+       ┃ │▌Setup                 ┌───────────────────────────────────────────┐█
+   Acti┃ │ People                │ GET IT WORKING                            │█
+ ──────┃ │ Chats                 │ 2 OF 4 DONE · 2 OPTIONAL LEFT             │█
+       ┃ │ Settings              │ It is paused: it answers nothing until    │█
+  ┌────┃                         │ you resume it.                            │█
+  │ At ┃                         │ Next: Add it to a group                   │█
+  │ App┃                         │ ━━━━━━━━━━ ━━━━━━━━━━ ┄┄┄┄┄┄┄┄┄ ┄┄┄┄┄┄┄┄┄ │█
+  │ Wai┃                         └───────────────────────────────────────────┘█
+  │ Peo┃                                                                      █
+  │ Cha┃                          ✓  Connect the app                    Paused█
+  └────┃                          ✓  Become its owner                      Dee█
+       ┃                         ┌───────────────────────────────────────────┐█
+       ┃                         │  Optional                                 │█
+  ┌────┃                         │ Add it to a group                         │█
+  │ Cha┃                         │ Chats shows how a group joins with this   │█
+  │ Let┃                         │ app's settings.                           │
+  │  Ap┃                         │ ───────────────────────────────────────── │
+  │› Su┃                         │ [Open Chats]                              │
+  │  Te┃                         └───────────────────────────────────────────┘
+  │  Co┃                          4  Choose a home chat               Optional
+ Tab mo┃

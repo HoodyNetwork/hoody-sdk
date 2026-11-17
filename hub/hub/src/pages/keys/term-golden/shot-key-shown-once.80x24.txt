@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ ci · shown once                                                  Esc ×
+ Keys a┃ ──────────────────────────────────────────────────────────────────────
+ A key ┃ ┌───────────────────────────────────────────────────────────────────┐█
+ key, w┃ │ YOUR NEW KEY                                                      │█
+ ▸ API ┃ │ Copy it now. When you close this panel it is gone, and nobody at  │█
+ ──────┃ │ Hoody can show it again.                                          │█
+ i Keys┃ │ Works in                                                 Personal │█
+ / Sear┃ │ ───────────────────────────────────────────────────────────────── │█
+ 4 keys┃ │ Ends                                              Feb 9, 2027 UTC │█
+   Name┃ │ ───────────────────────────────────────────────────────────────── │█
+   ci  ┃ └───────────────────────────────────────────────────────────────────┘█
+ › ci-d┃                                                                      █
+   hood┃ Key · shown once                                                     █
+   sdk-┃ │ hdy_f3f•••••••••••••••••••••••••••••••• (Hidden until you press    █
+       ┃   Show)                                                              █
+ Questi┃    [Show] [Copy key]                                                 █
+ ▸ Can ┃ ⚿ Copy it now: it won't be shown again.                              █
+ ▸ What┃                                                                      █
+ ▸ Whic┃ Use it as HOODY_TOKEN                                                █
+ ▸ What┃  export HOODY_TOKEN=••••••••                                         █
+ ▸ When┃ ⧉ copy                                                               █
+ ▸ How ┃
+ ▸ What┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃                                                    [I saved it, close]

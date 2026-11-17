@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Scripts                                  ▸ Use with your agent   + New script
+ ‹ Scripts  Esc
+ Weather lookup  ● Working                 [▷ Try it] [✦ Ask the assistant] [⋯]
+ /weather ·  atlas
+
+  Overview ▸Code  Test  Settings
+ ──────────────────────────────────────────────────────────────────────────────
+ ⧉ copy                                                                       █
+ Script code                                                                  █
+ │ // @label Weather lookup                                                   █
+   // @description Current weather for a city.                                █
+   export default async function (request: Request) {                         █
+     const city = new URL(request.url).searchParams.get("city") ??            ▀
+   "Singapore";
+     const res = await fetch(`https://wttr.in/${encodeURIComponent(city)}?
+   format=j1`);
+     return Response.json(await res.json());
+   }
+
+
+ ──────────────────────────────────────────────────────────────────────────────
+ [Discard changes]  [✓ Save Ctrl+S]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

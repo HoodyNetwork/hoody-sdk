@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Settings for Chief                                                                                    Esc ×
+ Home     ┃ Model, behaviour, guardrails and voice.
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │ The Bot itself        ┌─────────────────────────────────────────────────────────────────────────────────┐
+▌Bots     ┃ │ Model                 │ Voice                                                                           │
+ Board    ┃ │ Behaviour             │ Speaking to this Bot and hearing it answer.                                     │
+ Demo     ┃ │▌Voice                 │ ┌─────────────────────────────────────────────────────────────────────────────┐ │
+ Vault    ┃ │ The helpers it        │ │ VOICE CHECK                                                                 │ │
+          ┃ │ starts                │ │ Voice has not been checked yet.                                             │ │
+On atlas ▾┃ │ Helpers               │ └─────────────────────────────────────────────────────────────────────────────┘ │
+ Programs ┃ │ Guardrails and        │ ┌─────────────────────────────────────────────────────────────────────────────┐ │
+ Schedules┃ │ limits                │ │                                                                             │ │
+ Scripts  ┃ │ Advanced              │ │ Voice check                     [Check it works]                            │ │
+ Logs     ┃                         │ │                                                                             │ │
+ Tunnels  ┃                         │ │ Choose the models and voice     [□ off]                                     │ │
+ Notes    ┃                         │ │ myself                                                                      │ │
+ AI       ┃                         │ │ The Bot uses the default                                                    │ │
+ VMs      ┃                         │ │ voices. Press Check it works                                                │ │
+          ┃                         │ │ to see if they are ready.                                                   │ │
+Account   ┃                         │ │                                                                             │ │
+ Plans & B┃                         │ └─────────────────────────────────────────────────────────────────────────────┘ │
+ Referrals┃                         └─────────────────────────────────────────────────────────────────────────────────┘
+ Keys and ┃
+ API      ┃
+ Notificat┃
+ Account  ┃
+          ┃
+ + Rent se┃
+ Guide    ┃
+ Support  ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tab move ┃ [Discard] [Cancel]  Save

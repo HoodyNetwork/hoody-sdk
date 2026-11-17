@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Get a computer                                                                                        Esc ×
+ Home     ┃ Something is missing. The box below says what.
+▌Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ ┌──────────────────────────────────────────────────┐ ┌──────────────────────────────────────────────────┐ █
+ Bots     ┃ │ (•) A new computer                               │ │ ( ) A copy of one of yours                       │ █
+ Board    ┃ │     Debian 13, set up below.                     │ │     Same files as the computer you pick.         │ █
+ Demo     ┃ └──────────────────────────────────────────────────┘ └──────────────────────────────────────────────────┘ █
+ Vault    ┃                                                                                                           █
+          ┃ ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐█
+On atlas ▾┃ │ YOU GET                                                                                                │█
+ Programs ┃ │ Not ready yet: no server has room.                                                                     │█
+ Schedules┃ │ Get more room under Server.                                                                            │█
+ Scripts  ┃ │ Size      Known once a server is picked              Software  Hoody kit, Developer kit, Hoody AI      │█
+ Logs     ┃ │ System    Debian 13                                                                                    │█
+ Tunnels  ┃ └────────────────────────────────────────────────────────────────────────────────────────────────────────┘█
+ Notes    ┃                                                                                                           █
+ AI       ┃ ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐█
+ VMs      ┃ │ Computer                                                                                               │█
+          ┃ │ ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐ │█
+Account   ┃ │ │                                                                                                    │ │█
+ Plans & B┃ │ │ Name                            │ noble-sage-raven   [Suggest another name]                        │ │█
+ Referrals┃ │ │ Suggested for you. Keep it or                                                                      │ │█
+ Keys and ┃ │ │ type your own.                                                                                     │ │█
+ API      ┃ │ │                                                                                                    │ │█
+ Notificat┃ │ │ Server                          │ Choose… ▾                                                        │ │█
+ Account  ┃ │ │ Computers on a server share     No room left                                                       │ │█
+          ┃ │ │ its cores, memory and disk.     Get more room                                                      │ │█
+ + Rent se┃ │ │                                                                                                    │ │█
+ Guide    ┃ │ │ Project                         │ █ Home base ▾                                                    │ │█
+ Support  ┃ │ │ Groups computers. Its people    [+ New project in this realm]                                      │ │█
+          ┃ │ │ and access rules apply to this                                                                     │ │█
+          ┃ │ │ one too.                                                                                           │ │█
+          ┃ │ │                                                                                                    │ │█
+          ┃ │ │ Realm                            █  Personal                                                       │ │█
+          ┃ │ │ Always added: you're getting                                                                       │ │
+          ┃ │ │ this computer inside this                                                                          │ │
+          ┃ │ │ realm.                                                                                             │ │
+          ┃ │ │                                                                                                    │ │
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tab move ┃ [Cancel]  Get computer

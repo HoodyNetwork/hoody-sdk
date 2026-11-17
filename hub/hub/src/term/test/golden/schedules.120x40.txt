@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Schedules                                             ▸ Use with your agent   + New schedule
+ Computers             │  15 schedules on atlas · next: ping-api in 3 minutes · 4 failed today · Computers ›
+ Files                 │  9 programs running ›
+ Bots                  │
+ Board                 │  / Search schedules
+ Demo                  │  ‹ Any ›  Commands 8    Scripts 3    Web requests 2    Agent loops 2    Status ▾
+ Vault                 │  15 schedules  ↻ Refresh  View options
+                       │
+On atlas ▾             │    Name                                  Next run ↑                Last result         On
+ Programs              │  ▌   ping-api   Web request              in 3 minutes              ● Worked       [■ on ]    ⋯
+▌Schedules             │    ! queue-drain   Script                in 4 minutes              ● Failed                  ⋯
+ Scripts               │      Watch the build   Agent loop        in 4 minutes              ● Worked       [■ on ]    ⋯
+ Logs                  │    ! sync-photos   Command               in 8 minutes              ● Failed       [■ on ]    ⋯
+ Tunnels               │      Nightly backup   Command            in 9 hours                ● Worked       [■ on ]    ⋯
+ Notes                 │      nightly-digest   Script             in 13 hours               ● Worked                  ⋯
+ AI                    │      morning-check   Agent timer         in 15 hours               ● In chat      [■ on ]    ⋯
+ VMs                   │    ! POST hooks.example.org              in 20 hours               ● Failed       [■ on ]    ⋯
+                       │      rotate-logs   Command               in 2 days                 ● Worked       [■ on ]    ⋯
+Account                │      cleanup-tmp   Command               in 8 days                 ● Not run yet  [■ on ]    ⋯
+ Plans & Billing       │    ! Unnamed loop   Agent loop           Paused after failed runs  ● Failed       [□ off]    ⋯
+ Referrals             │      archive   Script                    Script is turned off      ● Skipped                 ⋯
+ Keys and tokens       │      old-report   Command                Paused                    ● Worked       [□ off]    ⋯
+ API                   │      poll.sh   Hand-written              Can't tell                ● No results
+ Notifications      26 │      warm-cache   Command                When the computer starts  ● Not run yet  [■ on ]    ⋯
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

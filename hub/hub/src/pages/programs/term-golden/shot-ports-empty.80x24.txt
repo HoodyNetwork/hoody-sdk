@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs                              ▸ Use with your agent   + Launch an app
+ Open ports and aliases on atlas
+   Running programs    Apps  ▸ Ports & aliases
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Open ports                                                                │█
+ │ Every port a program listens on. Web ports get an address you can open or │█
+ │ share.                                                                    │█
+ │Nothing is listening                                                       │█
+ │Start a program that opens a port, and it shows                            │█
+ │up here.                                                                   │█
+ │ 1 port Hoody uses itself is not shown.                                    │█
+ └───────────────────────────────────────────────────────────────────────────┘▀
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Aliases and domains                                        [Create alias] │
+ │ Short addresses that point to a web port or a program. Each one can also  │
+ │ open at a domain you own.                                                 │
+ │No aliases yet                                                             │
+ │Create one for any web port, for example port                              │
+ │3000 as my-shop. Nothing needs to be running on                            │
+ │it yet.                                                                    │
+ │▸ How do I use my own domain?                                              │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

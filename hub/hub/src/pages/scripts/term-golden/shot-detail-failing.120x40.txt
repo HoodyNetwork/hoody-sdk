@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                 ▸ Use with your agent   + New script
+ Computers             │
+ Files                 │  ‹ Scripts  Esc
+ Bots                  │  Order status  ● Failing                             [▷ Try it] [✦ Fix with the assistant] [⋯]
+ Board                 │  /orders/:id ·  atlas
+ Demo                  │
+ Vault                 │  ▸Overview  Code  Test  Settings
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Programs              │  │ About this script                                                                        │█
+ Schedules             │  │                                                                                          │█
+▌Scripts               │  │ Address pattern                                                                          │█
+ Logs                  │  │ People and programs call your script at this address.                                    │█
+ Tunnels               │  │ https://atlas-exec-1.hoody.example.test/orders/:id ⧉ copy                                │█
+ Notes                 │  │ The exec-1 part is this computer's script program, where the script runs.                │█
+ AI                    │  │                                                                                          │█
+ VMs                   │  │ Computer  atlas                               Schedule  None                             │█
+                       │  │ File      orders/[id].ts                      Key       Protected                        │█
+Account                │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Plans & Billing       │                                                                                              █
+ Referrals             │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Keys and tokens       │  │ Last 24 hours                                                      Open failures in Logs │█
+ API                   │  │  Calls                         Failed                       Typical time                 │█
+ Notifications      26 │  │  1,290                         ✗ 61                         38 ms                        │▀
+ Account               │  │ ▃▇▅▃▇▆▄█▆▅▃▇▅▃▇▆▄█▆▅▃▇▅▃                                                                 │
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+ + Rent servers        │
+ Guide                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+ Support               │  │ Recent failures                                                                          │
+                       │  │  500                                                                                     │
+                       │  │  Oct 23, 2026, 3:41 AM                                                     See the call  │
+                       │  │  TypeError: order.items is undefined                                                     │
+                       │  │  404                                                                                     │
+                       │  │  Oct 23, 2026, 2:12 AM                                                     See the call  │
+                       │  │  not found                                                                               │
+                       │  │  500                                                                                     │
+                       │  │  Oct 22, 2026, 9:30 PM                                                     See the call  │
+                       │  │  TypeError: order.items is undefined                                                     │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

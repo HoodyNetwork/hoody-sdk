@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY       ┃ Make the disk of win11 bigger                       Esc ×
+ Virtual machines › ┃ A disk only grows. Afterwards, extend the partition
+ win11  ● Stopped   ┃ inside the VM to use the new space.
+ A VM inside atlas. ┃ ─────────────────────────────────────────────────────────
+  Overview  Screen  ┃ New size (GiB)
+ ───────────────────┃ ┃ [−]  65                  [+]
+ ┌──────────────────┃ 410 GB free on the computer now.
+ │ Storage          ┃
+ │ The VM's disk, it┃
+ │Size  64 GB       ┃
+ │  Drive           ┃
+ │› Drive 1         ┃
+ │  Drive 2         ┃
+ │  Drive 3         ┃
+ └──────────────────┃
+                    ┃
+                    ┃
+                    ┃
+                    ┃
+                    ┃
+                    ┃
+                    ┃
+                    ┃ ─────────────────────────────────────────────────────────
+ Typing · Esc leaves┃ [Cancel]  Make it bigger

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Schedules                              ▸ Use with your agent   + New schedule
+ At least 8 schedules on atlas · next: sync-photos in 8 minutes
+ 1 failed today · Computers › · 9 programs running ›
+ ! This computer's Scripts program is too old to list schedules here.
+ ! Agent loops: this computer doesn't let the Hub in.
+ / Search schedules     Filters            8 schedules  ↻ Refresh  View options
+   Name                      Next run ↑               Last result        On
+ ▌ ! sync-photos   Command   in 8 minutes             ● Failed      [■ on ]   ⋯
+     Nightly backup          in 9 hours               ● Worked      [■ on ]   ⋯
+     morning-check           in 15 hours              ● In chat     [■ on ]   ⋯
+     rotate-logs   Command   in 2 days                ● Worked      [■ on ]   ⋯
+     cleanup-tmp   Command   in 8 days                ● Not run yet [■ on ]   ⋯
+     old-report   Command    Paused                   ● Worked      [□ off]   ⋯
+     poll.sh   Hand-written  Can't tell               ● No results
+     warm-cache   Command    When the computer starts ● Not run yet [■ on ]   ⋯
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

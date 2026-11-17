@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ ‹ Back                                                           Esc ×
+  Chats┃ Connect an account
+ ▌Model┃ ──────────────────────────────────────────────────────────────────────
+ atlas ┃ Anthropic API key * (required, unavailable)
+ Models┃ │ ______________
+ atlas ┃ Stored on atlas only. It is never shown again.
+ ▌Defau┃
+ ──────┃ The key is not kept if you close this. To retry, stop tracking this
+ ┌─────┃ save and type the key again.
+ │ Defa┃
+ │ The ┃ [Stop tracking this save]
+ │ ┌───┃
+ │ │   ┃ ◷ May have gone through
+ │ │ AI┃ This may have gone through. Check again before   [Close]  Check again
+ │ │ Th┃ trying a second time.
+ │ │ ev┃
+ │ │ co┃
+ │ │   ┃
+ │ │ Bo┃
+ │ │ Bo┃
+ │ │   ┃
+ │ └───┃
+ └─────┃
+ Tab mo┃

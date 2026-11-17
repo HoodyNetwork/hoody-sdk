@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                 ◆ Personal ▾  Computers not loaded ▾  [A]  ^K · ?
+ Good morning, Ada                              [i What is Hoody?]  [Customize]
+ ■ Personal
+
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Pick a computer                                                           │█
+ │ Choose the computer this dashboard should show.                           │█
+ │ [All computers]                                                           │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Your computer                                                  View all › │█
+ │ No computer selected                                                      │█
+ │ Pick a computer                                                           │▀
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────┐ ┌────────────────────────────────────┐
+ │ Bots                    View all › │ │ Billing                 View all › │
+ │ ◆ Chie… ◆ Waiting for you [Review] │ │ $42.50                             │
+ │ i Support · atlas        i Working │ │ Wallet balance                     │
+ │ i Digest · a… i 2 messages waiting │ │                                    │
+ │ ! Ledger · cinder         ! Paused │ │ SERVERS                            │
+ │ · Scout · cinder            · Idle │ │ ✗ fra-7 Unpaid since Oc… ✗ On hold │
+ │                                    │ │ ✓ n12          Renews Nov 22, 2026 │
+ │                                    │ │ ✓ Singapore M Runs until Dec 5, 2… │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

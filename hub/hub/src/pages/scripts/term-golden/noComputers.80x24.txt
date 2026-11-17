@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Scripts
+ Small programs on your computers that answer an address or run on a schedule.
+                       ┌─────────────────────────────────┐
+                       │ No computer selected            │
+                       │                                 │
+                       │ Pick a computer in the top bar. │
+                       │                                 │
+                       │ [Pick a computer]               │
+                       └─────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

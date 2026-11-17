@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent  [+ Get a computer]
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ Computers  Esc
+ atlas  ● Running                                         [Open terminal ⇗] [⋯]
+ SG n12 · Home base · █  Personal ·  Current computer
+
+  Overview  Connect  Permissions  Ports & addresses  Desktop  Network ▸Run
+  Programs  Backups  Storage
+ ──────────────────────────────────────────────────────────────────────────────
+ https://hub.example.test/auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/
+ computers
+                                                                              ▄
+ ┃ ls         [History] [▷ Run]                                               █
+                                                                              █
+ Runs once on the computer. Press Enter to run.                               █
+                                                                              █
+                                                                              █
+   No output came back. The command may still have run.                       ▀
+
+ ! A command sent to atlas may already have     [Check again]  [Stop tracking]
+   run. Check before sending another.
+ Typing · Esc leaves the field · Ctrl+K commands

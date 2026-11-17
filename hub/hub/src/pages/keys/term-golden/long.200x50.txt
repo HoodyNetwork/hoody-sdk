@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Keys and tokens                                                                                                                            ▸ Use with your agent   + New key
+ Computers             │  A key lets your agent, the CLI or the SDK act for you. Give each one its own key, with an end date.
+ Files                 │  ▸ API keys 58 keys    SSH keys    Shared access 0 shares
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │  i Keys that work in Personal.                                                                                                                               [Show all realms]
+ Demo                  │
+ Vault                 │  / Search                        Access ▾  State: Active ×  Ends ▾                                                                50 keys · 1 expired  ↻ Refresh  View options
+                       │
+On atlas ▾             │    Name ↑                                 Notes                           Key              Works in              Access             Ends (UTC)        State
+ Programs              │  ▌ backup-2                                Can make keys                  hdy_a708…        All realms            Full               No end date       ● Active               ⋯
+ Schedules             │    backup-3                                Can make keys                  hdy_fa8c…        All realms            Full               Dec 11, 2026      ● Active               ⋯
+ Scripts               │    backup-5                                Can make keys                  hdy_a195…        All realms            Full               No end date       ● Active               ⋯
+ Logs                  │    backup-6                                Can make keys                  hdy_f519…        All realms            Full               No end date       ● Active               ⋯
+ Tunnels               │    backup-7                                Can make keys                  hdy_489e…        All realms            Full               Jan 8, 2027       ● Active               ⋯
+ Notes                 │    backup-8                                Can make keys                  hdy_9c22…        All realms            Full               No end date       ● Active               ⋯
+ AI                    │    ci-2                                    Can make keys                  hdy_f1bb…        All realms            Full               No end date       ● Active               ⋯
+ VMs                   │    ci-3                                    Can make keys                  hdy_4540…        All realms            Full               No end date       ● Active               ⋯
+                       │    ci-4                                    Can make keys                  hdy_98c4…        All realms            Full               No end date       ● Active               ⋯
+Account                │    ci-5                                    Can make keys                  hdy_ec48…        All realms            Full               Dec 19, 2026      ● Active               ⋯
+ Plans & Billing       │    ci-6                                    Can make keys                  hdy_3fcd…        All realms            Full               No end date       ● Active               ⋯
+ Referrals             │    ci-7                                    Can make keys                  hdy_9351…        All realms            Full               No end date       ● Active               ⋯
+▌Keys and tokens       │    ci-8                                    Can make keys                  hdy_e6d5…        All realms            Full               No end date       ● Active               ⋯
+ API                   │    ci-9                                    Can make keys                  hdy_3a5a…        All realms            Full               Jan 16, 2027      ● Active               ⋯
+ Notifications      26 │    ci-deploy                               Only from 203.0.113.7/32       hdy_9e37…        Personal              Developer          Jan 20, 2027      ● Active               ⋯
+ Account               │    docs-2                                  Can make keys                  hdy_cc62…        All realms            Full               No end date       ● Active               ⋯
+                       │    docs-3                                  Can make keys                  hdy_1fe6…        All realms            Full               No end date       ● Active               ⋯
+ + Rent servers        │    docs-4                                  Can make keys                  hdy_736a…        All realms            Full               Dec 15, 2026      ● Active               ⋯
+ Guide                 │    docs-5                                  Can make keys                  hdy_c6ef…        All realms            Full               No end date       ● Active               ⋯
+ Support               │    docs-6                                  Can make keys                  hdy_1a73…        All realms            Full               No end date       ● Active               ⋯
+                       │    docs-8                                  Can make keys                  hdy_c17c…        All realms            Full               Jan 12, 2027      ● Active               ⋯
+                       │    docs-9                                  Can make keys                  hdy_1500…        All realms            Full               No end date       ● Active               ⋯
+                       │    edge-2                                  Can make keys                  hdy_8ff3…        All realms            Full               Nov 29, 2026      ● Active               ⋯
+                       │    edge-3                                  Can make keys                  hdy_e377…        All realms            Full               No end date       ● Active               ⋯
+                       │    edge-4                                  Can make keys                  hdy_36fb…        All realms            Full               No end date       ● Active               ⋯
+                       │
+                       │
+                       │  1–25 of 50 ‹ ›
+                       │
+                       │
+                       │  Questions
+                       │  ▸ Can I see a key's secret again?
+                       │  ▸ What is an API key for?
+                       │  ▸ Which realms does a key work in?
+                       │  ▸ What can a key do, and what does Full mean?
+                       │  ▸ When does a key stop working, and can I limit where it works from?
+                       │  ▸ How does the SSH key work?
+                       │  ▸ What does sharing a realm give someone?
+                       │  ▸ What do I send to the person I share with?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

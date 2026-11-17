@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Tunnels                                                                                                                           ▸ Use with your agent   + Connect a laptop
+ Computers             │  Put a laptop app online through atlas, or let atlas reach a service on your laptop. 2 sessions connected to atlas · tunnel program running since 06:00 AM
+ Files                 │
+ Bots                  │  / Search by address or port     Shared as ▾                                                                                                              6 entries  ↻ Refresh
+ Board                 │
+ Demo                  │      Shared as                                           Address                                                                                                   Port ↑
+ Vault                 │  ▾ Session 4f2a9c… · from 203.0.113.x · 3 streams of 1024 · 3
+                       │  ▌   Web address                                         https://6a00…0001-c0a7…00a1-http-3000.n12.fixture.invalid                                                   3000    ⋯
+On atlas ▾             │      Web address                                         https://6a00…0001-c0a7…00a1-http-5173.n12.fixture.invalid                                                   5173    ⋯
+ Programs              │      Inside this computer                                127.0.0.1:5432                                                                                              5432    ⋯
+ Schedules             │
+ Scripts               │  ▾ Session 9b1d7e… · from 192.0.2.x · 0 streams of 1024 · 2
+ Logs                  │      Inside this computer                                127.0.0.2:5432                                                                                              5432    ⋯
+▌Tunnels               │      Inside this computer                                127.0.0.1:6379                                                                                              6379    ⋯
+ Notes                 │
+ AI                    │  ▾ Reconnecting or closing · 1
+ VMs                   │      Web address seen 09:00 AM                           https://6a00…0001-c0a7…00a1-http-8080.n12.fixture.invalid                                                   8080    ⋯
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │  Questions
+                       │  ▸ What is a tunnel for?
+                       │  ▸ Should I put a laptop app online or bring a laptop service in?
+                       │  ▸ Which port on the computer should I use?
+                       │  ▸ Which ports does the Hub warn about?
+                       │  ▸ When do I tick the password box?
+                       │  ▸ Why did my tunnel fail to open?
+                       │  ▸ Why doesn't a web address load?
+                       │  ▸ What does "Reconnecting or closing" mean?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            Guide                                  ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │                              │ [\]                           Hide or show the list beside a │
+ Computers             │  │ Ask your agent            │                               detail                         │
+ Files                 │  │ Connect                   │ [Esc]                         Close the detail or overlay    │
+ Bots                  │  │ Skills                    │                                                              │
+ Board                 │  │ Build your own            │ Terminal                                                     │
+ Demo                  │  │ Every link                │ [q]                           Leave the Hub (not while       │
+ Vault                 │  │ Bots                      │                               typing)                        │
+                       │  │ Tools                     │ [Ctrl+C]                      Leave the Hub; twice: leave    │
+On atlas ▾             │  │ Try this                  │                               without asking                 │
+ Programs              │  │ Realms                    │ [Ctrl+Z]                      Suspend to the shell (fg to    │
+ Schedules             │  │ Topics                    │                               come back)                     │
+ Scripts               │  │ Keyboard                  │ [Tab] or [Shift+Tab]          Move between controls: the     │
+ Logs                  │  │▌Look                      │                               sidebar, then the top bar,     │
+ Tunnels               │                              │                               then the page                  │
+ Notes                 │   [j] [k] move between       │ [F6] or [Shift+F6]            Jump to the next or previous   │
+ AI                    │   sections                   │                               area (sidebar, top bar, page)  │
+ VMs                   │                              │ [Ctrl+M] or [Ctrl+I] or       Ctrl+M, Ctrl+I, Ctrl+[ arrive  │
+                       │                              │ [Ctrl+[]                      as Enter, Tab, Esc: run those  │
+Account                │                              │                               page keys from the palette     │
+ Plans & Billing       │                              │                               (Ctrl+K)                       │
+ Referrals             │                              │ [Ctrl+S] or [Ctrl+Q]          Ctrl+S / Ctrl+Q may be held by │
+ Keys and tokens       │                              │                               the terminal's flow control:   │
+ API                   │                              │                               use the palette                │
+ Notifications      26 │                              └──────────────────────────────────────────────────────────────┘
+ Account               │
+                       │                              ┌──────────────────────────────────────────────────────────────┐
+ + Rent servers        │                              │ Look                                                         │
+▌Guide                 │                              │ Light or dark follows your terminal's background, read once  │
+ Support               │                              │ when the Hub starts. If the terminal does not report it in   │
+                       │                              │ time and COLORFGBG does not name it, the Hub uses dark.      │
+                       │                              └──────────────────────────────────────────────────────────────┘
+                       │
+                       │
+                       │  ▸ atlas · Running ·
+                       │    Personal
+                       │                                                                                               █
+                       │                                                                                               █
+                       │                                                                                               █
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

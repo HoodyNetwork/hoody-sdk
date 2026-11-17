@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Plans & Billing                                                   + Add funds
+ Upgrade a server, rent a whole machine, and see what you pay.
+   Plans    Bare metal  ▸ Wallet & usage
+ ──────────────────────────────────────────────────────────────────────────────
+ │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC               [Pay now]
+                                                                              █
+   WALLET                                                                     █
+   $1,234,567.89                                                              █
+   Pays for servers and plans.                                                ▀
+   Referral credit $123,456.40 · spent first on servers
+   Owed $98,765.00 (paid from new Referral credit)
+   Referrals  What these amounts are
+
+
+   GITHUB BONUS  $10.00 in Wallet credit is available.
+   [Claim bonus] GitHub account: @octocat
+   Limit: one bonus per Hoody account and one per GitHub account.
+
+
+
+ Server subscriptions
+ What you pay for, when it renews, and what needs you.
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

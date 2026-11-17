@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  New script
+ Computers             │
+ Files                 │  Step 2 of 5 · Where it answers  ████░░░░░░
+ Bots                  │   ✓ What it does ▸2 Where it answers  3 Build it  4 Check it  5 Make it live
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ▸ Your script so far                                                                        █
+ Vault                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Where does it answer?                                                                    │█
+On atlas ▾             │  │ People and programs call your script at its address.                                     │█
+ Programs              │  │ │ ● atlas ▾                                                                              │█
+ Schedules             │  │ Address                                                                                  │█
+▌Scripts               │  │ │ /count-last-week                                                                ✓ Free │█
+ Logs                  │  │ People and programs call your script at this address.                                    │█
+ Tunnels               │  │ https://atlas-exec-1.hoody.example.test/count-last-week ⧉ copy                           │█
+ Notes                 │  │ The exec-1 part is this computer's script program, where the script runs.                │█
+ AI                    │  │ When it runs                                                                             │█
+ VMs                   │  │ ┌─────────────────────────────────────────┐ ┌─────────────────────────────────────────┐  │█
+                       │  │ │ (•) Only when its address is called     │ │ ( ) Also on a schedule                  │  │█
+Account                │  │ │     It runs each time someone or a      │ │     It also runs by itself at the times │  │█
+ Plans & Billing       │  │ │     program calls its address.          │ │     you set, and still answers its      │  │█
+ Referrals             │  │ │                                         │ │     address.                            │  │█
+ Keys and tokens       │  │ └─────────────────────────────────────────┘ └─────────────────────────────────────────┘  │█
+ API                   │  │ [□ off] Also make a public link                                                          │█
+ Notifications      26 │  │         Once the script is live, make a link anyone can open. Off by default.            │█
+ Account               │  │                                                                                          │█
+                       │  │   The agent on atlas was signed out.                                                     │█
+ + Rent servers        │  │                                                                                          │█
+ Guide                 │  │   [x] Sign the agent in again                                                            │█
+ Support               │  │       This happens when you press Build it. It stays signed in until you sign out of     │
+                       │  │       the Hub. Its key is on the Keys page.                                              │
+                       │  │                                                                                          │
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  Questions
+                       │  ▸ What is a script?
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  The assistant writes the code next. You check it before it goes live.
+                       │  [Back]                                                                   [Cancel]   Build it
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

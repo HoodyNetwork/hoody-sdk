@@ -1,0 +1,41 @@
+ ▐━┓ HOODY HUB                                         ◆ 5f0c…fee0 ▾  No computers yet ▾  [N]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing                                                                  + Add funds
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │  ▸ Plans    Bare metal    Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │
+                       │  Plans                                                                                       █
+On this computer       │  Each plan is a server of your own. Its computers share its cores, memory and disk. You can  █
+ Programs              │  take the same plan more than once.                                                          █
+ Schedules             │                                                                                              █
+ Scripts               │  ┌───────────────────────────────────────────┐  No server plans are on sale right now.       █
+ Logs                  │  │ Free                                      │                                               █
+ Tunnels               │  │ $0 / month                                │                                               █
+ Notes                 │  │ Hardware                  Shared hardware │                                               █
+ AI                    │  │ AI                      Free AI allowance │
+ VMs                   │  │ Locations                                 │
+                       │  │ No choice of location                     │
+Account                │  │ Next: Bare metal, a whole machine of your │
+▌Plans & Billing       │  │ own, below.                               │
+ Referrals             │  │ Free server details                       │
+ Keys and tokens       │  └───────────────────────────────────────────┘
+ API                   │
+ Notifications         │  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ Account               │  ┃ Bare metal                                                                               ┃
+                       │  ┃ A whole machine for you alone                                                            ┃
+ + Rent servers        │  ┃ Hardware                 Dedicated hardware   Locations  Pick a listing and its location ┃
+ Guide                 │  ┃                                                                                          ┃
+ Support               │  ┃  Browse machines →                                                                       ┃
+                       │  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+                       │
+                       │
+                       │  Compare plans
+                       │
+                       │    What you get                   Free                     Bare metal
+                       │  › Price                          $0 a month               Not listed
+                       │    Hardware                       Shared                   Dedicated
+                       │    Locations                      No choice of location    Pick a listing and its location
+                       │    AI                             Free AI allowance        Bare-metal AI allowance
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit
+

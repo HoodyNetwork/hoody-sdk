@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines › web-1
+ Computers             │  web-1  ● Running                                                              Shut down   [⋯]
+ Files                 │  A VM inside atlas.
+ Bots                  │
+ Board                 │   Overview ▸Screen  Ports  Storage  Snapshots  Settings  Logs
+ Demo                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Screen ⓘ                                                           [Ctrl+Alt+Del] [Enter] │
+On atlas ▾             │  │ Screen address  https://••••  ⧉ copy                                                      │
+ Programs              │  │ ┌───────────────────────────────────────────────────────────────────────────────────────┐ │
+ Schedules             │  │ │ ⇗ A VM's screen is a picture, and a terminal cannot draw it.                          │ │
+ Scripts               │  │ │ Open the screen on the web: (on your Hub's web address)                               │ │
+ Logs                  │  │ │ /auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/vms                                    │ │
+ Tunnels               │  │ │ [c Copy link]                                                                         │ │
+ Notes                 │  │ └───────────────────────────────────────────────────────────────────────────────────────┘ │
+ AI                    │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+▌VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

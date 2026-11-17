@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Logs                                                 ▸ Use with your agent  [See what failed]
+ Computers             │  55 events failed in the last hour. 19 kinds of problem.
+ Files                 │
+ Bots                  │  ▸ Everything    Visits    Bots    Changes    Scripts    Programs   [More ▾]
+ Board                 │  │ ● SG atlas · █ Personal ▾ Result ▾  When: 1 hour │ / Search
+ Demo                  │                                                                     [□ off] Live [Refresh] [⋯]
+ Vault                 │  ! Problems jumped around Nov 11, 08:46 AM (41 in a few minutes).         [Around this moment]
+                       │                                                          Failed 40 times Files [More actions]
+On atlas ▾             │                                                          Problem 9 times Agent [More actions]
+ Programs              │  What keeps going wrong ▾                               Problem 9 times Screen [More actions]
+ Schedules             │                                                       Problem 7 times Terminal [More actions]
+ Scripts               │                                                        Problem 7 times Browser [More actions]
+▌Logs                  │  ! Changes could not be read, so this list shows other activity only.              [Try again]
+ Tunnels               │    Time     Result              From   What happened                                  Took
+ Notes                 │  ▌ 08:59:49 ● OK                Visits GET 200 Terminal: opened /session/resize        295 ms█
+ AI                    │    08:59:38 ● OK                Visits GET 200 Terminal: opened /session               258 ms░
+ VMs                   │    08:59:27 ● OK                Visits DELETE 200 Agent: removed /health               221 ms░
+                       │    08:59:16 ● OK                Visits PUT 200 Browser: changed /tab/1                 184 ms░
+Account                │    08:59:05 ● OK                Visits POST 200 Screen: sent /input                    147 ms░
+ Plans & Billing       │    08:58:54 ● OK                Visits GET 200 Files: opened /share/ada                110 ms░
+ Referrals             │    08:58:43 ● OK                Visits GET 200 Terminal: opened /session/resize         73 ms░
+ Keys and tokens       │    08:58:33 ● OK                Visits GET 200 Terminal: opened /session                36 ms░
+ API                   │    08:58:22 ● Not found         Visits DELETE 404 Agent: removed /health               479 ms░
+ Notifications      26 │    08:58:11 ● OK                Visits PUT 200 Browser: changed /tab/1                 442 ms░
+ Account               │  [Show older]
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

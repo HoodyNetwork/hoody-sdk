@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            Guide                                  ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │                              ┌──────────────────────────────────────────────────────────────┐
+ Computers             │  │ Ask your agent            │ Bots                                      [Open Bots] [Docs] │
+ Files                 │  │ Connect                   │ Talk to a Bot from a chat app, an AI app or its own link. It │
+ Bots                  │  │ Skills                    │ runs agent sessions and reports back.                        │
+ Board                 │  │ Build your own            │   Bot URL                                                    │
+ Demo                  │  │ Every link                │ ▸ AI apps     OpenAI-compatible apps use the base with /     │
+ Vault                 │  │▌Bots                      │   MCP         v1. Anthropic-compatible apps use the base     │
+                       │  │ Tools                     │   Chat apps   without it.                                    │
+On atlas ▾             │  │ Try this                  │                                                              │
+ Programs              │  │ Realms                    │               AI apps        ⧉ Copy all (Make a Bot first)   │
+ Schedules             │  │ Topics                    │               1. OpenAI-compatible base                      │
+ Scripts               │  │ Keyboard                  │                https://‹bot›.hoody.bot/v1                    │
+ Logs                  │  │ Look                      │                ⧉ copy (Make a Bot first)                     │
+ Tunnels               │                              │               2. Anthropic-compatible base                   │
+ Notes                 │   [j] [k] move between       │                https://‹bot›.hoody.bot                       │
+ AI                    │   sections                   │                ⧉ copy (Make a Bot first)                     │
+ VMs                   │                              │               3. Use it with Claude Code                     │
+                       │                              │                ANTHROPIC_BASE_URL=https://‹bot›.hoody.bot    │
+Account                │                              │                ANTHROPIC_API_KEY="$HOODY_BOT_KEY" claude     │
+ Plans & Billing       │                              │                ⧉ copy (Make a Bot first)                     │
+ Referrals             │                              │               Make a Bot                                     │
+ Keys and tokens       │                              │                                                              │ ▄
+ API                   │                              └──────────────────────────────────────────────────────────────┘ █
+ Notifications      26 │                                                                                               █
+ Account               │                              ┌──────────────────────────────────────────────────────────────┐ ▀
+                       │                              │ Tools                                                        │
+ + Rent servers        │                              │ The tools, for when you want to see or touch. Each one opens │
+▌Guide                 │                              │ on the computer picked in the top bar: atlas.                │
+ Support               │                              │ Agent                                                        │
+                       │                              │ Your AI next to your files. Watch it, steer it.              │
+                       │                              │ Open  [Put Agent on Board]  Docs                             │
+                       │                              │                                                              │
+                       │                              │ Terminal                                                     │
+                       │                              │ A full shell in a tab, shared with your agent.               │
+                       │                              │ Open  [Put Terminal on Board]  Docs                          │
+                       │                              │                                                              │
+                       │                              │ Display                                                      │
+                       │                              │ The computer's desktop, live, on any device.                 │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

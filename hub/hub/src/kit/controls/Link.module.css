@@ -1,0 +1,197 @@
+/* Links in text: Link (a place to go: blue), TextButton (an action: dark, underlined) and ExtLink (a web address).
+   An action drawn as a plate is Button.module.css's; nothing here paints a box behind its words. */
+.link {
+  border-radius: var(--r-1);
+  cursor: pointer;
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+
+/* "Blue go": a link that goes somewhere is blue, the same blue at rest and on hover, underlined on
+   hover. inline (running text) and nav (a row's "Open", a footer link, a page link) look alike. */
+.inline {
+  color: var(--hx-link);
+}
+
+.nav {
+  color: var(--hx-link);
+}
+
+.plain {
+  color: inherit;
+}
+
+.nav[data-focus-visible] {
+  text-decoration: underline;
+}
+
+.ink {
+  color: var(--hx-do-text);
+}
+
+.danger {
+  color: var(--hx-danger);
+}
+
+.link[data-hovered] {
+  text-decoration: underline;
+}
+
+.underlined {
+  text-decoration: underline;
+}
+
+.link[data-focus-visible] {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.icon {
+  margin-inline-start: var(--sp-1);
+  vertical-align: -2px;
+}
+
+/* On a coarse pointer a TextButton's and a nav link's box is at least --touch-min both ways (a TextButton's words
+   centred in it). Zero specificity (:where), so a page's own minimum or alignment still wins; coarse only, so a fine
+   pointer is unchanged. */
+@media (pointer: coarse) {
+  :where(.textButton) {
+    justify-content: center;
+    min-block-size: var(--touch-min);
+    min-inline-size: var(--touch-min);
+  }
+
+  /* A nav link is its own target (a row's "Open", a footer link): a real touch-sized box, its words keeping their place. No
+     ::after hit layer, which would overlap the neighbours' targets. plain and inline are untouched: plain wraps tiles
+     and tags that are targets themselves, inline is running text. A standalone web address (ExtLink look nav: a fact's
+     value, a whole table cell) is boxed too; one autolink found among other words ([data-in-text]) is not, and a
+     secret one has its own rule (.extButton.nav, below). */
+  :where(.nav:not(.ext), .ext.nav:not(.extButton, .extCut, [data-in-text])) {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--touch-min);
+    min-inline-size: var(--touch-min);
+  }
+
+  /* A standalone web address cut to one line keeps its inline-block (a flex box would lose the ellipsis): its one line
+     is the touch size. */
+  :where(.ext.nav.extCut:not(.extButton, [data-in-text])) {
+    min-block-size: var(--touch-min);
+    min-inline-size: var(--touch-min);
+    line-height: var(--touch-min);
+  }
+}
+
+/* TextButton, "dark do": a button that acts reads as dark semibold text over a hairline underline in the
+   grey line, a little below; on hover and keyboard focus the underline takes the text colour. Same line height as body
+   text. A danger TextButton keeps its red (a delete never reads as a plain action) and takes the same shape. */
+.textButton {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+  text-decoration: underline;
+  text-decoration-color: var(--hx-do-line);
+  text-decoration-thickness: var(--bw);
+  text-underline-offset: 3px;
+}
+
+/* Pressed too: a press by touch or by key has no hover, and the underline still takes the text colour. */
+.textButton[data-hovered],
+.textButton[data-focus-visible],
+.textButton[data-pressed] {
+  text-decoration: underline;
+  text-decoration-color: currentcolor;
+  text-decoration-thickness: var(--bw);
+}
+
+.textButton .icon {
+  margin-inline: 0 var(--sp-1);
+  vertical-align: 0;
+}
+
+/* Pressed: a colour of its own (--hx-do-pressed, --hx-do-danger-pressed), never an opacity, so its contrast is the
+   token's and holds on every surface. */
+.textButton.ink[data-pressed] {
+  color: var(--hx-do-pressed);
+}
+
+.textButton.danger[data-pressed] {
+  color: var(--hx-do-danger-pressed);
+}
+
+.textButton:is([data-disabled], [aria-disabled='true']:not([data-pending])) {
+  color: var(--hx-faint);
+  cursor: default;
+  text-decoration: none;
+}
+
+/* ExtLink: a web address as a link. It wraps on any character, so a long address never forces a sideways
+   scroll; the one-line form (a table cell) cuts at the end instead. */
+.ext {
+  overflow-wrap: anywhere;
+}
+
+.extCut {
+  display: inline-block;
+  overflow: hidden;
+  max-inline-size: 100%;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  white-space: nowrap;
+}
+
+/* A secret address opens through a button (its whole address is never in an href): the button looks like the link. */
+.extButton {
+  padding: 0;
+  border: 0;
+  margin: 0;
+  background: none;
+  font: inherit;
+  text-align: start;
+  user-select: text;
+}
+
+.extButton.nav:focus-visible {
+  text-decoration: underline;
+}
+
+.extButton:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.extButton:hover {
+  text-decoration: underline;
+}
+
+.extText {
+  overflow-wrap: anywhere;
+}
+
+.extFaint {
+  color: var(--hx-faint);
+}
+
+/* A secret address in a row or cell is a button: on a coarse pointer its box is at least --touch-min, as a TextButton's.
+   Not the inline look: a link inside a sentence keeps the line height (WCAG 2.5.8 inline exception). */
+@media (pointer: coarse) {
+  :where(.extButton.nav) {
+    min-block-size: var(--touch-min);
+    min-inline-size: var(--touch-min);
+  }
+}
+
+/* Forced colors (Windows high contrast) drop box-shadow, so the focus ring above would vanish: a solid outline in the
+   system Highlight colour instead, as Button's. */
+@media (forced-colors: active) {
+  .link[data-focus-visible],
+  .extButton:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+}

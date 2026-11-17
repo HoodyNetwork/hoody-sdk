@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Vault                                                                   ▸ Use with your agent
+ Computers             │  Tokens, passwords and settings your tools and agents read by name. The list shows only names.
+ Files                 │
+ Bots                  │  Pick another realm from the realm menu at the top (Alt+R) to try its vault.
+ Board                 │
+ Demo                  │             ┌─────────────────────────────────────────────────────────────────────┐
+▌Vault                 │             │ This login cannot open the vault                                    │
+                       │             │                                                                     │
+On atlas ▾             │             │ This login has no access to the vault of Personal. Ask the account  │
+ Programs              │             │ owner, or leave the Hub, run hoody logout, and sign in with an      │
+ Schedules             │             │ account that has it.                                                │
+ Scripts               │             │                                                                     │
+ Logs                  │             │ [Leave the Hub]                                                     │
+ Tunnels               │             └─────────────────────────────────────────────────────────────────────┘
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

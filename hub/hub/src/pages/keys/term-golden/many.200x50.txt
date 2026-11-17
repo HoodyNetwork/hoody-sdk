@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Keys and tokens                                                                                                                            ▸ Use with your agent   + New key
+ Computers             │  A key lets your agent, the CLI or the SDK act for you. Give each one its own key, with an end date.
+ Files                 │  ▸ API keys 5 keys    SSH keys    Shared access 0 shares
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │  i Keys that work in Personal.                                                                                                                               [Show all realms]
+ Demo                  │
+ Vault                 │  / Search                        Access ▾  State: Active ×  Ends ▾                                                                 3 keys · 1 expired  ↻ Refresh  View options
+                       │
+On atlas ▾             │    Name ↑                                     Notes                            Key             Works in             Access            Ends (UTC)       State
+ Programs              │  ▌ ci-deploy                                   Only from 203.0.113.7/32        hdy_9e37…       Personal             Developer         Jan 20, 2027     ● Active              ⋯
+ Schedules             │    hoody-agent auto 7f3a                       Agent sign-in   Can make keys   hdy_77c1…       All realms           Full              No end date      ● Active              ⋯
+ Scripts               │    sdk-readonly                                                                hdy_b2e4…       All realms           Read only         Nov 20, 2026     ● Active              ⋯
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+▌Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │  Questions
+                       │  ▸ Can I see a key's secret again?
+                       │  ▸ What is an API key for?
+                       │  ▸ Which realms does a key work in?
+                       │  ▸ What can a key do, and what does Full mean?
+                       │  ▸ When does a key stop working, and can I limit where it works from?
+                       │  ▸ How does the SSH key work?
+                       │  ▸ What does sharing a realm give someone?
+                       │  ▸ What do I send to the person I share with?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Get a computer                                                   Esc ×
+ Comput┃ Something is missing. The box below says what.
+ Your c┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Comp┃ ┌────────────────────────────────┐ ┌────────────────────────────────┐█
+ ──────┃ │ (•) A new computer             │ │ ( ) A copy of one of yours     │█
+ Comput┃ │     Debian 13, set up below.   │ │     Same files as the computer │█
+ / Sear┃ │                                │ │     you pick.                  │█
+ 8 comp┃ └────────────────────────────────┘ └────────────────────────────────┘█
+ › █ at┃                                                                      █
+    █ P┃ ┌───────────────────────────────────────────────────────────────────┐█
+   █ bo┃ │ YOU GET                                                           │█
+    █ A┃ │ Not ready yet: there is no project to put it in.                  │
+   █ ce┃ │ Make one under Project.                                           │
+    █ P┃ │ Size      16 cores, 64 GB RAM, shared                             │
+   █ du┃ │ System    Debian 13                                               │
+    █ L┃ │ Software  Hoody kit, Developer kit, Hoody AI                      │
+   █ em┃ └───────────────────────────────────────────────────────────────────┘
+    █ A┃
+   █ fj┃ ┌───────────────────────────────────────────────────────────────────┐
+    █ P┃ │ Computer                                                          │
+   █ gr┃ │ ┌───────────────────────────────────────────────────────────────┐ │
+    █ A┃ │ │                                                               │ │
+   █ ha┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Cancel]  Get computer

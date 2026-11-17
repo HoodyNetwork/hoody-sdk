@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs                              ▸ Use with your agent   + Launch an app
+ Apps on atlas: programs you open only when you need them.
+ ‹ Programs  Esc
+ JupyterLab  ● Check needed                                                   █
+                                                                              █
+ │ ◷ Opening JupyterLab may have gone through                                 █
+ │   The computer did not confirm. Check before you open it again, so a       █
+ │   second copy is not started.                                              █
+ │   [Check again]                                                            █
+                                                                              █
+ Web address  https://18888-    ⧉ copy   Source       Registry                █
+              atlas.example.in           Variables    JUPYTER_PORT            ▀
+              valid/lab                  Handle       a1b2…a1b2 ⧉
+ Opens in     Web
+ Where        Terminal 15003
+ Started      Nov 11, 2026, 8:52 AM
+
+                                                                       ⧉ copy
+  $ jupyter lab --no-browser --port 18888
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │                                                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

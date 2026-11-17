@@ -1,0 +1,408 @@
+/* FileChooser: the side column (computer, places, recent), the place line, the box, the list with its sortable header,
+ * the preview column and the chosen-files tray. The frame, header and footer are the kit Dialog's. */
+
+/* A phone gets the whole screen: the list needs the height more than the page behind needs to show. */
+@media (width < 600px) {
+  div.dialog {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-height: none;
+    border: 0;
+  }
+}
+
+/* The computer has the dialog's width to itself, so its name and realm are never cut by the columns below. */
+.top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  margin-block-end: var(--sp-3);
+}
+
+.grid {
+  --fc-cols: minmax(0, 1fr) 76px 108px;
+  --fc-list-h: min(44vh, 360px);
+
+  display: grid;
+  grid-template-columns: 172px minmax(0, 1fr);
+  gap: var(--sp-3) var(--sp-4);
+  align-items: start;
+  min-width: 0;
+}
+
+.withPreview {
+  --fc-cols: minmax(0, 1fr) 72px;
+
+  grid-template-columns: 156px minmax(0, 1fr) 232px;
+}
+
+/* With the preview beside it the list keeps name and size; the time is in the preview. */
+.withPreview .col_modified {
+  display: none;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.sideGroup {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sideLabel {
+  display: flex;
+  align-items: center;
+  min-height: var(--ctl-h-sm);
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.sideLink {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--ctl-h-sm);
+  padding: var(--sp-1) var(--sp-2);
+  border: 0;
+  border-radius: var(--r-1);
+  background: none;
+  color: var(--hx-ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  outline: none;
+}
+
+.sideLink[data-hovered] {
+  background: var(--hx-hover);
+}
+
+.sideLink[data-current] {
+  background: var(--hx-selected);
+  box-shadow: inset var(--bw-2) 0 0 var(--hx-selected-bar);
+}
+
+.sideLink[data-focus-visible],
+.headCell[data-focus-visible] {
+  box-shadow: var(--focus-ring);
+}
+
+.sideText {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.whereLine {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.where {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.crumbSep {
+  color: var(--hx-muted);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.box {
+  flex: 1;
+  min-width: 0;
+}
+
+.findLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+
+.findWords {
+  min-width: 0;
+  color: var(--hx-muted);
+  overflow-wrap: anywhere;
+}
+
+/* The header and the list are one framed table: the header's rule is the kit table's. */
+.table {
+  min-width: 0;
+  border: var(--bw) solid var(--hx-line-strong);
+  border-radius: var(--r-2);
+}
+
+.head {
+  display: grid;
+  grid-template-columns: var(--fc-cols);
+  gap: var(--sp-2);
+  padding-inline: calc(var(--sp-1) + var(--sp-2));
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.headCell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: var(--ctl-h-sm);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+  cursor: pointer;
+  outline: none;
+}
+
+.headCell[data-hovered] {
+  color: var(--hx-ink);
+}
+
+.col_size,
+.col_modified {
+  justify-content: flex-end;
+  text-align: end;
+}
+
+.listWrap {
+  min-width: 0;
+}
+
+.list {
+  overflow: auto;
+
+  /* At the list's end a wheel tick stays in the list (the dialog behind it never moves), as in every capped pick list. */
+  overscroll-behavior: contain;
+  height: var(--fc-list-h);
+  padding: var(--sp-1);
+  outline: none;
+}
+
+.list[data-focus-visible] {
+  box-shadow: var(--focus-ring);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: auto var(--fc-cols);
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--pop-row-h);
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-1);
+  color: var(--hx-ink);
+  cursor: default;
+  outline: none;
+}
+
+.row[data-hovered],
+.row[data-focused] {
+  background: var(--pop-hover);
+}
+
+.row[data-focus-visible] {
+  box-shadow: var(--focus-ring-inset);
+}
+
+.row[data-current],
+.row[data-chosen] {
+  background: var(--hx-selected);
+  box-shadow: inset var(--bw-2) 0 0 var(--hx-selected-bar);
+}
+
+.row[data-disabled] .rowName,
+.row[data-disabled] .rowIcon,
+.row[data-disabled] .rowCell {
+  color: var(--pop-off);
+}
+
+/* The name is cut in its middle: the start gives way, the ending stays. A reason, or a match's folder, is a second line. */
+.rowIcon {
+  display: inline-flex;
+  flex: none;
+}
+
+.rowMain {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rowName {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+.nameHead {
+  overflow: hidden;
+  min-width: 3ch;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nameTail {
+  flex: none;
+  white-space: pre;
+}
+
+.linkMark {
+  flex: none;
+  margin-inline-start: var(--sp-1);
+  color: var(--hx-muted);
+}
+
+.rowCell {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rowWhy {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.note {
+  padding: var(--sp-3);
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.under {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  overflow: auto;
+  min-width: 0;
+  max-height: calc(var(--fc-list-h) + 120px);
+  padding-inline-start: var(--sp-4);
+  border-inline-start: var(--bw) solid var(--hx-line);
+}
+
+.previewName {
+  font-weight: var(--fw-medium);
+  overflow-wrap: anywhere;
+}
+
+.previewMeta {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.previewPath {
+  color: var(--hx-muted);
+}
+
+.previewImage {
+  max-width: 100%;
+  max-height: 220px;
+  border: var(--bw) solid var(--hx-line);
+  object-fit: contain;
+}
+
+.tray {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.trayCount {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+/* Narrow: one column. The side column is one row (computer, places), the preview goes under the list. */
+@media (width < 600px) {
+  .grid,
+  .withPreview {
+    --fc-list-h: 46vh;
+
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-3);
+  }
+
+  /* The chosen files are the task: they come before the preview. */
+  .tray {
+    order: 1;
+  }
+
+  .row {
+    min-height: var(--touch-min);
+  }
+
+  .preview {
+    order: 2;
+    max-height: 30vh;
+    padding-block-start: var(--sp-3);
+    padding-inline-start: 0;
+    border-block-start: var(--bw) solid var(--hx-line);
+    border-inline-start: 0;
+  }
+}

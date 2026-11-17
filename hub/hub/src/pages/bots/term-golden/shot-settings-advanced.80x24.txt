@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Settings for Chief                                               Esc ×
+ Bots  ┃ Model, behaviour, guardrails and voice.
+ ‹ Bots┃ ──────────────────────────────────────────────────────────────────────
+       ┃ │ The Bot itself        ┌────────────────────────────────────────────┐
+   i Ta┃ │ Model                 │ Advanced                               [⋯] │
+   The ┃ │ Behaviour             │ Read-only for now. Change these with the   │
+   rais┃ │ Voice                 │ Hoody agent.                               │
+   19 d┃ │ The helpers it        │ Model routing        Off                   │
+       ┃ │ starts                │ Replies later        Off                   │
+       ┃ │ Helpers               │ Waits for a reply    30 seconds            │
+       ┃ │ Guardrails and        │ Realtime items kept  200                   │
+       ┃ │ limits                └────────────────────────────────────────────┘
+       ┃ │▌Advanced
+   Unde┃
+   rest┃
+   19 d┃
+       ┃
+   ┌───┃
+   │ Me┃
+   └───┃
+       ┃
+       ┃
+       ┃
+ Tab mo┃

@@ -1,0 +1,20 @@
+{
+  "close": "Close",
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "more": "More actions",
+  "menuActions": "Menu actions",
+  "back": "Back to {{title}}",
+  "discardAsk": "Discard changes?",
+  "keepEditing": "Keep editing",
+  "discard": "Discard",
+  "busyHint": "Wait for the answer before closing",
+  "typeToConfirm": "Type {{text}} to confirm",
+  "copied": "Copied",
+  "copyFailed": "Couldn't copy. Select the text instead.",
+  "busyLeave": "Wait until this finishes before leaving.",
+  "checkingHint": "Still checking. You can close this once it finishes.",
+  "pendingHint": "This may have gone through. Choose an action to close this.",
+  "resize": "Resize panel",
+  "resizeValue": "{{width}} pixels wide"
+}

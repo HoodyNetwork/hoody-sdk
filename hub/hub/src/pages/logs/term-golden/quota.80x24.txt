@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Logs                                  ▸ Use with your agent  [See what failed]
+ Only part of these logs could be read.
+ ▸ Everything    Visits    Bots    Changes    Scripts    Programs   [More ▾]
+ │ ● SG atlas · █ Personal ▾ Result ▾  When: 1 hour │ / Search
+                                                     [□ off] Live [Refresh] [⋯]
+ ! Problems jumped around Nov 11, 08:46 AM (41 in a few    [Around this moment]
+   minutes).
+ ! This computer has read its logs a lot recently. Try again in a   [Try again]
+   while.
+   Time     Result   From    What happened
+ ▌ 08:35:00          Changes Computer started
+   06:25:00          Changes Computer renamed
+   04:15:00          Changes Realm assigned
+   02:05:00          Changes SSH key replaced
+   ── Tuesday, November 10 ──
+   23:55:00          Changes Computer stopped
+   21:45:00          Changes Program started
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

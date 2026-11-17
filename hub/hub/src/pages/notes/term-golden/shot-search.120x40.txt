@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notes                                                     ▸ Use with your agent   + New note
+ Computers             │  The notes on your computers. Everyone who opens Notes on a computer shares the same notes.
+ Files                 │
+ Bots                  │  / deploy                   Computer ▾                         1 note  ↻ Refresh  View options
+ Board                 │
+ Demo                  │      Title                                  Section                  Changed ↓
+ Vault                 │  ▾ atlas · 1  Open Notes New note
+                       │  ▌   Deploy checklist                       Work                     2 hours ago             ⋯
+On atlas ▾             │
+ Programs              │    borealis  Open Notes New note
+ Schedules             │
+ Scripts               │    cedar This computer is stopped. Start it from Computers. Computers
+ Logs                  │
+ Tunnels               │    dune This computer is starting. Its notes show when it is ready. Computers
+▌Notes                 │
+ AI                    │    ember This computer needs attention before its notes can be read. Computers
+ VMs                   │
+                       │    fjord This computer is stopped. Start it from Computers. Computers
+Account                │
+ Plans & Billing       │    granite Notes here is too old to list recent notes. Update it. Open Notes
+ Referrals             │
+ Keys and tokens       │    harbor No notes yet. Open Notes New note
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

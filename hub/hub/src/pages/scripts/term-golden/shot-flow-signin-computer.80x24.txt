@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ New script
+ Step 2 of 5 · Where it answers  ████░░░░░░
+  ✓ What it does ▸2 Where it answers  3 Build it  4 Check it  5 Make it live
+ ──────────────────────────────────────────────────────────────────────────────
+ ▸ Your script so far                                                         █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Where does it answer?                                                     │█
+ │ People and programs call your script at its address.                      │█
+ │ │ ● atlas ▾                                                               │▀
+ │ Address                                                                   │
+ │ │ /count-last-week                                                 ✓ Free │
+ │ People and programs call your script at this address.                     │
+ │ https://atlas-exec-1.hoody.example.test/count-last-week ⧉ copy            │
+ │ The exec-1 part is this computer's script program, where the script runs. │
+ │ When it runs                                                              │
+ │ ┌──────────────────────────────────┐ ┌──────────────────────────────────┐ │
+ │ │ (•) Only when its address is     │ │ ( ) Also on a schedule           │ │
+ │ │     called                       │ │     It also runs by itself at    │ │
+ │ │     It runs each time someone or │ │     the times you set, and still │ │
+ ──────────────────────────────────────────────────────────────────────────────
+ The assistant writes the code next. You check it before it goes live.
+ [Back]                                                    [Cancel]   Build it
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

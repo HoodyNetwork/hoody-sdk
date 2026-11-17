@@ -1,0 +1,20 @@
+# netns-read.list: the ONLY paths outside this tree that the boundary (netns.sh) shows, read-only, besides node_modules,
+# the runtime file and the slot locks. Sibling-tree SOURCE the conformance tests compare against; never a credential,
+# database, home or whole repository. One `<root>:<path>` per line: <root> is a name of scripts/lib.ts READ_ROOT_NAMES
+# (its path comes from the host file /etc/hoody-hub-term/read-roots, through netns-roots.ts; no absolute path in this
+# file; a root the host file does not name is skipped), <path> is relative to it, a bash glob allowed.
+# netns.sh refuses an unknown root, an absolute or `..` path, a symlink, a path whose real path differs, and any
+# credential-shaped name (.env*, *.pem, *.key, id_*, *.sqlite*, *secret*, *credential*) as the entry itself; a directory
+# entry is bound whole (its content is source: list a directory only after checking it). A missing path is skipped (the
+# test that needs it says so).
+# Entries for sibling trees that only a given host has go in that host's /etc/hoody-hub-term/read-list (same format).
+# Readers: src/core/limits.conformance.test.ts, socket.test.ts, realm.test.ts, run-open/*.test.ts,
+# src/kit/agent/*.wire.test.ts, rateLimit.ts, src/pages/{ai,bots,files,keys,logs,scripts,api,board}/**, shots.ts (--web),
+# build/fake-empty.term.test.ts, api-catalog-gen.ts.
+sdk:lib/vault-crypto.ts
+sdk:lib/run-open-core.js
+sdk:lib/bot-label.ts
+sdk:lib/domain-utils.ts
+sdk:lib/embeds/runtime.ts
+sdk:generated/embeds.catalog.v1.json
+sdk:generated/openapi.public.json

@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                                                                                                            ▸ Use with your agent  [+ New program]   + Launch an app
+ Computers             │  19 programs on atlas · 11 running · 4 need a look
+ Files                 │  ▸ Running programs    Apps    Ports & aliases
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  / Search programs               ‹ Any ›  Running 11    Stopped 4    Problems 4                                                                         19 programs  ↻ Refresh
+ Vault                 │
+                       │      Name              State                                            Up Ports                           Sandbox                  Restarts        At boot
+On atlas ▾             │  ▌   ! nightly-sync    ● Ended (code 2)                                  — —                               · No policy              Runs once       Off              [Start] ⋯
+▌Programs              │      ! worker          ● Not working                                     — —                               ✗ Problem                Always          On               [Start] ⋯
+ Schedules             │      ! mystery         ● Can't tell                                      — —                               · No policy              —               —                        ⋯
+ Scripts               │        api             ● Running                                         — 8000-8003 · 2/4 up              ● Policy set             After a crash   Off            [Restart] ⋯
+ Logs                  │        web             ● Running                                    3 days 3000                            ● Policy set             Always          On             [Restart] ⋯
+ Tunnels               │        backup          ● Finished                                        — —                               · No policy              Runs once       Off              [Start] ⋯
+ Notes                 │        docs-preview    ● Stopped                                         — —                               ! Old rules draining     Runs once       Off              [Start] ⋯
+ AI                    │        legacy-cron     ● Turned off                                      — —                               · Policy set, turned off —               Off                      ⋯
+ VMs                   │        report-builder  ● Starts when used                                — —                               ! Restricts nothing      —               —                [Start] ⋯
+                       │
+Account                │  ▾ Temporary programs · 1
+ Plans & Billing       │        http-server     ● Running             Ends in 40 minutes (09:40 AM) —                               —                        —               —                        ⋯
+ Referrals             │
+ Keys and tokens       │  ▸ System programs · 9 ● 1 problem
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │  Questions
+                       │  ▸ What is a program, and what are Running programs and Apps?
+                       │  ▸ What are the system programs, and is it safe to stop one?
+                       │  ▸ What is the difference between Keep it and Run once?
+                       │  ▸ When does a start count as done, and what happens when a program stops?
+                       │  ▸ What does a sandbox limit, and what do the starting points do?
+                       │  ▸ What do the network choices and allowed ranges do?
+                       │  ▸ When do new sandbox limits take effect, and what does removing them do?
+                       │  ▸ What if a change may have gone through?
+                       │  ▸ Which open ports get a web address?
+                       │  ▸ Why are some ports counted but not shown?
+                       │  ▸ What is the difference between a port's address and an alias?
+                       │  ▸ How do I create an alias?
+                       │  ▸ What happens to an alias when its program stops?
+                       │  ▸ Who can open a port's address or an alias?
+                       │  ▸ How do I open an alias at my own domain?
+                       │  ▸ Is the address HTTP or HTTPS, and what if my program serves HTTPS itself?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

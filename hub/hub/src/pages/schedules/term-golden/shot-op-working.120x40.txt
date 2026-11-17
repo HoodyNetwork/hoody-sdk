@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Schedules                                             ▸ Use with your agent   + New schedule
+ Computers             │  15 schedules on atlas · next: ping-api in 3 minutes · 4 failed today · Computers ›
+ Files                 │  9 programs running ›
+ Bots                  │
+ Board                 │  ‹ Schedules  Esc
+ Demo                  │  sync-photos  ● Failed · exit 1                                          [Edit] [Run now] [⋯]█
+ Vault                 │   Command                                                                                    █
+                       │                                                                                              █
+On atlas ▾             │  …  Working…                                                                                 █
+ Programs              │                                                                                              █
+▌Schedules             │  Schedule     Every 15 minutes                                                               █
+ Scripts               │  Status       [■ on ] On                                                                     █
+ Logs                  │  Next run     in 8 minutes · 17:08 · your 09:08                                              █
+ Tunnels               │  Last result  Failed · exit 1                                                                █
+ Notes                 │               rclone: Failed to sync: couldn't connect to remote:photos (dial tcp: i/o       █
+ AI                    │               timeout)                                                                       █
+ VMs                   │               See output                                                                     █
+                       │                                                                                              █
+Account                │  Next 5 runs                                                                                 █
+ Plans & Billing       │  Times are in the computer's time zone.                                                      █
+ Referrals             │  in 8 minutes · 17:08 · your 09:08                                                           █
+ Keys and tokens       │  in 23 minutes · 17:23 · your 09:23                                                          █
+ API                   │  in 38 minutes · 17:38 · your 09:38                                                          █
+ Notifications      26 │  in 1 hour · 17:53 · your 09:53                                                              █
+ Account               │  in 1 hour · 18:08 · your 10:08                                                              █
+                       │                                                                                              █
+ + Rent servers        │                                                                                              █
+ Guide                 │  History                                                                                     █
+ Support               │      Started                  Result                                                  Took   █
+                       │  › ▸ Today 16:53              ● Failed · exit 1                                       38 s   █
+                       │    ▸ Today 16:38              ● Failed · exit 1                                       41 s   ▀
+                       │      Today 16:23              ● Worked                                                39 s
+                       │      Today 16:08              ● Worked                                                42 s
+                       │      Today 15:53              ● Worked                                                40 s
+                       │      Today 15:38              ● Worked                                                43 s
+                       │      Today 15:23              ● Worked                                                41 s
+                       │      Today 15:08              ● Worked                                                38 s
+                       │      Today 14:53              ● Worked                                                41 s
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

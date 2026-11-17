@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing                                                                  + Add funds
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │    Plans    Bare metal  ▸ Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  │ ✗ node-2: On hold — will be deleted Nov 17, 2026 UTC                             [Pay now]
+ Vault                 │  │ ✗ node-5: On hold — will be deleted Nov 17, 2026 UTC                             [Pay now]
+                       │  │ ✗ node-8: On hold — will be deleted Nov 17, 2026 UTC                             [Pay now]
+On atlas ▾             │  │ ! 5 more servers are held                                                 [Wallet & usage]
+ Programs              │
+ Schedules             │                                                                                              █
+ Scripts               │    WALLET                                                                                    █
+ Logs                  │    $42.50                                                                                    █
+ Tunnels               │    Pays for servers and plans.                                                               █
+ Notes                 │                                                                                              █
+ AI                    │                                                                                              █
+ VMs                   │    GITHUB BONUS  $10.00 in Wallet credit is available.                                       █
+                       │    [Claim bonus] GitHub account: @octocat                                                    █
+Account                │    Limit: one bonus per Hoody account and one per GitHub account.
+▌Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │  Server subscriptions
+ Notifications      26 │  What you pay for, when it renews, and what needs you. What happens when auto-renew is off
+ Account               │
+                       │  / Search                   State ▾                                     24 servers  ↻ Refresh
+ + Rent servers        │
+ Guide                 │    Plan ↑             Server              State                           Price
+ Support               │  › Medium             DE node-2           ● On hold                   $29.00/mo    [Pay now]█
+                       │                       Frankfurt, Germany                                                    █
+                       │    Medium             DE node-5           ● On hold                   $29.00/mo    [Pay now]█
+                       │                       Frankfurt, Germany                                                    █
+                       │    Medium             DE node-8           ● On hold                   $29.00/mo    [Pay now]█
+                       │                       Frankfurt, Germany                                                    █
+                       │    Medium             DE node-11          ● On hold                   $29.00/mo    [Pay now]█
+                       │                       Frankfurt, Germany                                                    █
+                       │    Medium             DE node-14          ● On hold                   $29.00/mo    [Pay now]█
+                       │                       Frankfurt, Germany                                                    █
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

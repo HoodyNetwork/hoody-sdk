@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  API                                                                                                                                                     ▸ Use with your agent
+ Computers             │  Every endpoint of the Hoody API, how to call it, and its docs page.
+ Files                 │
+ Bots                  │  ▸ Endpoints    Overview
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  / Search endpoints              Service ▾                                                                                                           1296 endpoints  ↻ Refresh
+                       │
+On atlas ▾             │        Method               Path                                                                                Summary
+ Programs              │  ▸ Agent · 26 resources · 352 endpoints                                                                                                                                      █
+ Schedules             │                                                                                                                                                                              █
+ Scripts               │  ▸ Account API · 38 resources · 305 endpoints                                                                                                                                █
+ Logs                  │                                                                                                                                                                              █
+ Tunnels               │  ▸ Browser · 8 resources · 31 endpoints                                                                                                                                      █
+ Notes                 │                                                                                                                                                                              █
+ AI                    │  ▸ Code · 4 resources · 11 endpoints                                                                                                                                         █
+ VMs                   │                                                                                                                                                                              █
+                       │  ▸ Cron · 4 resources · 16 endpoints                                                                                                                                         █
+Account                │                                                                                                                                                                              █
+ Plans & Billing       │  ▸ cURL · 7 resources · 24 endpoints                                                                                                                                         █
+ Referrals             │                                                                                                                                                                              █
+ Keys and tokens       │  ▸ Daemon · 5 resources · 25 endpoints                                                                                                                                       █
+▌API                   │                                                                                                                                                                              █
+ Notifications      26 │  ▸ Display · 5 resources · 48 endpoints                                                                                                                                      █
+ Account               │                                                                                                                                                                              █
+                       │  ▸ Egress · 1 resource · 6 endpoints                                                                                                                                         █
+ + Rent servers        │                                                                                                                                                                              █
+ Guide                 │  ▸ Exec · 22 resources · 84 endpoints                                                                                                                                        █
+ Support               │                                                                                                                                                                              █
+                       │  ▸ Files · 15 resources · 125 endpoints                                                                                                                                      █
+                       │                                                                                                                                                                              █
+                       │  ▸ Notes · 16 resources · 63 endpoints                                                                                                                                       █
+                       │                                                                                                                                                                              █
+                       │  ▸ Notifications · 5 resources · 13 endpoints                                                                                                                                █
+                       │                                                                                                                                                                              █
+                       │  ▸ Pipe · 2 resources · 8 endpoints                                                                                                                                          █
+                       │                                                                                                                                                                              █
+                       │  ▸ Proxy logs · 1 resource · 3 endpoints                                                                                                                                     █
+                       │                                                                                                                                                                              █
+                       │  ▸ Run · 6 resources · 35 endpoints                                                                                                                                          █
+                       │                                                                                                                                                                              █
+                       │  ▸ SQLite · 6 resources · 36 endpoints                                                                                                                                       █
+                       │                                                                                                                                                                              █
+                       │  ▸ Terminal · 7 resources · 41 endpoints                                                                                                                                     █
+                       │                                                                                                                                                                              █
+                       │  ▸ Tunnels · 1 resource · 7 endpoints                                                                                                                                        █
+                       │                                                                                                                                                                              ░
+                       │  ▸ VM · 14 resources · 54 endpoints                                                                                                                                          ░
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

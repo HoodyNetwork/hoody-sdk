@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines › win11
+ win11  ● Stopped                                                   Start   [⋯]
+ A VM inside atlas.
+  Overview  Screen ▸Ports  Storage  Snapshots  Settings  Logs
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Ports                                                       + Open a port  │
+ │ Ports that lead into the VM.                                               │
+ │  ┌──────────────────────────────────────────────────────────────────────┐  │
+ │  │ No open ports                                                        │  │
+ │  │                                                                      │  │
+ │  │ The VM can reach out, and nothing can reach in. Open a port to let a │  │
+ │  │ service in.                                                          │  │
+ │  └──────────────────────────────────────────────────────────────────────┘  │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

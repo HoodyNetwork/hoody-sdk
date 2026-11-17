@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Demo                                                                              + New item
+ Computers             │  Everything in one list, newest first.
+ Files                 │
+ Bots                  │  / Search                   Status ▾                        120 items  ↻ Refresh  View options
+ Board                 │
+▌Demo                  │    Name             Status ↑        Owner          Updated                            Size
+ Vault                 │  ▌ ember-1          ● Failed        Ana Ruiz       Oct 21, 2026, 8:00 AM            3.4 GB  ⋯█
+                       │    juniper-1        ● Failed        Ben Okafor     Oct 19, 2026, 9:00 PM            6.8 GB  ⋯█
+On atlas ▾             │    cinder-2         ● Failed        Chen Wei       Oct 18, 2026, 10:00 AM            10 GB  ⋯█
+ Programs              │    harbor-2         ● Failed        Dara Novak     Oct 16, 2026, 11:00 PM            14 GB  ⋯█
+ Schedules             │    atlas-3          ● Failed        Ana Ruiz       Oct 15, 2026, 12:00 PM            17 GB  ⋯█
+ Scripts               │    fjord-3          ● Failed        Ben Okafor     Oct 14, 2026, 1:00 AM             21 GB  ⋯█
+ Logs                  │    kestrel-3        ● Failed        Chen Wei       Oct 12, 2026, 2:00 PM             24 GB  ⋯█
+ Tunnels               │    delta-4          ● Failed        Dara Novak     Oct 11, 2026, 3:00 AM             27 GB  ⋯█
+ Notes                 │    iris-4           ● Failed        Ana Ruiz       Oct 9, 2026, 4:00 PM              31 GB  ⋯█
+ AI                    │    boreal-5         ● Failed        Ben Okafor     Oct 8, 2026, 5:00 AM              34 GB  ⋯█
+ VMs                   │    granite-5        ● Failed        Chen Wei       Oct 6, 2026, 6:00 PM              38 GB  ⋯█
+                       │    lumen-5          ● Failed        Dara Novak     Oct 5, 2026, 7:00 AM              41 GB  ⋯█
+Account                │    ember-6          ● Failed        Ana Ruiz       Oct 3, 2026, 8:00 PM              44 GB  ⋯█
+ Plans & Billing       │    juniper-6        ● Failed        Ben Okafor     Oct 2, 2026, 9:00 AM              48 GB  ⋯█
+ Referrals             │    cinder-7         ● Failed        Chen Wei       Sep 30, 2026, 10:00 PM            51 GB  ⋯█
+ Keys and tokens       │    harbor-7         ● Failed        Dara Novak     Sep 29, 2026, 11:00 AM            55 GB  ⋯█
+ API                   │    atlas-8          ● Failed        Ana Ruiz       Sep 28, 2026, 12:00 AM            58 GB  ⋯█
+ Notifications      26 │    fjord-8          ● Failed        Ben Okafor     Sep 26, 2026, 1:00 PM             62 GB  ⋯█
+ Account               │    kestrel-8        ● Failed        Chen Wei       Sep 25, 2026, 2:00 AM             65 GB  ⋯█
+                       │    delta-9          ● Failed        Dara Novak     Sep 23, 2026, 3:00 PM             68 GB  ⋯░
+ + Rent servers        │    iris-9           ● Failed        Ana Ruiz       Sep 22, 2026, 4:00 AM             72 GB  ⋯░
+ Guide                 │    boreal-10        ● Failed        Ben Okafor     Sep 20, 2026, 5:00 PM             75 GB  ⋯░
+ Support               │    granite-10       ● Failed        Chen Wei       Sep 19, 2026, 6:00 AM             79 GB  ⋯░
+                       │    lumen-10         ● Failed        Dara Novak     Sep 17, 2026, 7:00 PM             82 GB  ⋯░
+                       │    cinder-1         ● Paused        Chen Wei       Oct 21, 2026, 10:00 PM           2.1 GB  ⋯░
+                       │    harbor-1         ● Paused        Dara Novak     Oct 20, 2026, 11:00 AM           5.5 GB  ⋯░
+                       │    atlas-2          ● Paused        Ana Ruiz       Oct 19, 2026, 12:00 AM           8.9 GB  ⋯░
+                       │    fjord-2          ● Paused        Ben Okafor     Oct 17, 2026, 1:00 PM             12 GB  ⋯░
+                       │    kestrel-2        ● Paused        Chen Wei       Oct 16, 2026, 2:00 AM             16 GB  ⋯░
+                       │    delta-3          ● Paused        Dara Novak     Oct 14, 2026, 3:00 PM             19 GB  ⋯░
+                       │    iris-3           ● Paused        Ana Ruiz       Oct 13, 2026, 4:00 AM             23 GB  ⋯░
+                       │  1–50 of 120 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

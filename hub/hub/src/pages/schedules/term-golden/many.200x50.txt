@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Schedules                                                                                                                             ▸ Use with your agent   + New schedule
+ Computers             │  15 schedules on atlas · next: ping-api in 3 minutes · 4 failed today · Computers › · 9 programs running ›
+ Files                 │
+ Bots                  │  / Search schedules              ‹ Any ›  Commands 8    Scripts 3    Web requests 2    Agent loops 2    Status ▾                         15 schedules  ↻ Refresh  View options
+ Board                 │
+ Demo                  │    Name                                                                     Schedule                       Next run ↑                   Last result                    On
+ Vault                 │  ▌   ping-api   Web request                                                 Every 5 minutes                in 3 minutes                 ● Worked                 [■ on ]     ⋯
+                       │    ! queue-drain   Script                                                   Every 10 minutes               in 4 minutes                 ● Failed                             ⋯
+On atlas ▾             │      Watch the build   Agent loop                                           Every 10 minutes               in 4 minutes                 ● Worked                 [■ on ]     ⋯
+ Programs              │    ! sync-photos   Command                                                  Every 15 minutes               in 8 minutes                 ● Failed                 [■ on ]     ⋯
+▌Schedules             │      Nightly backup   Command                                               Every day at 02:00             in 9 hours                   ● Worked                 [■ on ]     ⋯
+ Scripts               │      nightly-digest   Script                                                Every day at 06:00             in 13 hours                  ● Worked                             ⋯
+ Logs                  │      morning-check   Agent timer                                            Every day at 08:00             in 15 hours                  ● In chat                [■ on ]     ⋯
+ Tunnels               │    ! POST hooks.example.org   Web request                                   Weekdays at 09:00              in 20 hours                  ● Failed                 [■ on ]     ⋯
+ Notes                 │      rotate-logs   Command                                                  Every Monday at 03:30          in 2 days                    ● Worked                 [■ on ]     ⋯
+ AI                    │      cleanup-tmp   Command                                                  Monthly on day 1 at 04:15      in 8 days                    ● Not run yet            [■ on ]     ⋯
+ VMs                   │    ! Unnamed loop   Agent loop                                              Every 1 hour                   Paused after failed runs     ● Failed                 [□ off]     ⋯
+                       │      archive   Script                                                       Monthly on day 1 at 00:00      Script is turned off         ● Skipped                            ⋯
+Account                │      old-report   Command                                                   Weekdays at 07:00              Paused                       ● Worked                 [□ off]     ⋯
+ Plans & Billing       │      poll.sh   Hand-written                                                 Every 7 minutes                Can't tell                   ● No results
+ Referrals             │      warm-cache   Command                                                   When the computer starts       When the computer starts     ● Not run yet            [■ on ]     ⋯
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

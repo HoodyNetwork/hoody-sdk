@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Scripts                                  ▸ Use with your agent   + New script
+ Small programs on your computers that answer an address or run on a schedule.
+     Script ↑                    Status           Address
+ ▾ atlas · 7                                                                  █
+ ›   Daily digest  Idea          ● Working        /daily-digest              ⋯█
+     Health check              ┌─────────────────────────────────────────────┐█
+     Notify me  Idea           │› →  Open                                    │█
+     Old report                │  ▷  Test                                    │█
+     Order status              │     Copy address                            │█
+     Stripe webhook            │─────────────────────────────────────────────│█
+     Weather lookup            │     Delete…                                 │█
+ ▾ borealis · 3                └─────────────────────────────────────────────┘█
+     i Runs an older Scripts program. You can read and test its scripts. To   █
+       change them, update the computer.
+     ─────────────────────────────────────────────────────────────────────────
+     Daily digest  Read-only     —                /daily-digest              ⋯
+     Order status  Read-only     —                /orders/:id                ⋯
+     Weather lookup  Read-only   —                /weather                   ⋯
+ ▾ cedar · 0
+     i Turned off. Start it to see its scripts.
+     ─────────────────────────────────────────────────────────────────────────
+ ▾ harbor · 0
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

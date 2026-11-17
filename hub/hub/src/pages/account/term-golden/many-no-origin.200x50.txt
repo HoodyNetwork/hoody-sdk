@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Account
+ Computers             │  Your profile, how you sign in, and where you are signed in.
+ Files                 │
+ Bots                  │  Sections               │ ┌───────────────────────────────────────────────────────────────────────────────────────┐ ┌──────────────────────────────────────────┐█
+ Board                 │  ▌Profile               │ │ Profile                                                                               │ │ Security                                 │█
+ Demo                  │   Password              │ │                                                                                       │ │ ✓ Your email address is verified.        │█
+ Vault                 │   Two-step sign-in      │ │ Display name                    Ada                             [Change display name] │ │ ✓ Two-step sign-in is on.                │█
+                       │   Passcode lock         │ │                                                                                       │ │ i 11 other browsers or devices  [Review] │█
+On atlas ▾             │   Sign-in sessions      │ │ Username                        ada                                                   │ │   are signed in.                         │█
+ Programs              │   Agent sign-in         │ │                                                                                       │ └──────────────────────────────────────────┘█
+ Schedules             │   Security history      │ │ Email                           ada@example.com ✓ Verified             [Change email] │                                             █
+ Scripts               │   SSH keys              │ │                                                                                       │                                             █
+ Logs                  │   Emails                │ │ Member since                    Mar 14, 2025                                          │                                             █
+ Tunnels               │   Elsewhere             │ │                                                                                       │                                             █
+ Notes                 │   This device           │ │ Account ID                      64f0…0001 ⧉                                           │
+ AI                    │   Questions             │ │ Account deletion goes through support.                                                │
+ VMs                   │                         │ └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │                         │
+Account                │                         │ ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Plans & Billing       │                         │ │ Password                                                                              │
+ Referrals             │                         │ │                                                                                       │
+ Keys and tokens       │                         │ │ Password                        [Change password]                                     │
+ API                   │                         │ │ Changing it signs you out                                                             │
+ Notifications      26 │                         │ │ everywhere.                                                                           │
+▌Account               │                         │ └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │                         │
+ + Rent servers        │                         │ ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Guide                 │                         │ │ Two-step sign-in                                                                      │
+ Support               │                         │ │                                                                                       │
+                       │                         │ │ Two-step sign-in                ● On                    [New backup codes] [Turn off] │
+                       │                         │ │ Signing in asks for a code      · Backup codes left: 8                                │
+                       │                         │ │ from your authenticator app,                                                          │
+                       │                         │ │ or a backup code.                                                                     │
+                       │                         │ │                                                                                       │
+                       │                         │ │ Ask for a code when API keys    [■ on ] Ask for a code                                │
+                       │                         │ │ change                                                                                │
+                       │                         │ │ Creating an API key, or                                                               │
+                       │                         │ │ changing its access settings,                                                         │
+                       │                         │ │ then needs a code from your                                                           │
+                       │                         │ │ authenticator app.                                                                    │
+                       │                         │ │ ▸ What changes when two-step sign-in is on?                                           │
+                       │                         │ └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │                         │
+                       │                         │ ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │                         │ │ Passcode lock                                                                         │
+                       │                         │ │                                                                                       │
+                       │                         │ │ No passcode                                                                           │
+                       │                         │ │ The terminal Hub has no                                                               │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

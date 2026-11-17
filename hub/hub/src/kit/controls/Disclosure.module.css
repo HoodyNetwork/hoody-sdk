@@ -1,0 +1,106 @@
+/* Disclosure: the trigger row (chevron, title, one muted line) and the folded panel, indented to the title. */
+.disclosure {
+  min-width: 0;
+}
+
+.heading {
+  margin: 0;
+  font: inherit;
+}
+
+.trigger {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2) 0;
+  border: 0;
+  border-radius: var(--r-1);
+  background: none;
+  color: var(--hx-ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.trigger[data-focus-visible] {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.chevron {
+  flex: none;
+  margin-block-start: var(--sp-half);
+  color: var(--hx-muted);
+  transition: transform var(--dur-press) var(--ease-out);
+}
+
+.disclosure[data-expanded] .chevron {
+  transform: rotate(90deg);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+  min-width: 0;
+}
+
+/* A host sets --disclosure-title-weight for its own question weight (the page FAQ). */
+.title {
+  font-weight: var(--disclosure-title-weight, var(--fw-medium));
+}
+
+.trigger[data-hovered] .title {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.description {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+
+  /* A line break written in the text shows; plain text wraps as usual. */
+  white-space: pre-line;
+}
+
+.panel {
+  padding-inline-start: calc(var(--icon-sm) + var(--sp-2));
+}
+
+/* Open, the body keeps the block rhythm: a Band and the actions under it never touch, with no Stack around them. Only
+   while open, so a closed panel's `hidden` still hides it. */
+.disclosure[data-expanded] .panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-block);
+  padding-block: var(--sp-2) var(--sp-3);
+}
+
+/* Forced colors (Windows high contrast) drop box-shadow, so the focus ring above would vanish: a solid outline in the
+   system Highlight colour instead, as Button's. */
+@media (forced-colors: active) {
+  .trigger[data-focus-visible] {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+}
+
+/* heading={false}: a fold inside a list row. Small type, no block padding, so the row keeps its own height. */
+.rowFold .trigger {
+  padding-block: 0;
+  font-size: var(--fs-sm);
+}
+
+/* On a coarse pointer every trigger is a 44 px press (a heading fold such as "Details" drew 36): a finger needs the
+   floor. The row fold is drawn at text height, so it states the floor again after its own rule. */
+@media (pointer: coarse) {
+  .trigger {
+    min-block-size: var(--touch-min);
+  }
+
+  .rowFold .trigger {
+    min-block-size: var(--touch-min);
+  }
+}
+

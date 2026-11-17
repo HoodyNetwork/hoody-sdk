@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs                              ▸ Use with your agent   + Launch an app
+ Apps on atlas: programs you open only when you need them.
+ ‹ Programs  Esc
+ btop  ● Error                                                                █
+                                                                              █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ RIGHT NOW                                                                 │█
+ │ btop stopped with an error.                                               │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+                                                                              █
+ Opens in  Terminal                      Source    Installed                  █
+ Where     Terminal 15008                Handle    f6a7…f6a7 ⧉                █
+ Started   Nov 10, 2026, 7:00 AM                                              █
+                                                                              █
+                                                                       ⧉ copy █
+  $ /usr/bin/btop                                                             █
+                                                                              █
+                                                                              █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │                                                                           │
+ │ Remove from this list           [Remove]                                  │
+ │ Only this row goes. Nothing on                                            │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

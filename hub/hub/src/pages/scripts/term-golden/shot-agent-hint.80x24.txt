@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Use with your agent                                              Esc ×
+ Script┃ Hoody Agent, or any agent with the Hoody skill, can write
+ Small ┃ scripts on your computer. Each .ts or .js file in the scripts
+ / Sear┃ folder answers at its own HTTP address.
+ 10 scr┃ ──────────────────────────────────────────────────────────────────────
+     Sc┃ ▸ Prompts    Set up    Access    Can do                              █
+ ▾ atla┃ ─────────────────────────────────────────────────────────────────────█
+ ›   Da┃                                                                      █
+     He┃ Acts on
+     No┃ Computer  atlas c0a7…00a1
+     Ol┃ Realm     ■ Personal f1f1…f1f1
+     Or┃ Names the computer and its realm so your agent acts on the right one.
+     St┃
+     We┃ Start here
+ ▾ bore┃ Write a script with me
+     i ┃ Your agent asks you what you want before it does anything.
+       ┃
+     ──┃  ✦ Ask Hoody Agent   ⧉ Copy for your agent
+     Da┃
+     Or┃ Two ways to use it
+     We┃ Hoody Agent     No set-up. Ask Hoody Agent puts the prompt in the
+ ▾ ceda┃                 Agent's message box; it waits there until you press
+     i ┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ Skills in the Guide                                  Hide on this page

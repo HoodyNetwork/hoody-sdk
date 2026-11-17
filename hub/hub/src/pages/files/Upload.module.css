@@ -1,0 +1,54 @@
+/* The Upload dialog and its band lines. A long name wraps, never cuts. Tokens only. */
+.body {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.note {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.rows {
+  display: grid;
+  gap: var(--sp-2);
+  max-block-size: 320px;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--sp-1) var(--sp-3);
+  align-items: baseline;
+}
+
+.name {
+  overflow-wrap: anywhere;
+}
+
+.size {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.state {
+  grid-column: 1 / -1;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.progress {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.fileInput {
+  display: none;
+}

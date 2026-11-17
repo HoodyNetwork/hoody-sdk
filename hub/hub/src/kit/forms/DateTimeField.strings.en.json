@@ -1,0 +1,8 @@
+{
+  "dt.date": "Date",
+  "dt.time": "Time",
+  "dt.datePlaceholder": "YYYY-MM-DD",
+  "dt.timePlaceholder": "HH:MM",
+  "dt.dateInvalid": "Use a date such as 2026-10-23.",
+  "dt.timeInvalid": "Use a 24-hour time such as 09:30."
+}

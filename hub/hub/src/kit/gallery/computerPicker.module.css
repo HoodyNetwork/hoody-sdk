@@ -1,0 +1,4 @@
+/* A narrow place for the long-realm sample (a phone-width field). */
+.narrow {
+  width: 16rem;
+}

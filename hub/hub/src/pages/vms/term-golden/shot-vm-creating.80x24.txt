@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines › build
+ build  ● Creating
+ A VM inside atlas.
+ ▸Overview
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Overview                                                                   │
+ │ State           ● Creating                                                 │
+ │ Created so far  8 GB of 20 GB                                              │
+ │ Creating        ████░░░░░░                                                 │
+ │ This VM is being created. Its settings show once it exists.                │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

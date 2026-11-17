@@ -1,0 +1,57 @@
+/* Press and hold feedback for a drag handle that is a header on a card (the Board's tile header): a held
+   header shows at once that it was taken, before the drag threshold; a touch press first fills a bar along the header
+   over the hold. The accent is light in the light theme (#ef2 is about 1.1:1 on a card), so an ink line runs inside the
+   accent ring and along the bar: the ink carries the contrast, the accent the colour. The ring is a layer above the
+   card's children (an opaque body would hide a shadow on the card itself), all round. The card and the header are
+   positioned by their owner (the ring and the bar are absolute inside them). The hold time --press-hold is set on the header
+   by pressClasses (PRESS_HOLD_MS, the time the owner's hold timer waits). */
+.pressed::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-raised);
+  border: var(--bw-2) solid var(--hx-acc);
+  box-shadow: inset 0 0 0 var(--bw) var(--hx-ink);
+  pointer-events: none;
+}
+
+/* Two classes (the card's and the header's) so the fill and cursor win over the owner's own header rule (one class),
+   whatever order the stylesheets load in. */
+.pressed > .pressedHead {
+  background: var(--hx-selected);
+  cursor: grabbing;
+}
+
+.holdHead::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  height: var(--sp-half);
+  background: var(--hx-acc);
+  box-shadow: 0 calc(-1 * var(--bw)) 0 var(--hx-ink);
+  transform-origin: left center;
+  animation: holdFill var(--press-hold) linear forwards;
+  pointer-events: none;
+}
+
+/* The bar fills from the header's start: the right edge in a right-to-left page. */
+.holdHead:dir(rtl)::after {
+  transform-origin: right center;
+}
+
+@keyframes holdFill {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .holdHead::after {
+    animation: none;
+  }
+}

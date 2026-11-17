@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ○ atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                           ▸ Use with your agent  [+ Get a computer]
+▌Computers             │
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ Computers  Esc
+ Vault                 │  atlas  ● Stopped                                                              [Go to n12] [⋯]
+                       │  SG n12 · Home base · █  Personal ·  Current computer
+On atlas ▾             │
+ Programs              │  ▸Overview  Connect  Permissions  Ports & addresses  Desktop  Network  Run  Programs  Backups
+ Schedules             │   Storage
+ Scripts               │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Logs                  │  │ ! atlas expired on Nov 2, 2026: its server ended or was reinstalled. Nothing can start it █
+ Tunnels               │  │   again.                                                                                  █
+ Notes                 │                                                                                              █
+ AI                    │                                                                                              █
+ VMs                   │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐▀
+                       │  │ Open on atlas                                                                            │
+Account                │  │                                                                                          │
+ Plans & Billing       │  │   Terminal                                     Desktop                                   │
+ Referrals             │  │   Expired                                      Expired                                   │
+ Keys and tokens       │  │                                                                                          │
+ API                   │  │                                                                                          │
+ Notifications      26 │  │                                                                                          │
+ Account               │  │   Files                                        Browser                                   │
+                       │  │   Expired                                      Expired                                   │
+ + Rent servers        │  │                                                                                          │
+ Guide                 │  │                                                                                          │
+ Support               │  │                                                                                          │
+                       │  │   Agent                                        Website                                   │
+                       │  │   Expired                                      Expired                                   │
+                       │  │                                                                                          │
+                       │  │                                                                                          │
+                       │  │                                                                                          │
+                       │  │   SSH                                                                                    │
+                       │  │   Connect ›                                                                              │
+                       │  │                                                                                          │
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                      ◆ Personal ▾  Computers not loaded ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing                                                                  + Add funds
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │    Plans    Bare metal  ▸ Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │                                                                                              █
+                       │    WALLET                                                                                    █
+On this computer       │    ! Couldn't read your balances. · Try again                                                █
+ Programs              │                                                                                              █
+ Schedules             │                                                                                              █
+ Scripts               │    GITHUB BONUS  $10.00 in Wallet credit is available.                                       █
+ Logs                  │    [Claim bonus] GitHub account: @octocat                                                    █
+ Tunnels               │    Limit: one bonus per Hoody account and one per GitHub account.                            █
+ Notes                 │                                                                                              █
+ AI                    │                                                                                              █
+ VMs                   │                                                                                              █
+                       │  Server subscriptions                                                                        █
+Account                │  What you pay for, when it renews, and what needs you. What happens when auto-renew is off   █
+▌Plans & Billing       │                                                                                              █
+ Referrals             │  / Search                   State ▾                                                 ↻ Refresh█
+ Keys and tokens       │                                                                                              █
+ API                   │                                                                                              █
+ Notifications       2 │  ✗ Server subscriptions: This didn't load                                                    █
+ Account               │  Try again                                                                                   █
+                       │                                                                                              █
+ + Rent servers        │                                                                                              █
+ Guide                 │                                                                                              █
+ Support               │  AI usage & limits                                                                           █
+                       │  Each server you own has its own free AI allowance, shared by every computer on it.          █
+                       │  Where the allowance comes from                                                              █
+                       │                                                                                              ▀
+                       │  ! Couldn't read your AI usage.
+                       │  No answer from the server. Check your connection, then try again.
+                       │  [Try again]
+                       │  ▸ Details
+                       │
+                       │  Questions
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

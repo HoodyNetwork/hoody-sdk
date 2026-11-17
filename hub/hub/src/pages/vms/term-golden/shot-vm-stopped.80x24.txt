@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines › win11
+ win11  ● Stopped                                                   Start   [⋯]
+ A VM inside atlas.
+ ▸Overview  Screen  Ports  Storage  Snapshots  Settings  Logs
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Overview                                                                   │
+ │ Memory                  4 GB                                               │
+ │ CPUs                    2                                                  │
+ │ Disk                    64 GB                                              │
+ │ Starts with             UEFI with Secure Boot                              │
+ │ TPM                     Yes                                                │
+ │ Disk connection         VirtIO                                             │
+ │ Screen                  On                                                 │
+ │ Open ports              0                                                  │
+ │ Starts with the         No                                                 │
+ │ computer                                                                   │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

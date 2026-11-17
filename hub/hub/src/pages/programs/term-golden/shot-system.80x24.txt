@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs             ▸ Use with your agent  [+ New program]   + Launch an app
+ 19 programs on atlas · 11 running · 4 need a look
+ ‹ Programs  Esc
+ hoody-agent  ● Running                                [↻ Restart] [■ Stop] [⋯]
+
+ ▸ Why be careful with this one?                                              █
+                                                                              █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ At a glance                                                               │█
+ │ Kind      System program                                                  │█
+ │ State     Running                                                         │█
+ │ Up        5 days                                                          │█
+ │ Restarts  Starts again whenever it stops                                  │█
+ │ Startup   Off                                                             │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Ports                                                                     │
+ │ No alias for system programs: their address still shows which computer    │
+ │ they run on.                                                              │
+ │    Port              State                     Address                    │
+ │› ▸ 15000             ● Running                 Open port 15000            │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

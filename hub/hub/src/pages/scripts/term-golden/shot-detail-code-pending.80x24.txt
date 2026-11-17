@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Scripts                                  ▸ Use with your agent   + New script
+ ‹ Scripts  Esc
+ Weather lookup  ● Working                 [▷ Try it] [✦ Ask the assistant] [⋯]
+ /weather ·  atlas
+
+  Overview ▸Code  Test  Settings
+ ──────────────────────────────────────────────────────────────────────────────
+  7 │ }
+  8 │
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Versions                                                                  │
+ │ Every save is kept, newest first. Restore puts an older one back as a new │▄
+ │ save.                                                                     │█
+ │ Oct 22, 2026, 9:12 AM                                           [Preview] │█
+ │   1.8 KB                                                                  │█
+ │ Oct 19, 2026, 4:40 PM                                           [Preview] │█
+ │   1.7 KB                                                                  │█
+ │ Oct 15, 2026, 8:00 AM                                           [Preview] │█
+ │   1.2 KB                                                                  │▀
+ ──────────────────────────────────────────────────────────────────────────────
+ ◷ Saving may have gone through [Check again]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

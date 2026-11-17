@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                              ▸ Use with your agent   Browse market
+▌Computers             │  Your servers and subscriptions, and how many computers run on each.
+ Files                 │    Computers  ▸ Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  / Search servers                                                    ↻ Refresh  … More actions
+ Vault                 │
+                       │
+On atlas ▾             │  ✗ Servers: This didn't load
+ Programs              │  Try again
+ Schedules             │
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │  Questions
+                       │  ▸ What does a new computer come with?
+                       │  ▸ What are realms and projects?
+                       │  ▸ Who can open my computer's programs?
+                       │  ▸ How does the firewall work, and what does No internet block?
+                       │  ▸ How do I use a computer as a proxy, and what is an exit?
+                       │  ▸ How do I use my own domain for a web address?
+                       │  ▸ How do I get a shell on my computer?
+                       │  ▸ What is the difference between a snapshot and a zip backup?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

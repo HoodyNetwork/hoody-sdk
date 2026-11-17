@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Chats  ▌Agents   Automations   Knowledge   Settings
+ Agents
+ ‹ Agents  Esc
+ reviewer   Shipped copy                             [New chat with this agent]
+ Reviews a change before it ships
+
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │                                                                           │█
+ │ Model                           The chat's model           [Change model] │█
+ │                                                                           │█
+ │ Reasoning effort                │ Model default ▾                         │█
+ │ How much the model thinks                                                 │
+ │ before it answers. Model                                                  │
+ │ default uses the model's own                                              │
+ │ level.                                                                    │
+ │                                                                           │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ Turn limit  No limit set
+ Tools       Every tool
+ Tool list   A base: Hoody adds what this agent needs
+ Skills      Skills depend on this agent's tools
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

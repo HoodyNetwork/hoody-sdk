@@ -1,0 +1,10 @@
+/* A tight toolbar (DataTable's fit, toolbarSteps) shows the icons alone; the words stay as each
+   option's name for screen readers. The label is the segment's only span (the icon is an svg). */
+.iconOnly span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

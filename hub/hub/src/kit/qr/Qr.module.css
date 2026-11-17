@@ -1,0 +1,305 @@
+/* QR surfaces: the popover (--popover-w), the enlarged dialog (its code 440) and the phone sheet (the screen's width).
+   The popover and the dialog draw the one frame of every floating surface (--pop-line, --sh-pop). A panel is one grid
+   column of fixed slots (head, code, caption, address, actions) with equal padding, so every slot starts at the same
+   left edge and the code spans the column: the surface's width sizes the code. */
+.popover {
+  z-index: var(--z-popover);
+  box-sizing: border-box;
+  width: var(--popover-w);
+  max-width: calc(100vw - 2 * var(--sp-4));
+  border: var(--bw) solid var(--pop-line);
+  border-radius: var(--r-1);
+  background: var(--pop-bg);
+  box-shadow: var(--sh-pop);
+}
+
+.popover[data-entering] {
+  animation: qr-in var(--dur-enter) var(--ease-out);
+}
+
+.popover[data-exiting] {
+  animation: qr-out var(--dur-exit) linear forwards;
+}
+
+@keyframes qr-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes qr-out {
+  to {
+    opacity: 0;
+  }
+}
+
+.dialog {
+  outline: none;
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  background: var(--hx-scrim);
+}
+
+.modal {
+  box-sizing: border-box;
+  width: min(calc(440px + 2 * var(--sp-5) + 2 * var(--bw)), 100%); /* the large code is 440 px wide */
+  max-height: 100%;
+  overflow: auto;
+  border: var(--bw) solid var(--pop-line); /* the Dialog's frame */
+  border-radius: var(--r-2);
+  background: var(--hx-raised);
+  box-shadow: var(--sh-pop);
+  outline: none;
+}
+
+.modal[data-entering] {
+  animation: qr-pop var(--dur-enter) var(--ease-out);
+}
+
+@keyframes qr-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+.sheetModal {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
+.scrim:has(.sheetModal) {
+  padding: 0;
+}
+
+.sheetModal .dialog {
+  height: 100%;
+}
+
+/* Panel: one column of slots; every slot fills it, so all share one left (and right) edge. */
+.panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--sp-3);
+  padding: var(--sp-4);
+}
+
+.panel > * {
+  min-width: 0;
+}
+
+.large {
+  padding: var(--sp-5);
+}
+
+.sheet {
+  box-sizing: border-box;
+  height: 100%;
+  grid-template-rows: auto auto auto 1fr;
+  padding: var(--sp-4) var(--sp-4) calc(var(--sp-4) + env(safe-area-inset-bottom));
+}
+
+/* Title, then the size control and Close, on one line with one centre. */
+.head {
+  display: grid;
+  grid-auto-columns: auto;
+  grid-auto-flow: column;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--sp-1);
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--hx-ink);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-box-body);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.large .title,
+.sheet .title {
+  font: var(--t-heading);
+  letter-spacing: var(--tracking-title); /* the one overlay title */
+}
+
+.codeSize {
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.codeBox {
+  overflow: hidden;
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+}
+
+.secretBox > .codeBox {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+}
+
+.code {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.blurred {
+  filter: blur(6px);
+  opacity: 0.55;
+  transform: scale(1.06);
+}
+
+.large .blurred {
+  filter: blur(11px);
+}
+
+/* In a QR panel the code and its caption fill the column, the caption starting at its left edge. */
+.secret.panelSecret {
+  align-items: stretch;
+}
+
+.panelSecret .secretStack {
+  align-items: stretch;
+}
+
+.panelSecret .keyNote {
+  text-align: start;
+}
+
+/* QrSecret: the key badge above the box (outside the code and its quiet zone), the box as given, and the caption under it. */
+.secret {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* The badge centred over the box, whatever the QrSecret's own alignment. */
+.secretStack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.secretBox {
+  max-width: 100%;
+}
+
+/* A code the API sent as an image (QrImage) fills the box its QrSecret is given (boxClassName sizes and frames it, as
+   the code box does for a QrPanel), its modules kept sharp. */
+.image {
+  display: block;
+  image-rendering: pixelated;
+}
+
+.secretBox > .image {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+}
+
+.keyBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-2) var(--sp-1) var(--sp-1);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  color: var(--hx-ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.keyMark {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.keyNote {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.keyNote > svg {
+  display: inline-block;
+  margin-inline-end: var(--sp-1);
+  vertical-align: middle;
+}
+
+.address {
+  margin: 0;
+  color: var(--hx-ink);
+  font: var(--t-mono);
+  overflow-wrap: anywhere;
+}
+
+.masked {
+  color: var(--hx-muted);
+  letter-spacing: 0.08em;
+  user-select: none;
+}
+
+/* The shown address is a link that keeps the address's mono face and wraps anywhere, as the plain address did. */
+.address > * {
+  overflow-wrap: anywhere;
+}
+
+.status {
+  margin: calc(-1 * var(--sp-2)) 0 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-box-small);
+}
+
+.addressSlot {
+  display: grid;
+  row-gap: var(--sp-2);
+}
+
+/* The status line sits under the mask within its slot (the slot's own gap). */
+.addressSlot > .status {
+  margin: 0;
+}
+
+/* One row, one centre line; the buttons grow to share the column's width, so the row starts and ends at its edges. A
+   label that cannot fit (a long translation, "Couldn't copy") wraps the row rather than spilling out of its button. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.actions > * {
+  flex: 1 1 auto;
+}
+
+.sheet .actions {
+  align-self: end;
+}
+

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY       ┃ Ask the Agent about access to atlas                 Esc ×
+ Computers          ┃ Starts a new conversation with the Agent on atlas.
+ ▸ Computers    Serv┃ The answer shows in the Agent panel.
+ ───────────────────┃ ─────────────────────────────────────────────────────────
+ ‹ Computers  Esc   ┃ YOUR REQUEST                                            █
+ atlas  ● Running   ┃ Explain who can open atlas                              █
+ SG n12 · Home base ┃ The Agent explains who can open this computer's programs█
+                    ┃ and from where, what is blocked, and anything risky. It █
+  Overview  Connect ┃ changes nothing.                                        █
+  Programs  Backups ┃ ▸ Exact instructions sent with it                       █
+ ───────────────────┃                                                         █
+ ┌──────────────────┃ WHAT THE AGENT READS                                    █
+ │ ACCESS           ┃  ▸ atlas: access rules                                  █
+ │ Now: only connect┃ Passwords and keys are left out and ids are masked.     █
+ │ Chosen here, in a┃                                                         █
+ └──────────────────┃ Tell the Agent what you want                            █
+                    ┃ │                                                       █
+ ┌──────────────────┃                                                         █
+ │ Who can open its ┃                                                         █
+ │ ( ) Anyone with t┃ Example: only my office IP can open the terminal. The
+ │     No sign-in. A┃ Agent gets your request and these rules, without
+ │     open that pro┃ passwords or keys. It asks you to approve each change.
+ │ (•) Only my IP   ┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter op┃                                [Close]   ✦ Ask the Agent

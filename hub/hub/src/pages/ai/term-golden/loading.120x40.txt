@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            AI                        ◆ Personal ▾  … Loading computers… ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   New chat
+ Computers             │  ▌✦ Chats     Agents     Automations     Knowledge     Settings
+ Files                 │  / Search                   Filters              ‹ This computer ›  All computers    ↻ Refresh
+ Bots                  │
+ Board                 │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ Demo                  │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ Vault                 │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                       │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+On this computer       │
+ Programs              │
+ Schedules             │
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+▌AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications       2 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │ ───────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Personal                                                                        [AI settings]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

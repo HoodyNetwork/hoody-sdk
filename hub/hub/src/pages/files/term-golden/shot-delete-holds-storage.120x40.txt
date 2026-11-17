@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Files                                        ▸ Use with your agent  ‹ One pane ›  Two panes
+ Computers             │  The folders on your computers.
+▌Files                 │  ▸ Browse    Storage    Transfers    Use from your PC
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  [Up one folder] │ ● SG atlas · █ Personal ▾ /              [Find] [+ New folder] [Upload] [⋯]
+ Vault                 │
+                       │  / Se┌──────────────────────────────────────────────────────────┐tems  ↻ Refresh  View options
+On atlas ▾             │      │ Delete srv?                                        Esc × │
+ Programs              │    [ │ ──────────────────────────────────────────────────────── │            Kind ↑
+ Schedules             │    [ │ This holds the open storage Photos. Close it in Storage  │ 6:13 AM    Folder          ⋯
+ Scripts               │    [ │ first.                                                   │ 6:13 AM    Folder          ⋯
+ Logs                  │    [ │                                                          │ 6:13 AM    Folder          ⋯
+ Tunnels               │    [ │                                                  [Close] │ 6:13 AM    Folder          ⋯
+ Notes                 │    [ └──────────────────────────────────────────────────────────┘ 6:13 AM    Folder          ⋯
+ AI                    │  › [ ] srv                                          Oct 18, 2025, 6:13 AM    Folder          ⋯
+ VMs                   │    [ ] tmp                                          Oct 17, 2025, 6:13 AM    Folder          ⋯
+                       │    [ ] usr                                          Oct 16, 2025, 6:13 AM    Folder          ⋯
+Account                │    [ ] var                                          Oct 15, 2025, 6:13 AM    Folder          ⋯
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │  Questions
+                       │  ▸ How do I open a computer's files on my own device?
+                       │  ▸ How do I mount the files on Linux without a desktop?
+                       │  ▸ Can I mount from the command line or from my code?
+                       │  ▸ What do I need to use a computer's files from my PC?
+                       │  ▸ How do I put a folder from my PC into a computer?
+                       │  ▸ Which storage can I connect, and how do I sign in to Google Drive or Dropbox?
+                       │  ▸ What happens to files I write into a storage folder?
+                       │  ▸ How much can I upload, copy or download at once?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

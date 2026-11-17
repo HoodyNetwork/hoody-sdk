@@ -1,0 +1,15 @@
+/* The realm band's Details: under the band, full width, the kit's hairline and fill. */
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.details {
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--bw) solid var(--hx-line-2);
+  border-top: 0;
+  border-radius: 0 0 var(--r-1) var(--r-1);
+  background: var(--hx-bg);
+  font-size: var(--fs-sm);
+}

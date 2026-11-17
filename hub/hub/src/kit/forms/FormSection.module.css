@@ -1,0 +1,85 @@
+/* FormSection: a group of fields in a form. The title is a heading on --t-group (600 14/20), a step above a field
+   label (500 12); its description is the next line; the fields follow after the head gap, one field gap apart. */
+.section {
+  --form-section-gap: var(--sp-5);
+  --form-field-gap: var(--sp-4);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+/* Every section but the first: a rule above it, the section gap on both sides of the rule. The column around the
+   sections already put its own gap (--form-gap: a Stack, a Form, a Dialog body) before the section, so that is taken
+   off and the space above the rule is the section gap in every holder. */
+.section:not(:first-child) {
+  margin-block-start: calc(var(--form-section-gap) - var(--form-gap, 0px));
+  padding-block-start: var(--form-section-gap);
+  border-block-start: var(--bw) solid var(--pop-sep);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.head > [data-hub-heading] {
+  margin: 0;
+  color: var(--hx-ink);
+  font: var(--t-group);
+}
+
+.description {
+  max-width: 60ch;
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* The fields: one gap. What sits in the body is not in the holder's column any more. */
+.body {
+  --form-gap: 0px;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--form-field-gap);
+  min-width: 0;
+}
+
+/* The closing block: always ruled, the form's last section. */
+.summary {
+  padding-block-start: var(--form-section-gap);
+  border-block-start: var(--bw) solid var(--pop-sep);
+}
+
+/* In a Dialog, a Drawer or a Sheet, from 600 px wide, it also stays at the end of the scroll box, whole, above the
+   footer, on the surface's own fill (a Drawer body publishes --form-surface; a Dialog is --hx-raised), so the fields
+   scroll under it and no row is ever half shown at the footer's edge. A phone has no room to give up, and a form on
+   the page has no scroll box of its own: there it is the plain last section and scrolls with the form. */
+@media (width >= 600px) {
+  [role="dialog"] .summary,
+  [role="dialog"] .summary:not(:first-child) {
+    position: sticky;
+    z-index: var(--z-raised);
+    inset-block-end: 0;
+    padding-block: var(--sp-3);
+    background: var(--form-surface, var(--hx-raised));
+  }
+
+  /* While fields sit under the summary they fade out above its rule (the surface's fill to clear, over less than the
+     section gap), so the summary reads as the form's pinned end and a line of help never ends on the rule. At rest
+     the fade lies in the empty section gap, on the same fill, and shows nothing. */
+  [role="dialog"] .summary::before {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 100%;
+    block-size: var(--sp-4);
+    margin-block-end: var(--bw);
+    background: linear-gradient(to top, var(--form-surface, var(--hx-raised)), transparent);
+    content: "";
+    pointer-events: none;
+  }
+}

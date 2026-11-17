@@ -1,0 +1,402 @@
+/* Sidebar: 240 expanded (200-360 by its edge handle, remembered), 56 rail, 280 phone drawer. */
+.sidebar {
+  /* "Fluid fit": rows follow the window height so every item, the foot included, is in the window
+     from 700 to 1080 px tall; 5 px above and below each block line and 18 px block labels. A touch screen
+     keeps its 44 px rows and 24 px labels (below). rows is --nav-rows, the rows Sidebar.tsx draws.
+     The height left for rows is 100vh less 126 px of fixed chrome (brand 48, groups padding 8, two block lines 22,
+     labels 37, foot line 11) less the 1 px dashed line of every row after a block's first (rows - 4, four blocks):
+     (100vh - 122px) / rows - 1px. The floor is that height at 700 px, at most 24 px. A fifth block changes 126. */
+  --nav-item-h: clamp(
+    min(24px, calc(578px / var(--nav-rows, 23) - 1px)),
+    calc((100vh - 122px) / var(--nav-rows, 23) - 1px),
+    40px
+  );
+  --nav-label-h: 18px;
+  --nav-label-hit: 24px; /* the "On <computer>" switch's hit height (below) */
+  --nav-block-gap: 5px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  border-inline-end: var(--bw) solid var(--hx-panel-line);
+  background: var(--hx-sidebar);
+}
+
+/* The collapse button and the resize handle sit on the end edge; the drawer has neither. */
+.sidebar:not(.drawer) {
+  position: relative;
+}
+
+/* Collapse / expand: the kit's small icon button on the edge just under the brand line (level with the brand, its
+   outer half would sit under the top bar, which stacks above the sidebar). This wrapper only places it and shows it
+   while the pointer is on the sidebar or the button has focus, always on a touch screen (no hover there). Its size
+   follows the button's: the small control height with a mouse, a touch screen's --touch-min; its middle on the edge.
+   The holder takes that size itself (the button is drawn small, its press reaches the holder's edges), so placing it by
+   its size puts the button where it is measured. */
+.collapse {
+  --collapse-size: max(var(--ctl-h-xs), var(--touch-min));
+
+  position: absolute;
+  inline-size: var(--collapse-size);
+  block-size: var(--collapse-size);
+  inset-block-start: calc(var(--topbar-h) + 8px);
+  inset-inline-end: calc(var(--collapse-size) / -2);
+  z-index: var(--z-raised);
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transition: opacity var(--dur-hover) linear;
+}
+
+.sidebar:hover .collapse,
+.collapse:focus-within,
+.collapse:hover {
+  opacity: 1;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .collapse {
+    opacity: 1;
+  }
+}
+
+/* A touch screen: the button (--touch-min) sits in the brand row, at its end, not on the edge, so it shares no row's
+   touch area; in the rail it takes the logo's place. */
+@media (pointer: coarse) {
+  .collapse {
+    inset-block-start: calc((var(--topbar-h) - var(--collapse-size)) / 2);
+    inset-inline-end: var(--sp-1);
+  }
+
+  .rail .logo {
+    display: none;
+  }
+}
+
+/* Touch targets never shrink (tokens.css): the fluid rows are for a fine pointer only. */
+@media (pointer: coarse) {
+  .sidebar {
+    --nav-item-h: var(--sidebar-item-h);
+    --nav-label-h: 24px;
+  }
+}
+
+.brand {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2);
+  height: var(--topbar-h);
+  padding-inline: var(--sp-5);
+}
+
+.logo {
+  flex: none;
+  color: var(--hx-ink);
+}
+
+.brandText {
+  font-family: var(--font-head);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+  white-space: nowrap;
+}
+
+.brandHub {
+  color: var(--hx-muted);
+  font-weight: var(--fw-medium);
+}
+
+.groups {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--sp-1) var(--sp-2);
+  overflow: hidden auto;
+}
+
+.group + .group {
+  margin-block-start: var(--nav-block-gap);
+  padding-block-start: var(--nav-block-gap);
+  border-block-start: var(--bw) solid var(--hx-nav-line);
+}
+
+/* The Account block sits at the bottom of the groups, just above the foot's
+   line, and the free space goes between the top blocks and it. When the groups overflow (a short window) the auto
+   margin is 0 and Account simply follows On <computer> in the one scrolling list: nothing sticks or overlaps. The
+   block before it keeps its 5 px above the line (flex margins do not collapse). Rail and drawer alike. */
+.group.account {
+  margin-block-start: auto;
+}
+
+.group:has(+ .account) {
+  margin-block-end: var(--nav-block-gap);
+}
+
+.groupLabel {
+  display: flex;
+  align-items: center;
+  height: var(--nav-label-h);
+  overflow: hidden;
+  padding-inline: var(--sp-3);
+  color: var(--hx-faint);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-overflow: ellipsis;
+  text-transform: var(--case-caps);
+  white-space: nowrap;
+}
+
+/* "On <computer>" as a button: same look as the label, ink on hover, a chevron at its right on
+   hover and keyboard focus, and always on a touch screen, which has no hover. The label is 18 px tall; the
+   switch keeps a 24 px hit area, reaching up into the block line's 5 px spacing above it (nothing to press there) and
+   never over the line itself or the first row: the box is pulled up 5 px (the line's width less than the 6 px it
+   grows), so its top, and its focus ring, start just under the line and its label sits 1 px lower than a static one.
+   On a coarse pointer the label is 24: no growth, and the 1 px. */
+.groupSwitch {
+  position: relative;
+  width: 100%;
+  height: var(--nav-label-hit);
+  margin-block-start: calc(var(--nav-label-h) - var(--nav-label-hit) + var(--bw));
+  padding-block-start: calc(var(--nav-label-hit) - var(--nav-label-h));
+  gap: var(--sp-1);
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  text-align: start;
+}
+
+.groupSwitchText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+.groupSwitchIcon {
+  flex: none;
+  margin-inline-start: auto;
+  opacity: 0;
+}
+
+.groupSwitch[data-hovered] {
+  color: var(--hx-ink);
+}
+
+.groupSwitch[data-hovered] .groupSwitchIcon,
+.groupSwitch[data-focus-visible] .groupSwitchIcon {
+  opacity: 1;
+}
+
+.groupSwitch[data-focus-visible] {
+  box-shadow: var(--focus-ring-inset);
+}
+
+@media (hover: none) {
+  .groupSwitch .groupSwitchIcon {
+    opacity: 1;
+  }
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A dashed line between neighbours; the fills stay on the link. No padding around each item (the row
+   height carries the room), and the dashed lines hide at 900 px tall or less:
+   transparent, so the 1 px stays and no row moves. */
+.list > li {
+  padding-block: 0;
+}
+
+.list > li + li {
+  border-block-start: var(--bw) dashed var(--hx-nav-line-item);
+}
+
+@media (height <= 900px) {
+  .list > li + li {
+    border-block-start-color: transparent;
+  }
+}
+
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  height: var(--nav-item-h);
+  padding: 0 var(--sp-3);
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  color: var(--hx-muted);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  text-align: start;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  outline: none;
+}
+
+.item[data-hovered] {
+  background: var(--hx-hover);
+  color: var(--hx-ink);
+  text-decoration: none;
+}
+
+.item[data-pressed] {
+  background: var(--hx-press);
+}
+
+.item[data-focus-visible] {
+  box-shadow: var(--focus-ring-inset);
+}
+
+/* Current page: the accent fill, as the website's docs sidebar (rather than a neutral
+   current). Ink text on the accent in both themes. */
+.current,
+.current[data-hovered] {
+  background: var(--hx-acc);
+  color: var(--hx-acc-text-on);
+  font-weight: var(--fw-semibold);
+}
+
+/* Over the accent fill the inset ring alone is too faint (dark theme): an ink line inside it keeps it visible. */
+.current[data-focus-visible] {
+  box-shadow: var(--focus-ring-inset), inset 0 0 0 4px var(--hx-acc-text-on);
+}
+
+/* Chalk in the light theme makes the accent white, about 1.2:1 on the sidebar: the accent marks take a line in the
+   muted mark grey, about 3:1 on it (chalk's own edge grey is 1.5:1). Not while focus shows its own
+   ring and ink line. */
+:global(:root[data-hx-hl="chalk"]:not([data-hx-theme="dark"])) .current:not([data-focus-visible]),
+:global(:root[data-hx-hl="chalk"]:not([data-hx-theme="dark"])) .railDot.needs {
+  box-shadow: inset 0 0 0 var(--bw) var(--hx-muted-fill);
+}
+
+/* "Rent servers": a soft tint of the accent with its edge (both themes and every highlight define them), ink text,
+   nothing moving. Hover fills the full soft tint, pressing deepens it toward the edge color (after hover, so a held
+   press shows), and focus keeps the shared ring. */
+.rentRow {
+  margin-block-end: 0;
+}
+
+.rent {
+  background: color-mix(in srgb, var(--hx-acc-soft) 60%, transparent);
+  box-shadow: inset 0 0 0 var(--bw) var(--hx-acc-edge);
+  color: var(--hx-ink);
+}
+
+.rent[data-hovered] {
+  background: var(--hx-acc-soft);
+  box-shadow: inset 0 0 0 var(--bw) var(--hx-acc-edge);
+  color: var(--hx-ink);
+}
+
+.rent[data-pressed] {
+  background: color-mix(in srgb, var(--hx-acc-soft) 75%, var(--hx-acc-edge));
+}
+
+.rent[data-focus-visible] {
+  box-shadow: var(--focus-ring-inset);
+}
+
+.itemIconWrap {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+/* The count at the item's end (the kit CountBadge inside): neutral for unread, accent for "needs you". Placement only. */
+.count {
+  display: inline-flex;
+  flex: none;
+  margin-inline-start: auto;
+}
+
+/* In the rail the count becomes an 8 px dot on the icon. */
+.railDot {
+  display: none;
+  position: absolute;
+  inset-block-start: -3px;
+  inset-inline-end: -4px;
+  width: 8px;
+  height: 8px;
+  border: var(--bw-2) solid var(--hx-sidebar);
+  border-radius: var(--r-round);
+  background: var(--hx-muted-fill);
+  box-sizing: content-box;
+}
+
+.railDot.needs {
+  background: var(--hx-acc);
+}
+
+/* A dot-only badge (no count) shows on the icon in the expanded sidebar too. */
+.railDot.dotAlways {
+  display: block;
+}
+
+.itemLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-1);
+  background: var(--hx-ink);
+  color: var(--hx-on-ink);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+
+.foot {
+  flex: none;
+  padding: var(--nav-block-gap) var(--sp-2);
+  border-block-start: var(--bw) solid var(--hx-nav-line);
+}
+
+/* Rail: icons only, groups become 1 px dividers. */
+.rail .brand {
+  justify-content: center;
+  padding: 0;
+}
+
+.rail .brandText,
+.rail .groupLabel,
+.rail .itemLabel,
+.rail .count {
+  display: none;
+}
+
+.rail .railDot {
+  display: block;
+}
+
+.rail .item {
+  justify-content: center;
+  padding: 0;
+}
+
+/* Phone drawer: 280, 44 px targets. */
+.drawer .item {
+  height: 44px;
+}

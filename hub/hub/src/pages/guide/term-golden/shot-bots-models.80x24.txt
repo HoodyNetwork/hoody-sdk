@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  Guide                       ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Ask your agent  Connect  Skills  Build your own  Every link ▌Bots  Tools
+  Try this  Realms  Topics  Keyboard  Look
+ │ Talk to a Bot from a chat app, an AI app or its own link. It runs agent   │
+ │ sessions and reports back.                                                │
+ │   Bot URL                                                                 │
+ │ ▸ AI apps     OpenAI-compatible apps use the base with /v1. Anthropic-    │
+ │   MCP         compatible apps use the base without it.                    │
+ │   Chat apps                                                               │
+ │               AI apps                     ⧉ Copy all (Make a Bot first)   │
+ │               1. OpenAI-compatible base                                   │
+ │                https://‹bot›.hoody.bot/v1    ⧉ copy (Make a Bot first)    │
+ │               2. Anthropic-compatible base                                │
+ │                https://‹bot›.hoody.bot       ⧉ copy (Make a Bot first)    │ █
+ │               3. Use it with Claude Code                                  │
+ │                ANTHROPIC_BASE_URL=https://‹bot›.hoody.bot                 │
+ │                ANTHROPIC_API_KEY="$HOODY_BOT_KEY" claude                  │
+ │                ⧉ copy (Make a Bot first)                                  │
+ │               Make a Bot                                                  │
+ │                                                                           │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

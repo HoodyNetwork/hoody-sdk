@@ -1,0 +1,97 @@
+/* OtpField: a row of digit cells drawn under one transparent input. The cells carry the kit field box; this file
+   only lays them out and marks the active one. */
+.otp {
+  width: max-content;
+  max-width: 100%;
+}
+
+/* Six cells; the real input lies transparent over them and takes every key and paste. */
+.cells {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--otp-n, 6), var(--field-otp-w));
+  gap: var(--sp-2);
+  cursor: text;
+}
+
+.cell {
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.cells .cell {
+  height: var(--field-otp-h);
+  font-size: var(--fs-xl);
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  font-size: var(--fs-md);
+  opacity: 0;
+}
+
+.input:focus {
+  outline: none;
+}
+
+.cells:focus-within .active {
+  box-shadow: var(--focus-ring);
+}
+
+.cells:focus-within .active:not(.filled)::after {
+  width: var(--bw-2);
+  height: 20px;
+  background: var(--hx-ink);
+  animation: caret var(--dur-blink) steps(1) infinite;
+  content: '';
+}
+
+[data-invalid] .cell {
+  border-color: var(--hx-danger-fill);
+}
+
+[data-disabled] .cell {
+  background: var(--field-off-bg);
+  color: var(--field-off-ink);
+}
+
+[data-disabled] .cells {
+  cursor: not-allowed;
+}
+
+/* The error line keeps its room so a dialog does not jump. */
+.error {
+  min-height: calc(var(--sp-4) + var(--sp-1));
+}
+
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cells:focus-within .active:not(.filled)::after {
+    animation: none;
+  }
+}
+
+/* Forced colours do not paint box-shadow, so the focus ring above gets a solid system outline (the same rule as
+   Button's; measured by kit/focus.forced.spec.ts). */
+@media (forced-colors: active) {
+  /* The ring is on the active cell (the hidden input turns its own outline off). */
+  .cells:focus-within .active {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+}

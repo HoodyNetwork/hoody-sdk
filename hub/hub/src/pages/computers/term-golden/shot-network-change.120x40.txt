@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Use another exit                                                        Esc ×
+ Home                  │  Computers     ┃ Everything sent through atlas's proxy then leaves from that exit: for
+▌Computers             │                ┃ scraping, checking a site from another region, or one fixed IP.
+ Files                 │  ▸ Computers   ┃ ─────────────────────────────────────────────────────────────────────────────
+ Bots                  │  ──────────────┃ Leave from
+ Board                 │                ┃ ( ) atlas's own address (now) (unavailable)
+ Demo                  │  ‹ Computers  E┃     Sites see the address of atlas's server. Nothing to set up.
+ Vault                 │  atlas  ● Runni┃ ( ) Another computer of yours
+                       │  SG n12 · Home ┃     Traffic goes through that computer's proxy and leaves from its current
+On atlas ▾             │                ┃     exit. With no exit or VPN of its own, that is its server's address: pick
+ Programs              │   Overview  Con┃     one on another server for a different IP.
+ Schedules             │   Storage      ┃ (•) Your own proxy
+ Scripts               │  ──────────────┃     A SOCKS5 or HTTP(S) proxy you have, so sites see the IP you chose.
+ Logs                  │  ┌─────────────┃     Type
+ Tunnels               │  │ At a glance ┃     │ SOCKS5, names resolved by the proxy (socks5h) ▾
+ Notes                 │  │ Internet acc┃     Proxy host * (required)
+ AI                    │  │ Traffic leav┃     │ _______________________________________________________________________
+ VMs                   │  └─────────────┃     A host name or an IPv4 address.
+                       │                ┃     ! Set access rules on atlas's proxy first. Its address is the only key to
+Account                │  ┌─────────────┃       it, so without rules anyone who has the address can send traffic
+ Plans & Billing       │  │ Internet acc┃       through your exit. If the proxy you enter cannot be reached, atlas
+ Referrals             │  │ Whether atla┃       refuses requests (502) rather than sending them from its own address.
+ Keys and tokens       │  │ ✓ Allowed at┃     Port * (required)
+ API                   │  └─────────────┃     │ _______________________________________________________________________
+ Notifications      26 │                ┃     User name (optional)
+ Account               │  ┌─────────────┃     │ _______________________________________________________________________
+                       │  │ Where your t┃     Password (optional)
+ + Rent servers        │  │ [Exit addres┃     │ ______________ [Show what you typed]
+ Guide                 │  │ Sites see th┃     Sent once to atlas; the Hub never keeps it or shows it again.
+ Support               │  │  Your app  →┃ ( ) Block internet access
+                       │  │             ┃     Blocks new outgoing connections. The computer stays reachable and the
+                       │  │             ┃     exit chosen here is kept.
+                       │  └─────────────┃
+                       │                ┃ ▸ What is blocked?
+                       │  ┌─────────────┃
+                       │  │ Firewall ⓘ  ┃
+                       │  │ Anything not┃
+                       │  │    Action   ┃
+                       │  │▾ Inbound · 3┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ Enter the proxy host and the port to use this exit.  [Cancel]  Use this exit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Chats   Agents   Automations   Knowledge  ▌Settings
+ ▌Models & keys   Connections & MCP   Rules & hooks
+ atlas › Models & keys
+ Models & ┌──────────────────────────────────────────────────────────┐ account
+ atlas use│ ! Remove the key for OpenAI?                       Esc × │
+ ▌Default │ ──────────────────────────────────────────────────────── │ 2 ›
+ ─────────│ Anything using this account stops working. Nothing       │─────────
+ │ │ every│ switches to another AI by itself.                        │     │ │
+ │ │ compu│                                                          │     │ │█
+ │ │      │ • 1 Bot uses this account.                               │     │ │▀
+ │ │ Bots │ • Agents with their own model on this account: reviewer. │nge] │ │
+ │ │ Bots │                                                          │     │ │
+ │ │      │                                   [Cancel]  [Remove key] │     │ │
+ │ └──────└──────────────────────────────────────────────────────────┘─────┘ │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Accounts                                                                  │
+ │ The AI providers this computer can use, and how each one connects.        │
+ │ / Search                                            2 accounts  ↻ Refresh │
+ │   Provider     How it connects            Status       Used by            │
+ │   H Hoody AI   Included with Hoody        ● Ready      2 Bots             │
+ │ › O OpenAI     Your key                   ● Ready      1 Bot            ⋯ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

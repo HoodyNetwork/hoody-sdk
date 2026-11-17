@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Chats   Agents   Automations   Knowledge  ▌Settings
+ ▌Models & keys   Connections & MCP   Rules & hooks
+ atlas › Models & keys
+ Models & keys                                           [+ Connect an account]
+ atlas uses Claude Sonnet for chat and Hoody Free for Bots.
+ ▌Default model  Accounts  Claude Code  Hoody AI allowance  Spending   2 ›
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Now using                                                                 │▀
+ │ Claude Sonnet                                                             │
+ │                                                                           │
+ │ │ ! Claude Sonnet needs a key from [Connect Anthropic]  [Use Hoody Free]  │
+ │ │   Anthropic before it can                                               │
+ │ │   answer.                                                               │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Default model                                                             │
+ │ The model your AI helper and your Bots use unless told otherwise.         │
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │
+ │ │                                                                       │ │
+ │ │ AI helper and tasks             Claude Sonnet  Needs a key   [Change] │ │
+ │ │ The model for chat and                                                │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

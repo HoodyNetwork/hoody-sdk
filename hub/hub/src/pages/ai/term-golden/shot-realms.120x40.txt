@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                             ◆ Personal ▾  All computers ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  atlas › Models & keys
+ Computers             │  Models & keys                                                           + Connect an account
+ Files                 │  atlas uses Hoody Free for everything.
+ Bots                  │
+ Board                 │  ▌Default model  Accounts  Claude Code  Hoody AI allowance  Spending  Advanced  Questions
+ Demo                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │  ┌───────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Default model                                                                         │█
+On this computer ▾     │  │ The model your AI helper and your Bots use unless told otherwise.                     │█
+ Programs              │  │ Choose a realm                                                                        │█
+ Schedules             │  │ This computer is in more than one realm. A realm                                      │█
+ Scripts               │  │ is a separate space with its own computers, keys                                      │█
+ Logs                  │  │ and settings. Pick it from the realm menu at the                                      │█
+ Tunnels               │  │ top. Pick one there to see its default model.                                         │█
+ Notes                 │  └───────────────────────────────────────────────────────────────────────────────────────┘█
+▌AI                    │                                                                                           ▀
+ VMs                   │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Accounts                                                                              │
+Account                │  │ The AI providers this computer can use, and how each one connects.                    │
+ Plans & Billing       │  │ / Search                                                        2 accounts  ↻ Refresh │
+ Referrals             │  │                                                                                       │
+ Keys and tokens       │  │   Provider        How it connects               Status          Used by               │
+ API                   │  │ › H Hoody AI      Included with Hoody           ● Ready         2 Bots                │
+ Notifications      26 │  │   O OpenAI        Your key                      ● Ready         1 Bot               ⋯ │
+ Account               │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+ + Rent servers        │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Guide                 │  │ Claude Code                                                                           │
+ Support               │  │ Use your own Claude plan through Claude Code on this computer.                        │
+                       │  │ Choose a realm                                                                        │
+                       │  │ This computer is in more than one realm. A realm                                      │
+                       │  │ is a separate space with its own computers, keys                                      │
+                       │  │ and settings. Pick it from the realm menu at the                                      │
+                       │  │ top. Pick one there to see its default model.                                         │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Hoody AI allowance                                                                    │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

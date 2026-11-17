@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ New script
+ Step 3 of 5 · Build it  ██████░░░░
+  ✓ What it does  ✓ Where it answers ▸3 Build it  4 Check it  5 Make it live
+ ──────────────────────────────────────────────────────────────────────────────
+ ▸ Your script so far                                                         █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Building your script                                                      │█
+ │ The assistant on atlas is writing it. It keeps going if you leave this    │█
+ │ page.                                                                     │█
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │█
+ │ │ THE BUILD                                                             │ │█
+ │ │ Your script is written.                                               │ │█
+ │ └───────────────────────────────────────────────────────────────────────┘ │█
+ │ Adds a 404 for unknown cities.                                            │
+ │ ▸ See the code                                                            │
+ │ [Build again]                                                             │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ Questions
+ ──────────────────────────────────────────────────────────────────────────────
+ Next: the computer checks the code.
+ [Back]                                                    [Cancel]   Check it
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

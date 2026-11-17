@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Share Personal                                                   Esc ×
+ Keys a┃ ──────────────────────────────────────────────────────────────────────
+ A key ┃ ┌───────────────────────────────────────────────────────────────────┐█
+ key, w┃ │ SHARE A REALM                                                     │█
+   API ┃ │ Give someone access to this realm's computers for a set time.     │█
+ ──────┃ │ You get a short text and a sign-in link to send. They see what    │█
+       ┃ │ it opens and confirm before they're in.                           │█
+ People┃ └───────────────────────────────────────────────────────────────────┘█
+ includ┃                                                                      █
+ share.┃  1  Choose                                                           ▀
+ ends. ┃  2  Review
+       ┃
+ SHARED┃ Computers they can reach
+       ┃ Couldn't list this realm's computers.
+ / Sear┃
+   Shar┃ This gives access to every computer in this realm, now and later.
+ › Anyo┃
+   Anyo┃ [Try again]
+       ┃
+       ┃
+       ┃ What they can do
+ Questi┃ │ See only ▾
+ ▸ Can ┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃                                                     [Cancel]   Review

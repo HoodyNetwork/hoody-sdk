@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ New computer from before-upgrade                    Esc ×
+ Home                  │  Computers                         ┃ A new computer starts from the snapshot before-
+▌Computers             │                                    ┃ upgrade of borealis. It shows as copying in the
+ Files                 │  ▸ Computers    Servers    Projects┃ list until it is ready.
+ Bots                  │  ──────────────────────────────────┃ ─────────────────────────────────────────────────────────
+ Board                 │                                    ┃ Name
+ Demo                  │  ‹ Computers  Esc                  ┃ ┃ borealis-before-upgrade
+ Vault                 │  borealis  ● Running               ┃ 3 to 100 letters, digits, - or _.
+                       │  DE fra-7 · Acme storefront · █  Ac┃
+On atlas ▾             │                                    ┃ Server
+ Programs              │   Overview  Connect  Permissions  P┃ │ DE fra-7 ▾
+ Schedules             │   Storage                          ┃
+ Scripts               │  ──────────────────────────────────┃ Project
+ Logs                  │  ┌─────────────────────────────────┃ ┃ Pick a project ▾
+ Tunnels               │  │ At a glance                     ┃ ✗ This computer's project is not in this realm. Pick a
+ Notes                 │  │ Snapshots kept  2 of 10 ██░░░░░░┃   project here for the new computer.
+ AI                    │  │ Newest          Oct 20, 2026, 9:┃
+ VMs                   │  │ Space used      6.1 GB          ┃
+                       │  │ Last used       Oct 21, 2026, 10┃
+Account                │  └─────────────────────────────────┃
+ Plans & Billing       │                                    ┃
+ Referrals             │  ┌─────────────────────────────────┃
+ Keys and tokens       │  │ Snapshots                       ┃
+ API                   │  │ A snapshot saves the whole compu┃
+ Notifications      26 │  │ computer from it.               ┃
+ Account               │  │  Snapshot         Holds         ┃
+                       │  │› before-upgrade    Disk only    ┃
+ + Rent servers        │  │  snap-20261018-2…               ┃
+ Guide                 │  └─────────────────────────────────┃
+ Support               │                                    ┃
+                       │  ┌─────────────────────────────────┃
+                       │  │ Download folders                ┃
+                       │  │ Each folder comes as one .zip, s┃
+                       │  │  Folder              Size check ┃
+                       │  │› /root               Under 100,0┃
+                       │  │  /home               Under 100,0┃
+                       │  │  /etc                Under 100,0┃
+                       │  └─────────────────────────────────┃
+                       │                                    ┃ ─────────────────────────────────────────────────────────
+ Typing · Esc leaves the field · Ctrl+K commands            ┃ [Cancel]  Make the computer

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Demo                                                               + New item
+ Everything in one list, newest first.
+ / Search               Filters              120 items  ↻ Refresh  View options
+   Name             Status ↑        Owner         Updated
+ ▌ ember-1          ● Failed        Ana Ruiz      Oct 21, 2026, 8:00 AM      ⋯█
+   juniper-1        ● Failed        Ben Okafor    Oct 19, 2026, 9:00 PM      ⋯█
+   cinder-2         ● Failed        Chen Wei      Oct 18, 2026, 10:00 AM     ⋯█
+   harbor-2         ● Failed        Dara Novak    Oct 16, 2026, 11:00 PM     ⋯█
+   atlas-3          ● Failed        Ana Ruiz      Oct 15, 2026, 12:00 PM     ⋯█
+   fjord-3          ● Failed        Ben Okafor    Oct 14, 2026, 1:00 AM      ⋯█
+   kestrel-3        ● Failed        Chen Wei      Oct 12, 2026, 2:00 PM      ⋯░
+   delta-4          ● Failed        Dara Novak    Oct 11, 2026, 3:00 AM      ⋯░
+   iris-4           ● Failed        Ana Ruiz      Oct 9, 2026, 4:00 PM       ⋯░
+   boreal-5         ● Failed        Ben Okafor    Oct 8, 2026, 5:00 AM       ⋯░
+   granite-5        ● Failed        Chen Wei      Oct 6, 2026, 6:00 PM       ⋯░
+   lumen-5          ● Failed        Dara Novak    Oct 5, 2026, 7:00 AM       ⋯░
+   ember-6          ● Failed        Ana Ruiz      Oct 3, 2026, 8:00 PM       ⋯░
+   juniper-6        ● Failed        Ben Okafor    Oct 2, 2026, 9:00 AM       ⋯░
+   cinder-7         ● Failed        Chen Wei      Sep 30, 2026, 10:00 PM     ⋯░
+   harbor-7         ● Failed        Dara Novak    Sep 29, 2026, 11:00 AM     ⋯░
+   atlas-8          ● Failed        Ana Ruiz      Sep 28, 2026, 12:00 AM     ⋯░
+ 1–50 of 120 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

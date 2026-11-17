@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Outgoing spam reported from your server                                 Esc ×
+ Home                  │  Notifications ┃ About n12
+ Computers             │  Notices Hoody ┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │                ┃ ┌───────────────────────────────────────────────────────────────────────────┐
+ Bots                  │    Inbox 26  ▸ ┃ │ The notice                                                                │
+ Board                 │  ──────────────┃ │ │ ! The suspension linked to this notice remains active. Resolving this   │
+ Demo                  │                ┃ │ │   notice does not lift that suspension.                                 │
+ Vault                 │  ┌─────────────┃ │ Server                                                                n12 │
+                       │  │ Notices from┃ │ ───────────────────────────────────────────────────────────────────────── │
+On atlas ▾             │  │/ Search     ┃ │ Status                                                             ! Open │
+ Programs              │  │             ┃ │ ───────────────────────────────────────────────────────────────────────── │
+ Schedules             │  │  Notice     ┃ │ Sent                                                Oct 22, 2026, 3:00 AM │
+ Scripts               │  │› Outgoing sp┃ │ ───────────────────────────────────────────────────────────────────────── │
+ Logs                  │  │  Port scanni┃ │ Last update                                         Oct 23, 2026, 2:30 AM │
+ Tunnels               │  │  Copyright c┃ │ ───────────────────────────────────────────────────────────────────────── │
+ Notes                 │  │  Phishing pa┃ │ Linked suspension                                                ✗ Active │
+ AI                    │  │  Outgoing sp┃ │ ───────────────────────────────────────────────────────────────────────── │
+ VMs                   │  │  Port scanni┃ │ Hoody                                                                     │
+                       │  │  Copyright c┃ │   Oct 22, 2026, 3:00 AM                                                   │
+Account                │  │  Phishing pa┃ │   Message  We received a report about n12. Please check what runs on it   │
+ Plans & Billing       │  │  Outgoing sp┃ │            and reply here with what you found and what you changed.       │
+ Referrals             │  │  Port scanni┃ │ You                                                                       │
+ Keys and tokens       │  │  Copyright c┃ │   Oct 22, 2026, 11:40 PM                                                  │
+ API                   │  │  Phishing pa┃ │   Message  Thanks, I am looking into it now.                              │
+▌Notifications      26 │  │  Outgoing sp┃ │ Hoody                                                                     │
+ Account               │  │  Port scanni┃ │   Oct 23, 2026, 2:00 AM                                                   │
+                       │  │  Copyright c┃ │   Message  Thank you. Tell us when the mail queue is clean.               │
+ + Rent servers        │  │  Phishing pa┃ └───────────────────────────────────────────────────────────────────────────┘
+ Guide                 │  │  Outgoing sp┃ ┌───────────────────────────────────────────────────────────────────────────┐
+ Support               │  │  Port scanni┃ │ Reply                                                                     │
+                       │  │  Copyright c┃ │ Your reply                                                                │
+                       │  │  Phishing pa┃ │ │                                                                         │
+                       │  │  Outgoing sp┃ │                                                                           │
+                       │  │  Port scanni┃ │                                                                           │
+                       │  │  Copyright c┃ │                                                                           │
+                       │  │  Phishing pa┃ │ 0 of 4,000 characters. You can send 19 more replies on this notice.       │
+                       │  │  Outgoing sp┃ └───────────────────────────────────────────────────────────────────────────┘
+                       │  │1–25 of 40 ‹ ┃
+                       │  └─────────────┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃                                                         [Close]   Send reply

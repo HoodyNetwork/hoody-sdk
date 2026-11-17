@@ -1,0 +1,11 @@
+{
+  "chip.more": "{{first}} +{{count}}",
+  "chip.between": "{{min}}–{{max}}",
+  "chip.atLeast": "≥ {{min}}",
+  "chip.atMost": "≤ {{max}}",
+  "range.min": "From",
+  "range.max": "To",
+  "range.any": "Any",
+  "range.apply": "Apply",
+  "clearAll": "Clear all"
+}

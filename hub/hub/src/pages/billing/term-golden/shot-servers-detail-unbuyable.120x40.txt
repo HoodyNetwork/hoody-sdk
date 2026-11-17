@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing  Balance $250                                                    + Add funds
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │    Plans  ▸ Bare metal    Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC                              [Pay now]
+                       │  ‹ Plans & Billing  Esc
+On atlas ▾             │  Ashburn S  · Not for sale                                                                   █
+ Programs              │  US Ashburn · delivery time not listed                                                       █
+ Schedules             │                                                                                              █
+ Scripts               │  Delivery                                                        Delivery time is not listed.█
+ Logs                  │  ────────────────────────────────────────────────────────────────────────────────────────────█
+ Tunnels               │                                                                                              █
+ Notes                 │  Processor                                                                  Intel Xeon E-2124█
+ AI                    │  ────────────────────────────────────────────────────────────────────────────────────────────█
+ VMs                   │  Cores                                                                    2 cores · 4 threads█
+                       │  ────────────────────────────────────────────────────────────────────────────────────────────█
+Account                │  Geekbench multi-core                                                                   8,000█
+▌Plans & Billing       │  ────────────────────────────────────────────────────────────────────────────────────────────█
+ Referrals             │  Memory                                                                                  4 GB█
+ Keys and tokens       │  ────────────────────────────────────────────────────────────────────────────────────────────█
+ API                   │  Memory type                                                                         DDR4 ECC█
+ Notifications      26 │  ────────────────────────────────────────────────────────────────────────────────────────────█
+ Account               │  Memory speed                                                                       3,200 MHz█
+                       │  ────────────────────────────────────────────────────────────────────────────────────────────▀
+ + Rent servers        │  Disks                                                                              80 GB SSD
+ Guide                 │  ────────────────────────────────────────────────────────────────────────────────────────────
+ Support               │  Storage in total                                                                       80 GB
+                       │  ────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Bandwidth                                                                           1 Gbit/s
+                       │  ────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Monthly traffic                                                                    Unlimited
+                       │  ────────────────────────────────────────────────────────────────────────────────────────────
+                       │  IPv4 addresses                                                                             1
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  This server isn't for sale right now.
+                       │                                                             [See similar servers]  [Add funds]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

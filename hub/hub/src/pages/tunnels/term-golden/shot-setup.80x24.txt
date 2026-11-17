@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Connect a laptop to atlas                                        Esc ×
+ Tunnel┃ ──────────────────────────────────────────────────────────────────────
+ Put a ┃ ┌───────────────────────────────────────────────────────────────────┐█
+ laptop┃ │ WHAT YOU GET                                                      │█
+ / Sear┃ │ Like ngrok without a middleman: put a laptop app online straight  │█
+     Sh┃ │ from atlas, with no outside service to pay for.                   │█
+ ▾ Sess┃ │ Next: run the command on the laptop                               │█
+ ›   We┃ └───────────────────────────────────────────────────────────────────┘█
+     We┃                                                                      █
+     In┃                                                                      ▀
+ ▾ Sess┃  ✓  What to connect
+     In┃
+     In┃     What to connect
+ ▾ Reco┃     ┌──────────────────────────────┐ ┌──────────────────────────────┐
+     We┃     │ (•) Put a laptop app online  │ │ ( ) Bring a laptop service   │
+     se┃     │     Web pages and            │ │     into this computer       │
+       ┃     │     WebSockets, at a web     │ │     Any TCP service, such as │
+ Questi┃     │     address.                 │ │     a database.              │
+ ▸ What┃     └──────────────────────────────┘ └──────────────────────────────┘
+ ▸ Shou┃     ▸ Which one should I pick?
+ ▸ Whic┃
+ ▸ Whic┃  ✓  On the laptop
+ ▸ When┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃                                                                [Close]

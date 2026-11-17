@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs             ▸ Use with your agent  [+ New program]   + Launch an app
+ 21 programs on atlas · 11 running · 4 need a look
+ ‹ Programs  Esc
+ shards-wide  ● Stopped                                                     [⋯]
+
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ At a glance                                                               │█
+ │ Kind      Your program                                                    │█
+ │ State     Stopped                                                         │█
+ │ Restarts  Runs once and stays stopped                                     │█
+ │ Startup   [□ off] Start with the computer                                 │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Ports                                                       Start a port  │
+ │ 0 of 40 ports running                                                     │
+ │    Port             State         Address           Alias                 │
+ │› ▸ 9100             · not started Open port 9100 (…              [Start] ⋯│
+ │  ▸ 9101             · not started Open port 9101 (…              [Start] ⋯│
+ │  ▸ 9102             · not started Open port 9102 (…              [Start] ⋯│
+ │  ▸ 9103             · not started Open port 9103 (…              [Start] ⋯│
+ │  ▸ 9104             · not started Open port 9104 (…              [Start] ⋯│
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

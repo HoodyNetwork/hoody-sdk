@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Explain with your AI helper                                             Esc ×
+ Home                  │  Logs          ┃ Asks your chosen model about this text. On atlas.
+ Computers             │  55 events fail┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │                ┃
+ Bots                  │  ▸ Everything  ┃ Your AI helper will read exactly this
+ Board                 │  │ ● SG atlas ·┃ What I am looking at:                                                       │
+ Demo                  │                ┃ | 55 events failed in the last hour. 19 kinds of problem.                   │
+ Vault                 │  ! Problems jum┃                                                                             │
+                       │                ┃ 1 log entry, newest first:                                                  │
+On atlas ▾             │                ┃ <<<LOG DATA                                                                 │
+ Programs              │  What keeps goi┃ | ERROR edge                                                                │
+ Schedules             │                ┃ LOG DATA>>>                                                                 │
+ Scripts               │                ┃ What happened here?                                                         │
+▌Logs                  │    Time     Res┃ Passwords, keys and tokens are already hidden as [REDACTED].
+ Tunnels               │  › 08:59:49 ● O┃
+ Notes                 │    08:59:38 ● O┃ ▸ Instructions sent with it
+ AI                    │    08:59:27 ● O┃
+ VMs                   │    08:59:16 ● O┃ ┌───────────────────────────────────────────────────────────────────────────┐
+                       │    08:59:05 ● O┃ │                                                                           │
+Account                │    08:58:54 ● O┃ │ Model                           Hoody Free                         Change │
+ Plans & Billing       │    08:58:43 ● O┃ │ Free.                                                                     │
+ Referrals             │    08:58:33 ● O┃ │                                                                           │
+ Keys and tokens       │    08:58:22 ● N┃ └───────────────────────────────────────────────────────────────────────────┘
+ API                   │    08:58:11 ● O┃
+ Notifications      26 │  [Show older]  ┃
+ Account               │                ┃ │ ◷ No answer came back. Your AI helper may still have used some of its
+                       │                ┃ │   budget.
+ + Rent servers        │                ┃
+ Guide                 │                ┃
+ Support               │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃ ─────────────────────────────────────────────────────────────────────────────
+                       │                ┃ Sends a new request and may use more of your AI          [Close]  [Ask again]
+ Tab move · Enter open · Ctrl+K commands┃ helper's budget.

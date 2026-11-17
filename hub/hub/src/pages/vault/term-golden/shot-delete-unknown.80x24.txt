@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                 ◆ Personal ▾  Computers not loaded ▾  [A]  ^K · ?
+ Vault                                ▸ Use with your agent   + New entry   [⋯]
+ ‹ Vault  Esc
+ deploy.notes                                      ⧉ copy [✎ Replace value] [⋯]
+
+ │ ◷ Deleting deploy.notes in Personal may have gone through
+ │   The answer did not arrive. A delete can still be finishing after the list
+ │   no longer shows the entry, so this stays until you stop tracking it.
+ │   [Stop tracking]
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ About this entry                                                          │█
+ │ Belongs to     Personal                                                   │█
+ │ Encryption     Not marked as encrypted                                    │█
+ │ Size           44 B                                                       │█
+ │ Updated        Oct 23, 2026, 4:40 PM                                      │▀
+ │ Created        Oct 20, 2026, 9:15 AM                                      │
+ │ Other details  1 detail                                                   │
+ │                                                                           │
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │
+ │ │                                                                       │ │
+ │ │ Protect with a password         [Encrypt…]                            │ │
+ │ │ No encryption is recorded for                                         │ │
+ │ │ this entry. To protect this                                           │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

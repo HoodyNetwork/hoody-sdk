@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                           ▸ Use with your agent  [+ Get a computer]
+▌Computers             │
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ Computers  Esc
+ Vault                 │  atlas  ● Running                                                        [Open terminal ⇗] [⋯]
+                       │  SG n12 · Home base · █  Personal ·  Current computer
+On atlas ▾             │
+ Programs              │   Overview  Connect  Permissions  Ports & addresses  Desktop ▸Network  Run  Programs  Backups
+ Schedules             │   Storage
+ Scripts               │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Logs                  │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Tunnels               │  │ At a glance                                                                              │█
+ Notes                 │  │ Internet access      Allowed                  Firewall             4 of 500 █░░░░░░░░░   │█
+ AI                    │  │ Traffic leaves from  atlas's own address                                                 │█
+ VMs                   │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+                       │                                                                                              █
+Account                │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Plans & Billing       │  │ Internet access ⓘ                                                 Block internet access  │█
+ Referrals             │  │ Whether atlas can open new connections to the internet.                                  │█
+ Keys and tokens       │  │ ✓ Allowed atlas can open connections to the internet.                                    │█
+ API                   │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Notifications      26 │                                                                                              █
+ Account               │  ┌────────────────────────────────────────────────┌───────────────────────────────────────┐─┐█
+                       │  │ Where your traffic comes out                   │Presets                                │ │█
+ + Rent servers        │  │ [Exit addresses in the docs] [VPN inside a comp│› Block inbound TCP except web…        │ │█
+ Guide                 │  │ Sites see the exit, not you. A change applies t│  Block outbound to private networks…  │ │█
+ Support               │  │  Your app  →  atlas's proxy  →  Exit           │  Block an address…                    │ │
+                       │  │                                   atlas's own a│  Block outbound mail…                 │ │
+                       │  │                                                │  Block a port…                        │ │
+                       │  └────────────────────────────────────────────────│───────────────────────────────────────│─┘
+                       │                                                   │  Reset to no rules…                   │
+                       │  ┌────────────────────────────────────────────────└───────────────────────────────────────┘─┐
+                       │  │ Firewall ⓘ                                            [✦ Ask the Agent]  Add a rule  [⋯] │
+                       │  │ Anything not blocked is allowed. A block always wins over an allow, whatever the order.  │
+                       │  │    Action          Traffic                    From or to      Note                       │
+                       │  │▾ Inbound · 3                                                                             │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

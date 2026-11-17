@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Tunnels                                           ▸ Use with your agent   + Connect a laptop
+ Computers             │  Put a laptop app online through atlas, or let atlas reach a service on your laptop. 2
+ Files                 │  sessions connected to atlas · tunnel program running since 06:00 AM
+ Bots                  │
+ Board                 │  / Search by address or…    Shared as ▾                                   6 entries  ↻ Refresh
+ Demo                  │  ! Could not read this computer's tunnels. Showing what was read at 09:00   Try again  Details
+ Vault                 │    AM.
+                       │
+On atlas ▾             │      Shared as                  Address                                            Port ↑
+ Programs              │  ▾ Session 4f2a9c… · from 203.0.113.x · 3 streams of 1024 · 3
+ Schedules             │  ›   Web address                https://6a00…0001-c0a7…00a1-http-3000.n12.fixtur…    3000    ⋯
+ Scripts               │      Web address                https://6a00…0001-c0a7…00a1-http-5173.n12.fixtur…    5173    ⋯
+ Logs                  │      Inside this computer       127.0.0.1:5432                                       5432    ⋯
+▌Tunnels               │
+ Notes                 │  ▾ Session 9b1d7e… · from 192.0.2.x · 0 streams of 1024 · 2
+ AI                    │      Inside this computer       127.0.0.2:5432                                       5432    ⋯
+ VMs                   │      Inside this computer       127.0.0.1:6379                                       6379    ⋯
+                       │
+Account                │  ▾ Reconnecting or closing · 1
+ Plans & Billing       │      Web address seen 09:00 AM  https://6a00…0001-c0a7…00a1-http-8080.n12.fixtur…    8080    ⋯
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │  Questions
+                       │  ▸ What is a tunnel for?
+                       │  ▸ Should I put a laptop app online or bring a laptop service in?
+                       │  ▸ Which port on the computer should I use?
+                       │  ▸ Which ports does the Hub warn about?
+                       │  ▸ When do I tick the password box?
+                       │  ▸ Why did my tunnel fail to open?
+                       │  ▸ Why doesn't a web address load?
+                       │  ▸ What does "Reconnecting or closing" mean?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ New backup codes                                    Esc ×
+ Home                  │  Account                           ┃ The backup codes you have now stop working. Use a
+ Computers             │  Your profile, how you sign in, and┃ code from your authenticator app to confirm.
+ Files                 │                                    ┃ ─────────────────────────────────────────────────────────
+ Bots                  │  ▌Profile  Password  Two-step sign-┃ Current password
+ Board                 │  ──────────────────────────────────┃ ┃
+ Demo                  │  ┌─────────────────────────────────┃
+ Vault                 │  │ Security                        ┃ 6-digit code
+                       │  │ ✓ Your email address is verified┃ │ [_][_][_][_][_][_]
+On atlas ▾             │  │ ✓ Two-step sign-in is on.       ┃ The 6-digit code from your authenticator app.
+ Programs              │  │ i 11 other browsers or devices a┃
+ Schedules             │  └─────────────────────────────────┃
+ Scripts               │                                    ┃
+ Logs                  │  ┌─────────────────────────────────┃
+ Tunnels               │  │ Profile                         ┃
+ Notes                 │  │                                 ┃
+ AI                    │  │ Display name                    ┃
+ VMs                   │  │                                 ┃
+                       │  │ Username                        ┃
+Account                │  │                                 ┃
+ Plans & Billing       │  │ Email                           ┃
+ Referrals             │  │                                 ┃
+ Keys and tokens       │  │ Member since                    ┃
+ API                   │  │                                 ┃
+ Notifications      26 │  │ Account ID                      ┃
+▌Account               │  │ Account deletion goes through su┃
+                       │  └─────────────────────────────────┃
+ + Rent servers        │                                    ┃
+ Guide                 │  ┌─────────────────────────────────┃
+ Support               │  │ Password                        ┃
+                       │  │                                 ┃
+                       │  │ Password                        ┃
+                       │  │ Changing it signs you out       ┃
+                       │  │ everywhere.                     ┃
+                       │  └─────────────────────────────────┃
+                       │                                    ┃
+                       │  ┌─────────────────────────────────┃
+                       │  │ Two-step sign-in                ┃
+                       │  │                                 ┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit  ┃ [Cancel]   Make new codes

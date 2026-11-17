@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   New chat                                │
+ Computers             │  ▌✦ Chats                               ● │
+ Files                 │     Agents                                │                    What should we do?
+ Bots                  │     Automations                           │                    Give an agent a task on atlas, or just chat with a model. To use another computer, pick it in
+ Board                 │     Knowledge                             │                    the top bar.
+ Demo                  │     Settings                              │                    ■ Personal · ✓ atlas (Running)
+ Vault                 │  / Search        Filters                  │
+                       │  5 chats                                  │
+On atlas ▾             │  ‹ This computer ›  All computers         │                    ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Programs              │  ↻ Refresh                                │                    │ Ask anything, or describe a task…                                                         │
+ Schedules             │                                           │                    └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Scripts               │  ▾ Needs you · 1                          │                    [+ Attach a file]  [/ Commands]
+ Logs                  │  ›     Deploy the staging s… last month ⋯ │                    [Work on this computer] [Hoody Free] [Options · Allow everything]
+ Tunnels               │                                           │                    [Send ↵]
+ Notes                 │  ▾ Today · 2                              │                    Enter send · Alt+Enter or Ctrl+J new line · / commands · @ files · PgUp scroll
+▌AI                    │        Fix the failing c… 2 minutes ago ⋯ │
+ VMs                   │        Review the release…  3 hours ago ⋯ │                      Work on this           ✦                       Work in a folder       Do it every day
+                       │         Claude Code                       │                      computer               Just chat               Pick a project         Ask your agent on
+Account                │                                           │                      Start with the         Start a chat with       folder: its chats,     atlas: "Schedule
+ Plans & Billing       │  ▾ Yesterday · 1                          │                      General agent on       the Just chat           edits and              every morning at
+ Referrals             │        Answer the support ti… yesterday ⋯ │                      atlas.                 agent.                  repository in one      8, check my
+ Keys and tokens       │         Bot support-desk                  │                                                                     place.                 backups and tell
+ API                   │                                           │                                                                                            me if one failed".
+ Notifications      26 │  ▾ Older · 1                              │                                                                                            Or keep a TODO.
+ Account               │        Plan the backup job   last month ⋯ │                                                                                            Ask the agent
+                       │                                           │                                                                                            New TODO
+ + Rent servers        │                                           │
+ Guide                 │                                           │
+ Support               │                                           │
+                       │                                           │
+                       │                                           │
+                       │                                           │
+                       │                                           │
+                       │                                           │
+                       │                                           │
+                       │                                           │
+                       │                                           │
+                       │                                           │
+                       │                                           │
+                       │                                           │
+                       │                                           │
+                       │                                           │
+                       │                                           │
+                       │                                           │
+                       │                                           │
+                       │ ──────────────────────────────────────────│
+                       │  atlas · Personal           [AI settings] │
+                       │  1 needs you                              │
+ Typing · Esc leaves the field · Ctrl+K commands

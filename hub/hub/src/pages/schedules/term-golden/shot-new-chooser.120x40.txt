@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ New schedule                                                            Esc ×
+ Home                  │  Schedules     ┃ ─────────────────────────────────────────────────────────────────────────────
+ Computers             │  15 schedules o┃ What should run?
+ Files                 │  9 programs run┃ ┌───────────────────────────────────────────────────────────────────────────┐
+ Bots                  │                ┃ │ › Command                                                                 │
+ Board                 │  / Search sched┃ │ Run a command on this computer on a timer.                                │
+ Demo                  │  ‹ Any ›  Comma┃ └───────────────────────────────────────────────────────────────────────────┘
+ Vault                 │  15 schedules  ┃ ┌───────────────────────────────────────────────────────────────────────────┐
+                       │                ┃ │ Web request                                              Opens Programs ⇗ │
+On atlas ▾             │    Name        ┃ │ Send a request to a web address on a timer.                               │
+ Programs              │  ›   ping-api  ┃ └───────────────────────────────────────────────────────────────────────────┘
+▌Schedules             │    ! queue-drai┃ ┌───────────────────────────────────────────────────────────────────────────┐
+ Scripts               │      Watch the ┃ │ Script                                                    Opens Scripts ⇗ │
+ Logs                  │    ! sync-photo┃ │ Run a script on a timer. You set the timer inside the script, in Scripts. │
+ Tunnels               │      Nightly ba┃ └───────────────────────────────────────────────────────────────────────────┘
+ Notes                 │      nightly-di┃ ┌───────────────────────────────────────────────────────────────────────────┐
+ AI                    │      morning-ch┃ │ Agent timer or loop                                                       │
+ VMs                   │    ! POST hooks┃ │ Ask your agent: "Schedule every morning at 8, check my backups and tell…  │
+                       │      rotate-log┃ └───────────────────────────────────────────────────────────────────────────┘
+Account                │      cleanup-tm┃
+ Plans & Billing       │    ! Unnamed lo┃
+ Referrals             │      archive   ┃
+ Keys and tokens       │      old-report┃
+ API                   │      poll.sh   ┃
+ Notifications      26 │      warm-cache┃
+ Account               │                ┃
+                       │                ┃
+ + Rent servers        │                ┃
+ Guide                 │                ┃
+ Support               │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+ Tab move · Enter open · Ctrl+K commands┃

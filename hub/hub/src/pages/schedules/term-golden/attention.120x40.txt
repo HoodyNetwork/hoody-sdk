@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Schedules                                             ▸ Use with your agent   + New schedule
+ Computers             │  4 schedules on atlas · next: queue-drain in 4 minutes · 4 failed today · Computers ›
+ Files                 │  9 programs running ›
+ Bots                1 │
+ Board                 │  / Search schedules
+ Demo                  │  ‹ Any ›  Commands 1    Scripts 1    Web requests 1    Agent loops 1    Status ▾
+ Vault                 │  4 schedules  ↻ Refresh  View options
+                       │
+On atlas ▾             │    Name                                  Next run ↑                Last result         On
+ Programs              │  ▌ ! queue-drain   Script                in 4 minutes              ● Failed                  ⋯
+▌Schedules             │    ! sync-photos   Command               in 8 minutes              ● Failed       [■ on ]    ⋯
+ Scripts               │    ! POST hooks.example.org              in 20 hours               ● Failed       [■ on ]    ⋯
+ Logs                  │    ! Unnamed loop   Agent loop           Paused after failed runs  ● Failed       [□ off]    ⋯
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

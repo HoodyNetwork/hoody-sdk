@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ New key                                                          Esc ×
+ Keys a┃ Made in Personal
+ A key ┃ ──────────────────────────────────────────────────────────────────────
+ key, w┃ │ ___________________________________________________________________
+ ▸ API ┃ Name it after the agent or app that uses it.                         ▄
+ ──────┃                                                                      █
+ i Keys┃                                                                      █
+ / Sear┃ Realms                                                               █
+ 3 keys┃                                                                      █
+   Name┃ Works in                        Only Personal                        █
+ › ci-d┃ It cannot see or change                                              █
+   hood┃ anything in other realms.                                            █
+   sdk-┃ ▸ Which realms can a key work in?                                    █
+       ┃                                                                      █
+ Questi┃                                                                      ▀
+ ▸ Can ┃ Limits
+ ▸ What┃ Ends
+ ▸ Whic┃ ‹ Never ›  90 days    1 year    On a date
+ ▸ What┃ Allowed IPv4 addresses
+ ▸ When┃ │ 203.0.113.7
+ ▸ How ┃ Comma separated. Empty works anywhere.
+ ▸ What┃ [Add my IP] ✓ Added 203.0.113.7
+ ▸ What┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃                                                   [Cancel]   Make key

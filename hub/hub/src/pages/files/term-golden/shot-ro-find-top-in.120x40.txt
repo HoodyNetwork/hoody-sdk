@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Find in /home                                                           Esc ×
+ Home                  │  Files         ┃ ─────────────────────────────────────────────────────────────────────────────
+ Computers             │  The folders on┃ Other folders
+▌Files                 │  ▸ Browse    St┃
+ Bots                  │  ──────────────┃ │ / a                                       ×  Find
+ Board                 │                ┃
+ Demo                  │  [Up one folder┃ 4 matches. A search looks at up to 50,000 items, so a very big folder may
+ Vault                 │                ┃ hold more.
+                       │  / Search      ┃
+On atlas ▾             │                ┃
+ Programs              │    [ ] Name    ┃ ada                                                                    [Open]
+ Schedules             │  › [ ] bin     ┃ Folder
+ Scripts               │    [ ] copy Can┃
+ Logs                  │    [ ] etc     ┃
+ Tunnels               │    [ ] home    ┃ ada/projects/site/config.yaml                      [Show in folder] [Preview]
+ Notes                 │    [ ] root    ┃ 340 B
+ AI                    │    [ ] srv     ┃
+ VMs                   │    [ ] tmp     ┃
+                       │    [ ] usr     ┃ ada/projects/README.md                             [Show in folder] [Preview]
+Account                │    [ ] var     ┃ 2 KB
+ Plans & Billing       │                ┃
+ Referrals             │                ┃
+ Keys and tokens       │                ┃ ada/caf�                                                               [Open]
+ API                   │                ┃ Can't act on this: its name has characters the Hub can't show exactly
+ Notifications      26 │                ┃
+ Account               │                ┃
+                       │                ┃
+ + Rent servers        │                ┃
+ Guide                 │                ┃
+ Support               │                ┃
+                       │  Questions     ┃
+                       │  ▸ How do I ope┃
+                       │  ▸ How do I mou┃
+                       │  ▸ Can I mount ┃
+                       │  ▸ What do I ne┃
+                       │  ▸ How do I put┃
+                       │  ▸ Which storag┃
+                       │  ▸ What happens┃
+                       │  ▸ How much can┃
+ Tab move · Enter open · Ctrl+K commands┃

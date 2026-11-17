@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing                                                                  + Add funds
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │  ▸ Plans    Bare metal    Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC                              [Pay now]
+ Vault                 │
+                       │    Free Not listed · Small 6 · Medium 16 · Large 32 · Bare metal Not listed                 █
+On atlas ▾             │                                                                                             █
+ Programs              │    AI allowance                                                                             █
+ Schedules             │    Free Free 1×    · Small Plus 4×    · Medium Pro 10×    · Large Pro 20×                   █
+ Scripts               │         █░░░░░░░░░         ██░░░░░░░░          █████░░░░░         ██████████                █
+ Logs                  │     · Bare metal Bare-metal                                                                 █
+ Tunnels               │                                                                                             █
+ Notes                 │    Virtual machines                                                                         █
+ AI                    │    Free Not included · Small Not included · Medium Not included · Large Not included        ░
+ VMs                   │
+                       │
+Account                │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+▌Plans & Billing       │  │ All plans                                                                                │
+ Referrals             │  │ Every plan includes Hoody AI (free), the Hoody Kit, Bots and agents, the API, SDK and    │
+ Keys and tokens       │  │ CLI, link permissions, disk encryption and full SSH access.                              │▄
+ API                   │  │ Plans             Free · Small · Medium · Large · Bare metal                             │█
+ Notifications      26 │  │ Your own tools    Docker, Podman, Kubernetes and nearly any tool like them, on every     │█
+ Account               │  │                   plan.                                                                  │█
+                       │  │ Virtual machines  With their own kernel and OS, on bare metal only.                      │█
+ + Rent servers        │  │ Sites             As many sites as your computers can run. Connect your own domains,     │▀
+ Guide                 │  │                   HTTPS included.                                                        │
+ Support               │  │                                                                                          │
+                       │  │ ▸ Bot URLs                                                                               │
+                       │  │   One shareable address for one Bot. Each person or agent gets its own named key.        │
+                       │  │                                                                                          │
+                       │  │ ▸ Full SSH access  Four ways into a terminal.                                            │
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Free has useful limits                                                                   │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

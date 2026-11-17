@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                       ▸ Use with your agent   + New Bot
+ Computers             │  Every Bot on your running computers, and the page of each one.
+ Files                 │
+▌Bots                  │  Bots             Working now    ! Need you    In chat apps
+ Board                 │  11               1              1             2
+ Demo                  │  on 1 computer    Show           Show          Show
+ Vault                 │
+                       │  / Search                   Filters                          11 Bots  ↻ Refresh  View options█
+On atlas ▾             │                                                                                              █
+ Programs              │  ▌ C Chief                                                      ● Waiting for you [Answer] ⋯██
+ Schedules             │      Asked you something: answer to let it go on                                            ██
+ Scripts               │       · Runs the team day: triage, approvals and summaries                                  ██
+ Logs                  │       · production-worker-01 · Acme client · Model Hoody Free                               ██
+ Tunnels               │      Telegram Slack Discord  Public link                                                    ██
+ Notes                 │    S Support                                                            ● Working          ⋯██
+ AI                    │      … Working on it now · Answers questions about the shop and drafts replies              ██
+ VMs                   │       · production-worker-01 · Acme client · Model Hoody Free                               ██
+                       │      Discord                                                                                ██
+Account                │    D Digest                                                  ● 2 messages waiting          ⋯██
+ Plans & Billing       │      2 messages to read next · Writes the daily summary of what changed                     ██
+ Referrals             │       · production-worker-01 · Acme client · Model Hoody Free                               ██
+ Keys and tokens       │      Only here in the Hub                                                                   ██
+ API                   │    N Notes                                                                 ● Idle          ⋯██
+ Notifications      26 │      Last active 19 days ago · Files meeting notes where they belong                        ██
+ Account               │       · production-worker-01 · Personal · Model Hoody Free                                  ██
+                       │      Only here in the Hub                                                                   ██
+ + Rent servers        │    H Helper 1                                                              ● Idle          ⋯██
+ Guide                 │      Last active 20 days ago · Short-lived task helper · production-worker-01 · Acme client ██
+ Support               │       · Model Hoody Free                                                                    ██
+                       │      Only here in the Hub                                                                   ░
+                       │    H Helper 3                                                              ● Idle          ⋯░
+                       │      Last active 20 days ago · Short-lived task helper · production-worker-01 · Acme client ░
+                       │       · Model Hoody Free                                                                    ░
+                       │      Only here in the Hub                                                                   ░
+                       │    H Helper 5                                                              ● Idle          ⋯░
+                       │      Last active 20 days ago · Short-lived task helper · production-worker-01 · Acme client ░
+                       │       · Model Hoody Free                                                                    ░
+                       │      Only here in the Hub                                                                   ░
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

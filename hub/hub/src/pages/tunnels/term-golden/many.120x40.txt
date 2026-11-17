@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Tunnels                                           ▸ Use with your agent   + Connect a laptop
+ Computers             │  Put a laptop app online through atlas, or let atlas reach a service on your laptop. 1 session
+ Files                 │  connected to atlas · tunnel program running since 06:00 AM
+ Bots                  │
+ Board                 │  / Search by address or…    Shared as ▾                                 60 entries  ↻ Refresh█
+ Demo                  │                                                                                              █
+ Vault                 │      Shared as         Address                                                    Port ↑     █
+                       │  ▾ Session 4f2a9c… · from 203.0.113.x · 12 streams of 1024 · 50                             ██
+On atlas ▾             │  ▌   Web address       https://6a00…0001-c0a7…00a1-http-3000.n12.fixture.invalid    3000   ⋯██
+ Programs              │      Web address       https://6a00…0001-c0a7…00a1-http-3001.n12.fixture.invalid    3001   ⋯██
+ Schedules             │      Web address       https://6a00…0001-c0a7…00a1-http-3002.n12.fixture.invalid    3002   ⋯██
+ Scripts               │      Web address       https://6a00…0001-c0a7…00a1-http-3003.n12.fixture.invalid    3003   ⋯██
+ Logs                  │      Web address       https://6a00…0001-c0a7…00a1-http-3004.n12.fixture.invalid    3004   ⋯██
+▌Tunnels               │      Web address       https://6a00…0001-c0a7…00a1-http-3005.n12.fixture.invalid    3005   ⋯██
+ Notes                 │      Web address       https://6a00…0001-c0a7…00a1-http-3006.n12.fixture.invalid    3006   ⋯██
+ AI                    │      Web address       https://6a00…0001-c0a7…00a1-http-3007.n12.fixture.invalid    3007   ⋯██
+ VMs                   │      Web address       https://6a00…0001-c0a7…00a1-http-3008.n12.fixture.invalid    3008   ⋯██
+                       │      Web address       https://6a00…0001-c0a7…00a1-http-3009.n12.fixture.invalid    3009   ⋯██
+Account                │      Web address       https://6a00…0001-c0a7…00a1-http-3010.n12.fixture.invalid    3010   ⋯██
+ Plans & Billing       │      Web address       https://6a00…0001-c0a7…00a1-http-3011.n12.fixture.invalid    3011   ⋯██
+ Referrals             │      Web address       https://6a00…0001-c0a7…00a1-http-3012.n12.fixture.invalid    3012   ⋯██
+ Keys and tokens       │      Web address       https://6a00…0001-c0a7…00a1-http-3013.n12.fixture.invalid    3013   ⋯██
+ API                   │      Web address       https://6a00…0001-c0a7…00a1-http-3014.n12.fixture.invalid    3014   ⋯██
+ Notifications      26 │      Web address       https://6a00…0001-c0a7…00a1-http-3015.n12.fixture.invalid    3015   ⋯░█
+ Account               │      Web address       https://6a00…0001-c0a7…00a1-http-3016.n12.fixture.invalid    3016   ⋯░█
+                       │      Web address       https://6a00…0001-c0a7…00a1-http-3017.n12.fixture.invalid    3017   ⋯░█
+ + Rent servers        │      Web address       https://6a00…0001-c0a7…00a1-http-3018.n12.fixture.invalid    3018   ⋯░█
+ Guide                 │      Web address       https://6a00…0001-c0a7…00a1-http-3019.n12.fixture.invalid    3019   ⋯░█
+ Support               │      Web address       https://6a00…0001-c0a7…00a1-http-3020.n12.fixture.invalid    3020   ⋯░█
+                       │      Web address       https://6a00…0001-c0a7…00a1-http-3021.n12.fixture.invalid    3021   ⋯░█
+                       │      Web address       https://6a00…0001-c0a7…00a1-http-3022.n12.fixture.invalid    3022   ⋯░
+                       │      Web address       https://6a00…0001-c0a7…00a1-http-3023.n12.fixture.invalid    3023   ⋯░
+                       │      Web address       https://6a00…0001-c0a7…00a1-http-3024.n12.fixture.invalid    3024   ⋯░
+                       │      Web address       https://6a00…0001-c0a7…00a1-http-3025.n12.fixture.invalid    3025   ⋯░
+                       │      Web address       https://6a00…0001-c0a7…00a1-http-3026.n12.fixture.invalid    3026   ⋯░
+                       │      Web address       https://6a00…0001-c0a7…00a1-http-3027.n12.fixture.invalid    3027   ⋯░
+                       │
+                       │  1–50 of 60 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

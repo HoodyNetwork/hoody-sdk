@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations  ▌Knowledge   Settings                                         █
+ Computers             │   Skills   Instructions  ▌Memory                                                              █
+ Files                 │  Memory                                                                                       █
+ Bots                  │  What agents learned while working on atlas. Agents recall it when it fits the task.          █
+ Board                 │                                                                                               █
+ Demo                  │  Memory of                                                                                    █
+ Vault                 │  ‹ Realm Personal ›  Global                                                                   █
+                       │  │ i Realm Personal · stored on atlas (this realm's memory host) · memory on    Hide details  █
+On atlas ▾             │                                                                                               █
+ Programs              │    Memory on or off                                                                           █
+ Schedules             │    ┌──────────────────────────────────────────────────────────────────────────────────────┐   █
+ Scripts               │    │                                                                                      │   █
+ Logs                  │    │ Agents remember what they       [■ on ]                                              │   █
+ Tunnels               │    │ learn in realm Personal                                                              │   █
+ Notes                 │    │ Turns memory on or off for                                                           │   █
+▌AI                    │    │ every agent in realm Personal                                                        │   █
+ VMs                   │    │ on atlas. What is stored                                                             │   █
+                       │    │ stays.                                                                               │   █
+Account                │    │                                                                                      │   █
+ Plans & Billing       │    └──────────────────────────────────────────────────────────────────────────────────────┘   █
+ Referrals             │                                                                                               █
+ Keys and tokens       │                                                                                               █
+ API                   │    Memory hosts                                                                               █
+ Notifications      26 │    State                                     Leader: this computer keeps the realm’s memory   █
+ Account               │    ────────────────────────────────────────────────────────────────────────────────────────   █
+                       │    Computers                                           atlas · this computer · current host   █
+ + Rent servers        │    ────────────────────────────────────────────────────────────────────────────────────────   ▀
+ Guide                 │
+ Support               │
+                       │    Stored in realm Personal
+                       │    Store totals count every version of a memory and include the realm-wide space; project
+                       │    numbers count current memories only.
+                       │
+                       │    Projects                                  3   Observations                             0
+                       │    ───────────────────────────────────────────   ──────────────────────────────────────────
+                       │    Memories, all                             2   Sessions                                 3
+                       │    versions                                      ──────────────────────────────────────────
+                       │    ───────────────────────────────────────────   Graph nodes                             10
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

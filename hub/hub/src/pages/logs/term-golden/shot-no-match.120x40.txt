@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Logs                                                                    ▸ Use with your agent
+ Computers             │  No events in the last hour.
+ Files                 │
+ Bots                  │  ▸ Everything    Visits    Bots    Changes    Scripts    Programs   [More ▾]
+ Board                 │  │ ● SG atlas · █ Personal ▾ Result ▾  When: 1 hour │ / zzzz                                 ×
+ Demo                  │                                                                     [□ off] Live [Refresh] [⋯]
+ Vault                 │  [Clear all]
+                       │  i Changes are not shown while a filter or search is on.
+On atlas ▾             │            Nothing matches in the last hour. Try a wider time range or fewer filters.
+ Programs              │            [Clear filters]
+ Schedules             │
+ Scripts               │
+▌Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

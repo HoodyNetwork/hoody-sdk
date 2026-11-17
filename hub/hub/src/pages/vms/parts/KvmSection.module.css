@@ -1,0 +1,4 @@
+/* The KVM row keeps the kit's form measure (--form-max): on the full-width card its switch ends a form-width row. */
+.kvmRow {
+  max-inline-size: var(--form-max);
+}

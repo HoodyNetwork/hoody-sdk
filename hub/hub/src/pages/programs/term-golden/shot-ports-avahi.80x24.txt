@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs                              ▸ Use with your agent   + Launch an app
+ Open ports and aliases on atlas
+   Running programs    Apps  ▸ Ports & aliases
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Open ports                                                                │█
+ │ Every port a program listens on. Web ports get an address you can open or │█
+ │ share.                                                                    │█
+ │▌ 3000                                                Web  [Create alias] ⋯│█
+ │  node · Open port 3000                                                    │█
+ │ 4 ports Hoody uses itself are not shown.                                  │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+ ┌───────────────────────────────────────────────────────────────────────────┐▀
+ │ Aliases and domains                                        [Create alias] │
+ │ Short addresses that point to a web port or a program. Each one can also  │
+ │ open at a domain you own.                                                 │
+ │  Alias            Goes to    Address      Your domain points to           │
+ │› shop-front       Port 3000  Open shop-f… shop-front.custom-domain.ex…   ⋯│
+ │  term-desk        terminal   Open term-d… term-desk.custom-domain.exa…   ⋯│
+ │  api-two          Port 8001  Open api-two api-two.custom-domain.examp…   ⋯│
+ │  api-four         Port 8003  Open api-fo… api-four.custom-domain.exam…   ⋯│
+ │  agent-door       Port 15000 Open agent-… agent-door.custom-domain.ex…   ⋯│
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

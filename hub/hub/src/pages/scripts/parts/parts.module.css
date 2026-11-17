@@ -1,0 +1,453 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.listWrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.problems {
+  list-style: none;
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  background: var(--hx-fill);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-2);
+  font: var(--t-small);
+  color: var(--hx-ink);
+}
+
+.problems li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+/* The sentence beside the mark gives way and wraps; it never runs past the note. */
+.problems li > span {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* The Advanced section at the foot of the list: quiet, with room around it. */
+.folder {
+  margin-top: var(--sp-2);
+}
+
+.folderRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+.folderField {
+  width: 8rem;
+}
+
+.folderNote {
+  margin: var(--sp-2) 0 0;
+  font: var(--t-small);
+  color: var(--hx-muted);
+}
+
+.nameCell {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.nameMain {
+  flex: 0 1 auto;
+  min-width: 0;
+  font: var(--t-body-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.route,
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.route {
+  color: var(--hx-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.faint {
+  color: var(--hx-faint);
+}
+
+.failedN {
+  color: var(--hx-danger);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--sp-3);
+}
+
+.hint {
+  margin: 0;
+  font: var(--t-small);
+  color: var(--hx-muted);
+}
+
+.errLine {
+  display: block;
+  font: var(--t-small);
+  color: var(--hx-muted);
+  font-family: var(--font-mono);
+}
+
+.linkList,
+.versionList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.versionList li,
+.linkList li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  min-height: var(--row-h);
+  border-top: var(--bw) solid var(--hx-line);
+}
+
+.versionList li:first-child,
+.linkList li:first-child {
+  border-top: 0;
+}
+
+.linkList li {
+  padding-inline: 0;
+}
+
+.linkUrl {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+/* New script's buttons under the sign-in box drop to one per line on a phone-width frame. */
+@container content (width <= 480px) {
+  .newActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.editor textarea {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  tab-size: 2;
+}
+
+.testRow {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.grow {
+  flex: 1;
+  min-width: 200px;
+}
+
+.answer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.answerCode {
+  flex-basis: 100%;
+  min-width: 0;
+}
+
+/* A row of the Answer under the status line: content type and size, the headers, Show body. */
+.answerWide {
+  flex-basis: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.newPage {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--sp-4) var(--pad-page) var(--sp-8);
+}
+
+.newGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+.review {
+  position: sticky;
+  top: var(--sp-4);
+}
+
+@container content (width <= 900px) {
+  .newGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Relative, never static: a card is its corner edge's containing block; the sticky offset is off. */
+  .review {
+    position: relative;
+    top: auto;
+  }
+}
+
+.about {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.faintBlock {
+  display: block;
+  font: var(--t-small);
+  color: var(--hx-faint);
+}
+
+.padded {
+  padding: 0 var(--sp-4);
+}
+
+.inline {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font: var(--t-small);
+  color: var(--hx-muted);
+}
+
+.inline[data-kind='failed'] {
+  color: var(--hx-danger);
+}
+
+.ctlLine {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.codeGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+}
+
+.codeMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.versions {
+  min-width: 0;
+}
+
+.testGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+}
+
+.modeBar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0 var(--sp-4);
+}
+
+.newOne {
+  max-width: var(--form-max);
+}
+
+.ideaGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--sp-3);
+}
+
+.ideaCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  width: 100%;
+  height: 100%;
+  padding: var(--sp-3);
+  text-align: start;
+  font: var(--t-body);
+  color: var(--hx-ink);
+  background: var(--hx-card);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-2);
+  cursor: pointer;
+}
+
+.ideaCard[data-on='true'] {
+  border-color: var(--hx-ink);
+  box-shadow: inset 0 0 0 var(--bw) var(--hx-ink);
+}
+
+.footBar {
+  position: sticky;
+
+  /* The main area keeps room for the phone's action button below its content, and a sticky box stops above that room. Take the
+     room back so the footer sits on the bottom bar with nothing showing under it, as the kit's detail footer does
+     (ListDetailPage .detailFooter). The room is 0 from 768 px up. */
+  inset-block-end: calc(-1 * var(--shell-fab-room, 0px));
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+  padding: var(--sp-3) 0;
+  background: var(--hx-bg);
+  border-top: var(--bw) solid var(--hx-line);
+}
+
+.footBar > :first-child,
+.footBar > .footNote + * {
+  margin-inline-end: auto;
+}
+
+/* The create's outcome note: the bar's whole first row, above the hint and the actions (none when it is empty). */
+.footNote {
+  flex-basis: 100%;
+}
+
+.footNote:empty {
+  display: none;
+}
+
+/* On a phone the footer's hint and actions go one per line, the actions full width (after the rules above, which it overrides). */
+@container content (width <= 480px) {
+  /* One column, no wrapping: a wrapping column sizes each row's height at its narrowest width, so the note would stand a word wide
+     and tall. */
+  .footBar {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+  }
+
+  .footBar > :first-child,
+  .footBar > .footNote + * {
+    margin-inline-end: 0;
+  }
+
+  /* In the column the note is one row like the others: a 100% basis would be its height. */
+  .footNote {
+    flex-basis: auto;
+  }
+}
+
+.diff {
+  max-height: 280px;
+  overflow: auto;
+}
+
+@container content (width >= 1000px) {
+  .codeGrid {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+
+  .testGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.fullAddress {
+  display: grid;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.addressLine {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+/* The whole address is the point: it wraps instead of being cut (the kit's text shortens with an ellipsis). */
+.addressLine .addressText {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Open beside the address stays one word: the line's break-anywhere rule is for the address. */
+.addressOpen {
+  flex: none;
+  white-space: nowrap;
+}
+
+.linkName {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.linkOption {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+

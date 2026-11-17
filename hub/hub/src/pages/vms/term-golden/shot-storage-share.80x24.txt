@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines › files-1
+ files-1  ● Stopped                                                 Start   [⋯]
+ A VM inside atlas.
+  Overview  Screen  Ports ▸Storage  Snapshots  Settings  Logs
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Storage                                            + Make the disk bigger  │
+ │ The VM's disk, its disc drives and its shared folder.                      │
+ ││ ! The shared folder is over its size limit. The VM will not start until   │
+ ││   it is under the limit or the limit is raised in Settings.               │
+ │Size    20 GB                           In use  12 GB of 10 GB              │
+ │  Drive                  Disc                                               │
+ │› Drive 1                Empty                               [Insert a disc]│
+ └────────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

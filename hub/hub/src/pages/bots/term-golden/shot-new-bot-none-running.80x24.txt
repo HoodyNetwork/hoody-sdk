@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ New Bot                                                          Esc ×
+ Bots  ┃ ──────────────────────────────────────────────────────────────────────
+ None o┃ ┌───────────────────────────────────────────────────────────────────┐█
+    ┌──┃ │ The Bot                                                           │█
+    │ ▷┃ │ ┌───────────────────────────────────────────────────────────────┐ │█
+    │  ┃ │ │                                                               │ │█
+    │ A┃ │ │ Computer                        ┃ Choose a computer ▾         │ │█
+    │ n┃ │ │ The Bot runs here and starts    No computer is running in     │ │█
+    │  ┃ │ │ its tasks here.                 this realm. Start one, then   │ │█
+    │  ┃ │ │                                 come back.                    │ │█
+    │ ›┃ │ │                                                               │ │█
+    │  ┃ │ │ Name                                                          │ │█
+    │  ┃ │ │ Its identifier will be calm-olive-panda.                      │ │▀
+    └──┃ │ │ │ calm-olive-panda                     [Suggest another name] │ │
+       ┃ │ │                                                               │ │
+ Questi┃ │ │ Model                           Hoody Free           [Change] │ │
+ ▸ What┃ │ │ The model that answers you.                                   │ │
+ ▸ What┃ │ │ You can change it later in the                                │ │
+ ▸ What┃ │ │ Bot's Settings, under Model.                                  │ │
+ ▸ What┃ │ │                                                               │ │
+ ▸ What┃ │ └───────────────────────────────────────────────────────────────┘ │
+ ▸ Who ┃ └───────────────────────────────────────────────────────────────────┘
+ ▸ What┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃                                                  [Cancel]  Create Bot

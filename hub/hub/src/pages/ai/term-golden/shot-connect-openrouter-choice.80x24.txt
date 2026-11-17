@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ ‹ Back                                                           Esc ×
+  Chats┃ Connect OpenRouter
+ ▌Model┃ ──────────────────────────────────────────────────────────────────────
+ atlas ┃ How to connect OpenRouter
+ Models┃ ( ) Sign in with OpenRouter
+ atlas ┃     Use your OpenRouter account
+ ▌Defau┃ ( ) Use an API key
+ ──────┃     Pay as you go on your own key
+ ┌─────┃
+ │ Defa┃
+ │ The ┃
+ │ ┌───┃
+ │ │   ┃
+ │ │ AI┃
+ │ │ Th┃
+ │ │ ev┃
+ │ │ co┃
+ │ │   ┃
+ │ │ Bo┃
+ │ │ Bo┃
+ │ │   ┃
+ │ └───┃
+ └─────┃
+ Tab mo┃

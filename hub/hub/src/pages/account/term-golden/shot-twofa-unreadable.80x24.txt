@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Account
+ Your profile, how you sign in, and where you are signed in.
+ ‹ 2  ▌Two-step sign-in  Passcode lock  Sign-in sessions  Agent sign-in   6 ›
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Two-step sign-in                                                          │
+ │                                                                           │
+ │ Two-step sign-in                Couldn't read your two-step   [Try again] │█
+ │ It is not off: the Hub just     sign-in status                            │▀
+ │ could not read it.                                                        │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Passcode lock                                                             │
+ │                                                                           │
+ │ No passcode                                                               │
+ │ The terminal Hub has no                                                   │
+ │ passcode lock.                                                            │
+ │ ⇗ A passcode locks the Hub in the browser where you set it, in the web    │
+ │ Hub.                                                                      │
+ │ [c Copy link] [r QR code]                                                 │
+ │ https://hub.example.test/auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/   │
+ │ account                                                                   │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Account
+ Your profile, how you sign in, and where you are signed in.
+ ‹ 6   Security history  SSH keys ▌Emails  Elsewhere  This device  Questions
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Emails                                                                    │
+ │ What Hoody also sends to your email address.                              │
+ │                                                                           │
+ │ Support replies                 [□ off]                                   │
+ │ Email me when support replies                                             │
+ │ to one of my tickets. The                                                 │
+ │ email names no ticket and                                                 │
+ │ shows none of its text.                                                   │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Elsewhere                                                                 │
+ │ Other places that act on your account.                                    │█
+ │                                                                           │▀
+ │ API keys                        [Open]                                    │
+ │ Make, rename and remove the                                               │
+ │ keys your tools sign in with.                                             │
+ │                                                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Files                         ▸ Use with your agent  ‹ One pane ›  Two panes
+ The folders on your computers.
+ ▸ Browse    Storage    Transfers    Use from your PC                         █
+ ─────────────────────────────────────────────────────────────────────────────█
+ [Up one folder] │ ● █ SG atlas · █ Personal ▾ /                              █
+                                              [Find] [New folder] [Upload] [⋯]█
+                                                                              █
+ / Search               Filters               9 items  ↻ Refresh  View options█
+   [ ] Name                         Size Modified                Kind ↑       █
+ ▌ [ ] bin                               Oct 23, 2025, 6:13 AM   Folder      ⋯█
+   [ ] copy Can't open here yet          Oct 22, 2025, 6:13 AM   Folder      ⋯█
+   [ ] etc                               Oct 21, 2025, 6:13 AM   Folder      ⋯█
+   [ ] home                              Oct 20, 2025, 6:13 AM   Folder      ⋯█
+   [ ] root                              Oct 19, 2025, 6:13 AM   Folder      ⋯█
+   [ ] srv                               Oct 18, 2025, 6:13 AM   Folder      ⋯█
+   [ ] tmp                               Oct 17, 2025, 6:13 AM   Folder      ⋯█
+   [ ] usr                               Oct 16, 2025, 6:13 AM   Folder      ⋯▀
+   [ ] var                               Oct 15, 2025, 6:13 AM   Folder      ⋯
+
+ Questions
+ ▸ How do I open a computer's files on my own device?
+ ▸ How do I mount the files on Linux without a desktop?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

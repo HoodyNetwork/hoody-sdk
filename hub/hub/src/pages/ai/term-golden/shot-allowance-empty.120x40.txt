@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                          ◆ Personal ▾  No computers yet ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  atlas › Models & keys
+ Computers             │  Models & keys                                                           + Connect an account
+ Files                 │  atlas uses Hoody Free for everything.
+ Bots                  │
+ Board                 │   Default model  Accounts  Claude Code ▌Hoody AI allowance  Spending  Advanced  Questions
+ Demo                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Hoody AI allowance                                                                    │
+On this computer       │  │ Each server you own has its own free AI allowance, shared by every computer on it.    │
+ Programs              │  │                                                                                       │
+ Schedules             │  │ Your servers                                                                          │
+ Scripts               │  │ No server yet                                                                         │
+ Logs                  │  │ You don't own a server yet, so there is no                                            │
+ Tunnels               │  │ allowance to show. A server plan comes with its                                       │
+ Notes                 │  │ own free AI.                                                                          │
+▌AI                    │  │                                                                                       │
+ VMs                   │  │ AI credit                                                                             │
+                       │  │ ┌───────────────────────────────────────────────────────────────────────────────────┐ │
+Account                │  │ │                                                                                   │ │
+ Plans & Billing       │  │ │ Add AI credit                    Coming soon                      [Add AI credit] │ │
+ Referrals             │  │ │ Buying AI credit on its own is                                                    │ │▄
+ Keys and tokens       │  │ │ planned. Until then, your AI                                                      │ │█
+ API                   │  │ │ comes with each server's                                                          │ │█
+ Notifications         │  │ │ allowance.                                                                        │ │█
+ Account               │  │ │                                                                                   │ │█
+                       │  │ └───────────────────────────────────────────────────────────────────────────────────┘ │█
+ + Rent servers        │  └───────────────────────────────────────────────────────────────────────────────────────┘█
+ Guide                 │                                                                                           █
+ Support               │  ┌───────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Spending                                                                              │█
+                       │  │ What each model has cost, as this computer recorded it.                               │
+                       │  │ ‹ 7 days ›  30 days    All time                                                       │
+                       │  │ Credit unavailable                                                                    │
+                       │  │                                                                                       │
+                       │  │ No AI calls recorded in this period.                                                  │
+                       │  │                                                                                       │
+                       │  │ Recorded total No cost recorded. Your provider's own bill is the final word.          │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

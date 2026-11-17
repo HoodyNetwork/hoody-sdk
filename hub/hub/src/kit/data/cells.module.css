@@ -1,0 +1,53 @@
+/* A progress cell: the meter and its words on one line, centred on each other; the words may wrap in a list field. */
+.progress {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* CellLines: the cell's parts stacked, one block line each, with no gap beyond the line box (the second line reads as the
+   row's sub-line). Each line cuts on its own; an empty one (a child that rendered nothing) takes no room. */
+.lines {
+  display: block;
+  min-inline-size: 0;
+}
+
+.line {
+  display: block;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line:empty {
+  display: none;
+}
+
+/* MarkCell: a fixed mark gutter (one icon wide, --icon-md holds an sm or md icon) before the cell's text, empty or not, so texts align down a column. */
+.marked {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.mark {
+  display: inline-flex;
+  flex: none;
+  inline-size: var(--icon-md);
+  justify-content: center;
+}
+
+.markedText {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.markedAfter {
+  display: inline-flex;
+  flex: none;
+}

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Add a chat app to Chief                                                                               Esc ×
+ Home     ┃ The token is sent once and never shown again.
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │▌Setup                  1  ┌─────────────────────────────────────────────────────────────────────────────┐
+▌Bots     ┃ │ People                    │ Pick the chat app                                                           │
+ Board    ┃ │ Chats                     │                                                                             │
+ Demo     ┃ │ Settings                  │ Chat app                                                                    │
+ Vault    ┃                             │ (•) Telegram                                                                │
+          ┃                             │     A bot made with BotFather.                                              │
+On atlas ▾┃                             │ ( ) Slack                                                                   │
+ Programs ┃                             │     An app in your workspace, with a bot token and an app token.            │
+ Schedules┃                             │ ( ) Discord                                                                 │
+ Scripts  ┃                             │     An application in the developer portal.                                 │
+ Logs     ┃                             │ ─────────────────────────────────────────────────────────────────────────── │
+ Tunnels  ┃                             │                                                                       Next  │
+ Notes    ┃                             └─────────────────────────────────────────────────────────────────────────────┘
+ AI       ┃                          2  Make the bot and connect it
+ VMs      ┃                          3  Become the owner
+          ┃
+Account   ┃
+ Plans & B┃
+ Referrals┃
+ Keys and ┃
+ API      ┃
+ Notificat┃
+ Account  ┃
+          ┃
+ + Rent se┃
+ Guide    ┃
+ Support  ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+ Tab move ┃

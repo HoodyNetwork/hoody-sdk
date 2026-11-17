@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                           ▸ Use with your agent   + Get a computer
+▌Computers             │  Your computers: start them, open a terminal, and manage access.
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  Computers 8 · 4 running · 2 stopped · 1 failed · 1 starting    Servers 3                    █
+ Vault                 │                                                                                              █
+                       │  / Search computers         Filters                                                          █
+On atlas ▾             │  8 computers  [ ] Show usage  Ask the Agent  ↻ Refresh  View options                         █
+ Programs              │                                                                                              █
+ Schedules             │  ▌ █ atlas · · Current                                                            ● Running ⋯█
+ Scripts               │     █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                                    █
+ Logs                  │                                                                                              █
+ Tunnels               │    █ borealis                                                                     ● Running ⋯█
+ Notes                 │     █ Acme client  · DE fra-7 · Frankfurt · 2 cores · 4 GB RAM                               █
+ AI                    │                                                                                              █
+ VMs                   │    █ cedar                                                                        ● Stopped ⋯█
+                       │     █ Personal  · SG n12 · Singapore · 2 cores · 4 GB RAM                                    █
+Account                │                                                                                              █
+ Plans & Billing       │    █ dune                                                                        ● Starting ⋯█
+ Referrals             │     █ Lab  · US ash-3 · Ashburn · 1 core · 2 GB RAM                                          █
+ Keys and tokens       │                                                                                              █
+ API                   │    █ ember                                                                         ● Failed ⋯█
+ Notifications      26 │     █ Acme client  · DE fra-7 · Frankfurt · 2 cores · 4 GB RAM                               █
+ Account               │                                                                                              █
+                       │    █ fjord                                                                         ● Paused ⋯█
+ + Rent servers        │     █ Personal  · US ash-3 · Ashburn · 1 core · 2 GB RAM                                     █
+ Guide                 │                                                                                              █
+ Support               │    █ granite                                                                      ● Running ⋯█
+                       │     █ Acme client  · SG n12 · Singapore · 4 cores · 16 GB RAM                                █
+                       │                                                                                              █
+                       │    █ harbor                                                                       ● Running ⋯█
+                       │     █ Lab  · US ash-3 · Ashburn · 1 core · 2 GB RAM                                          ▀
+                       │
+                       │
+                       │  Questions
+                       │  ▸ What does a new computer come with?
+                       │  ▸ What are realms and projects?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

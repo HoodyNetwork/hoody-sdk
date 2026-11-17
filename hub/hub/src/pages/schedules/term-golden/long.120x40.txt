@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Schedules                                             ▸ Use with your agent   + New schedule
+ Computers             │  75 schedules on atlas · next: ping-api in 3 minutes · 4 failed today · Computers ›
+ Files                 │  9 programs running ›
+ Bots                  │
+ Board                 │  / Search schedules
+ Demo                  │  ‹ Any ›  Commands 68    Scripts 3    Web requests 2    Agent loops 2    Status ▾
+ Vault                 │  75 schedules  ↻ Refresh  View options
+                       │
+On atlas ▾             │    Name                             Next run ↑              Last result                On
+ Programs              │  ▌   ping-api   Web request         in 3 minutes            ● Worked             [■ on ]    ⋯█
+▌Schedules             │    ! queue-drain   Script           in 4 minutes            ● Failed                        ⋯█
+ Scripts               │      Watch the build   Agent loop   in 4 minutes            ● Worked             [■ on ]    ⋯█
+ Logs                  │    ! sync-photos   Command          in 8 minutes            ● Failed             [■ on ]    ⋯█
+ Tunnels               │      Nightly backup   Command       in 9 hours              ● Worked             [■ on ]    ⋯█
+ Notes                 │      Nightly backup 10   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯█
+ AI                    │      Nightly backup 11   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯█
+ VMs                   │      Nightly backup 12   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯█
+                       │      Nightly backup 13   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯█
+Account                │      Nightly backup 14   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯█
+ Plans & Billing       │      Nightly backup 15   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯█
+ Referrals             │      Nightly backup 16   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯█
+ Keys and tokens       │      Nightly backup 17   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯█
+ API                   │      Nightly backup 18   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯█
+ Notifications      26 │      Nightly backup 19   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯█
+ Account               │      Nightly backup 2   Command     in 9 hours              ● Not run yet        [■ on ]    ⋯█
+                       │      Nightly backup 20   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯░
+ + Rent servers        │      Nightly backup 21   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯░
+ Guide                 │      Nightly backup 22   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯░
+ Support               │      Nightly backup 23   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯░
+                       │      Nightly backup 24   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯░
+                       │      Nightly backup 25   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯░
+                       │      Nightly backup 26   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯░
+                       │      Nightly backup 27   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯░
+                       │      Nightly backup 28   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯░
+                       │      Nightly backup 29   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯░
+                       │      Nightly backup 3   Command     in 9 hours              ● Not run yet        [■ on ]    ⋯░
+                       │      Nightly backup 30   Command    in 9 hours              ● Not run yet        [■ on ]    ⋯░
+                       │  1–50 of 75 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

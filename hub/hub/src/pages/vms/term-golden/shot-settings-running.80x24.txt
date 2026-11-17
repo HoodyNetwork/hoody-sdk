@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines › web-1
+ web-1  ● Running                                               Shut down   [⋯]
+ A VM inside atlas.
+  Overview  Screen  Ports  Storage  Snapshots ▸Settings  Logs
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Settings                                                                  │█
+ │ Changes apply when the VM next starts.                                    │█
+ │ │ i Shut the VM down to change this.                                      │█
+ │ Size                                                                      │█
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │
+ │ │                                                                       │ │
+ │ │ Memory (GiB)                    │ [−] 2                    [+]        │ │
+ │ │ About 8 GiB is free for VMs                                           │ │
+ │ │ now.                                                                  │ │
+ │ │                                                                       │ │
+ │ │ CPUs                            │ [−] 2                    [+]        │ │
+ │ │                                                                       │ │
+ │ └───────────────────────────────────────────────────────────────────────┘ │
+ │                                                                           │
+ │ Start and stop                                                            │
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

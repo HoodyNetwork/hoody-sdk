@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Buy a plan                                                              Esc ×
+ Home                  │  Plans & Billin┃ Small
+ Computers             │  Upgrade a serv┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │                ┃ │ ◷ We couldn't confirm Small
+ Bots                  │  ▸ Plans    Bar┃ │   We couldn't confirm the purchase. It may already have gone through.
+ Board                 │  ──────────────┃ │   Check again only looks for it and sends nothing.
+ Demo                  │  │ ✗ fra-7: On ┃ │   [Check again]  [Send the same request again]
+ Vault                 │  │ ◷ Small may ┃
+                       │  │   We could n┃ If the earlier request never reached us, this one goes through now and
+On atlas ▾             │                ┃ charges up to $12.00. If it did, you get its result and nothing new is
+ Programs              │  Plans         ┃ charged.
+ Schedules             │  Each plan is a┃
+ Scripts               │  take the same ┃
+ Logs                  │                ┃
+ Tunnels               │  ┌─────────────┃
+ Notes                 │  │             ┃
+ AI                    │  │ Plans for   ┃
+ VMs                   │  │ Choose a pla┃
+                       │  │ server, or p┃
+Account                │  │ to upgrade i┃
+▌Plans & Billing       │  │             ┃
+ Referrals             │  └─────────────┃
+ Keys and tokens       │                ┃
+ API                   │  ┌─────────────┃
+ Notifications      26 │  │ Free        ┃
+ Account               │  │ $0 / month  ┃
+                       │  │ Your free se┃
+ + Rent servers        │  │ Computers   ┃
+ Guide                 │  │ Hardware    ┃
+ Support               │  │ AI allowance┃
+                       │  │             ┃
+                       │  │ Locations   ┃
+                       │  │ No choice of┃
+                       │  │ Your free se┃
+                       │  │ buy a plan. ┃
+                       │  │ Next: Small.┃
+                       │  │ computers.  ┃
+                       │  │ Free server ┃
+                       │  │             ┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ [Close]

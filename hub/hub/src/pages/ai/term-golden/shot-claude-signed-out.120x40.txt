@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations   Knowledge  ▌Settings
+ Computers             │  ▌Models & keys   Connections & MCP   Rules & hooks
+ Files                 │  atlas › Models & keys
+ Bots                  │  Models & keys                                                           + Connect an account
+ Board                 │  atlas uses Hoody Free for everything.
+ Demo                  │
+ Vault                 │   Default model  Accounts ▌Claude Code  Hoody AI allowance  Spending  Advanced  Questions
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Programs              │  │ Claude Code                                                                           │
+ Schedules             │  │ Use your own Claude plan through Claude Code on this computer.                        │
+ Scripts               │  │ ┌───────────────────────────────────────────────────────────────────────────────────┐ │
+ Logs                  │  │ │                                                                                   │ │
+ Tunnels               │  │ │ Claude Code on this computer    [Open a terminal to sign in] Do it myself         │ │
+ Notes                 │  │ │ Not signed in to Claude Code                                                      │ │█
+▌AI                    │  │ │                                                                                   │ │█
+ VMs                   │  │ └───────────────────────────────────────────────────────────────────────────────────┘ │█
+                       │  │ ┌───────────────────────────────────────────────────────────────────────────────────┐ │█
+Account                │  │ │                                                                                   │ │█
+ Plans & Billing       │  │ │ Sign-in on other computers      [Copy sign-in…]                                   │ │█
+ Referrals             │  │ │ Copy Claude Code's sign-in                                                        │ │█
+ Keys and tokens       │  │ │ from a computer where it works                                                    │ │
+ API                   │  │ │ to another computer of this                                                       │ │
+ Notifications      26 │  │ │ realm.                                                                            │ │
+ Account               │  │ │                                                                                   │ │
+                       │  │ │ Settings on other computers     [Copy settings…]                                  │ │
+ + Rent servers        │  │ │ Copy Claude Code's settings,                                                      │ │
+ Guide                 │  │ │ agents, commands and skills to                                                    │ │
+ Support               │  │ │ another computer of this                                                          │ │
+                       │  │ │ realm. Sign-ins and chats are                                                     │ │
+                       │  │ │ never copied.                                                                     │ │
+                       │  │ │                                                                                   │ │
+                       │  │ └───────────────────────────────────────────────────────────────────────────────────┘ │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Hoody AI allowance                                                                    │
+                       │  │ Each server you own has its own free AI allowance, shared by every computer on it.    │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                      ◆ Personal ▾  Computers not loaded ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Vault                                               ▸ Use with your agent   + New entry   [⋯]
+ Computers             │
+ Files                 │  ‹ Vault  Esc
+ Bots                  │  deploy.notes                                                     ⧉ copy [✎ Replace value] [⋯]
+ Board                 │
+ Demo                  │  │ ◷ Deleting deploy.notes in Personal may have gone through
+▌Vault                 │  │   The answer did not arrive. A delete can still be finishing after the list no longer
+                       │  │   shows the entry, so this stays until you stop tracking it.
+On this computer       │  │   [Stop tracking]
+ Programs              │
+ Schedules             │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Scripts               │  │ About this entry                                                                         │█
+ Logs                  │  │ Belongs to     Personal                       Updated        Oct 23, 2026, 4:40 PM       │█
+ Tunnels               │  │ Encryption     Not marked as encrypted        Created        Oct 20, 2026, 9:15 AM       │█
+ Notes                 │  │ Size           44 B                           Other details  1 detail                    │█
+ AI                    │  │                                                                                          │█
+ VMs                   │  │ ┌──────────────────────────────────────────────────────────────────────────────────────┐ │█
+                       │  │ │                                                                                      │ │█
+Account                │  │ │ Protect with a password         [Encrypt…]                                           │ │█
+ Plans & Billing       │  │ │ No encryption is recorded for                                                        │ │█
+ Referrals             │  │ │ this entry. To protect this                                                          │ │█
+ Keys and tokens       │  │ │ value with a password, use                                                           │ │█
+ API                   │  │ │ Replace value and tick Encrypt                                                       │ │█
+ Notifications      26 │  │ │ with a password.                                                                     │ │█
+ Account               │  │ │                                                                                      │ │█
+                       │  │ └──────────────────────────────────────────────────────────────────────────────────────┘ │█
+ + Rent servers        │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Guide                 │                                                                                              █
+ Support               │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Metadata                                                                                 │█
+                       │  │ owner  ops                                                                               │█
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+                       │                                                                                              █
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Value                                                                                    │█
+                       │  │ Value                                                                                    │
+                       │  │ │ •••••••••••• (Not read yet) [Show value] [Copy value]                                  │
+                       │  │ ⚿ Read only on Show value or Copy; hiding it removes it from this page.                  │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

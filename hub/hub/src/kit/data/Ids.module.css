@@ -1,0 +1,455 @@
+/* Ids: IdChip, CopyField, CodeBlock (one block, or captioned steps) and the inline CodeLine. CopyStatus, the status
+   line only a screen reader gets, takes the kit's visually-hidden class (SR_ONLY, kit/base.css). */
+
+/* CopyButton is the kit's IconButton (or ghost Button with its label): size, look, hover, focus ring and the coarse
+   touch minimum are the kit's. The CodeBlock rules below place it, and the step line's copy cell keeps its own fill; they
+   name the element (0,1,1 and 0,2,1) so they outweigh the kit's .ghost and .iconOnly.sm (0,1,0 and 0,2,0). */
+
+/* IdChip */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  max-width: 100%;
+  padding-inline-start: var(--sp-2);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--hx-fill);
+  vertical-align: middle;
+}
+
+.chipLabel {
+  color: var(--hx-muted);
+  font: var(--t-label);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.chipId {
+  color: var(--hx-ink);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.chip:not(:has(.chipCopy)) {
+  padding-inline-end: var(--sp-2);
+}
+
+/* The chip's copy is a smaller IconButton, inside the chip's line (0,2,1 outweighs the kit's .iconOnly.sm). On a coarse
+   pointer it keeps the chip's line and takes the rest of its press from ::after, as the kit's xs does: --touch-min
+   (44) both ways around the drawn --icon-lg (20), no wider (the ::after insets from the padding box: less one --bw).
+   The chip keeps that reach as its own margin (above, below and after it, where the press passes the chip), so two chips
+   side by side or wrapped, at any gap, never share a press: a tap near one copies that chip's id. */
+.chip > button.chipCopy {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+}
+
+@media (pointer: coarse) {
+  .chip:has(> button.chipCopy) {
+    margin-block: calc((var(--touch-min) - var(--icon-lg)) / 2);
+    margin-inline-end: calc((var(--touch-min) - var(--icon-lg)) / 2);
+  }
+
+  .chip > button.chipCopy {
+    position: relative;
+  }
+
+  .chip > button.chipCopy::after {
+    position: absolute;
+    inset: calc((var(--icon-lg) - var(--touch-min)) / 2 - var(--bw));
+    content: '';
+  }
+}
+
+/* CopyField */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.fieldLabel {
+  color: var(--hx-ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.fieldBox {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--ctl-h);
+  padding-inline: var(--sp-3) var(--sp-1);
+  border: var(--bw) solid var(--hx-line-2);
+  border-radius: var(--r-1);
+  background: var(--hx-fill);
+}
+
+.fieldValue {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--hx-ink);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: all;
+}
+
+/* A web address (the value the kit shows as its ExtLink) is shown whole: it wraps anywhere inside the field instead of
+   being cut. A code, a command or an address shown plain keeps its one line with an ellipsis. */
+.fieldValue:has(> a) {
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.fieldDesc {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+/* CodeBlock */
+.code {
+  position: relative;
+  margin: 0;
+  border: var(--bw) solid var(--hx-line-2);
+  border-radius: var(--r-2);
+  background: var(--hx-fill);
+}
+
+/* CodeBlock with its Copy button: the button has a column of its own at the end, so the code (its scroller) ends where
+   the button starts and no character ever sits under it, at any width, wrapped or scrolled, whatever the button's size
+   (44 px on a coarse pointer). The footer spans both columns. */
+.withCopy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+
+  /* A cut line ends a gap short of the button, so it reads as scrolling, never as hidden under it. */
+  column-gap: var(--sp-2);
+  align-items: start;
+}
+
+.withCopy > .codeFooter {
+  grid-column: 1 / -1;
+}
+
+.pre {
+  margin: 0;
+  overflow-x: auto;
+  scrollbar-color: var(--hx-faint) transparent;
+  padding: var(--sp-3);
+  color: var(--hx-ink);
+  font-family: var(--font-mono);
+  font-size: var(--fs-md);
+  line-height: var(--lh-box-body);
+  white-space: pre;
+}
+
+.wrap {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* CodeBlock maxHeight="md": the MarkdownViewer's md height (--viewer-h-md, kit/tokens.css), inside a viewer or alone. */
+.maxMd {
+  max-block-size: var(--viewer-h-md);
+  overflow-y: auto;
+}
+
+.prompt::before {
+  content: '$ ';
+  color: var(--hx-faint);
+  user-select: none;
+}
+
+/* Shell colour (CodeBlock lang="shell"). The theme-aware code tokens, chosen for 4.5:1 on --hx-fill in both themes;
+   the --hx-syn-* set is tuned for a dark editor only. */
+.sh_cmd {
+  color: var(--hx-code-blue);
+}
+
+.sh_flag {
+  color: var(--hx-code-purple);
+}
+
+.sh_var {
+  color: var(--hx-warn);
+}
+
+/* Other languages (CodeBlock lang json/js/ts/yaml/http/python/diff, highlight.ts): each colour a kit token
+   at 4.5:1 or more on --hx-fill in both themes (code-blue, code-purple, r-pink, ok, warn, muted, danger). */
+.hl_kw {
+  color: var(--hx-code-purple);
+}
+
+.hl_str {
+  color: var(--hx-ok);
+}
+
+.hl_num {
+  color: var(--hx-warn);
+}
+
+.hl_lit {
+  color: var(--hx-warn);
+}
+
+.hl_com {
+  color: var(--hx-muted);
+  font-style: italic;
+}
+
+.hl_key {
+  color: var(--hx-code-blue);
+}
+
+.hl_fn {
+  color: var(--hx-code-blue);
+}
+
+.hl_meta {
+  color: var(--hx-code-pink);
+}
+
+/* Diff lines: added in the ok colour, removed in the danger text shade (both 4.5:1 or more on --hx-fill). */
+.hl_ins {
+  color: var(--hx-ok);
+}
+
+.hl_del {
+  color: var(--hx-danger);
+}
+
+/* Terminal output (CodeBlock lang ansi): SGR colours on the same readable tokens as above; black reads as muted, white
+   and the default colour as the text colour, bright colours as their normal ones. */
+.ansi_black {
+  color: var(--hx-muted);
+}
+
+.ansi_red {
+  color: var(--hx-danger);
+}
+
+.ansi_green {
+  color: var(--hx-ok);
+}
+
+.ansi_yellow {
+  color: var(--hx-warn);
+}
+
+.ansi_blue,
+.ansi_cyan {
+  color: var(--hx-code-blue);
+}
+
+.ansi_magenta {
+  color: var(--hx-code-purple);
+}
+
+.ansi_bold {
+  font-weight: var(--fw-semibold);
+}
+
+/* In its own column at the block's top end (see .withCopy), the same 8 px in from the corner as before. */
+button.codeCopy {
+  margin-block-start: var(--sp-2);
+  margin-inline-end: var(--sp-2);
+}
+
+/* It sits on the code's fill, so at rest it has a fill of its own, set through the button's plate (a `background` here would
+   erase the plate). Load-bearing weight: the `:not()` lifts this over the kit's frameless icon rule (three classes),
+   and leaves hover and pressed to that rule's own steps. */
+.code > button.codeCopy:not([data-hovered], [data-pressed]) {
+  --plate: var(--hx-raised);
+}
+
+.codeFooter {
+  padding: var(--sp-2) var(--sp-3);
+  border-block-start: var(--bw) solid var(--hx-line);
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+/* CodeBlock with steps: captioned boxed lines of --codeline-h, each with its copy cell always shown, Copy all. */
+.steps {
+  background: var(--hx-fill);
+}
+
+.stepsHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--sp-8);
+  padding-inline: var(--sp-3) var(--sp-1);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.stepsTitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-overflow: ellipsis;
+  text-transform: var(--case-caps);
+  white-space: nowrap;
+}
+
+.copyAll {
+  margin-inline-start: auto;
+}
+
+.stepList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-3) var(--sp-1) var(--sp-3) var(--sp-3);
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.caption {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-box-small);
+}
+
+/* A step line is a box (white in light) with its copy button attached at the right end as a cell, so each copy
+   button sits beside the line it copies. One line of code is --codeline-h tall; a wrapped line grows. */
+.stepLine {
+  display: flex;
+  align-items: stretch;
+  min-block-size: var(--codeline-h);
+  border: var(--bw) solid var(--hx-codeline-line);
+  background: var(--hx-codeline-bg);
+}
+
+.stepCode {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  padding: calc((var(--codeline-h) - 2 * var(--bw) - var(--lh-box-body)) / 2) var(--sp-3);
+  scrollbar-color: var(--hx-faint) transparent;
+  color: var(--hx-ink);
+  font-family: var(--font-mono);
+  font-size: var(--fs-md);
+  line-height: var(--lh-box-body);
+  white-space: pre;
+}
+
+/* A wrapped step line breaks anywhere (a long token included); after .stepCode so it wins. */
+.stepCode.wrap {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.stepLine > button.lineCopy {
+  inline-size: var(--codeline-copy-w);
+  block-size: auto;
+  min-block-size: calc(var(--codeline-h) - 2 * var(--bw));
+  border-inline-start: var(--bw) solid var(--hx-codeline-line);
+}
+
+/* A coarse pointer keeps the copy cell at --touch-min both ways; the line grows to it. */
+@media (pointer: coarse) {
+  .stepLine > button.lineCopy {
+    inline-size: var(--touch-min);
+    min-block-size: var(--touch-min);
+  }
+}
+
+/* A copy cell's fill (a step line's and a CodeLine's): the kit icon button drawn as the line's end cell, through the
+   button's own plate, with the kit's hover and pressed steps. Never a `background`: that would erase the plate.
+   Load-bearing weight: `button` and two classes outweigh the kit's frameless icon rule (three classes) at rest and in
+   each state, in either file order. */
+.stepLine > button.copyCell.lineCopy,
+.codeInline > button.copyCell.codeInlineCopy {
+  --plate: var(--hx-codeline-copy-bg);
+}
+
+.stepLine > button.copyCell.lineCopy[data-hovered],
+.codeInline > button.copyCell.codeInlineCopy[data-hovered] {
+  --plate: var(--hx-btn-plate-hover);
+}
+
+.stepLine > button.copyCell.lineCopy[data-pressed],
+.codeInline > button.copyCell.codeInlineCopy[data-pressed] {
+  --plate: var(--hx-btn-plate-press);
+}
+
+/* A refused step's copy cell (soft-disabled) keeps its own fill, whole, hovered or not: only the faint icon and the
+   tooltip say it refuses (the kit's disabled opacity would fade the cell and its line). */
+.stepLine > button.lineCopy[aria-disabled='true'] {
+  color: var(--hx-faint);
+  opacity: 1;
+}
+
+.stepLine > button.copyCell.lineCopy[aria-disabled='true'][data-hovered] {
+  --plate: var(--hx-codeline-copy-bg);
+}
+
+/* A missing fact inside a command, never copied: a neutral chip (hairline on the raised surface);
+   the accent stays for act-here / needs-you. */
+.placeholder {
+  display: inline-block;
+  padding-inline: var(--sp-half);
+  border: var(--bw) solid var(--hx-line-2);
+  border-radius: var(--r-1);
+  background: var(--hx-raised);
+  color: var(--hx-ink);
+  font-family: var(--font-mono);
+  line-height: 18px;
+}
+
+/* CodeLine: a step line inline in a sentence, at the icon hit height, with its copy cell. A long value ends in an
+   ellipsis (whole in its title); a coarse pointer gets a --touch-min copy cell and the line grows to it. */
+.codeInline {
+  display: inline-flex;
+  align-items: stretch;
+  max-width: 100%;
+  min-block-size: var(--icon-hit);
+  border: var(--bw) solid var(--hx-codeline-line);
+  background: var(--hx-codeline-bg);
+  vertical-align: middle;
+}
+
+.codeInlineText {
+  min-width: 0;
+  overflow: hidden;
+  align-self: center;
+  padding-inline: var(--sp-2);
+  color: var(--hx-ink);
+  font: var(--t-mono);
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+
+.codeInline > button.codeInlineCopy {
+  flex: none;
+  inline-size: var(--icon-hit);
+  block-size: auto;
+  min-block-size: calc(var(--icon-hit) - 2 * var(--bw));
+  border-inline-start: var(--bw) solid var(--hx-codeline-line);
+}
+
+@media (pointer: coarse) {
+  .codeInline > button.codeInlineCopy {
+    inline-size: var(--touch-min);
+    min-block-size: var(--touch-min);
+  }
+}

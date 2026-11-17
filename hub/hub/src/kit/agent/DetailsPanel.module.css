@@ -1,0 +1,57 @@
+/* DetailsPanel: the conversation's Details, a column of its own (never over the conversation). Kit tokens only. */
+.root {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.title { margin: 0; font: var(--t-heading); }
+
+/* The Tabs root and its panel carry the height down to .body, which is the one scroller. */
+.tabs {
+  flex: 1;
+  min-height: 0;
+}
+
+.panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  padding: var(--sp-4);
+  overflow: hidden auto;
+}
+
+.section + .section { margin-block-start: var(--sp-5); }
+
+/* A tab's sub-sections (kit SubSection) stand apart: one's last line never runs into the next heading. */
+.body [data-hub-section='sub'] + [data-hub-section='sub'] { margin-block-start: var(--sp-4); }
+
+.p { margin: 0 0 var(--sp-2); font: var(--t-body); overflow-wrap: anywhere; }
+.muted { color: var(--hx-muted); font: var(--t-small); }
+
+.list { margin: 0; padding: 0; list-style: none; }
+.row { display: flex; gap: var(--sp-2); padding-block: var(--sp-1); font: var(--t-body); }
+.verb { flex: none; color: var(--hx-muted); }
+.path { min-width: 0; font-family: var(--font-mono); overflow-wrap: anywhere; }
+.meta { flex: none; margin-inline-start: auto; color: var(--hx-muted); font: var(--t-small); }
+.edit { padding-block: var(--sp-1); }
+.editActions { display: flex; flex-wrap: wrap; column-gap: var(--sp-3); align-items: center; }
+.diff { display: grid; gap: var(--sp-1); margin-block-start: var(--sp-1); }

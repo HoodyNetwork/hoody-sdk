@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Use with your agent                                              Esc ×
+ Vault ┃ Hoody Agent, or any agent with the Hoody skill, can list, read
+ Tokens┃ and write the keys in your vault through the Hoody API, when its
+ shows ┃ sign-in allows the vault.
+ These ┃ ──────────────────────────────────────────────────────────────────────
+       ┃ ▸ Prompts    Set up    Access    Can do                              █
+ Entrie┃ ─────────────────────────────────────────────────────────────────────█
+ 3     ┃                                                                      █
+ / Sear┃ Acts on                                                              █
+   Name┃ Realm  ■ Personal f1f1…f1f1
+ › db-p┃ Vault  this realm's vault
+   depl┃ Names the realm so your agent acts on the right one.
+   gith┃
+       ┃ Start here
+       ┃ Work with this vault
+ Questi┃ Your agent asks you what you want before it does anything.
+ ▸ What┃
+ ▸ What┃  ✦ Ask Hoody Agent   ⧉ Copy for your agent
+ ▸ How ┃
+ ▸ What┃ Two ways to use it
+ ▸ What┃ Hoody Agent     No set-up. Ask Hoody Agent puts the prompt in the
+ ▸ What┃                 Agent's message box; it waits there until you press
+ ▸ What┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ Skills in the Guide                                  Hide on this page

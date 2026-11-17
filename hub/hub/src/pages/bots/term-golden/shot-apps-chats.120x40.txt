@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Support chat                                                                                          Esc ×
+ Home     ┃ Telegram
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │ Setup                 ! In groups the Bot sees only commands and replies to its messages.    [How to fix]
+▌Bots     ┃ │ People
+ Board    ┃ │▌Chats
+ Demo     ┃ │ Settings              ▸ Add the Bot to a group
+ Vault    ┃
+          ┃
+On atlas ▾┃                         ┌─────────────────────────────────────────────────────────────────────────────────┐
+ Programs ┃                         │ Chats                                                                           │
+ Schedules┃                         │ A private chat shows here when someone writes to the Bot; a group, when it asks │
+ Scripts  ┃                         │ to join.                                                                        │
+ Logs     ┃                         │  Chat                         Kind             State                            │
+ Tunnels  ┃                         │› Support chat                 Group            ● Approved      [Chat settings] ⋯│
+ Notes    ┃                         │   Home chat                                                                     │
+ AI       ┃                         │  Sees only commands and                                                         │
+ VMs      ┃                         │  replies to it while privacy                                                    │
+          ┃                         │  is on (unless the Bot is an                                                    │
+Account   ┃                         │  admin of this group).                                                          │
+ Plans & B┃                         │  Ana                          Direct message   ● Approved      [Chat settings] ⋯│
+ Referrals┃                         └─────────────────────────────────────────────────────────────────────────────────┘
+ Keys and ┃
+ API      ┃
+ Notificat┃
+ Account  ┃
+          ┃
+ + Rent se┃
+ Guide    ┃
+ Support  ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+ Tab move ┃

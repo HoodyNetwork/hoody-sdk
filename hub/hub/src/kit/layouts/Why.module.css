@@ -1,0 +1,21 @@
+/* Why: a quiet disclosure. The question reads at the small size and regular weight, so it sits
+   under the step's own text, not beside it; the answer is small muted prose that ends with the FAQ link. */
+.why {
+  --disclosure-title-weight: var(--fw-regular);
+
+  min-width: 0;
+  font-size: var(--fs-sm);
+}
+
+.answer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  max-width: 64ch;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.more {
+  display: block;
+}

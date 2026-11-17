@@ -1,0 +1,117 @@
+/* NodeLink: one entity and its links. No transition or animation: nothing to reduce. */
+.box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 100%;
+  min-width: 0;
+}
+
+.draw {
+  display: block;
+  max-width: 100%;
+}
+
+.spoke {
+  stroke: var(--hx-line-strong);
+  stroke-width: var(--bw);
+}
+
+.relation {
+  fill: var(--hx-muted);
+  font: var(--t-label);
+  pointer-events: none;
+}
+
+.node {
+  cursor: pointer;
+  outline: none;
+}
+
+.center {
+  cursor: default;
+}
+
+/* The press target is wider than the dot, and draws nothing until hovered or focused. */
+.hit {
+  fill: transparent;
+}
+
+/* The focus mark sits close round the dot, clear of the label beside it; the centre dot is the focus colour's kin, so a
+   mark on the dot itself would not show. */
+.ring {
+  fill: none;
+  pointer-events: none;
+  stroke: transparent;
+  stroke-width: var(--bw-2);
+}
+
+.node:not(.center):hover .hit {
+  fill: var(--hx-hover);
+}
+
+.node:focus-visible .ring {
+  stroke: var(--hx-focus);
+}
+
+.dot {
+  fill: var(--hx-card);
+  stroke: var(--hx-muted-fill);
+  stroke-width: var(--bw);
+}
+
+.centerDot {
+  fill: var(--hx-selected-bar);
+}
+
+.label,
+.centerLabel {
+  fill: var(--hx-ink);
+  font: var(--t-small);
+}
+
+.centerLabel {
+  font-weight: var(--fw-semibold);
+}
+
+.about,
+.more {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font: var(--t-small);
+}
+
+.more {
+  color: var(--hx-muted);
+}
+
+/* Forced colours leave an svg's own fills and strokes alone, so they are named here. */
+@media (forced-colors: active) {
+  .spoke {
+    stroke: canvastext;
+  }
+
+  .relation,
+  .label,
+  .centerLabel {
+    fill: canvastext;
+  }
+
+  .dot {
+    fill: canvas;
+    stroke: canvastext;
+  }
+
+  .centerDot {
+    fill: canvastext;
+  }
+
+  .node:not(.center):hover .hit {
+    fill: transparent;
+    stroke: highlight;
+  }
+
+  .node:focus-visible .ring {
+    stroke: highlight;
+  }
+}

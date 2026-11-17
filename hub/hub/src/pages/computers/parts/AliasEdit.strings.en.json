@@ -1,0 +1,22 @@
+{
+  "edit.menu": "Edit",
+  "edit.title": "Edit {{name}}",
+  "edit.lede": "Change the alias's name or the port it goes to.",
+  "edit.name": "Alias",
+  "edit.rule": "3 to 61 lowercase letters, numbers and dashes, not starting or ending with a dash.",
+  "edit.reserved": "That name is kept for the platform. Pick another one.",
+  "edit.port": "Goes to port",
+  "edit.portRule": "Type a port number from 1 to 65535.",
+  "edit.kit": "Hoody uses port {{port}}, so an alias can't go to it.",
+  "edit.program": "This alias goes to a Hoody program ({{program}}), not to a port. Only its name can be changed here.",
+  "edit.go": "Save changes",
+  "edit.same": "Nothing changed yet.",
+  "edit.reason.name": "Fix the alias name to save.",
+  "edit.reason.port": "Fix the port to save.",
+  "edit.reason.wait": "Checking which ports Hoody uses on this computer.",
+  "edit.rename": "The address changes with the name: {{old}} stops working as soon as this is saved, and links that use it break.",
+  "edit.cname": "If a domain of yours points at {{old}}, point its DNS record at the new name: the old name becomes free and can be taken by someone else.",
+  "edit.taken": "That alias name is already in use. Pick another one.",
+  "edit.gone": "This alias is no longer in the list. Close this and check the Aliases table.",
+  "edit.held": "A change to the alias {{name}} may already have gone through. Check the list before trying again."
+}

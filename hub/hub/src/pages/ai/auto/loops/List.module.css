@@ -1,0 +1,12 @@
+/* Loops list: one-line cells and the full prompt in the detail. */
+.one {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prompt {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}

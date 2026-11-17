@@ -1,0 +1,104 @@
+/* ComputerPicker: a field-sized trigger (as the kit's text fields), the picked computer's dot, flag, name and realm. */
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 var(--field-pad-x);
+  cursor: pointer;
+}
+
+/* size="toolbar": a toolbar control's height, so a toolbar size scope (data-tb-size) sets it; the look stays the
+   field's (the toolbar look is the field look). */
+.trigger.toolbar {
+  height: var(--tb-ctl-h);
+}
+
+.lead {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-round);
+  background: var(--hx-line-strong);
+}
+
+.dotOn {
+  background: var(--hx-ok);
+}
+
+.flag {
+  line-height: 1;
+}
+
+.text {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+/* The name gives way first, down to about four characters (kept at the start of its box); then the realm, capped at 12rem, is cut. A percentage cap would
+   resolve against the content-sized trigger and cut short realms too. */
+.name {
+  flex: 0 10 auto;
+  min-width: 4ch;
+  overflow: hidden;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placeholder {
+  color: var(--hx-faint);
+}
+
+.realm {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  min-width: 0;
+  max-width: 12rem;
+  gap: var(--sp-1);
+  color: var(--hx-muted);
+  font-size: var(--fs-xs);
+}
+
+.realmSquare {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--bw);
+  background: var(--hx-faint);
+}
+
+.realmName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.caret {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--hx-muted);
+}
+
+/* The state in words for assistive tech beside the dot (kept out of view, read with the name). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

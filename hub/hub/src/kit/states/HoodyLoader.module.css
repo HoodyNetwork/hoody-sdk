@@ -1,0 +1,86 @@
+/* HoodyLoader (states/HoodyLoader.tsx): the Hoody mark, its three cut-out parts lighting in turn over one cycle of two
+   pulses. Each part rests unlit (opacity 0), so a still frame, reduced motion and performance mode all show the plain
+   mark. currentColor only. The perf selector names the attribute alone (kit/perf.ts sets it only when on): a kit module
+   holds no quote in a selector (kitpure). */
+.loader {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  vertical-align: middle;
+
+  /* A flex item in a row: may shrink below its one-line text, so the line takes the ellipsis instead of overflowing. */
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+.mark {
+  flex: none;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  fill: currentcolor;
+}
+
+.md .mark {
+  width: var(--icon-md);
+  height: var(--icon-md);
+}
+
+/* A page section that waits: the mark at the large-region size (Spinner lg's frame), the line centred under it. */
+.lg {
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--sp-3);
+  text-align: center;
+}
+
+.lg .mark {
+  width: var(--sp-10);
+  height: var(--sp-10);
+}
+
+.part {
+  opacity: 0;
+  animation: hoody-loader-part calc(2 * var(--dur-pulse)) var(--ease-in-out) infinite;
+}
+
+.part:nth-child(3) {
+  animation-delay: calc(2 * var(--dur-pulse) / 3);
+}
+
+.part:nth-child(4) {
+  animation-delay: calc(4 * var(--dur-pulse) / 3);
+}
+
+.text {
+  min-width: 0;
+}
+
+/* In a row (sm, md) the mark and its line stay one line: a tight row cuts the line with an ellipsis, never one word per
+   line. The lg line, centred under the mark, wraps as text does. */
+.loader:not(.lg) .text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes hoody-loader-part {
+  20% {
+    opacity: 0.6;
+  }
+
+  40% {
+    opacity: 0;
+  }
+}
+
+/* Reduced motion: the plain mark, still. */
+@media (prefers-reduced-motion: reduce) {
+  .part {
+    animation: none;
+  }
+}
+
+/* Performance mode (kit/perf.ts) stops it too. */
+:root[data-hx-perf] .part {
+  animation: none;
+}

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            AI                                     ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   New chat
+ Computers             │  ▌✦ Chats ●     Agents     Automations     Knowledge     Settings
+ Files                 │  / Search                   Filters     6 chats  ‹ This computer ›  All computers    ↻ Refresh
+ Bots                  │
+ Board                 │  ▾ Needs you · 1
+ Demo                  │  ›     Deploy the staging site                                                    last month ⋯
+ Vault                 │
+                       │  ▾ Today · 3
+On atlas ▾             │        Build the status page                                                             now ⋯
+ Programs              │        Fix the failing checkout tests                                          2 minutes ago ⋯
+ Schedules             │        Review the release notes                                                  3 hours ago ⋯
+ Scripts               │         Claude Code
+ Logs                  │
+ Tunnels               │  ▾ Yesterday · 1
+ Notes                 │        Answer the support ticket                                                   yesterday ⋯
+▌AI                    │         Bot support-desk
+ VMs                   │
+                       │  ▾ Older · 1
+Account                │        Plan the backup job                                                        last month ⋯
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │  i Some chats may not be shown                                                         Refresh
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │ ───────────────────────────────────────────────────────────────────────────────────────────────
+                       │  atlas · Personal                                                                [AI settings]
+                       │  1 needs you
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

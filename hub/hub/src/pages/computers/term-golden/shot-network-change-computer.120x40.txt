@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Use another exit                                                        Esc ×
+ Home                  │  Computers     ┃ Everything sent through atlas's proxy then leaves from that exit: for
+▌Computers             │                ┃ scraping, checking a site from another region, or one fixed IP.
+ Files                 │  ▸ Computers   ┃ ─────────────────────────────────────────────────────────────────────────────
+ Bots                  │  ──────────────┃ Leave from
+ Board                 │                ┃ ( ) atlas's own address (now) (unavailable)
+ Demo                  │  ‹ Computers  E┃     Sites see the address of atlas's server. Nothing to set up.
+ Vault                 │  atlas  ● Runni┃ (•) Another computer of yours
+                       │  SG n12 · Home ┃     Traffic goes through that computer's proxy and leaves from its current
+On atlas ▾             │                ┃     exit. With no exit or VPN of its own, that is its server's address: pick
+ Programs              │   Overview  Con┃     one on another server for a different IP.
+ Schedules             │   Storage      ┃     Computer
+ Scripts               │  ──────────────┃     │ Pick a computer ▾
+ Logs                  │  ┌─────────────┃     If that computer's proxy has access rules, allow atlas's address there,
+ Tunnels               │  │ At a glance ┃     or its requests are refused.
+ Notes                 │  │ Internet acc┃     ! Set access rules on atlas's proxy first. Its address is the only key to
+ AI                    │  │ Traffic leav┃       it, so without rules anyone who has the address can send traffic
+ VMs                   │  └─────────────┃       through your exit. If the proxy you enter cannot be reached, atlas
+                       │                ┃       refuses requests (502) rather than sending them from its own address.
+Account                │  ┌─────────────┃ ( ) Your own proxy
+ Plans & Billing       │  │ Internet acc┃     A SOCKS5 or HTTP(S) proxy you have, so sites see the IP you chose.
+ Referrals             │  │ Whether atla┃ ( ) Block internet access
+ Keys and tokens       │  │ ✓ Allowed at┃     Blocks new outgoing connections. The computer stays reachable and the
+ API                   │  └─────────────┃     exit chosen here is kept.
+ Notifications      26 │                ┃
+ Account               │  ┌─────────────┃ ▸ What is blocked?
+                       │  │ Where your t┃
+ + Rent servers        │  │ [Exit addres┃
+ Guide                 │  │ Sites see th┃
+ Support               │  │  Your app  →┃
+                       │  │             ┃
+                       │  │             ┃
+                       │  └─────────────┃
+                       │                ┃
+                       │  ┌─────────────┃
+                       │  │ Firewall ⓘ  ┃
+                       │  │ Anything not┃
+                       │  │    Action   ┃
+                       │  │▾ Inbound · 3┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ Choose the computer to leave through.                [Cancel]  Use this exit

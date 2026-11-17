@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Settings for Chief                                               Esc ×
+ Bots  ┃ Model, behaviour, guardrails and voice.
+ ‹ Bots┃ ──────────────────────────────────────────────────────────────────────
+       ┃ │ The Bot itself        ┌────────────────────────────────────────────┐
+   i Ta┃ │▌Model                 │ Model                                  [⋯] │
+   The ┃ │ Behaviour             │ The model the Bot itself answers you with. │
+   rais┃ │ Voice                 │ Helpers it starts don't use it.            │
+   19 d┃ │ The helpers it        │ Ready to use                               │
+       ┃ │ starts                │                                            │
+       ┃ │ Helpers               │ ┃ / gemini                               × │
+       ┃ │ Guardrails and        │                                            │
+       ┃ │ limits                │ Showing 1 of 1                             │
+       ┃ │ Advanced              │                                            │
+   Unde┃                         │  Can't tell yet · 1                        │
+   rest┃                         │  ( ) Gemini 3 Pro                          │
+   19 d┃                         │      Can't tell if it runs here            │
+       ┃                         │                                            │
+   ┌───┃                         │ ▸ Do the Bot's helpers use this model?     │
+   │ Me┃                         └────────────────────────────────────────────┘
+   └───┃
+       ┃
+       ┃
+       ┃
+ Typing┃

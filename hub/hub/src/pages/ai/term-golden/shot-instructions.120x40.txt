@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations  ▌Knowledge   Settings
+ Computers             │   Skills  ▌Instructions   Memory
+ Files                 │  Instructions  ● On                                                               [Read again]
+ Bots                  │  The text this realm's agents get with their instructions on this computer, and its on/off.
+ Board                 │
+ Demo                  │
+ Vault                 │  ┌────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │                                                                                        │
+On atlas ▾             │  │ Give agents these instructions  [■ on ]                                                │
+ Programs              │  │ On. This text is added                                                                 │
+ Schedules             │  │ whenever an agent's                                                                    │
+ Scripts               │  │ instructions are built, unless                                                         │
+ Logs                  │  │ the chat's or agent's prompt                                                           │
+ Tunnels               │  │ settings leave it out.                                                                 │
+ Notes                 │  │                                                                                        │
+▌AI                    │  └────────────────────────────────────────────────────────────────────────────────────────┘
+ VMs                   │
+                       │  Instructions text
+Account                │  │ Answer in English.
+ Plans & Billing       │    Keep pull requests small and explain why a change is needed.
+ Referrals             │    Run the tests before you say a change is done.
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │  A chat picks up a change at its next turn; a helper or workflow step already running keeps
+                       │  the version it started with.
+                       │
+                       │  [Discard]  Save
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

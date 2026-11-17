@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                 ◆ Personal ▾  Computers not loaded ▾  [A]  ^K · ?
+ Scripts                                                  ▸ Use with your agent
+ Small programs on your computers that answer an address or run on a schedule.
+      ! This didn't load
+
+      The Hub couldn't reach the server. Your data is safe; try again in a
+      moment.
+
+      [Try again]
+
+
+
+ Questions
+ ▸ What is a script?
+ ▸ Do I need to know how to code?
+ ▸ What can a script do?
+ ▸ How does the assistant write a script?
+ ▸ How do I make a script run on a schedule?
+ ▸ What is a public link, and how is its name chosen?
+ ▸ How does a script key work?
+ ▸ Where do I keep secrets such as passwords or API keys?
+ ▸ What are magic comments, and what do the settings do?
+ ▸ Can I undo a change or bring back a deleted script?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

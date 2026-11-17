@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Launch an app                                                    Esc ×
+ Progra┃ ──────────────────────────────────────────────────────────────────────
+ Apps o┃ Start a program on atlas. It opens in a window, a terminal or a web  █
+   Runn┃ page.                                                                █
+ ──────┃                                                                      █
+ / Sear┃ ‹ Find an app ›  From GitHub                                         █
+   Name┃                                                                      █
+ › Jupy┃ │ / jupyter                                 ×                        █
+   htop┃                                                                      █
+   Fire┃ Category: All                                                        █
+   VS C┃                                                                      █
+   Shar┃  ● Hoody apps: 8 ● On this computer: 1 ● Hoody list: 0 ● Nix: 4      █
+   btop┃  ● pkgx: 1 ● AppImage: 0 ● Docker: 1 [Hide libraries and plugins]    █
+   sqli┃                                                                      █
+   Open┃                                                    15 apps  ↻ Refresh█
+       ┃     Name                               Found in                      █
+       ┃ ▾ On this computer · 1                                               █
+       ┃     jupyter-notebook Jupyter noteboo…  · On this computer    [Open] ⋯
+       ┃ ▾ Hoody apps · 8
+       ┃ ›   JupyterLab Notebooks in the brow…  · Hoody apps          [Open] ⋯
+       ┃     VS Code A code editor in the bro…  · Hoody apps          [Open] ⋯
+       ┃     Shared folder ! Shares files Sha…  · Hoody apps          [Open] ⋯
+       ┃     Firefox A web browser on the com…  · Hoody apps          [Open] ⋯
+ Tab mo┃     htop See what the computer is do…  · Hoody apps          [Open] ⋯

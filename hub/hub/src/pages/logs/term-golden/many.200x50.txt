@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Logs                                                                                                                                 ▸ Use with your agent  [See what failed]
+ Computers             │  55 events failed in the last hour. 19 kinds of problem.
+ Files                 │
+ Bots                  │  ▸ Everything    Visits    Bots    Changes    Scripts    Programs   [More ▾] │ ● SG atlas · █ Personal ▾ Result ▾  When: 1 hour │ / Search
+ Board                 │                                                                                                                                                     [□ off] Live [Refresh] [⋯]
+ Demo                  │  ! Problems jumped around Nov 11, 08:46 AM (41 in a few minutes).                                                                                         [Around this moment]
+ Vault                 │  What keeps going wrong ▾                                 Failed 40 times Files [More actions]   Problem 9 times Agent [More actions]   Problem 9 times Screen [More actions]
+                       │                                                                                              Problem 7 times Terminal [More actions]   Problem 7 times Browser [More actions]
+On atlas ▾             │    Time     Result              From    What happened                                                                                              Visitor            Took
+ Programs              │  ▌ 08:59:49 ● OK                Visits  GET 200 Terminal: opened /session/resize                                                                  93.184.216.148 AU    295 ms█
+ Schedules             │    08:59:38 ● OK                Visits  GET 200 Terminal: opened /session                                                                         93.184.216.135 BR    258 ms░
+ Scripts               │    08:59:27 ● OK                Visits  DELETE 200 Agent: removed /health                                                                         93.184.216.122 DE    221 ms░
+▌Logs                  │    08:59:16 ● OK                Visits  PUT 200 Browser: changed /tab/1                                                                           93.184.216.109 ZA    184 ms░
+ Tunnels               │    08:59:05 ● OK                Visits  POST 200 Screen: sent /input                                                                              93.184.216.96 GB     147 ms░
+ Notes                 │    08:58:54 ● OK                Visits  GET 200 Files: opened /share/ada                                                                          93.184.216.83        110 ms░
+ AI                    │    08:58:43 ● OK                Visits  GET 200 Terminal: opened /session/resize                                                                  93.184.216.70 FR      73 ms░
+ VMs                   │    08:58:33 ● OK                Visits  GET 200 Terminal: opened /session                                                                         93.184.216.57 IN      36 ms░
+                       │    08:58:22 ● Not found         Visits  DELETE 404 Agent: removed /health                                                                         93.184.216.44 JP     479 ms░
+Account                │    08:58:11 ● OK                Visits  PUT 200 Browser: changed /tab/1                                                                           93.184.216.31 US     442 ms░
+ Plans & Billing       │  [Show older]
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

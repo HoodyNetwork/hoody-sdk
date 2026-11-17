@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                      ◆ Personal ▾  Computers not loaded ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing                                                                  + Add funds
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │  ▸ Plans    Bare metal    Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  Plans                                                                                       █
+                       │  Each plan is a server of your own. Its computers share its cores, memory and disk. You can  █
+On this computer       │  take the same plan more than once.                                                          █
+ Programs              │                                                                                              █
+ Schedules             │  ┌───────────────────────────────────────────┐  ! Couldn't load the offer.                   █
+ Scripts               │  │ Free                          ✓ Your plan │  No answer from the server. Check your        █
+ Logs                  │  │ $0 / month                                │  connection, then try again.                  █
+ Tunnels               │  │ Computers                               3 │  [Try again]                                  █
+ Notes                 │  │ Hardware                  Shared hardware │  ▸ Details
+ AI                    │  │ AI allowance                      Free 1× │
+ VMs                   │  │                                   █       │
+                       │  │ Locations                                 │
+Account                │  │ No choice of location                     │
+▌Plans & Billing       │  │ Your free server stays as it is when you  │
+ Referrals             │  │ buy a plan.                               │
+ Keys and tokens       │  │ Free server details                       │
+ API                   │  └───────────────────────────────────────────┘
+ Notifications       2 │
+ Account               │  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+                       │  ┃ Bare metal                                                                               ┃
+ + Rent servers        │  ┃ A whole machine for you alone                                                            ┃
+ Guide                 │  ┃ From $30 a month                                                                         ┃
+ Support               │  ┃ Hardware                 Dedicated hardware   Locations  Pick a listing and its location ┃
+                       │  ┃ Cores                                  4–32   Memory                        32 GB–512 GB ┃
+                       │  ┃ Disk                        500 GB–19.75 TB   Countries                                4 ┃
+                       │  ┃                                                                                          ┃
+                       │  ┃  Browse machines →                                                                       ┃
+                       │  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+                       │
+                       │
+                       │  Compare plans
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

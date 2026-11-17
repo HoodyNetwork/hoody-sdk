@@ -1,0 +1,828 @@
+/* StatusPill and Tag: one 20 px box, square corners, --hx-tag-pad sides, a --bw edge, and one tone map (--tone-*).
+   A pill sets its Hub-written word in mono capitals (--fs-tag) with a 6 px square dot; a Tag keeps the text face at
+   --fs-xs, as written, for it may hold a name a person typed. */
+/* stylelint-disable selector-attribute-quotes -- Display.tsx is a pure kit module: kitpure C0 takes attribute values unquoted */
+.pill,
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-dot);
+  box-sizing: border-box;
+  height: var(--tag-h);
+  padding: 0 var(--hx-tag-pad);
+  border: var(--bw) solid var(--tone-edge);
+  border-radius: 0;
+  background: var(--tone-bg);
+  color: var(--tone-ink);
+  font-weight: var(--fw-medium);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.pill {
+  font-family: var(--font-mono);
+  font-size: var(--fs-tag);
+  letter-spacing: var(--tracking-tag);
+  text-transform: var(--case-caps);
+}
+
+.tag {
+  font-size: var(--fs-xs);
+}
+
+/* A StatusPill that is its own switch (onPress): a bare button around the pill. The pill keeps its look; the button adds
+   the kit focus ring, a frame in the pill's ink under the pointer, the disabled opacity and the coarse-pointer floor
+   (centred, so the drawn pill stays 20 px). */
+.pillPress {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pillPress[data-hovered] > .pill {
+  border-color: var(--tone-ink);
+}
+
+.pillPress[data-focus-visible] {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.pillPress[data-disabled] {
+  cursor: default;
+  opacity: var(--ctl-off-opacity);
+}
+
+/* A finger gets the floor both ways: a short label ("Off") is narrower than it, so the pill is centred in the box. */
+@media (pointer: coarse) {
+  .pillPress {
+    justify-content: center;
+    min-block-size: var(--touch-min);
+    min-inline-size: var(--touch-min);
+  }
+}
+
+@media (forced-colors: active) {
+  .pillPress[data-focus-visible] {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+}
+
+.dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 0;
+  background: var(--tone-dot);
+}
+
+/* The tone map. Info ("Starting") and a plain Tag read neutral grey: blue is for links and focus only. */
+.neutral,
+.info,
+.tag_neutral {
+  --tone-bg: var(--hx-tag-neutral-bg);
+  --tone-edge: var(--hx-tag-neutral-edge);
+  --tone-ink: var(--hx-tag-neutral-ink);
+  --tone-dot: var(--hx-tag-neutral-dot);
+}
+
+.ok,
+.tag_ok {
+  --tone-bg: var(--hx-tag-ok-bg);
+  --tone-edge: var(--hx-tag-ok-edge);
+  --tone-ink: var(--hx-tag-ok-ink);
+  --tone-dot: var(--hx-tag-ok-dot);
+}
+
+.warn,
+.tag_warn {
+  --tone-bg: var(--hx-tag-warn-bg);
+  --tone-edge: var(--hx-tag-warn-edge);
+  --tone-ink: var(--hx-tag-warn-ink);
+  --tone-dot: var(--hx-tag-warn-dot);
+}
+
+.danger {
+  --tone-bg: var(--hx-tag-bad-bg);
+  --tone-edge: var(--hx-tag-bad-edge);
+  --tone-ink: var(--hx-tag-bad-ink);
+  --tone-dot: var(--hx-tag-bad-dot);
+}
+
+/* "Waiting for you" and "Recommended", the only accent: accent-soft ground, ink text, the accent dot in its edge. */
+.accent,
+.tag_accent {
+  --tone-bg: var(--hx-acc-soft);
+  --tone-edge: var(--hx-acc-edge);
+  --tone-ink: var(--hx-ink);
+  --tone-dot: var(--hx-acc);
+}
+
+/* 'mark': the words of a marked row ("This browser"): mono caps on the full highlight, a frame. */
+.tag_mark {
+  --tone-bg: var(--hx-acc);
+  --tone-edge: var(--hx-tag-mark-edge);
+  --tone-ink: var(--hx-acc-ink);
+  --tone-dot: var(--hx-acc-ink);
+
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.accent .dot {
+  box-shadow: 0 0 0 var(--bw) var(--hx-acc-edge);
+}
+
+/* Facts. The grid layout is ruled cells (.cells, below); .facts, .cols* and .fact are the rows of the spec layout. */
+.factsWrap {
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.facts {
+  display: grid;
+  gap: var(--sp-3) var(--sp-6);
+  margin: 0;
+}
+
+.cols1 {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.cols2,
+.cols3 {
+  grid-auto-flow: column;
+  grid-template-rows: repeat(var(--fact-rows, 1), auto);
+}
+
+.cols2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cols3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.fact {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: var(--sp-3);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.factWide {
+  grid-column: 1 / -1;
+}
+
+.factsAfter {
+  margin-block-start: var(--sp-3);
+}
+
+.factLabel {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.factValue {
+  min-width: 0;
+  margin: 0;
+  color: var(--hx-ink);
+  overflow-wrap: anywhere;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+.factValue .factLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-half);
+  max-width: 100%;
+}
+
+.factChevron {
+  flex: none;
+  color: var(--hx-faint);
+}
+
+.factCopyRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  max-width: 100%;
+}
+
+.factCopyText {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.factCopy {
+  flex: none;
+  opacity: 0;
+}
+
+.fact:hover .factCopy,
+.fact:focus-within .factCopy {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .factCopy {
+    opacity: 1;
+  }
+}
+
+@container (width < 600px) {
+  .cols2,
+  .cols3 {
+    grid-auto-flow: row;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+  }
+}
+
+/* Facts, the grid layout: a sheet of ruled cells on twelve tracks. Every cell is the label (the table header's type:
+   mono, small capitals, muted) over the value (ink, semibold, figures in tabular columns); cells share their borders
+   and a row's cells are one height, so a value on two lines keeps the grid even. A cell's span comes from the plan
+   (Display.pure.ts factsPlan): a short last row widens to fill, so no ruled cell stands empty. Below the phone
+   breakpoint two short facts share a row and anything longer takes a row of its own. */
+.cells {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  margin: 0;
+  border-block-start: var(--bw) solid var(--hx-panel-line);
+  border-inline-start: var(--bw) solid var(--hx-panel-line);
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  grid-column: span var(--cell-span, 12);
+  gap: var(--sp-1);
+  min-width: 0;
+  padding: var(--sp-3) var(--sp-4);
+  border-block-end: var(--bw) solid var(--hx-panel-line);
+  border-inline-end: var(--bw) solid var(--hx-panel-line);
+}
+
+.cellLabel {
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+  overflow-wrap: anywhere;
+}
+
+.cellValue {
+  min-width: 0;
+  margin: 0;
+  color: var(--hx-ink);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.cellMono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-md);
+}
+
+/* One height for every value box (a row action's), so a value with a copy button and a plain one sit on one line. */
+.cellText {
+  display: block;
+  min-height: var(--btn-h-sm);
+  align-content: center;
+}
+
+/* A value that is prose in blocks (a list, paragraphs) reads as body text, not as a figure. */
+.cellValue :where(ul, ol, p) {
+  font: var(--t-body);
+}
+
+.cellValue .cellMeter {
+  display: block;
+  margin-block-start: var(--sp-2);
+}
+
+.cellValue .factLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-half);
+  max-width: 100%;
+}
+
+.cell:hover .factCopy,
+.cell:focus-within .factCopy {
+  opacity: 1;
+}
+
+@container (width < 600px) {
+  .cells:not([data-rows]) .cell {
+    grid-column: span 6;
+  }
+
+  .cells:not([data-rows]) .cell:nth-child(odd):last-child,
+  .cells:not([data-rows])[data-phone='one'] .cell {
+    grid-column: span 12;
+  }
+}
+
+/* One column: compact ruled rows in the same frame. The label stands at the start in the list's one label column
+   (as wide as its longest label, at most 45%), the value beside it; a long value wraps under the value column.
+   A one-column list is always rows; any other list becomes rows below the phone breakpoint when it holds a fact
+   too long for half a row. */
+.cells[data-rows='always'] {
+  grid-template-columns: fit-content(45%) minmax(0, 1fr);
+}
+
+.cells[data-rows='always'] .cell {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  gap: 0;
+  align-items: start;
+  padding-block: var(--sp-1);
+}
+
+.cells[data-rows='always'] .cellLabel {
+  min-height: var(--btn-h-sm);
+  padding-inline-end: var(--sp-4);
+  align-content: center;
+}
+
+.cells[data-rows='always'] .cellValue {
+  font-size: var(--fs-md);
+}
+
+@container (width < 600px) {
+  .cells[data-rows='narrow'] {
+    grid-template-columns: fit-content(45%) minmax(0, 1fr);
+  }
+
+  .cells[data-rows='narrow'] .cell {
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
+    gap: 0;
+    align-items: start;
+    padding-block: var(--sp-1);
+  }
+
+  .cells[data-rows='narrow'] .cellLabel {
+    min-height: var(--btn-h-sm);
+    padding-inline-end: var(--sp-4);
+    align-content: center;
+  }
+
+  .cells[data-rows='narrow'] .cellValue {
+    font-size: var(--fs-md);
+  }
+}
+
+/* Facts layout="spec": a spec sheet. Each row is the label at the start and the value at
+   the end, one hairline under it; the label keeps its words on one line until it would take more than half the row,
+   and the value wraps in its own column. The column count and the 600 px fall are the grid's. */
+.spec .facts {
+  row-gap: 0;
+}
+
+.spec .fact {
+  grid-template-columns: fit-content(50%) minmax(0, 1fr);
+  padding-block: var(--sp-2);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.spec .factValue {
+  text-align: end;
+}
+
+/* StatStrip: on the card fill, label over the number (--t-readout) over a muted note (--t-small), solid hairline dividers.
+   Below 600 px the cells wrap two to a row, or one stat per row under narrow="rows". */
+.ssWrap {
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.ss {
+  display: flex;
+  min-height: var(--stat-h);
+  margin: 0;
+  border: var(--bw) solid var(--hx-panel-line);
+  border-radius: var(--r-1);
+  background: var(--hx-card);
+}
+
+.ssItem {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: var(--sp-1);
+  min-width: 0;
+  padding: var(--stat-pad-y) var(--sp-5);
+}
+
+.ssItem + .ssItem {
+  border-inline-start: var(--bw) solid var(--hx-line);
+}
+
+.ssLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-dot);
+  overflow: hidden;
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-overflow: ellipsis;
+  text-transform: var(--case-caps);
+  white-space: nowrap;
+}
+
+.ssDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-round);
+  background: var(--hx-muted-fill);
+}
+
+.ssDot_ok {
+  background: var(--hx-ok);
+}
+
+.ssDot_warn {
+  background: var(--hx-warn-fill);
+}
+
+.ssDot_danger {
+  background: var(--hx-danger-fill);
+}
+
+.ssDot_accent {
+  background: var(--hx-acc);
+  box-shadow: 0 0 0 var(--bw) var(--hx-acc-edge);
+}
+
+.ssValue {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-half);
+  min-width: 0;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.ssNumber {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--hx-ink);
+  font: var(--t-readout);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+}
+
+/* A note wraps rather than clip: on a phone a cell is half the strip, and a note can hold a control (Computers' upgrade link). */
+.ssDetail {
+  max-width: 100%;
+  min-width: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+/* A control in a note (Computers' slots upgrade, "Running low: Get more room") keeps to its cell: it wraps its words on
+   a narrow cell instead of keeping its one-line width (the kit's max-content minimum would run it into the next cell or
+   past the strip). (0,1,1) outweighs .button and .sm (0,1,0) and the zero-specificity minimum. */
+.ssDetail > :is(a, button) {
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  block-size: auto;
+  min-block-size: max(var(--btn-h-sm), var(--touch-min)); /* a coarse pointer keeps its 44 (--touch-min is 0 on a fine one) */
+  padding-block: var(--sp-1);
+  line-height: var(--lh-tight);
+  text-align: start;
+  white-space: normal;
+}
+
+@container (width < 600px) {
+  .ss {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* The first cell of each row has no divider before it; every row after the first has one above it. */
+  .ssItem:nth-child(2n + 1) {
+    border-inline-start: 0;
+  }
+
+  .ssItem:nth-child(n + 3) {
+    border-top: var(--bw) solid var(--hx-line);
+  }
+
+  /* narrow="rows": one stat per row, the label at the start, the number (its caption under it) at the end. */
+  .ss[data-narrow=rows] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ss[data-narrow=rows] .ssItem {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, max-content);
+    align-items: center;
+    column-gap: var(--sp-3);
+    padding-block: var(--sp-3);
+    border-inline-start: 0;
+  }
+
+  .ss[data-narrow=rows] .ssItem + .ssItem {
+    border-top: var(--bw) solid var(--hx-line);
+  }
+
+  .ss[data-narrow=rows] .ssValue {
+    align-items: end;
+    text-align: end;
+  }
+}
+
+/* StatTile */
+.stat {
+  --card-edge: var(--hx-panel-line); /* the frame's colour, drawn by the corner edge too (CardEdge) */
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+  padding: var(--sp-3) var(--pad-card);
+  border: var(--bw) solid var(--card-edge);
+  border-radius: var(--r-1);
+  background: var(--card-body);
+}
+
+.statHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--hx-muted);
+}
+
+.statLabel {
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.statValue {
+  color: var(--hx-ink);
+  font: var(--t-stat);
+  font-variant-numeric: tabular-nums;
+}
+
+.v_ok {
+  color: var(--hx-ok);
+}
+
+.v_warn {
+  color: var(--hx-warn);
+}
+
+.v_danger {
+  color: var(--hx-danger);
+}
+
+.v_info {
+  color: var(--hx-ink);
+}
+
+.statHint {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+/* ContextLine: one line, ink text, the realm truncates first. */
+.context {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  color: var(--hx-ink);
+  font-size: var(--fs-md);
+  line-height: var(--lh-box-body);
+  white-space: nowrap;
+}
+
+.ctxPart {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  min-width: 0;
+}
+
+.cp_realm {
+  flex-shrink: 1000;
+  min-width: 48px;
+}
+
+.cp_server {
+  flex-shrink: 10;
+}
+
+/* The computer never gives up width to the others (a tiny shrink share would still cut it);
+   a very long name is capped instead. */
+.cp_computer {
+  flex-shrink: 0;
+  max-width: 60%;
+}
+
+.ctxSep {
+  flex: none;
+  padding-inline: var(--sp-2);
+  color: var(--hx-faint);
+}
+
+.ctxLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-dot);
+  min-width: 0;
+}
+
+/* A linked part is a tap target of at least 24 px (WCAG 2.5.8), and the touch minimum on a coarse pointer. It grows
+   inside the line's own box: an equal negative block margin takes the growth back, so the line stays one
+   --lh-box-body line and nothing around it moves on either pointer. */
+.ctxLink[href] {
+  --ctx-hit: max(24px, var(--touch-min));
+
+  min-block-size: var(--ctx-hit);
+  margin-block: calc((var(--lh-box-body) - var(--ctx-hit)) / 2);
+}
+
+.ctxText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.realmSquare {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--bw);
+  background: var(--hx-faint);
+}
+
+.ctxDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-round);
+  background: var(--hx-faint);
+}
+
+.cd_ok {
+  background: var(--hx-ok);
+}
+
+.cd_warn {
+  background: var(--hx-warn-fill);
+}
+
+.cd_danger {
+  background: var(--hx-danger-fill);
+}
+
+.cd_info {
+  background: var(--hx-ink);
+}
+
+.cd_accent {
+  background: var(--hx-acc);
+}
+
+.ctxFlag {
+  flex: none;
+  line-height: 1;
+}
+
+/* A removable tag: the remove button sits flush at the end, drawn inside the 20 px box; its hit
+   area keeps the full icon-hit size around it. The one listed exception to the kit's button sizes (tagremove.spec.ts
+   measures it): 18 px drawn at every pointer (the 20 px box less its two --bw edges), its press a centred ::before of
+   --icon-hit (44 on a coarse pointer). */
+.tagRemovable {
+  gap: var(--sp-half);
+  padding-inline-end: 0;
+}
+
+.tag .tagRemove {
+  position: relative;
+  width: calc(20px - 2 * var(--bw));
+  height: calc(20px - 2 * var(--bw));
+  min-width: 0;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+}
+
+.tag .tagRemove::before {
+  position: absolute;
+
+  /* Inset from the box it is placed in (the padding box, 16 px inside the 18 px button's border), so the press is
+     --icon-hit whole. */
+  inset-block: calc((100% - var(--icon-hit)) / 2);
+  inset-inline: calc((100% - var(--icon-hit)) / 2);
+  content: '';
+}
+
+.tag .tagRemove:hover {
+  color: var(--hx-ink);
+}
+
+/* Monogram: a letter tile, --sp-4 square at sm (the base rule); md, lg and xl set their own size below. */
+.monogram {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: var(--sp-4);
+  block-size: var(--sp-4);
+  border-radius: var(--r-1);
+  background: var(--hx-fill);
+  color: var(--hx-ink);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  line-height: 1;
+}
+
+.monogram_md {
+  inline-size: var(--sp-6);
+  block-size: var(--sp-6);
+  font-size: var(--fs-xs);
+}
+
+/* lg: 36 px, the mark on a PickCard; xl: 56 px, the mark heading a page or panel. */
+.monogram_lg {
+  inline-size: calc(var(--sp-7) + var(--sp-1));
+  block-size: calc(var(--sp-7) + var(--sp-1));
+  font-size: var(--fs-lg);
+}
+
+.monogram_xl {
+  inline-size: calc(var(--sp-9) + var(--sp-2));
+  block-size: calc(var(--sp-9) + var(--sp-2));
+  font-size: var(--fs-2xl);
+}
+
+/* A tint of the palette colour (--rc, set by the global .rc-<colour> class) over the raised surface, under the ink
+   letter: 6.7:1 or more for every palette colour in both themes. The 1 px swatch ring keeps the pale tints (green,
+   teal) from vanishing on a light card. */
+.monogramTint {
+  background: color-mix(in srgb, var(--rc) 26%, var(--hx-raised));
+  box-shadow: inset 0 0 0 var(--bw) var(--hx-swatch-ring);
+}
+
+/* RowNote: a muted sentence in a row's cell. Table cells keep one line, so the note sets its own wrapping: it breaks
+   inside the cell (long words too) and never sets the cell's minimum width. */
+.rowNote {
+  min-width: 0;
+  font-size: var(--fs-sm);
+  color: var(--hx-muted);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.rowNote.rowNoteCut {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+/* Keyboard: while focus is in its row (row navigation, or the row's button), a cut note wraps whole, so it is read
+ * without a pointer's tooltip and without a tab stop of its own. */
+:is(tr, [role=row], [role=listitem], li):focus-within .rowNote.rowNoteCut {
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* No hover, no tooltip to read a cut note by: it wraps whole instead (a touch phone). */
+@media (pointer: coarse), (hover: none) {
+  .rowNote.rowNoteCut {
+    overflow: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}

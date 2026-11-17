@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Referrals                                                      [Program rules]
+ Invite people to Hoody. When they pay for servers by card or crypto, you earn
+ Referral credit.
+ │   No more codes of your own can be made now.                               █
+ │   ▸ Details                                                                █
+ │   [Hide this note]
+
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Your links                                                                │
+ │ Each code is its own signup link. Every code earns you the same.          │
+ │                                                                           │
+ │ Main code                                                                 │
+ │ Given when you joined. It stays with your account, can't be retired, and  │
+ │ doesn't count toward your own codes.                                      │
+ │ k7m2q9xa  Main   https://api.hoody.com/auth/signup?ref=k7m2q9xa ⇗         │
+ │ ⧉ Copy link                                                               │
+ │                                                                           │
+ │                                                                           │
+ │ Your own codes                                                            │
+ │ 1 of 3 active · 2 more can be made now                                    │
+ │ maya-builds  Your own                                                     │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

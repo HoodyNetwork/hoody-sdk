@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines                                                        ▸ Use with your agent
+ Computers             │  Full machines that run inside atlas.
+ Files                 │
+ Bots                  │    VMs  ▸ Images    KVM on computers
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Images                                                   [+ Add from a link] [Open Files] │
+On atlas ▾             │  │ Installer images (ISO) kept on this computer.                                             │
+ Programs              │  │  Image                 State                  Size Added           SHA-256                │
+ Schedules             │  │› Debian 13             ● Ready              3.4 GB Oct 9, 2025, 8… aaaaaaaaaaaa   [Delete]│
+ Scripts               │  │  CCCOMA_X64FRE_EN-US_… ● Ready              6.1 GB Oct 10, 2025,…  bbbbbbbbbbbb   [Delete]│
+ Logs                  │  │  Ubuntu 24.04          ● Other machine type   2 GB Oct 11, 2025,…  dddddddddddd   [Delete]│
+ Tunnels               │  │  Unnamed image         ● Uploading            1 GB Oct 12, 2025,…  cccccccccccc   [Delete]│
+ Notes                 │  │ Already have the file? Put it on this computer with Files, then pick it when you create   │
+ AI                    │  │ the VM.                                                                                   │
+▌VMs                   │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+Account                │  │ Downloads                                                                                 │
+ Plans & Billing       │  │ Images being fetched from a link. A finished one shows under Images.                      │
+ Referrals             │  │  From                        State          Progress                                      │
+ Keys and tokens       │  │› releases.ubuntu.com         ● Downloading  ████░░░░░░ 38% · 988 MB of 2.5 GB     [Cancel]│
+ API                   │  │  mirror.example.org          ● Downloading  120 MB so far                         [Cancel]│
+ Notifications      26 │  │  cdimage.debian.org          ● Checking     Checking the image                     [Clear]│
+ Account               │  │  cdimage.debian.org          ● Done         Not checked against a SHA-256          [Clear]│
+                       │  │  downloads.example.net       ● Failed       the site answered 404 for this li…     [Clear]│
+ + Rent servers        │  │  download.fedoraproject.org  ● Cut off      A restart cut it off. Clear it an…     [Clear]│
+ Guide                 │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Support               │
+                       │
+                       │  Questions
+                       │  ▸ What is a VM?
+                       │  ▸ Why can't my computer run VMs?
+                       │  ▸ How do I see a VM's screen?
+                       │  ▸ How do I install Windows?
+                       │  ▸ How do I reach a website that runs in a VM?
+                       │  ▸ Why did my VM stop or not start?
+                       │  ▸ Is the console line a terminal?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

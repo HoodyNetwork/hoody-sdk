@@ -1,0 +1,17 @@
+{
+  "kept": "Backups kept",
+  "kept.value": "3 of 10",
+  "kept.meter": "3 of 10 backups kept",
+  "newest": "Newest",
+  "space": "Space they use",
+  "space.value": "40 GB",
+  "access": "Internet access",
+  "access.value": "Allowed",
+  "access.tip": "Whether programs on this computer can reach the internet. The firewall rules below decide it.",
+  "used": "Last used",
+  "rules": "Firewall rules",
+  "rules.value": "4",
+  "rules.max": "4 of 10",
+  "rules.meter": "4 of 10 firewall rules",
+  "rules.tip": "Firewall rules on this computer, of the most it takes."
+}

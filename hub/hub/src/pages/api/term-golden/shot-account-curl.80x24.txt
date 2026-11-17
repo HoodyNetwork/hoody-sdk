@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ API                                                      ▸ Use with your agent
+ ▸ Endpoints    Overview
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ API  Esc
+ GET /api/v1/auth/tokens
+ List auth tokens
+
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Authorisation                                                             │█
+ │ Sends your account token: set HOODY_TOKEN to a key from Keys and tokens.  │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ How to call it                                                            │█
+ │ ‹ cURL ›  JavaScript    Python (requests)    CLI                          │█
+ │ cURL example                                                   ⧉ Copy all │█
+ │  curl -X GET 'https://api.hoody.com/api/v1/auth/tokens' \         ⧉ copy  │█
+ │    -H "Authorization: Bearer $HOODY_TOKEN"                                │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ About this endpoint                                                       │█
+ │ Operation ID  api_listAuthTokens  ⧉ copy                                  │
+ │ Service       Account API                                                 │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

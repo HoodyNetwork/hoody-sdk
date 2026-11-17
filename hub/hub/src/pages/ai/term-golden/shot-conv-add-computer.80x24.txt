@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  AI                          ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ [┌──────────────────────────────────────────────────────────────────────────┐]
+ a│ Attach files from a computer                                       Esc × │
+ [│ ──────────────────────────────────────────────────────────────────────── │
+──│ ┃ ● SG atlas · █ Personal ▾  [Places]                                    │──
+  │                                                                          │
+  │ [Up one folder] [Back] / / home / ada  [View options]                    │
+ ││                                                                          │
+ ││ │ / Filter, or type a path                     Find in subfolders        │
+  │                                                                          │
+ ✦│  ▸  backups/                                                  2 days ago │
+ ▸│  ▸  projects/                                                  yesterday │
+  │     notes.txt                                         3.2 KB · yesterday │ █
+ ✗│     plan.md                                           1.2 KB · yesterday │ █
+ m│     screenshot.png                                    471 KB · yesterday │ █
+  │                                                                          │ █
+ i│ 0 of 7 chosen                                                            │ █
+ t│                                                                          │ █
+  │ Each file is read once and added to this message; nothing is sent yet.   │ █
+ ┌│ Images up to 4 MB and up to 3 text files of 24 KB each can be attached.  │┐
+ ││                                                                          ││
+ └│                                                       [Cancel]   Attach  │┘
+ [└──────────────────────────────────────────────────────────────────────────┘]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

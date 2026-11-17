@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Scripts                                  ▸ Use with your agent   + New script
+ ‹ Scripts  Esc
+ Weather lookup  ● Working                 [▷ Try it] [✦ Ask the assistant] [⋯]
+ /wea┌────────────────────────────────────────────────────────────────────┐
+     │ Make a public link                                           Esc × │
+ ▸Ove│ ────────────────────────────────────────────────────────────────── │
+ ────│ Anyone who has the link can run this script without signing in.    │────
+ │ La│                                                                    │s │
+ │  C│ Link name                                                          │  │
+ │  4│ ┃ brave-breeze-wt2vse5bosm1i3r2             [Suggest another name] │  │
+ │ ▃▇│ 3 to 61 lowercase letters, numbers and dashes, not starting or     │  │
+ └───│ ending with a dash.                                                │──┘
+     │ The random ending keeps the address from being guessed. A short    │   █
+ ┌───│ name of your own can be found by anyone who tries it.              │──┐█
+ │ Sc│                                                                    │] │█
+ │ Ru│                                              [Cancel]   Make link  │  │█
+ └───└────────────────────────────────────────────────────────────────────┘──┘█
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Public links                                                              │
+ │ A link anyone can open, without signing in, that runs this script.        │
+ │ [+ Make a link]                                                           │
+ Typing · Esc leaves the field · Ctrl+K commands

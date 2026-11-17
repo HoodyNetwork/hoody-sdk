@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                                    ▸ Use with your agent
+ Computers             │
+ Files                 │  ‹ Bots  Esc
+▌Bots                  │  Chief  ● Waiting for you                               [■ Stop] [Bot settings] [Details] [⋯]
+ Board                 │    SG atlas    Hoody Free  · Allow everything is off +2
+ Demo                  │
+ Vault                 │  ▸ Activity    Link and keys    Chat apps 2    Work 2
+                       │  ────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │
+ Programs              │     i Task report ·  Read deploy log  · on atlas
+ Schedules             │     The deploy failed because the build step ran out of memory. I suggest raising the
+ Scripts               │     limit to 2 GB.
+ Logs                  │     19 days ago
+ Tunnels               │
+ Notes                 │                                            Direct message
+ AI                    │                                            Do that, but ask me before restarting anything.
+ VMs                   │                                            19 days ago
+                       │
+Account                │     Understood. I will change the limit and ask before any restart.
+ Plans & Billing       │     19 days ago
+ Referrals             │     … Working on it
+ Keys and tokens       │    ┌─ ! Needs you ────────────────────────────────────────────────────────────────────────┐
+ API                   │    │  Allow this action?  Use a tool                                                      │
+ Notifications      26 │    │                                                                                      │  ▄
+ Account               │    │ Run a command that changes files in the shop repository: npm install && npm run      │  █
+                       │    │ build                                                                                │  █
+ + Rent servers        │    │ Applies to this call only.                                                           │  █
+ Guide                 │    │ [Deny n]  [Allow once y]  Add a reason                                               │  █
+ Support               │    └──────────────────────────────────────────────────────────────────────────────────────┘  █
+                       │    A check-in rule asks you before the Bot goes on.                                          █
+                       │                                                                                              █
+                       │     ! Sending declines the waiting approval.                                                 █
+                       │     ┌────────────────────────────────────────────────────────────────────────────────────┐   █
+                       │     │ Message the Bot                                                                    │   █
+                       │     └────────────────────────────────────────────────────────────────────────────────────┘   █
+                       │                                                 Write a message first.  [⇗ Talk]  [Send ↵]   █
+                       │                                                                                              █
+                       │                                                                                              █
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

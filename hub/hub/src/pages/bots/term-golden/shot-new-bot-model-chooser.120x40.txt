@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ ‹ Back to New Bot                                                       Esc ×
+ Home                  │  Bots          ┃ Choose a model
+ Computers             │  Every Bot on y┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │                ┃ Ready to use
+▌Bots                  │  Bots          ┃
+ Board                 │  23            ┃ │ / Search models and providers
+ Demo                  │  on 2 computers┃
+ Vault                 │                ┃ Showing 5 of 5
+                       │  / Search      ┃
+On atlas ▾             │                ┃  ( ) Agent's default
+ Programs              │  › C Chief     ┃      Uses the agent's configured model, also when that changes
+ Schedules             │      Asked you ┃
+ Scripts               │       · Runs th┃  H Hoody AI Included
+ Logs                  │       · Model H┃  (•) Hoody Free Current · Recommended
+ Tunnels               │      Telegram S┃  ( ) Hoody Fast
+ Notes                 │    L Ledger    ┃
+ AI                    │      Stopped at┃  G Google Your key · Can't tell yet
+ VMs                   │       · cinder ┃  ( ) Gemini 3 Pro
+                       │      Only here ┃      Can't tell if it runs here
+Account                │    S Support   ┃
+ Plans & Billing       │      … Working ┃  Ensembles
+ Referrals             │       · atlas ·┃  ( ) Best of three
+ Keys and tokens       │      Discord   ┃
+ API                   │    D Digest    ┃
+ Notifications      26 │      2 messages┃  More models
+ Account               │       · atlas ·┃  More models are available once you set up a provider.
+                       │      Only here ┃  [OpenAI] [Set up a provider]
+ + Rent servers        │    S Scout     ┃
+ Guide                 │      Last activ┃
+ Support               │       · Model g┃
+                       │      Telegram  ┃
+                       │    N Notes     ┃
+                       │      Last activ┃
+                       │       · Model H┃
+                       │      Only here ┃
+                       │                ┃
+                       │  1–20 of 23 ‹ ›┃
+                       │                ┃
+                       │  Questions     ┃
+ Tab move · Enter open · Ctrl+K commands┃

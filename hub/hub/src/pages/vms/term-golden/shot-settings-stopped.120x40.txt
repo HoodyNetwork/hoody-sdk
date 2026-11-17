@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines › win11
+ Computers             │  win11  ● Stopped                                                                  Start   [⋯]
+ Files                 │  A VM inside atlas.
+ Bots                  │
+ Board                 │   Overview  Screen  Ports  Storage  Snapshots ▸Settings  Logs
+ Demo                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Settings                                                                                 │█
+On atlas ▾             │  │ Changes apply when the VM next starts.                                                   │█
+ Programs              │  │ Size                                                                                     │█
+ Schedules             │  │ ┌──────────────────────────────────────────────────────────────────────────────────────┐ │█
+ Scripts               │  │ │                                                                                      │ │█
+ Logs                  │  │ │ Memory (GiB)                    │ [−] 4                    [+]                       │ │█
+ Tunnels               │  │ │ About 8 GiB is free for VMs                                                          │ │█
+ Notes                 │  │ │ now.                                                                                 │ │█
+ AI                    │  │ │                                                                                      │ │█
+▌VMs                   │  │ │ CPUs                            │ [−] 2                    [+]                       │ │█
+                       │  │ │                                                                                      │ │█
+Account                │  │ └──────────────────────────────────────────────────────────────────────────────────────┘ │█
+ Plans & Billing       │  │                                                                                          │█
+ Referrals             │  │ Start and stop                                                                           │█
+ Keys and tokens       │  │ ┌──────────────────────────────────────────────────────────────────────────────────────┐ │█
+ API                   │  │ │                                                                                      │ │█
+ Notifications      26 │  │ │ Start with the computer         [□ off]                                              │ │█
+ Account               │  │ │ The VM starts whenever the                                                           │ │█
+                       │  │ │ computer does, even after you                                                        │ │▀
+ + Rent servers        │  │ │ shut it down.                                                                        │ │
+ Guide                 │  │ │                                                                                      │ │
+ Support               │  │ │ Shut-down wait (seconds)        │ [−] 30                   [+]                       │ │
+                       │  │ │ How long a shut-down waits for                                                       │ │
+                       │  │ │ the system before it cuts the                                                        │ │
+                       │  │ │ power. Empty: 30 seconds.                                                            │ │
+                       │  │ │                                                                                      │ │
+                       │  │ └──────────────────────────────────────────────────────────────────────────────────────┘ │
+                       │  │                                                                                          │
+                       │  │ Screen                                                                                   │
+                       │  │ ┌──────────────────────────────────────────────────────────────────────────────────────┐ │
+                       │  │ │                                                                                      │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

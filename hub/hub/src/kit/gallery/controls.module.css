@@ -1,0 +1,93 @@
+/* The controls tab: specimens in a grid (layout only; every look is the kit control's own). */
+.grid {
+  display: grid;
+
+  /* auto-fill: the specimen count varies with the spec; empty tracks keep every cell the same width. */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--sp-4);
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+/* The specimen tables of the Actions tab (layout only): a row's name, then one specimen per cell, so a kind of button
+   lines up down the page and a size or a state across it. */
+.matrix {
+  border-collapse: collapse;
+}
+
+.matrixName,
+.matrixCell {
+  padding: 0;
+  padding-block-end: var(--sp-3);
+  padding-inline-end: var(--sp-4);
+  vertical-align: middle;
+}
+
+/* A row's name and a column's head. */
+.matrixName {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+  text-align: start;
+  white-space: nowrap;
+}
+
+/* Too narrow for the columns: each name takes a line and its specimens wrap under it; the column heads and a kind's
+   empty cell go. */
+@container content (width < 1080px) {
+  .matrix {
+    display: block;
+  }
+
+  .matrixHead {
+    display: none;
+  }
+
+  .matrixRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-3);
+    padding-block-end: var(--sp-4);
+  }
+
+  .matrixName,
+  .matrixCell {
+    padding: 0;
+  }
+
+  .matrixName {
+    flex-basis: 100%;
+  }
+
+  .matrixCell:empty {
+    display: none;
+  }
+}
+
+/* On a touch screen an extra-small button's press reaches past its box, so wrapped specimens stand further apart. */
+@media (pointer: coarse) {
+  .matrixRow {
+    gap: var(--sp-6);
+  }
+}
+
+/* A capped slot for the shrink specimen: four thumb targets wide at every pointer, so the data label ends in an ellipsis. */
+.capSlot {
+  display: flex;
+  min-inline-size: 0;
+  max-inline-size: calc(4 * var(--hit-narrow));
+}
+
+/* A slot squeezed narrower than any button: a shrink button in it still keeps the touch target on a coarse pointer. */
+.capSqueezed {
+  display: flex;
+  min-inline-size: 0;
+  max-inline-size: var(--sp-4);
+}

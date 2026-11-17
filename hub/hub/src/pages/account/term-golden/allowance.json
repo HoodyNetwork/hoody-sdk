@@ -1,0 +1,38 @@
+{
+  "_doc": "Terminal page acceptance debt (scripts/term/goldens.ts). Shrink-only: `bun scripts/term/check.ts --page <id> --update` drops what is gone and never adds. Fix the cause instead of listing it.",
+  "crashes": [],
+  "placeholders": [],
+  "holes": [],
+  "traps": [],
+  "domRefused": [],
+  "domUnsupported": [],
+  "consoleErrors": [],
+  "tableFaults": [],
+  "waitTextDebt": [
+    {
+      "case": "shot-passcode-off",
+      "text": "Lock the Hub on this browser with a passcode.",
+      "owner": "pages",
+      "reason": "the terminal frame does not draw the state the web shot waits for; draw it in the .term sibling"
+    },
+    {
+      "case": "shot-passcode-set-sheet",
+      "text": "Type it again",
+      "owner": "pages",
+      "reason": "the terminal frame does not draw the state the web shot waits for; draw it in the .term sibling"
+    },
+    {
+      "case": "shot-sessions-ip-error",
+      "text": "Couldn't read this browser's address",
+      "owner": "pages",
+      "reason": "the terminal frame does not draw the state the web shot waits for; draw it in the .term sibling"
+    },
+    {
+      "case": "shot-twofa-off",
+      "text": "A password alone signs in",
+      "owner": "pages",
+      "reason": "the terminal frame does not draw the state the web shot waits for; draw it in the .term sibling"
+    }
+  ],
+  "untranslatable": 0
+}

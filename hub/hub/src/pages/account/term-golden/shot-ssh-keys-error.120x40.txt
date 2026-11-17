@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Account
+ Computers             │  Your profile, how you sign in, and where you are signed in.
+ Files                 │
+ Bots                  │  ‹ 5   Agent sign-in  Security history ▌SSH keys  Emails  Elsewhere  This device  Questions
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Vault                 │  │ SSH keys                                                                              │
+                       │  │ Each computer takes one SSH key, set on that computer.                                │
+On atlas ▾             │  │ / Search                                                                    ↻ Refresh │
+ Programs              │  │                                                                                       │
+ Schedules             │  │                                                                                       │
+ Scripts               │  │ ✗ SSH keys: This didn't load                                                          │
+ Logs                  │  │ Try again                                                                             │
+ Tunnels               │  │                                                                                       │
+ Notes                 │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ AI                    │
+ VMs                   │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Emails                                                                                │
+Account                │  │ What Hoody also sends to your email address.                                          │
+ Plans & Billing       │  │                                                                                       │
+ Referrals             │  │ Support replies                 [■ on ]                                               │
+ Keys and tokens       │  │ Email me when support replies                                                         │
+ API                   │  │ to one of my tickets. The                                                             │
+ Notifications      26 │  │ email names no ticket and                                                             │
+▌Account               │  │ shows none of its text.                                                               │▄
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘█
+ + Rent servers        │                                                                                           █
+ Guide                 │  ┌───────────────────────────────────────────────────────────────────────────────────────┐█
+ Support               │  │ Elsewhere                                                                             │█
+                       │  │ Other places that act on your account.                                                │█
+                       │  │                                                                                       │
+                       │  │ API keys                        [Open]                                                │
+                       │  │ Make, rename and remove the                                                           │
+                       │  │ keys your tools sign in with.                                                         │
+                       │  │                                                                                       │
+                       │  │ Billing                         [Open]                                                │
+                       │  │ Your plan, balance and                                                                │
+                       │  │ payments.                                                                             │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,101 @@
+/* The row is the container: it stacks when it cannot hold the 220 px label, the 16 px gap and a
+   usable control (284 px), whatever column it sits in. */
+.row {
+  container: setting / inline-size;
+  min-width: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: var(--setting-label-w) minmax(0, 1fr);
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+  min-width: 0;
+  padding-block-start: calc(var(--sp-1) + var(--sp-half));
+}
+
+.name {
+  color: var(--hx-ink);
+  font: var(--t-body-strong);
+  overflow-wrap: anywhere;
+}
+
+.danger {
+  color: var(--hx-danger);
+}
+
+.help {
+  color: var(--hx-muted);
+  font: var(--t-small);
+
+  /* A line break written in the text shows; plain text wraps (pinned by states/preline.test.tsx). */
+  white-space: pre-line;
+}
+
+/* The setting as it is written (a directive, a flag): one mono line under the help, in the help's colour. A long one
+   breaks anywhere, so it never widens the label column. */
+.code {
+  color: var(--hx-muted);
+  font: var(--t-mono);
+  overflow-wrap: anywhere;
+}
+
+.ctl {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  min-width: 0;
+  min-height: var(--btn-h); /* one button row; a field in it is taller and sets the row itself */
+  max-width: var(--setting-ctl-max);
+}
+
+.wide {
+  max-width: none;
+}
+
+.value {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.wide .value {
+  flex: 1 1 auto;
+}
+
+.outcome {
+  flex: 0 1 auto;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-inline-start: auto;
+}
+
+@container setting (width < 520px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-2);
+  }
+
+  .label {
+    padding-block-start: 0;
+  }
+
+  .ctl {
+    max-width: none;
+  }
+
+  .actions {
+    margin-inline-start: 0;
+  }
+}

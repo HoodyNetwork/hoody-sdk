@@ -1,0 +1,7 @@
+{
+  "trim.item": "Remove what follows",
+  "trim.itemDesc": "Keep this reply and everything before it. Later messages are removed for good.",
+  "trim.noChat": "There is no chat to cut.",
+  "trim.noComputer": "This chat's computer is not shown, so nothing can be sent to it.",
+  "trim.done": "Removed everything after reply {{n}}."
+}

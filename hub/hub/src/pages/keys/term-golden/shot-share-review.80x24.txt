@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Share Personal                                                   Esc ×
+ Keys a┃ ──────────────────────────────────────────────────────────────────────
+ A key ┃  ✓  Choose                                                           █
+ key, w┃  2  Review                                                           █
+   API ┃                                                                      █
+ ──────┃ Realm      Personal                                                  █
+       ┃ Ends       Nov 18, 2026, 9:00 AM your time (UTC) · 2026-11-18 09:00  █
+ People┃            UTC                                                       █
+ includ┃ Addresses  Any address                                               █
+ share.┃ For        Anyone you send it to                                     █
+ ends. ┃                                                                      ▀
+       ┃
+ SHARED┃ They can
+       ┃ Computers
+ / Sear┃   See this realm's computers
+   Shar┃ Projects
+ › Anyo┃   See projects. Also shows your pending project invitations and the
+   Anyo┃   people in your projects
+       ┃    Shows account details
+       ┃
+       ┃
+ Questi┃ They can't
+ ▸ Can ┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃                                                 [Back]   Create share

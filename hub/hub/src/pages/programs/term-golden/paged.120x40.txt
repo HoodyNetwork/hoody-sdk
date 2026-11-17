@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                            ▸ Use with your agent  [+ New program]   + Launch an app
+ Computers             │  79 programs on atlas · 71 running · 4 need a look
+ Files                 │  ▸ Running programs    Apps    Ports & aliases
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  / Search programs          ‹ Any ›  Running 71    Stopped 4    Problems 4                   █
+ Vault                 │  79 programs  ↻ Refresh                                                                      █
+                       │                                                                                              █
+On atlas ▾             │      Name               State                  Ports                                         █
+▌Programs              │  ▌   ! nightly-sync     ● Ended (code 2)       —                                   [Start] ⋯██
+ Schedules             │      ! worker           ● Not working          —                                   [Start] ⋯██
+ Scripts               │      ! mystery          ● Can't tell           —                                           ⋯██
+ Logs                  │        api              ● Running              8000-8003 · 2/4 up                [Restart] ⋯██
+ Tunnels               │        job-01           ● Running              20000                             [Restart] ⋯██
+ Notes                 │        job-02           ● Running              20001                             [Restart] ⋯██
+ AI                    │        job-03           ● Running              20002                             [Restart] ⋯██
+ VMs                   │        job-04           ● Running              20003                             [Restart] ⋯██
+                       │        job-05           ● Running              20004                             [Restart] ⋯██
+Account                │        job-06           ● Running              20005                             [Restart] ⋯██
+ Plans & Billing       │        job-07           ● Running              20006                             [Restart] ⋯██
+ Referrals             │        job-08           ● Running              20007                             [Restart] ⋯██
+ Keys and tokens       │        job-09           ● Running              20008                             [Restart] ⋯██
+ API                   │        job-10           ● Running              20009                             [Restart] ⋯██
+ Notifications      26 │        job-11           ● Running              20010                             [Restart] ⋯██
+ Account               │        job-12           ● Running              20011                             [Restart] ⋯░█
+                       │        job-13           ● Running              20012                             [Restart] ⋯░█
+ + Rent servers        │        job-14           ● Running              20013                             [Restart] ⋯░
+ Guide                 │        job-15           ● Running              20014                             [Restart] ⋯░
+ Support               │        job-16           ● Running              20015                             [Restart] ⋯░
+                       │        job-17           ● Running              20016                             [Restart] ⋯░
+                       │        job-18           ● Running              20017                             [Restart] ⋯░
+                       │        job-19           ● Running              20018                             [Restart] ⋯░
+                       │        job-20           ● Running              20019                             [Restart] ⋯░
+                       │        job-21           ● Running              20020                             [Restart] ⋯░
+                       │        job-22           ● Running              20021                             [Restart] ⋯░
+                       │        job-23           ● Running              20022                             [Restart] ⋯░
+                       │
+                       │  1–50 of 79 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Chats   Agents   Automations  ▌Knowledge   Settings
+ ▌Skills   Instructions   Memory
+ Skills                                                 [↓ Import]  [Skill Hub]
+ ‹ Skills  Esc
+ deploy-check  ● On
+ Check a deploy before it goes out.
+
+ Use                                                                          █
+ [■ on ] Agents can use this skill                                            █
+         Turns deploy-check on or off for every agent in this realm. It does  █
+         not change trust.                                                    █
+ On, but not trusted: agents see its name only and its commands do not run.   █
+ What on and trusted mean                                                     █
+ Trust                                                                        █
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │                                                                           │
+ │ ! Not trusted                                         [Review and trust…] │
+ │ Installed and not trusted: its                                            │
+ │ description and instructions                                              │
+ │ are withheld and its commands                                             │
+ │ do not run.                                                               │
+ │                                                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

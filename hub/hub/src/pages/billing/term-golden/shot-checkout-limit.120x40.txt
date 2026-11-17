@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Buy a plan                                                              Esc ×
+ Home                  │  Plans & Billin┃ Small · $12.00 / month
+ Computers             │  Upgrade a serv┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │                ┃ │ ! You have reached your limit of 3 paid servers.
+ Bots                  │  ▸ Plans    Bar┃
+ Board                 │  ──────────────┃ What you get
+ Demo                  │  │ ✗ fra-7: On ┃ CPU cores               2
+ Vault                 │                ┃ Memory                  4 GB
+                       │  Plans         ┃ Disk                    60 GB
+On atlas ▾             │  Each plan is a┃ Computers               3
+ Programs              │  take the same ┃ Disk speed              400 MiB/s read, 200 MiB/s write
+ Schedules             │                ┃ Network                 500 Mbps
+ Scripts               │  ┌─────────────┃ Snapshots per computer  3
+ Logs                  │  │             ┃ Custom computer URLs    6
+ Tunnels               │  │ Plans for   ┃ Bot URLs                3
+ Notes                 │  │ Choose a pla┃ AI allowance            ×4
+ AI                    │  │ server, or p┃
+ VMs                   │  │ to upgrade i┃ Location
+                       │  │             ┃ │ Automatic (best available) ▾
+Account                │  └─────────────┃ Right now that is Frankfurt, Germany. The location is set when you confirm.
+▌Plans & Billing       │                ┃
+ Referrals             │  ┌─────────────┃ Plan                                                                   $12.00
+ Keys and tokens       │  │ Free        ┃ ─────────────────────────────────────────────────────────────────────────────
+ API                   │  │ $0 / month  ┃ Charged now                                                            $12.00
+ Notifications      26 │  │ Your free se┃
+ Account               │  │ Computers   ┃ Wallet balance                                                         $42.50
+                       │  │ Hardware    ┃
+ + Rent servers        │  │ AI allowance┃ Your free server ash-3 stays as it is.
+ Guide                 │  │             ┃
+ Support               │  │ Locations   ┃ [ ] I understand this purchase is not eligible for a customer-requested
+                       │  │ No choice of┃     refund, and I agree to the Terms of Service and Privacy Policy.
+                       │  │ Your free se┃
+                       │  │ buy a plan. ┃
+                       │  │ Next: Small.┃
+                       │  │ computers.  ┃
+                       │  │ Free server ┃
+                       │  │             ┃
+                       │  │             ┃
+                       │  │             ┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ [Cancel]   Confirm purchase

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                           ▸ Use with your agent  [+ Get a computer]
+▌Computers             │
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ Computers  Esc
+ Vault                 │  cedar  ● Stopped                                                  ▷ Start  [Make current] [⋯]
+                       │  SG n12 · Home base · █  Personal
+On atlas ▾             │
+ Programs              │   Overview  Connect  Permissions  Ports & addresses  Desktop  Network  Run  Programs  Backups
+ Schedules             │  ▸Storage
+ Scripts               │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Logs                  │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Tunnels               │  │ Connected storage                                                                         │
+ Notes                 │  │ ■ The computer is stopped                                                                 │
+ AI                    │  │ Start the computer to see or change its storage.                                          │
+ VMs                   │  │  ▷ Start                                                                                  │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

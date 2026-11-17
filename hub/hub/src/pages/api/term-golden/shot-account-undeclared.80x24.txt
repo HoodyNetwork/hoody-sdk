@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ API                                                      ▸ Use with your agent
+ ▸ Endpoints    Overview
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ API  Esc
+ POST /api/v1/users/auth/login
+ Login with username and password
+
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Authorisation                                                             │█
+ │ Sends your account token: set HOODY_TOKEN to a key from Keys and tokens.  │█
+ │ The API description doesn't say which token this takes, so the examples   │█
+ │ send your account token.                                                  │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ How to call it                                                            │█
+ │ No example for this request's shape: see the docs.                        │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ About this endpoint                                                       │█
+ │ Operation ID  api_login  ⧉ copy                                           │█
+ │ Service       Account API                                                 │█
+ │ Docs          https://docs.hoody.com/api/authentication/                  │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

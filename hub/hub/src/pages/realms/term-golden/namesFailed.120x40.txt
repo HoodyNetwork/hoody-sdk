@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  New realm
+ Computers             │  A separate space in your account, with its own computers, keys and settings.
+ Files                 │
+ Bots                  │  Step 1 of 3 · Name and colour  ███░░░░░░░
+ Board                 │  ▸1 Name and colour  2 Computers  3 Create
+ Demo                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │  ▸ Your choices
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+On atlas ▾             │  │ Name your realm                                                                           │
+ Programs              │  │ The name and colour it shows in the realm menu.                                           │
+ Schedules             │  │ Separate           Keys and shares limited to this realm reach only what is in it.        │
+ Scripts               │  │ Shared on purpose  A computer can be in several realms. All-realms keys and Global vault  │
+ Logs                  │  │                    entries reach every realm.                                             │
+ Tunnels               │  │ Free               Making a realm costs nothing. You pay for computers as before.         │
+ Notes                 │  │ More about realms                                                                         │
+ AI                    │  │ Name                                                                                      │
+ VMs                   │  │ │ _______________________________________________________________________________________ │
+                       │  │ Shown in the realm menu on every device.                                                  │
+Account                │  │                                                                                           │
+ Plans & Billing       │  │ │ ! We couldn't read your realm names, so we can't check that this  [Try again]  Details  │
+ Referrals             │  │ │   one is free.                                                                          │
+ Keys and tokens       │  │ Colour                                                                                    │
+ API                   │  │ │ Red ▾                                                                                   │
+ Notifications      26 │  │ Kept on this device only; other devices keep their own colour.                            │
+ Account               │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+ + Rent servers        │  Questions
+ Guide                 │  ▸ What is a realm?
+ Support               │  ▸ What is in a new realm?
+                       │  ▸ Does adding a computer here take it out of its other realms?
+                       │  ▸ Can I make a new computer in an empty realm?
+                       │  ▸ How do keys and shares work with a realm?
+                       │  ▸ What else belongs to a realm?
+                       │  ▸ Does a realm cost anything?
+                       │  ▸ Where are the name and colour kept?
+                       │  ▸ How do I switch realms, or remove one I don't need?
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │                                                                               [Cancel]   Next
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

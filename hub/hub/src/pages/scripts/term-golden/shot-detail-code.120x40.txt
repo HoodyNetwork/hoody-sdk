@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                 ▸ Use with your agent   + New script
+ Computers             │
+ Files                 │  ‹ Scripts  Esc
+ Bots                  │  Weather lookup  ● Working                                [▷ Try it] [✦ Ask the assistant] [⋯]
+ Board                 │  /weather ·  atlas
+ Demo                  │
+ Vault                 │   Overview ▸Code  Test  Settings
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  ⧉ copy                                                                                      █
+ Programs              │  Script code                                                                                 █
+ Schedules             │  │ // @label Weather lookup                                                                  █
+▌Scripts               │    // @description Current weather for a city.                                               █
+ Logs                  │    export default async function (request: Request) {                                        █
+ Tunnels               │      const city = new URL(request.url).searchParams.get("city") ?? "Singapore";              █
+ Notes                 │      const res = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);       █
+ AI                    │      return Response.json(await res.json());                                                 █
+ VMs                   │    }                                                                                         █
+                       │                                                                                              █
+Account                │                                                                                              █
+ Plans & Billing       │                                                                                              █
+ Referrals             │                                                                                              █
+ Keys and tokens       │                                                                                              █
+ API                   │                                                                                              █
+ Notifications      26 │                                                                                              █
+ Account               │                                                                                              █
+                       │                                                                                              █
+ + Rent servers        │                                                                                              █
+ Guide                 │                                                                                              █
+ Support               │  Enter new line · Tab next control · Ctrl+S save                                             █
+                       │                                                                                              █
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Versions                                                                                 │█
+                       │  │ Every save is kept, newest first. Restore puts an older one back as a new save.          │▀
+                       │  │ Oct 22, 2026, 9:12 AM                                                          [Preview] │
+                       │  │   1.8 KB                                                                                 │
+                       │  │ Oct 19, 2026, 4:40 PM                                                          [Preview] │
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  [Discard changes]  [✓ Save Ctrl+S]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

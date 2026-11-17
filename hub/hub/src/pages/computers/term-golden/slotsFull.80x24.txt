@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent   + Get a computer
+ Your computers: start them, open a terminal, and manage access.
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ Computers 8 · 4 running · 2 stopped · 1 failed · 1 starting    Servers 3     █
+ Slots 8 of 8 · [ Full: Get more room]                                        █
+ / Search computers     Filters                                               █
+ 8 computers  [ ] Show usage  Ask the Agent  ↻ Refresh  View options          █
+ ▌ █ atlas · Home base · Current                                   ● Running ⋯█
+    █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                     █
+   █ borealis · Acme storefront                                    ● Running ⋯█
+    █ Acme client  · DE fra-7 · Frankfurt · 2 cores · 4 GB RAM                █
+   █ cedar · Home base                                             ● Stopped ⋯█
+    █ Personal  · SG n12 · Singapore · 2 cores · 4 GB RAM                     █
+   █ dune · Experiments                                           ● Starting ⋯▀
+    █ Lab  · US ash-3 · Ashburn · 1 core · 2 GB RAM
+   █ ember · Acme storefront                                        ● Failed ⋯
+    █ Acme client  · DE fra-7 · Frankfurt · 2 cores · 4 GB RAM
+   █ fjord · Home base                                              ● Paused ⋯
+    █ Personal  · US ash-3 · Ashburn · 1 core · 2 GB RAM
+   █ granite · Acme storefront                                     ● Running ⋯
+    █ Acme client  · SG n12 · Singapore · 4 cores · 16 GB RAM
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

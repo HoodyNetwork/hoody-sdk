@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Account
+ Computers             │  Your profile, how you sign in, and where you are signed in.
+ Files                 │
+ Bots                  │   Profile  Password ▌Two-step sign-in  Passcode lock  Sign-in sessions  Agent sign-in   6 ›
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Vault                 │  │ Two-step sign-in                                                                      │
+                       │  │                                                                                       │
+On atlas ▾             │  │ Two-step sign-in                Couldn't read your two-step sign-in       [Try again] │
+ Programs              │  │ It is not off: the Hub just     status                                                │
+ Schedules             │  │ could not read it.                                                                    │▄
+ Scripts               │  └───────────────────────────────────────────────────────────────────────────────────────┘█
+ Logs                  │                                                                                           █
+ Tunnels               │  ┌───────────────────────────────────────────────────────────────────────────────────────┐█
+ Notes                 │  │ Passcode lock                                                                         │█
+ AI                    │  │                                                                                       │█
+ VMs                   │  │ No passcode                                                                           │
+                       │  │ The terminal Hub has no                                                               │
+Account                │  │ passcode lock.                                                                        │
+ Plans & Billing       │  │ ⇗ A passcode locks the Hub in the browser where you set it, in the web Hub.           │
+ Referrals             │  │ [c Copy link] [r QR code]                                                             │
+ Keys and tokens       │  │ https://hub.example.test/auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/account        │
+ API                   │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ Notifications      26 │
+▌Account               │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Sign-in sessions                                                                      │
+ + Rent servers        │  │ Each browser or device signed in to your account. End one you do not recognise.       │
+ Guide                 │  │                                                                                       │
+ Support               │  │ This device's address ⓘ         PT 203.0.113.7 · Lisbon ⧉ copy (i)                    │
+                       │  │ / Search                 Filters     12 sessions  [End all other sessions]  ↻ Refresh │
+                       │  │                                                                                       │
+                       │  │   Device             Signed in with    Last seen ↓ IP / country         Keys made     │
+                       │  │ ›•Chrome on macOS    Password          19 days ago 203.0.113.24 · SG            2     │
+                       │  │    This device                                                                        │
+                       │  │   Firefox on Linux   Password and code 19 days ago 198.51.100.7 · DE            0   ⋯ │
+                       │  │   Safari on iPhone   Google            19 days ago 192.0.2.88 · US              0   ⋯ │
+                       │  │   build-server       Device sign-in    19 days ago 203.0.113.90 · SG           14   ⋯ │
+                       │  │    Hoody CLI                                                                          │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

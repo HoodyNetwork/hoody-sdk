@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Upgrade a server                                                 Esc ×
+ Plans ┃ 1 Choose plan 2 Review 3 Confirm
+ Upgrad┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Plan┃ Upgrade n12 to Medium $29.00 / month                                 █
+ ──────┃                                                                      █
+ │ ✗ fr┃ What you get                                                         █
+ Plans ┃ CPU cores               4                                            █
+ Each p┃ Memory                  8 GB                                         █
+ disk. ┃ Disk                    160 GB                                       █
+       ┃ Computers               8                                            █
+ ┌─────┃ Disk speed              800 MiB/s read, 400 MiB/s write              █
+ │     ┃ Network                 1000 Mbps                                    █
+ │ Plan┃ Snapshots per computer  3                                            █
+ │ Choo┃ Custom computer URLs    16                                           █
+ │ serv┃ Bot URLs                8                                            █
+ │ to u┃ AI allowance            ×10
+ │     ┃
+ └─────┃  Upgrade difference                                           $17.10
+       ┃  Charged now                                                  $17.10
+ ┌─────┃  Wallet balance                                               $42.50
+ │ Free┃
+ │ $0 /┃ │ n12 stops, changes and starts again. That takes a few minutes.
+ │ Your┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Cancel]   Upgrade and pay

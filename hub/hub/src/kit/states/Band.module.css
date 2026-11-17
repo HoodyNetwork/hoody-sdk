@@ -1,0 +1,241 @@
+/* Bands and Notices, "Edge bars": one family, never blue. A 1 px frame and a 3 px bar at the
+   start: calm (neutral) grey; warning the hazard stripe on a neutral fill ("Hazard stripe edge"); danger keeps
+   the solid bar in its own hue. Square corners. The tone sets four custom properties (--nt-*); every notice shape
+   reads them, so the tone map is written once.
+
+   The warning edge, one recipe for every notice shape (Band, Notice, the flush row, OutcomeBanner, the States block,
+   the Ledger strip): the start border stays the 3 px it always is but turns transparent (--nt-bar), and the shape's
+   first background layer paints --nt-edge over that border's box, at the start edge (the right one in RTL). Calm and
+   danger paint no layer. The icon and the words stay: the stripe is never the only signal. In forced colours the
+   image is dropped, so the border takes the system colour back. */
+.band,
+.notice {
+  --nt-fill: var(--hx-notice-calm);
+  --nt-line: var(--hx-notice-line);
+  --nt-bar: var(--hx-notice-calm-bar);
+  --nt-edge: none;
+}
+
+/* An announcement, neither calm grey nor a warning: the soft accent as the fill, its edge as the frame, the accent
+   itself as the bar. The words keep the notice text colour, which reads on the soft accent in both themes. */
+.accent {
+  --nt-fill: var(--hx-acc-soft);
+  --nt-line: var(--hx-acc-edge);
+  --nt-bar: var(--hx-acc);
+}
+
+.warn {
+  --nt-fill: var(--hx-notice-warn);
+  --nt-line: var(--hx-notice-warn-line);
+  --nt-bar: transparent;
+  --nt-edge: var(--hx-warn-stripe);
+}
+
+@media (forced-colors: active) {
+  .warn {
+    --nt-bar: CanvasText;
+  }
+}
+
+.danger {
+  --nt-fill: var(--hx-notice-danger);
+  --nt-line: var(--hx-notice-danger-line);
+  --nt-bar: var(--hx-danger-fill);
+}
+
+.band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-3);
+  min-height: var(--ctl-h); /* one field row: 44 under a coarse pointer, as the buttons in it */
+  padding: var(--sp-2) var(--sp-4);
+  border: var(--bw) solid var(--nt-line);
+  border-inline-start: var(--bw-notice) solid var(--nt-bar);
+  border-radius: 0;
+  background: var(--nt-edge) 0 0 / var(--bw-notice) 100% no-repeat border-box, var(--nt-fill);
+  color: var(--hx-notice-text);
+  font-size: var(--fs-md);
+  line-height: var(--lh-snug);
+}
+
+.table {
+  min-height: 36px;
+  padding-block: var(--sp-1);
+  padding-inline: var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+.icon {
+  flex: none;
+  color: var(--hx-muted);
+}
+
+.text {
+  flex: 1 1 240px;
+  min-width: 0;
+
+  /* A line break written in the text shows; plain text wraps (pinned by states/preline.test.tsx). */
+  white-space: pre-line;
+}
+
+/* The actions keep their order and wrap within the band: as a
+   group under the text when they do not fit beside it, then one under another when they do not fit side by side. */
+.actions {
+  display: inline-flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  gap: var(--sp-3);
+  margin-inline-start: auto;
+}
+
+.close {
+  flex: none;
+  margin-inline-end: calc(-1 * var(--sp-2));
+}
+
+.warn .icon {
+  color: var(--hx-warn);
+}
+
+.danger .icon {
+  color: var(--hx-danger);
+}
+
+/* One row of a stack inside a table's frame: the icon out of the wrap, in the lead column, so wrapped text stays on the
+   text edge; 240 would put the text under its icon at a 280 rail. The frame's own hairline below, no frame of its own;
+   the edge bar is drawn inside (a start-edge border on ::before, over the padding), so the text keeps the rail's lead
+   column in either direction and in forced colours (the Bots paused rows are the model). */
+.band:dir(rtl),
+.notice:dir(rtl) {
+  background-position-x: 100%;
+}
+
+.flush {
+  position: relative;
+  padding-inline: calc(var(--band-flush-pad, var(--rail-pad)) + var(--rail-lead) + var(--rail-gap)) var(--band-flush-pad, var(--rail-pad));
+  border: 0;
+  border-block-end: var(--bw) solid var(--hx-line);
+  border-radius: 0;
+}
+
+.flush::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-inline-start: var(--bw-notice) solid var(--nt-bar);
+  background: var(--nt-edge) border-box;
+  pointer-events: none;
+}
+
+.flush > .text {
+  position: relative;
+  flex-basis: 160px;
+}
+
+.flush > .text > .icon {
+  position: absolute;
+  inset-block-start: calc((var(--lh-snug) * 1em - var(--icon-sm)) / 2);
+  inset-inline-start: calc(-1 * (var(--rail-lead) + var(--rail-gap)));
+  inline-size: var(--rail-lead);
+}
+
+.flush > .close {
+  margin-inline-end: 0;
+}
+
+/* A Notice: the same edge bar with no actions and no live role, a sentence that stays on the page (a guide's
+   warning, a list's "Showing 8 of 33"). Block by default; `inline` is the small chip that sits in a row of text. */
+.notice {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: baseline;
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--bw) solid var(--nt-line);
+  border-inline-start: var(--bw-notice) solid var(--nt-bar);
+  background: var(--nt-edge) 0 0 / var(--bw-notice) 100% no-repeat border-box, var(--nt-fill);
+  color: var(--hx-notice-text);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-normal);
+}
+
+.notice > .icon {
+  align-self: center;
+}
+
+.notice > .text {
+  flex: 1 1 auto;
+}
+
+.inline {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--bw) var(--sp-2);
+}
+
+.measure {
+  max-inline-size: var(--measure);
+}
+
+/* A block notice: structured content (a heading, a list) in the frame; the icon on the first line's top start. */
+.block {
+  align-items: flex-start;
+}
+
+.block > .icon {
+  align-self: flex-start;
+  margin-block-start: var(--sp-1);
+}
+
+.block > .text {
+  display: grid;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+/* An attached band: the field, then the band right under it in the table look. The field's border takes the tone
+   through --field-attach-line, which fieldBox.module.css reads (a custom property, not an attribute-value selector:
+   a kit module's selectors stay quote-free, kitpure.conformance.test.ts). */
+.attachWrap {
+  display: grid;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.attachWarn {
+  --field-attach-line: var(--hx-warn-fill);
+}
+
+.attachDanger {
+  --field-attach-line: var(--hx-danger-fill);
+}
+
+.attach {
+  min-height: 0;
+}
+
+/* Over a frame or canvas tile: the band places itself on the top edge of its nearest positioned ancestor. What lies
+   under it is not the page's ground (a program's own dark ground, a document in a frame) and the warn and danger fills
+   are see-through, so the card is painted under the fill: the edge layer as in .band, then the fill as an image layer,
+   then the card colour. The band's words (--hx-notice-text) always sit on the Hub's own ground. */
+.over {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: var(--z-raised);
+  background: var(--nt-edge) 0 0 / var(--bw-notice) 100% no-repeat border-box, linear-gradient(var(--nt-fill), var(--nt-fill)), var(--hx-card);
+}
+
+/* HeldBand's note: what the last check said, on its own line under the band's sentence. */
+.heldNote {
+  display: block;
+  margin-block-start: var(--sp-1);
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+

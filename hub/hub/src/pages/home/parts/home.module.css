@@ -1,0 +1,613 @@
+/* Home's own parts: how it fits together, first steps, Needs you, Start something, realms, shortcuts.
+   Tokens only; light and dark come from them. */
+
+/* ── How it fits together ─────────────────────────────────────────────────── */
+.fits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.fitsTitle {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.ideas {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.idea {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* The arrow to the next idea: a hairline from this mark to the next one, ending in a chevron. */
+.idea:not(:last-child)::after {
+  position: absolute;
+  inset-block-start: 20px;
+  inset-inline: 52px calc(var(--sp-4) * -1 + 6px);
+  block-size: var(--bw);
+  background: var(--hx-line-strong);
+  content: "";
+}
+
+.idea:not(:last-child)::before {
+  position: absolute;
+  inset-block-start: 17px;
+  inset-inline-end: calc(var(--sp-4) * -1 + 4px);
+  inline-size: 7px;
+  block-size: 7px;
+  border-block-start: var(--bw) solid var(--hx-line-strong);
+  border-inline-end: var(--bw) solid var(--hx-line-strong);
+  content: "";
+  transform: rotate(45deg);
+}
+
+.ideaMark {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: 40px;
+  block-size: 40px;
+  border: var(--bw) solid var(--hx-line-strong);
+  border-radius: var(--r-1);
+  background: var(--hx-raised);
+  color: var(--hx-ink);
+}
+
+.ideaNum {
+  position: absolute;
+  inset-block-start: -7px;
+  inset-inline-end: -7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 18px;
+  block-size: 18px;
+  border-radius: var(--r-round);
+  background: var(--hx-ink);
+  color: var(--hx-on-ink);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  line-height: 1;
+}
+
+.ideaText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.ideaName {
+  color: var(--hx-ink);
+  font-weight: var(--fw-semibold);
+}
+
+.ideaBody {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+}
+
+/* Narrow: the ideas stack, joined by a vertical rail. */
+@container content (width < 840px) {
+  .ideas {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-3);
+  }
+
+  .idea {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--sp-3);
+  }
+
+  .idea:not(:last-child)::after {
+    inset-block: 44px calc(var(--sp-3) * -1 + 2px);
+    inset-inline: 20px auto;
+    inline-size: var(--bw);
+    block-size: auto;
+  }
+
+  .idea:not(:last-child)::before {
+    display: none;
+  }
+}
+
+/* Setup: the ideas sit in their own wide panel under the setup panel. */
+.fitsCard {
+  min-height: 0;
+}
+
+/* The ideas and the Guide link: the foot's space is the column's gap, never a margin (layout.cssMargin). */
+.fitsBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* The Customize drawer's body: the add form, then the order list, 16 px apart by the gap (layout.cssMargin). */
+.customizeBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* ── First steps ──────────────────────────────────────────────────────────── */
+.firstSteps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  min-width: 0;
+}
+
+/* Each group of the body (milestones; the try list) and the card's column (body; foot): spacing is the gap. */
+.stepsGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.stepsCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.stepsHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.stepsHead:empty {
+  display: none;
+}
+
+.stepsTitle,
+.tryTitle {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.stepsFoot {
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+
+/* ── Needs you ────────────────────────────────────────────────────────────── */
+.needs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-2) var(--sp-5);
+  grid-column: 1 / -1;
+  padding: var(--sp-3) var(--sp-4);
+
+  /* The warning notice: the kit's notice tokens, 3 px bar, 1 px frame, the orange tint. */
+  border: var(--bw) solid var(--hx-notice-warn-line);
+  border-inline-start: var(--bw-notice) solid var(--hx-warn-fill);
+  border-radius: 0;
+  background: var(--hx-notice-warn);
+  color: var(--hx-notice-text);
+}
+
+.needsTitle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2);
+
+  /* As tall as a line (.need), so the title and the first sentence share one centre line. */
+  min-block-size: var(--ctl-h);
+  margin: 0;
+  color: var(--hx-ink);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+}
+
+.needsList {
+  display: flex;
+  flex: 1 1 320px;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The title, the first message and its Open share one centre line at every width. On a phone the
+   title stays beside the lines with its words shown (never hidden): the gaps narrow and the message wraps, so the list
+   takes the rest of the row instead of wrapping under the title. Open keeps its width and its place at the right. */
+@container content (width < 600px) {
+  .needs {
+    column-gap: var(--sp-3);
+  }
+
+  .needsList {
+    flex-basis: 0;
+  }
+
+  /* Two classes: .need is defined after this block. A line whose sentence would get less than 160 px beside its action
+     (a long one, such as a held save's path and computer) puts the action under it, at the right, so words are never
+     broken into a few letters a line. */
+  .needsList .need {
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+  }
+
+  .needsList .need > .needText {
+    flex: 1 1 160px;
+  }
+
+  .needsList .need > .needAction {
+    margin-inline-start: auto;
+  }
+}
+
+/* Every part of a line starts at its top: the title, the dot, the sentence's first line and the action are each
+   centred in the first --ctl-h of the line, so they share one centre line even when the text wraps or a body line
+   follows. */
+.need {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  min-block-size: var(--ctl-h);
+}
+
+/* The line's action: at the strip's far right edge (the sentence before it grows) and wider than its word: 160 px,
+   120 px on a phone, where the sentence needs the room. Three classes: the kit's chip button sets its own touch
+   minimum at two (.button.chipped), which would otherwise win and leave the action as wide as its word. */
+.needsList .need > .needAction {
+  flex: none;
+  min-inline-size: clamp(120px, 30%, 160px);
+}
+
+.needMark {
+  display: flex;
+  flex: none;
+  align-items: center;
+  block-size: var(--ctl-h);
+}
+
+.needDot {
+  --dot: 8px;
+
+  flex: none;
+  inline-size: var(--dot);
+  block-size: var(--dot);
+  border-radius: var(--r-round);
+  background: var(--hx-warn-fill);
+}
+
+.needText {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--sp-2);
+  min-width: 0;
+
+  /* The first text line sits in the middle of the line's first --ctl-h (the line height from the type tokens set
+     here, so the offset follows them). */
+  padding-block-start: calc((var(--ctl-h) - var(--fs-md) * var(--lh-normal)) / 2);
+  font-size: var(--fs-md);
+  line-height: var(--lh-normal);
+}
+
+.needSentence {
+  color: var(--hx-ink);
+  font-weight: var(--fw-medium);
+  overflow-wrap: anywhere;
+}
+
+.needScope {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.needScope:empty {
+  display: none;
+}
+
+.needBody {
+  flex-basis: 100%;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+/* ── Start something ─────────────────────────────────────────────────────── */
+.quick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block-start: var(--sp-2);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tileItem {
+  display: flex;
+  min-width: 0;
+}
+
+.tile {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-block-size: 44px;
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--hx-card);
+  color: var(--hx-ink);
+  text-decoration: none;
+  transition:
+    border-color var(--dur-hover) var(--ease-out),
+    background var(--dur-hover) var(--ease-out);
+}
+
+.tile:hover {
+  border-color: var(--hx-line-strong);
+  background: var(--hx-hover);
+}
+
+.tileIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: var(--r-1);
+  background: var(--tile-icon-bg, var(--hx-fill));
+  color: var(--tile-icon-ink, var(--hx-ink));
+  transition: background var(--dur-hover) var(--ease-out);
+}
+
+/* The tile (a kit Link) carries the hover state as inherited custom properties, and its icon reads them (layout.cssReach). */
+.tile:hover,
+.tile:focus-visible {
+  --tile-icon-bg: var(--hx-acc);
+  --tile-icon-ink: var(--hx-acc-ink);
+}
+
+.tileText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.tileName {
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.tileBody {
+  color: var(--hx-muted);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-snug);
+}
+
+/* More: its own group under a rule. The heading has a line to itself and the links stand on the tiles' two tracks,
+   so every link starts on one of two edges and none is left alone on a line. */
+.more {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-block-start: var(--sp-3);
+  border-block-start: var(--bw) solid var(--hx-line-2);
+}
+
+.moreLabel {
+  margin: 0;
+  color: var(--hx-faint);
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.moreList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-1) var(--sp-2);
+  margin: 0;
+  padding: 0;
+  font-size: var(--fs-sm);
+  list-style: none;
+}
+
+/* ── Your realms ─────────────────────────────────────────────────────────── */
+.realms {
+  --realm-col: 200px;
+
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--realm-col), 100%), 1fr));
+  column-gap: var(--sp-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Two columns where both keep a readable name beside the count and Showing; one on a phone or in a
+   narrow card. The row height, its line and the whole-row snap are the kit's (Widget level="rows"). */
+.realms > .realmAll {
+  grid-column: 1 / -1;
+}
+
+.realmRow {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--sp-2) + var(--sp-half));
+  inline-size: 100%;
+  block-size: 100%;
+  padding: 0 var(--sp-2);
+  border: 0;
+  border-radius: var(--r-1);
+  background: none;
+  color: var(--hx-ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+/* The kit focus ring, as on the kit's own list rows; forced colours draw no shadow, so the outline stays there. */
+.realmRow:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+@media (forced-colors: active) {
+  .realmRow:focus-visible {
+    outline: 2px solid CanvasText;
+  }
+}
+
+.realmRow:hover:not([aria-current]) {
+  --swatch-plain: var(--hx-muted);
+
+  background: var(--hx-hover);
+}
+
+.realmRow[aria-current] {
+  --swatch-plain: var(--hx-muted);
+
+  background: var(--hx-selected);
+  cursor: default;
+}
+
+/* The realm's colour comes from the kit's global .rc-<colour> class (--rc). Without one the swatch is the neutral
+   grey, which falls below 3:1 on a hovered or current row in light: there the row hands it the muted text shade. */
+.swatch {
+  flex: none;
+  inline-size: 12px;
+  block-size: 12px;
+  border-radius: var(--r-1);
+  background: var(--rc, var(--swatch-plain, var(--hx-muted-fill)));
+}
+
+.realmName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.realmCount {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.realmShowing {
+  color: var(--hx-ink);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+
+/* ── Shortcuts ───────────────────────────────────────────────────────────── */
+
+/* Keycap tiles: the five keys and All shortcuts in a 2 by 3 grid of equal tiles, keycaps above the
+   description. The rows fill the body (a flex item's height is definite). All shortcuts is not restyled, only placed. */
+.keyCard {
+  display: grid;
+  min-block-size: 100%;
+  container: keys / inline-size;
+}
+
+.keyGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: var(--sp-2);
+}
+
+/* A tile under about 205 px would cut All shortcuts' words, so in a narrow card it takes a row of its own, under the
+   fifth key, which takes the row's other half. */
+@container keys (width < 420px) {
+  .keyGrid {
+    --tile-pad-y: var(--sp-1);
+
+    grid-template-rows: repeat(3, 1fr) auto;
+  }
+
+  .keyRows > :nth-child(odd):last-child,
+  .keyGrid > :last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+.keyRows {
+  display: contents;
+}
+
+.keyKeys {
+  display: flex;
+  gap: var(--sp-1);
+}
+
+.keyLabel {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .tileIcon {
+    transition: none;
+  }
+}
+
+/* Touch: a text link is not a kit button, so a coarse pointer gives it the button's target here (the kit's own
+   buttons are 44 on touch). */
+@media (pointer: coarse) {
+  .touchLink {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--ctl-h);
+  }
+}
+
+/* One realm column on a phone. */
+@container content (width < 600px) {
+  .realms {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

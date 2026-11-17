@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  API                                                                     ▸ Use with your agent
+ Computers             │
+ Files                 │  ▸ Endpoints    Overview
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ API  Esc
+ Vault                 │  GET /api/v1/auth/tokens
+                       │  List auth tokens
+On atlas ▾             │
+ Programs              │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Schedules             │  │ Authorisation                                                                             │
+ Scripts               │  │ Sends your account token: set HOODY_TOKEN to a key from Keys and tokens.                  │
+ Logs                  │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Tunnels               │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Notes                 │  │ How to call it                                                                            │
+ AI                    │  │ ‹ cURL ›  JavaScript    Python (requests)    CLI                                          │
+ VMs                   │  │ cURL example                                                                   ⧉ Copy all │
+                       │  │  curl -X GET 'https://api.hoody.com/api/v1/auth/tokens' \                         ⧉ copy  │
+Account                │  │    -H "Authorization: Bearer $HOODY_TOKEN"                                                │
+ Plans & Billing       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Referrals             │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Keys and tokens       │  │ About this endpoint                                                                       │
+▌API                   │  │ Operation ID  api_listAuthTokens  ⧉ copy      Docs          https://docs.hoody.com/api/   │
+ Notifications      26 │  │ Service       Account API                                   auth-tokens/                  │
+ Account               │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

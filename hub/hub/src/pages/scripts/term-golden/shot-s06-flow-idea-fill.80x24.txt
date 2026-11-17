@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ New script
+ Step 3 of 5 · Fill it in  ██████░░░░
+  ✓ What it does  ✓ Where it answers ▸3 Fill it in  4 Check it  5 Make it live
+ ──────────────────────────────────────────────────────────────────────────────
+ ▸ Your script so far                                                         █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Fill in the details                                                       │█
+ │ This idea needs a little information.                                     │█
+ │ Address to check                                                          │█
+ │ │ _______________________________________________________________________ │█
+ │ A key is made for you when it goes live.                                  │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+                                                                              █
+ Questions                                                                    █
+ ▸ What is a script?                                                          █
+ ▸ Do I need to know how to code?
+ ▸ What can a script do?
+ ▸ How does the assistant write a script?
+ ▸ How do I make a script run on a schedule?
+ ──────────────────────────────────────────────────────────────────────────────
+ Next: the computer checks the code.
+ [Back]                                                    [Cancel]   Continue
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

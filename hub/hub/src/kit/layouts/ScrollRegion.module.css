@@ -1,0 +1,38 @@
+/* ScrollRegion: the overflow of one axis, a focus ring and an optional card frame. The region is positioned, so it is the
+   containing block of absolute content inside it (visually hidden header text): that content stays inside the clip instead
+   of widening the page. */
+.region {
+  position: relative;
+  min-inline-size: 0;
+  overscroll-behavior: contain;
+}
+
+.block {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.inline {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.both {
+  overflow: auto;
+}
+
+.framed {
+  --ring-gap: var(--hx-card); /* controls inside ring on the frame's own fill, as in a framed DataTable */
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus); /* again with the gap: see kit/tokens.css Focus */
+
+  border: var(--bw) solid var(--hx-panel-line);
+  border-radius: var(--r-1);
+  background: var(--hx-card);
+}
+
+/* The ring is a shadow, which forced-colors mode drops: the transparent outline then takes the system colour, so focus
+   still shows. */
+.region:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: var(--bw-2) solid transparent;
+}

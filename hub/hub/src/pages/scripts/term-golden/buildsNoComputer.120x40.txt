@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts
+ Computers             │  Small programs on your computers that answer an address or run on a schedule.
+ Files                 │
+ Bots                  │  ▾ Being built on this device · 3
+ Board                 │     Turn the store feed into a daily summary                ● Stopped borealis 40 minutes ago
+ Demo                  │     [Open] [Discard]
+ Vault                 │     Warn me when the disk fills up                      ● Ready to check atlas 12 minutes ago
+                       │     [Open] [Discard]
+On atlas ▾             │     Every Monday at 9:00, count last wee… ● Building Running a code check atlas 3 minutes ago
+ Programs              │     [Open] [Stop] [Discard]
+ Schedules             │
+▌Scripts               │                               ┌─────────────────────────────────┐
+ Logs                  │                               │ No computer selected            │
+ Tunnels               │                               │                                 │
+ Notes                 │                               │ Pick a computer in the top bar. │
+ AI                    │                               │                                 │
+ VMs                   │                               │ [Pick a computer]               │
+                       │                               └─────────────────────────────────┘
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                       ◆ Personal ▾  Computer not listed ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notes                                                     ▸ Use with your agent   + New note
+ Computers             │  The notes on your computers. Everyone who opens Notes on a computer shares the same notes.
+ Files                 │
+ Bots                  │  / Search                   Computer ▾                       80 notes  ↻ Refresh  View options
+ Board                 │
+ Demo                  │      Title                                  Section                  Changed ↓
+ Vault                 │  ▾ atlas · 13  Open Notes New note                                                           █
+                       │  ▌   Backup schedule                        Work                     10 minutes ago         ⋯█
+On this computer ▾     │      Release notes                          Personal                 3 hours ago            ⋯█
+ Programs              │      Customer feedback                      Projects                 6 hours ago            ⋯█
+ Schedules             │      Launch timeline                        Work                     10 hours ago           ⋯█
+ Scripts               │      Open questions                         Personal                 13 hours ago           ⋯█
+ Logs                  │      Schema changes                         Projects                 16 hours ago           ⋯█
+ Tunnels               │      Index review                           Work                     19 hours ago           ⋯█
+▌Notes                 │      Weekly plan                            Personal                 yesterday              ⋯█
+ AI                    │      Deploy checklist                       Projects                 yesterday              ⋯█
+ VMs                   │      Reading list                           Work                     yesterday              ⋯█
+                       │      Meeting notes                          Personal                 yesterday              ⋯█
+Account                │      Trip ideas                             Projects                 yesterday              ⋯█
+ Plans & Billing       │      Backup schedule                        Work                     2 days ago             ⋯█
+ Referrals             │                                                                                              █
+ Keys and tokens       │  ▾ borealis · 13  Open Notes New note                                                        █
+ API                   │      Launch timeline                        Work                     10 minutes ago         ⋯░
+ Notifications      26 │      Open questions                         Personal                 3 hours ago            ⋯░
+ Account               │      Schema changes                         Projects                 6 hours ago            ⋯░
+                       │      Index review                           Work                     10 hours ago           ⋯░
+ + Rent servers        │      Weekly plan                            Personal                 13 hours ago           ⋯░
+ Guide                 │      Deploy checklist                       Projects                 16 hours ago           ⋯░
+ Support               │      Reading list                           Work                     19 hours ago           ⋯░
+                       │      Meeting notes                          Personal                 yesterday              ⋯░
+                       │      Trip ideas                             Projects                 yesterday              ⋯░
+                       │      Backup schedule                        Work                     yesterday              ⋯░
+                       │      Release notes                          Personal                 yesterday              ⋯░
+                       │      Customer feedback                      Projects                 yesterday              ⋯░
+                       │      Launch timeline                        Work                     2 days ago             ⋯░
+                       │                                                                                              ░
+                       │    cedar This computer is stopped. Start it from Computers. Computers                        ░
+                       │  1–50 of 80 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

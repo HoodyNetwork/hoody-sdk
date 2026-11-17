@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                                    ▸ Use with your agent
+ Computers             │  None of your computers is running. A Bot runs on a running computer.
+ Files                 │
+▌Bots                  │
+ Board                 │             ┌──────────────────────────────────────────────────────────────────────┐
+ Demo                  │             │ ▷ None of your computers is running                                  │
+ Vault                 │             │                                                                      │
+                       │             │ A Bot runs on a running computer. Start one to see its Bots and make │
+On atlas ▾             │             │ new ones.                                                            │
+ Programs              │             │                                                                      │
+ Schedules             │             │   Computer                               Start                       │
+ Scripts               │             │ ▌ SG atlas                               [Start]                     │
+ Logs                  │             │   DE boreal                              [Start]                     │
+ Tunnels               │             │   US cinder                              [Start]                     │
+ Notes                 │             └──────────────────────────────────────────────────────────────────────┘
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │  Questions
+                       │  ▸ What is a Bot, and where does it run?
+                       │  ▸ What is the default Bot of a realm?
+                       │  ▸ What is a link, and what do keys do?
+                       │  ▸ What do Other websites (CORS) and the call limits mean?
+                       │  ▸ What does Allow everything do, and what does mixed mean?
+                       │  ▸ Who becomes the owner of a chat app, and how do others join?
+                       │  ▸ What does the warning that privacy is on mean?
+                       │  ▸ What does the Bot read in a group?
+                       │  ▸ Which model answers me, and which do the Bot's helpers use?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

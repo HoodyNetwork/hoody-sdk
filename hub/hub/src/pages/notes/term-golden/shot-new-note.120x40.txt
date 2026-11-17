@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notes                                                     ▸ Use with your agent   + New note
+ Computers             │  The notes on your computers. Everyone who opens Notes on a computer shares the same notes.
+ Files                 │
+ Bots                  │  / Search                   Computer ▾                       10 notes  ↻ Refresh  View options
+ Board                 │
+ Demo                  │      Title                                  Section                  Changed ↓
+ Vault                 │  ▾ atlas · 6  Open Notes New note
+                       │  ›   ┌──────────────────────────────────────────────────────────┐    12 minutes ago          ⋯
+On atlas ▾             │      │ New note                                           Esc × │    2 hours ago             ⋯
+ Programs              │      │ ──────────────────────────────────────────────────────── │    7 hours ago             ⋯
+ Schedules             │      │ On atlas, in Work. Everyone who opens Notes on this      │    yesterday               ⋯
+ Scripts               │      │ computer will see it.                                    │    4 days ago              ⋯
+ Logs                  │      │                                                          │    9 days ago              ⋯
+ Tunnels               │      │ Title                                                    │
+▌Notes                 │  ▾ bo│ ┃                  [Now: name it with the date and time] │
+ AI                    │      │                                                          │    40 minutes ago          ⋯
+ VMs                   │      │                                                          │    5 hours ago             ⋯
+                       │      │                                       [Cancel]   Create  │    3 days ago              ⋯
+Account                │      └──────────────────────────────────────────────────────────┘                            ⋯
+ Plans & Billing       │
+ Referrals             │    cedar This computer is stopped. Start it from Computers. Computers
+ Keys and tokens       │
+ API                   │    dune This computer is starting. Its notes show when it is ready. Computers
+ Notifications      26 │
+ Account               │    ember This computer needs attention before its notes can be read. Computers
+                       │
+ + Rent servers        │    fjord This computer is stopped. Start it from Computers. Computers
+ Guide                 │
+ Support               │    granite Notes here is too old to list recent notes. Update it. Open Notes
+                       │
+                       │    harbor No notes yet. Open Notes New note
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Typing · Esc leaves the field · Ctrl+K commands

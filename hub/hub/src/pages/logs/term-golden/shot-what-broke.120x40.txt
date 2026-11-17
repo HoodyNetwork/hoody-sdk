@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Logs                                                ▸ Use with your agent  [Show all results]
+ Computers             │  55 events failed in the last hour.
+ Files                 │
+ Bots                  │  ▸ Everything    Visits    Bots    Changes    Scripts    Programs   [More ▾]
+ Board                 │  │ ● SG atlas · █ Personal ▾ Result: Failed only ×  When: 1 hour │ / Search
+ Demo                  │                                                                     [□ off] Live [Refresh] [⋯]
+ Vault                 │  [Clear all]
+                       │  ! Problems jumped around Nov 11, 08:46 AM (40 in a few minutes).         [Around this moment]
+On atlas ▾             │  i Changes are not shown while a filter or search is on.
+ Programs              │    Time     Result   From   What happened                          Visitor            Took
+ Schedules             │  ▌ 08:57:06 ● Failed Visits PUT 500 Browser: changed /tab/1       93.184.216.203 SG    220 ms█
+ Scripts               │    08:52:55 ● Failed Visits DELETE 500 Agent: removed /health     93.184.216.154 JP    329 ms█
+▌Logs                  │    08:48:45 ● Failed Visits GET 500 Terminal: opened /session     93.184.216.105 BR    438 ms░
+ Tunnels               │    08:46:46 ● Failed Visits GET 500 Files: opened …/report.pdf    203.0.113.23       1,173 ms░
+ Notes                 │    08:46:45 ● Failed Visits GET 500 Files: opened …/report.pdf    203.0.113.16       1,166 ms░
+ AI                    │    08:46:44 ● Failed Visits GET 500 Files: opened …/report.pdf    203.0.113.9        1,159 ms░
+ VMs                   │    08:46:43 ● Failed Visits GET 500 Files: opened …/report.pdf    203.0.113.2        1,152 ms░
+                       │    08:46:42 ● Failed Visits GET 500 Files: opened …/report.pdf    203.0.113.245      1,145 ms░
+Account                │    08:46:40 ● Failed Visits GET 500 Files: opened …/report.pdf    203.0.113.238      1,138 ms░
+ Plans & Billing       │    08:46:39 ● Failed Visits GET 500 Files: opened …/report.pdf    203.0.113.231      1,131 ms░
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

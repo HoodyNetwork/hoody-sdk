@@ -1,0 +1,8 @@
+{
+  "ipf.add": "Add my IP",
+  "ipf.failed": "Couldn't read your address. Type it in instead.",
+  "ipf.private": "Your address looks private, so it can't be used here. Type the one your servers see.",
+  "ipf.added": "Added",
+  "ipf.have": "Already in the list:",
+  "ipf.v6": "This list takes IPv4 only, and your address is IPv6:"
+}

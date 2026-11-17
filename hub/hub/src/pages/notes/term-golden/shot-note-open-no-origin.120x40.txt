@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notes                                                     ▸ Use with your agent   + New note
+ Computers             │
+ Files                 │  ‹ Notes  Esc
+ Bots                  │  Weekly plan                                                      [⇗ Open outside the Hub] [⋯]
+ Board                 │  atlas · Changed 12 minutes ago
+ Demo                  │
+ Vault                 │   ┌─────────────────────────────────────────────────────────────────────────────────────────┐
+                       │   │ ⇗ A note is a page of the Notes program in a browser frame, which a terminal cannot     │
+On atlas ▾             │   │ draw.                                                                                   │
+ Programs              │   │ Open the Notes page on the web: (on your Hub's web address)                             │
+ Schedules             │   │ /auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/notes                                    │
+ Scripts               │   │ [c Copy link]                                                                           │
+ Logs                  │   └─────────────────────────────────────────────────────────────────────────────────────────┘
+ Tunnels               │
+▌Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

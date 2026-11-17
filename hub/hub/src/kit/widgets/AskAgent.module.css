@@ -1,0 +1,72 @@
+/* Ask the Agent's panel: the request and what the Agent reads, each a kit SubSection (its group heading; the kit draws the rule between them). Kit tokens only. */
+.title {
+  margin: 0;
+  font-weight: var(--fw-semibold);
+}
+
+.summary {
+  margin: 0;
+  color: var(--hx-muted-text);
+  font: var(--t-small);
+}
+
+/* The parts the Agent reads: one row each, a hairline between rows, the exact text behind each row's fold. */
+.parts {
+  margin: 0;
+  padding: 0;
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-2);
+  list-style: none;
+}
+
+/* The row gives the fold its height (a row fold has no block padding of its own). */
+.part { padding: var(--sp-2) var(--sp-3); }
+.part + .part { border-block-start: var(--bw) solid var(--hx-line-2); }
+
+.partPlain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+  margin: 0;
+}
+
+/* One text the Agent reads behind a fold: Copy is the fold row's trailing action, in the row's own end column; the
+   fold spans both columns, so open, its text takes the whole width under the row. The trigger keeps room for Copy. */
+.fold {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  min-width: 0;
+}
+
+.foldBody {
+  grid-area: 1 / 1 / 2 / 3;
+  min-width: 0;
+}
+
+.foldBody > button { padding-inline-end: var(--icon-hit); }
+
+.foldCopy {
+  grid-area: 1 / 2 / 2 / 3;
+  margin-block-start: calc(-1 * var(--sp-1));
+}
+
+/* A prose text the Agent reads (kind 'prose'): paragraphs in the body font across the fold's width, a paragraph's gap
+   between them (one blank row in the terminal). No inner scroll: the drawer body is the one scroller. */
+.prose {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+  margin: 0;
+  padding: var(--sp-3);
+  border: var(--bw) solid var(--hx-line-2);
+  border-radius: var(--r-2);
+  color: var(--hx-ink);
+  font: var(--t-body);
+  overflow-wrap: anywhere;
+}
+
+.prose > p { margin: 0; }
+
+.lead { font-weight: var(--fw-semibold); }

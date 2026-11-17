@@ -1,0 +1,396 @@
+/* PlanCard: a cut-corner card (CutFrame); a grid row stretches the cards to one height
+   and the action is pinned at the bottom. The price is the display price type, used nowhere else (app/conformance.surfaces.test.ts). */
+/* stylelint-disable selector-attribute-quotes -- PlanCard.tsx is a pure kit module: kitpure C0 takes attribute values unquoted */
+.inner {
+  gap: var(--sp-3);
+  padding: var(--pad-card);
+  background: var(--card-body);
+}
+
+/* fill: the plan fills of a pricing grid and their plan edge (CutFrame's line reads --cut-edge). */
+.card[data-fill] {
+  --cut-edge: var(--hx-plan-edge);
+}
+
+.card[data-fill=calm] .inner {
+  background: var(--hx-plan-card-calm);
+}
+
+.card[data-fill=plan] .inner {
+  background: var(--hx-plan-card);
+}
+
+.card[data-fill=lift] .inner {
+  background: var(--hx-plan-card-lift);
+}
+
+/* accent: the one card the page points at, its 1 px line in the plan frame colour and no tint. After the fill's edge,
+   so a framed card keeps its frame whatever its fill. */
+.card[data-tone=accent] {
+  --cut-edge: var(--hx-plan-frame);
+}
+
+/* current: a plan the person has. After the fills, so it keeps its fill over any plan fill. */
+.card[data-tone=current] .inner {
+  background: var(--hx-selected);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.name {
+  min-inline-size: 0;
+  margin: 0;
+  font: var(--t-section);
+  overflow-wrap: anywhere;
+}
+
+/* The kit Heading inside takes the name's type: its level follows the section, its look does not. */
+.name > * {
+  margin: 0;
+  font: inherit;
+}
+
+.chip {
+  font: var(--t-label);
+  color: var(--hx-muted);
+  text-transform: var(--case-caps);
+}
+
+/* The marks take a line of their own under the name on every card, one pill high when a card has none (except where
+   the grid is one column, below). The card's
+   step between parts is --sp-3; the marks sit one --sp-1 closer, at the head's own --sp-2. */
+.marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  min-block-size: var(--tag-h);
+  margin-block-start: calc(-1 * var(--sp-1));
+}
+
+/* The line under the name: what the offer is, on the marks' line. */
+.subTitle {
+  min-inline-size: 0;
+  font: var(--t-body);
+  color: var(--hx-muted-text);
+}
+
+.price {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  align-items: baseline;
+  margin: 0;
+}
+
+.amount {
+  font: var(--t-price);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.per {
+  font: var(--t-small);
+  color: var(--hx-muted);
+}
+
+.lead {
+  margin: 0;
+  font: var(--t-body);
+  color: var(--hx-muted);
+}
+
+/* The rows: one hairline between rows, the label muted at the start, the value in ink at the end (tabular figures, so
+   a row of cards reads across). A long value wraps under its label rather than pushing the card wider. */
+.rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-2);
+  justify-content: space-between;
+  padding-block: var(--sp-1);
+  border-block-start: var(--bw) solid var(--hx-line);
+  font: var(--t-small);
+}
+
+.rowLabel {
+  min-inline-size: 0;
+  color: var(--hx-muted);
+}
+
+.rowValue {
+  min-inline-size: 0;
+  margin: 0;
+  margin-inline-start: auto;
+  color: var(--hx-ink);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+
+/* The regions row: its label, then small outlined tags (one tag box plus its two edges high, small type), or a note. */
+.regions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  align-items: center;
+  padding-block: var(--sp-1);
+  border-block-start: var(--bw) solid var(--hx-line);
+  font: var(--t-small);
+}
+
+.regionsLabel,
+.regionsNote {
+  min-inline-size: 0;
+  color: var(--hx-muted);
+}
+
+.regionTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.region {
+  display: inline-flex;
+  gap: var(--sp-1);
+  align-items: center;
+  box-sizing: border-box;
+  min-block-size: calc(var(--tag-h) + 2 * var(--bw));
+  padding-inline: var(--sp-2);
+  border: var(--bw) solid var(--hx-tag-edge-soft);
+  color: var(--hx-ink);
+  white-space: nowrap;
+}
+
+.region[data-full] {
+  color: var(--hx-muted);
+}
+
+@media (forced-colors: active) {
+  .region {
+    border-color: CanvasText;
+  }
+
+  .region[data-full] {
+    color: GrayText;
+  }
+}
+
+.specs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.spec {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  font: var(--t-mono);
+  overflow-wrap: anywhere;
+}
+
+.check {
+  flex: none;
+  color: var(--hx-muted);
+}
+
+.more,
+.footnote,
+.note,
+.error,
+.skeleton {
+  min-inline-size: 0;
+}
+
+/* The body: everything under the price, the action last. It fills the rest of the card, so the action sits at the
+   card's bottom whatever the content above it and a row of cards lines its actions up. */
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+.action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-start: auto;
+}
+
+/* PlanGrid: the grid PlanCards sit in. Each card spans four rows and hands them through its frame and the frame's inner
+   box (subgrid) to its parts: head, marks, price, body. A part then takes the height of the tallest of its kind in the
+   card's grid row, so a card with two marks or a two-line name moves its neighbours' prices and bodies with its own.
+   Equal columns at least 260 px wide by default (one column on a phone); columns 2 or 3 fix the count (below). The
+   grid's row gap is the cards' own step, so a part's place is the same in and out of a grid. */
+.grid {
+  container: plan-grid / inline-size;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: var(--sp-3) var(--sp-4);
+  align-items: stretch;
+  min-inline-size: 0;
+}
+
+.grid > * {
+  grid-row: span 4;
+}
+
+.grid > .card {
+  display: grid;
+  grid-template-rows: subgrid;
+  row-gap: var(--sp-3);
+}
+
+.grid > .card > .inner {
+  display: grid;
+  grid-row: 1 / -1;
+  grid-template-rows: subgrid;
+  row-gap: var(--sp-3);
+}
+
+.grid .head {
+  grid-row: 1;
+}
+
+.grid .marks {
+  grid-row: 2;
+}
+
+.grid .price {
+  grid-row: 3;
+}
+
+.grid .body {
+  grid-row: 4;
+}
+
+.grid .skeleton,
+.grid .error {
+  grid-row: 3 / -1;
+}
+
+/* Fixed columns: three on thirds, two on halves. Under 600 px of content three become two, a last odd card taking the
+   whole row; under 480 px every card takes the whole width. */
+.grid[data-cols=two] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid[data-cols=three] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@container content (width < 600px) {
+  .grid[data-cols=three] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid[data-cols=three] > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
+@container content (width < 480px) {
+  .grid[data-cols] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* One column: as the fitted grid's one column (below). */
+  .grid[data-cols] > .card,
+  .grid[data-cols] > .card > .inner {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .grid[data-cols] .marks:empty {
+    display: none;
+  }
+}
+
+/* One column (the cards stacked, as on a phone): no card beside another to line up with, so each card lays out its
+   parts alone and a marks line with nothing on it takes no room. The fitted grid is one column under two 260 px columns
+   and the 16 px gap between them (536 px); a fixed-columns grid does the same under 480 px of content (above). */
+@container plan-grid (width < 536px) {
+  .grid:not([data-cols]) > .card,
+  .grid:not([data-cols]) > .card > .inner {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .grid:not([data-cols]) .marks:empty {
+    display: none;
+  }
+}
+
+/* A wide card: the whole row under the other cards. With it the grid's columns are at least an equal share of the row
+   for the cards beside it (--plan-cards, PlanGrid), so they spread over no more columns than there are of them and the
+   wide card ends where their row ends (a hair under the exact share: a rounded share must still fit). */
+.grid[data-wide]:not([data-cols]) {
+  grid-template-columns: repeat(auto-fit, minmax(max(min(100%, 260px), calc((100% - (var(--plan-cards, 1) - 1) * var(--sp-4)) / var(--plan-cards, 1) - var(--bw) / 4)), 1fr));
+}
+
+.grid > .wide {
+  grid-column: 1 / -1;
+}
+
+/* Its rows sit side by side, one column of them under each column of cards: the card, its inner box, its body and its
+   row list hand the grid's columns down (subgrid), and their gap is the cards' gap plus the two card paddings it
+   crosses, so a row starts and ends where the rows of the card above it do. One list where the grid is one column. */
+@supports (grid-template-columns: subgrid) {
+  .grid > .card.wide,
+  .grid > .card.wide > .inner,
+  .grid > .card.wide .body,
+  .grid > .card.wide .rows {
+    grid-template-columns: subgrid;
+    column-gap: calc(var(--sp-4) + 2 * var(--pad-card));
+  }
+
+  .grid > .card.wide > .inner,
+  .grid > .card.wide .head,
+  .grid > .card.wide .marks,
+  .grid > .card.wide .price,
+  .grid > .card.wide .body,
+  .grid > .card.wide .body > * {
+    grid-column: 1 / -1;
+  }
+
+  .grid > .card.wide .body,
+  .grid > .card.wide .rows {
+    display: grid;
+  }
+
+  .grid > .card.wide .body {
+    align-content: start;
+  }
+
+  .grid > .card.wide .action {
+    margin-block-start: 0;
+  }
+}
+
+/* Without subgrid each card keeps its own column of parts (the rows of a grid line up their cards' tops and bottoms). */
+@supports not (grid-template-rows: subgrid) {
+  .grid > .card,
+  .grid > .card > .inner {
+    display: flex;
+    flex-direction: column;
+  }
+}

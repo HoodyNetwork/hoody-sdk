@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats  ▌Agents   Automations   Knowledge   Settings
+ Computers             │  Agents
+ Files                 │
+ Bots                  │  ‹ Agents  Esc
+ Board                 │  reviewer   Shipped copy                                            [New chat with this agent]
+ Demo                  │  Reviews a change before it ships
+ Vault                 │
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+On atlas ▾             │  │                                                                                          │█
+ Programs              │  │ Model                           The chat's model                          [Change model] │█
+ Schedules             │  │                                                                                          │█
+ Scripts               │  │ Reasoning effort                │ Model default ▾                                        │█
+ Logs                  │  │ How much the model thinks                                                                │█
+ Tunnels               │  │ before it answers. Model                                                                 │█
+ Notes                 │  │ default uses the model's own                                                             │█
+▌AI                    │  │ level.                                                                                   │█
+ VMs                   │  │                                                                                          │█
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+Account                │                                                                                              █
+ Plans & Billing       │  Turn limit  No limit set                                                                    █
+ Referrals             │  Tools       Every tool                                                                      █
+ Keys and tokens       │  Tool list   A base: Hoody adds what this agent needs                                        █
+ API                   │  Skills      Skills depend on this agent's tools                                             █
+ Notifications      26 │  MCP tools   Every connected MCP tool                                                        █
+ Account               │  Labels      coding                                                                          █
+                       │                                                                                              █
+ + Rent servers        │  File        Built in, no file on this computer                                              █
+ Guide                 │
+ Support               │
+                       │
+                       │  Tools
+                       │  Reads and edits files, runs commands and starts helpers on atlas, as you. This agent gets
+                       │  every tool, also ones added later.
+                       │
+                       │  ▸ How does this tool list work?
+                       │  │ / Search by name, ID or description…
+                       │  ‹ All 6 ›  On 6    Off 0    Changed 0    Can change things 3
+                       │  ▸ Coding · 5 of 5 on  Files, shell, search and code · 3 read only
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

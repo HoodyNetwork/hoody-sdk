@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Get a computer                                                   Esc ×
+ Comput┃ Something is missing. The box below says what.
+ Your c┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Comp┃ ┌────────────────────────────────┐ ┌────────────────────────────────┐█
+ ──────┃ │ (•) A new computer             │ │ ( ) A copy of one of yours     │█
+ Comput┃ │     Debian 13, set up below.   │ │     Same files as the computer │█
+ / Sear┃ │                                │ │     you pick.                  │█
+ 8 comp┃ └────────────────────────────────┘ └────────────────────────────────┘█
+ › █ at┃                                                                      █
+    █ P┃ ┌───────────────────────────────────────────────────────────────────┐█
+   █ bo┃ │ YOU GET                                                           │█
+    █ A┃ │ Your servers could not be read.                                   │▀
+   █ ce┃ │ Size      Known once a server is picked                           │
+    █ P┃ │ System    Debian 13                                               │
+   █ du┃ │ Software  Hoody kit, Developer kit, Hoody AI                      │
+    █ L┃ └───────────────────────────────────────────────────────────────────┘
+   █ em┃
+    █ A┃ ┌───────────────────────────────────────────────────────────────────┐
+   █ fj┃ │ Computer                                                          │
+    █ P┃ │ ┌───────────────────────────────────────────────────────────────┐ │
+   █ gr┃ │ │                                                               │ │
+    █ A┃ │ │ Name                                                          │ │
+   █ ha┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Cancel]  Get computer

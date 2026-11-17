@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Bots                                                     ▸ Use with your agent
+ ‹ Bots  Esc
+   SG atlas    Hoody Free  · Allow everything is off +2                       ▄
+                                        ┌─ Where this Bot lives ───────────────┐
+ ▸ Activity    Link and keys    Chat app│   n12 Singapore    Acme client       │
+ ───────────────────────────────────────│ This Bot   at…. It starts its tasks  │
+                                        │ runs on       there. With permission │
+  Activity ● Up to date [ ] Hide task up│               it can also use the    │
+                                   Load │               other computers of its │
+                       Sam ·  Telegram  │               realm; you choose      │
+                       Can you check why│               which under Settings,  │
+                       19 days ago      │               Guardrails and limits. │
+                                        │ The default Bot of a realm answers   │
+   I opened a task to read the deploy lo│ when something asks for a Bot        │
+   it now.                              │ without naming one. If you delete    │
+   19 days ago                          │ it, a new empty one is made the next │
+                                        │ time it is needed.                   │
+   i Update ·  Read deploy log  · on atl└──────────────────────────────────────┘
+   ┌───────────────────────────────────────────────────────────────────────┐
+   │ Message the Bot                                                       │
+   └───────────────────────────────────────────────────────────────────────┘
+                                  Write a message first.  [⇗ Talk]  [Send ↵]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

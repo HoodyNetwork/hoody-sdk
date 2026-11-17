@@ -1,0 +1,23 @@
+/* A hint is a line, not a banner: muted text, actions at the end. Its buttons keep 6 px to the box's top and bottom
+   lines and 8 px to its end line; the words start 12 px in. */
+.hint {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-block: calc(var(--sp-1) + var(--sp-half));
+  padding-inline: var(--sp-3) var(--sp-2);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--hx-card);
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.icon {
+  flex: none;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+}

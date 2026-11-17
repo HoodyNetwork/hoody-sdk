@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Turn on two-step sign-in                                         Esc ×
+ Accoun┃ Step 1 of 2: confirm it is you
+ Your p┃ ──────────────────────────────────────────────────────────────────────
+ ▌Profi┃ Current password
+ ──────┃ ┃
+ ┌─────┃
+ │ Secu┃
+ │ ✓ Yo┃
+ │ ! Tw┃
+ │ i 11┃
+ └─────┃
+ ┌─────┃
+ │ Prof┃
+ │     ┃
+ │ Disp┃
+ │     ┃
+ │ User┃
+ │     ┃
+ │ Emai┃
+ │     ┃
+ │     ┃
+ │ Memb┃
+ │     ┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ Next: add Hoody to your authenticator app.        [Cancel]   Continue

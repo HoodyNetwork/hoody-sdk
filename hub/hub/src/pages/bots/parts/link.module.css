@@ -1,0 +1,8 @@
+/* The Link tab: the glance's key count beside its meter (as the Backups glance draws its kept count). */
+.kept {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ ‹ Back                                                           Esc ×
+  Chats┃ Connect OpenRouter
+ ▌Model┃ ──────────────────────────────────────────────────────────────────────
+ atlas ┃ How to connect OpenRouter
+ Models┃ (•) Sign in with OpenRouter
+ atlas ┃     Use your OpenRouter account
+ ▌Defau┃ ( ) Use an API key
+ ──────┃     Pay as you go on your own key
+ ┌─────┃
+ │ Defa┃ ! Sign-in did not finish
+ │ The ┃ This computer cannot sign in to OpenRouter yet. Go back and use an API
+ │ ┌───┃ key.
+ │ │   ┃ [Try again]  [Back]
+ │ │ AI┃ ▸ Details
+ │ │ Th┃
+ │ │ ev┃
+ │ │ co┃
+ │ │   ┃
+ │ │ Bo┃
+ │ │ Bo┃
+ │ │   ┃
+ │ └───┃
+ └─────┃
+ Tab mo┃

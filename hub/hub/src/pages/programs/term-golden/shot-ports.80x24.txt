@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs                              ▸ Use with your agent   + Launch an app
+ Open ports and aliases on atlas
+   Running programs    Apps  ▸ Ports & aliases
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Open ports                                                                │█
+ │ Every port a program listens on. Web ports get an address you can open or │█
+ │ share.                                                                    │█
+ │▌ 3000                                                Web  [Create alias] ⋯│█
+ │  node · Open port 3000                                                    │█
+ │  4100                                                Web                 ⋯│█
+ │  hoody-notes · Open port 4100…                                            │
+ │  5432                                              Other                  │
+ │  postgres · No web address                                                │
+ │  8001                                                Web  [Create alias] ⋯│
+ │  node · Open port 8001                                                    │
+ │  9229                                         Local only                  │
+ │  node · Only inside atlas                                                 │
+ │ 2 ports Hoody uses itself are not shown.                                  │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Aliases and domains                                        [Create alias] │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

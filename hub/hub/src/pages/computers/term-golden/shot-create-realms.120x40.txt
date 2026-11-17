@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Get a computer                                                                                        Esc ×
+ Home     ┃ Everything is filled in for you. Change what you like, then get it.
+▌Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃   ┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
+ Bots     ┃   │ Machine                                                                                              │
+ Board    ┃   │ ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+ Demo     ┃   │ │                                                                                                  │ │
+ Vault    ┃   │ │ Start automatically             [■ on ]                                                          │ │
+          ┃   │ │ Start the computer as soon as                                                                    │ │
+On atlas ▾┃   │ │ it is ready.                                                                                     │ │
+ Programs ┃   │ │                                                                                                  │ │
+ Schedules┃   │ │ RAM disk                        [■ on ]                                                          │ │
+ Scripts  ┃   │ │ Fast temporary storage in                                                                        │ │
+ Logs     ┃   │ │ memory.                                                                                          │ │
+ Tunnels  ┃   │ │                                                                                                  │ │
+ Notes    ┃   │ │ Virtual machine                 [□ off]                                                          │ │
+ AI       ┃   │ │ Gives the computer /dev/kvm,                                                                     │ │
+ VMs      ┃   │ │ so you can run VMs inside it.                                                                    │ │
+          ┃   │ │ Only on servers allowed to run                                                                   │ │
+Account   ┃   │ │ VMs: rented bare-metal                                                                           │ │
+ Plans & B┃   │ │ servers.                                                                                         │ │
+ Referrals┃   │ │                                                                                                  │ │
+ Keys and ┃   │ └──────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+ API      ┃   └──────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ Notificat┃
+ Account  ┃   ┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐▄
+          ┃   │ Access                                                                                               │█
+ + Rent se┃   │ ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐ │█
+ Guide    ┃   │ │                                                                                                  │ │█
+ Support  ┃   │ │ SSH key                         │ ___________________________________________________________    │ │█
+          ┃   │ │ Paste a public key to connect   Optional: Hoody Terminal opens in your browser without a key.    │ │█
+          ┃   │ │ from your own SSH client.       ▸ How do I get a key?                                            │ │█
+          ┃   │ │                                                                                                  │ │█
+          ┃   │ │ Other realms                    1 selected                                                       │ │█
+          ┃   │ │                                  [ ] █   Acme client                                             │ │█
+          ┃   │ │                                      3 computers                                                 │ │
+          ┃   │ │                                 ›[✓] █   Lab                                                     │ │
+          ┃   │ │                                      2 computers                                                 │ │
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tab move ┃ ● Unsaved changes                                                                   [Cancel]  Get computer

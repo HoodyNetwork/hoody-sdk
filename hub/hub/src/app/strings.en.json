@@ -1,0 +1,13 @@
+{
+  "dev.label": "Fixture controls",
+  "dev.short": "FX",
+  "dev.open": "Show fixture controls",
+  "dev.close": "Hide fixture controls",
+  "dev.hide": "Hide",
+  "dev.page": "page: {{id}}",
+  "dev.noPage": "no page",
+  "dev.state": "Fixture state",
+  "dev.latency": "Latency",
+  "dev.light": "Light",
+  "dev.dark": "Dark"
+}

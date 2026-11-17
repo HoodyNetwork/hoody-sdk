@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Options for this chat                                            Esc ×
+ ▌Chats┃ On atlas. Approvals and Runs with are remembered for new chats;
+       ┃ the folder is for this chat only.
+       ┃ ──────────────────────────────────────────────────────────────────────
+ What s┃ ┌───────────────────────────────────────────────────────────────────┐█
+ Give a┃ │                                                                   │█
+ comput┃ │ Folder                          ┃ Home folder ▾                   │█
+ ■ Pers┃ │ Fixed once the chat starts.                                       │█
+       ┃ │ Folder access (home folder or                                     │█
+       ┃ │ whole computer) is fixed when                                     │█
+ ┌─────┃ │ its first turn starts.                                            │█
+ │ Ask ┃ │                                                                   │█
+ └─────┃ │ Approvals                       ‹ Default ›  Strict               │█
+ [+ Att┃ │ This chat starts with Allow                                       │█
+ [Work ┃ │ everything on: it approves                                        │█
+ [Send ┃ │ actions for you, though some                                      │█
+       ┃ │ can still ask. Turn it off in                                     │█
+   Work┃ │ the chat, or pick Strict here.                                    │█
+   Star┃ │                                                                   │▀
+   atla┃ │ Runs with                                                         │
+       ┃ │ The model chip picks the model.                                   │
+       ┃ │ ‹ Hoody models ›  Claude Code                                     │
+       ┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃                                                                  Done

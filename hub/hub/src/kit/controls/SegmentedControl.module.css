@@ -1,0 +1,297 @@
+/* SegmentedControl: one square track in the field look (the input fill, the field line) with a white
+   thumb (an ink frame, a small shadow) under the current option; the other options have no fill and no frame. The
+   track grows to fit: an option (`--tog-h`) plus the track's padding (`--tog-pad`) and frame is a field's height
+   (`--ctl-h`). The current option is told apart by more than colour: the thumb, its frame and its shadow. */
+.track {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: var(--tog-pad);
+  gap: var(--sp-half);
+  border: var(--bw) solid var(--hx-tog-line);
+  border-radius: 0;
+  background: var(--hx-tog-track);
+  vertical-align: middle;
+}
+
+.full {
+  display: flex;
+  width: 100%;
+}
+
+/* Segments share the width equally but never shrink below their labels: a full-width control whose equal cells
+   cannot hold its widest label is unequal for one measurement and is then drawn as a Select (SegmentedControl's
+   trackNeed), so drawn cells are equal (within 1 px). */
+.full .segment {
+  flex: 1;
+  min-width: max-content;
+}
+
+/* The box a full-width control measures: the width it is given, whichever presentation it draws. */
+.fit {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.segment {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tog-gap);
+  box-sizing: border-box;
+  height: var(--tog-h);
+  min-width: 0;
+  padding-inline: var(--seg-pad-inline, var(--sp-3)); /* a rail (DataTable) tightens it */
+  border: var(--bw) solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--hx-tog-text);
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-press) linear,
+    border-color var(--dur-press) linear,
+    color var(--dur-press) linear;
+}
+
+.segment[data-hovered],
+.segment[data-pressed] {
+  color: var(--hx-tog-ink);
+}
+
+/* An icon-only option: a square the option's height, its icon centred. With a count it grows by the count. */
+.iconSegment {
+  min-width: var(--tog-h);
+  padding-inline: var(--sp-2);
+}
+
+.iconSegment:not(:has(.count)) {
+  width: var(--tog-h);
+  padding-inline: 0;
+}
+
+/* The current option: the white thumb. */
+.segment[data-selected] {
+  border-color: var(--hx-tog-ink);
+  background: var(--hx-tog-thumb);
+  box-shadow: var(--sh-tog);
+  color: var(--hx-tog-ink);
+}
+
+/* Focus: the kit ring, as every kit control (its card-coloured gap included). On the chosen option the ring takes the
+   thumb shadow's place (the fill and frame stay). Forced colours draw an outline instead (below). */
+.segment[data-focus-visible] {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* A disabled option takes the kit's one disabled recipe (--ctl-off-opacity, as a Button), the chosen one its thumb
+   too. The folder variant keeps its grey tab with a faint label, as kit Tabs (below). */
+.segment[data-disabled] {
+  cursor: not-allowed;
+  opacity: var(--ctl-off-opacity);
+}
+
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* A count reads as part of its option's label (one text style): the option's colour in every state, its font. */
+.count {
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Touch (the kit's coarse-pointer rule, tokens.css): every size is at least one touch target (`--touch-min`) tall, each
+   option at least as wide, and each option's target reaches over the tray's padding and frame to the tray's full height,
+   so a toolbar grows no taller than its other controls. Only up and down: neighbouring options never share a target. */
+@media (pointer: coarse) {
+  .track {
+    min-height: var(--touch-min);
+  }
+
+  .segment {
+    min-width: var(--touch-min);
+  }
+
+  /* Placed from the option's padding box: the option (`--tog-h`) sits centred in the tray (`--touch-min`), so up and
+     down by half the difference plus its own frame reaches the tray's outer edge; sideways to its own edge only, so the
+     gap between options stays nobody's. */
+  .segment::after {
+    position: absolute;
+    inset: calc((var(--tog-h) - var(--touch-min)) / 2 - var(--bw)) calc(-1 * var(--bw));
+    content: '';
+  }
+}
+
+/* variant="folder" ("Folder tabs"): the kit Tabs strip's look for a switch between views of one
+   page, from the same tokens: grey tabs drawn --tabs-lift under the --tabs-h strip's top, on its one line (an inset
+   shadow, so the chosen tab's fill covers it: open at the bottom); the chosen tab white, the strip's full height,
+   framed. Every option's box is the strip's height, a full-height target, and grows with the tab strip on touch and on
+   a narrow screen (--tabs-h). */
+.folder {
+  align-items: stretch;
+  height: var(--tabs-h);
+  min-height: 0;
+  padding: 0;
+  gap: var(--tabs-gap);
+  border: 0;
+  background: transparent;
+  box-shadow: inset 0 calc(-1 * var(--bw)) 0 var(--hx-folder-line);
+}
+
+.folder .segment {
+  height: auto;
+  padding-inline: var(--tabs-pad);
+  padding-block-start: var(--tabs-lift);
+  border-color: transparent;
+  border-block-start-width: 0;
+  background:
+    linear-gradient(transparent calc(var(--tabs-lift) + var(--bw)), var(--hx-folder-tab) calc(var(--tabs-lift) + var(--bw))) padding-box,
+    linear-gradient(transparent var(--tabs-lift), var(--hx-folder-tab-line) var(--tabs-lift), var(--hx-folder-tab-line) calc(100% - var(--bw)), transparent calc(100% - var(--bw))) border-box;
+  color: var(--hx-folder-text);
+}
+
+.folder .segment[data-hovered],
+.folder .segment[data-pressed] {
+  color: var(--hx-folder-on-text);
+}
+
+.folder .segment[data-selected] {
+  padding-block-start: 0;
+  border-color: var(--hx-folder-line);
+  border-block-start-width: var(--bw);
+  border-block-end-color: var(--hx-folder-on);
+  background: var(--hx-folder-on);
+  box-shadow: none;
+  color: var(--hx-folder-on-text);
+}
+
+/* A disabled folder tab stays a grey tab, its label faint. */
+.folder .segment[data-disabled] {
+  border-color: transparent;
+  background:
+    linear-gradient(transparent calc(var(--tabs-lift) + var(--bw)), var(--hx-folder-tab) calc(var(--tabs-lift) + var(--bw))) padding-box,
+    linear-gradient(transparent var(--tabs-lift), var(--hx-folder-tab-line) var(--tabs-lift), var(--hx-folder-tab-line) calc(100% - var(--bw)), transparent calc(100% - var(--bw))) border-box;
+  color: var(--hx-faint);
+  cursor: default;
+  opacity: 1;
+}
+
+/* In a toolbar (a kit Toolbar or a DataTable's, the `data-tb-size` scope) the folder strip is one of the row's
+   controls: as tall as the search field and the buttons beside it, never shorter than a tab strip. */
+[data-tb-size] .folder {
+  height: max(var(--tb-ctl-h), var(--tabs-h));
+}
+
+/* The option's box is already the strip's full height: no touch extension over a tray that is not there. */
+.folder .segment::after {
+  content: none;
+}
+
+/* A folder tab's ring is inside it, as kit Tabs (the strip's line and the next tab would cover an outer one). */
+.folder .segment[data-focus-visible] {
+  box-shadow: var(--focus-ring-inset);
+}
+
+/* Forced colours, as kit Tabs: the line is a real bottom border on the track, every option reaches one line width
+   over it (the track is border-box, so it keeps its height), a grey option is a GrayText frame with a clear bottom
+   edge, the chosen one a CanvasText frame on Canvas whose Canvas bottom edge covers the line. Focus is a
+   Highlight outline inside the tab (in the block below: the ring is a shadow, which forced colours drop). */
+@media (forced-colors: active) {
+  .folder {
+    border-block-end: var(--bw) solid canvastext;
+  }
+
+  .folder .segment,
+  .folder .segment[data-disabled] {
+    margin-block-end: calc(-1 * var(--bw));
+    border-color: graytext;
+    border-block-start: var(--bw) solid graytext;
+    border-block-end-color: transparent;
+    background: none;
+    color: canvastext;
+  }
+
+  .folder .segment[data-selected] {
+    border-color: canvastext;
+    border-block-end-color: canvas;
+    background: canvas;
+  }
+
+  .folder .segment[data-disabled] {
+    color: graytext;
+  }
+}
+
+/* Forced colours, the field strip: the thumb's fill, its shadow and the transparent frames are gone, and every
+   option can map to the same system colours. So the chosen option takes the system's selected colours
+   and an underlined label, a cue of shape as well as colour that stays once focus has moved on. It draws those colours
+   itself (forced-color-adjust: none): Chromium's Canvas backplate under the label would hide SelectedItemText. The
+   others are CanvasText on Canvas with no visible frame, a disabled one GrayText. Focus is a Highlight
+   outline (the ring is a shadow, which forced colours drop), CanvasText on the chosen one (whose colours are not
+   forced). */
+@media (forced-colors: active) {
+  .segment[data-focus-visible] {
+    outline: var(--bw-2) solid highlight;
+    outline-offset: var(--bw-2);
+  }
+
+  .folder .segment[data-focus-visible] {
+    outline-offset: calc(-1 * (var(--bw) + var(--bw-2)));
+  }
+
+  .track:not(.folder) .segment {
+    border-color: canvas;
+    background: canvas;
+    color: canvastext;
+  }
+
+  .track:not(.folder) .segment[data-selected] {
+    forced-color-adjust: none;
+    border-color: selecteditem;
+    background: selecteditem;
+    color: selecteditemtext;
+  }
+
+  .track:not(.folder) .segment[data-selected][data-focus-visible] {
+    outline-color: canvastext;
+  }
+
+  /* The label clips its overflow (one ellipsis) in a 1-line-high box, so the line needs room inside it: `--sp-1` above
+     and below keeps the text centred and the line drawn. */
+  .track:not(.folder) .segment[data-selected] .label {
+    padding-block: var(--sp-1);
+    text-decoration: underline var(--bw);
+    text-underline-offset: 3px;
+  }
+
+  .track:not(.folder) .segment[data-disabled] .label {
+    text-decoration: none;
+  }
+
+  .track:not(.folder) .segment[data-disabled] {
+    border-color: canvas;
+    background: canvas;
+    color: graytext;
+  }
+}
+
+/* Under its own label the track keeps its content width (the label's column would stretch it); fullWidth still fills. */
+.labelled > .track:not(.full) {
+  align-self: flex-start;
+}
+

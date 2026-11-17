@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                 ◆ Personal ▾  Computers not loaded ▾  [A]  ^K · ?
+ Plans & Billing                                                   + Add funds
+ Upgrade a server, rent a whole machine, and see what you pay.
+   Plans    Bare metal  ▸ Wallet & usage
+ ──────────────────────────────────────────────────────────────────────────────
+                                                                              █
+   WALLET                                                                     █
+   ! Couldn't read your balances. · Try again                                 █
+                                                                              █
+                                                                              █
+   GITHUB BONUS  $10.00 in Wallet credit is available.                        █
+   [Claim bonus] GitHub account: @octocat                                     █
+   Limit: one bonus per Hoody account and one per GitHub account.             ▀
+
+
+
+ Server subscriptions
+ What you pay for, when it renews, and what needs you.
+ What happens when auto-renew is off
+
+ / Search               Filters                                      ↻ Refresh
+
+ ✗ Server subscriptions: This didn't load
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

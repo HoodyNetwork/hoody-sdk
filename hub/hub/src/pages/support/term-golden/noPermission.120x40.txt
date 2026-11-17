@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            Support                                ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │              ┌───────────────────────────────────────────────────────────────────┐
+ Computers             │              │ You don't have access to this                                     │
+ Files                 │              │                                                                   │
+ Bots                  │              │ Support needs your account. Sign in with your account, or use an  │
+ Board                 │              │ access key allowed to use Support.                                │
+ Demo                  │              └───────────────────────────────────────────────────────────────────┘
+ Vault                 │
+                       │
+On atlas ▾             │
+ Programs              │
+ Schedules             │
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+▌Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,89 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.states {
+  display: grid;
+
+  /* auto-fill: a single-state shot route (&state=…) shows one card; spare tracks keep it card-sized. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: var(--sp-4);
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-2);
+  background: var(--hx-card);
+}
+
+.stateTitle {
+  color: var(--hx-faint);
+  font: var(--t-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  max-width: 720px;
+}
+
+.slotRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: var(--row-h);
+  padding-inline: var(--sp-3) var(--sp-2);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+}
+
+.slotName {
+  flex: 1;
+  font: var(--t-body-strong);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* A field in a narrow space: 300 px is below the 20rem (320 px) wrap rule, so the TextField action wraps
+   under the box. */
+.narrow {
+  inline-size: 300px;
+  max-inline-size: 100%;
+}
+
+/* A field with an action as an auto-sized flex item and in an auto grid track (it keeps its own width). */
+.autoRow {
+  display: flex;
+  align-items: flex-start;
+}
+
+.autoGrid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+}
+
+/* The form sections specimen: the width of a dialog's column. */
+.narrowForm {
+  inline-size: 480px;
+  max-inline-size: 100%;
+}

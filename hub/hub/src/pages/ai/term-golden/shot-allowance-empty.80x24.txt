@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                     ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+ atlas › Models & keys
+ Models & keys                                            + Connect an account
+ atlas uses Hoody Free for everything.
+ ‹ 2   Claude Code ▌Hoody AI allowance  Spending  Advanced  Questions
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Hoody AI allowance                                                        │
+ │ Each server you own has its own free AI allowance, shared by every        │
+ │ computer on it.                                                           │
+ │                                                                           │
+ │ Your servers                                                              │
+ │ No server yet                                                             │
+ │ You don't own a server yet, so there is no                                │
+ │ allowance to show. A server plan comes with its                           │█
+ │ own free AI.                                                              │█
+ │                                                                           │▀
+ │ AI credit                                                                 │
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │
+ │ │                                                                       │ │
+ │ │ Add AI credit                    Coming soon          [Add AI credit] │ │
+ │ │ Buying AI credit on its own is                                        │ │
+ │ │ planned. Until then, your AI                                          │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

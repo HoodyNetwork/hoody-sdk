@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Buy a plan                                                           ×
+ Plans ┃ Small · $12.00 / month
+ Upgrad┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Plan┃
+ ──────┃ Location (unavailable)
+ │ ✗ fr┃ │ Automatic (best available) ▾
+ Plans ┃ Right now that is Frankfurt, Germany. The location is set when you
+ Each p┃ confirm.
+ disk. ┃
+       ┃ Plan                                                           $12.00
+ ┌─────┃ ─────────────────────────────────────────────────────────────────────
+ │     ┃ Charged now                                                    $12.00
+ │ Plan┃
+ │ Choo┃ Wallet balance                                                 $42.50
+ │ serv┃                                                                      █
+ │ to u┃ Renews on 23 Nov 2026 at $12.00 a month from your wallet.            █
+ │     ┃ If a renewal isn't paid, the server is stopped and kept 7 days, then █
+ └─────┃ permanently deleted.                                                 █
+       ┃                                                                      █
+ ┌─────┃ [x] I understand this purchase is not eligible for a customer-       █
+ │ Free┃     requested refund, and I agree to the Terms of Service and Privacy█
+ │ $0 /┃     Policy.                                                          █
+ │ Your┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ Charging your wallet — don't quit the Hub.

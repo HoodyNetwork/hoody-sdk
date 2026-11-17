@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notes                                                     ▸ Use with your agent   + New note
+ Computers             │
+ Files                 │  ‹ Notes  Esc
+ Bots                  │  Weekly plan                                                      [⇗ Open outside the Hub] [⋯]
+ Board                 │  atlas · Changed 12 minutes ago               ┌──────────────────────────────────────────────┐
+ Demo                  │                                               │›    Copy link                                │
+ Vault                 │   ┌───────────────────────────────────────────│     Copy read-only link                      │
+                       │   │ ⇗ A note is a page of the Notes program in│       Opens the note with editing turned off.│
+On atlas ▾             │   │ draw.                                     │       It doesn't change who can edit: anyone │
+ Programs              │   │ Open the Notes page on the web:           │       who opens it can still turn editing    │
+ Schedules             │   │ https://hub.example.test/auth/home?realm=f│       back on.                               │
+ Scripts               │   │ [c Copy link] [r QR code]                 │     Copy for an agent                        │
+ Logs                  │   └───────────────────────────────────────────│       A command an agent on atlas can run to │
+ Tunnels               │                                               │       read this note. An agent without access│
+▌Notes                 │                                               │       to this notebook can't read it.        │
+ AI                    │                                               │     Put on Board                             │
+ VMs                   │                                               │     Open computer                            │
+                       │                                               │──────────────────────────────────────────────│
+Account                │                                               │     Delete note…                             │
+ Plans & Billing       │                                               └──────────────────────────────────────────────┘
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

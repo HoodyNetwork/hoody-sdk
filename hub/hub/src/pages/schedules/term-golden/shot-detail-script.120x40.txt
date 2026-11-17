@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Schedules                                             ▸ Use with your agent   + New schedule
+ Computers             │  15 schedules on atlas · next: ping-api in 3 minutes · 4 failed today · Computers ›
+ Files                 │  9 programs running ›
+ Bots                  │
+ Board                 │  ‹ Schedules  Esc
+ Demo                  │  queue-drain  ● Failed                                                          [Run now] [⋯]█
+ Vault                 │   Script                                                                                     █
+                       │                                                                                              █
+On atlas ▾             │  i Run now runs the same way as its timer.                                                   █
+ Programs              │                                                                                              █
+▌Schedules             │  Schedule     Every 10 minutes                                                               █
+ Scripts               │  Next run     in 4 minutes · 09:04                                                           █
+ Logs                  │  Last result  Failed                                                                         █
+ Tunnels               │               queue-drain: lock held by pid 4411                                             █
+ Notes                 │               See output                                                                     █
+ AI                    │                                                                                              █
+ VMs                   │  Next run                                                                                    █
+                       │  Times are in UTC.                                                                           █
+Account                │  in 4 minutes · 09:04                                                                        █
+ Plans & Billing       │                                                                                              █
+ Referrals             │                                                                                              █
+ Keys and tokens       │  History                                                                                     █
+ API                   │      Started                  Result                                                  Took   █
+ Notifications      26 │  › ▸ Today 16:54              ● Failed · exit 1                                        8 s   █
+ Account               │      Today 16:44              ● Worked                                                11 s   █
+                       │      Today 16:34              ● Worked                                                 9 s   █
+ + Rent servers        │      Today 16:24              ● Worked                                                12 s   █
+ Guide                 │      Today 16:14              ● Worked                                                10 s   █
+ Support               │      Today 16:04              ● Worked                                                13 s   █
+                       │      Today 15:54              ● Worked                                                11 s   █
+                       │      Today 15:44              ● Worked                                                 8 s   █
+                       │      Today 15:34              ● Worked                                                11 s   █
+                       │      Today 15:24              ● Worked                                                 9 s   █
+                       │  [Show more]                                                                                 █
+                       │
+                       │
+                       │  Advanced
+                       │  The saved command, with the secrets we recognise hidden.
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

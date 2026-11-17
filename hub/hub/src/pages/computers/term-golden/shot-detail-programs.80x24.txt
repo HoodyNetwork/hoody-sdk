@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent  [+ Get a computer]
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ Computers  Esc
+ atlas  ● Running                                         [Open terminal ⇗] [⋯]
+ SG n12 · Home base · █  Personal ·  Current computer
+
+  Overview  Connect  Permissions  Ports & addresses  Desktop  Network  Run
+ ▸Programs  Backups  Storage
+ ──────────────────────────────────────────────────────────────────────────────
+ Programs running on atlas.                                                   █
+                                                                              █
+ [+ New program…] [+ Launch an app]                                           █
+                                                                              █
+ / Search programs                                       6 programs  ↻ Refresh█
+     Name ↑                     State                Logs                     █
+ ▾ Needs a look · 1                                                           █
+ ›   worker                     ● Failed             Logs ›        [Restart] ⋯█
+ ▾ Running · 1                                                                █
+     web                        ● Running            Logs ›                  ⋯█
+ ▾ Stopped · 1                                                                █
+     cron-sync                  ● Stopped            Logs ›                  ⋯
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

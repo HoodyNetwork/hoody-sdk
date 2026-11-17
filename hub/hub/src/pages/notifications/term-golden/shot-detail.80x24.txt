@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Notifications                                                [✓ Mark all read]
+ Messages about your account: computers, rentals, sign-in and keys.
+ ‹ Notifications  Esc
+ Computer atlas stopped  ✗ Error
+ Computers Oct 23, 2026, 2:56 AM
+
+
+   ✓ Marked read
+
+   This one needs a look.
+
+   atlas stopped after running out of memory on n12. Start it again from
+   Computers, or open the logs to see what happened.
+
+   Open Computers Open logs
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

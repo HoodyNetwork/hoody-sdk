@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Use with your agent                                              Esc ×
+ Bots  ┃ Hoody Agent, or any agent with the Hoody skill, can list your
+ Every ┃ Bots, send one a message, read its answer, and manage the links
+ Bots  ┃ and keys that reach it.
+ 23    ┃ ──────────────────────────────────────────────────────────────────────
+ on 2 c┃ ▸ Prompts    Set up    Access    Can do                              █
+ / Sear┃ ─────────────────────────────────────────────────────────────────────█
+ › C Ch┃                                                                      █
+     As┃ Acts on
+      ·┃ Realm     ■ Personal f1f1…f1f1
+      ·┃ Computer  Every computer in this realm
+     Te┃ Names the realm so your agent acts on the right one.
+   L Le┃
+     St┃ Start here
+      ·┃ Work with my Bots
+     On┃ Your agent asks you what you want before it does anything.
+   S Su┃
+     … ┃  ✦ Ask Hoody Agent   ⧉ Copy for your agent
+      ·┃
+      ·┃ Two ways to use it
+     Di┃ Hoody Agent     No set-up. Ask Hoody Agent puts the prompt in the
+ 1–20 o┃                 Agent's message box; it waits there until you press
+       ┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ Skills in the Guide                                  Hide on this page

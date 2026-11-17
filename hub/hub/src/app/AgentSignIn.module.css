@@ -1,0 +1,31 @@
+/* The agent sign-in box (AgentSignIn): its own row where the person is. The extra block margin makes it --sp-5
+   around the box inside a --sp-3 stack. The box is not a kit Band: a Band is a live region
+   (status/alert), and a checkbox inside one would be announced on every toggle. */
+.signIn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-block: var(--sp-2);
+}
+
+.signInBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--hx-fill);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-2);
+}
+
+.signInText {
+  margin: 0;
+  font: var(--t-body);
+}
+
+.hint {
+  margin: 0;
+  font: var(--t-small);
+  color: var(--hx-muted);
+}

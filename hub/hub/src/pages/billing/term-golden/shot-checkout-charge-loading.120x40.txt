@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Buy a plan                                                                  ×
+ Home                  │  Plans & Billin┃ Small · $12.00 / month
+ Computers             │  Upgrade a serv┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │                ┃ │ ──────────────────────────────────────────────────────────────────────── │
+ Bots                  │  ▸ Plans    Bar┃ │ Disk                                                               60 GB │
+ Board                 │  ──────────────┃ │ ──────────────────────────────────────────────────────────────────────── │
+ Demo                  │  │ ✗ fra-7: On ┃ │ Computers                                                              3 │
+ Vault                 │                ┃ │ ──────────────────────────────────────────────────────────────────────── │
+                       │  Plans         ┃ │ Disk speed                               400 MiB/s read, 200 MiB/s write │
+On atlas ▾             │  Each plan is a┃ │ ──────────────────────────────────────────────────────────────────────── │█
+ Programs              │  take the same ┃ │ Network                                                         500 Mbps │█
+ Schedules             │                ┃ │ ──────────────────────────────────────────────────────────────────────── │█
+ Scripts               │  ┌─────────────┃ │ Snapshots per computer                                                 3 │█
+ Logs                  │  │             ┃ │ ──────────────────────────────────────────────────────────────────────── │█
+ Tunnels               │  │ Plans for   ┃ │ Custom computer URLs                                                   6 │█
+ Notes                 │  │ Choose a pla┃ │ ──────────────────────────────────────────────────────────────────────── │█
+ AI                    │  │ server, or p┃ │ Bot URLs                                                               3 │█
+ VMs                   │  │ to upgrade i┃ │ ──────────────────────────────────────────────────────────────────────── │█
+                       │  │             ┃ │ AI allowance                                                          ×4 │█
+Account                │  └─────────────┃ │ ──────────────────────────────────────────────────────────────────────── │█
+▌Plans & Billing       │                ┃ └──────────────────────────────────────────────────────────────────────────┘█
+ Referrals             │  ┌─────────────┃                                                                             █
+ Keys and tokens       │  │ Free        ┃ Location (unavailable)                                                      █
+ API                   │  │ $0 / month  ┃ │ Automatic (best available) ▾                                              █
+ Notifications      26 │  │ Your free se┃ Right now that is Frankfurt, Germany. The location is set when you confirm. █
+ Account               │  │ Computers   ┃                                                                             █
+                       │  │ Hardware    ┃ Plan                                                                  $12.00█
+ + Rent servers        │  │ AI allowance┃ ────────────────────────────────────────────────────────────────────────────█
+ Guide                 │  │             ┃ Charged now                                                           $12.00█
+ Support               │  │ Locations   ┃                                                                             █
+                       │  │ No choice of┃ Wallet balance                                                        $42.50█
+                       │  │ Your free se┃                                                                             █
+                       │  │ buy a plan. ┃ Renews on 23 Nov 2026 at $12.00 a month from your wallet.                   █
+                       │  │ Next: Small.┃ If a renewal isn't paid, the server is stopped and kept 7 days, then        █
+                       │  │ computers.  ┃ permanently deleted.                                                        █
+                       │  │ Free server ┃                                                                             █
+                       │  │             ┃ [x] I understand this purchase is not eligible for a customer-requested     █
+                       │  │             ┃     refund, and I agree to the Terms of Service and Privacy Policy.         █
+                       │  │             ┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ Charging your wallet — don't quit the Hub.

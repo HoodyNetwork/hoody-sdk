@@ -1,0 +1,56 @@
+/* A folder's Repository tab: the status line, the notes above the file table, and the diff below it. */
+.repo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.local {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.changes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.notes {
+  margin: 0;
+  padding-inline-start: var(--sp-4);
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.path {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.from,
+.pick,
+.note {
+  color: var(--hx-muted);
+}
+
+.lines,
+.sha {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.pick,
+.note {
+  margin: 0;
+  font-size: var(--fs-sm);
+}

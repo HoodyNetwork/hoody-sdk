@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent  [+ Get a computer]
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ Computers  Esc
+ atlas  ● Running                                         [Open terminal ⇗] [⋯]
+ SG n12 · Home base · █  Personal ·  Current computer
+
+  Overview  Connect  Permissions  Ports & addresses  Desktop ▸Network  Run
+  Programs  Backups  Storage
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ At a glance                                                               │█
+ │ Internet access      Allowed                                              │▀
+ │ Traffic leaves from  socks5h://exit.example.net:1080, not reported        │
+ │                      whether it works                                     │
+ │ Firewall             4 of 500 █░░░░░░░░░                                  │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Internet access ⓘ                                  Block internet access  │
+ │ Whether atlas can open new connections to the internet.                   │
+ │ ✓ Allowed atlas can open connections to the internet.                     │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

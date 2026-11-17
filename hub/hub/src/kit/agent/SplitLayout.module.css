@@ -1,0 +1,49 @@
+/* The AI tab's frame: pane, conversation, Details. Widths per size class. */
+.root {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  background: var(--hx-card);
+  color: var(--hx-ink);
+}
+
+.root [hidden] { display: none; }
+
+.pane {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  width: var(--rail-width, 288px);
+  min-height: 0;
+  border-inline-end: var(--bw) solid var(--hx-line);
+  background: var(--hx-bg);
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.details {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  width: 400px;
+  min-height: 0;
+  border-inline-start: var(--bw) solid var(--hx-line);
+  background: var(--hx-bg);
+}
+
+.root[data-size='xl'] .pane,
+.root[data-size='xxl'] .pane { width: var(--rail-width, 304px); }
+.root[data-size='xl'] .details { width: 460px; }
+.root[data-size='xxl'] .details { width: clamp(560px, 34%, 1040px); }
+
+/* Below 840 one slot fills the page; Details is the whole page, never over the conversation. */
+.root[data-size='xs'] .pane,
+.root[data-size='s'] .pane { flex: 1; width: 100%; border-inline-end: 0; }
+.root[data-size='xs'] .details,
+.root[data-size='s'] .details { flex: 1; width: 100%; border-inline-start: 0; }

@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ ‹ Back to New Bot                                                Esc ×
+ Bots  ┃ Choose a model
+ Every ┃ ──────────────────────────────────────────────────────────────────────
+ Bots  ┃ Ready to use                                                         █
+ 23    ┃                                                                      █
+ on 2 c┃ │ / Search models and providers                                      █
+ / Sear┃                                                                      █
+ › C Ch┃ Showing 9 of 9                                                       █
+     As┃                                                                      █
+      ·┃  ( ) Agent's default                                                 █
+      ·┃      Uses the agent's configured model, also when that changes       █
+     Te┃                                                                      █
+   L Le┃  H Hoody AI Included                                                 █
+     St┃  (•) Hoody Free Current · Recommended                                █
+      ·┃  ( ) Hoody Fast                                                      █
+     On┃                                                                      █
+   S Su┃  A Anthropic Your key                                                █
+     … ┃  ( ) Claude 1
+      ·┃  ( ) Claude 2
+      ·┃  ( ) Claude 3
+     Di┃  ( ) Claude 4
+ 1–20 o┃  ( ) Claude 5
+       ┃
+ Tab mo┃  G Google Your key · Can't tell yet

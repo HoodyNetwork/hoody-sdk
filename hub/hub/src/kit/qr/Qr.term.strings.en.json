@@ -1,0 +1,7 @@
+{
+  "qr.term.noRoom": "The QR code needs {{cols}} × {{rows}} cells; this pane is smaller.",
+  "qr.term.noRoomReason": "A cut QR code cannot be scanned; widen the terminal or open it on the web.",
+  "qr.term.noRoomSecret": "This code holds a key shown only here, so the web cannot show it: widen the terminal, or copy the key instead.",
+  "qr.term.what": "QR code",
+  "qr.term.unreadable": "This QR code can't be drawn here: type the key below into your app instead."
+}

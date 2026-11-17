@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Chats   Agents   Automations   Knowledge  ▌Settings
+  Models & keys   Connections & MCP  ▌Rules & hooks
+ Rules & hooks
+ The checked rules and hooks of a realm. Pause every agent on this computer, or
+ stop everything running in a realm.
+ Showing                                                                      █
+ ‹ This realm ›  One folder                                                   █
+ ┌───────────────────────────────────────────────────────────────────────────┐▀
+ │ Rules                                                                     │
+ │ Limits checked before a tool runs, and guidance for every chat.           │
+ │ How rules and hooks work                                                  │
+ │ / Search                                   3 rules  Add a rule  ↻ Refresh │
+ │   Rule                                      Type       Applies to         │
+ │ › Never push to main; open a pull request…  · Limit    Tools: bash.…    ⋯ │
+ │   Ask before changing a database migration… · Check in Tools: write_…   ⋯ │
+ │   Answer in British English.                · Guidance Any agent        ⋯ │
+ │ In this realm: 2 of 32 limits and check-ins, 1 of 32 guidance and         │
+ │ playbooks.                                                                │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Hooks                                                                     │
+ │ Commands that run on this computer, as you, when something happens in a   │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ○ atlas ▾  [A]  ^K · ?
+ Virtual machines                                         ▸ Use with your agent
+ Full machines that run inside atlas.
+ ▸ VMs    Images    KVM on computers
+ ──────────────────────────────────────────────────────────────────────────────
+ │ ! atlas has expired. Nothing runs on it any more, so the   [Open Computers]
+ │   VMs inside it cannot be shown.
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ This computer                                                             │█
+ │ VMs need a bare-metal server, with KVM on for the computer.               │█
+ │                                                                           │█
+ │ What this computer can run                                                │█
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │█
+ │ │                                                                       │ │█
+ │ │ Run VMs on this computer (KVM)  [■ on ]                               │ │█
+ │ │ KVM is on for this computer.                                          │ │▀
+ │ │                                                                       │ │
+ │ └───────────────────────────────────────────────────────────────────────┘ │
+ │ Server  Bare metal                                                        │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ VMs                                                                       │
+ │ atlas has expired.                                                        │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

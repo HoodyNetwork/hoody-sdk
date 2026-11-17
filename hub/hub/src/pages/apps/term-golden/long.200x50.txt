@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                                                                                                                             ▸ Use with your agent   + Launch an app
+ Computers             │  Apps on atlas: programs you open only when you need them.
+ Files                 │    Running programs  ▸ Apps    Ports & aliases
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  / Search opened apps            State ▾                                                                                                                    68 apps  ↻ Refresh
+ Vault                 │
+                       │    Name                                                                  State                                   Opens in                    Action
+On atlas ▾             │  ▌ JupyterLab Registry                                                   ● Ready                                 Web                         [Open]                         ⋯█
+▌Programs              │    htop Installed                                                        ● Ready                                 Terminal                    [Open]                         ⋯█
+ Schedules             │    Firefox Installed                                                     ● Warming up                            Display                     [Open display]                 ⋯█
+ Scripts               │    VS Code Registry                                                      ● Starting                              Web                         Starting…                      ⋯█
+ Logs                  │    Shared folder Registry                                                ● Stopped                               Web                         [Open again]                   ⋯█
+ Tunnels               │    btop Installed                                                        ● Error                                 Terminal                    [Open again]                   ⋯█
+ Notes                 │    sqlite-web pkgx                                                       ● Check needed                          Web                         [Check again]                  ⋯█
+ AI                    │    Open WebUI Registry                                                   ● Port in use                           Web                         [See open apps]                ⋯█
+ VMs                   │    notebook-01 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+                       │    notebook-02 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+Account                │    notebook-03 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+ Plans & Billing       │    notebook-04 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+ Referrals             │    notebook-05 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+ Keys and tokens       │    notebook-06 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+ API                   │    notebook-07 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+ Notifications      26 │    notebook-08 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+ Account               │    notebook-09 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+                       │    notebook-10 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+ + Rent servers        │    notebook-11 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+ Guide                 │    notebook-12 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+ Support               │    notebook-13 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+                       │    notebook-14 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+                       │    notebook-15 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+                       │    notebook-16 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+                       │    notebook-17 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+                       │    notebook-18 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+                       │    notebook-19 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+                       │    notebook-20 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+                       │    notebook-21 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+                       │    notebook-22 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯█
+                       │    notebook-23 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯░
+                       │    notebook-24 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯░
+                       │    notebook-25 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯░
+                       │    notebook-26 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯░
+                       │    notebook-27 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯░
+                       │    notebook-28 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯░
+                       │    notebook-29 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯░
+                       │    notebook-30 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯░
+                       │    notebook-31 Registry                                                  ● Stopped                               Web                         [Open again]                   ⋯░
+                       │  1–50 of 68 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

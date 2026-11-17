@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ New program                                                      Esc ×
+ Progra┃ Add program keeps it. Run now starts it once.
+ 19 pro┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Runn┃ How it runs                                                          █
+ ──────┃ ┌────────────────────────────────┐ ┌────────────────────────────────┐█
+ / Sear┃ │ (•) Keep it                    │ │ ( ) Run once                   │█
+ ›   ! ┃ │     Saved on this computer.    │ │     Starts now and isn't kept. │█
+     ! ┃ │     Start it when you like, or │ │     After it ends, its result  │█
+     ! ┃ │     with the computer.         │ │     stays readable for 10      │█
+       ┃ │                                │ │     minutes.                   │█
+       ┃ └────────────────────────────────┘ └────────────────────────────────┘█
+       ┃ ▾ Which one should I pick?                                           ▀
+       ┃   Keep it for something you will start again, such as a server.
+       ┃   Run once for a single job.
+       ┃   More about Keep it and Run once
+       ┃
+       ┃ Name * (required)
+ ▾ Temp┃ │ ___________________________________________________________________
+       ┃ Letters, digits, dots, dashes and underscores. Each program on this
+       ┃ computer has its own name.
+ ▸ Syst┃
+       ┃ Command * (required)
+ Questi┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃                                                [Cancel]   Add program

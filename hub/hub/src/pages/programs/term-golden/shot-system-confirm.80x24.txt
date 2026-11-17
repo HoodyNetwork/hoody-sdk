@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs             ▸ Use with your agent  [+ New program]   + Launch an app
+ 19 programs on atlas · 11 running · 4 need a look
+ ‹ Programs  Esc
+ hoody-age┌──────────────────────────────────────────────────────────┐Stop] [⋯]
+          │ Restart hoody-agent?                               Esc × │
+ ▸ Why be │ ──────────────────────────────────────────────────────── │        █
+          │ hoody-agent is one of the programs that keep this        │        █
+ ┌────────│ computer and the Hub working.                            │───────┐█
+ │ At a gl│ Bots and the agent stop answering until it runs again.   │       │█
+ │ Kind   │ It stops for a moment, then starts again.                │       │█
+ │ State  │                                                          │       │█
+ │ Up     │                                   [Cancel]   Restart it  │       │█
+ │ Restart└──────────────────────────────────────────────────────────┘       │█
+ │ Startup   Off                                                             │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Ports                                                                     │
+ │ No alias for system programs: their address still shows which computer    │
+ │ they run on.                                                              │
+ │    Port              State                     Address                    │
+ │› ▸ 15000             ● Running                 Open port 15000            │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

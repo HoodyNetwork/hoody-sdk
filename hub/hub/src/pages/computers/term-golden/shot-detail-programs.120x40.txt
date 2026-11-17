@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                           ▸ Use with your agent  [+ Get a computer]
+▌Computers             │
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ Computers  Esc
+ Vault                 │  atlas  ● Running                                                        [Open terminal ⇗] [⋯]
+                       │  SG n12 · Home base · █  Personal ·  Current computer
+On atlas ▾             │
+ Programs              │   Overview  Connect  Permissions  Ports & addresses  Desktop  Network  Run ▸Programs  Backups
+ Schedules             │   Storage
+ Scripts               │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Logs                  │  Programs running on atlas.
+ Tunnels               │
+ Notes                 │  [+ New program…] [+ Launch an app]
+ AI                    │
+ VMs                   │  / Search programs                                                       6 programs  ↻ Refresh
+                       │
+Account                │      Name ↑                     State                Logs        Up for
+ Plans & Billing       │  ▾ Needs a look · 1
+ Referrals             │  ›   worker                     ● Failed             Logs ›      —                 [Restart] ⋯
+ Keys and tokens       │
+ API                   │  ▾ Running · 1
+ Notifications      26 │      web                        ● Running            Logs ›      3d 2h                       ⋯
+ Account               │
+                       │  ▾ Stopped · 1
+ + Rent servers        │      cron-sync                  ● Stopped            Logs ›      —                           ⋯
+ Guide                 │
+ Support               │  ▸ System programs · 3
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

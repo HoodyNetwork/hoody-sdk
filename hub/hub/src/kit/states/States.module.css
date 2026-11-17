@@ -1,0 +1,422 @@
+/* Skeleton, EmptyState, ErrorState (with its compact line) and OutcomeBanner (states/States.tsx), one block each.
+   UnreachableState imports the compact classes. */
+
+/* Skeleton: fill-coloured blocks at text cap height, a slow sweep, shown after
+   150 ms so fast answers never flash one. */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+}
+
+.delayed {
+  animation: sk-appear 0ms linear 150ms both;
+}
+
+@keyframes sk-appear {
+  from {
+    visibility: hidden;
+  }
+
+  to {
+    visibility: visible;
+  }
+}
+
+.skHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-2);
+}
+
+.skRow {
+  display: flex;
+  gap: var(--sp-4);
+  align-items: center;
+  min-height: 16px;
+}
+
+.skCell {
+  flex: 1;
+  min-width: 0;
+}
+
+.skCell:first-child {
+  flex: 2;
+}
+
+.sk_table {
+  gap: 0;
+  padding-block: 0;
+}
+
+.sk_table .skRow {
+  height: var(--table-row-h);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.sk_widget {
+  gap: var(--sp-3);
+  padding: 0;
+}
+
+.sk_widget .skRow {
+  min-height: 24px;
+}
+
+.bar {
+  height: 8px;
+  border-radius: var(--r-1);
+  background-color: var(--hx-fill);
+  background-image: linear-gradient(90deg, transparent 0%, var(--skeleton-hi) 50%, transparent 100%);
+  background-repeat: no-repeat;
+  background-size: 50% 100%;
+  animation: shimmer 1400ms linear infinite;
+}
+
+/* A table cell's loading line keeps its column's alignment (TableSkeletonBody). */
+.barEnd {
+  margin-inline-start: auto;
+}
+
+.barCenter {
+  margin-inline: auto;
+}
+
+.barTitle {
+  width: 40%;
+  height: 10px;
+}
+
+.sk_widget .barTitle {
+  width: 32%;
+}
+
+.barPill {
+  width: 64px;
+  height: 10px;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -100% 0;
+  }
+
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    animation: none;
+    background-image: none;
+  }
+}
+
+/* Empty / error: a solid hairline tile with an accent corner tick,
+   an Oxanium title, one sentence, one primary action. */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-9) var(--sp-6);
+  text-align: center;
+  color: var(--hx-muted);
+}
+
+.sm {
+  padding: var(--sp-6) var(--sp-4);
+}
+
+.emptyIcon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-block-end: var(--sp-2);
+  border: var(--bw) solid var(--hx-line-2);
+  border-radius: var(--r-1);
+  color: var(--hx-ink);
+}
+
+.emptyIcon::after {
+  position: absolute;
+  inset-block-start: -1px;
+  inset-inline-end: -1px;
+  width: 8px;
+  height: 8px;
+  border-block-start: var(--bw-2) solid var(--hx-acc);
+  border-inline-end: var(--bw-2) solid var(--hx-acc);
+  content: '';
+}
+
+.sm .emptyIcon {
+  width: 40px;
+  height: 40px;
+}
+
+.errorIcon {
+  border-color: color-mix(in srgb, var(--hx-danger-fill) 45%, transparent);
+  color: var(--hx-danger);
+}
+
+.errorIcon::after {
+  display: none;
+}
+
+.emptyTitle {
+  margin: 0;
+  color: var(--hx-ink);
+  font-family: var(--font-head);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-box-heading);
+}
+
+.sm .emptyTitle {
+  font-size: var(--fs-lg);
+  line-height: 20px;
+}
+
+.emptyBody {
+  max-width: 48ch;
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: var(--lh-box-body);
+
+  /* A line break written in the text shows; plain text wraps (pinned by states/preline.test.tsx). */
+  white-space: pre-line;
+}
+
+/* Tags written inline into the body (a row of names that wraps): every line is one Tag plus one line gap tall, so two
+   rows of Tags never touch and the text lines above and below keep the same pitch (pinned by states/emptyTags.test.tsx). */
+.emptyBody:has(> [data-hx-tag]) {
+  line-height: calc(var(--tag-h) + var(--gap-line));
+}
+
+.emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-3);
+}
+
+.emptyHint {
+  margin: var(--sp-1) 0 0;
+  color: var(--hx-faint);
+  font-size: var(--fs-sm);
+}
+
+/* The md empty card, "Slanted card": one card, at most 560 px, 48 px top and bottom, 32 px sides, the Hub's
+   slanted corner from CardEdge (the frame line is drawn there; this border keeps the layout). Centred in its area. */
+.card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 560px;
+  margin: var(--sp-6) auto;
+  padding: var(--sp-9) var(--sp-7);
+  border: var(--bw) solid var(--hx-panel-line);
+  background: var(--hx-card);
+}
+
+.card .emptyIcon {
+  margin-block-end: var(--sp-3);
+}
+
+/* "Takes the table frame's place": on a list page the card sits where the table would, full width directly under
+   the header, 44 px top and bottom (a design value; not measured against where the first row lands). */
+.frame {
+  max-width: none;
+  margin: 0;
+  padding-block: calc(var(--sp-8) + var(--sp-1));
+}
+
+/* Compact: one line plus one action, at a widget row's height. */
+.compact {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 32px;
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-md);
+  line-height: var(--lh-box-body);
+}
+
+.compactIcon {
+  flex: none;
+  color: var(--hx-faint);
+}
+
+.compactText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compactSep {
+  color: var(--hx-faint);
+}
+
+.compactError .compactIcon {
+  color: var(--hx-danger);
+}
+
+.compactError .compactText {
+  color: var(--hx-ink);
+}
+
+/* Outcome banner: a notice of the Band family (Band.module.css): a hairline frame, an edge bar at the start and a
+   fill, all three read from the --nt-* map its kind sets below. The values are Band's, tone for tone. */
+.outcome {
+  --nt-fill: var(--hx-notice-calm);
+  --nt-line: var(--hx-notice-line);
+  --nt-bar: var(--hx-notice-calm-bar);
+  --nt-edge: none;
+
+  container: outcome / inline-size;
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--bw) solid var(--nt-line);
+  border-inline-start: var(--bw-notice) solid var(--nt-bar);
+  border-radius: 0;
+  background: var(--nt-edge) 0 0 / var(--bw-notice) 100% no-repeat border-box, var(--nt-fill);
+  color: var(--hx-notice-text);
+}
+
+.outcome:dir(rtl) {
+  background-position-x: 100%;
+}
+
+.outcomeInner {
+  display: grid;
+
+  /* The actions' column is implicit: a banner without actions gives its text the whole width. */
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--sp-3);
+}
+
+.outcomeActions {
+  display: flex;
+  grid-row: 1;
+  grid-column: 3;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Narrow banner: the actions go under the text, Check again first and the close at the row's end. The close is
+   words ("Hide this note", "Stop tracking"), so even alone it takes that row: beside the title it would squeeze the
+   message on a phone. When Check again and the close do not fit one row the close wraps under it, still at the row's
+   end: a kit button keeps its whole words. */
+@container outcome (width < 480px) {
+  .outcomeActions {
+    flex-wrap: wrap;
+    grid-row: 2;
+    grid-column: 2;
+  }
+
+  .outcomeClose {
+    display: flex;
+    margin-inline-start: auto;
+  }
+}
+
+.outcomeIcon {
+  margin-block-start: var(--sp-half);
+}
+
+/* The recovery action: between Check again and the close; its own buttons keep their order and wrap together. */
+.outcomeRecover {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.outcomeText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-half);
+  min-width: 0;
+}
+
+.outcomeTitle {
+  color: var(--hx-ink);
+  font-weight: var(--fw-semibold);
+}
+
+.outcomeBody {
+  /* A line break written in the text shows; plain text wraps (pinned by preline.test.tsx). */
+  white-space: pre-line;
+}
+
+/* Kinds. done keeps the calm frame and fill with its own bar; pending is Band's warn, failed Band's danger;
+   not_sent and stale are the calm default (information is neutral, never blue). */
+.o_done {
+  --nt-bar: var(--hx-ok);
+}
+
+.o_done .outcomeIcon {
+  color: var(--hx-ok);
+}
+
+.o_pending {
+  --nt-fill: var(--hx-notice-warn);
+  --nt-line: var(--hx-notice-warn-line);
+  --nt-bar: transparent;
+  --nt-edge: var(--hx-warn-stripe);
+}
+
+@media (forced-colors: active) {
+  .o_pending {
+    --nt-bar: CanvasText;
+  }
+}
+
+
+.o_pending .outcomeIcon {
+  color: var(--hx-warn);
+}
+
+.o_failed {
+  --nt-fill: var(--hx-notice-danger);
+  --nt-line: var(--hx-notice-danger-line);
+  --nt-bar: var(--hx-danger-fill);
+}
+
+.o_failed .outcomeIcon {
+  color: var(--hx-danger);
+}
+
+.o_not_sent .outcomeIcon,
+.o_stale .outcomeIcon {
+  color: var(--hx-muted);
+}
+
+/* Error details: the fold sits under the actions, left-aligned so the facts read as lines. */
+.errorDetails {
+  align-self: stretch;
+  max-width: 480px;
+  margin: var(--sp-3) auto 0;
+  text-align: start;
+}
+
+.outcomeDetails {
+  margin-top: var(--sp-1);
+}
+
+/* An error's mapped sentence after the compact title, on the same line (cut, never wrapped). */
+.compactDetail {
+  margin-inline-start: var(--sp-2);
+  color: var(--hx-muted);
+}

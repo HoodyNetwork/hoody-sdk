@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                     ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+ Plans & Billing                                                   + Add funds
+ Upgrade a server, rent a whole machine, and see what you pay.
+   Plans    Bare metal  ▸ Wallet & usage
+ ──────────────────────────────────────────────────────────────────────────────
+                                                                              █
+   WALLET                                                                     █
+   $42.50                                                                     █
+   Pays for servers and plans.                                                █
+                                                                              █
+                                                                              █
+                                                                              █
+ Server subscriptions                                                         █
+ What you pay for, when it renews, and what needs you.                        ▀
+ What happens when auto-renew is off
+
+ No servers yet
+ A paid server comes with its own computers and
+ free AI. See the plans to get one.
+ [See plans]
+
+
+ AI usage & limits
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

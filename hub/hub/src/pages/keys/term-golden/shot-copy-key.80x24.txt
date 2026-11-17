@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY       ┃ Copy ci-deploy                                      Esc ×
+ Keys and tokens    ┃ ─────────────────────────────────────────────────────────
+ A key lets your age┃ Same rights, realms and addresses, with a new secret. The
+ key, with an end da┃ original keeps working.
+ ▸ API keys 5 keys  ┃
+ ───────────────────┃ Name
+ i Keys that work in┃ ┃
+ ‹ Back to list  Esc┃ Leave it empty and the copy is named for you.
+ ci-deploy  ● Active┃
+                    ┃ Ends
+                    ┃ │ Same as the key it copies ▾
+   ┌────────────────┃
+   │ THIS KEY       ┃
+   │ It works now.  ┃
+   └────────────────┃
+                    ┃
+   Key            hd┃
+   Works in       Pe┃
+   In this realm  Co┃
+   Access         De┃
+   Ends           Ja┃
+   Allowed IPs    20┃
+   Made           No┃ ─────────────────────────────────────────────────────────
+ Typing · Esc leaves┃                                     [Cancel]   Make copy

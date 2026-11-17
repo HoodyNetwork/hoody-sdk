@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                                    ▸ Use with your agent
+ Computers             │
+ Files                 │  ‹ Bots  Esc
+▌Bots                  │  Chief  ● Working                                                  [■ Stop] [Bot settings] [⋯]
+ Board                 │    SG atlas    Hoody Free  · Allow everything is off +2
+ Demo                  │
+ Vault                 │    Activity    Link and keys    Chat apps 2  ▸ Work 2
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │
+ Programs              │    ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Schedules             │    │ Work in progress                                                                      │
+ Scripts               │    │ The tasks the Bot opened, what each is doing, and what it waits on.                   │
+ Logs                  │    └───────────────────────────────────────────────────────────────────────────────────────┘
+ Tunnels               │
+ Notes                 │
+ AI                    │    / Search tasks                                                         2 tasks  ↻ Refresh
+ VMs                   │
+                       │      Task                                  Computer     State
+Account                │    ›   Read deploy log                     atlas        ● Working                [Message] ⋯
+ Plans & Billing       │      ◷ Draft reply to a reader   Waiting   atlas        ● Waiting for…           [Message] ⋯
+ Referrals             │
+ Keys and tokens       │
+ API                   │    Show finished tasks (1)
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

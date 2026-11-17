@@ -1,0 +1,93 @@
+/* DatePickButton: the calendar inside its popover. A month header (‹ title ›) over a 7-column grid; the
+   chosen day is ink on the page colour, today has a ring, a disabled day is faint, a day of the
+   neighbouring month is not shown. Kit tokens only. */
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.title {
+  margin: 0;
+  color: var(--hx-ink);
+  font: var(--t-section);
+}
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.weekday {
+  padding-block-end: var(--sp-1);
+  color: var(--hx-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  text-align: center;
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--ctl-h-sm);
+  min-width: var(--touch-min); /* 44 px square on a touch screen (the lg popover has room for 7 of them), 0 otherwise */
+  min-height: var(--touch-min);
+  border: var(--bw) solid transparent;
+  border-radius: var(--r-1);
+  color: var(--hx-ink);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  outline: none;
+}
+
+.cell[data-hovered] {
+  background: var(--pop-hover);
+}
+
+.cell[data-focus-visible] {
+  box-shadow: var(--focus-ring);
+}
+
+.today {
+  border-color: var(--hx-line-strong);
+  font-weight: var(--fw-semibold);
+}
+
+.cell[data-selected] {
+  border-color: var(--hx-ink);
+  background: var(--hx-ink);
+  color: var(--hx-on-ink);
+}
+
+.cell[data-outside-month] {
+  visibility: hidden;
+}
+
+.cell[data-disabled],
+.cell[data-unavailable] {
+  color: var(--hx-faint);
+  cursor: default;
+}
+
+.cell[data-disabled][data-hovered] {
+  background: transparent;
+}
+
+/* Forced colours do not paint box-shadow, so the focus ring above gets a solid system outline (the same rule as
+   Button's; measured by kit/focus.forced.spec.ts). */
+@media (forced-colors: active) {
+  .cell[data-focus-visible] {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+}

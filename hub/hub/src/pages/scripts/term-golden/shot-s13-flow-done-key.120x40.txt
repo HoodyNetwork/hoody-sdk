@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  New script
+ Computers             │
+ Files                 │  Step 4 of 4 · Make it live  ██████████
+ Bots                  │   ✓ What it does  ✓ Where it answers  ✓ Check it ▸4 Make it live
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Vault                 │  │ It's live                                                                                 │
+                       │  │ ┌───────────────────────────────────────────────────────────────────────────────────────┐ │
+On atlas ▾             │  │ │ WHAT IS LIVE                                                                          │ │
+ Programs              │  │ │ Answering at /note on atlas.                                                          │ │
+ Schedules             │  │ └───────────────────────────────────────────────────────────────────────────────────────┘ │
+▌Scripts               │  │ People and programs call your script at this address.                                     │
+ Logs                  │  │ https://6a00…0001-c0a7…00a1-exec-1.n12.fixture.invalid/note ⧉ copy Open                   │
+ Tunnels               │  │ The exec-1 part is this computer's script program, where the script runs.                 │
+ Notes                 │  │                                                                                           │
+ AI                    │  │ Save your key now                                                                         │
+ VMs                   │  │ This key is shown once. Store it somewhere safe before you close this.                    │
+                       │  │                                                                                           │
+Account                │  │ Key                                                                                       │
+ Plans & Billing       │  │ │ •••••••••••••••••••••••••••••••• (Hidden until you press Show) [Show] [Copy]            │
+ Referrals             │  │ [Try it] [Open the script] [Make another]                                                 │
+ Keys and tokens       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ API                   │
+ Notifications      26 │  Questions
+ Account               │  ▸ What is a script?
+                       │  ▸ Do I need to know how to code?
+ + Rent servers        │  ▸ What can a script do?
+ Guide                 │  ▸ How does the assistant write a script?
+ Support               │  ▸ How do I make a script run on a schedule?
+                       │  ▸ What is a public link, and how is its name chosen?
+                       │  ▸ How does a script key work?
+                       │  ▸ Where do I keep secrets such as passwords or API keys?
+                       │  ▸ What are magic comments, and what do the settings do?
+                       │  ▸ Can I undo a change or bring back a deleted script?
+                       │
+                       │
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │                                                                                          Done
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,1003 @@
+/*
+ * Hub v3 design tokens. Every colour, spacing step, type size, radius, shadow, z-layer, motion
+ * value and layout size of the Hub lives here and nowhere else: kit and page stylesheets read
+ * var(--…) only (stylelint, hub/stylelint.config.mjs). Colours keep the --hx-* names;
+ * every scale is defined below.
+ *
+ * Theme: data-hx-theme="light" | "dark" on <html> (fouc.js writes it from the device preference);
+ * accent set: data-hx-hl (mint, sky, coral, lilac, chalk; yellow sets no attribute).
+ * Density: data-density="compact" on any element tightens rows and controls below it.
+ */
+
+:root {
+  /* ── Surfaces ─────────────────────────────────────────────── */
+
+  /* Hoody greys, designer values: a light grey ground, warm grey panels,
+     white only for what floats. */
+  --hx-bg: #f0f0f0;
+  --hx-card: #edeaea;
+  --hx-raised: #fff;
+  --hx-fill: #f2f2f2;
+  --hx-sidebar: #e8e8e8;
+  --hx-hover: rgb(17 17 17 / 4%);
+  --hx-press: rgb(17 17 17 / 8%);
+  --hx-scrim: rgb(17 17 17 / 28%);
+  --hx-selected: rgb(17 17 17 / 6%);
+  --hx-selected-fill: var(--hx-ink); /* a current choice drawn as a filled shape (MenuThumb), ink like a ticked box: never blue */
+  --hx-selected-bar: var(--hx-blue); /* the current row/item is marked in the palette blue (4.9:1 over --hx-selected on a card) */
+  --skeleton-hi: rgb(255 255 255 / 70%);
+
+  /* ── Text ─────────────────────────────────────────────────── */
+
+  /* Readability rule: a designer colour is used as given for fills, tints, dots, borders and
+     swatches (--hx-*-fill); a colour used as text gets a darker shade of the same hue (--hx-*-text) at 4.5:1 or more
+     on bg, card, sec-bg, raised, fill and input, and under the hover and selected overlays. The role names
+     (--hx-muted, --hx-danger, --hx-warn) stay the text shade, because nearly every rule reading them is text. */
+  --hx-ink: #272727;
+  --hx-muted-fill: #848484; /* designer muted: 3.3:1 on bg, so never text */
+  --hx-muted-text: #606060; /* 4.6:1 at worst (selected row over card), 5.5:1 on bg */
+  --hx-muted: var(--hx-muted-text);
+  --hx-faint: #555; /* 6.5:1 on --hx-bg; 5.9:1 on --hx-sec-bg */
+  --hx-heading: #616161; /* the designer's heading grey #6c6c6c is 4.4:1 on card; this shade of it reaches 4.5:1 */
+  --hx-on-ink: #fff;
+
+  /* ── Lines ────────────────────────────────────────────────── */
+
+  /* Designer values: header, nav and menu hairlines; card and surface frames; field borders. Field borders
+     come out about #a9a9a9 over the input fill, 2.1:1 on --hx-bg (below 3:1 for an input edge). */
+  --hx-line: #00000017;
+  --hx-line-2: #1313130d;
+
+  /* The scrollbar thumb: about 2.1:1 on every panel, seen at a glance and still quiet. */
+  --hx-scroll-thumb: #0000004d;
+
+  /* Side nav: a solid line between its blocks, a fainter dashed one between its items. */
+  --hx-nav-line: #d2d2d2;
+  --hx-nav-line-item: #dedede;
+
+  /* Section menus ("Dashed rail, ink bar"): SettingsPage's rail and the Guide's index (kit
+     SectionMenu). Light, quoted: a #9c9c9c dashed rail, #606060 text, #272727 on hover, a #1c1c1c bar and text on the
+     current one. */
+  --hx-section-rail: var(--hx-panel-line);
+
+  /* Rail cards ("Server cards, Left rail"): the kit DataTable's rail card. Light, quoted: an
+     rgba(0,0,0,.045) tint and a 1 px #a8a8a8 dashed divider. */
+  --hx-card-rail: rgb(0 0 0 / 4.5%);
+  --hx-card-rail-line: #a8a8a8;
+  --hx-section-text: var(--hx-muted-text);
+  --hx-section-text-hover: var(--hx-ink);
+  --hx-section-bar: var(--hx-do-text);
+
+  --hx-line-strong: #6b6b6b8f;
+  --hx-rule: #c4c4c4; /* the one line that closes a page header, and the folder tabs' line */
+
+  /* "Slanted plates": Home's Ask ideas are square grey plates with a 9 px cut at the bottom end. */
+  --hx-bubble-plate: #d6d6d6;
+
+  /* The dashed line and the tile fill of Home's level cards. */
+  --hx-dash-line: #b3b3b3;
+  --hx-tile-fill: rgb(255 255 255 / 40%);
+  --hx-bubble-cut: 9px;
+  --hx-frame: #101010;
+
+  /* ── Hoody blue: links, current, selected, focus ─────────── */
+  --hx-blue: #0741ff;
+  --hx-blue-ink: #fff;
+  --hx-blue-text: #0741ff;
+  --hx-blue-hover: #0535cc; /* darker than the rest colour: 6.5:1 on --hx-bg, 7:1 on --hx-card */
+  --hx-blue-shade: #0035e6;
+  --hx-blue-t2: rgb(7 65 255 / 16%);
+  --hx-blue-2: #2f5fff; /* the blue chip button's chip; dark swaps the two blues */
+
+  /* ── Accent (the yellow role; swapped by data-hx-hl) ─────── */
+  --hx-acc: #ef2;
+  --hx-acc-soft-lt: #f2ff8e; /* each accent's light soft value; the yellow chip button's chip reads it in both themes */
+  --hx-acc-soft: var(--hx-acc-soft-lt);
+  --hx-acc-edge: #beca65;
+  --hx-acc-ink: #101010;
+  --hx-acc-text-on: #1e1e1e;
+  --hx-acc-press: color-mix(in srgb, var(--hx-acc) 92%, var(--hx-ink));
+
+  /* ── Buttons and inputs per theme ────────── */
+  --hx-sec-bg: #e5e5e5;
+  --hx-sec-line: var(--hx-frame);
+
+  /* Chip buttons (the primary buttons). Text on the white and grey buttons, their chips,
+     the grey label and its hover, and the separator rules. */
+  --hx-btn-text: var(--hx-acc-ink);
+  --hx-grey: #e8e8e8;
+  --hx-grey-hover: #dedede;
+
+  /* "Grey plate": a text ghost action is a square --hx-grey plate with this line and hover. */
+  --hx-grey-plate-line: rgb(19 19 19 / 10%);
+  --hx-grey-plate-hover: #dcdcdc;
+  --hx-btng-chip: var(--hx-fill);
+  --hx-btn-sep: rgb(16 16 16 / 25%);
+  --hx-btn-sep-n: var(--hx-btn-sep);
+  --hx-btn-sep-blue: rgb(255 255 255 / 40%);
+
+  /* A panel's frame: a mid grey in light, a soft line in dark. */
+  --hx-panel-line: #9c9c9c;
+  --hx-input-bg: #f8f8f8;
+
+  /* The top bar ("Unified 32 px + hairline zones"): search on white, the realm / computer pickers on
+     white 35%, and a 1 px black 20% hairline between the realm zone, search and the action cluster. */
+  --hx-topbar-search-bg: #fff;
+  --hx-topbar-pick-bg: rgb(255 255 255 / 35%);
+  --hx-topbar-zone-line: rgb(0 0 0 / 20%);
+
+  /* The field family: a toolbar control (search, filter chip, Filters button, icon buttons) has the field look, the
+     designer's #f8f8f8 fill, a 1 px outline and #272727 text: the input tokens, so dark follows them. Text 14.1:1 light,
+     16.1:1 dark. The outline is 3:1 on the field's own fill: #7a7a7a is 4.0:1 here; dark sets its own
+     value, 3.07:1 at the least, on --hx-fill. */
+  --hx-field-bg: var(--hx-input-bg);
+  --hx-field-line: #7a7a7a;
+  --hx-field-ink: var(--hx-ink);
+
+  /* Three-dot (more actions) buttons: the card frame grey as the line, never black; a lighter grey
+     fill. Dark follows --hx-grey / --hx-grey-hover. */
+  --hx-more-line: var(--hx-panel-line);
+  --hx-more-bg: #efefef;
+  --hx-more-bg-hover: #e4e4e4;
+
+  /* A secondary strip (kit ButtonStrip): #f2f2f2 buttons on a #c4c4c4 line, hover #e8e8e8. */
+  --hx-strip-bg: #f2f2f2;
+  --hx-strip-line: #c4c4c4;
+  --hx-strip-hover: #e8e8e8;
+
+  /* Toggle groups (SegmentedControl): a track with a white thumb under the current option. In the field
+     family, the track is drawn in the field look, the input fill with the field line, as the search and chips
+     beside it. Dark: a sunken tray (the page ground, which is the dark field fill) with a raised thumb. */
+  --hx-tog-track: var(--hx-field-bg);
+  --hx-tog-line: var(--hx-field-line);
+  --hx-tog-thumb: #fff;
+  --hx-tog-ink: var(--hx-frame);
+
+  /* Guide Connect's ways rail and panel as one framed plate ("Light rail plate": #9c9c9c
+     frame and rail line, #e4e4e4 rail, #f8f8f8 panel, #cfcfcf row lines, #5c5c5c text, the current way #101010 with a
+     4 px accent bar), and the kit step code line as a white box with an attached #e8e8e8 copy cell. */
+  --hx-plate-line: var(--hx-panel-line);
+  --hx-plate-rail-bg: #e4e4e4;
+  --hx-plate-bg: var(--hx-input-bg);
+  --hx-plate-rule: #cfcfcf;
+  --hx-plate-text: var(--hx-dim);
+  --hx-plate-pick-text: #101010;
+  --hx-plate-pick-bar: var(--hx-acc);
+  --hx-codeline-line: var(--hx-panel-line);
+  --hx-codeline-bg: var(--hx-raised);
+  --hx-codeline-copy-bg: var(--hx-grey);
+
+  /* The Verdict `state` tone, an ink plate in a CutFrame. The tints are the
+     mockups' own; every text tint reaches 4.5:1 on the plate in light and dark (verdict-dark.tokens.test.ts). Dark keeps
+     the plate the deepest surface and draws its edge, since a dark plate on a dark drawer has no edge of its own. */
+  --hx-verdict-bg: #101010;
+  --hx-verdict-edge: var(--hx-verdict-bg);
+  --hx-verdict-ink: #fff;
+  --hx-verdict-muted: #b5b5b5; /* label and count */
+  --hx-verdict-next: #c9c9c9;
+  --hx-verdict-warn: #ff9a57;
+  --hx-verdict-danger: #ff7a66;
+  --hx-verdict-good: var(--hx-acc);
+  --hx-verdict-seg: #3c3c3c; /* a segment still to do */
+  --hx-verdict-hatch: #5a5a5a; /* optional or unknown segments */
+  --hx-dim: #5c5c5c; /* a dimmed label grey (toggle text, Computers cards); shared */
+  --hx-tog-text: var(--hx-dim);
+  --sh-tog: 0 2px 2px rgb(0 0 0 / 10%);
+  --tog-h-default: 32px; /* What a default toolbar scope (data-tb-size="default") goes back to */
+  --tog-h: var(--tog-h-default); /* An option is 32 px tall; the track adds its padding and frame (32 + 2 x 3 + 2 x 1 = 40 px, a field's height) */
+  --tog-pad: 3px;
+  --tog-gap: 7px; /* between an option's icon and its label */
+
+  --hx-on-check: var(--hx-on-ink);
+
+  /* Switches ("Square grey, yellow on"): a square grey track with a square white thumb, the yellow
+     track with a dark frame when on. The off line is the one deviation from the given #9c9c9c (2.2-2.8:1 on the Hub's
+     surfaces, 2.0:1 for the thumb's frame on the track): #7a7a7a keeps every fill and reaches 3:1 (WCAG 1.4.11) on
+     each surface and on the track, in both themes. */
+  --hx-switch-off: #dedede;
+  --hx-switch-line: #7a7a7a;
+  --hx-switch-thumb: #fff;
+  --hx-switch-on: var(--hx-acc);
+  --hx-switch-on-line: #1c1c1c;
+
+  /* Meters ("Ten segments"): ten square 8 px blocks, the empty grey and the ink; a toned meter (warn,
+     danger) lights its blocks in the switch yellow with the switch's dark edge, since the yellow alone is 1.1:1 on the
+     grey (WCAG 1.4.11 asks 3:1). The designer's #e6f200 is the switch's yellow: one kit yellow. */
+  --hx-meter-track: #dedede;
+  --hx-meter-fill: var(--hx-ink);
+  --hx-meter-tone: var(--hx-switch-on);
+  --hx-meter-edge: var(--hx-switch-on-line);
+
+  /* Folder tabs: grey 30 px tabs on the one #c4c4c4 line (--hx-rule); the chosen tab white,
+     34 px, framed and open at the bottom. Kit Tabs and SegmentedControl variant="folder". The given text #737373 is
+     3.9:1 on the grey: the text is the muted text shade. The given #e8e8e8 is 1.08:1 on the
+     #f0f0f0 page, so a grey tab barely shows. The grey is one step darker (#e0e0e0; the muted text stays 4.76:1) and
+     each grey tab is framed from the lift down in the strip's line (--hx-folder-tab-line), open at the bottom where
+     it meets the line; the chosen tab stays the white, taller one. */
+  --hx-folder-tab: #e0e0e0;
+  --hx-folder-tab-line: var(--hx-folder-line);
+  --hx-folder-line: var(--hx-rule);
+  --hx-folder-on: var(--hx-raised);
+  --hx-folder-text: var(--hx-muted-text);
+  --hx-folder-on-text: #1c1c1c;
+
+  /* Questions, "split ledger": a framed well under
+     a mono-caps band, the questions two to a row on a wide well; an open question is one card (a lighter plate and an ink
+     bar down its start) with its answer in a softer ink. Ink on the well is 11.4:1, on the plate 13.4:1; the answer ink
+     on the plate is 9.8:1. */
+  --hx-faq-well: #e6e3e3;
+  --hx-faq-border: rgb(0 0 0 / 14%);
+  --hx-faq-bar-bg: rgb(0 0 0 / 5%);
+  --hx-faq-bar-line: rgb(0 0 0 / 20%);
+  --hx-faq-hover: #f0eded;
+  --hx-faq-open-bg: #f7f5f5;
+  --hx-faq-answer: #3a3a3a;
+  --hx-faq-bar-w: 3px; /* the bar at a question's start: the accent on hover, the ink down an open card */
+
+  /* ── Status (text-safe on bg and card) ───────────────────── */
+
+  /* Ok is the designer's #006144 (text-safe, 6:1 on sec-bg) on its given tint. The designer's warning and
+     danger were inverted (warning #fe361b was the redder): danger takes #fe361b, warning the designer's orange
+     #ff7b24, each with a 12% tint and a darker text shade of its own hue. */
+  --hx-ok: #006144;
+  --hx-ok-t: #00ff7b57;
+  --hx-warn-fill: #ff7b24;
+  --hx-warn-text: #9f4500; /* 4.6:1 at worst (selected row over card), 5.5:1 on bg */
+  --hx-warn: var(--hx-warn-text);
+  --hx-warn-t: rgb(255 123 36 / 12%);
+  --hx-danger-fill: #fe361b;
+  --hx-danger-text: #b71902; /* 4.9:1 at worst, 5.8:1 on bg */
+
+  /* Notices, "Edge bars": one family, two levels, a 3 px bar at the start and a 1 px frame. Calm:
+     #ebebeb with a #9c9c9c bar; warning: the orange at 11% with a 30% frame and the orange bar. Text #3a3a3a (10:1 on
+     calm). Danger keeps the same shape in its own hue (not in the design; the Band's third tone). */
+  --hx-notice-line: rgb(19 19 19 / 10%);
+  --hx-notice-text: #3a3a3a;
+  --hx-notice-calm: #ebebeb;
+  --hx-notice-calm-bar: #9c9c9c;
+  --hx-notice-warn: rgb(255 123 36 / 11%);
+  --hx-notice-warn-line: rgb(255 123 36 / 30%);
+  --hx-danger: var(--hx-danger-text);
+  --hx-danger-t: rgb(254 54 27 / 12%);
+  --hx-on-danger: #111; /* text on the danger fill: 5.2:1 (white is 3.6:1) */
+  --hx-on-warn: #111; /* text on the warn fill (a Track warn node's number): 7.3:1, light and dark */
+
+  /* Info is neutral (blue is not a status colour; it is links and focus only). */
+  --hx-info: var(--hx-ink);
+  --hx-info-t: var(--hx-selected);
+
+  /* The one tone map of StatusPill and Tag, fill / edge / text / dot, as given.
+     Text on its own fill: ok 7.3:1, warn 5.5:1, bad 5.4:1, neutral 5.4:1. */
+  --hx-tag-ok-bg: #d6f8e2;
+  --hx-tag-ok-edge: #7fcf9f;
+  --hx-tag-ok-ink: #0b5a36;
+  --hx-tag-ok-dot: #14a35a;
+  --hx-tag-warn-bg: #ffecd6;
+  --hx-tag-warn-edge: #efad72;
+  --hx-tag-warn-ink: #9f4500;
+  --hx-tag-warn-dot: #ff7b24;
+  --hx-tag-bad-bg: #ffe0da;
+  --hx-tag-bad-edge: #ee9282;
+  --hx-tag-bad-ink: #b71902;
+  --hx-tag-bad-dot: #fe361b;
+  --hx-tag-neutral-bg: #ededed;
+  --hx-tag-neutral-edge: #c4c4c4;
+  --hx-tag-neutral-ink: #606060;
+  --hx-tag-neutral-dot: #9c9c9c;
+
+  /* ── Links: the only text blue ────────────── */
+  --hx-link: var(--hx-blue-text);
+  --hx-link-hover: var(--hx-blue-hover);
+
+  /* ── Text buttons that act, "dark do": dark, 600, a 1 px underline in the grey line ── */
+  --hx-do-text: #1c1c1c;
+  --hx-do-line: var(--hx-rule);
+
+  /* Pressed: a colour, never an opacity, and derived here once, so the theme's own values feed it: the do ink
+     a fifth of the way to the page (the old 0.8 look); the danger red a fifth of the way to the ink, which only adds
+     contrast (darker in light, lighter in dark). links.go-blue-do-dark.spec.ts holds both at 4.5:1 or more on every surface. */
+  --hx-do-pressed: color-mix(in srgb, var(--hx-do-text) 80%, var(--hx-bg));
+  --hx-do-danger-pressed: color-mix(in srgb, var(--hx-danger) 80%, var(--hx-ink));
+
+  /* ── App windows (code, terminal previews): dark in both themes ── */
+  --hx-app: #1f1f1f;
+  --hx-app-ink: #d2d2d2;
+  --hx-app-muted: #939393;
+  --hx-app-hover: rgb(255 255 255 / 10%);
+
+  /* ── Realm palette (designer values; dots and swatches, never text) ── */
+  --hx-r-red: #ff242b;
+  --hx-r-orange: #ff7b24;
+  --hx-r-yellow: #ffb41e;
+  --hx-r-green: #61ff81;
+  --hx-r-teal: #26ffea;
+  --hx-r-blue: #3092ff;
+  --hx-r-purple: #9e2dff;
+  --hx-r-pink: #c2298a;
+
+  /* A computer's colour mark, Board stripe and page band: the 1 px ring that keeps white or near-black colours
+     from vanishing on the surface (decoration, not a 3:1 boundary). */
+  --hx-swatch-ring: rgb(0 0 0 / 22%);
+
+  /* Code text (CodeBlock shell and syntax colours, kit/data/Ids.module.css): the realm palette's earlier shades, kept
+     because the designer's realm brights are fills; 4.5:1 or more on --hx-fill in both themes. */
+  --hx-code-blue: #0a5fbd;
+  --hx-code-purple: #8145b5;
+
+  /* ── Focus ────────────────────────────────────────────────── */
+  --hx-focus: var(--hx-blue);
+
+  /* --focus-ring resolves --ring-gap here, on :root, and passes the result down: a surface that sets its own
+     --ring-gap (the grey under its controls) declares --focus-ring again in the same rule, with the same shape, or its
+     gap never reaches a ring (app/conformance.ringgap.test.ts). */
+  --ring-gap: var(--hx-card);
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus);
+  --focus-ring-inset: inset 0 0 0 2px var(--hx-focus);
+
+  /* ── Type ─────────────────────────────────────────────────── */
+  --font-head: "Oxanium", system-ui, sans-serif;
+  --font-text: "Geist", system-ui, -apple-system, "Segoe UI", roboto, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", menlo, consolas, monospace;
+  --fs-xs: 11px;
+  --fs-tag: 10.5px; /* A StatusPill's mono capitals only, the designer's pick (below the 11 px floor) */
+  --fs-sm: 12px;
+  --fs-md: 13px; /* every button's text */
+  --fs-bubble: 14px; /* The text of a chat bubble (Button variant bubble), one step above a button's */
+  --fs-faq: 13.5px; /* A question in the page's Questions well, the designer's pick */
+  --fs-lg: 15px;
+  --fs-xl: 18px;
+  --fs-2xl: 22px;
+  --lh-tight: 1.2;
+  --lh-snug: 1.35;
+  --lh-normal: 1.5;
+
+  /* Px line boxes of the type roles below; a part that sets its own font size takes the box of its role. */
+  --lh-box-body: 20px; /* --t-body, --t-body-strong: 13px text */
+  --lh-box-small: 16px; /* --t-small, --t-mono: 12px text */
+  --lh-box-heading: 24px; /* --t-heading: 18px text */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --tracking-caps: 0.03em;
+  --tracking-head: -0.02em;
+  --tracking-title: -0.01em; /* a dialog or drawer title */
+  --tracking-label: 0.06em; /* a mono uppercase control label (segmented control) */
+  --tracking-code: 0.04em; /* the country-code chip an IP shows when it has no flag emoji */
+  --tracking-tag: 0.04em; /* A StatusPill's mono capitals */
+  --tracking-faq: 0.16em; /* The Questions band's mono capitals */
+  --case-caps: uppercase;
+
+  /* Type roles as font shorthands. */
+  --t-display: 600 32px/36px var(--font-head);
+  --t-title: 600 26px/32px var(--font-head); /* 22 to 26 */
+  --t-heading: 600 18px/var(--lh-box-heading) var(--font-head);
+  --t-section: 600 16px/22px var(--font-head); /* 15 to 16 */
+  --t-group: 600 14px/20px var(--font-text); /* a table's group heading, a step above its rows, normal case */
+  --t-body: 400 13px/var(--lh-box-body) var(--font-text);
+  --t-body-strong: 500 13px/var(--lh-box-body) var(--font-text);
+  --t-small: 400 12px/var(--lh-box-small) var(--font-text);
+  --t-label: 400 11px/14px var(--font-mono);
+  --t-mono: 400 12px/var(--lh-box-small) var(--font-mono);
+  --t-stat: 700 20px/24px var(--font-head);
+  --t-readout: 700 28px/34px var(--font-head); /* A StatStrip number, the designer's 28/34 (Stacked readout) */
+  --t-price: 300 40px/44px var(--font-head); /* PlanCard's price only; the card adds tabular-nums */
+
+  /* ── Spacing (4 px base) ──────────────────────────────────── */
+  --sp-0: 0;
+  --sp-px: 1px;
+  --sp-half: 2px;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+  --sp-9: 48px;
+  --sp-10: 64px;
+
+  /* A colour dot (or flag, or icon) and the text beside it, on tags, status pills, stat labels and the context line
+     (one gap for all of them). */
+  --gap-dot: 6px;
+  --hx-tag-pad: 7px; /* The sides of a StatusPill or Tag */
+
+  /* Surface spacing. A surface pads its content the same on every side: --pad-surface
+     for popovers, menus' sheets, pickers and phones, --pad-surface-lg for dialogs and --pad-drawer for drawers (the
+     right-hand panels, roomier) on wider screens. A list
+     row pads its text by --pad-row-y/--pad-row-x inside its highlight; a section label leaves --gap-section above it
+     (none for the first). Inside a surface a search field fills the width. */
+  --pad-surface: var(--sp-4);
+  --pad-surface-lg: var(--sp-6);
+  --pad-drawer: var(--sp-7);
+  --pad-menu: var(--sp-1);
+  --pad-row-y: var(--sp-2);
+  --pad-row-x: var(--sp-2);
+  --gap-section: var(--sp-4);
+
+  /* Spacing roles. --gap-section above is the label gap inside one surface; --gap-between-sections is the gap
+     between whole Sections, and --gap-category the one between groups of Sections. Inside a Section, --gap-block separates blocks and
+     --gap-line a title from its meta lines. These are the desktop values; the kit Section sets the phone ones itself inside
+     @container content (width < 600px), because :root cannot answer a container query. A page sets none of them: vertical rhythm
+     is the kit's (layout.cssGap). */
+  --gap-category: var(--sp-7);
+  --gap-between-sections: var(--sp-6);
+  --gap-block: var(--sp-3);
+  --gap-line: var(--sp-1);
+
+  /* The one phone breakpoint. CSS cannot read a custom property inside @media or @container, so those conditions write the number
+     (`width < 600px`, `width >= 600px`) and std.breakpoint holds it equal to this token. */
+  --bp-phone: 600px;
+  --search-max-w: 360px;
+  --search-grow: 0; /* 1 inside a surface, with --search-max-w: none */
+  --surface-inset: var(--pad-surface); /* set by each surface to the inset it pads with */
+
+  /* Cards: a card (Panel, Widget, a settings section, a card-table row, a stat)
+     pads by --pad-card (--pad-card-y above a head) and has two greys: its head band on --card-head over a
+     --card-head-line rule, its body on --card-body. Palette greys only; no new shade. */
+  --pad-card: 20px;
+  --card-cut: 16px; /* Every outermost card's slanted bottom-right corner (CardEdge.tsx CARD_CUT) */
+  --pad-card-y: var(--sp-4);
+
+  /* Widget `level`: the head, and the body as whole rows (a coarse pointer takes fewer, taller rows: the row's 1 px
+     line sits under a 44 px target). */
+  --card-level-head: 69px;
+  --card-level-row: max(36px, calc(var(--touch-min) + var(--bw)));
+  --card-level-rows: 9;
+
+  /* The ways rail of a plate and its rows; a step code line and its attached copy cell. */
+  --plate-rail-w: 176px;
+  --plate-row-h: 42px;
+  --plate-pick-bar: 4px;
+  --plate-pad-top: 14px;
+  --plate-pad-bottom: 18px;
+  --codeline-h: 34px;
+  --codeline-copy-w: 36px;
+
+  /* A Track step's node, the done tick or the step's number, and the spine's column. */
+  --track-node: 28px;
+  --card-body: var(--hx-input-bg);
+  --card-head: var(--hx-card);
+  --card-head-line: var(--hx-line);
+
+  /* The Computers cards: head and footer, body, a failed card's head; the size tiles' icons. The
+     state tag is the kit StatusPill (its tone map, --hx-tag-*). Dim labels use --hx-dim. */
+  --hx-cc-head: #e9e9e9;
+  --hx-cc-body: #f3f3f3;
+  --hx-cc-head-bad: #f0e0dc;
+  --hx-cc-icon: #a3a3a3;
+
+  /* Popovers: every menu, popover, picker and switcher list draws one frame: a --pop-line border on
+     --pop-bg with --sh-pop; a focused item fills --pop-hover. */
+  --pop-line: var(--hx-panel-line);
+  --pop-bg: var(--hx-raised);
+  --pop-hover: var(--hx-selected);
+
+  /* Overlay bars and bands: a bar is the head/foot of a panel (Drawer, Dialog footer, Sheet, tray head) and always carries a
+     --pop-sep rule on its body side; a band sits inside a list (group notes, search bands, titled heads). Both are opaque.
+     --pop-off is a text role only (an unavailable label, picture or box, under a disabled selector), never a surface,
+     and never the only carrier of a reason. */
+  --bar-bg: var(--hx-fill);
+  --pop-band: var(--hx-fill);
+  --pop-sep: var(--hx-line);
+  --pop-off: var(--hx-muted-fill);
+  --pop-row-h: 32px;
+  --pop-row-x: 12px;
+  --pop-row-gap: 2px;
+
+  /* Table column dividers: faint, between data columns only. */
+  --col-line: var(--hx-line-2);
+
+  /* ── Radius and borders (the brand is square: no rounding on controls, panels or tables) ── */
+  --r-0: 0;
+  --r-1: 0;
+  --r-2: 0;
+  --r-pill: 999px;
+  --r-round: 50%;
+  --r-swatch: 3px; /* a computer's colour mark: a rounded square, never round like a state dot */
+  --bw: 1px;
+  --bw-2: 2px;
+  --bw-notice: 3px; /* a notice's edge bar ("Edge bars") */
+
+  /* ── Elevation ────────────────────────────────────────────── */
+  --sh-0: none;
+  --sh-2: 0 4px 12px rgb(16 16 16 / 10%);
+  --sh-btn: 0 3px 3px rgb(16 16 16 / 8%);
+  --sh-btn-hover: 0 4px 4px rgb(16 16 16 / 10%);
+  --btn-sh: 0 3px 3px rgb(0 0 0 / 8%); /* the chip buttons only */
+  --btn-sh-hover: 0 4px 4px rgb(0 0 0 / 10%);
+  --btn-dur: 200ms; /* 0.2s on the chip buttons; 0ms under reduced motion */
+  --sh-pop: 0 2px 6px rgb(17 17 17 / 10%), 0 12px 32px rgb(17 17 17 / 16%); /* the lift of a popover */
+  --sh-drawer: -1px 0 0 rgb(17 17 17 / 8%), -16px 0 48px rgb(17 17 17 / 14%);
+
+  /* ── Z layers ─────────────────────────────────────────────── */
+  --z-raised: 1;
+  --z-sticky: 10;
+  --z-sidebar: 20;
+  --z-topbar: 30;
+  --z-dock: 40;
+  --z-drawer: 50;
+  --z-modal: 60;
+  --z-popover: 70;
+  --z-toast: 80;
+  --z-tooltip: 90;
+  --z-devbar: 100;
+
+  /* ── Motion ───────────────────────────────────────────────── */
+  --dur-0: 120ms;
+  --dur-1: 80ms;
+  --dur-2: 160ms;
+  --dur-3: 240ms;
+  --dur-4: 1200ms;
+
+  /* Motion roles: what CSS reads, chosen by meaning. press: a control's own feedback to a
+     press, focus or selection; hover: a pointer-tied reveal or tint; enter: something opening or appearing; exit:
+     something closing or leaving, shorter than its enter; loop: a spinner or a long ambient mark; pulse: the beat of a
+     pending mark (busy dots, the spinner's dots); blink: a text caret's on/off cycle. Reduced motion and
+     performance mode zero them by name too (perf.conformance checks every --dur-* there). The numbered steps above
+     are primitives only: no CSS outside this file reads them. */
+  --dur-press: var(--dur-1);
+  --dur-hover: var(--dur-0);
+  --dur-enter: var(--dur-2);
+  --dur-exit: var(--dur-0);
+  --dur-loop: var(--dur-4);
+  --dur-pulse: 900ms;
+  --dur-blink: 1000ms;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Layout ───────────────────────────────────────────────── */
+  --sidebar-w: 240px;
+  --sidebar-w-collapsed: 56px;
+  --topbar-h: 48px;
+  --topbar-zone-pad: 14px; /* A top-bar zone's room on its hairline side */
+  --topbar-zone-inset: 4px; /* A zone hairline stops this far from the control's top and bottom */
+  --sidebar-w-drawer: 280px;
+  --sidebar-item-h: 32px;
+  --pane-list-min: 280px;
+  --rail-pad: var(--sp-3); /* a left rail (L-rail): the inset of everything from its edge, both sides */
+  --rail-lead: var(--sp-4); /* the lead column: chevron, state mark, nav icon, notice icon, foot icon */
+  --rail-gap: var(--sp-2); /* lead column to text; text edge = pad + lead + gap */
+  --detail-min: 560px;
+  --detail-head-h: 64px;
+
+  /* Folder tabs: the strip is 34 px; a grey tab is drawn 4 px lower (30 px) and the chosen tab
+     the strip's full height; 3 px between tabs, 14 px inside them. 44 px on touch and below 600 px (rules below): grey
+     tabs drawn 40, the chosen 44. Every tab's box is the strip's height, so each is a full-height target. */
+  --tabs-h: 34px;
+  --section-row-h: 34px; /* A section-menu row (kit SectionMenu takes max(this, --touch-min)) */
+  --section-bar-w: 3px; /* The current section's ink bar, over the 1 px rail */
+  --tabs-lift: 4px;
+  --tabs-gap: 3px;
+  --tabs-pad: 14px;
+  --stat-h: 56px;
+  --stat-pad-y: 14px; /* A StatStrip cell's top and bottom padding (Stacked readout) */
+  --rail-w: 280px;
+  --summary-w: 300px;
+  --section-rail-w: 208px; /* 208 keeps the 176 px label budget it had before the rail, bar and 16 px start padding (178) */
+  --setting-label-w: 220px;
+  --setting-ctl-max: 480px;
+  --setting-value-w: 240px; /* SettingGroup value track */
+  --setting-field-w: 360px; /* SettingGroup field track */
+
+  /* Field width scale: TextField, SearchField and Select `width`. sm is a row field's usual 240 px, md the setting field's 360 px. */
+  --field-w-xs: 8rem;
+  --field-w-sm: 15rem;
+  --field-w-md: 22.5rem;
+  --field-w-lg: 30rem;
+  --wizard-body-max: 640px;
+  --stepper-w: 220px;
+  --drawer-sm: 480px;
+  --drawer-md: 640px;
+  --drawer-lg: 880px;
+  --drawer-head-h: 56px;
+  --drawer-foot-h: 64px;
+  --savebar-h: 56px;
+  --wizard-foot-h: 64px;
+  --dialog-w: 480px;
+  --dialog-w-lg: 560px;
+  --dialog-w-xl: 800px;
+  --popover-w: 320px;
+  --popover-w-sm: 280px;
+  --popover-w-lg: 360px;
+  --picker-w: 440px;
+  --picker-w-wide: 640px; /* a picker whose one-line rows name the place and realm beside the name (ComputerPicker) */
+  --bell-w: 400px;
+  --toast-w: 360px;
+  --bottom-nav-h: 56px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --fab-h: 56px;
+  --pad-page: 24px;
+  --content-max: 1600px;
+  --measure: 72ch;
+  --form-max: 720px;
+
+  /* From the designer: a button and a text field are 40 px, a compact control 32 px. */
+  --ctl-h: 40px;
+  --ctl-h-sm: 32px;
+  --ctl-h-compact: 32px; /* The compact control family (the top bar; Files), whatever the density; a consumer takes max(this, --touch-min), so a coarse pointer keeps 44 */
+
+  /* The Board tile head: it holds small controls at their own size, so it is the small
+     control plus its line. --strip-btn is a strip icon button's drawn width, one length (Board Strip's fit
+     parseFloat()s it: keep it a single var). The Board sets its own 44 on a coarse pointer (board.module.css .coarse). */
+  --tile-head-h: calc(var(--ctl-h-sm) + var(--bw));
+  --strip-btn: var(--ctl-h-sm);
+
+  /* How far an xs control's press reaches out of its drawn box on each side: on a coarse pointer (44 - 24) / 2
+     plus the border, 11 px; with a mouse 0. Button's xs ::after reads it; a part that pins an xs at a screen edge keeps
+     it at least this far in, so the whole press is on the screen (the shell's focus-mode restore). */
+  --xs-press-out: max(0px, calc((var(--touch-min) - var(--ctl-h-xs)) / 2 + var(--bw)));
+
+  /* Control roles: one name per control role, each an alias of the token the role reads
+     today, so the aliases move no pixel; callers move to them role by role (the 40 px compact control, the field line). An alias
+     resolves where it is declared and that value is what inherits (as --focus-ring, above): a rule that redeclares the
+     old token also redeclares its alias (the compact area below, ListDetailPage's footer; controlRoles.test.ts). */
+  --ctl-h-md: var(--ctl-h); /* Button md, IconButton md, every field box */
+  --ctl-h-xs: 24px; /* dense-row actions, opt-in size="xs": visual 24, hit >= 44 on coarse */
+  --ctl-pad-x-md: var(--sp-3);
+  --ctl-pad-x-sm: var(--sp-2);
+  --ctl-gap: var(--sp-2);
+  --ctl-gap-sm: var(--sp-1);
+  --ctl-line-field: var(--hx-field-line); /* every field box (forms/fieldBox.module.css), 3:1 on its fill */
+  --ctl-line-button: var(--hx-sec-line);
+  --ctl-line-quiet: var(--hx-rule); /* strip, folder and do underline */
+  --ctl-line-frame: var(--hx-panel-line); /* more, tray, popover frame */
+  --ctl-line-toggle: var(--hx-switch-line); /* Switch, Checkbox box and Radio dot */
+  --ctl-ink-on: var(--hx-switch-on-line); /* the near-black of an on control; the folder/do near-blacks are to fold into it later */
+  --ctl-hover: var(--hx-hover); /* a transparent control's hover */
+  --ctl-press: var(--hx-press);
+  --ctl-off-opacity: 0.5; /* disabled pressables and toggles: Button, Switch, Checkbox, Radio, swatches */
+  --field-pad-x: var(--sp-3);
+  --field-bg: var(--hx-field-bg);
+  --field-line-hover: var(--hx-ink);
+  --field-off-bg: var(--hx-fill);
+  --field-off-ink: var(--hx-muted);
+  --field-otp-h: 44px; /* an OTP cell */
+  --field-otp-w: 40px;
+  --field-date-w: calc(var(--sp-10) + var(--sp-10) + var(--sp-4)); /* YYYY-MM-DD in the mono face, with its calendar button */
+  --field-time-w: calc(var(--sp-10) + var(--sp-7)); /* HH:MM in the mono face */
+  --field-hex-w: 8ch; /* #RRGGBB in the mono face */
+  --field-textarea-min-h: 80px;
+
+  /* The grey fill ramp: hover is a step down it (the dark ramp's steps are a designer question). */
+  --hx-grey-1: var(--hx-input-bg);
+  --hx-grey-2: var(--hx-fill);
+  --hx-grey-3: var(--hx-grey);
+  --hx-grey-4: var(--hx-grey-hover);
+
+  /* Chip buttons: the two heights, which density never changes (compact keeps them), and the chip's width
+     measured outside the frame; the label's inline padding. */
+  --btn-h-lg: 40px;
+  --btn-h-sm: 32px;
+  --btn-chip-lg: 38px;
+  --btn-chip-sm: 32px;
+  --btn-tracking: 0.3px; /* a chip button's label (13 px mono uppercase, 0.3 px letter spacing) */
+  --btn-pad: calc(var(--sp-3) + var(--sp-half));
+  --btn-pad-sm: 10px; /* a small chip button's label padding (0 10px) */
+  --row-h: 36px;
+
+  /* A data row of a table: 44 px, a minimum, so taller rows stay taller; a coarse pointer keeps its
+     48. Only tables: --row-h itself also sizes non-table rows (code editor, address lines, page rows). */
+  --table-row-h: max(44px, var(--row-h));
+  --row-h-dense: 32px;
+  --row-h-2line: 56px;
+  --row-h-2line-dense: 52px;
+  --th-h: 32px;
+  --group-row-h: 39px; /* a group header row is 40 px as drawn, this plus its 1 px rule */
+  --group-row-h-rail: 31px; /* a rail's group header: 32 px as drawn, a coarse pointer keeps its 44 (.groupRow) */
+  --group-row-h-tiles: 32px; /* a group header above cards or tiles (no rule, not a table row): unchanged */
+  --icon-hit: 28px;
+
+  /* Touch targets: 0 here, so nothing moves with a fine pointer; 44 / 8 on a coarse one (below). */
+  --touch-min: 0px;
+  --touch-gap: 0px;
+  --hit-narrow: 44px; /* a thumb-sized target on a NARROW viewport or container (a width query), whatever the pointer; unlike --touch-min, which follows the pointer and is 0 with a mouse */
+  --kbd-h: 18px;
+  --switch-w: 34px;
+  --switch-h: 20px; /* the Switch track's height */
+  --switch-thumb: 14px; /* the Switch thumb; it travels --switch-w - --switch-h */
+  --toggle-box: 16px; /* the Checkbox box and the Radio dot */
+  --swatch: 24px; /* a ColorPicker swatch and its any-colour square */
+  --strip-more-w: 24px; /* the chevron beside a scrolling strip (Tabs, a phone section nav) */
+  --option-row-h: 36px; /* a ModelChooser option row (a coarse pointer keeps --touch-min) */
+  --icon-sm: 14px;
+  --icon-md: 16px;
+  --icon-lg: 20px;
+  --toolbar-h: 52px; /* A toolbar row is at least 52 px, its 40 px controls with 6 px above and below */
+  --toolbar-pad-y: 6px;
+  --tb-ctl-h-default: 40px; /* What a default toolbar scope (data-tb-size="default") goes back to; 44 on a coarse pointer (below) */
+  --tb-ctl-h: var(--tb-ctl-h-default); /* A toolbar control, whatever the density (compact keeps 40) */
+  --toolbar-search-min: 200px; /* the least a table toolbar's search keeps: about 16 characters past its icons */
+  --toolbar-search-min-tight: 144px; /* only at the toolbar's tightest step, on the narrowest phones */
+
+  color-scheme: light;
+}
+
+:root[data-hx-theme="dark"] {
+  --hx-bg: #111112;
+  --hx-card: #18181a;
+  --hx-raised: #202023;
+  --hx-fill: #232326;
+  --hx-sidebar: #0b0b0c;
+  --hx-hover: rgb(255 255 255 / 4%);
+  --hx-press: rgb(255 255 255 / 8%);
+  --hx-scrim: rgb(0 0 0 / 56%);
+  --hx-selected: rgb(255 255 255 / 7%);
+  --hx-selected-bar: var(--hx-blue-text); /* the palette's lighter dark-theme blue is 6.3:1 over --hx-selected on a card (#2f5fff would be 2.9:1) */
+  --skeleton-hi: rgb(255 255 255 / 6%);
+  --hx-ink: #ededed;
+  --hx-muted-fill: #848484; /* 5:1 on the dark bg */
+  --hx-muted-text: #9d9d9d; /* 4.69:1 at worst (a selected row over --hx-fill); pressed segments switch to ink */
+  --hx-faint: #939399; /* 4.8:1 on a selected row (--hx-selected over --hx-card), in dark */
+  --hx-heading: #9d9d9d;
+  --hx-on-ink: #111112;
+  --hx-line: rgb(255 255 255 / 7%);
+  --hx-line-2: rgb(255 255 255 / 12%);
+  --hx-scroll-thumb: rgb(255 255 255 / 28%); /* about 2.5:1 on every dark panel */
+  --hx-nav-line: var(--hx-line-2);
+  --hx-nav-line-item: var(--hx-line);
+  --hx-section-rail: rgb(255 255 255 / 30%); /* Dark (derived): --hx-panel-line is a faint line here, so the rail takes a mid grey of its own */
+  --hx-card-rail: rgb(255 255 255 / 4.5%); /* Dark (derived): the same tint, lightening the dark card */
+  --hx-card-rail-line: var(--hx-section-rail); /* Dark (derived): the section menu's dashed rail grey */
+  --hx-line-strong: rgb(255 255 255 / 24%);
+  --hx-field-line: rgb(255 255 255 / 39%); /* over the field fill it reads #6e6e6e, at least 3:1 beside every surface a field sits on (3.69 on --hx-input-bg, 3.85 --hx-sidebar, 3.47 --hx-card, 3.18 --hx-raised, 3.07 --hx-fill); the strong line's 24% is 2.14:1 */
+  --hx-rule: rgb(255 255 255 / 24%); /* as --hx-line-strong: #c4c4c4 has no dark value in the palette */
+  --hx-bubble-plate: var(--hx-fill); /* Dark (derived): the raised step off the dark card; ink is 14:1 on it */
+  --hx-dash-line: var(--hx-line-strong); /* Dark (derived): #b3b3b3 has no dark value in the palette */
+  --hx-tile-fill: var(--hx-hover); /* Dark (derived): white 40% would glare; the same step --hx-topbar-pick-bg takes */
+  --hx-frame: #6e6e6e;
+  --hx-blue: #2f5fff;
+  --hx-blue-text: #8da6ff;
+  --hx-blue-hover: #a9bcff;
+  --hx-blue-shade: #2450e8; /* the designer's #0035e6 is a light-theme value; dark keeps its brighter shade */
+  --hx-blue-t2: rgb(61 107 255 / 26%);
+  --hx-blue-2: #0741ff;
+  --hx-acc-soft: #2a2d10;
+  --hx-sec-bg: var(--hx-raised);
+  --hx-sec-line: var(--hx-line-2);
+  --hx-btn-text: var(--hx-ink);
+  --hx-grey: var(--hx-fill);
+  --hx-grey-hover: var(--hx-raised);
+  --hx-grey-plate-line: rgb(255 255 255 / 10%);
+  --hx-grey-plate-hover: var(--hx-raised);
+  --hx-btng-chip: var(--hx-raised);
+  --hx-btn-sep-n: var(--hx-line-strong);
+  --hx-panel-line: var(--hx-line-2);
+  --hx-more-bg: var(--hx-fill);
+  --hx-more-bg-hover: var(--hx-raised);
+
+  /* Derived from the three-dot pair: the strip is the three-dot fill with the strong line. */
+  --hx-strip-bg: var(--hx-more-bg);
+  --hx-strip-line: var(--hx-line-strong);
+  --hx-strip-hover: var(--hx-more-bg-hover);
+  --hx-tog-track: var(--hx-field-bg);
+  --hx-tog-line: var(--hx-field-line);
+  --hx-tog-thumb: var(--hx-fill);
+  --hx-tog-ink: var(--hx-ink);
+  --hx-dim: var(--hx-muted-text);
+
+  /* The rail plate, dark (derived): the rail a step above the panel (--hx-fill over --hx-bg), the row lines the faint line,
+     the current way the ink; the frame, the code line and its copy cell follow their light tokens' dark pairs. */
+  --hx-plate-rail-bg: var(--hx-fill);
+  --hx-plate-rule: var(--hx-line);
+  --hx-verdict-bg: #0b0b0c; /* the deepest surface; text tints 7.4:1 or more */
+  --hx-verdict-edge: rgb(255 255 255 / 50%); /* drawn over the plate (#858586), 4.25:1 or more beside every dark ground */
+  --hx-verdict-ink: var(--hx-ink);
+  --hx-plate-pick-text: var(--hx-ink);
+  --hx-tog-text: var(--hx-dim);
+  --hx-input-bg: var(--hx-bg);
+
+  /* The top bar, dark (derived): search on the input fill, the pickers on the hover tint, the hairline white 20%. */
+  --hx-topbar-search-bg: var(--hx-input-bg);
+  --hx-topbar-pick-bg: var(--hx-hover);
+  --hx-topbar-zone-line: rgb(255 255 255 / 20%);
+  --hx-switch-off: var(--hx-fill); /* dark (derived): the raised grey's step; line, thumb and the yellow stay */
+  --hx-meter-track: #3a3a3d; /* dark (derived): the light grey's step off the raised surface; ink, yellow and edge follow */
+
+  /* Folder tabs, dark (derived): the grey tabs are the fill step off the page; the chosen tab is the page itself, so it
+     opens into it; the muted text is 5.7:1 on the fill. A grey tab's frame is its own fill: dark draws no frame. */
+  --hx-folder-tab: var(--hx-fill);
+  --hx-folder-tab-line: var(--hx-folder-tab);
+  --hx-folder-on: var(--hx-bg);
+  --hx-folder-on-text: var(--hx-ink);
+
+  /* Questions ledger, dark: the well is its own step above the page ground (the page ground left it invisible), in
+     a 1 px frame; the band rule is the dark line step. Ink on the well is 15.2:1, on the open plate 13.9:1; the answer
+     ink on the plate is 9.4:1. */
+  --hx-faq-well: #161618;
+  --hx-faq-border: rgb(255 255 255 / 14%);
+  --hx-faq-bar-bg: rgb(255 255 255 / 6%);
+  --hx-faq-bar-line: var(--hx-rule);
+  --hx-faq-hover: #202024;
+  --hx-faq-open-bg: #1e1e22;
+  --hx-faq-answer: #c2c2c6;
+
+  /* "Dark do", dark (derived): the source's #1c1c1c is the light ink step; dark takes the ink. The line is --hx-rule's. */
+  --hx-do-text: var(--hx-ink);
+
+  /* Dark (derived): the designer's bright fills read well on dark as given; text shades are lighter steps
+     of the same hues, at 4.7:1 or more on every dark ground. */
+  --hx-ok: #6bb998;
+  --hx-ok-t: rgb(0 255 123 / 16%);
+  --hx-warn-fill: #ff7b24;
+  --hx-warn-text: #ff7b24; /* 5:1 at worst as it is */
+  --hx-warn-t: rgb(255 123 36 / 14%);
+  --hx-danger-fill: #fe361b;
+  --hx-danger-text: #fe7059;
+  --hx-danger-t: rgb(254 54 27 / 16%);
+
+  /* Notices, dark (derived): calm one step above the fill with a mid-grey bar, the warning tint as --hx-warn-t,
+     the calm frame as --hx-line-2, the warning frame kept at the light 30% orange, the text the ink. */
+  --hx-notice-line: rgb(255 255 255 / 12%);
+  --hx-notice-text: var(--hx-ink);
+  --hx-notice-calm: #2b2b2f;
+  --hx-notice-calm-bar: #7a7a7a;
+  --hx-notice-warn: rgb(255 123 36 / 14%);
+
+  /* Tags, dark (derived): dark grounds of the same hues, the designer's dots, lighter text steps. Text on
+     its own fill: ok 9.2:1, warn 8.3:1, bad 7.6:1, neutral 7.2:1. */
+  --hx-tag-ok-bg: #12301f;
+  --hx-tag-ok-edge: #2e7a50;
+  --hx-tag-ok-ink: #8fe0b0;
+  --hx-tag-warn-bg: #3a2312;
+  --hx-tag-warn-edge: #9a5a2a;
+  --hx-tag-warn-ink: #ffb27a;
+  --hx-tag-bad-bg: #3d1913;
+  --hx-tag-bad-edge: #a8473a;
+  --hx-tag-bad-ink: #ff9a88;
+  --hx-tag-neutral-bg: #2a2a2d;
+  --hx-tag-neutral-edge: #4a4a4e;
+  --hx-tag-neutral-ink: #b8b8b8;
+  --hx-app: #0f0f0f;
+  --hx-r-red: #ff242b;
+  --hx-r-orange: #ff7b24;
+  --hx-r-yellow: #ffb41e;
+  --hx-r-green: #61ff81;
+  --hx-r-teal: #26ffea;
+  --hx-r-blue: #3092ff;
+  --hx-r-purple: #9e2dff;
+  --hx-r-pink: #f062a0;
+  --hx-swatch-ring: rgb(255 255 255 / 28%);
+  --hx-code-blue: #5eb0ef;
+  --hx-code-purple: #b388eb;
+  --hx-focus: #8da6ff;
+  --sh-2: 0 4px 12px rgb(0 0 0 / 45%);
+  --sh-btn: 0 3px 3px rgb(0 0 0 / 30%);
+  --sh-btn-hover: 0 4px 4px rgb(0 0 0 / 40%);
+  --btn-sh: 0 3px 3px rgb(0 0 0 / 30%); /* dark keeps its own, stronger button shadows */
+  --btn-sh-hover: 0 4px 4px rgb(0 0 0 / 40%);
+  --sh-pop: 0 2px 6px rgb(0 0 0 / 40%), 0 12px 32px rgb(0 0 0 / 60%); /* the lift of a popover */
+  --sh-drawer: -16px 0 48px rgb(0 0 0 / 60%);
+
+  /* Cards in dark: the body on the card grey, the head band one step up. Columns take the fainter dark line
+     (--hx-line-2 is the stronger one here). */
+  --card-body: var(--hx-card);
+  --card-head: var(--hx-raised);
+  --hx-cc-head: var(--hx-raised);
+  --hx-cc-body: var(--hx-card);
+  --hx-cc-head-bad: #3a1f1b;
+  --hx-cc-icon: #6b6b70;
+  --col-line: var(--hx-line);
+
+  /* A focused popover item keeps the lighter dark hover fill: on the 7% selected fill --hx-faint labels fall to 4.3:1
+     (4.75:1 here). conformance.surfaces checks every popover text token against it. */
+  --pop-hover: var(--hx-hover);
+
+  /* A band steps down to the card grey in dark: between rows a rule alone would read as one more separator.
+     Bars keep --hx-fill (inherited) and their rule. */
+  --pop-band: var(--hx-card);
+  --pop-sep: var(--hx-line-2);
+  --pop-off: var(--hx-frame);
+
+  color-scheme: dark;
+}
+
+/* Accent sets: ink stays #101010 on every accent. */
+:root[data-hx-hl="mint"] { --hx-acc: #3dffb0; --hx-acc-soft-lt: #b4ffe0; --hx-acc-edge: #5fbf95; }
+:root[data-hx-hl="sky"] { --hx-acc: #5ce1ff; --hx-acc-soft-lt: #bdf2ff; --hx-acc-edge: #5aafc4; }
+:root[data-hx-hl="coral"] { --hx-acc: #ff8a5c; --hx-acc-soft-lt: #ffcdb8; --hx-acc-edge: #c7795c; }
+:root[data-hx-hl="lilac"] { --hx-acc: #c4a8ff; --hx-acc-soft-lt: #e4d9ff; --hx-acc-edge: #9883c4; }
+:root[data-hx-hl="chalk"] { --hx-acc: #fff; --hx-acc-soft-lt: #f2f2f2; --hx-acc-edge: #bdbdbd; }
+:root[data-hx-theme="dark"][data-hx-hl="mint"] { --hx-acc-soft: #123a2a; }
+:root[data-hx-theme="dark"][data-hx-hl="sky"] { --hx-acc-soft: #10343d; }
+:root[data-hx-theme="dark"][data-hx-hl="coral"] { --hx-acc-soft: #3d2117; }
+:root[data-hx-theme="dark"][data-hx-hl="lilac"] { --hx-acc-soft: #2a2340; }
+:root[data-hx-theme="dark"][data-hx-hl="chalk"] { --hx-acc-soft: #333; }
+
+/* Scripts without case or tracking. */
+:lang(ar), :lang(th), :lang(ja), :lang(ko), :lang(zh) { --case-caps: none; --tracking-caps: normal; --tracking-tag: normal; --tracking-faq: normal; --tracking-label: normal; }
+
+/* Density: compact tables and toolbars. Compact makes rows dense and never changes a control height:
+   a control keeps the size it asks for, md 40, sm 32 (44 on a coarse pointer), and a dense row that needs a
+   smaller one asks for xs. */
+[data-density="compact"] { --row-h: var(--row-h-dense); }
+
+/* Touch: default controls, rows and hit areas grow to 44 px on coarse pointers. Every button with words (sm and
+   compact included) is at least --touch-min in the layout itself, and wrapping rows of them leave --touch-gap. No
+   density rule may name the touch tokens: compact must not shrink a touch target. */
+@media (pointer: coarse) {
+  :root { --ctl-h: 44px; --row-h: 48px; --row-h-dense: 44px; --row-h-2line: 64px; --row-h-2line-dense: 64px; --sidebar-item-h: 44px; --icon-hit: 44px; --tabs-h: 44px; --touch-min: 44px; --touch-gap: 8px; --card-level-rows: 8; --pop-row-h: 44px; }
+}
+
+/* A toolbar control grows with the other touch targets. Its own rule: the line above belongs to every token. */
+@media (pointer: coarse) {
+  :root { --tb-ctl-h-default: 44px; }
+}
+
+/* The 32 toolbar scope (the Files rail): set only by Toolbar size="32", ToolbarScope or DataTable
+   toolbarSize="32", never by a page. Both tokens on the one element, so --tog-h follows this --tb-ctl-h. */
+[data-tb-size="32"] {
+  --tb-ctl-h: max(var(--ctl-h-compact), var(--touch-min)); /* 32; a coarse pointer keeps 44 (as TopBar .bar) */
+  --tog-h: calc(var(--tb-ctl-h) - 8px); /* the segmented track (option + 2 x 3 pad + 2 x 1 frame) = --tb-ctl-h */
+}
+
+/* The scope's inner boundary: every kit Toolbar and DataTable toolbar that is not 32 carries this, so a default one inside
+   a 32 scope does not inherit it. Kit overlays portal to the body and are out of the scope anyway; anything else drawn in place
+   inside one (an inline panel) wraps itself in ToolbarScope size="default". */
+[data-tb-size="default"] {
+  --tb-ctl-h: var(--tb-ctl-h-default);
+  --tog-h: var(--tog-h-default);
+}
+
+/* A phone-width window gets the touch strip height too, whatever the pointer (desktop tabs stay 34). */
+@media (width < 600px) {
+  :root { --tabs-h: 44px; --pad-card: var(--sp-4); --pad-card-y: var(--sp-4); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-0: 0ms;
+    --dur-1: 0ms;
+    --dur-2: 0ms;
+    --dur-3: 0ms;
+    --dur-4: 0ms;
+    --btn-dur: 0ms;
+    --dur-press: 0ms;
+    --dur-hover: 0ms;
+    --dur-enter: 0ms;
+    --dur-exit: 0ms;
+    --dur-loop: 0ms;
+    --dur-pulse: 0ms;
+    --dur-blink: 0ms;
+  }
+}
+
+/* Performance mode (kit/perf.ts): no shadow and no motion. Placed after the dark theme with the same
+   specificity, so it wins in both themes. Focus rings (--focus-ring*) stay: they are box-shadows too, but the only
+   focus cue, so they are not in this list. A shadow token becomes a transparent zero shadow, never none: none is
+   invalid inside a list, so a rule that adds a focus ring to a shadow (the toast's var(--sh-pop), var(--focus-ring))
+   would lose its ring. */
+:root[data-hx-perf="on"] {
+  --sh-2: 0 0 #0000;
+  --sh-btn: 0 0 #0000;
+  --sh-btn-hover: 0 0 #0000;
+  --btn-sh: 0 0 #0000;
+  --btn-sh-hover: 0 0 #0000;
+  --sh-pop: 0 0 #0000;
+  --sh-drawer: 0 0 #0000;
+  --sh-tog: 0 0 #0000;
+  --dur-0: 0ms;
+  --dur-1: 0ms;
+  --dur-2: 0ms;
+  --dur-3: 0ms;
+  --dur-4: 0ms;
+  --btn-dur: 0ms;
+  --dur-press: 0ms;
+  --dur-hover: 0ms;
+  --dur-enter: 0ms;
+  --dur-exit: 0ms;
+  --dur-loop: 0ms;
+  --dur-pulse: 0ms;
+  --dur-blink: 0ms;
+}
+
+/* Realm colours as classes (no style attributes needed). */
+.rc-red { --rc: var(--hx-r-red); }
+.rc-orange { --rc: var(--hx-r-orange); }
+.rc-yellow { --rc: var(--hx-r-yellow); }
+.rc-green { --rc: var(--hx-r-green); }
+.rc-teal { --rc: var(--hx-r-teal); }
+.rc-blue { --rc: var(--hx-r-blue); }
+.rc-purple { --rc: var(--hx-r-purple); }
+.rc-pink { --rc: var(--hx-r-pink); }

@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Upgrade n12                                                      Esc ×
+ Plans ┃ Choose plan
+ Upgrad┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Plan┃ n12 is on Small. Pick a bigger plan for it:
+ ──────┃
+ │ ✗ fr┃ New plan
+ Plans ┃ (•) Medium · $29.00 / month
+ Each p┃     ×10 the free AI allowance
+ disk. ┃ ( ) Large · $59.00 / month
+       ┃     ×20 the free AI allowance
+ ┌─────┃
+ │     ┃ Upgrades can't be undone: n12 can't move back to a smaller plan later.
+ │ Plan┃ What an upgrade does
+ │ Choo┃
+ │ serv┃
+ │ to u┃
+ │     ┃
+ └─────┃
+       ┃
+ ┌─────┃
+ │ Free┃
+ │ $0 /┃
+ │ Your┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Cancel]   Next

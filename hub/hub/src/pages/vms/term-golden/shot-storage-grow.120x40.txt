@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ Make the disk of win11 bigger                       Esc ×
+ Home                  │  Virtual machines › win11          ┃ A disk only grows. Afterwards, extend the partition
+ Computers             │  win11  ● Stopped                  ┃ inside the VM to use the new space.
+ Files                 │  A VM inside atlas.                ┃ ─────────────────────────────────────────────────────────
+ Bots                  │                                    ┃ New size (GiB)
+ Board                 │   Overview  Screen  Ports ▸Storage ┃ ┃ [−]  65                  [+]
+ Demo                  │  ──────────────────────────────────┃ 410 GB free on the computer now.
+ Vault                 │  ┌─────────────────────────────────┃
+                       │  │ Storage                         ┃
+On atlas ▾             │  │ The VM's disk, its disc drives a┃
+ Programs              │  │Size  64 GB                      ┃
+ Schedules             │  │  Drive            Disc          ┃
+ Scripts               │  │› Drive 1          /var/lib/hoody┃
+ Logs                  │  │  Drive 2          /usr/share/vir┃
+ Tunnels               │  │  Drive 3          Empty         ┃
+ Notes                 │  └─────────────────────────────────┃
+ AI                    │                                    ┃
+▌VMs                   │                                    ┃
+                       │                                    ┃
+Account                │                                    ┃
+ Plans & Billing       │                                    ┃
+ Referrals             │                                    ┃
+ Keys and tokens       │                                    ┃
+ API                   │                                    ┃
+ Notifications      26 │                                    ┃
+ Account               │                                    ┃
+                       │                                    ┃
+ + Rent servers        │                                    ┃
+ Guide                 │                                    ┃
+ Support               │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃
+                       │                                    ┃ ─────────────────────────────────────────────────────────
+ Typing · Esc leaves the field · Ctrl+K commands            ┃ [Cancel]  Make it bigger

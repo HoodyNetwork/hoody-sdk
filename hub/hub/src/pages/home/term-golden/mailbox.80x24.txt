@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                     ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+ Good morning, Ada                                           [i What is Hoody?]
+ ■ Personal
+
+                                                                              █
+                                                                              █
+     ┌────────────────────────────────────────────────────────────────────┐   █
+     │ Personal has no computers yet                                      │   █
+     │                                                                    │   █
+     │ Each realm has its own computers. Get one for this realm, or show  │   █
+     │ all your realms.                                                   │   █
+     │                                                                    │   █
+     │  Get a computer   [Show all realms]                                │   ▀
+     └────────────────────────────────────────────────────────────────────┘
+
+
+ ┌────────────────────────────────────┐ ┌────────────────────────────────────┐
+ │ Bots                    View all › │ │ Billing                 View all › │
+ │ ◆ Chie… ◆ Waiting for you [Review] │ │ $42.50                             │
+ │ i Support · atlas        i Working │ │ Wallet balance                     │
+ │ i Digest · a… i 2 messages waiting │ │                                    │
+ │ ! Ledger · cinder         ! Paused │ │ SERVERS                            │
+ │ · Scout · cinder            · Idle │ │ ✗ fra-7 Unpaid since Oc… ✗ On hold │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

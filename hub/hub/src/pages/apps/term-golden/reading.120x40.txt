@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                                             ▸ Use with your agent   + Launch an app
+ Computers             │  Apps on atlas: programs you open only when you need them.
+ Files                 │    Running programs  ▸ Apps    Ports & aliases
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  / Search opened apps       State ▾                                          9 apps  ↻ Refresh
+ Vault                 │
+                       │    Name                             State                 Opens in        Action
+On atlas ▾             │  ▌ JupyterLab Registry              ● Ready               Web             [Open]             ⋯
+▌Programs              │    htop Installed                   ● Ready               Terminal        [Open]             ⋯
+ Schedules             │    Firefox Installed                ● Warming up          Display         [Open display]     ⋯
+ Scripts               │    VS Code Registry                 ● Starting            Web             Starting…          ⋯
+ Logs                  │    Shared folder Registry           ● Stopped             Web             [Open again]       ⋯
+ Tunnels               │    btop Installed                   ● Error               Terminal        [Open again]       ⋯
+ Notes                 │    sqlite-web pkgx                  ● Check needed        Web             [Check again]      ⋯
+ AI                    │    Open WebUI Registry              ● Port in use         Web             [See open apps]    ⋯
+ VMs                   │    Gitea Registry                   ● Checking            Web             Checking…          ⋯
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

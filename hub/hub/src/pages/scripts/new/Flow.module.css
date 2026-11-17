@@ -1,0 +1,104 @@
+/* New script steps: kit tokens only. The WizardPage (variant flow) owns the strip, the side card's place and the footer. */
+
+.heading {
+  margin: 0;
+  font: var(--t-heading);
+  color: var(--hx-ink);
+}
+
+.lead {
+  margin: calc(-1 * var(--sp-3)) 0 0;
+  font: var(--t-body);
+  color: var(--hx-muted);
+}
+
+.note {
+  margin: 0;
+  font: var(--t-small);
+  color: var(--hx-muted);
+}
+
+.fact {
+  margin: 0;
+  font: var(--t-body);
+  color: var(--hx-ink);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--sp-3);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  text-align: start;
+  font: var(--t-body);
+  color: var(--hx-ink);
+  background: var(--hx-card);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-2);
+  cursor: pointer;
+}
+
+.card:hover:not(:disabled) {
+  border-color: var(--hx-line-strong);
+}
+
+.card:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.card[data-on='true'] {
+  border-color: var(--hx-ink);
+  box-shadow: inset 0 0 0 var(--bw) var(--hx-ink);
+}
+
+.card:disabled {
+  cursor: default;
+  color: var(--hx-muted);
+  background: var(--hx-fill);
+}
+
+.cardTitle {
+  font: var(--t-body-strong);
+}
+
+.cardBody {
+  font: var(--t-small);
+  color: var(--hx-muted);
+}
+
+.clamp2 {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* The pause band in place of the step body. */
+.band {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  background: var(--hx-fill);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-2);
+}
+
+.bandActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}

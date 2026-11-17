@@ -1,0 +1,66 @@
+/* The one field box. Every boxed field (TextField, SearchField, NumberField, Select and its own search, Combobox,
+   SecretInput, PathField, a picker's trigger, the OTP cells) carries .box beside its own class, which keeps only its
+   layout, so rest, hover, focus, invalid and disabled cannot drift between fields. (Not `composes`: the kit's
+   pure-module rule refuses it across stylesheets, kitpure.conformance.test.ts.)
+
+   This stylesheet and a field's own may load in either order, so a field that changes a property set here does it with
+   two classes (.input.textarea, .cells .cell), never one.
+
+   --field-attach-line is set by a Band attached under the field (states/Band.module.css .attachWarn/.attachDanger):
+   the border takes the band's tone at rest and under the pointer; an invalid field still shows the danger border. */
+.box {
+  height: var(--ctl-h-md);
+  border: var(--bw) solid var(--field-attach-line, var(--ctl-line-field));
+  border-radius: var(--r-1);
+  background: var(--field-bg);
+  color: var(--hx-ink);
+  font-size: var(--fs-md);
+  transition: border-color var(--dur-press) var(--ease-out);
+}
+
+.box[data-hovered] {
+  border-color: var(--field-attach-line, var(--field-line-hover));
+}
+
+/* Text entry shows the ring on any focus; a trigger only on keyboard focus (its menu takes focus while it is open); a
+   group of parts while any part has focus. */
+.box:is(input, textarea)[data-focused],
+.box[data-focus-visible],
+.box[data-focus-within] {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+/* A field with a Band attached under it (Band `attach`): its border takes the band's tone. Before the invalid rule,
+   at the same weight, so an invalid field keeps the danger border. Attribute values unquoted (kitpure rule C0: a
+   selector holds no quote; the same match). */
+/* stylelint-disable selector-attribute-quotes -- fieldBox.module.css styles pure kit modules: kitpure C0 takes attribute values unquoted */
+[data-band-attach=warn] .box {
+  border-color: var(--hx-warn-fill);
+}
+
+[data-band-attach=danger] .box {
+  border-color: var(--hx-danger-fill);
+}
+
+.box[data-invalid],
+[data-invalid] > .box {
+  border-color: var(--hx-danger-fill);
+}
+
+.box[data-disabled] {
+  background: var(--field-off-bg);
+  color: var(--field-off-ink);
+  cursor: not-allowed;
+}
+
+/* Forced colours do not paint box-shadow, so the focus ring above gets a solid system outline (the same rule as
+   Button's; measured by kit/focus.forced.spec.ts). */
+@media (forced-colors: active) {
+  .box:is(input, textarea)[data-focused],
+  .box[data-focus-visible],
+  .box[data-focus-within] {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+}

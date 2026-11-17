@@ -1,0 +1,116 @@
+/* The composer's "/" menu: above the draft box, the box's width, the popover's surface and rows (Menu.module.css). */
+.menu {
+  position: absolute;
+  z-index: var(--z-popover);
+  inset-block-end: calc(100% + var(--sp-1));
+  inset-inline: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(8 * var(--pop-row-h));
+  border: var(--bw) solid var(--pop-line);
+  border-radius: var(--r-1);
+  background: var(--pop-bg);
+  box-shadow: var(--sh-pop);
+}
+
+.list {
+  overflow: auto;
+  margin: 0;
+  padding: var(--pad-menu);
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: var(--pop-row-h);
+  padding: var(--sp-1) var(--pop-row-x);
+  border-radius: var(--r-1);
+  color: var(--hx-ink);
+  cursor: default;
+}
+
+.item + .item {
+  margin-block-start: var(--pop-row-gap);
+}
+
+.item[data-focused] {
+  background: var(--pop-hover);
+}
+
+/* Forced colours drop the background: the active row (the box keeps the focus, aria-activedescendant names the row) is outlined. */
+@media (forced-colors: active) {
+  .item[data-focused] {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: calc(-1 * var(--bw-2));
+  }
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.name {
+  font: var(--t-body-strong);
+  overflow-wrap: anywhere;
+}
+
+.mark {
+  flex: none;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* What may follow the name ("<turn>"), quieter than the name; and what the row opens, at the row's end. */
+.hint {
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.opens {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* A group: its header in the kit's one group-label shape (Menu.module.css .head), then its rows. */
+.group + .group,
+.item + .group,
+.group + .item {
+  margin-block-start: var(--pop-row-gap);
+}
+
+.header {
+  display: block;
+  padding: var(--sp-2) var(--pop-row-x) var(--sp-1);
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desc {
+  overflow: hidden;
+  color: var(--hx-muted);
+  font: var(--t-small);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.note {
+  margin: 0;
+  padding: var(--pad-menu) var(--pop-row-x);
+  color: var(--hx-muted);
+  font: var(--t-small);
+}

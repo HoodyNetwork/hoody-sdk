@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                     ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+ Files
+ The folders on your computers.
+        ┌──────────────────────────────────────────────────────────────┐
+        │ No computers yet                                             │
+        │                                                              │
+        │ Files shows the folders on a computer. Get a computer first. │
+        │                                                              │
+        │ [Get a computer]                                             │
+        └──────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Schedules                                                                                                                             ▸ Use with your agent   + New schedule
+ Computers             │  75 schedules on atlas · next: ping-api in 3 minutes · 4 failed today · Computers › · 9 programs running ›
+ Files                 │
+ Bots                  │  / Search schedules              ‹ Any ›  Commands 68    Scripts 3    Web requests 2    Agent loops 2    Status ▾                        75 schedules  ↻ Refresh  View options
+ Board                 │
+ Demo                  │    Name                                                              Schedule                        Next run ↑                      Last result                       On
+ Vault                 │  ▌   ping-api   Web request                                          Every 5 minutes                 in 3 minutes                    ● Worked                    [■ on ]    ⋯█
+                       │    ! queue-drain   Script                                            Every 10 minutes                in 4 minutes                    ● Failed                               ⋯█
+On atlas ▾             │      Watch the build   Agent loop                                    Every 10 minutes                in 4 minutes                    ● Worked                    [■ on ]    ⋯█
+ Programs              │    ! sync-photos   Command                                           Every 15 minutes                in 8 minutes                    ● Failed                    [■ on ]    ⋯█
+▌Schedules             │      Nightly backup   Command                                        Every day at 02:00              in 9 hours                      ● Worked                    [■ on ]    ⋯█
+ Scripts               │      Nightly backup 10   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+ Logs                  │      Nightly backup 11   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+ Tunnels               │      Nightly backup 12   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+ Notes                 │      Nightly backup 13   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+ AI                    │      Nightly backup 14   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+ VMs                   │      Nightly backup 15   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+                       │      Nightly backup 16   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+Account                │      Nightly backup 17   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+ Plans & Billing       │      Nightly backup 18   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+ Referrals             │      Nightly backup 19   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+ Keys and tokens       │      Nightly backup 2   Command                                      Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+ API                   │      Nightly backup 20   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+ Notifications      26 │      Nightly backup 21   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+ Account               │      Nightly backup 22   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+                       │      Nightly backup 23   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+ + Rent servers        │      Nightly backup 24   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+ Guide                 │      Nightly backup 25   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+ Support               │      Nightly backup 26   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+                       │      Nightly backup 27   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+                       │      Nightly backup 28   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+                       │      Nightly backup 29   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+                       │      Nightly backup 3   Command                                      Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+                       │      Nightly backup 30   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+                       │      Nightly backup 31   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+                       │      Nightly backup 32   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+                       │      Nightly backup 33   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+                       │      Nightly backup 34   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+                       │      Nightly backup 35   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+                       │      Nightly backup 36   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯█
+                       │      Nightly backup 37   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯░
+                       │      Nightly backup 38   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯░
+                       │      Nightly backup 39   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯░
+                       │      Nightly backup 4   Command                                      Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯░
+                       │      Nightly backup 40   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯░
+                       │      Nightly backup 41   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯░
+                       │      Nightly backup 42   Command                                     Every day at 02:00              in 9 hours                      ● Not run yet               [■ on ]    ⋯░
+                       │  1–50 of 75 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

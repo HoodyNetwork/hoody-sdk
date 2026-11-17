@@ -1,0 +1,160 @@
+/* Support page parts. Tokens only; sections, banners and the list come from the kit. A message body is plain text:
+   its line breaks show as typed (pre-wrap) and a long word wraps instead of widening the pane. */
+
+.listWrap {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.listFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.note {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.subject {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.unread {
+  font-weight: var(--fw-semibold);
+}
+
+/* A read row's empty dot slot, the dot's width: subjects start in one column. */
+.dotSlot {
+  display: inline-block;
+  flex: none;
+  inline-size: var(--sp-2);
+  min-inline-size: var(--sp-2);
+}
+
+.unreadDot {
+  display: inline-block;
+  width: var(--sp-2);
+  height: var(--sp-2);
+  border-radius: var(--r-round);
+  background: var(--hx-acc);
+  vertical-align: middle;
+}
+
+.ref {
+  color: var(--hx-muted);
+  font: var(--t-small);
+  font-family: var(--font-mono);
+}
+
+.older {
+  display: flex;
+  justify-content: center;
+  padding-block: var(--sp-2);
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.message {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-2);
+}
+
+.staff {
+  background: var(--hx-fill);
+}
+
+.messageHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.author {
+  font: var(--t-body-strong);
+}
+
+.time {
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.body {
+  font: var(--t-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.statusLine {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.reply {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.replyActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.endState {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.endState p {
+  margin: 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.limits {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  font: var(--t-small);
+}
+
+/* Beside the tip: the rows give way (and wrap) before the tip is pushed out of the note. */
+.limitRows {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

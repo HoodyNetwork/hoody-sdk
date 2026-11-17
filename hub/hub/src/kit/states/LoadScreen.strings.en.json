@@ -1,0 +1,22 @@
+{
+  "progress": "Step {{now}} of {{total}}",
+  "partial": "{{done}} of {{total}} done",
+  "ready": "Ready",
+  "stuck": "Needs you",
+  "count": "{{done}}/{{total}}",
+  "state.done": "done",
+  "state.now": "in progress",
+  "state.next": "not started",
+  "state.stuck": "needs you",
+  "cards.role": "carousel",
+  "cards.slide": "card",
+  "cards.place": "{{n}} of {{total}}",
+  "cards.controls": "Card controls",
+  "cards.prev": "Previous card",
+  "cards.next": "Next card",
+  "cards.pause": "Pause the cards",
+  "cards.play": "Play the cards",
+  "cards.atStart": "This is the first card.",
+  "cards.atEnd": "This is the last step.",
+  "cards.stopped": "The cards stop at the last step."
+}

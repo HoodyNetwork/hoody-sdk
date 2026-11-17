@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Account
+ Computers             │  Your profile, how you sign in, and where you are signed in.
+ Files                 │
+ Bots                  │  ‹ 5   Agent sign-in  Security history ▌SSH keys  Emails  Elsewhere  This device  Questions
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Vault                 │  │ SSH keys                                                                              │
+                       │  │ Each computer takes one SSH key, set on that computer.                                │
+On atlas ▾             │  │ / Search                                                       5 computers  ↻ Refresh │
+ Programs              │  │                                                                                       │
+ Schedules             │  │   Computer ↑        Key                                                               │
+ Scripts               │  │ › atlas             ED25519 …AcctKey1                                                 │
+ Logs                  │  │                     ada@laptop                                                        │
+ Tunnels               │  │   borealis          · No key                                                          │
+ Notes                 │  │   cedar             RSA …lyCedar9                                                     │
+ AI                    │  │   fjord             · No key                                                          │
+ VMs                   │  │   granite           ED25519 …Granite7                                                 │
+                       │  │                     ci-deploy@build-runner-07.acme.example (rotated 2026-11-01,       │
+Account                │  │                     owner platform team, read-only)                                   │
+ Plans & Billing       │  │ Only the first 100 computers in this realm are listed. Open Computers to see the      │
+ Referrals             │  │ rest.                                                                                 │
+ Keys and tokens       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ API                   │
+ Notifications      26 │  ┌───────────────────────────────────────────────────────────────────────────────────────┐▄
+▌Account               │  │ Emails                                                                                │█
+                       │  │ What Hoody also sends to your email address.                                          │█
+ + Rent servers        │  │                                                                                       │█
+ Guide                 │  │ Support replies                 [■ on ]                                               │█
+ Support               │  │ Email me when support replies                                                         │█
+                       │  │ to one of my tickets. The                                                             │
+                       │  │ email names no ticket and                                                             │
+                       │  │ shows none of its text.                                                               │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Elsewhere                                                                             │
+                       │  │ Other places that act on your account.                                                │
+                       │  │                                                                                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,223 @@
+/* RailFrame: the rail's column beside the page, or one slot. */
+.frame {
+  display: grid;
+  grid-template-columns: var(--rail-width) minmax(0, 1fr);
+  min-block-size: 100%;
+}
+
+.frame[data-rail-single] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* The rail stays put beside the page's scroll, as tall as the page region. The handle lies over its end edge. */
+.rail {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  block-size: var(--rail-region-h, 100dvh);
+  min-inline-size: 0;
+  min-block-size: 0;
+  border-inline-end: var(--bw) solid var(--hx-line);
+  background: var(--hx-card);
+}
+
+/* One slot, or placed in a conversation's frame, which draws the line itself. */
+.frame[data-rail-single] .rail {
+  border-inline-end: none;
+}
+
+/* The whole screen: the region's end padding keeps clear of the bottom bar, and the foot stays above it. */
+.strip {
+  block-size: calc(var(--rail-region-h, 100dvh) - var(--shell-main-pad-end, 0px));
+}
+
+/* The handle lies over the end edge, half on each side of the line. */
+.handle {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: calc(var(--sp-1) * -1);
+  display: flex;
+  inline-size: var(--sp-2);
+}
+
+.handle > * {
+  flex: 1 1 auto;
+}
+
+.head {
+  display: flex;
+  padding: var(--rail-pad) var(--rail-pad) var(--sp-2);
+}
+
+.head > * {
+  flex: 1 1 auto;
+}
+
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-block-size: 0;
+}
+
+.navList {
+  /* Each destination is a 34 px tile 6 px apart, inset 4 px from the rail
+     edge, so the icon still starts at --rail-pad and the label on the rail's text edge (the subnav's text lines up).
+     4 px below the last tile: at 1350x800 the AI rail keeps 4 chats above its foot. */
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--sp-1) + var(--sp-half));
+  margin: 0;
+  padding: 0 var(--sp-1) var(--sp-1);
+  list-style: none;
+}
+
+.strip .navList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-1);
+  padding-inline: var(--rail-pad);
+}
+
+.navItem {
+  display: grid;
+  grid-template-columns: var(--rail-lead) minmax(0, 1fr) auto;
+  column-gap: var(--rail-gap);
+  align-items: center;
+  box-sizing: border-box;
+  block-size: max(var(--section-row-h), var(--touch-min));
+  padding-inline: calc(var(--rail-pad) - var(--sp-1) - var(--bw));
+  border: var(--bw) dashed var(--hx-section-rail);
+  color: var(--hx-rail-tile-text);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-label);
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.strip .navItem {
+  display: flex;
+  gap: var(--sp-2);
+  padding-inline: var(--sp-2);
+}
+
+.navItem:hover {
+  background: var(--hx-hover);
+  color: var(--hx-ink);
+}
+
+.navItem[aria-current] {
+  border: var(--bw) solid var(--hx-rail-tile-now-line);
+  background: var(--hx-rail-tile-now-bg);
+  color: var(--hx-ink);
+}
+
+.navLabel {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navMark {
+  flex: none;
+  inline-size: var(--sp-2);
+  block-size: var(--sp-2);
+  border-radius: var(--r-1);
+  background: var(--hx-acc);
+}
+
+/* The section menu's rail stands so its text lands on the text edge: rail at 18, item margin -2, bar 3, padding 16 (SectionMenu.module.css).
+   The list is inset --sp-1 (the tiles), so the rail sits --sp-1 less in from it. */
+.sub {
+  padding-inline-start: calc(var(--rail-pad) + var(--sp-half));
+}
+
+/* Not beside the page: the same links across, with the section menu's own hooks. Wider than the screen, the list scrolls
+   sideways between the edge chevrons (kit Tabs StripMore), as the settings strip does; the page never scrolls. */
+.subStrip {
+  --section-menu-flow: row;
+  --section-menu-gap: var(--sp-half);
+  --section-menu-marks: 0;
+  --section-menu-current-line: var(--hx-selected-bar);
+
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.subStripList {
+  flex: 1;
+  min-width: 0;
+
+  /* The scroller clips what is drawn outside it: the block padding keeps a link's 4 px focus ring (--focus-ring) inside. */
+  padding-block: var(--sp-1);
+  padding-inline: var(--rail-pad);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.subStripList::-webkit-scrollbar {
+  display: none;
+}
+
+.foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--rail-pad);
+  border-block-start: var(--bw) solid var(--hx-line);
+}
+
+/* Where, and the pane's menu on the same row: the lead icon, the words, then the menu at the content's end edge, each centred
+   on the row (one line of words and a control of another height still share a middle). */
+.where {
+  display: grid;
+  grid-template-columns: var(--rail-lead) minmax(0, 1fr) auto;
+  column-gap: var(--rail-gap);
+  align-items: center;
+  min-block-size: var(--ctl-h-sm);
+}
+
+.whereEnd {
+  display: inline-flex;
+  align-items: center;
+}
+
+.whereText {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  font: var(--t-small);
+}
+
+.whereText > strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.whereText > span {
+  color: var(--hx-muted);
+}
+
+/* The notice row. A quiet slot that draws nothing (PauseControl while running) takes no room, so the foot is one row. */
+.footActions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.footActions:not(:has(> :not(:empty))) { display: none; }
+
+/* Forced colours (Windows high contrast) repaint backgrounds, so the needs-you mark, drawn only as a fill, would vanish: it
+   keeps a system colour. */
+@media (forced-colors: active) {
+  .navMark {
+    background: CanvasText;
+    forced-color-adjust: none;
+  }
+}

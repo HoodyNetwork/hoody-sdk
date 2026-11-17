@@ -1,0 +1,142 @@
+Rationale: shared web code puts bare strings beside elements (`<div>Hi {name}<b>!</b></div>`), which 0.8.4 throws on
+("Text must be created inside of a text node"). Loose text outside a text node becomes a text block of its own (a
+core TextRenderable) and goes through the same host text filter as 0001, so the Hub's compat runtime draws web
+markup without a second, unfiltered path.
+
+diff -ruN a/packages/react/src/reconciler/host-config.ts b/packages/react/src/reconciler/host-config.ts
+--- a/packages/react/src/reconciler/host-config.ts	2026-11-11 11:19:56.567817664 +0000
++++ b/packages/react/src/reconciler/host-config.ts	2026-11-11 11:21:11.619203344 +0000
+@@ -131,11 +131,14 @@
+ 
+   // Create text instance
+   createTextInstance(text: string, rootContainerInstance: Container, hostContext: HostContext) {
++    const filter = hostTextFilter()
+     if (!hostContext.isInsideText) {
+-      throw new Error("Text must be created inside of a text node")
++      // Text outside a text node becomes its own text block, as a browser makes an anonymous box, instead of
++      // throwing. A component that returns a bare string is common. commitTextUpdate updates its content.
++      return new TextRenderable(rootContainerInstance.ctx, { id: getNextId("text"), content: filter.text(text) })
+     }
+ 
+-    return TextNodeRenderable.fromString(hostTextFilter().text(text))
++    return TextNodeRenderable.fromString(filter.text(text))
+   },
+ 
+   // Schedule timeout
+@@ -176,7 +179,10 @@
+   },
+ 
+   commitTextUpdate(textInstance: TextInstance, oldText: string, newText: string) {
+-    textInstance.children = [hostTextFilter().text(newText)]
++    const text = hostTextFilter().text(newText)
++    // Loose text (created outside a text node) is a TextRenderable of its own.
++    if (textInstance instanceof TextRenderable) textInstance.content = text
++    else textInstance.children = [text]
+   },
+ 
+   // Append child to container
+diff -ruN a/packages/react/src/types/host.ts b/packages/react/src/types/host.ts
+--- a/packages/react/src/types/host.ts	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/react/src/types/host.ts	2026-11-11 11:21:11.620706467 +0000
+@@ -1,10 +1,11 @@
+-import type { BaseRenderable, RootRenderable, TextNodeRenderable } from "@opentui/core"
++import type { BaseRenderable, RootRenderable, TextNodeRenderable, TextRenderable } from "@opentui/core"
+ import { baseComponents } from "../components/index.js"
+ 
+ export type Type = keyof typeof baseComponents
+ export type Props = Record<string, any>
+ export type Container = RootRenderable
+ export type Instance = BaseRenderable
+-export type TextInstance = TextNodeRenderable
++/** A text node inside a text element, or a loose text block (text outside a text node). */
++export type TextInstance = TextNodeRenderable | TextRenderable
+ export type PublicInstance = Instance
+ export type HostContext = Record<string, any> & { isInsideText?: boolean }
+diff -ruN a/packages/react/tests/layout.test.tsx b/packages/react/tests/layout.test.tsx
+--- a/packages/react/tests/layout.test.tsx	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/react/tests/layout.test.tsx	2026-11-11 11:22:09.175109974 +0000
+@@ -61,16 +61,15 @@
+       expect(frame).toMatchSnapshot()
+     })
+ 
+-    it("should catch and display error when rendering text without parent <text> element", async () => {
++    it("should render text without parent <text> element as its own text block", async () => {
+       testSetup = await testRender(<box>This text is not wrapped in a text element</box>, {
+         width: 60,
+         height: 15,
+       })
+       await testSetup.renderOnce()
+       const frame = testSetup.captureCharFrame()
+-      expect(frame).toContain("Error:")
+-      expect(frame).toContain("Text must be created inside of a text node")
+-      expect(frame).not.toContain("This text is not wrapped in a text element")
++      expect(frame).not.toContain("Error:")
++      expect(frame).toContain("This text is not wrapped in a text element")
+     })
+ 
+     it("should catch and display error when rendering span without parent <text> element", async () => {
+diff -ruN a/packages/react/tests/loose-text.test.tsx b/packages/react/tests/loose-text.test.tsx
+--- a/packages/react/tests/loose-text.test.tsx	1970-01-01 00:00:00.000000000 +0000
++++ b/packages/react/tests/loose-text.test.tsx	2026-11-11 11:21:11.632188849 +0000
+@@ -0,0 +1,61 @@
++import { afterEach, describe, expect, test } from "bun:test"
++import { act, useState } from "react"
++import { setHostTextFilter } from "../src/index.js"
++import { testRender } from "../src/test-utils.js"
++import { passThroughHostTextFilter } from "./preload.js"
++
++let testSetup: Awaited<ReturnType<typeof testRender>> | undefined
++
++afterEach(() => {
++  if (testSetup) {
++    act(() => testSetup!.renderer.destroy())
++    testSetup = undefined
++  }
++  setHostTextFilter(passThroughHostTextFilter)
++})
++
++describe("loose text", () => {
++  test("a string outside a text node draws as its own text block instead of throwing", async () => {
++    function Label() {
++      return "plain string"
++    }
++    await act(async () => {
++      testSetup = await testRender(
++        <box flexDirection="column">
++          <Label />
++          {"second"}
++          <text>inside</text>
++        </box>,
++        { width: 30, height: 4 },
++      )
++    })
++    await testSetup!.renderOnce()
++    const frame = testSetup!.captureCharFrame()
++    expect(frame).toContain("plain string")
++    expect(frame).toContain("second")
++    expect(frame).toContain("inside")
++  })
++
++  test("loose text is filtered on create and on update", async () => {
++    setHostTextFilter({ ...passThroughHostTextFilter, text: (s: string) => s.replaceAll("\x1b", "?") })
++    let setValue: (s: string) => void = () => {}
++    function App() {
++      const [value, set] = useState("a\x1b[2Jb")
++      setValue = set
++      return <box>{value}</box>
++    }
++    await act(async () => {
++      testSetup = await testRender(<App />, { width: 30, height: 3 })
++    })
++    await testSetup!.renderOnce()
++    expect(testSetup!.captureCharFrame()).toContain("a?[2Jb")
++
++    await act(async () => {
++      setValue("c\x1b]8;;x")
++    })
++    await testSetup!.renderOnce()
++    const frame = testSetup!.captureCharFrame()
++    expect(frame).toContain("c?]8;;x")
++    expect(frame).not.toContain("a?[2Jb")
++  })
++})

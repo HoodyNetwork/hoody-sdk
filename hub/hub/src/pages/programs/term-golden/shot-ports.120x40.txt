@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                                             ▸ Use with your agent   + Launch an app
+ Computers             │  Open ports and aliases on atlas
+ Files                 │    Running programs    Apps  ▸ Ports & aliases
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Vault                 │  │ Open ports                                                                               │█
+                       │  │ Every port a program listens on. Web ports get an address you can open or share.         │█
+On atlas ▾             │  │  Port             Program         Address                                                │█
+▌Programs              │  │▌ 3000             node            Open port 3000                         [Create alias] ⋯│█
+ Schedules             │  │  4100             hoody-notes     Open port 4100                                        ⋯│█
+ Scripts               │  │                    Hoody kit                                                             │█
+ Logs                  │  │  5432             postgres        No web address                                         │█
+ Tunnels               │  │  8001             node            Open port 8001                         [Create alias] ⋯│█
+ Notes                 │  │  9229             node            Only inside atlas                                      │█
+ AI                    │  │ 2 ports Hoody uses itself are not shown.                                                 │█
+ VMs                   │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+Account                │  │ Aliases and domains                                                       [Create alias] │█
+ Plans & Billing       │  │ Short addresses that point to a web port or a program. Each one can also open at a       │█
+ Referrals             │  │ domain you own.                                                                          │█
+ Keys and tokens       │  │  Alias             Goes to     Address          Your domain points to                    │█
+ API                   │  │› shop-front        Port 3000   Open shop-front  shop-front.custom-domain.example.te…    ⋯│█
+ Notifications      26 │  │  term-desk         terminal    Open term-desk   term-desk.custom-domain.example.test    ⋯│█
+ Account               │  │  api-two           Port 8001   Open api-two     api-two.custom-domain.example.test …    ⋯│█
+                       │  │  api-four          Port 8003   Open api-four    api-four.custom-domain.example.test     ⋯│█
+ + Rent servers        │  │  agent-door        Port 15000  Open agent-door  agent-door.custom-domain.example.te…    ⋯│█
+ Guide                 │  │▸ How do I use my own domain?                                                             │█
+ Support               │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+                       │                                                                                              █
+                       │  Questions                                                                                   ▀
+                       │  ▸ What is a program, and what are Running programs and Apps?
+                       │  ▸ What are the system programs, and is it safe to stop one?
+                       │  ▸ What is the difference between Keep it and Run once?
+                       │  ▸ When does a start count as done, and what happens when a program stops?
+                       │  ▸ What does a sandbox limit, and what do the starting points do?
+                       │  ▸ What do the network choices and allowed ranges do?
+                       │  ▸ When do new sandbox limits take effect, and what does removing them do?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

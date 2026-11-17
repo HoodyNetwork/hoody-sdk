@@ -1,0 +1,651 @@
+diff -ruN a/packages/core/scripts/native-abi-pointers.ts b/packages/core/scripts/native-abi-pointers.ts
+--- a/packages/core/scripts/native-abi-pointers.ts	2026-11-11 11:27:24.085145831 +0000
++++ b/packages/core/scripts/native-abi-pointers.ts	2026-11-11 11:56:44.715638490 +0000
+@@ -213,6 +213,7 @@
+   ot_session_draw_buffer: { 0: context, 1: buffer, 2: buffer },
+   ot_session_set_debug_overlay: { 0: context, 1: buffer },
+   ot_session_set_color_mode: { 0: context, 1: buffer },
++  ot_session_set_hyperlinks: { 0: context, 1: buffer },
+   ot_session_update_stats: { 0: context, 1: buffer },
+   ot_session_update_memory_stats: { 0: context, 1: buffer },
+   ot_session_dump_hit_grid: { 0: context, 1: buffer },
+diff -ruN a/packages/core/src/index.ts b/packages/core/src/index.ts
+--- a/packages/core/src/index.ts	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/core/src/index.ts	2026-11-11 12:32:52.043282574 +0000
+@@ -32,6 +32,7 @@
+   FFIRenderLib,
+   LogLevel,
+   MAX_LINK_URL_BYTES,
++  isStorableLinkUrl,
+   NATIVE_BUFFER_TEXT_BYTES_MAX,
+   NATIVE_EDGE_NONE,
+   NATIVE_SESSION_CONTROL_PACKET_BYTES,
+diff -ruN a/packages/core/src/native-abi.generated.ts b/packages/core/src/native-abi.generated.ts
+--- a/packages/core/src/native-abi.generated.ts	2026-11-11 11:47:38.004916557 +0000
++++ b/packages/core/src/native-abi.generated.ts	2026-11-11 12:33:39.643335399 +0000
+@@ -1,7 +1,7 @@
+ // Generated from packages/native/include/opentui.h and scripts/native-abi-pointers.ts.
+ // Run `bun run generate:abi` in packages/core. Do not edit.
+ // Inspect audit input: bun scripts/native-abi.ts --audit
+-// ABI audit SHA-256: 418f9f91c756f98b7784e8c984328dba05bd05136bb1bbd24b6e8341c7c88b15
++// ABI audit SHA-256: ec246448d1fa1f7856ce4b5f1925063850405e92432133c49ddc0a22fbc81a55
+ 
+ export const nativeSymbols = {
+   ot_scene_set_hooks: { args: ["ptr", "buffer", "buffer"], returns: "i32" },
+@@ -249,6 +249,7 @@
+   ot_session_draw_buffer: { args: ["ptr", "buffer", "buffer", "i32", "i32"], returns: "i32" },
+   ot_scene_frame_draw_buffer: { args: ["ptr", "buffer", "buffer", "buffer", "i32", "i32"], returns: "i32" },
+   ot_session_set_debug_overlay: { args: ["ptr", "buffer", "u32", "u32"], returns: "i32" },
++  ot_session_set_hyperlinks: { args: ["ptr", "buffer", "u32"], returns: "i32" },
+   ot_session_set_color_mode: { args: ["ptr", "buffer", "u32"], returns: "i32" },
+   ot_session_update_stats: { args: ["ptr", "buffer", "f64", "u32", "f64"], returns: "i32" },
+   ot_session_update_memory_stats: { args: ["ptr", "buffer", "u32", "u32", "u32"], returns: "i32" },
+@@ -2255,6 +2256,9 @@
+   OT_SCENE_RECORD_GRAYSCALE_FOREGROUND: 1,
+   OT_SCENE_RECORD_GRAYSCALE_BACKGROUND: 2,
+   OT_SCENE_RECORD_GRAYSCALE_SUPERSAMPLED: 4,
++  OT_HYPERLINKS_AUTO: 0,
++  OT_HYPERLINKS_ON: 1,
++  OT_HYPERLINKS_OFF: 2,
+   OT_COLOR_MODE_AUTO: 0,
+   OT_COLOR_MODE_TRUECOLOR: 1,
+   OT_COLOR_MODE_ANSI256: 2,
+diff -ruN a/packages/core/src/renderables/Markdown.ts b/packages/core/src/renderables/Markdown.ts
+--- a/packages/core/src/renderables/Markdown.ts	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/core/src/renderables/Markdown.ts	2026-11-11 12:32:52.043651825 +0000
+@@ -22,7 +22,7 @@
+ import { parseMarkdownIncremental, type ParseState } from "./markdown-parser.js"
+ import { detectLinks, normalizeMarkdownLinkTarget } from "../lib/detect-links.js"
+ import type { SimpleHighlight } from "../lib/tree-sitter/types.js"
+-import { MAX_LINK_URL_BYTES } from "../zig.js"
++import { isStorableLinkUrl } from "../zig.js"
+ 
+ export type MarkdownTableStyle = "grid" | "columns"
+ 
+@@ -228,11 +228,9 @@
+ 
+ const TRAILING_MARKDOWN_BLOCK_BREAKS_RE = /(?:\r?\n){2,}$/
+ const TRAILING_MARKDOWN_BLOCK_NEWLINES_RE = /(?:\r?\n)+$/
+-const markdownLinkEncoder = new TextEncoder()
+-
++// Native keeps a link only for these URLs; any other destination stays visible as text.
+ function isSupportedLinkTarget(url: string): boolean {
+-  if (url.length > MAX_LINK_URL_BYTES) return false
+-  return markdownLinkEncoder.encode(url).byteLength <= MAX_LINK_URL_BYTES
++  return isStorableLinkUrl(url)
+ }
+ 
+ function colorsEqual(left?: RGBA, right?: RGBA): boolean {
+diff -ruN a/packages/core/src/renderables/__tests__/Markdown.test.ts b/packages/core/src/renderables/__tests__/Markdown.test.ts
+--- a/packages/core/src/renderables/__tests__/Markdown.test.ts	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/core/src/renderables/__tests__/Markdown.test.ts	2026-11-11 12:32:58.725685150 +0000
+@@ -2341,11 +2341,11 @@
+ ] as const) {
+   test(`${label} Markdown destinations respect the native link-pool UTF-8 capacity`, async () => {
+     setRendererCapabilities(renderer, { hyperlinks: true })
+-    resizeRenderer(560, 12)
++    resizeRenderer(2100, 12)
+ 
+     const custom = label === "maximum custom scheme"
+     const prefix = custom ? "custom+v1://example.test/" : "https://example.com/"
+-    const destination = prefix + "a".repeat(511 - prefix.length - (ending.startsWith("\u00e9") ? 1 : 0)) + ending
++    const destination = prefix + "a".repeat(2047 - prefix.length - (ending.startsWith("\u00e9") ? 1 : 0)) + ending
+     const target = destination.replace("\\_", "_")
+     const md = createMarkdownRenderable({
+       id: "markdown-link-native-capacity",
+@@ -2360,8 +2360,8 @@
+     const frame = captureFrame()
+     const prose = findRenderedText("Prose")
+     const table = findRenderedText("Table")
+-    expect(new TextEncoder().encode(target)).toHaveLength(supported ? 512 : 513)
+-    if (ending === "\\_") expect(new TextEncoder().encode(destination)).toHaveLength(513)
++    expect(new TextEncoder().encode(target)).toHaveLength(supported ? 2048 : 2049)
++    if (ending === "\\_") expect(new TextEncoder().encode(destination)).toHaveLength(2049)
+     if (custom) expect(md.content).not.toContain("http")
+     if (supported) {
+       expect(frame).not.toContain(target)
+diff -ruN a/packages/core/src/renderer.ts b/packages/core/src/renderer.ts
+--- a/packages/core/src/renderer.ts	2026-11-11 11:46:42.471183963 +0000
++++ b/packages/core/src/renderer.ts	2026-11-11 11:56:54.684867660 +0000
+@@ -36,6 +36,7 @@
+   type ContextBufferHandle,
+   type SynchronizedOutput,
+ } from "./zig.js"
++import { nativeConstants } from "./native-abi.generated.js"
+ import { NativeSession } from "./NativeSession.js"
+ import { NativeScene } from "./NativeScene.js"
+ import { TerminalConsole, type ConsoleOptions, capture } from "./console.js"
+@@ -175,6 +176,12 @@
+   // Raw is the default. File requires a local terminal with medium and upload ACK support.
+   kittyImageTransport?: KittyImageTransport
+ 
++  // Write OSC 8 hyperlinks (true) or never (false), whatever terminal detection says. Omitted: follow detection
++  // (XTVERSION, TERM, TERM_PROGRAM, FORCE_HYPERLINK). Either way the native renderer refuses any link URL that is
++  // longer than 2048 bytes, holds a control byte (C0, DEL, C1: no ESC, BEL or ST) or has a scheme other than
++  // http, https or mailto; such text is drawn without a link.
++  hyperlinks?: boolean
++
+   // How colors are written. See `ColorMode`. When omitted: "mono" if NO_COLOR is set to a non-empty value in the
+   // environment native detection sees (forwarded process env, or `environment`), else "auto".
+   colorMode?: ColorMode
+@@ -1545,6 +1552,7 @@
+     this.lib = this.nativeSession.renderLib
+     try {
+       this.applyColorMode(initialColorMode)
++      if (config.hyperlinks !== undefined) this.applyHyperlinks(config.hyperlinks)
+       const kittyConfig = config.useKittyKeyboard ?? {}
+       this.nativeKittyKeyboardFlags = buildKittyKeyboardFlags(kittyConfig)
+ 
+@@ -4547,6 +4555,30 @@
+     this.emit(CliRenderEvents.DEBUG_OVERLAY_TOGGLE, this.debugOverlay.enabled)
+   }
+ 
++  /**
++   * Overrides hyperlink detection: true writes OSC 8 links, false never does, null returns to detection. The
++   * choice is reported as `capabilities.hyperlinks`. Link URLs are validated natively either way.
++   */
++  public setHyperlinks(enabled: boolean | null): void {
++    this.applyHyperlinks(enabled)
++    const previous = JSON.stringify(this._capabilities)
++    this._capabilities = this.nativeSession.getCapabilities()
++    if (JSON.stringify(this._capabilities) !== previous) this.emit(CliRenderEvents.CAPABILITIES, this._capabilities)
++    this.forceFullRepaintRequested = true
++    this.requestRender()
++  }
++
++  private applyHyperlinks(enabled: boolean | null): void {
++    if (enabled !== null && typeof enabled !== "boolean") throw new TypeError("hyperlinks must be a boolean or null")
++    const mode =
++      enabled === null
++        ? nativeConstants.OT_HYPERLINKS_AUTO
++        : enabled
++          ? nativeConstants.OT_HYPERLINKS_ON
++          : nativeConstants.OT_HYPERLINKS_OFF
++    this.lib.sessionSetHyperlinks(this.nativeSession.context, this.nativeSession.session, mode)
++  }
++
+   /** How colors are written. See `ColorMode`. */
+   public get colorMode(): ColorMode {
+     return this._colorMode
+diff -ruN a/packages/core/src/tests/renderer.hyperlinks-option.test.ts b/packages/core/src/tests/renderer.hyperlinks-option.test.ts
+--- a/packages/core/src/tests/renderer.hyperlinks-option.test.ts	1970-01-01 00:00:00.000000000 +0000
++++ b/packages/core/src/tests/renderer.hyperlinks-option.test.ts	2026-11-11 12:33:05.867200266 +0000
+@@ -0,0 +1,141 @@
++import { afterEach, test } from "bun:test"
++import assert from "node:assert/strict"
++import { StyledText } from "../lib/styled-text.js"
++import { TextRenderable } from "../renderables/Text.js"
++import type { CliRendererConfig } from "../renderer.js"
++import { ManualClock } from "../testing/manual-clock.js"
++import { createTestRenderer, type TestRendererSetup } from "../testing/test-renderer.js"
++import { RecordingWriteStream } from "../testing/test-streams.js"
++import { MAX_LINK_URL_BYTES } from "../zig.js"
++
++const setups: TestRendererSetup[] = []
++const kitty = "\x1bP>|kitty 0.41.0\x1b\\"
++
++afterEach(async () => {
++  for (const { renderer } of setups.splice(0)) {
++    renderer.destroy()
++    await renderer.closed
++  }
++})
++
++// A remote terminal that reported nothing, so detection alone never enables OSC 8.
++async function setup(config: Partial<CliRendererConfig> = {}, width = 40) {
++  const stdout = new RecordingWriteStream(width, 2)
++  const target = await createTestRenderer({
++    width,
++    height: 2,
++    stdout: stdout as unknown as NodeJS.WriteStream,
++    bufferedOutput: "stdout",
++    remote: true,
++    clock: new ManualClock(),
++    ...config,
++  })
++  setups.push(target)
++  await target.renderer.setupTerminal()
++  stdout.clear()
++  const take = () => {
++    const text = stdout.text()
++    stdout.clear()
++    return text
++  }
++  return { ...target, take }
++}
++
++function openings(output: string) {
++  return [...output.matchAll(/\x1b\]8;id=(\d+);([^\x1b]*)\x1b\\/g)].map((match) => match[2])
++}
++
++function link(target: TestRendererSetup, url: string, text = "label") {
++  const renderable = new TextRenderable(target.renderer, {
++    selectable: false,
++    content: new StyledText([{ __isChunk: true, text, link: { url } }]),
++  })
++  target.renderer.root.add(renderable)
++  return renderable
++}
++
++test("hyperlinks: true writes OSC 8 without any terminal detection", async () => {
++  const target = await setup({ hyperlinks: true })
++  assert.equal(target.renderer.capabilities?.hyperlinks, true)
++  link(target, "https://example.test/a")
++  await target.renderOnce()
++  const output = target.take()
++  assert.deepEqual(openings(output), ["https://example.test/a"])
++  assert.ok(output.includes("\x1b]8;;\x1b\\"), "the link is closed")
++})
++
++test("hyperlinks: false writes no OSC 8 even after a hyperlink terminal identifies itself", async () => {
++  const target = await setup({ hyperlinks: false })
++  link(target, "https://example.test/a")
++  target.renderer.stdin.emit("data", Buffer.from(kitty))
++  await target.renderOnce()
++  assert.deepEqual(openings(target.take()), [])
++  assert.equal(target.renderer.capabilities?.hyperlinks, false)
++})
++
++test("setHyperlinks switches at runtime; null returns to detection", async () => {
++  const target = await setup()
++  link(target, "https://example.test/a")
++  await target.renderOnce()
++  assert.deepEqual(openings(target.take()), [])
++  target.renderer.setHyperlinks(true)
++  await target.renderOnce()
++  assert.deepEqual(openings(target.take()), ["https://example.test/a"])
++  target.renderer.setHyperlinks(null)
++  assert.equal(target.renderer.capabilities?.hyperlinks, false)
++})
++
++test("the native boundary refuses unsafe link URLs and keeps the text", async () => {
++  const refused = [
++    "javascript:alert(1)",
++    "file:///etc/passwd",
++    "ftp://example.test/",
++    "data:text/html,x",
++    "ssh://example.test",
++    "https://example.test/\x1b]52;c;eA==\x07",
++    "https://example.test/\x07",
++    "https://example.test/\x1b\\",
++    "https://example.test/\u009c",
++    "https://example.test/\x7f",
++    "https://example.test/a\nb",
++    "https://example.test/" + "a".repeat(2049 - "https://example.test/".length),
++    "noscheme",
++    ":empty-scheme",
++  ]
++  for (const url of refused) {
++    const target = await setup({ hyperlinks: true })
++    link(target, url, "kept")
++    await target.renderOnce()
++    const output = target.take()
++    assert.deepEqual(openings(output), [], `no link for ${JSON.stringify(url.slice(0, 40))}`)
++    assert.ok(!output.includes("\x1b]8;"), `no OSC 8 at all for ${JSON.stringify(url.slice(0, 40))}`)
++    assert.ok(target.captureCharFrame().includes("kept"), "the text is still drawn")
++  }
++})
++
++test("http, https and mailto URLs up to 2048 bytes are linked", async () => {
++  assert.equal(MAX_LINK_URL_BYTES, 2048)
++  const long = "https://example.test/" + "a".repeat(2048 - "https://example.test/".length)
++  for (const url of ["http://example.test/", "HTTPS://example.test/x?y=1;z", "mailto:someone@example.test", long]) {
++    const target = await setup({ hyperlinks: true })
++    link(target, url)
++    await target.renderOnce()
++    assert.deepEqual(openings(target.take()), [url])
++  }
++})
++
++test("a custom-scheme link stays resolvable in the app but is never written as OSC 8", async () => {
++  const target = await setup({ hyperlinks: true })
++  link(target, "custom+v1://target")
++  await target.renderOnce()
++  assert.equal(target.renderer.getLinkAt(0, 0), "custom+v1://target")
++  assert.ok(!target.take().includes("\x1b]8;"))
++})
++
++test("a URL with a control byte gets no link at all", async () => {
++  const target = await setup({ hyperlinks: true })
++  link(target, "https://example.test/\x1b]52;c;eA==\x07")
++  await target.renderOnce()
++  assert.equal(target.renderer.getLinkAt(0, 0), null)
++  assert.ok(!target.take().includes("\x1b]8;"))
++})
+diff -ruN a/packages/core/src/zig.ts b/packages/core/src/zig.ts
+--- a/packages/core/src/zig.ts	2026-11-11 11:27:24.138950727 +0000
++++ b/packages/core/src/zig.ts	2026-11-11 12:32:52.041913617 +0000
+@@ -116,8 +116,22 @@
+ declare const nativeContextBrand: unique symbol
+ export type NativeContextHandle = { readonly [nativeContextBrand]: true }
+ 
+-/** Native hyperlink URL slot bound. Longer URLs fail allocation. */
+-export const MAX_LINK_URL_BYTES = 512
++/** Native hyperlink URL bound. Longer URLs produce no link (the text is kept). */
++export const MAX_LINK_URL_BYTES = 2048
++
++const linkUrlEncoder = new TextEncoder()
++
++/**
++ * Whether native styled text keeps a link for this URL (native `link.isStorableUrl`): 1-2048 UTF-8 bytes, none
++ * below 0x20, 0x7f or 0x80-0x9f. Any scheme; only http, https and mailto are ever written as OSC 8 hyperlinks.
++ */
++export function isStorableLinkUrl(url: string): boolean {
++  if (url.length === 0 || url.length > MAX_LINK_URL_BYTES) return false
++  const bytes = linkUrlEncoder.encode(url)
++  if (bytes.byteLength > MAX_LINK_URL_BYTES) return false
++  for (const byte of bytes) if (byte < 0x20 || byte === 0x7f || (byte >= 0x80 && byte <= 0x9f)) return false
++  return true
++}
+ 
+ // Struct outputs use `buffer` instead of `ptr`: the call is cheaper, and `buffer` rejects a non-view with a TypeError
+ // where `ptr` would accept a number as a raw address. Bun 1.3 rejects ArrayBuffer and DataView for `buffer`, so keep one
+@@ -6529,6 +6543,14 @@
+     )
+   }
+ 
++  /** mode: OT_HYPERLINKS_AUTO, OT_HYPERLINKS_ON or OT_HYPERLINKS_OFF. */
++  public sessionSetHyperlinks(context: NativeContextHandle, session: SessionHandle, mode: number): void {
++    const handle = encodeContextHandle(context, session)
++    const code = toSafeFFIU32Length(mode, "Session hyperlinks mode")
++    const pointer = this.nativeContextPointer(context, "ot_session_set_hyperlinks")
++    nativeResult("ot_session_set_hyperlinks", this.opentui.symbols.ot_session_set_hyperlinks(pointer, handle, code))
++  }
++
+   public sessionSetColorMode(context: NativeContextHandle, session: SessionHandle, mode: number): void {
+     const handle = encodeContextHandle(context, session)
+     const code = toSafeFFIU32Length(mode, "Session color mode")
+diff -ruN a/packages/native/include/opentui.h b/packages/native/include/opentui.h
+--- a/packages/native/include/opentui.h	2026-11-11 11:46:37.102587661 +0000
++++ b/packages/native/include/opentui.h	2026-11-11 12:32:52.039388228 +0000
+@@ -987,8 +987,11 @@
+  * Rejection preserves accepted content and resources. No style handles.
+  * Each array may be NULL only when its count is zero. link_offset and
+  * link_byte_count select bytes in urls; without LINK both must be zero. URLs are
+- * copied raw metadata, not parsed or normalized. Empty URLs, URLs over 512 bytes,
+- * and chunks with zero independently measured width produce no link. Oversized
++ * copied raw metadata, not parsed or normalized. Empty URLs, URLs over 2048 bytes,
++ * URLs holding a byte below 0x20, 0x7f or 0x80-0x9f (so no ESC, BEL or ST), and
++ * chunks with zero independently measured width produce no link; their text is
++ * kept. Any scheme is stored, but only http, https and mailto (ASCII
++ * case-insensitive) are ever written as OSC 8 hyperlinks. Oversized
+  * URLs are not truncated. URLs and their references are prepared before publication;
+  * rejection preserves accepted text, styles, and links. urls may be NULL only
+  * when url_byte_count is zero. Link IDs stay local to the owning Context. */
+@@ -2790,7 +2793,7 @@
+ 
+ /* Copy a live interned hyperlink URL. Zero capacity reports the byte count.
+  * Nonzero capacity must fit that count; out_count is the copied byte count.
+- * bytes may be NULL only when capacity is zero. URLs are at most 512 bytes.
++ * bytes may be NULL only when capacity is zero. URLs are at most 2048 bytes.
+  * Unknown or retired IDs return OT_INVALID_ARGUMENT. Outputs are unchanged on
+  * rejection. Owner-thread and busy-operation rules apply. */
+ ot_status ot_context_get_link_url(ot_context *context, uint32_t link_id,
+@@ -3140,6 +3143,18 @@
+  * hitgrid_<timestamp>.txt in the working directory. */
+ ot_status ot_session_set_debug_overlay(ot_context *, const ot_handle *session, uint32_t enabled, uint32_t corner);
+ 
++#define OT_HYPERLINKS_AUTO UINT32_C(0)
++#define OT_HYPERLINKS_ON UINT32_C(1)
++#define OT_HYPERLINKS_OFF UINT32_C(2)
++
++/* Whether the attached renderer writes OSC 8 hyperlinks. AUTO (the default)
++ * follows terminal detection (XTVERSION, TERM, TERM_PROGRAM, FORCE_HYPERLINK).
++ * ON and OFF override detection and are reported as the hyperlinks capability.
++ * Every URL is checked again when it is written: one with a control byte, over
++ * 2048 bytes, or a scheme other than http, https or mailto opens no hyperlink. Requires an open Session with an attached renderer; the next
++ * frame repaints every cell. */
++ot_status ot_session_set_hyperlinks(ot_context *, const ot_handle *session, uint32_t mode);
++
+ #define OT_COLOR_MODE_AUTO UINT32_C(0)
+ #define OT_COLOR_MODE_TRUECOLOR UINT32_C(1)
+ #define OT_COLOR_MODE_ANSI256 UINT32_C(2)
+diff -ruN a/packages/native/src/context-abi.zig b/packages/native/src/context-abi.zig
+--- a/packages/native/src/context-abi.zig	2026-11-11 11:46:37.113539321 +0000
++++ b/packages/native/src/context-abi.zig	2026-11-11 13:01:39.317852095 +0000
+@@ -912,6 +912,21 @@
+     return c.OT_OK;
+ }
+ 
++pub fn ot_session_set_hyperlinks(context: ?*ContextHandle, session_ptr: ?*const c.ot_handle, mode: u32) callconv(.c) c.ot_status {
++    const status = sessionContextStatus(context);
++    if (status != c.OT_OK) return status;
++    const owner = context.?;
++    const id = session_ptr orelse return sessionError(owner, error.InvalidOptions);
++    const forced: ?bool = switch (mode) {
++        c.OT_HYPERLINKS_AUTO => null,
++        c.OT_HYPERLINKS_ON => true,
++        c.OT_HYPERLINKS_OFF => false,
++        else => return sessionError(owner, error.InvalidOptions),
++    };
++    owner.core.sessionSetHyperlinks(handleFromC(id.*), forced) catch |err| return sessionError(owner, err);
++    return c.OT_OK;
++}
++
+ pub fn ot_session_set_color_mode(context: ?*ContextHandle, session_ptr: ?*const c.ot_handle, mode: u32) callconv(.c) c.ot_status {
+     const status = sessionContextStatus(context);
+     if (status != c.OT_OK) return status;
+@@ -3077,6 +3092,9 @@
+     try std.testing.expectEqual(c.OT_INVALID_ARGUMENT, ot_session_set_color_mode(handle, &session, c.OT_COLOR_MODE_MONO + 1));
+     try std.testing.expectEqual(c.OT_WRONG_KIND, ot_session_set_color_mode(handle, &buffer, c.OT_COLOR_MODE_ANSI16));
+     try std.testing.expectEqual(c.OT_OK, ot_session_set_color_mode(handle, &session, c.OT_COLOR_MODE_ANSI16));
++    try std.testing.expectEqual(c.OT_INVALID_ARGUMENT, ot_session_set_hyperlinks(handle, &session, c.OT_HYPERLINKS_OFF + 1));
++    try std.testing.expectEqual(c.OT_WRONG_KIND, ot_session_set_hyperlinks(handle, &buffer, c.OT_HYPERLINKS_ON));
++    try std.testing.expectEqual(c.OT_OK, ot_session_set_hyperlinks(handle, &session, c.OT_HYPERLINKS_ON));
+     try std.testing.expectEqual(c.OT_OK, ot_session_update_stats(handle, &session, 1.5, 60, 0.25));
+     try std.testing.expectEqual(c.OT_OK, ot_session_update_memory_stats(handle, &session, 1, 2, 3));
+     const config: c.ot_scene_frame_options = .{
+@@ -4379,7 +4397,7 @@
+     linked.flags = c.OT_SCENE_TEXT_LINK;
+     linked.link_offset = 1;
+     linked.link_byte_count = 3;
+-    var urls = [_]u8{ '_', 0xff, 0, 0x1b };
++    var urls = [_]u8{ '_', 'x', ':', 'y' };
+     const text = (try owner.raw().getRenderable(node)).scene_node.?.text.?;
+     const kept = text.buffer.run_styles.keys()[0];
+     const epoch = text.buffer.getContentEpoch();
+@@ -4425,13 +4443,17 @@
+     try std.testing.expectEqual(c.OT_INVALID_ARGUMENT, ot_scene_set_styled_text(handle, &id, "next", 4, &.{ linked, invalid_tail }, 2, &urls, urls.len));
+     try std.testing.expectEqual(c.OT_INVALID_ARGUMENT, ot_scene_set_styled_text(handle, &id, "a\xc3\xa9b", 4, &.{ linked, linked }, 2, &urls, urls.len));
+     try std.testing.expectEqual(@as(u64, 0), owner.links.getTotalSlots());
++    // A URL holding control bytes (ESC, NUL, C1-range bytes) is accepted as text but gets no link.
++    var control_urls = [_]u8{ '_', 0xff, 0, 0x1b };
++    try std.testing.expectEqual(c.OT_OK, ot_scene_set_styled_text(handle, &id, "next", 4, &.{ linked, linked }, 2, &control_urls, control_urls.len));
++    try std.testing.expectEqual(@as(u64, 0), owner.links.getLiveSlotCount());
+     try std.testing.expectEqual(c.OT_OK, ot_scene_set_styled_text(handle, &id, "next", 4, &.{ linked, linked }, 2, &urls, urls.len));
+     @memset(&urls, '!');
+     try owner.sceneMoveNode(node, root, 0);
+     const frame = try owner.scenePaint(session, .{ 0, 0, 0, 255 }, false, 0);
+     const target = (try owner.raw().getSessionRenderer(session)).getNextBuffer();
+     const link_id = @import("ansi.zig").TextAttributes.getLinkId(target.get(0, 0).?.attributes);
+-    try std.testing.expectEqualStrings("\xff\x00\x1b", try owner.links.get(link_id));
++    try std.testing.expectEqualStrings("x:y", try owner.links.get(link_id));
+     try std.testing.expectEqual(link_id, @import("ansi.zig").TextAttributes.getLinkId(target.get(3, 0).?.attributes));
+     try std.testing.expectEqual(@as(u32, 2), try owner.links.getRefcount(link_id));
+     unlinked.flags = c.OT_SCENE_TEXT_FOREGROUND;
+@@ -5247,5 +5269,5 @@
+         if (@offsetOf(c.ot_scene_text_line, name) != @offsetOf(TextLine, name))
+             @compileError("ot_scene_text_line differs from scene.TextLine: " ++ name);
+     }
+-    if (@import("link.zig").MAX_URL_LENGTH != 512) @compileError("opentui.h documents 512-byte URLs");
++    if (@import("link.zig").MAX_URL_LENGTH != 2048) @compileError("opentui.h documents 2048-byte URLs");
+ }
+diff -ruN a/packages/native/src/context.zig b/packages/native/src/context.zig
+--- a/packages/native/src/context.zig	2026-11-11 11:27:14.268246286 +0000
++++ b/packages/native/src/context.zig	2026-11-11 12:32:52.037980089 +0000
+@@ -942,6 +942,15 @@
+         attached.setDebugOverlay(enabled, @fromBackingInt(@intCast(corner)));
+     }
+ 
++    pub fn sessionSetHyperlinks(self: *Context, handle: Handle, forced: ?bool) Error!void {
++        try self.beginMutation();
++        defer self.mutating = false;
++        const value = try self.getSession(handle);
++        try value.checkOpen();
++        const attached = value.renderer orelse return error.RendererNotAttached;
++        attached.setHyperlinksForced(forced);
++    }
++
+     pub fn sessionSetColorMode(self: *Context, handle: Handle, mode: u32) Error!void {
+         try self.beginMutation();
+         defer self.mutating = false;
+@@ -2659,8 +2668,9 @@
+             if (chunk.byte_count == 0) continue;
+             var attributes = chunk.attributes;
+             if (chunk.link_url) |url| {
+-                // Legacy styled text omits empty/oversized URLs and zero-width chunks.
+-                if (url.len != 0 and url.len <= link.MAX_URL_LENGTH and
++                // Legacy styled text omits zero-width chunks and URLs link.isStorableUrl refuses (empty, oversized,
++                // control bytes). The text is kept. The scheme is checked when an OSC 8 link is written.
++                if (link.isStorableUrl(url) and
+                     text.buffer.measureText(bytes[offset..][0..chunk.byte_count]) > 0)
+                 {
+                     const id = try prepared.links.trackUrl(url);
+diff -ruN a/packages/native/src/link.zig b/packages/native/src/link.zig
+--- a/packages/native/src/link.zig	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/native/src/link.zig	2026-11-11 12:32:52.036982757 +0000
+@@ -14,7 +14,7 @@
+ pub const SLOT_BITS: u5 = 16;
+ pub const GEN_MASK: u32 = (@as(u32, 1) << GEN_BITS) - 1;
+ pub const SLOT_MASK: u32 = (@as(u32, 1) << SLOT_BITS) - 1;
+-pub const MAX_URL_LENGTH: usize = 512;
++pub const MAX_URL_LENGTH: usize = 2048;
+ const RETIRED_GENERATION = GEN_MASK + 1;
+ 
+ pub const IdPayload = u32;
+@@ -25,6 +25,51 @@
+     generation: u32,
+ };
+ 
++/// Whether a URL may become a link at all. Checked where a URL enters (styled text): a refused URL gets no link id
++/// and its text is kept. Refused: empty or longer than MAX_URL_LENGTH; any byte below 0x20, 0x7f or 0x80-0x9f (C0
++/// and C1 controls, so ESC, BEL and both STs; UTF-8 continuation bytes in that range too, so a URL should be
++/// percent-encoded). Any scheme is kept: an app can still resolve a custom-scheme link (getLinkAt) itself.
++pub fn isStorableUrl(url: []const u8) bool {
++    if (url.len == 0 or url.len > MAX_URL_LENGTH) return false;
++    for (url) |byte| {
++        if (byte < 0x20 or byte == 0x7f or (byte >= 0x80 and byte <= 0x9f)) return false;
++    }
++    return true;
++}
++
++/// Whether a URL may be written to the terminal as an OSC 8 hyperlink: isStorableUrl and a scheme of http, https or
++/// mailto (ASCII case-insensitive). Checked by the renderer for every hyperlink it opens; a refused one opens none.
++pub fn isSafeUrl(url: []const u8) bool {
++    if (!isStorableUrl(url)) return false;
++    const colon = std.mem.findScalar(u8, url, ':') orelse return false;
++    const scheme = url[0..colon];
++    return std.ascii.eqlIgnoreCase(scheme, "http") or
++        std.ascii.eqlIgnoreCase(scheme, "https") or
++        std.ascii.eqlIgnoreCase(scheme, "mailto");
++}
++
++test "isSafeUrl accepts http, https and mailto and refuses controls, other schemes and long URLs" {
++    for ([_][]const u8{ "https://example.test/", "http://a", "HTTPS://A.TEST/x?y=1;z", "mailto:a@example.test", "https://example.test/caf\xc3\xa9" }) |url| {
++        try std.testing.expect(isSafeUrl(url));
++    }
++    for ([_][]const u8{
++        "",                              "javascript:alert(1)",        "file:///etc/passwd",      "ftp://x",
++        "noscheme",                      ":x",                         "https://a/\x1b]52;c;x\x07", "https://a/\x07",
++        "https://a/\x1b\\",             "https://a/\xc2\x9c",          "https://a/\x9c",          "https://a/\x7f",
++        "https://a/\x00",                "https://a/\n",               "https://a/\x85",
++    }) |url| {
++        try std.testing.expect(!isSafeUrl(url));
++    }
++    var long: [MAX_URL_LENGTH + 1]u8 = undefined;
++    @memset(&long, 'a');
++    @memcpy(long[0..8], "https://");
++    try std.testing.expect(isSafeUrl(long[0..MAX_URL_LENGTH]));
++    try std.testing.expect(!isSafeUrl(&long));
++    try std.testing.expect(isStorableUrl("custom+v1://target"));
++    try std.testing.expect(!isSafeUrl("custom+v1://target"));
++    try std.testing.expect(!isStorableUrl("custom://a\x1b"));
++}
++
+ /// Simple link pool for storing URL strings with reusable IDs
+ pub const LinkPool = struct {
+     allocator: std.mem.Allocator,
+diff -ruN a/packages/native/src/renderer.zig b/packages/native/src/renderer.zig
+--- a/packages/native/src/renderer.zig	2026-11-11 11:46:37.107300057 +0000
++++ b/packages/native/src/renderer.zig	2026-11-11 11:56:29.345689414 +0000
+@@ -780,6 +780,20 @@
+         }
+     }
+ 
++    /// Overrides hyperlink detection (null returns to it) and repaints every cell on the next frame.
++    pub fn setHyperlinksForced(self: *CliRenderer, forced: ?bool) void {
++        if (self.terminal.hyperlinks_forced == forced) return;
++        self.terminal.hyperlinks_forced = forced;
++        self.force_full_repaint = true;
++    }
++
++    /// Opens an OSC 8 hyperlink. A URL link.isSafeUrl refuses opens nothing (the caller draws the text without a link).
++    fn openHyperlink(writer: anytype, id: u32, url: []const u8) bool {
++        if (!link.isSafeUrl(url)) return false;
++        writer.print("\x1b]8;id={d};{s}\x1b\\", .{ id, url }) catch {};
++        return true;
++    }
++
+     /// Selects how colors are written and repaints every cell on the next frame.
+     pub fn setColorMode(self: *CliRenderer, mode: ColorMode) void {
+         if (self.color_mode == mode) return;
+@@ -1586,7 +1600,7 @@
+                     if (currentLinkId != 0) {
+                         const lp = snapshot.link_pool;
+                         if (lp.get(currentLinkId)) |url_bytes| {
+-                            writer.print("\x1b]8;id={d};{s}\x1b\\", .{ currentLinkId, url_bytes }) catch {};
++                            if (!openHyperlink(writer, currentLinkId, url_bytes)) currentLinkId = 0;
+                         } else |_| {
+                             currentLinkId = 0;
+                         }
+@@ -2802,7 +2816,7 @@
+                     if (currentLinkId != 0) {
+                         const lp = self.nextRenderBuffer.link_pool;
+                         if (lp.get(currentLinkId)) |url_bytes| {
+-                            writer.print("\x1b]8;id={d};{s}\x1b\\", .{ currentLinkId, url_bytes }) catch {};
++                            if (!openHyperlink(writer, currentLinkId, url_bytes)) currentLinkId = 0;
+                         } else |_| {
+                             // Link not found, treat as no link
+                             currentLinkId = 0;
+@@ -2933,12 +2947,14 @@
+                         self.emitColor(writer, cell.fg, false);
+                         self.emitColor(writer, cell.bg, true);
+                         ansi.TextAttributes.applyAttributesOutputWriter(writer, cell.attributes) catch {};
+-                        const replay_link_id = if (hyperlinksEnabled) ansi.TextAttributes.getLinkId(cell.attributes) else 0;
++                        var replay_link_id = if (hyperlinksEnabled) ansi.TextAttributes.getLinkId(cell.attributes) else 0;
+                         if (replay_link_id != 0) {
+                             const lp = self.nextRenderBuffer.link_pool;
+                             if (lp.get(replay_link_id)) |url_bytes| {
+-                                writer.print("\x1b]8;id={d};{s}\x1b\\", .{ replay_link_id, url_bytes }) catch {};
+-                            } else |_| {}
++                                if (!openHyperlink(writer, replay_link_id, url_bytes)) replay_link_id = 0;
++                            } else |_| {
++                                replay_link_id = 0;
++                            }
+                         }
+                         if (gp.isGraphemeChar(cell.char)) {
+                             if (self.pool.get(gp.graphemeIdFromChar(cell.char))) |bytes| {
+diff -ruN a/packages/native/src/terminal.zig b/packages/native/src/terminal.zig
+--- a/packages/native/src/terminal.zig	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/native/src/terminal.zig	2026-11-11 11:56:16.090210473 +0000
+@@ -239,6 +239,9 @@
+ mode_2027: ?u8 = null,
+ host_env_hyperlinks: bool = false,
+ hyperlinks_override: ?bool = null,
++/// The host's explicit hyperlink choice (ot_session_set_hyperlinks). Detection never resets it; getCapabilities
++/// reports it in place of the detected value.
++hyperlinks_forced: ?bool = null,
+ 
+ state: struct {
+     alt_screen: bool = false,
+@@ -1572,7 +1575,9 @@
+ }
+ 
+ pub fn getCapabilities(self: *Terminal) Capabilities {
+-    return self.caps;
++    var caps = self.caps;
++    if (self.hyperlinks_forced) |enabled| caps.hyperlinks = enabled;
++    return caps;
+ }
+ 
+ pub fn setMousePointerStyle(self: *Terminal, style: MousePointerStyle) void {

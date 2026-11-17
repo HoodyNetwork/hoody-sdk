@@ -1,0 +1,18 @@
+/* UpgradeLink: the near/full dot before the label; the link and button looks are Link's and Button's. */
+.dotNear,
+.dotFull {
+  display: inline-block;
+  inline-size: 6px;
+  block-size: 6px;
+  margin-inline-end: var(--sp-1);
+  border-radius: var(--r-round);
+  vertical-align: middle;
+}
+
+.dotNear {
+  background: var(--hx-warn);
+}
+
+.dotFull {
+  background: var(--hx-danger);
+}

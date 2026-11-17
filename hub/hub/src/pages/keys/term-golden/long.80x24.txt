@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Keys and tokens                             ▸ Use with your agent   + New key
+ A key lets your agent, the CLI or the SDK act for you. Give each one its own
+ key, with an end date.
+ ▸ API keys 58 keys    SSH keys    Shared access 0 shares
+ ──────────────────────────────────────────────────────────────────────────────
+ i Keys that work in Personal.                                [Show all realms]
+ / Search               Filters (1)                                           █
+ 50 keys · 1 expired  ↻ Refresh  View options                                 █
+   Name ↑            Key            Works in            State                 █
+ ▌ backup-2          hdy_a708…      All realms          ● Active            ⋯██
+   backup-3          hdy_fa8c…      All realms          ● Active            ⋯██
+   backup-5          hdy_a195…      All realms          ● Active            ⋯██
+   backup-6          hdy_f519…      All realms          ● Active            ⋯█▀
+   backup-7          hdy_489e…      All realms          ● Active            ⋯█
+   backup-8          hdy_9c22…      All realms          ● Active            ⋯█
+   ci-2              hdy_f1bb…      All realms          ● Active            ⋯█
+   ci-3              hdy_4540…      All realms          ● Active            ⋯█
+   ci-4              hdy_98c4…      All realms          ● Active            ⋯█
+   ci-5              hdy_ec48…      All realms          ● Active            ⋯█
+   ci-6              hdy_3fcd…      All realms          ● Active            ⋯█
+   ci-7              hdy_9351…      All realms          ● Active            ⋯█
+   ci-8              hdy_e6d5…      All realms          ● Active            ⋯█
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

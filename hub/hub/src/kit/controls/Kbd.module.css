@@ -1,0 +1,57 @@
+/* The key chip: mono, one key cap tall (`--kbd-h`), a hairline, the small radius, baseline-aligned.
+   Colours come from the surrounding text so one chip reads on cards, dark tooltips and accent buttons. The text
+   is never dimmed (axe color-contrast): it is exactly as readable as the text around it. */
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: var(--kbd-h);
+  height: var(--kbd-h);
+  padding-inline: var(--sp-1);
+  border: var(--bw) solid color-mix(in srgb, currentcolor 22%, transparent);
+  border-radius: var(--r-1);
+  background: color-mix(in srgb, currentcolor 7%, transparent);
+  color: inherit;
+  font: var(--fw-regular) 11px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+/* Inside a button, a menu row or a list option: a quiet hairline, no fill, so it never outshines
+   the label. */
+button .kbd,
+[role='button'] .kbd,
+[role='menuitem'] .kbd,
+[role='menuitemradio'] .kbd,
+[role='menuitemcheckbox'] .kbd,
+[role='option'] .kbd {
+  border-color: color-mix(in srgb, currentcolor 30%, transparent);
+  background: transparent;
+}
+
+.shortcut {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  vertical-align: baseline;
+}
+
+.combo {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-half);
+  font: inherit;
+}
+
+/* Touch without hover (a phone or tablet by finger): a key badge on a control names a key the person
+   cannot press, so buttons and menu items drop it. Keys in prose (hints, the shortcuts sheet, tooltips)
+   stay: they explain keys rather than label a tap. The hidden badge also leaves the control's spoken
+   name there (the label alone); an aria-keyshortcuts attribute is untouched, and a fine pointer keeps
+   every badge. */
+@media (pointer: coarse) and (hover: none) {
+  :is(button, [role='button'], [role='menuitem'], [role='menuitemcheckbox'], [role='menuitemradio']) :is(.kbd, .shortcut) {
+    display: none;
+  }
+}

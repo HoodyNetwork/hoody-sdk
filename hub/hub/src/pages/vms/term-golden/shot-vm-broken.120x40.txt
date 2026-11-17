@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines › batch
+ Computers             │  batch  ● Failed                                                                   Start   [⋯]
+ Files                 │  A VM inside atlas.
+ Bots                  │
+ Board                 │  │ ✗ Last problem: Not enough memory is left in this computer.
+ Demo                  │
+ Vault                 │  ▸Overview  Screen  Ports  Storage  Snapshots  Settings  Logs
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Programs              │  │ Overview                                                                                  │
+ Schedules             │  │ Memory                  32 GB                 Disk connection         VirtIO              │
+ Scripts               │  │ CPUs                    8                     Screen                  Off                 │
+ Logs                  │  │ Disk                    20 GB                 Open ports              0                   │
+ Tunnels               │  │ Starts with             UEFI                  Starts with the         No                  │
+ Notes                 │  │ TPM                     No                    computer                                    │
+ AI                    │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+▌VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

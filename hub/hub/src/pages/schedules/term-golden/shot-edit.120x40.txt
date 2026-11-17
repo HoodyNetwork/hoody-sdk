@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Edit Nightly backup                                                     Esc ×
+ Home                  │  Schedules     ┃ Runs a command on a timer.
+ Computers             │  15 schedules o┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  9 programs run┃
+ Bots                  │                ┃   Name
+ Board                 │  / Search sched┃   ┃ Nightly backup
+ Demo                  │  ‹ Any ›  Comma┃
+ Vault                 │  15 schedules  ┃   Command
+                       │                ┃   │ Unchanged
+On atlas ▾             │    Name        ┃   Leave empty to keep the current command.
+ Programs              │  ›   ping-api  ┃
+▌Schedules             │    ! queue-drai┃   Runs
+ Scripts               │      Watch the ┃   │ Every day ▾
+ Logs                  │    ! sync-photo┃
+ Tunnels               │      Nightly ba┃   Time
+ Notes                 │      nightly-di┃   │ 02:00
+ AI                    │      morning-ch┃
+ VMs                   │    ! POST hooks┃   ┌───────────────────────────────────────────────────────────────────────┐
+                       │      rotate-log┃   │ NEXT RUNS                                                             │
+Account                │      cleanup-tm┃   │ It runs at these times.                                               │
+ Plans & Billing       │    ! Unnamed lo┃   │ Times are on the computer's clock.                                    │
+ Referrals             │      archive   ┃   │ in 9 hours · 02:00 · your 18:00                                       │
+ Keys and tokens       │      old-report┃   │ tomorrow · Oct 25, 02:00 · your Oct 24, 18:00                         │
+ API                   │      poll.sh   ┃   │ in 2 days · Oct 26, 02:00 · your Oct 25, 18:00                        │
+ Notifications      26 │      warm-cache┃   │ in 3 days · Oct 27, 02:00 · your Oct 26, 18:00                        │
+ Account               │                ┃   │ in 4 days · Oct 28, 02:00 · your Oct 27, 18:00                        │
+                       │                ┃   └───────────────────────────────────────────────────────────────────────┘
+ + Rent servers        │                ┃
+ Guide                 │                ┃
+ Support               │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃
+                       │                ┃ ─────────────────────────────────────────────────────────────────────────────
+ Typing · Esc leaves the field · Ctrl+K ┃ [Cancel]  Save

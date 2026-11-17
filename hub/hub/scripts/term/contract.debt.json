@@ -1,0 +1,9 @@
+{
+  "note": "Obligations and any escapes failing when their rule started (scripts/term/contract.ts). It only shrinks: a fixed entry still listed fails the gate; `--update-debt` removes fixed entries and never adds one; `--write-debt` adds entries only with `--allow-growth`, which names each.",
+  "entries": [
+    "src/kit/pickers/PickerPanel.term.tsx: behavioural prop PickerPanel.onQuery not exercised",
+    "src/pages/apps/github/Ready.term.tsx: no scenario for Ready (src/pages/apps/github/Ready.scenario.ts)",
+    "src/pages/apps/github/Ready.term.tsx: unread prop Ready.narrow",
+    "src/shell/ComputerRequired.term.tsx: no scenario for ComputerRequired (src/shell/ComputerRequired.scenario.ts)"
+  ]
+}

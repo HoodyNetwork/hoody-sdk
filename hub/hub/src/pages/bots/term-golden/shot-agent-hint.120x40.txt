@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Use with your agent                                                     Esc ×
+ Home                  │  Bots          ┃ Hoody Agent, or any agent with the Hoody skill, can list your Bots,
+ Computers             │  Every Bot on y┃ send one a message, read its answer, and manage the links and keys that
+ Files                 │                ┃ reach it.
+▌Bots                  │  Bots          ┃ ─────────────────────────────────────────────────────────────────────────────
+ Board                 │  23            ┃ ▸ Prompts    Set up    Access    Can do                                     █
+ Demo                  │  on 2 computers┃ ────────────────────────────────────────────────────────────────────────────█
+ Vault                 │                ┃                                                                             █
+                       │  / Search      ┃                                                                             █
+On atlas ▾             │                ┃ Acts on                                                                     █
+ Programs              │  › C Chief     ┃ Realm     ■ Personal f1f1…f1f1                                              █
+ Schedules             │      Asked you ┃ Computer  Every computer in this realm                                      █
+ Scripts               │       · Runs th┃ Names the realm so your agent acts on the right one.                        █
+ Logs                  │       · Model H┃                                                                             █
+ Tunnels               │      Telegram S┃ Start here                                                                  █
+ Notes                 │    L Ledger    ┃ Work with my Bots                                                           █
+ AI                    │      Stopped at┃ Your agent asks you what you want before it does anything.                  █
+ VMs                   │       · cinder ┃                                                                             █
+                       │      Only here ┃  ✦ Ask Hoody Agent   ⧉ Copy for your agent                                  █
+Account                │    S Support   ┃
+ Plans & Billing       │      … Working ┃ Two ways to use it
+ Referrals             │       · atlas ·┃ Hoody Agent     No set-up. Ask Hoody Agent puts the prompt in the Agent's
+ Keys and tokens       │      Discord   ┃                 message box; it waits there until you press Send.
+ API                   │    D Digest    ┃ Your own agent  Copy the prompt and paste it in. Set your agent up once in
+ Notifications      26 │      2 messages┃                 Set up.
+ Account               │       · atlas ·┃
+                       │      Only here ┃  Use the Hoody skill.
+ + Rent servers        │    S Scout     ┃
+ Guide                 │      Last activ┃  Target
+ Support               │       · Model g┃  - Realm: "Personal" (id f1f1f1f1f1f1f1f1f1f1f1f1)
+                       │      Telegram  ┃  - Computers: every computer in this realm
+                       │    N Notes     ┃  If you cannot find this realm, stop and ask me.
+                       │      Last activ┃
+                       │       · Model H┃  Steps
+                       │      Only here ┃  1. Ask me which Bot and what I want: send it a message, answer what it is
+                       │                ┃  waiting on, or give it a public URL. Do nothing else until I answer.
+                       │  1–20 of 23 ‹ ›┃  2. Tell me your plan in one line and wait for my OK.
+                       │                ┃  3. Do it only on the Bots of the target above.
+                       │  Questions     ┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ Skills in the Guide                                         Hide on this page

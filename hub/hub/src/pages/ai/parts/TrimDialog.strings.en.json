@@ -1,0 +1,11 @@
+{
+  "trim.title": "Remove what follows?",
+  "trim.go": "Remove",
+  "trim.body": "This reply and everything before it stay. Everything after it is removed and cannot be brought back.",
+  "trim.blocked": "Settle its rename, close or delete first.",
+  "trim.busy": "A reply is running. Try again when it ends.",
+  "trim.cannot": "This chat cannot be cut here.",
+  "trim.gone": "This chat is not open on its computer, so nothing was removed.",
+  "trim.failed": "Nothing was removed.",
+  "trim.refused": "The agent did not remove anything."
+}

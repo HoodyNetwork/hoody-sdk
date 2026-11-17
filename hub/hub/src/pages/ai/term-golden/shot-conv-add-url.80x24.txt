@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  AI                          ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ [Back to chats] Plan the backup job                       · Idle [⋯] [Details]
+ atlas · Personal  /home/ada
+ [Hoody Free]
+─────┌────────────────────────────────────────────────────────────────────┐─────
+     │ Attach a web page                                            Esc × │
+     │ ────────────────────────────────────────────────────────────────── │
+ │ Yo│ The page is read on this chat's computer, not by the Hub, and      │
+ │ Ru│ added to your message as a file. Nothing is sent yet.              │
+     │                                                                    │
+ ✦ Ag│ Web address                                                        │
+ ▸ 3 │ ┃  https://example.com/article                                     │
+     │                                                                    │    █
+ ✗ Th│ Attach it                                                          │    █
+ mode│ (•) As Markdown                                                    │    █
+     │     The page's main text, cleaned up by a hidden browser on this   │    █
+ i Ho│     computer. Best for articles and docs.                          │    █
+ trus│ ( ) As it is                                                       │    █
+     │     The file exactly as the site sends it: HTML, JSON, plain text  │    █
+ ┌───│     or an image. Text up to 24 KB.                                 │───┐
+ │ Me│                                                                    │   │
+ └───│                                                 [Cancel]   Attach  │───┘
+ [+] └────────────────────────────────────────────────────────────────────┘ [▾]
+ Typing · Esc leaves the field · Ctrl+K commands

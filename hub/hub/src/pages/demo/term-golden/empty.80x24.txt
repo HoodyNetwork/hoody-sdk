@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                     ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+ Demo
+ Everything in one list, newest first.
+     ┌────────────────────────────────────────────────────────────────────┐
+     │ Your items live here                                               │
+     │                                                                    │
+     │ An item keeps one thing you track. Create the first one to see it  │
+     │ here.                                                              │
+     │                                                                    │
+     │  + New item                                                        │
+     └────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

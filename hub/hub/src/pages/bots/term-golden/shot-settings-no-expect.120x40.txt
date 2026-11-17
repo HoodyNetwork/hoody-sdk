@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Settings for Chief                                                                                    Esc ×
+ Home     ┃ Model, behaviour, guardrails and voice.
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │ The Bot itself        ┌─────────────────────────────────────────────────────────────────────────────────┐
+▌Bots     ┃ │ Model                 │ Guardrails and limits                                                           │
+ Board    ┃ │ Behaviour             │ Limits on the work this Bot and its new tasks may do. They aren't instructions  │
+ Demo     ┃ │ Voice                 │ to the Bot.                                                                     │
+ Vault    ┃ │ The helpers it        │ i This computer's agent is too old to change guardrails from here. Update it    │
+          ┃ │ starts                │   from Computers.                                                               │
+On atlas ▾┃ │ Helpers               │ ┌─────────────────────────────────────────────────────────────────────────────┐ │
+ Programs ┃ │▌Guardrails and        │ │                                                                             │ │
+ Schedules┃ │ limits                │ │ Rules                           │ Never delete data without asking.         │ │
+ Scripts  ┃ │ Advanced              │ │ One rule per line. Tasks          Stay inside the shop repository.          │ │
+ Logs     ┃                         │ │ already running keep the                                                    │ │
+ Tunnels  ┃                         │ │ limits they started with.                                                   │ │
+ Notes    ┃                         │ │                                                                             │ │
+ AI       ┃                         │ │ Check                           ‹ Strict (recommended) ›  Lenient    Off    │ │
+ VMs      ┃                         │ │ Work that may break a rule is                                               │ │
+          ┃                         │ │ refused, and so is work that                                                │ │
+Account   ┃                         │ │ can't be checked.                                                           │ │
+ Plans & B┃                         │ │                                                                             │ │
+ Referrals┃                         │ │ Tasks may use any computer      [■ on ]                                     │ │
+ Keys and ┃                         │ │ Turn it off to limit its tasks                                              │ │
+ API      ┃                         │ │ to the computers you list.                                                  │ │
+ Notificat┃                         │ │                                                                             │ │
+ Account  ┃                         │ └─────────────────────────────────────────────────────────────────────────────┘ │
+          ┃                         └─────────────────────────────────────────────────────────────────────────────────┘
+ + Rent se┃
+ Guide    ┃
+ Support  ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tab move ┃ [Discard] [Cancel]  Save

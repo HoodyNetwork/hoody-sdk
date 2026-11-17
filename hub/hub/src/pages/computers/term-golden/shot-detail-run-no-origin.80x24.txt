@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent  [+ Get a computer]
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ Computers  Esc
+ atlas  ● Running                                         [Open terminal ⇗] [⋯]
+ SG n12 · Home base · █  Personal ·  Current computer
+
+  Overview  Connect  Permissions  Ports & addresses  Desktop  Network ▸Run
+  Programs  Backups  Storage
+ ──────────────────────────────────────────────────────────────────────────────
+ Folder                                                                       █
+ │ /                                                                          █
+ ⇗ Browsing a folder tree is in the web Hub; here, type the path and pick from█
+ the entries offered. (on your Hub's web address)                             █
+ [c Copy link]                                                                █
+ /auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/computers                     █
+                                                                              ▀
+ │ Type a command [History]  ▷ Run
+
+ Runs once on the computer. Press Enter to run.
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

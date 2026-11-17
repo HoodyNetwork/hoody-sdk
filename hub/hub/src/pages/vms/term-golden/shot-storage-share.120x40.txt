@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines › files-1
+ Computers             │  files-1  ● Stopped                                                                Start   [⋯]
+ Files                 │  A VM inside atlas.
+ Bots                  │
+ Board                 │   Overview  Screen  Ports ▸Storage  Snapshots  Settings  Logs
+ Demo                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Storage                                                           + Make the disk bigger  │
+On atlas ▾             │  │ The VM's disk, its disc drives and its shared folder.                                     │
+ Programs              │  ││ ! The shared folder is over its size limit. The VM will not start until it is under the  │
+ Schedules             │  ││   limit or the limit is raised in Settings.                                              │
+ Scripts               │  │Size    20 GB                                  In use  12 GB of 10 GB                      │
+ Logs                  │  │  Drive                              Disc                                                  │
+ Tunnels               │  │› Drive 1                            Empty                                  [Insert a disc]│
+ Notes                 │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ AI                    │
+▌VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

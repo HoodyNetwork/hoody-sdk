@@ -1,0 +1,37 @@
+/* The inline options panel: its title is a group heading, a step above the field labels under it; its actions close
+   the form under a rule. */
+.panelTitle { margin: 0; font: var(--t-group); color: var(--hx-ink); }
+.panelFoot { padding-block-start: var(--sp-3); border-block-start: var(--bw) solid var(--hx-line); }
+.strip { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); padding: var(--sp-2) var(--sp-3); border-block-end: var(--bw) solid var(--hx-line); font: var(--t-small); color: var(--hx-muted); }
+.nameCell { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2); }
+.dim { color: var(--hx-muted); }
+.actions { display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-1); }
+.note { margin: 0; padding: var(--sp-2) var(--sp-3); font: var(--t-small); color: var(--hx-muted); border-block-end: var(--bw) solid var(--hx-line); }
+
+/* Row note in the action cell: the outcome stays on its row, not a toast. */
+.rowNote {
+  color: var(--hx-warn);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+}
+
+/* Find name cell: name, chips and the description inline on one line; detail and "also in" in the tooltip. */
+.findName {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.findTitle {
+  flex: none;
+  font-weight: var(--fw-medium);
+}
+
+.findDesc {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--hx-muted);
+  text-overflow: ellipsis;
+}

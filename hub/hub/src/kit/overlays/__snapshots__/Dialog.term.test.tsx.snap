@@ -1,0 +1,73 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`golden: a danger confirm at 80x24 and 120x40: confirm-80x24 1`] = `
+"The page behind                                                                 
+                                                                                
+                                                                                
+                                                                                
+          ┌──────────────────────────────────────────────────────────┐          
+          │ ! Delete schedule nightly-backup?                  Esc × │          
+          │ ──────────────────────────────────────────────────────── │          
+          │ It stops running. Its run history is kept for 30 days.   │          
+          │                                                          │          
+          │ • The next run at 02:00 does not happen.                 │          
+          │ • Runs in progress finish.                               │          
+          │                                                          │          
+          │                                       [Cancel]  [Delete] │          
+          └──────────────────────────────────────────────────────────┘          
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+"
+`;
+
+exports[`golden: a danger confirm at 80x24 and 120x40: confirm-120x40 1`] = `
+"The page behind                                                                                                         
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                              ┌──────────────────────────────────────────────────────────┐                              
+                              │ ! Delete schedule nightly-backup?                  Esc × │                              
+                              │ ──────────────────────────────────────────────────────── │                              
+                              │ It stops running. Its run history is kept for 30 days.   │                              
+                              │                                                          │                              
+                              │ • The next run at 02:00 does not happen.                 │                              
+                              │ • Runs in progress finish.                               │                              
+                              │                                                          │                              
+                              │                                       [Cancel]  [Delete] │                              
+                              └──────────────────────────────────────────────────────────┘                              
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+"
+`;

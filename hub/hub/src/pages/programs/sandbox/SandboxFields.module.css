@@ -1,0 +1,6 @@
+/* The sandbox fields: the resource limits pair in two columns at most: each takes half the
+   row less half the Row gap (gap 3), so a third never fits; below two minimum widths they stack, one per row. */
+.half {
+  flex: 1 1 calc((100% - var(--sp-3)) / 2);
+  min-width: min(100%, calc(4 * var(--sp-10)));
+}

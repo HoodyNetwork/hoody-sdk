@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Files                         ▸ Use with your agent  ‹ One pane ›  Two panes
+ The folders on your computers.
+ ▸ Browse    Storage    Transfers    Use from your PC                         █
+ ─────────────────────────────────────────────────────────────────────────────█
+ [Up one folder] │ ● SG atlas · █ Personal ▾ / › home › ada                   █
+                                              [Find] [New folder] [Upload] [⋯]█
+                                                                              █
+ Changes are turned off in this Hub session.                                  █
+                                                                              █
+ / Search               Filters               7 items  ↻ Refresh  View options█
+   [ ] Name                           Size Modified               Kind ↑      █
+ ▌ [ ] caf� Can't act on this              Oct 21, 2025, 6:13 AM  Folder     ⋯█
+   [ ] odd%dir Can't open here yet         Oct 22, 2025, 6:13 AM  Folder     ⋯█
+   [ ] projects                            Oct 23, 2025, 6:13 AM  Folder     ⋯█
+   [ ] bell\x07.txt                    3 B Oct 23, 2025, 4:13 AM  File       ⋯█
+   [ ] hosts-link                    220 B Oct 23, 2025, 3:13 AM  File       ⋯█
+   [ ] notes.txt                    1.2 KB Oct 23, 2025, 6:13 AM  File       ⋯▀
+   [ ] report.pdf                   471 KB Oct 23, 2025, 5:13 AM  File       ⋯
+
+ Questions
+ ▸ How do I open a computer's files on my own device?
+ ▸ How do I mount the files on Linux without a desktop?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Get a computer                                                   Esc ×
+ Comput┃ Pick one of your computers. The copy starts with the same files.
+ Your c┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Comp┃ ┌────────────────────────────────┐ ┌────────────────────────────────┐█
+ ──────┃ │ ( ) A new computer             │ │ (•) A copy of one of yours     │█
+ Comput┃ │     Debian 13, set up below.   │ │     Same files as the computer │█
+ / Sear┃ │                                │ │     you pick.                  │█
+ 8 comp┃ └────────────────────────────────┘ └────────────────────────────────┘█
+ › █ at┃                                                                      █
+    █ P┃ ┌───────────────────────────────────────────────────────────────────┐█
+   █ bo┃ │ YOU GET                                                           │█
+    █ A┃ │ A copy of cedar on n12, Singapore.                                │█
+   █ ce┃ │ Size     16 cores, 64 GB RAM, shared                              │█
+    █ P┃ │ Files    Same as cedar has now                                    │▀
+   █ du┃ │ Project  Home base                                                │
+    █ L┃ │ Realm    Personal                                                 │
+   █ em┃ └───────────────────────────────────────────────────────────────────┘
+    █ A┃
+   █ fj┃ ┌───────────────────────────────────────────────────────────────────┐
+    █ P┃ │ Computer                                                          │
+   █ gr┃ │ ┌───────────────────────────────────────────────────────────────┐ │
+    █ A┃ │ │                                                               │ │
+   █ ha┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ ● Unsaved changes                                 [Cancel]  Make copy

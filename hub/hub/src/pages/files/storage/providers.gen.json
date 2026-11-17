@@ -1,0 +1,3870 @@
+{
+  "types": [
+    "azureblob",
+    "azurefiles",
+    "b2",
+    "box",
+    "cloudinary",
+    "drive",
+    "dropbox",
+    "fichier",
+    "filefabric",
+    "filescom",
+    "ftp",
+    "gofile",
+    "google-cloud-storage",
+    "google-photos",
+    "hdfs",
+    "hidrive",
+    "http",
+    "iclouddrive",
+    "imagekit",
+    "internetarchive",
+    "jottacloud",
+    "koofr",
+    "linkbox",
+    "mailru",
+    "mega",
+    "netstorage",
+    "onedrive",
+    "opendrive",
+    "oracleobjectstorage",
+    "pcloud",
+    "pikpak",
+    "pixeldrain",
+    "premiumizeme",
+    "protondrive",
+    "putio",
+    "qingstor",
+    "quatrix",
+    "s3",
+    "seafile",
+    "sftp",
+    "sharefile",
+    "sia",
+    "smb",
+    "sugarsync",
+    "swift",
+    "ulozto",
+    "webdav",
+    "yandex",
+    "zoho"
+  ],
+  "generated": [
+    {
+      "id": "azureblob",
+      "label": "Microsoft Azure Blob Storage",
+      "fields": [
+        {
+          "key": "account",
+          "kind": "text",
+          "label": "Account",
+          "hint": "Azure Storage Account Name.",
+          "main": true
+        },
+        {
+          "key": "client_id",
+          "kind": "text",
+          "label": "Client ID",
+          "hint": "The ID of the client in use.",
+          "main": true
+        },
+        {
+          "key": "client_secret",
+          "kind": "secret",
+          "label": "Client secret",
+          "hint": "One of the service principal's client secrets",
+          "main": true
+        },
+        {
+          "key": "endpoint",
+          "kind": "text",
+          "label": "Endpoint",
+          "hint": "Endpoint for the service.",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "key",
+          "kind": "secret",
+          "label": "Key",
+          "hint": "Storage Account Shared Key.",
+          "main": true
+        },
+        {
+          "key": "password",
+          "kind": "secret",
+          "label": "Password",
+          "hint": "The user's password",
+          "main": true
+        },
+        {
+          "key": "sas_url",
+          "kind": "secret",
+          "label": "SAS URL",
+          "hint": "SAS URL for container level access only.",
+          "main": true
+        },
+        {
+          "key": "tenant",
+          "kind": "text",
+          "label": "Tenant",
+          "hint": "ID of the service principal's tenant. Also called its directory ID.",
+          "main": true
+        },
+        {
+          "key": "username",
+          "kind": "text",
+          "label": "Username",
+          "hint": "User name (usually an email address)",
+          "main": true
+        },
+        {
+          "key": "access_tier",
+          "kind": "text",
+          "label": "Access tier",
+          "hint": "Access tier of blob: hot, cool, cold or archive."
+        },
+        {
+          "key": "archive_tier_delete",
+          "kind": "boolean",
+          "label": "Archive tier delete",
+          "default": false,
+          "hint": "Delete archive tier blobs before overwriting."
+        },
+        {
+          "key": "chunk_size",
+          "kind": "text",
+          "label": "Chunk size",
+          "default": "4194304",
+          "hint": "Upload chunk size."
+        },
+        {
+          "key": "client_certificate_password",
+          "kind": "secret",
+          "label": "Client certificate password",
+          "hint": "Password for the certificate file (optional)."
+        },
+        {
+          "key": "client_send_certificate_chain",
+          "kind": "boolean",
+          "label": "Client send certificate chain",
+          "default": false,
+          "hint": "Send the certificate chain when using certificate auth."
+        },
+        {
+          "key": "copy_concurrency",
+          "kind": "int",
+          "label": "Copy concurrency",
+          "default": 512,
+          "hint": "Concurrency for multipart copy."
+        },
+        {
+          "key": "copy_cutoff",
+          "kind": "text",
+          "label": "Copy cutoff",
+          "default": "8388608",
+          "hint": "Cutoff for switching to multipart copy."
+        },
+        {
+          "key": "copy_total_concurrency",
+          "kind": "int",
+          "label": "Copy total concurrency",
+          "default": 0,
+          "hint": "Global concurrency limit for multipart copy chunks."
+        },
+        {
+          "key": "decompress",
+          "kind": "boolean",
+          "label": "Decompress",
+          "default": false,
+          "hint": "If set this will decompress gzip encoded objects."
+        },
+        {
+          "key": "delete_snapshots",
+          "kind": "select",
+          "label": "Delete snapshots",
+          "options": [
+            "include",
+            "only"
+          ],
+          "hint": "Set to specify how to deal with snapshots on blob deletion."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "directory_markers",
+          "kind": "boolean",
+          "label": "Directory markers",
+          "default": false,
+          "hint": "Upload an empty object with a trailing slash when a new directory is created"
+        },
+        {
+          "key": "disable_checksum",
+          "kind": "boolean",
+          "label": "Disable checksum",
+          "default": false,
+          "hint": "Don't store MD5 checksum with object metadata."
+        },
+        {
+          "key": "disable_instance_discovery",
+          "kind": "boolean",
+          "label": "Disable instance discovery",
+          "default": false,
+          "hint": "Skip requesting Microsoft Entra instance metadata"
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "21078018",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "list_chunk",
+          "kind": "int",
+          "label": "List chunk",
+          "default": 5000,
+          "hint": "Size of blob list."
+        },
+        {
+          "key": "list_parallelism",
+          "kind": "int",
+          "label": "List parallelism",
+          "default": 0,
+          "hint": "Number of parallel shards to list a directory with."
+        },
+        {
+          "key": "memory_pool_flush_time",
+          "kind": "int",
+          "label": "Memory pool flush time",
+          "default": 60,
+          "hint": "How often internal memory buffer pools will be flushed. (no longer used) (in seconds)"
+        },
+        {
+          "key": "memory_pool_use_mmap",
+          "kind": "boolean",
+          "label": "Memory pool use mmap",
+          "default": false,
+          "hint": "Whether to use mmap buffers in internal memory pool. (no longer used)"
+        },
+        {
+          "key": "msi_client_id",
+          "kind": "text",
+          "label": "MSI client ID",
+          "hint": "Client ID of a user-assigned managed identity. Managed identity authentication is unavailable."
+        },
+        {
+          "key": "msi_mi_res_id",
+          "kind": "text",
+          "label": "MSI mi res ID",
+          "hint": "Azure resource ID of the user-assigned MSI to use, if any."
+        },
+        {
+          "key": "msi_object_id",
+          "kind": "text",
+          "label": "MSI object ID",
+          "hint": "Object ID of the user-assigned MSI to use, if any."
+        },
+        {
+          "key": "no_check_container",
+          "kind": "boolean",
+          "label": "No check container",
+          "default": false,
+          "hint": "If set, don't attempt to check the container exists or create it."
+        },
+        {
+          "key": "no_head_object",
+          "kind": "boolean",
+          "label": "No head object",
+          "default": false,
+          "hint": "If set, do not do HEAD before GET when getting objects."
+        },
+        {
+          "key": "public_access",
+          "kind": "text",
+          "label": "Public access",
+          "suggest": [
+            "blob",
+            "container"
+          ],
+          "hint": "Public access level of a container: blob or container."
+        },
+        {
+          "key": "upload_concurrency",
+          "kind": "int",
+          "label": "Upload concurrency",
+          "default": 16,
+          "hint": "Concurrency for multipart uploads."
+        },
+        {
+          "key": "upload_cutoff",
+          "kind": "text",
+          "label": "Upload cutoff",
+          "hint": "Cutoff for switching to chunked upload (<= 256 MiB) (deprecated)."
+        },
+        {
+          "key": "use_arrow_list",
+          "kind": "boolean",
+          "label": "Use arrow list",
+          "default": false,
+          "hint": "Use the Apache Arrow listing format."
+        },
+        {
+          "key": "use_copy_blob",
+          "kind": "boolean",
+          "label": "Use copy blob",
+          "default": true,
+          "hint": "Whether to use the Copy Blob API when copying to the same storage account."
+        }
+      ]
+    },
+    {
+      "id": "azurefiles",
+      "label": "Microsoft Azure Files",
+      "fields": [
+        {
+          "key": "account",
+          "kind": "text",
+          "label": "Account",
+          "hint": "Azure Storage Account Name.",
+          "main": true
+        },
+        {
+          "key": "client_id",
+          "kind": "text",
+          "label": "Client ID",
+          "hint": "The ID of the client in use.",
+          "main": true
+        },
+        {
+          "key": "client_secret",
+          "kind": "secret",
+          "label": "Client secret",
+          "hint": "One of the service principal's client secrets",
+          "main": true
+        },
+        {
+          "key": "endpoint",
+          "kind": "text",
+          "label": "Endpoint",
+          "hint": "Endpoint for the service.",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "key",
+          "kind": "secret",
+          "label": "Key",
+          "hint": "Storage Account Shared Key.",
+          "main": true
+        },
+        {
+          "key": "password",
+          "kind": "secret",
+          "label": "Password",
+          "hint": "The user's password",
+          "main": true
+        },
+        {
+          "key": "sas_url",
+          "kind": "secret",
+          "label": "SAS URL",
+          "hint": "SAS URL for container level access only.",
+          "main": true
+        },
+        {
+          "key": "tenant",
+          "kind": "text",
+          "label": "Tenant",
+          "hint": "ID of the service principal's tenant. Also called its directory ID.",
+          "main": true
+        },
+        {
+          "key": "username",
+          "kind": "text",
+          "label": "Username",
+          "hint": "User name (usually an email address)",
+          "main": true
+        },
+        {
+          "key": "chunk_size",
+          "kind": "text",
+          "label": "Chunk size",
+          "default": "4194304",
+          "hint": "Upload chunk size."
+        },
+        {
+          "key": "client_certificate_password",
+          "kind": "secret",
+          "label": "Client certificate password",
+          "hint": "Password for the certificate file (optional)."
+        },
+        {
+          "key": "client_send_certificate_chain",
+          "kind": "boolean",
+          "label": "Client send certificate chain",
+          "default": false,
+          "hint": "Send the certificate chain when using certificate auth."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "disable_instance_discovery",
+          "kind": "boolean",
+          "label": "Disable instance discovery",
+          "default": false,
+          "hint": "Skip requesting Microsoft Entra instance metadata"
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "54634382",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "max_stream_size",
+          "kind": "text",
+          "label": "Max stream size",
+          "default": "10737418240",
+          "hint": "Max size for streamed files."
+        },
+        {
+          "key": "msi_client_id",
+          "kind": "text",
+          "label": "MSI client ID",
+          "hint": "Client ID of a user-assigned managed identity. Managed identity authentication is unavailable."
+        },
+        {
+          "key": "msi_mi_res_id",
+          "kind": "text",
+          "label": "MSI mi res ID",
+          "hint": "Azure resource ID of the user-assigned MSI to use, if any."
+        },
+        {
+          "key": "msi_object_id",
+          "kind": "text",
+          "label": "MSI object ID",
+          "hint": "Object ID of the user-assigned MSI to use, if any."
+        },
+        {
+          "key": "share_name",
+          "kind": "text",
+          "label": "Share name",
+          "hint": "Azure Files Share Name."
+        },
+        {
+          "key": "upload_concurrency",
+          "kind": "int",
+          "label": "Upload concurrency",
+          "default": 16,
+          "hint": "Concurrency for multipart uploads."
+        }
+      ]
+    },
+    {
+      "id": "b2",
+      "label": "Backblaze B2",
+      "fields": [
+        {
+          "key": "account",
+          "kind": "text",
+          "label": "Account",
+          "required": true,
+          "hint": "Account ID or Application Key ID.",
+          "main": true
+        },
+        {
+          "key": "key",
+          "kind": "secret",
+          "label": "Key",
+          "required": true,
+          "hint": "Application Key.",
+          "main": true
+        },
+        {
+          "key": "endpoint",
+          "kind": "text",
+          "label": "Endpoint",
+          "hint": "Endpoint for the service.",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "chunk_size",
+          "kind": "text",
+          "label": "Chunk size",
+          "default": "100663296",
+          "hint": "Upload chunk size."
+        },
+        {
+          "key": "copy_cutoff",
+          "kind": "text",
+          "label": "Copy cutoff",
+          "default": "4294967296",
+          "hint": "Cutoff for switching to multipart copy."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "disable_checksum",
+          "kind": "boolean",
+          "label": "Disable checksum",
+          "default": false,
+          "hint": "Disable checksums for large (> upload cutoff) files."
+        },
+        {
+          "key": "download_auth_duration",
+          "kind": "int",
+          "label": "Download auth duration",
+          "default": 604800,
+          "hint": "Time before the public link authorization token will expire in s or suffix ms|s|m|h|d."
+        },
+        {
+          "key": "download_url",
+          "kind": "text",
+          "label": "Download URL",
+          "hint": "Custom endpoint for downloads.",
+          "address": true
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50438146",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "hard_delete",
+          "kind": "boolean",
+          "label": "Hard delete",
+          "default": false,
+          "hint": "Permanently delete files on remote removal, otherwise hide files."
+        },
+        {
+          "key": "lifecycle",
+          "kind": "int",
+          "label": "Lifecycle",
+          "default": 0,
+          "hint": "Set the number of days deleted files should be kept when creating a bucket."
+        },
+        {
+          "key": "memory_pool_flush_time",
+          "kind": "int",
+          "label": "Memory pool flush time",
+          "default": 60,
+          "hint": "How often internal memory buffer pools will be flushed. (no longer used) (in seconds)"
+        },
+        {
+          "key": "memory_pool_use_mmap",
+          "kind": "boolean",
+          "label": "Memory pool use mmap",
+          "default": false,
+          "hint": "Whether to use mmap buffers in internal memory pool. (no longer used)"
+        },
+        {
+          "key": "sse_customer_algorithm",
+          "kind": "text",
+          "label": "SSE customer algorithm",
+          "suggest": [
+            "AES256"
+          ],
+          "hint": "If using SSE-C, the server-side encryption algorithm used when storing this object in B2."
+        },
+        {
+          "key": "sse_customer_key",
+          "kind": "secret",
+          "label": "SSE customer key",
+          "hint": "To use SSE-C, you may provide the secret encryption key encoded in a UTF-8 compatible string to encrypt/decrypt your data"
+        },
+        {
+          "key": "sse_customer_key_base64",
+          "kind": "secret",
+          "label": "SSE customer key base64",
+          "hint": "To use SSE-C, you may provide the secret encryption key encoded in Base64 format to encrypt/decrypt your data"
+        },
+        {
+          "key": "sse_customer_key_md5",
+          "kind": "secret",
+          "label": "SSE customer key MD5",
+          "hint": "If using SSE-C you may provide the secret encryption key MD5 checksum (optional)."
+        },
+        {
+          "key": "test_mode",
+          "kind": "text",
+          "label": "Test mode",
+          "hint": "A flag string for X-Bz-Test-Mode header for debugging."
+        },
+        {
+          "key": "upload_concurrency",
+          "kind": "int",
+          "label": "Upload concurrency",
+          "default": 4,
+          "hint": "Concurrency for multipart uploads."
+        },
+        {
+          "key": "upload_cutoff",
+          "kind": "text",
+          "label": "Upload cutoff",
+          "default": "209715200",
+          "hint": "Cutoff for switching to chunked upload."
+        },
+        {
+          "key": "version_at",
+          "kind": "text",
+          "label": "Version at",
+          "default": "0001-01-01T00:00:00Z",
+          "hint": "Show file versions as they were at the specified time."
+        },
+        {
+          "key": "versions",
+          "kind": "boolean",
+          "label": "Versions",
+          "default": false,
+          "hint": "Include old versions in directory listings."
+        }
+      ]
+    },
+    {
+      "id": "cloudinary",
+      "label": "Cloudinary",
+      "fields": [
+        {
+          "key": "api_key",
+          "kind": "secret",
+          "label": "API key",
+          "required": true,
+          "hint": "Cloudinary API Key",
+          "main": true
+        },
+        {
+          "key": "api_secret",
+          "kind": "secret",
+          "label": "API secret",
+          "required": true,
+          "hint": "Cloudinary API Secret",
+          "main": true
+        },
+        {
+          "key": "cloud_name",
+          "kind": "text",
+          "label": "Cloud name",
+          "required": true,
+          "hint": "Cloudinary Environment Name",
+          "main": true
+        },
+        {
+          "key": "adjust_media_files_extensions",
+          "kind": "boolean",
+          "label": "Adjust media files extensions",
+          "default": true,
+          "hint": "Cloudinary handles media formats as a file attribute and strips it from the name, which is unlike most other file systems"
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "52543246",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "eventually_consistent_delay",
+          "kind": "int",
+          "label": "Eventually consistent delay",
+          "default": 0,
+          "hint": "Wait N seconds for eventual consistency of the databases that support the backend operation"
+        },
+        {
+          "key": "media_extensions",
+          "kind": "text",
+          "label": "Media extensions",
+          "default": "3ds,3g2,3gp,ai,arw,avi,avif,bmp,bw,cr2,cr3,djvu,dng,eps3,fbx,flif,flv,gif,glb,gltf,hdp,heic,heif,ico,indd,jp2,jpe,jpeg,jpg,jxl,jxr,m2ts,mov,mp4,mpeg,mts,mxf,obj,ogv,pdf,ply,png,psd,svg,tga,tif,tiff,ts,u3ma,usdz,wdp,webm,webp,wmv",
+          "hint": "Cloudinary supported media extensions"
+        },
+        {
+          "key": "upload_prefix",
+          "kind": "text",
+          "label": "Upload prefix",
+          "hint": "Specify the API endpoint for environments out of the US",
+          "address": true
+        },
+        {
+          "key": "upload_preset",
+          "kind": "text",
+          "label": "Upload preset",
+          "hint": "Upload Preset to select asset manipulation on upload"
+        }
+      ]
+    },
+    {
+      "id": "fichier",
+      "label": "1Fichier",
+      "fields": [
+        {
+          "key": "api_key",
+          "kind": "secret",
+          "label": "API key",
+          "hint": "Your API Key, get it from https://1fichier.com/console/params.pl.",
+          "main": true
+        },
+        {
+          "key": "file_password",
+          "kind": "secret",
+          "label": "File password",
+          "hint": "If you want to download a shared file that is password protected, add this parameter.",
+          "main": true
+        },
+        {
+          "key": "folder_password",
+          "kind": "secret",
+          "label": "Folder password",
+          "hint": "If you want to list the files in a shared folder that is password protected, add this parameter.",
+          "main": true
+        },
+        {
+          "key": "cdn",
+          "kind": "boolean",
+          "label": "CDN",
+          "default": false,
+          "hint": "Set if you wish to use CDN download links."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "52666494",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "shared_folder",
+          "kind": "text",
+          "label": "Shared folder",
+          "hint": "If you want to download a shared folder, add this parameter."
+        }
+      ]
+    },
+    {
+      "id": "filefabric",
+      "label": "Enterprise File Fabric",
+      "fields": [
+        {
+          "key": "url",
+          "kind": "text",
+          "label": "URL",
+          "required": true,
+          "suggest": [
+            "https://storagemadeeasy.com",
+            "https://eu.storagemadeeasy.com",
+            "https://yourfabric.smestorage.com"
+          ],
+          "hint": "URL of the Enterprise File Fabric to connect to.",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "permanent_token",
+          "kind": "secret",
+          "label": "Permanent token",
+          "hint": "Permanent Authentication Token.",
+          "main": true
+        },
+        {
+          "key": "token",
+          "kind": "secret",
+          "label": "Token",
+          "hint": "Session Token.",
+          "main": true
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50429954",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "root_folder_id",
+          "kind": "text",
+          "label": "Root folder ID",
+          "hint": "ID of the root folder."
+        },
+        {
+          "key": "token_expiry",
+          "kind": "text",
+          "label": "Token expiry",
+          "hint": "Token expiry time."
+        },
+        {
+          "key": "version",
+          "kind": "text",
+          "label": "Version",
+          "hint": "Version read from the file fabric."
+        }
+      ]
+    },
+    {
+      "id": "filescom",
+      "label": "Files.com",
+      "fields": [
+        {
+          "key": "api_key",
+          "kind": "secret",
+          "label": "API key",
+          "hint": "The API key used to authenticate with Files.com.",
+          "main": true
+        },
+        {
+          "key": "password",
+          "kind": "secret",
+          "label": "Password",
+          "hint": "The password used to authenticate with Files.com.",
+          "main": true
+        },
+        {
+          "key": "username",
+          "kind": "text",
+          "label": "Username",
+          "hint": "The username used to authenticate with Files.com.",
+          "main": true
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "60923906",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "site",
+          "kind": "text",
+          "label": "Site",
+          "hint": "Your site subdomain (e.g. mysite) or custom domain (e.g. myfiles.customdomain.com).",
+          "address": true
+        }
+      ]
+    },
+    {
+      "id": "gofile",
+      "label": "Gofile",
+      "fields": [
+        {
+          "key": "access_token",
+          "kind": "secret",
+          "label": "Access token",
+          "hint": "API Access token",
+          "main": true
+        },
+        {
+          "key": "account_id",
+          "kind": "text",
+          "label": "Account ID",
+          "hint": "Account ID",
+          "main": true
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "323331982",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "list_chunk",
+          "kind": "int",
+          "label": "List chunk",
+          "default": 1000,
+          "hint": "Number of items to list in each call"
+        },
+        {
+          "key": "root_folder_id",
+          "kind": "text",
+          "label": "Root folder ID",
+          "hint": "ID of the root folder"
+        }
+      ]
+    },
+    {
+      "id": "google-cloud-storage",
+      "label": "Google Cloud Storage",
+      "token": true,
+      "fields": [
+        {
+          "key": "token",
+          "kind": "token",
+          "label": "Token",
+          "hint": "OAuth token, as a JSON object with access_token, token_type, refresh_token and expiry, sent as a string, curly brackets included.",
+          "main": true
+        },
+        {
+          "key": "access_token",
+          "kind": "secret",
+          "label": "Access token",
+          "hint": "Short-lived access token.",
+          "main": true
+        },
+        {
+          "key": "client_id",
+          "kind": "text",
+          "label": "Client ID",
+          "hint": "OAuth Client Id.",
+          "main": true,
+          "name": true,
+          "needs": "client_secret"
+        },
+        {
+          "key": "client_secret",
+          "kind": "secret",
+          "label": "Client secret",
+          "hint": "OAuth Client Secret.",
+          "main": true,
+          "needs": "client_id"
+        },
+        {
+          "key": "endpoint",
+          "kind": "text",
+          "label": "Endpoint",
+          "suggest": [
+            "storage.example.org",
+            "storage.example.org:4443",
+            "storage.example.org:4443/gcs/api"
+          ],
+          "hint": "Custom endpoint for the storage API. Leave blank to use the provider default.",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "project_number",
+          "kind": "text",
+          "label": "Project number",
+          "hint": "Project number.",
+          "main": true
+        },
+        {
+          "key": "service_account_credentials",
+          "kind": "secret",
+          "label": "Service account credentials",
+          "hint": "Service Account Credentials JSON blob.",
+          "main": true
+        },
+        {
+          "key": "user_project",
+          "kind": "text",
+          "label": "User project",
+          "hint": "User project.",
+          "main": true
+        },
+        {
+          "key": "anonymous",
+          "kind": "boolean",
+          "label": "Anonymous",
+          "default": false,
+          "hint": "Access public buckets and objects without credentials."
+        },
+        {
+          "key": "auth_url",
+          "kind": "text",
+          "label": "Auth URL",
+          "hint": "Auth server URL.",
+          "address": true
+        },
+        {
+          "key": "bucket_acl",
+          "kind": "text",
+          "label": "Bucket ACL",
+          "suggest": [
+            "authenticatedRead",
+            "private",
+            "projectPrivate",
+            "publicRead",
+            "publicReadWrite"
+          ],
+          "hint": "Access Control List for new buckets."
+        },
+        {
+          "key": "bucket_policy_only",
+          "kind": "boolean",
+          "label": "Bucket policy only",
+          "default": false,
+          "hint": "Access checks should use bucket-level IAM policies."
+        },
+        {
+          "key": "client_credentials",
+          "kind": "boolean",
+          "label": "Client credentials",
+          "default": false,
+          "hint": "Use client credentials OAuth flow."
+        },
+        {
+          "key": "decompress",
+          "kind": "boolean",
+          "label": "Decompress",
+          "default": false,
+          "hint": "If set this will decompress gzip encoded objects."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "directory_markers",
+          "kind": "boolean",
+          "label": "Directory markers",
+          "default": false,
+          "hint": "Upload an empty object with a trailing slash when a new directory is created"
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50348034",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "location",
+          "kind": "text",
+          "label": "Location",
+          "suggest": [
+            "asia",
+            "eu",
+            "us",
+            "asia-east1",
+            "asia-east2",
+            "asia-northeast1",
+            "asia-northeast2",
+            "asia-northeast3",
+            "asia-south1",
+            "asia-south2",
+            "asia-southeast1",
+            "asia-southeast2",
+            "australia-southeast1",
+            "australia-southeast2",
+            "europe-north1",
+            "europe-west1",
+            "europe-west2",
+            "europe-west3",
+            "europe-west4",
+            "europe-west6",
+            "europe-central2",
+            "us-central1",
+            "us-east1",
+            "us-east4",
+            "us-east5",
+            "us-west1",
+            "us-west2",
+            "us-west3",
+            "us-west4",
+            "northamerica-northeast1",
+            "northamerica-northeast2",
+            "southamerica-east1",
+            "southamerica-west1",
+            "asia1",
+            "eur4",
+            "nam4"
+          ],
+          "hint": "Location for the newly created buckets."
+        },
+        {
+          "key": "no_check_bucket",
+          "kind": "boolean",
+          "label": "No check bucket",
+          "default": false,
+          "hint": "If set, don't attempt to check the bucket exists or create it."
+        },
+        {
+          "key": "object_acl",
+          "kind": "text",
+          "label": "Object ACL",
+          "suggest": [
+            "authenticatedRead",
+            "bucketOwnerFullControl",
+            "bucketOwnerRead",
+            "private",
+            "projectPrivate",
+            "publicRead"
+          ],
+          "hint": "Access Control List for new objects."
+        },
+        {
+          "key": "storage_class",
+          "kind": "text",
+          "label": "Storage class",
+          "suggest": [
+            "MULTI_REGIONAL",
+            "REGIONAL",
+            "NEARLINE",
+            "COLDLINE",
+            "ARCHIVE",
+            "DURABLE_REDUCED_AVAILABILITY"
+          ],
+          "hint": "The storage class to use when storing objects in Google Cloud Storage."
+        },
+        {
+          "key": "token_url",
+          "kind": "text",
+          "label": "Token URL",
+          "hint": "Token server url.",
+          "address": true
+        }
+      ]
+    },
+    {
+      "id": "google-photos",
+      "label": "Google Photos",
+      "token": true,
+      "fields": [
+        {
+          "key": "token",
+          "kind": "token",
+          "label": "Token",
+          "hint": "OAuth token, as a JSON object with access_token, token_type, refresh_token and expiry, sent as a string, curly brackets included.",
+          "main": true
+        },
+        {
+          "key": "client_id",
+          "kind": "text",
+          "label": "Client ID",
+          "hint": "OAuth Client Id.",
+          "main": true,
+          "name": true,
+          "needs": "client_secret"
+        },
+        {
+          "key": "client_secret",
+          "kind": "secret",
+          "label": "Client secret",
+          "hint": "OAuth Client Secret.",
+          "main": true,
+          "needs": "client_id"
+        },
+        {
+          "key": "auth_url",
+          "kind": "text",
+          "label": "Auth URL",
+          "hint": "Auth server URL.",
+          "address": true
+        },
+        {
+          "key": "batch_commit_timeout",
+          "kind": "int",
+          "label": "Batch commit timeout",
+          "default": 600,
+          "hint": "Max time to wait for a batch to finish committing. (no longer used) (in seconds)"
+        },
+        {
+          "key": "batch_mode",
+          "kind": "text",
+          "label": "Batch mode",
+          "default": "sync",
+          "hint": "Upload file batching sync|async|off."
+        },
+        {
+          "key": "batch_size",
+          "kind": "int",
+          "label": "Batch size",
+          "default": 0,
+          "hint": "Max number of files in upload batch."
+        },
+        {
+          "key": "batch_timeout",
+          "kind": "int",
+          "label": "Batch timeout",
+          "default": 0,
+          "hint": "Max time to allow an idle upload batch before uploading."
+        },
+        {
+          "key": "client_credentials",
+          "kind": "boolean",
+          "label": "Client credentials",
+          "default": false,
+          "hint": "Use client credentials OAuth flow."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50348034",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "include_archived",
+          "kind": "boolean",
+          "label": "Include archived",
+          "default": false,
+          "hint": "Also view and download archived media."
+        },
+        {
+          "key": "proxy",
+          "kind": "text",
+          "label": "Proxy",
+          "hint": "Use the gphotosdl proxy for downloading the full resolution images",
+          "address": true
+        },
+        {
+          "key": "read_only",
+          "kind": "boolean",
+          "label": "Read only",
+          "default": false,
+          "hint": "Set to make the Google Photos backend read only."
+        },
+        {
+          "key": "read_size",
+          "kind": "boolean",
+          "label": "Read size",
+          "default": false,
+          "hint": "Set to read the size of media items."
+        },
+        {
+          "key": "start_year",
+          "kind": "int",
+          "label": "Start year",
+          "default": 2000,
+          "hint": "Year limits the photos to be downloaded to those which are uploaded after the given year."
+        },
+        {
+          "key": "token_url",
+          "kind": "text",
+          "label": "Token URL",
+          "hint": "Token server url.",
+          "address": true
+        }
+      ]
+    },
+    {
+      "id": "hdfs",
+      "label": "Hadoop distributed file system",
+      "fields": [
+        {
+          "key": "namenode",
+          "kind": "text",
+          "label": "Namenode",
+          "required": true,
+          "hint": "Hadoop name nodes and ports.",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "username",
+          "kind": "text",
+          "label": "Username",
+          "suggest": [
+            "root"
+          ],
+          "hint": "Hadoop user name.",
+          "main": true
+        },
+        {
+          "key": "data_transfer_protection",
+          "kind": "text",
+          "label": "Data transfer protection",
+          "suggest": [
+            "privacy"
+          ],
+          "hint": "Kerberos data transfer protection: authentication|integrity|privacy."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50430082",
+          "hint": "The encoding for the backend."
+        }
+      ]
+    },
+    {
+      "id": "hidrive",
+      "label": "HiDrive",
+      "token": true,
+      "fields": [
+        {
+          "key": "token",
+          "kind": "token",
+          "label": "Token",
+          "hint": "OAuth token, as a JSON object with access_token, token_type, refresh_token and expiry, sent as a string, curly brackets included.",
+          "main": true
+        },
+        {
+          "key": "client_id",
+          "kind": "text",
+          "label": "Client ID",
+          "hint": "OAuth Client Id.",
+          "main": true,
+          "name": true,
+          "needs": "client_secret"
+        },
+        {
+          "key": "client_secret",
+          "kind": "secret",
+          "label": "Client secret",
+          "hint": "OAuth Client Secret.",
+          "main": true,
+          "needs": "client_id"
+        },
+        {
+          "key": "endpoint",
+          "kind": "text",
+          "label": "Endpoint",
+          "default": "https://api.hidrive.strato.com/2.1",
+          "hint": "Endpoint for the service.",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "auth_url",
+          "kind": "text",
+          "label": "Auth URL",
+          "hint": "Auth server URL.",
+          "address": true
+        },
+        {
+          "key": "chunk_size",
+          "kind": "text",
+          "label": "Chunk size",
+          "default": "50331648",
+          "hint": "Chunksize for chunked uploads."
+        },
+        {
+          "key": "client_credentials",
+          "kind": "boolean",
+          "label": "Client credentials",
+          "default": false,
+          "hint": "Use client credentials OAuth flow."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "disable_fetching_member_count",
+          "kind": "boolean",
+          "label": "Disable fetching member count",
+          "default": false,
+          "hint": "Do not fetch number of objects in directories unless it is absolutely necessary."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "33554434",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "root_prefix",
+          "kind": "text",
+          "label": "Root prefix",
+          "suggest": [
+            "/",
+            "root"
+          ],
+          "default": "/",
+          "hint": "The root/parent folder for all paths."
+        },
+        {
+          "key": "scope_access",
+          "kind": "text",
+          "label": "Scope access",
+          "suggest": [
+            "rw",
+            "ro"
+          ],
+          "default": "rw",
+          "hint": "Access permissions that hoody-vfs should use when requesting access from HiDrive."
+        },
+        {
+          "key": "scope_role",
+          "kind": "text",
+          "label": "Scope role",
+          "suggest": [
+            "user",
+            "admin",
+            "owner"
+          ],
+          "default": "user",
+          "hint": "User-level that hoody-vfs should use when requesting access from HiDrive."
+        },
+        {
+          "key": "token_url",
+          "kind": "text",
+          "label": "Token URL",
+          "hint": "Token server url.",
+          "address": true
+        },
+        {
+          "key": "upload_concurrency",
+          "kind": "int",
+          "label": "Upload concurrency",
+          "default": 4,
+          "hint": "Concurrency for chunked uploads."
+        },
+        {
+          "key": "upload_cutoff",
+          "kind": "text",
+          "label": "Upload cutoff",
+          "default": "100663296",
+          "hint": "Cutoff/Threshold for chunked uploads."
+        }
+      ]
+    },
+    {
+      "id": "http",
+      "label": "HTTP",
+      "fields": [
+        {
+          "key": "url",
+          "kind": "text",
+          "label": "URL",
+          "required": true,
+          "hint": "URL of HTTP host to connect to.",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "headers",
+          "kind": "secret",
+          "label": "Headers",
+          "hint": "Set HTTP headers for all transactions.",
+          "main": true
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "no_escape",
+          "kind": "boolean",
+          "label": "No escape",
+          "default": false,
+          "hint": "Do not escape URL metacharacters in path names."
+        },
+        {
+          "key": "no_head",
+          "kind": "boolean",
+          "label": "No head",
+          "default": false,
+          "hint": "Don't use HEAD requests."
+        },
+        {
+          "key": "no_slash",
+          "kind": "boolean",
+          "label": "No slash",
+          "default": false,
+          "hint": "Set this if the site doesn't end directories with /."
+        }
+      ]
+    },
+    {
+      "id": "iclouddrive",
+      "label": "iCloud Drive and Photos",
+      "fields": [
+        {
+          "key": "apple_id",
+          "kind": "text",
+          "label": "Apple ID",
+          "required": true,
+          "hint": "Apple ID.",
+          "main": true
+        },
+        {
+          "key": "password",
+          "kind": "secret",
+          "label": "Password",
+          "required": true,
+          "hint": "Password.",
+          "main": true
+        },
+        {
+          "key": "client_id",
+          "kind": "text",
+          "label": "Client ID",
+          "default": "d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d",
+          "hint": "Client ID for iCloud API access.",
+          "main": true
+        },
+        {
+          "key": "cookies",
+          "kind": "secret",
+          "label": "Cookies",
+          "hint": "Session cookies.",
+          "main": true
+        },
+        {
+          "key": "trust_token",
+          "kind": "secret",
+          "label": "Trust token",
+          "hint": "Trust token for session authentication.",
+          "main": true
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50438146",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "service",
+          "kind": "text",
+          "label": "Service",
+          "suggest": [
+            "drive",
+            "photos"
+          ],
+          "default": "drive",
+          "hint": "iCloud service to use."
+        }
+      ]
+    },
+    {
+      "id": "imagekit",
+      "label": "ImageKit.io",
+      "fields": [
+        {
+          "key": "endpoint",
+          "kind": "text",
+          "label": "Endpoint",
+          "required": true,
+          "hint": "You can find your ImageKit.io URL endpoint in your [dashboard](https://imagekit.io/dashboard/developer/api-keys)",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "private_key",
+          "kind": "secret",
+          "label": "Private key",
+          "required": true,
+          "hint": "You can find your ImageKit.io private key in your [dashboard](https://imagekit.io/dashboard/developer/api-keys)",
+          "main": true
+        },
+        {
+          "key": "public_key",
+          "kind": "text",
+          "label": "Public key",
+          "required": true,
+          "hint": "You can find your ImageKit.io public key in your [dashboard](https://imagekit.io/dashboard/developer/api-keys)",
+          "main": true
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "117553486",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "only_signed",
+          "kind": "boolean",
+          "label": "Only signed",
+          "default": false,
+          "hint": "If you have configured `Restrict unsigned image URLs` in your dashboard settings, set this to true."
+        },
+        {
+          "key": "upload_tags",
+          "kind": "text",
+          "label": "Upload tags",
+          "hint": "Tags to add to the uploaded files, e.g. \"tag1,tag2\"."
+        },
+        {
+          "key": "versions",
+          "kind": "boolean",
+          "label": "Versions",
+          "default": false,
+          "hint": "Include old versions in directory listings."
+        }
+      ]
+    },
+    {
+      "id": "internetarchive",
+      "label": "Internet Archive",
+      "fields": [
+        {
+          "key": "access_key_id",
+          "kind": "text",
+          "label": "Access key ID",
+          "hint": "IAS3 Access Key.",
+          "main": true
+        },
+        {
+          "key": "endpoint",
+          "kind": "text",
+          "label": "Endpoint",
+          "default": "https://s3.us.archive.org",
+          "hint": "IAS3 Endpoint.",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "secret_access_key",
+          "kind": "secret",
+          "label": "Secret access key",
+          "hint": "IAS3 Secret Key (password).",
+          "main": true
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "disable_checksum",
+          "kind": "boolean",
+          "label": "Disable checksum",
+          "default": true,
+          "hint": "Don't ask the server to test against MD5 checksum calculated by hoody-vfs."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50446342",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "front_endpoint",
+          "kind": "text",
+          "label": "Front endpoint",
+          "default": "https://archive.org",
+          "hint": "Host of InternetArchive Frontend.",
+          "address": true
+        },
+        {
+          "key": "item_derive",
+          "kind": "boolean",
+          "label": "Item derive",
+          "default": true,
+          "hint": "Whether to trigger derive on the IA item or not. If set to false, the item will not be derived by IA upon upload."
+        },
+        {
+          "key": "item_metadata",
+          "kind": "text",
+          "label": "Item metadata",
+          "hint": "Metadata to be set on the IA item, this is different from file-level metadata that can be set using --metadata-set. Format is key=value and the 'x-archive-meta-' prefix is automatically added."
+        },
+        {
+          "key": "wait_archive",
+          "kind": "int",
+          "label": "Wait archive",
+          "default": 0,
+          "hint": "Timeout for waiting the server's processing tasks (specifically archive and book_op) to finish. Only enable if you need to be guaranteed to be reflected after write operations. 0 to disable waiting."
+        }
+      ]
+    },
+    {
+      "id": "jottacloud",
+      "label": "Jottacloud",
+      "token": true,
+      "fields": [
+        {
+          "key": "token",
+          "kind": "token",
+          "label": "Token",
+          "hint": "OAuth token, as a JSON object with access_token, token_type, refresh_token and expiry, sent as a string, curly brackets included.",
+          "main": true
+        },
+        {
+          "key": "client_id",
+          "kind": "text",
+          "label": "Client ID",
+          "hint": "OAuth Client Id.",
+          "main": true,
+          "name": true,
+          "needs": "client_secret"
+        },
+        {
+          "key": "client_secret",
+          "kind": "secret",
+          "label": "Client secret",
+          "hint": "OAuth Client Secret.",
+          "main": true,
+          "needs": "client_id"
+        },
+        {
+          "key": "auth_url",
+          "kind": "text",
+          "label": "Auth URL",
+          "hint": "Auth server URL.",
+          "address": true
+        },
+        {
+          "key": "client_credentials",
+          "kind": "boolean",
+          "label": "Client credentials",
+          "default": false,
+          "hint": "Use client credentials OAuth flow."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50435982",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "hard_delete",
+          "kind": "boolean",
+          "label": "Hard delete",
+          "default": false,
+          "hint": "Delete files permanently rather than putting them into the trash."
+        },
+        {
+          "key": "md5_memory_limit",
+          "kind": "text",
+          "label": "MD5 memory limit",
+          "default": "10485760",
+          "hint": "Files bigger than this will be cached on disk to calculate the MD5 if required."
+        },
+        {
+          "key": "no_versions",
+          "kind": "boolean",
+          "label": "No versions",
+          "default": false,
+          "hint": "Avoid server side versioning by deleting files and recreating files instead of overwriting them."
+        },
+        {
+          "key": "token_url",
+          "kind": "text",
+          "label": "Token URL",
+          "hint": "Token server url.",
+          "address": true
+        },
+        {
+          "key": "trashed_only",
+          "kind": "boolean",
+          "label": "Trashed only",
+          "default": false,
+          "hint": "Only show files that are in the trash."
+        },
+        {
+          "key": "upload_resume_limit",
+          "kind": "text",
+          "label": "Upload resume limit",
+          "default": "10485760",
+          "hint": "Files bigger than this can be resumed if the upload fail's."
+        }
+      ]
+    },
+    {
+      "id": "koofr",
+      "label": "Koofr",
+      "fields": [
+        {
+          "key": "endpoint",
+          "kind": "text",
+          "label": "Endpoint",
+          "required": true,
+          "hint": "The Koofr API endpoint to use.",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "password",
+          "kind": "secret",
+          "label": "Password",
+          "required": true,
+          "hint": "Password generated in your storage provider's settings.",
+          "main": true
+        },
+        {
+          "key": "user",
+          "kind": "text",
+          "label": "User",
+          "required": true,
+          "hint": "Your user name.",
+          "main": true
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50438146",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "mountid",
+          "kind": "text",
+          "label": "Mountid",
+          "hint": "Mount ID of the mount to use."
+        },
+        {
+          "key": "provider",
+          "kind": "text",
+          "label": "Provider",
+          "suggest": [
+            "koofr",
+            "digistorage",
+            "other"
+          ],
+          "hint": "Choose your storage provider."
+        },
+        {
+          "key": "setmtime",
+          "kind": "boolean",
+          "label": "Setmtime",
+          "default": true,
+          "hint": "Does the backend support setting modification time."
+        }
+      ]
+    },
+    {
+      "id": "linkbox",
+      "label": "Linkbox",
+      "fields": [
+        {
+          "key": "email",
+          "kind": "text",
+          "label": "Email",
+          "required": true,
+          "hint": "Email for login",
+          "main": true
+        },
+        {
+          "key": "password",
+          "kind": "secret",
+          "label": "Password",
+          "required": true,
+          "hint": "Password for login",
+          "main": true
+        },
+        {
+          "key": "token",
+          "kind": "secret",
+          "label": "Token",
+          "required": true,
+          "hint": "Token from https://www.linkbox.to/admin/account",
+          "main": true
+        },
+        {
+          "key": "web_token",
+          "kind": "secret",
+          "label": "Web token",
+          "hint": "Web API login token - set automatically.",
+          "main": true
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        }
+      ]
+    },
+    {
+      "id": "mailru",
+      "label": "Mail.ru Cloud",
+      "token": true,
+      "fields": [
+        {
+          "key": "pass",
+          "kind": "secret",
+          "label": "Pass",
+          "required": true,
+          "hint": "Password.",
+          "main": true
+        },
+        {
+          "key": "user",
+          "kind": "text",
+          "label": "User",
+          "required": true,
+          "hint": "User name (usually email).",
+          "main": true
+        },
+        {
+          "key": "token",
+          "kind": "token",
+          "label": "Token",
+          "hint": "OAuth token, as a JSON object with access_token, token_type, refresh_token and expiry, sent as a string, curly brackets included.",
+          "main": true
+        },
+        {
+          "key": "client_id",
+          "kind": "text",
+          "label": "Client ID",
+          "hint": "OAuth Client Id.",
+          "main": true,
+          "name": true,
+          "needs": "client_secret"
+        },
+        {
+          "key": "client_secret",
+          "kind": "secret",
+          "label": "Client secret",
+          "hint": "OAuth Client Secret.",
+          "main": true,
+          "needs": "client_id"
+        },
+        {
+          "key": "auth_url",
+          "kind": "text",
+          "label": "Auth URL",
+          "hint": "Auth server URL.",
+          "address": true
+        },
+        {
+          "key": "check_hash",
+          "kind": "boolean",
+          "label": "Check hash",
+          "default": true,
+          "hint": "What should copy do if file checksum is mismatched or invalid."
+        },
+        {
+          "key": "client_credentials",
+          "kind": "boolean",
+          "label": "Client credentials",
+          "default": false,
+          "hint": "Use client credentials OAuth flow."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50440078",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "speedup_enable",
+          "kind": "boolean",
+          "label": "Speedup enable",
+          "default": true,
+          "hint": "Skip full upload if there is another file with same data hash."
+        },
+        {
+          "key": "speedup_file_patterns",
+          "kind": "text",
+          "label": "Speedup file patterns",
+          "suggest": [
+            "*",
+            "*.mkv,*.avi,*.mp4,*.mp3",
+            "*.zip,*.gz,*.rar,*.pdf"
+          ],
+          "default": "*.mkv,*.avi,*.mp4,*.mp3,*.zip,*.gz,*.rar,*.pdf",
+          "hint": "Comma separated list of file name patterns eligible for speedup (put by hash)."
+        },
+        {
+          "key": "speedup_max_disk",
+          "kind": "text",
+          "label": "Speedup max disk",
+          "suggest": [
+            "0",
+            "1G",
+            "3G"
+          ],
+          "default": "3221225472",
+          "hint": "This option allows you to disable speedup (put by hash) for large files."
+        },
+        {
+          "key": "speedup_max_memory",
+          "kind": "text",
+          "label": "Speedup max memory",
+          "suggest": [
+            "0",
+            "32M",
+            "256M"
+          ],
+          "default": "33554432",
+          "hint": "Files larger than the size given below will always be hashed on disk."
+        },
+        {
+          "key": "token_url",
+          "kind": "text",
+          "label": "Token URL",
+          "hint": "Token server url.",
+          "address": true
+        },
+        {
+          "key": "user_agent",
+          "kind": "text",
+          "label": "User agent",
+          "hint": "HTTP user agent used internally by client."
+        }
+      ]
+    },
+    {
+      "id": "netstorage",
+      "label": "Akamai NetStorage",
+      "fields": [
+        {
+          "key": "account",
+          "kind": "text",
+          "label": "Account",
+          "required": true,
+          "hint": "Set the NetStorage account name",
+          "main": true
+        },
+        {
+          "key": "host",
+          "kind": "text",
+          "label": "Host",
+          "required": true,
+          "hint": "Domain+path of NetStorage host to connect to.",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "secret",
+          "kind": "secret",
+          "label": "Secret",
+          "required": true,
+          "hint": "Set the NetStorage account secret/G2O key for authentication.",
+          "main": true
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "protocol",
+          "kind": "text",
+          "label": "Protocol",
+          "suggest": [
+            "http",
+            "https"
+          ],
+          "default": "https",
+          "hint": "Select between HTTP or HTTPS protocol."
+        }
+      ]
+    },
+    {
+      "id": "opendrive",
+      "label": "OpenDrive",
+      "fields": [
+        {
+          "key": "password",
+          "kind": "secret",
+          "label": "Password",
+          "required": true,
+          "hint": "Password.",
+          "main": true
+        },
+        {
+          "key": "username",
+          "kind": "text",
+          "label": "Username",
+          "required": true,
+          "hint": "Username.",
+          "main": true
+        },
+        {
+          "key": "access",
+          "kind": "text",
+          "label": "Access",
+          "suggest": [
+            "private",
+            "public",
+            "hidden"
+          ],
+          "default": "private",
+          "hint": "Files and folders will be uploaded with this access permission (default private)"
+        },
+        {
+          "key": "chunk_size",
+          "kind": "text",
+          "label": "Chunk size",
+          "default": "10485760",
+          "hint": "Files will be uploaded in chunks this size."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "62007182",
+          "hint": "The encoding for the backend."
+        }
+      ]
+    },
+    {
+      "id": "oracleobjectstorage",
+      "label": "Oracle Cloud Infrastructure Object Storage",
+      "fields": [
+        {
+          "key": "namespace",
+          "kind": "text",
+          "label": "Namespace",
+          "required": true,
+          "hint": "Object storage namespace",
+          "main": true
+        },
+        {
+          "key": "region",
+          "kind": "text",
+          "label": "Region",
+          "required": true,
+          "hint": "Object storage Region",
+          "main": true
+        },
+        {
+          "key": "compartment",
+          "kind": "text",
+          "label": "Compartment",
+          "hint": "Specify compartment OCID, if you need to list buckets.",
+          "main": true
+        },
+        {
+          "key": "endpoint",
+          "kind": "text",
+          "label": "Endpoint",
+          "hint": "Endpoint for Object storage API.",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "attempt_resume_upload",
+          "kind": "boolean",
+          "label": "Attempt resume upload",
+          "default": false,
+          "hint": "If true attempt to resume previously started multipart upload for the object. This will be helpful to speed up multipart transfers by resuming uploads from past session."
+        },
+        {
+          "key": "chunk_size",
+          "kind": "text",
+          "label": "Chunk size",
+          "default": "5242880",
+          "hint": "Chunk size to use for uploading."
+        },
+        {
+          "key": "copy_cutoff",
+          "kind": "text",
+          "label": "Copy cutoff",
+          "default": "4999610368",
+          "hint": "Cutoff for switching to multipart copy."
+        },
+        {
+          "key": "copy_timeout",
+          "kind": "int",
+          "label": "Copy timeout",
+          "default": 60,
+          "hint": "Timeout for copy."
+        },
+        {
+          "key": "decompress",
+          "kind": "boolean",
+          "label": "Decompress",
+          "default": false,
+          "hint": "If set this will decompress gzip encoded objects."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "disable_checksum",
+          "kind": "boolean",
+          "label": "Disable checksum",
+          "default": false,
+          "hint": "Don't store MD5 checksum with object metadata."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50331650",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "leave_parts_on_error",
+          "kind": "boolean",
+          "label": "Leave parts on error",
+          "default": false,
+          "hint": "If true avoid calling abort upload on a failure, leaving all successfully uploaded parts for manual recovery."
+        },
+        {
+          "key": "max_upload_parts",
+          "kind": "int",
+          "label": "Max upload parts",
+          "default": 10000,
+          "hint": "Maximum number of parts in a multipart upload."
+        },
+        {
+          "key": "no_check_bucket",
+          "kind": "boolean",
+          "label": "No check bucket",
+          "default": false,
+          "hint": "If set, don't attempt to check the bucket exists or create it."
+        },
+        {
+          "key": "sse_customer_algorithm",
+          "kind": "text",
+          "label": "SSE customer algorithm",
+          "suggest": [
+            "AES256"
+          ],
+          "hint": "If using SSE-C, the optional header that specifies \"AES256\" as the encryption algorithm. Object Storage supports \"AES256\" as the encryption algorithm."
+        },
+        {
+          "key": "sse_customer_key",
+          "kind": "secret",
+          "label": "SSE customer key",
+          "hint": "To use SSE-C, the optional header that specifies the base64-encoded 256-bit encryption key to use to encrypt or decrypt the data."
+        },
+        {
+          "key": "sse_customer_key_sha256",
+          "kind": "secret",
+          "label": "SSE customer key SHA-256",
+          "hint": "If using SSE-C, The optional header that specifies the base64-encoded SHA256 hash of the encryption key. This value is used to check the integrity of the encryption key."
+        },
+        {
+          "key": "sse_kms_key_id",
+          "kind": "text",
+          "label": "SSE KMS key ID",
+          "hint": "if using your own master key in vault, this header specifies the OCID (https://docs.cloud.oracle.com/Content/General/Concepts/identifiers.htm) of a master encryption key used to call the Key Manageme…"
+        },
+        {
+          "key": "storage_tier",
+          "kind": "text",
+          "label": "Storage tier",
+          "suggest": [
+            "Standard",
+            "InfrequentAccess",
+            "Archive"
+          ],
+          "default": "Standard",
+          "hint": "The storage class to use when storing new objects in storage. https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/understandingstoragetiers.htm"
+        },
+        {
+          "key": "upload_concurrency",
+          "kind": "int",
+          "label": "Upload concurrency",
+          "default": 10,
+          "hint": "Concurrency for multipart uploads."
+        },
+        {
+          "key": "upload_cutoff",
+          "kind": "text",
+          "label": "Upload cutoff",
+          "default": "209715200",
+          "hint": "Cutoff for switching to chunked upload."
+        }
+      ],
+      "fixed": {
+        "provider": "no_auth"
+      }
+    },
+    {
+      "id": "pikpak",
+      "label": "PikPak",
+      "fields": [
+        {
+          "key": "device_id",
+          "kind": "secret",
+          "label": "Device ID",
+          "hint": "Device ID used for authorization.",
+          "main": true
+        },
+        {
+          "key": "pass",
+          "kind": "secret",
+          "label": "Pass",
+          "hint": "Pikpak password.",
+          "main": true
+        },
+        {
+          "key": "user",
+          "kind": "text",
+          "label": "User",
+          "hint": "Pikpak username.",
+          "main": true
+        },
+        {
+          "key": "chunk_size",
+          "kind": "text",
+          "label": "Chunk size",
+          "default": "5242880",
+          "hint": "Chunk size for multipart uploads."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "56829838",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "hash_memory_limit",
+          "kind": "text",
+          "label": "Hash memory limit",
+          "default": "10485760",
+          "hint": "Files bigger than this will be cached on disk to calculate hash if required."
+        },
+        {
+          "key": "no_media_link",
+          "kind": "boolean",
+          "label": "No media link",
+          "default": false,
+          "hint": "Use original file links instead of media links."
+        },
+        {
+          "key": "root_folder_id",
+          "kind": "text",
+          "label": "Root folder ID",
+          "hint": "ID of the root folder. Leave blank normally."
+        },
+        {
+          "key": "trashed_only",
+          "kind": "boolean",
+          "label": "Trashed only",
+          "default": false,
+          "hint": "Only show files that are in the trash."
+        },
+        {
+          "key": "upload_concurrency",
+          "kind": "int",
+          "label": "Upload concurrency",
+          "default": 4,
+          "hint": "Concurrency for multipart uploads."
+        },
+        {
+          "key": "upload_cutoff",
+          "kind": "text",
+          "label": "Upload cutoff",
+          "default": "209715200",
+          "hint": "Cutoff for switching to chunked upload."
+        },
+        {
+          "key": "use_trash",
+          "kind": "boolean",
+          "label": "Use trash",
+          "default": true,
+          "hint": "Send files to the trash instead of deleting permanently."
+        },
+        {
+          "key": "user_agent",
+          "kind": "text",
+          "label": "User agent",
+          "default": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0",
+          "hint": "HTTP user agent for pikpak."
+        }
+      ]
+    },
+    {
+      "id": "pixeldrain",
+      "label": "Pixeldrain Filesystem",
+      "fields": [
+        {
+          "key": "api_key",
+          "kind": "secret",
+          "label": "API key",
+          "hint": "API key for your pixeldrain account. Found on https://pixeldrain.com/user/api_keys.",
+          "main": true
+        },
+        {
+          "key": "api_url",
+          "kind": "text",
+          "label": "API URL",
+          "default": "https://pixeldrain.com/api",
+          "hint": "The API endpoint to connect to. In the vast majority of cases it's fine to leave this at default. It is only intended to be changed for testing purposes.",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "root_folder_id",
+          "kind": "text",
+          "label": "Root folder ID",
+          "default": "me",
+          "hint": "Root of the filesystem to use."
+        }
+      ]
+    },
+    {
+      "id": "premiumizeme",
+      "label": "premiumize.me",
+      "token": true,
+      "fields": [
+        {
+          "key": "token",
+          "kind": "token",
+          "label": "Token",
+          "hint": "OAuth token, as a JSON object with access_token, token_type, refresh_token and expiry, sent as a string, curly brackets included.",
+          "main": true
+        },
+        {
+          "key": "api_key",
+          "kind": "secret",
+          "label": "API key",
+          "hint": "API Key.",
+          "main": true
+        },
+        {
+          "key": "client_id",
+          "kind": "text",
+          "label": "Client ID",
+          "hint": "OAuth Client Id.",
+          "main": true,
+          "name": true,
+          "needs": "client_secret"
+        },
+        {
+          "key": "client_secret",
+          "kind": "secret",
+          "label": "Client secret",
+          "hint": "OAuth Client Secret.",
+          "main": true,
+          "needs": "client_id"
+        },
+        {
+          "key": "auth_url",
+          "kind": "text",
+          "label": "Auth URL",
+          "hint": "Auth server URL.",
+          "address": true
+        },
+        {
+          "key": "client_credentials",
+          "kind": "boolean",
+          "label": "Client credentials",
+          "default": false,
+          "hint": "Use client credentials OAuth flow."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50438154",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "token_url",
+          "kind": "text",
+          "label": "Token URL",
+          "hint": "Token server url.",
+          "address": true
+        }
+      ]
+    },
+    {
+      "id": "protondrive",
+      "label": "Proton Drive",
+      "fields": [
+        {
+          "key": "2fa",
+          "kind": "secret",
+          "label": "2fa",
+          "hint": "The 2FA code",
+          "main": true
+        },
+        {
+          "key": "client_access_token",
+          "kind": "secret",
+          "label": "Client access token",
+          "hint": "Client access token key (internal use only)",
+          "main": true
+        },
+        {
+          "key": "client_refresh_token",
+          "kind": "secret",
+          "label": "Client refresh token",
+          "hint": "Client refresh token key (internal use only)",
+          "main": true
+        },
+        {
+          "key": "client_salted_key_pass",
+          "kind": "secret",
+          "label": "Client salted key pass",
+          "hint": "Client salted key pass key (internal use only)",
+          "main": true
+        },
+        {
+          "key": "client_uid",
+          "kind": "secret",
+          "label": "Client uid",
+          "hint": "Client uid key (internal use only)",
+          "main": true
+        },
+        {
+          "key": "mailbox_password",
+          "kind": "secret",
+          "label": "Mailbox password",
+          "hint": "The mailbox password of your two-password proton account.",
+          "main": true
+        },
+        {
+          "key": "otp_secret_key",
+          "kind": "secret",
+          "label": "OTP secret key",
+          "hint": "The OTP secret key",
+          "main": true
+        },
+        {
+          "key": "password",
+          "kind": "secret",
+          "label": "Password",
+          "hint": "The password of your proton account.",
+          "main": true
+        },
+        {
+          "key": "username",
+          "kind": "text",
+          "label": "Username",
+          "hint": "The username of your proton account",
+          "main": true
+        },
+        {
+          "key": "app_version",
+          "kind": "text",
+          "label": "App version",
+          "hint": "The app version string"
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "enable_caching",
+          "kind": "boolean",
+          "label": "Enable caching",
+          "default": true,
+          "hint": "Caches the files and folders metadata to reduce API calls"
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "52559874",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "original_file_size",
+          "kind": "boolean",
+          "label": "Original file size",
+          "default": true,
+          "hint": "Return the file size before encryption"
+        },
+        {
+          "key": "replace_existing_draft",
+          "kind": "boolean",
+          "label": "Replace existing draft",
+          "default": false,
+          "hint": "Create a new revision when filename conflict is detected"
+        }
+      ]
+    },
+    {
+      "id": "putio",
+      "label": "Put.io",
+      "token": true,
+      "fields": [
+        {
+          "key": "token",
+          "kind": "token",
+          "label": "Token",
+          "hint": "OAuth token, as a JSON object with access_token, token_type, refresh_token and expiry, sent as a string, curly brackets included.",
+          "main": true
+        },
+        {
+          "key": "client_id",
+          "kind": "text",
+          "label": "Client ID",
+          "hint": "OAuth Client Id.",
+          "main": true,
+          "name": true,
+          "needs": "client_secret"
+        },
+        {
+          "key": "client_secret",
+          "kind": "secret",
+          "label": "Client secret",
+          "hint": "OAuth Client Secret.",
+          "main": true,
+          "needs": "client_id"
+        },
+        {
+          "key": "auth_url",
+          "kind": "text",
+          "label": "Auth URL",
+          "hint": "Auth server URL.",
+          "address": true
+        },
+        {
+          "key": "client_credentials",
+          "kind": "boolean",
+          "label": "Client credentials",
+          "default": false,
+          "hint": "Use client credentials OAuth flow."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50438146",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "token_url",
+          "kind": "text",
+          "label": "Token URL",
+          "hint": "Token server url.",
+          "address": true
+        }
+      ]
+    },
+    {
+      "id": "qingstor",
+      "label": "QingCloud Object Storage",
+      "fields": [
+        {
+          "key": "access_key_id",
+          "kind": "text",
+          "label": "Access key ID",
+          "hint": "QingStor Access Key ID.",
+          "main": true
+        },
+        {
+          "key": "endpoint",
+          "kind": "text",
+          "label": "Endpoint",
+          "hint": "Enter an endpoint URL to connection QingStor API.",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "secret_access_key",
+          "kind": "secret",
+          "label": "Secret access key",
+          "hint": "QingStor Secret Access Key (password).",
+          "main": true
+        },
+        {
+          "key": "chunk_size",
+          "kind": "text",
+          "label": "Chunk size",
+          "default": "4194304",
+          "hint": "Chunk size to use for uploading."
+        },
+        {
+          "key": "connection_retries",
+          "kind": "int",
+          "label": "Connection retries",
+          "default": 3,
+          "hint": "Number of connection retries."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "16842754",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "upload_concurrency",
+          "kind": "int",
+          "label": "Upload concurrency",
+          "default": 1,
+          "hint": "Concurrency for multipart uploads."
+        },
+        {
+          "key": "upload_cutoff",
+          "kind": "text",
+          "label": "Upload cutoff",
+          "default": "209715200",
+          "hint": "Cutoff for switching to chunked upload."
+        },
+        {
+          "key": "zone",
+          "kind": "text",
+          "label": "Zone",
+          "suggest": [
+            "pek3a",
+            "sh1a",
+            "gd2a"
+          ],
+          "hint": "Zone to connect to."
+        }
+      ]
+    },
+    {
+      "id": "quatrix",
+      "label": "Quatrix by Maytech",
+      "fields": [
+        {
+          "key": "api_key",
+          "kind": "secret",
+          "label": "API key",
+          "required": true,
+          "hint": "API key for accessing Quatrix account",
+          "main": true
+        },
+        {
+          "key": "host",
+          "kind": "text",
+          "label": "Host",
+          "required": true,
+          "hint": "Host name of Quatrix account",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "effective_upload_time",
+          "kind": "text",
+          "label": "Effective upload time",
+          "default": "4s",
+          "hint": "Wanted upload time for one chunk"
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50438146",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "hard_delete",
+          "kind": "boolean",
+          "label": "Hard delete",
+          "default": false,
+          "hint": "Delete files permanently rather than putting them into the trash"
+        },
+        {
+          "key": "maximal_summary_chunk_size",
+          "kind": "text",
+          "label": "Maximal summary chunk size",
+          "default": "100000000",
+          "hint": "The maximal summary for all chunks. It should not be less than 'transfers'*'minimal_chunk_size'"
+        },
+        {
+          "key": "minimal_chunk_size",
+          "kind": "text",
+          "label": "Minimal chunk size",
+          "default": "10000000",
+          "hint": "The minimal size for one chunk"
+        },
+        {
+          "key": "skip_project_folders",
+          "kind": "boolean",
+          "label": "Skip project folders",
+          "default": false,
+          "hint": "Skip project folders in operations"
+        }
+      ]
+    },
+    {
+      "id": "seafile",
+      "label": "Seafile",
+      "fields": [
+        {
+          "key": "url",
+          "kind": "text",
+          "label": "URL",
+          "required": true,
+          "suggest": [
+            "https://cloud.seafile.com/"
+          ],
+          "hint": "URL of seafile host to connect to.",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "auth_token",
+          "kind": "secret",
+          "label": "Auth token",
+          "hint": "Authentication token.",
+          "main": true
+        },
+        {
+          "key": "library_key",
+          "kind": "secret",
+          "label": "Library key",
+          "hint": "Library password (for encrypted libraries only).",
+          "main": true
+        },
+        {
+          "key": "pass",
+          "kind": "secret",
+          "label": "Pass",
+          "hint": "Password.",
+          "main": true
+        },
+        {
+          "key": "user",
+          "kind": "text",
+          "label": "User",
+          "hint": "User name (usually email address).",
+          "main": true
+        },
+        {
+          "key": "2fa",
+          "kind": "boolean",
+          "label": "2fa",
+          "default": false,
+          "hint": "Two-factor authentication ('true' if the account has 2FA enabled)."
+        },
+        {
+          "key": "create_library",
+          "kind": "boolean",
+          "label": "Create library",
+          "default": false,
+          "hint": "Should hoody-vfs create a library if it doesn't exist."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50405386",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "library",
+          "kind": "text",
+          "label": "Library",
+          "hint": "Name of the library."
+        }
+      ]
+    },
+    {
+      "id": "sharefile",
+      "label": "Citrix Sharefile",
+      "token": true,
+      "fields": [
+        {
+          "key": "token",
+          "kind": "token",
+          "label": "Token",
+          "hint": "OAuth token, as a JSON object with access_token, token_type, refresh_token and expiry, sent as a string, curly brackets included.",
+          "main": true
+        },
+        {
+          "key": "client_id",
+          "kind": "text",
+          "label": "Client ID",
+          "hint": "OAuth Client Id.",
+          "main": true,
+          "name": true,
+          "needs": "client_secret"
+        },
+        {
+          "key": "client_secret",
+          "kind": "secret",
+          "label": "Client secret",
+          "hint": "OAuth Client Secret.",
+          "main": true,
+          "needs": "client_id"
+        },
+        {
+          "key": "endpoint",
+          "kind": "text",
+          "label": "Endpoint",
+          "hint": "Endpoint for API calls.",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "auth_url",
+          "kind": "text",
+          "label": "Auth URL",
+          "hint": "Auth server URL.",
+          "address": true
+        },
+        {
+          "key": "chunk_size",
+          "kind": "text",
+          "label": "Chunk size",
+          "default": "67108864",
+          "hint": "Upload chunk size."
+        },
+        {
+          "key": "client_credentials",
+          "kind": "boolean",
+          "label": "Client credentials",
+          "default": false,
+          "hint": "Use client credentials OAuth flow."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "57091982",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "root_folder_id",
+          "kind": "text",
+          "label": "Root folder ID",
+          "suggest": [
+            "favorites",
+            "allshared",
+            "connectors",
+            "top"
+          ],
+          "hint": "ID of the root folder."
+        },
+        {
+          "key": "token_url",
+          "kind": "text",
+          "label": "Token URL",
+          "hint": "Token server url.",
+          "address": true
+        },
+        {
+          "key": "upload_cutoff",
+          "kind": "text",
+          "label": "Upload cutoff",
+          "default": "134217728",
+          "hint": "Cutoff for switching to multipart upload."
+        }
+      ]
+    },
+    {
+      "id": "sia",
+      "label": "Sia Decentralized Cloud",
+      "fields": [
+        {
+          "key": "api_url",
+          "kind": "text",
+          "label": "API URL",
+          "required": true,
+          "hint": "Sia daemon API URL, like http://sia.daemon.host:9980.",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "api_password",
+          "kind": "secret",
+          "label": "API password",
+          "hint": "Sia Daemon API Password.",
+          "main": true
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50436354",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "user_agent",
+          "kind": "text",
+          "label": "User agent",
+          "default": "Sia-Agent",
+          "hint": "Siad User Agent"
+        }
+      ]
+    },
+    {
+      "id": "sugarsync",
+      "label": "Sugarsync",
+      "fields": [
+        {
+          "key": "access_key_id",
+          "kind": "text",
+          "label": "Access key ID",
+          "hint": "Sugarsync Access Key ID.",
+          "main": true
+        },
+        {
+          "key": "app_id",
+          "kind": "text",
+          "label": "App ID",
+          "hint": "Sugarsync App ID.",
+          "main": true
+        },
+        {
+          "key": "authorization",
+          "kind": "secret",
+          "label": "Authorization",
+          "hint": "Sugarsync authorization.",
+          "main": true
+        },
+        {
+          "key": "private_access_key",
+          "kind": "secret",
+          "label": "Private access key",
+          "hint": "Sugarsync Private Access Key.",
+          "main": true
+        },
+        {
+          "key": "refresh_token",
+          "kind": "secret",
+          "label": "Refresh token",
+          "hint": "Sugarsync refresh token.",
+          "main": true
+        },
+        {
+          "key": "user",
+          "kind": "text",
+          "label": "User",
+          "hint": "Sugarsync user.",
+          "main": true
+        },
+        {
+          "key": "authorization_expiry",
+          "kind": "text",
+          "label": "Authorization expiry",
+          "hint": "Sugarsync authorization expiry."
+        },
+        {
+          "key": "deleted_id",
+          "kind": "text",
+          "label": "Deleted ID",
+          "hint": "Sugarsync deleted folder id."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50397186",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "hard_delete",
+          "kind": "boolean",
+          "label": "Hard delete",
+          "default": false,
+          "hint": "Permanently delete files if true otherwise put them in the deleted files."
+        },
+        {
+          "key": "root_id",
+          "kind": "text",
+          "label": "Root ID",
+          "hint": "Sugarsync root id."
+        }
+      ]
+    },
+    {
+      "id": "swift",
+      "label": "OpenStack Swift",
+      "fields": [
+        {
+          "key": "application_credential_id",
+          "kind": "text",
+          "label": "Application credential ID",
+          "hint": "Application Credential ID (OS_APPLICATION_CREDENTIAL_ID).",
+          "main": true
+        },
+        {
+          "key": "application_credential_name",
+          "kind": "text",
+          "label": "Application credential name",
+          "hint": "Application Credential Name (OS_APPLICATION_CREDENTIAL_NAME).",
+          "main": true
+        },
+        {
+          "key": "application_credential_secret",
+          "kind": "secret",
+          "label": "Application credential secret",
+          "hint": "Application Credential Secret (OS_APPLICATION_CREDENTIAL_SECRET).",
+          "main": true
+        },
+        {
+          "key": "auth",
+          "kind": "text",
+          "label": "Auth",
+          "suggest": [
+            "https://auth.api.rackspacecloud.com/v1.0",
+            "https://lon.auth.api.rackspacecloud.com/v1.0",
+            "https://identity.api.rackspacecloud.com/v2.0",
+            "https://auth.storage.memset.com/v1.0",
+            "https://auth.storage.memset.com/v2.0",
+            "https://auth.cloud.ovh.net/v3",
+            "https://authenticate.ain.net"
+          ],
+          "hint": "Authentication URL for server (OS_AUTH_URL).",
+          "address": true,
+          "main": true
+        },
+        {
+          "key": "auth_token",
+          "kind": "secret",
+          "label": "Auth token",
+          "hint": "Auth Token from alternate authentication - optional (OS_AUTH_TOKEN).",
+          "main": true
+        },
+        {
+          "key": "domain",
+          "kind": "text",
+          "label": "Domain",
+          "hint": "User domain - optional (v3 auth) (OS_USER_DOMAIN_NAME)",
+          "main": true
+        },
+        {
+          "key": "key",
+          "kind": "secret",
+          "label": "Key",
+          "hint": "API key or password (OS_PASSWORD).",
+          "main": true
+        },
+        {
+          "key": "region",
+          "kind": "text",
+          "label": "Region",
+          "hint": "Region name - optional (OS_REGION_NAME).",
+          "main": true
+        },
+        {
+          "key": "tenant",
+          "kind": "text",
+          "label": "Tenant",
+          "hint": "Tenant name - optional for v1 auth, this or tenant_id required otherwise (OS_TENANT_NAME or OS_PROJECT_NAME).",
+          "main": true
+        },
+        {
+          "key": "tenant_domain",
+          "kind": "text",
+          "label": "Tenant domain",
+          "hint": "Tenant domain - optional (v3 auth) (OS_PROJECT_DOMAIN_NAME).",
+          "main": true
+        },
+        {
+          "key": "tenant_id",
+          "kind": "text",
+          "label": "Tenant ID",
+          "hint": "Tenant ID - optional for v1 auth, this or tenant required otherwise (OS_TENANT_ID).",
+          "main": true
+        },
+        {
+          "key": "user",
+          "kind": "text",
+          "label": "User",
+          "hint": "User name to log in (OS_USERNAME).",
+          "main": true
+        },
+        {
+          "key": "user_id",
+          "kind": "text",
+          "label": "User ID",
+          "hint": "User ID to log in - optional - most swift systems use user and leave this blank (v3 auth) (OS_USER_ID).",
+          "main": true
+        },
+        {
+          "key": "auth_version",
+          "kind": "int",
+          "label": "Auth version",
+          "default": 0,
+          "hint": "AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH_VERSION)."
+        },
+        {
+          "key": "chunk_size",
+          "kind": "text",
+          "label": "Chunk size",
+          "default": "5368709120",
+          "hint": "Above this size files will be chunked."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "16777218",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "endpoint_type",
+          "kind": "text",
+          "label": "Endpoint type",
+          "suggest": [
+            "public",
+            "internal",
+            "admin"
+          ],
+          "default": "public",
+          "hint": "Endpoint type to choose from the service catalogue (OS_ENDPOINT_TYPE)."
+        },
+        {
+          "key": "fetch_until_empty_page",
+          "kind": "boolean",
+          "label": "Fetch until empty page",
+          "default": false,
+          "hint": "When paginating, always fetch unless we received an empty page."
+        },
+        {
+          "key": "leave_parts_on_error",
+          "kind": "boolean",
+          "label": "Leave parts on error",
+          "default": false,
+          "hint": "If true avoid calling abort upload on a failure."
+        },
+        {
+          "key": "no_chunk",
+          "kind": "boolean",
+          "label": "No chunk",
+          "default": false,
+          "hint": "Don't chunk files during streaming upload."
+        },
+        {
+          "key": "no_large_objects",
+          "kind": "boolean",
+          "label": "No large objects",
+          "default": false,
+          "hint": "Disable support for static and dynamic large objects"
+        },
+        {
+          "key": "partial_page_fetch_threshold",
+          "kind": "int",
+          "label": "Partial page fetch threshold",
+          "default": 0,
+          "hint": "When paginating, fetch if the current page is within this percentage of the limit."
+        },
+        {
+          "key": "storage_policy",
+          "kind": "text",
+          "label": "Storage policy",
+          "suggest": [
+            "pcs",
+            "pca"
+          ],
+          "hint": "The storage policy to use when creating a new container."
+        },
+        {
+          "key": "storage_url",
+          "kind": "text",
+          "label": "Storage URL",
+          "hint": "Storage URL - optional (OS_STORAGE_URL).",
+          "address": true
+        },
+        {
+          "key": "use_segments_container",
+          "kind": "text",
+          "label": "Use segments container",
+          "default": "unset",
+          "hint": "Choose destination for large object segments"
+        }
+      ]
+    },
+    {
+      "id": "ulozto",
+      "label": "Uloz.to",
+      "fields": [
+        {
+          "key": "app_token",
+          "kind": "secret",
+          "label": "App token",
+          "hint": "The application token identifying the app. An app API key can be either found in the API doc https://uloz.to/upload-resumable-api-beta or obtained from customer service.",
+          "main": true
+        },
+        {
+          "key": "password",
+          "kind": "secret",
+          "label": "Password",
+          "hint": "The password for the user.",
+          "main": true
+        },
+        {
+          "key": "username",
+          "kind": "text",
+          "label": "Username",
+          "hint": "The username of the principal to operate as.",
+          "main": true
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50438146",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "list_page_size",
+          "kind": "int",
+          "label": "List page size",
+          "default": 500,
+          "hint": "The size of a single page for list commands. 1-500"
+        },
+        {
+          "key": "root_folder_slug",
+          "kind": "text",
+          "label": "Root folder slug",
+          "hint": "If set, hoody-vfs will use this folder as the root folder for all operations."
+        }
+      ]
+    },
+    {
+      "id": "yandex",
+      "label": "Yandex Disk",
+      "token": true,
+      "fields": [
+        {
+          "key": "token",
+          "kind": "token",
+          "label": "Token",
+          "hint": "OAuth token, as a JSON object with access_token, token_type, refresh_token and expiry, sent as a string, curly brackets included.",
+          "main": true
+        },
+        {
+          "key": "client_id",
+          "kind": "text",
+          "label": "Client ID",
+          "hint": "OAuth Client Id.",
+          "main": true,
+          "name": true,
+          "needs": "client_secret"
+        },
+        {
+          "key": "client_secret",
+          "kind": "secret",
+          "label": "Client secret",
+          "hint": "OAuth Client Secret.",
+          "main": true,
+          "needs": "client_id"
+        },
+        {
+          "key": "auth_url",
+          "kind": "text",
+          "label": "Auth URL",
+          "hint": "Auth server URL.",
+          "address": true
+        },
+        {
+          "key": "client_credentials",
+          "kind": "boolean",
+          "label": "Client credentials",
+          "default": false,
+          "hint": "Use client credentials OAuth flow."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "50429954",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "hard_delete",
+          "kind": "boolean",
+          "label": "Hard delete",
+          "default": false,
+          "hint": "Delete files permanently rather than putting them into the trash."
+        },
+        {
+          "key": "spoof_ua",
+          "kind": "boolean",
+          "label": "Spoof User agent",
+          "default": true,
+          "hint": "Set the user agent to match an official version of the yandex disk client. May help with upload performance."
+        },
+        {
+          "key": "token_url",
+          "kind": "text",
+          "label": "Token URL",
+          "hint": "Token server url.",
+          "address": true
+        },
+        {
+          "key": "upload_wait",
+          "kind": "int",
+          "label": "Upload wait",
+          "default": 0,
+          "hint": "Wait this long after an upload before setting the modification time."
+        }
+      ]
+    },
+    {
+      "id": "zoho",
+      "label": "Zoho",
+      "token": true,
+      "fields": [
+        {
+          "key": "token",
+          "kind": "token",
+          "label": "Token",
+          "hint": "OAuth token, as a JSON object with access_token, token_type, refresh_token and expiry, sent as a string, curly brackets included.",
+          "main": true
+        },
+        {
+          "key": "client_id",
+          "kind": "text",
+          "label": "Client ID",
+          "hint": "OAuth Client Id.",
+          "main": true,
+          "name": true,
+          "needs": "client_secret"
+        },
+        {
+          "key": "client_secret",
+          "kind": "secret",
+          "label": "Client secret",
+          "hint": "OAuth Client Secret.",
+          "main": true,
+          "needs": "client_id"
+        },
+        {
+          "key": "region",
+          "kind": "text",
+          "label": "Region",
+          "suggest": [
+            "com",
+            "eu",
+            "in",
+            "jp",
+            "com.cn",
+            "com.au"
+          ],
+          "hint": "Zoho region to connect to.",
+          "main": true
+        },
+        {
+          "key": "auth_url",
+          "kind": "text",
+          "label": "Auth URL",
+          "hint": "Auth server URL.",
+          "address": true
+        },
+        {
+          "key": "client_credentials",
+          "kind": "boolean",
+          "label": "Client credentials",
+          "default": false,
+          "hint": "Use client credentials OAuth flow."
+        },
+        {
+          "key": "description",
+          "kind": "text",
+          "label": "Description",
+          "hint": "Description of the remote."
+        },
+        {
+          "key": "encoding",
+          "kind": "text",
+          "label": "Encoding",
+          "default": "16875520",
+          "hint": "The encoding for the backend."
+        },
+        {
+          "key": "list_folder_burst",
+          "kind": "int",
+          "label": "List folder burst",
+          "default": 6,
+          "hint": "Same-folder listings allowed back-to-back before `list_folder_limit` paces them."
+        },
+        {
+          "key": "list_folder_limit",
+          "kind": "int",
+          "label": "List folder limit",
+          "default": 19,
+          "hint": "Max listings of the SAME folder allowed per `list_folder_window`."
+        },
+        {
+          "key": "list_folder_window",
+          "kind": "int",
+          "label": "List folder window",
+          "default": 60,
+          "hint": "The window for `list_folder_limit`."
+        },
+        {
+          "key": "root_folder_id",
+          "kind": "text",
+          "label": "Root folder ID",
+          "hint": "ID of the root folder."
+        },
+        {
+          "key": "token_url",
+          "kind": "text",
+          "label": "Token URL",
+          "hint": "Token server url.",
+          "address": true
+        },
+        {
+          "key": "tpslimit",
+          "kind": "text",
+          "label": "Tpslimit",
+          "default": "6",
+          "hint": "Max number of API transactions per second."
+        },
+        {
+          "key": "tpslimit_burst",
+          "kind": "int",
+          "label": "Tpslimit burst",
+          "default": 1,
+          "hint": "Number of API calls to allow back-to-back without sleeping, for `tpslimit`."
+        },
+        {
+          "key": "upload_cutoff",
+          "kind": "text",
+          "label": "Upload cutoff",
+          "default": "10485760",
+          "hint": "Cutoff for switching to large file upload api (>= 10 MiB)."
+        }
+      ]
+    }
+  ],
+  "s3": [
+    {
+      "provider": "AWS",
+      "label": "Amazon S3"
+    },
+    {
+      "provider": "Alibaba",
+      "label": "Alibaba Cloud OSS"
+    },
+    {
+      "provider": "ArvanCloud",
+      "label": "ArvanCloud"
+    },
+    {
+      "provider": "BizflyCloud",
+      "label": "Bizfly Cloud"
+    },
+    {
+      "provider": "Ceph",
+      "label": "Ceph"
+    },
+    {
+      "provider": "ChinaMobile",
+      "label": "China Mobile Ecloud"
+    },
+    {
+      "provider": "Cloudflare",
+      "label": "Cloudflare R2"
+    },
+    {
+      "provider": "Cubbit",
+      "label": "Cubbit"
+    },
+    {
+      "provider": "DigitalOcean",
+      "label": "DigitalOcean Spaces"
+    },
+    {
+      "provider": "Dreamhost",
+      "label": "DreamHost DreamObjects"
+    },
+    {
+      "provider": "Exaba",
+      "label": "Exaba"
+    },
+    {
+      "provider": "Fastly",
+      "label": "Fastly Object Storage"
+    },
+    {
+      "provider": "FileLu",
+      "label": "FileLu S5"
+    },
+    {
+      "provider": "FlashBlade",
+      "label": "Pure Storage FlashBlade"
+    },
+    {
+      "provider": "GCS",
+      "label": "Google Cloud Storage (S3 API)"
+    },
+    {
+      "provider": "HCP",
+      "label": "Hitachi Content Platform"
+    },
+    {
+      "provider": "Hetzner",
+      "label": "Hetzner Object Storage"
+    },
+    {
+      "provider": "HuaweiOBS",
+      "label": "Huawei OBS"
+    },
+    {
+      "provider": "IBMCOS",
+      "label": "IBM Cloud Object Storage"
+    },
+    {
+      "provider": "IDrive",
+      "label": "IDrive e2"
+    },
+    {
+      "provider": "ImpossibleCloud",
+      "label": "Impossible Cloud"
+    },
+    {
+      "provider": "Intercolo",
+      "label": "Intercolo"
+    },
+    {
+      "provider": "IONOS",
+      "label": "IONOS Cloud"
+    },
+    {
+      "provider": "Leviia",
+      "label": "Leviia"
+    },
+    {
+      "provider": "Liara",
+      "label": "Liara"
+    },
+    {
+      "provider": "Linode",
+      "label": "Linode Object Storage"
+    },
+    {
+      "provider": "LyveCloud",
+      "label": "Seagate Lyve Cloud"
+    },
+    {
+      "provider": "Magalu",
+      "label": "Magalu Cloud"
+    },
+    {
+      "provider": "Mega",
+      "label": "MEGA S4"
+    },
+    {
+      "provider": "Minio",
+      "label": "MinIO"
+    },
+    {
+      "provider": "Netease",
+      "label": "Netease NOS"
+    },
+    {
+      "provider": "Outscale",
+      "label": "Outscale OOS"
+    },
+    {
+      "provider": "OVHcloud",
+      "label": "OVHcloud Object Storage"
+    },
+    {
+      "provider": "Petabox",
+      "label": "Petabox"
+    },
+    {
+      "provider": "Qiniu",
+      "label": "Qiniu Kodo"
+    },
+    {
+      "provider": "Rabata",
+      "label": "Rabata"
+    },
+    {
+      "provider": "RackCorp",
+      "label": "RackCorp"
+    },
+    {
+      "provider": "Scaleway",
+      "label": "Scaleway"
+    },
+    {
+      "provider": "Scality",
+      "label": "Scality"
+    },
+    {
+      "provider": "SeaweedFS",
+      "label": "SeaweedFS"
+    },
+    {
+      "provider": "Selectel",
+      "label": "Selectel"
+    },
+    {
+      "provider": "Servercore",
+      "label": "Servercore"
+    },
+    {
+      "provider": "SpectraLogic",
+      "label": "Spectra Logic"
+    },
+    {
+      "provider": "Storj",
+      "label": "Storj"
+    },
+    {
+      "provider": "Synology",
+      "label": "Synology C2"
+    },
+    {
+      "provider": "TencentCOS",
+      "label": "Tencent COS"
+    },
+    {
+      "provider": "US3",
+      "label": "UCloud US3"
+    },
+    {
+      "provider": "Wasabi",
+      "label": "Wasabi"
+    },
+    {
+      "provider": "Zadara",
+      "label": "Zadara"
+    },
+    {
+      "provider": "Zata",
+      "label": "Zata"
+    },
+    {
+      "provider": "ZeroServices",
+      "label": "Zero Services"
+    },
+    {
+      "provider": "Other",
+      "label": "Other S3-compatible service"
+    },
+    {
+      "type": "b2",
+      "label": "Backblaze B2"
+    }
+  ]
+}

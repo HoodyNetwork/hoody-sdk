@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                                             ▸ Use with your agent   + Launch an app
+ Computers             │  Apps on atlas: programs you open only when you need them.
+ Files                 │  ‹ Programs  Esc
+ Bots                  │  JupyterLab  ● Check needed                                                                  █
+ Board                 │                                                                                              █
+ Demo                  │  │ ◷ Opening JupyterLab may have gone through                                                █
+ Vault                 │  │   The computer did not confirm. Check before you open it again, so a second copy is not   █
+                       │  │   started.                                                                                █
+On atlas ▾             │  │   [Check again]                                                                           █
+▌Programs              │                                                                                              █
+ Schedules             │  Web address  https://18888-            ⧉ copy   Source       Registry                       █
+ Scripts               │               atlas.example.invalid/             Variables    JUPYTER_PORT                   █
+ Logs                  │               lab                                Handle       a1b2…a1b2 ⧉                    █
+ Tunnels               │  Opens in     Web                                                                            █
+ Notes                 │  Where        Terminal 15003                                                                 █
+ AI                    │  Started      Nov 11, 2026, 8:52 AM                                                          █
+ VMs                   │                                                                                              █
+                       │                                                                                       ⧉ copy █
+Account                │   $ jupyter lab --no-browser --port 18888                                                    █
+ Plans & Billing       │                                                                                              █
+ Referrals             │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Keys and tokens       │  │                                                                                          │█
+ API                   │  │ Access code                     [Restart to get a new code]                              │█
+ Notifications      26 │  │ The access code was shown once                                                           │█
+ Account               │  │ and is gone.                                                                             │█
+                       │  │                                                                                          │█
+ + Rent servers        │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Guide                 │                                                                                              █
+ Support               │                                                                                              █
+                       │  Stop or remove                                                                              █
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │                                                                                          │█
+                       │  │ Stop JupyterLab                 [■ Stop]                                                 │▀
+                       │  │ It closes the app and anything                                                           │
+                       │  │ unsaved in it. You can open it                                                           │
+                       │  │ again later.                                                                             │
+                       │  │                                                                                          │
+                       │  │ This Open may still be going    [Stop tracking]                                          │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

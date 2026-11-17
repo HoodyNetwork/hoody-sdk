@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Plans & Billing  Balance $250                                     + Add funds
+ Upgrade a server, rent a whole machine, and see what you pay.
+   Plans  ▸ Bare metal    Wallet & usage
+ ──────────────────────────────────────────────────────────────────────────────
+ │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC               [Pay now]
+   Listings  ▸ Reservations 2
+ / Search reservatio…   Filters                       5 reservations  ↻ Refresh
+   Server            State              Ready by ↓
+ ▌ Frankfurt XL      ● Pending          in 3 days
+   Ashburn XL        ● Pending          2 days late
+   Singapore XL      ● Fulfilled        —                      [View computers]
+   Frankfurt XL      ● Refunded         —
+   Tokyo L           ● Fulfilled        —                      [View computers]
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

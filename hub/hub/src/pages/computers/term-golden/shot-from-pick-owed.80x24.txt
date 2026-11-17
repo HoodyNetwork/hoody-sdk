@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY       ┃ New computer from before-upgrade                    Esc ×
+ Computers          ┃ A new computer starts from the snapshot before-
+ ▸ Computers    Serv┃ upgrade of borealis. It shows as copying in the
+ ───────────────────┃ list until it is ready.
+ ‹ Computers  Esc   ┃ ─────────────────────────────────────────────────────────
+ borealis  ● Running┃ Name
+ DE fra-7 · Acme sto┃ ┃ borealis-before-upgrade
+                    ┃ 3 to 100 letters, digits, - or _.
+  Overview  Connect ┃
+  Programs ▸Backups ┃ Server
+ ───────────────────┃ │ DE fra-7 ▾
+ │ Newest          O┃
+ │ Space used      6┃ Project
+ │ Last used       O┃ ┃ Pick a project ▾
+ └──────────────────┃ ✗ This computer's project is not in this realm. Pick a
+                    ┃   project here for the new computer.
+ ┌──────────────────┃
+ │ Snapshots        ┃
+ │ A snapshot saves ┃
+ │ start a new compu┃
+ │  Snapshot        ┃
+ │› before-upgrade  ┃
+ │  snap-20261018-2…┃ ─────────────────────────────────────────────────────────
+ Typing · Esc leaves┃ [Cancel]  Make the computer

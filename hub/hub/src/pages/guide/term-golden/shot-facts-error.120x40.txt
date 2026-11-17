@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                      ◆ Personal ▾  Computers not loaded ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Guide                                                                                        █
+ Computers             │  How to use Hoody: ask your agent, connect your own tools, and find every link.               █
+ Files                 │                                                                                               █
+ Bots                  │  │▌Ask your agent            ┌──────────────────────────────────────────────────────────────┐ ▀
+ Board                 │  │ Connect                   │ Ask your agent       [Show the welcome again]  ✦ Open Agent  │
+ Demo                  │  │ Skills                    │ Every computer comes with its own agent. Tell it what to     │
+ Vault                 │  │ Build your own            │ build, watch its progress, and answer its questions in the   │
+                       │  │ Every link                │ Agent panel.                                                 │
+On this computer       │  │ Bots                      │ Alt+J opens or closes the Agent panel from any page.         │
+ Programs              │  │ Tools                     └──────────────────────────────────────────────────────────────┘
+ Schedules             │  │ Try this
+ Scripts               │  │ Realms                    ┌──────────────────────────────────────────────────────────────┐
+ Logs                  │  │ Topics                    │ Connect                                                      │
+ Tunnels               │  │ Keyboard                  │ Connect your AI. Hoody works best from the AI you already    │
+ Notes                 │  │ Look                      │ use. Connect it once and it gets real computers, terminals,  │
+ AI                    │                              │ displays, browsers and files.                                │
+ VMs                   │   [j] [k] move between       │   AI chats                                                   │
+                       │   sections                   │   Coding agents   CLI   ⧉ Copy all (Pick a computer first)   │
+Account                │                              │ ▸ CLI             1. Install                                 │
+ Plans & Billing       │                              │   SDK              curl -fsSL https://             ⧉ copy    │
+ Referrals             │                              │   HTTP API         install.hoody.com | sh                    │
+ Keys and tokens       │                              │   SSH             2. Or install with npm                     │
+ API                   │                              │   Browser          npm install -g hoody-sdk        ⧉ copy    │
+ Notifications      26 │                              │                   3. Sign in (the CLI remembers this         │
+ Account               │                              │                   platform)                                  │
+                       │                              │                    hoody login                     ⧉ copy    │
+ + Rent servers        │                              │                   4. See your computers                      │
+▌Guide                 │                              │                    hoody computers list            ⧉ copy    │
+ Support               │                              │                   5. Ask the agent to build something        │
+                       │                              │                    hoody agent prompt "Build a sample        │
+                       │                              │                    HTML dashboard on this computer." -c      │
+                       │                              │                    ‹computer›                                │
+                       │                              │                    ⧉ copy (Pick a computer first)            │
+                       │                              │                   6. Open the agent                          │
+                       │                              │                    hoody agent ‹computer›                    │
+                       │                              │                    ⧉ copy (Pick a computer first)            │
+                       │                              │                   7. Sign in on the computer                 │
+                       │                              │                    hoody agent login -c ‹computer›           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,292 @@
+/* The Ask conversation (LAYOUT-ask). It fills the shell's dock frame: header 48, the column (the one scroll
+   area), the status line, bands and the composer. Prose is Geist 14/22, code Geist Mono 12.5/20. */
+.panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  background: var(--hx-card);
+  color: var(--hx-ink);
+}
+
+.srOnly {
+  position: absolute;
+  overflow: hidden;
+  clip-path: inset(50%);
+  width: 1px;
+  height: 1px;
+  white-space: nowrap;
+}
+
+.muted {
+  display: block;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.ok { color: var(--hx-ok); }
+.bad { color: var(--hx-danger); }
+.warnText { color: var(--hx-warn); }
+
+/* ---- header ---- */
+.head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-1);
+  height: var(--topbar-h);
+  padding: 0 var(--sp-2);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.headConfirm {
+  gap: var(--sp-2);
+  padding-inline-start: var(--sp-4);
+}
+
+.confirmText {
+  flex: 1;
+  min-width: 0;
+  font: var(--t-small);
+}
+
+.chip {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.headEnd {
+  display: flex;
+  flex: none;
+  gap: var(--sp-half);
+  margin-inline-start: auto;
+}
+
+.targetFacts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--sp-2) var(--sp-3);
+  margin: 0;
+  font: var(--t-body);
+}
+
+.targetFacts dt { color: var(--hx-muted); }
+
+.targetFacts dd {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+  min-width: 0;
+  margin: 0;
+}
+
+.recentEmpty {
+  margin: 0;
+  padding: var(--sp-4);
+  color: var(--hx-muted);
+  font: var(--t-body);
+}
+
+/* Recent. Clear list: the status or confirm line above the footer, inside the Recent popover. */
+.clearNote {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-4);
+  color: var(--hx-muted);
+  font: var(--t-small);
+  overflow-wrap: anywhere;
+}
+
+.clearAgain { padding: 0 var(--sp-4) var(--sp-2); }
+
+/* The capacity note under the status line: Recent is full, so this conversation is not listed there yet. */
+.recentNote {
+  margin: 0;
+  padding: var(--sp-1) var(--sp-4);
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* ---- column ---- */
+.dockSession {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.dockJobs {
+  flex: none;
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.columnWrap {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.column {
+  flex: 1;
+  overflow: hidden auto;
+  min-height: 0;
+  padding: var(--sp-4);
+  overscroll-behavior: contain;
+  font: 400 14px/22px var(--font-text);
+}
+
+.blk + .blk { margin-block-start: var(--sp-3); }
+.blk.turnGap { margin-block-start: var(--sp-6); }
+
+.pillWrap {
+  position: absolute;
+  inset-block-end: var(--sp-2);
+  inset-inline: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.pillWrap > * { pointer-events: auto; box-shadow: var(--sh-pop); }
+
+/* user message */
+.userWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+}
+
+.user {
+  position: relative;
+  width: 100%;
+  padding: var(--sp-3) calc(var(--sp-3) + var(--sp-half));
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-2);
+  background: var(--hx-fill);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.userState {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* A queued row's sentence and note: each a line of its own, the actions between them. */
+.userLine {
+  flex-basis: 100%;
+}
+
+/* The card for hooks that hold the agent. */
+.hooksText { margin: 0; }
+
+.outcome {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.errorActions {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 2;
+  gap: var(--sp-2);
+}
+
+.errorActions:empty { display: none; }
+
+/* ---- first use ---- */
+.first {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block-start: 12vh;
+}
+
+.firstTitle {
+  margin: 0;
+  font: var(--t-heading);
+  text-align: center;
+}
+
+.firstBody {
+  margin: 0 0 var(--sp-3);
+  color: var(--hx-muted);
+  font: var(--t-body);
+  text-align: center;
+}
+
+/* The welcome note: placement only (the sentence is a kit Notice). */
+.tip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-block-start: var(--sp-4);
+}
+
+.tipActions { display: flex; gap: var(--sp-3); }
+
+/* ---- provisioning ---- */
+.prov {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block-start: 12vh;
+  text-align: center;
+}
+
+.prov p { margin: 0; }
+
+/* ---- status line, bands ---- */
+.status {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 0;
+  padding: 0 var(--sp-4);
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.status:not(:empty) { height: 28px; }
+.statusText { overflow: hidden; min-width: 0; text-overflow: ellipsis; white-space: nowrap; }
+.statusWait { color: var(--hx-ink); }
+
+.accentDot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-round);
+  background: var(--hx-acc);
+  box-shadow: 0 0 0 var(--bw) var(--hx-acc-edge);
+}
+
+.band { flex: none; margin: 0 var(--sp-3) var(--sp-2); }
+
+/* ---- running conversations: the count on Recent, as the bell's ---- */
+.countWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Placement only: the kit CountBadge pinned on the Recent button's corner. */
+.countPin {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  pointer-events: none;
+}
+
+/* The dock's tail: a message waiting for the agent (Queued, May have gone through) with what can be done about it. */
+.dockPending { padding: var(--sp-2) var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-half); }
+.dockPendingText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

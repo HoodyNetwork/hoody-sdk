@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ ▌Chats   Agents   Automations   Knowledge   Settings                          █
+                                                                               █
+                                                                               █
+ What should we do?                                                            █
+ Give an agent a task on atlas, or just chat with a model. To use another      █
+ computer, pick it in the top bar.                                             █
+ ■ Personal · ✓ atlas (Running)                                                █
+                                                                               █
+                                                                               █
+ ┌───────────────────────────────────────────────────────────────────────────┐ █
+ │ Ask anything, or describe a task…                                         │ █
+ └───────────────────────────────────────────────────────────────────────────┘ █
+ [+ Attach a file]  [/ Commands]                                               █
+ [Work on this computer] [Hoody Free] [Options · Allow everything]             █
+ [Send ↵]                                                                      █
+ Enter send · Alt+Enter or Ctrl+J new line · / commands · @ files ·
+ PgUp scroll
+
+   Work on this computer                  ✦
+   Start with the General agent on        Just chat
+   atlas.                                 Start a chat with the Just chat
+                                          agent.
+ Typing · Esc leaves the field · Ctrl+K commands

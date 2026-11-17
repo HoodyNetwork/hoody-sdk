@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Buy a plan                                                       Esc ×
+ Plans ┃ Small · $12.00 / month
+ Upgrad┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Plan┃ │ ! The price changed to $14.00. Review the new total, then confirm  █
+ ──────┃ │   again.                                                           █
+ │ ✗ fr┃                                                                      █
+ Plans ┃ ┌───────────────────────────────────────────────────────────────────┐█
+ Each p┃ │ WHAT YOU GET                                                      │█
+ disk. ┃ │ This adds a new server to your account. Your free server ash-3    │█
+       ┃ │ stays as it is.                                                   │▀
+ ┌─────┃ │ CPU cores                                                       2 │
+ │     ┃ │ ───────────────────────────────────────────────────────────────── │
+ │ Plan┃ │ Memory                                                       4 GB │
+ │ Choo┃ │ ───────────────────────────────────────────────────────────────── │
+ │ serv┃ │ Disk                                                        60 GB │
+ │ to u┃ │ ───────────────────────────────────────────────────────────────── │
+ │     ┃ │ Computers                                                       3 │
+ └─────┃ │ ───────────────────────────────────────────────────────────────── │
+       ┃ │ Disk speed                        400 MiB/s read, 200 MiB/s write │
+ ┌─────┃ │ ───────────────────────────────────────────────────────────────── │
+ │ Free┃ │ Network                                                  500 Mbps │
+ │ $0 /┃ ──────────────────────────────────────────────────────────────────────
+ │ Your┃ Tick the box to agree to the terms        [Cancel]   Confirm purchase
+ Tab mo┃ first.

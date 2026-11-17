@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Port scanning reported from your server                                 Esc ×
+ Home                  │  Notifications ┃ About fra-7
+ Computers             │  Notices Hoody ┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │                ┃ ┌───────────────────────────────────────────────────────────────────────────┐
+ Bots                  │    Inbox 26  ▸ ┃ │ The notice                                                                │
+ Board                 │  ──────────────┃ │ Server                                                              fra-7 │
+ Demo                  │                ┃ │ ───────────────────────────────────────────────────────────────────────── │
+ Vault                 │  ┌─────────────┃ │ Status                                                             ! Open │
+                       │  │ Notices from┃ │ ───────────────────────────────────────────────────────────────────────── │
+On atlas ▾             │  │/ Search     ┃ │ Sent                                                Oct 21, 2026, 3:00 AM │
+ Programs              │  │             ┃ │ ───────────────────────────────────────────────────────────────────────── │
+ Schedules             │  │  Notice     ┃ │ Last update                                        Oct 23, 2026, 12:53 AM │
+ Scripts               │  │  Outgoing sp┃ │ ───────────────────────────────────────────────────────────────────────── │
+ Logs                  │  │› Port scanni┃ │ Hoody                                                                     │
+ Tunnels               │  │  Copyright c┃ │   Oct 21, 2026, 3:00 AM                                                   │
+ Notes                 │  │  Phishing pa┃ │   Message  We received a report about fra-7. Please check what runs on it │
+ AI                    │  │  Outgoing sp┃ │            and reply here with what you found and what you changed.       │
+ VMs                   │  │  Port scanni┃ │ You                                                                       │
+                       │  │  Copyright c┃ │   Oct 23, 2026, 3:00 AM                                                   │
+Account                │  │  Phishing pa┃ │   Message  Removed the script and rotated the keys.                       │
+ Plans & Billing       │  │  Outgoing sp┃ └───────────────────────────────────────────────────────────────────────────┘
+ Referrals             │  │  Port scanni┃ ┌───────────────────────────────────────────────────────────────────────────┐
+ Keys and tokens       │  │  Copyright c┃ │ Reply                                                                     │
+ API                   │  │  Phishing pa┃ │ │ ◷ This may have gone through                                            │
+▌Notifications      26 │  │  Outgoing sp┃ │ │   Your reply may have been sent. We couldn't confirm it.                │
+ Account               │  │  Port scanni┃ │ │   Check again reads this notice's messages. It never sends anything,    │
+                       │  │  Copyright c┃ │ │   and a message with the same text may be an earlier one.               │
+ + Rent servers        │  │  Phishing pa┃ │ │   If you stop tracking it, the reply box unlocks. If it did go          │
+ Guide                 │  │  Outgoing sp┃ │ │   through, sending it again posts it twice.                             │
+ Support               │  │  Port scanni┃ │ │   [Check again]  [Stop tracking]                                        │
+                       │  │  Copyright c┃ │ Your reply (read only, unavailable)                                       │
+                       │  │  Phishing pa┃ │ ┃ Removed the script and rotated the keys.                              │ │
+                       │  │  Outgoing sp┃ │ 40 of 4,000 characters. You can send 19 more replies on this notice.      │
+                       │  │  Port scanni┃ └───────────────────────────────────────────────────────────────────────────┘
+                       │  │  Copyright c┃
+                       │  │  Phishing pa┃
+                       │  │  Outgoing sp┃
+                       │  │1–25 of 40 ‹ ┃
+                       │  └─────────────┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃                                                         [Close]   Send reply

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Bots                                                     ▸ Use with your agent
+ ‹ Bots  Esc
+   restart.
+   19 days ago
+   … Working on it
+  ┌─ ! Needs you ───────────────────────────────────────────────────────────┐
+  │  Allow this action?  Use a tool                                         │
+  │                                                                         │
+  │ Run a command that changes files in the shop repository: npm install && │
+  │ npm run build                                                           │
+  │ Applies to this call only.                                              │
+  │ [Deny n]  [Allow once y]  Add a reason                                  │
+  └─────────────────────────────────────────────────────────────────────────┘
+  A check-in rule asks you before the Bot goes on.
+
+   ! Sending declines the waiting approval.
+   ┌───────────────────────────────────────────────────────────────────────┐
+   │ Message the Bot                                                       │  ▄
+   └───────────────────────────────────────────────────────────────────────┘  █
+                                  Write a message first.  [⇗ Talk]  [Send ↵]  █
+                                                                              █
+                                                                              █
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

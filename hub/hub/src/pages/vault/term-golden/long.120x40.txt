@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Vault                                               ▸ Use with your agent   + New entry   [⋯]
+ Computers             │  Tokens, passwords and settings your tools and agents read by name. The list shows only names.
+ Files                 │
+ Bots                  │  These entries belong to Personal. Other realms and Global have their own.
+ Board                 │
+ Demo                  │  Entries here    Size here    Account storage
+▌Vault                 │  140             10 KB        3% of 50 MB
+                       │
+On atlas ▾             │  / Search                   Encryption ▾  Kind ▾         140 entries  ↻ Refresh  View options█
+ Programs              │                                                                                              █
+ Schedules             │    Name ↑                   Encrypted     Kind             Size  Updated                     █
+ Scripts               │  ▌ entry-001                ✓ Encrypted   Yours           251 B  Oct 23, 2026, 4:40 PM      ██
+ Logs                  │    entry-002                · Not marked  Yours            15 B  Oct 23, 2026, 4:40 PM      ██
+ Tunnels               │    entry-003                · Not marked  Yours            15 B  Oct 23, 2026, 4:40 PM      ██
+ Notes                 │    entry-004                · Not marked  Yours            15 B  Oct 23, 2026, 4:40 PM      ██
+ AI                    │    entry-005                ✓ Encrypted   Yours           251 B  Oct 23, 2026, 4:40 PM      ██
+ VMs                   │    entry-006                · Not marked  Yours            15 B  Oct 23, 2026, 4:40 PM      ██
+                       │    entry-007                · Not marked  Yours            15 B  Oct 23, 2026, 4:40 PM      ██
+Account                │    entry-008                · Not marked  Yours            15 B  Oct 23, 2026, 4:40 PM      ██
+ Plans & Billing       │    entry-009                ✓ Encrypted   Yours           251 B  Oct 23, 2026, 4:40 PM      ██
+ Referrals             │    entry-010                · Not marked  Yours            16 B  Oct 23, 2026, 4:40 PM      ██
+ Keys and tokens       │    entry-011                · Not marked  Yours            16 B  Oct 23, 2026, 4:40 PM      ██
+ API                   │    entry-012                · Not marked  Yours            16 B  Oct 23, 2026, 4:40 PM      ██
+ Notifications      26 │    entry-013                ✓ Encrypted   Yours           251 B  Oct 23, 2026, 4:40 PM      ██
+ Account               │    entry-014                · Not marked  Yours            16 B  Oct 23, 2026, 4:40 PM      ░█
+                       │    entry-015                · Not marked  Yours            16 B  Oct 23, 2026, 4:40 PM      ░█
+ + Rent servers        │    entry-016                · Not marked  Yours            16 B  Oct 23, 2026, 4:40 PM      ░█
+ Guide                 │    entry-017                ✓ Encrypted   Yours           251 B  Oct 23, 2026, 4:40 PM      ░█
+ Support               │    entry-018                · Not marked  Yours            16 B  Oct 23, 2026, 4:40 PM      ░█
+                       │    entry-019                · Not marked  Yours            16 B  Oct 23, 2026, 4:40 PM      ░█
+                       │    entry-020                · Not marked  Yours            16 B  Oct 23, 2026, 4:40 PM      ░█
+                       │    entry-021                ✓ Encrypted   Yours           251 B  Oct 23, 2026, 4:40 PM      ░
+                       │    entry-022                · Not marked  Yours            16 B  Oct 23, 2026, 4:40 PM      ░
+                       │    entry-023                · Not marked  Yours            16 B  Oct 23, 2026, 4:40 PM      ░
+                       │    entry-024                · Not marked  Yours            16 B  Oct 23, 2026, 4:40 PM      ░
+                       │    entry-025                ✓ Encrypted   Yours           251 B  Oct 23, 2026, 4:40 PM      ░
+                       │
+                       │  1–50 of 140 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

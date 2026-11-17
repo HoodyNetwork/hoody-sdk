@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Tunnels                            ▸ Use with your agent   + Connect a laptop
+ Put a laptop app online through atlas, or let atlas reach a service on your
+ laptop. 2 sessions connected to atlas · tunnel program running since 06:00 AM
+ ‹ Tunnels  Esc
+ Web address :3000  ● Connected                              [Put on Board] [⋯]
+
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Session                                                                   │█
+ │ Session             4f2a9c…  ⧉ copy                                       │█
+ │ Connection address  203.0.113.x Show  ⧉ copy                              │█
+ │ Streams             3 streams of 1024                                     │█
+ │ Protocol            v2                                                    │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+                                                                              █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Web address                                      [Access settings] [Keys] │█
+ │ Anyone with the address can open it, unless this computer's access        │█
+ │ settings say otherwise.                                                   │█
+ │ https://••••  ⧉ copy                                                      │█
+ │                                                                           │
+ │ ▾ Not loading?                                                            │
+ │   Start the app on the laptop, check this computer's access               │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

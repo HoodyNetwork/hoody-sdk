@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Settings for Chief                                               Esc ×
+ Bots  ┃ Model, behaviour, guardrails and voice.
+ ‹ Bots┃ ──────────────────────────────────────────────────────────────────────
+       ┃ │ The Bot itself        ┌───────────────────────────────────────────┐█
+   i Ta┃ │ Model                 │ Behaviour                                 │█
+   The ┃ │▌Behaviour             │ Its name, role and standing instructions. │█
+   rais┃ │ Voice                 │ ┌───────────────────────────────────────┐ │█
+   19 d┃ │ The helpers it        │ │                                       │ │█
+       ┃ │ starts                │ │ Name                                  │ │█
+       ┃ │ Helpers               │ │ │ Chief                               │ │█
+       ┃ │ Guardrails and        │ │                                       │ │█
+       ┃ │ limits                │ │ Role                                  │ │█
+       ┃ │ Advanced              │ │ One line that says what it is for.    │ │█
+   Unde┃                         │ │ │ Runs the team day: triage, approva… │ │█
+   rest┃                         │ │                                       │ │█
+   19 d┃                         │ │ Instructions                          │ │
+       ┃                         │ │ How it should work and talk.          │ │
+   ┌───┃                         │ │ Guardrails are separate.              │ │
+   │ Me┃                         │ │ │ Be brief and kind. Ask before       │ │
+   └───┃                         │ │   anything that costs money. Never    │ │
+       ┃                         │ │   reveal keys or addresses.           │ │
+       ┃                         │ │                                       │ │
+       ┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Discard] [Cancel]  Save

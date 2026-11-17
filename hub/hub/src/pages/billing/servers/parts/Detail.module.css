@@ -1,0 +1,6 @@
+/* Several disk groups: one per line in the Disks value. */
+.lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

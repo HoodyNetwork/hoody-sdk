@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines › web-1
+ Computers             │  web-1  ● Running                                                              Shut down   [⋯]
+ Files                 │  A VM inside atlas.
+ Bots                  │
+ Board                 │   Overview  Screen  Ports  Storage ▸Snapshots  Settings  Logs
+ Demo                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Snapshots                                                               [Take a snapshot] │
+On atlas ▾             │  │ A snapshot keeps the VM's disk as it is now, so you can go back to it.                    │
+ Programs              │  │  Label                Taken                  Disk size  Restore                           │
+ Schedules             │  │› v1                   Oct 15, 2025, 3:46 AM      20 GB  ● Possible             [Restore] ⋯│
+ Scripts               │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Logs                  │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Tunnels               │  │ Move this VM                                                                              │
+ Notes                 │  │ To move a VM to another computer, export a snapshot with the CLI.                         │
+ AI                    │  │                                                                                   ⧉ copy  │
+▌VMs                   │  │  $ hoody vm snapshots export create web-1 v1                                              │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

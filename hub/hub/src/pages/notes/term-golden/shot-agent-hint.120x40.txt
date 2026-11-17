@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Use with your agent                                                     Esc ×
+ Home                  │  Notes         ┃ Hoody Agent, or any agent with the Hoody skill, can read and write
+ Computers             │  The notes on y┃ these notes. They live in the notes program of the Hoody Kit on your
+ Files                 │                ┃ computer.
+ Bots                  │  / Search      ┃ ─────────────────────────────────────────────────────────────────────────────
+ Board                 │                ┃ ▸ Prompts    Set up    Access    Can do                                     █
+ Demo                  │      Title     ┃ ────────────────────────────────────────────────────────────────────────────█
+ Vault                 │  ▾ atlas · 6  O┃                                                                             █
+                       │  ›   Weekly pla┃                                                                             █
+On atlas ▾             │      Deploy che┃ Acts on                                                                     █
+ Programs              │      Reading li┃ Computer  None chosen yet               Realm     ■ Personal f1f1…f1f1      █
+ Schedules             │      Meeting no┃ No computer is chosen, so your agent asks you which one first.              █
+ Scripts               │      Trip ideas┃                                                                             █
+ Logs                  │      Backup sch┃ i No computer is chosen on this page yet, so each prompt asks your agent to █
+ Tunnels               │                ┃   ask you which one first. Choose a computer to name it in the prompts.     █
+▌Notes                 │  ▾ borealis · 4┃   Open Computers                                                            █
+ AI                    │      Staging re┃                                                                             █
+ VMs                   │      Customer f┃ Start here                                                                  █
+                       │      Launch tim┃ Work on my notes                                                            █
+Account                │      Open quest┃ Your agent asks you what you want before it does anything.                  █
+ Plans & Billing       │                ┃                                                                             ▀
+ Referrals             │    cedar This c┃  ✦ Ask Hoody Agent   ⧉ Copy for your agent
+ Keys and tokens       │                ┃
+ API                   │    dune This co┃ Two ways to use it
+ Notifications      26 │                ┃ Hoody Agent     No set-up. Ask Hoody Agent puts the prompt in the Agent's
+ Account               │    ember This c┃                 message box; it waits there until you press Send.
+                       │                ┃ Your own agent  Copy the prompt and paste it in. Set your agent up once in
+ + Rent servers        │    fjord This c┃                 Set up.
+ Guide                 │                ┃
+ Support               │    granite Note┃  Use the Hoody skill.
+                       │                ┃
+                       │    harbor No no┃  Target
+                       │                ┃  - Computer: not chosen yet (ask me which one first)
+                       │                ┃  - Realm: "Personal" (id f1f1f1f1f1f1f1f1f1f1f1f1)
+                       │                ┃  If you cannot find this realm, stop and ask me.
+                       │                ┃
+                       │                ┃  Steps
+                       │                ┃  1. Ask me what I want in my notes: a page to write or change, something to
+                       │                ┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ Skills in the Guide                                         Hide on this page

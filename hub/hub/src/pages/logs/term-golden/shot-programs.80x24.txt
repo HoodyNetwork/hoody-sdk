@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Logs                                                     ▸ Use with your agent
+ Program output
+   Everything    Visits    Bots    Changes    Scripts  ▸ Programs   [More ▾]  █
+ │ ● SG atlas · █ Personal ▾ │ / Search                          [Refresh] [⋯]█
+ [Clear all]                                                                  █
+ │  web  ▾ ‹ Normal output ›  Errors   [↻ Refresh] [✦ Explain]                █
+                                                                              █
+ Program output has no times and is not kept forever: this is what the program
+ wrote most recently.
+
+ Recent output as of Nov 11, 09:00 AM. Refresh to read it again.
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │                                                                           │
+ │ [08:30:00] GET /health 200 3ms                                            │
+ │ [08:30:30] GET /health 200 4ms                                            │
+ │ [08:31:00] GET /health 200 5ms                                            │
+ │ [08:31:30] GET /health 200 6ms                                            │
+ │ [08:32:00] GET /health 200 7ms                                            │
+ │ [08:32:30] GET /health 200 3ms                                            │
+ │ [08:33:00] GET /health 200 4ms                                            │
+ │ [08:33:30] GET /health 200 5ms                                            │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

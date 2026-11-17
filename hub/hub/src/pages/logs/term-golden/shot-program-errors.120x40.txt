@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Logs                                                                    ▸ Use with your agent
+ Computers             │  Program output
+ Files                 │
+ Bots                  │    Everything    Visits    Bots    Changes    Scripts  ▸ Programs   [More ▾]
+ Board                 │  │ ● SG atlas · █ Personal ▾ │ / Search                                          [Refresh] [⋯]
+ Demo                  │  Program: worker × [Clear all]
+ Vault                 │  │  worker  ▾   Normal output  ‹ Errors › [↻ Refresh] [✦ Explain]
+                       │
+On atlas ▾             │  Program output has no times and is not kept forever: this is what the program wrote most
+ Programs              │  recently.
+ Schedules             │
+ Scripts               │  Recent output as of Nov 11, 09:00 AM. Refresh to read it again.
+▌Logs                  │
+ Tunnels               │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Notes                 │  │                                                                                           │
+ AI                    │  │ error: job 40 failed: connection refused                                                  │
+ VMs                   │  │ error: job 41 failed: connection refused                                                  │
+                       │  │ error: job 42 failed: connection refused                                                  │
+Account                │  │ error: job 43 failed: connection refused                                                  │
+ Plans & Billing       │  │ error: job 44 failed: connection refused                                                  │
+ Referrals             │  │ error: job 45 failed: connection refused                                                  │
+ Keys and tokens       │  │ error: job 46 failed: connection refused                                                  │
+ API                   │  │ error: job 47 failed: connection refused                                                  │
+ Notifications      26 │  │ error: job 48 failed: connection refused                                                  │
+ Account               │  │ error: job 49 failed: connection refused                                                  │
+                       │  │ error: job 50 failed: connection refused                                                  │
+ + Rent servers        │  │ error: job 51 failed: connection refused                                                  │
+ Guide                 │  │                                                                                           │
+ Support               │  │                                                                                           │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

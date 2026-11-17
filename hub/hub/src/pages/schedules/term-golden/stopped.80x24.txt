@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ○ atlas ▾  [A]  ^K · ?
+ Schedules
+     ┌─────────────────────────────────────────────────────────────────────┐
+     │ This computer is stopped                                            │
+     │                                                                     │
+     │ atlas is stopped. Nothing scheduled on it runs while it's stopped,  │
+     │ and it can't be checked.                                            │
+     │                                                                     │
+     │ [Open Computers]                                                    │
+     └─────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

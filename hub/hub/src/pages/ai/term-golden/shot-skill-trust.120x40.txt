@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations  ▌Knowledge   Settings
+ Computers             │  ▌Skills   Instructions   Memory
+ Files                 │  Skills                                                                [↓ Import]  [Skill Hub]
+ Bots                  │
+ Board                 │  ‹ Skills  Esc
+ Demo                  │  deploy-check  ● On
+ Vault                 │  Check a deploy before it goes out.
+                       │
+On atlas ▾             │  Use                                                                                         █
+ Programs              │  [■ on ] Agents can use this skill                                                           █
+ Schedules             │          Turns deploy-check on or off for every agent in this realm. It does not change      █
+ Scripts               │          trust.                                                                              █
+ Logs                  │  On, but not trusted: agents see its name only and its commands do not run.                  █
+ Tunnels               │  What on and trusted mean                                                                    █
+ Notes                 │                                                                                              █
+▌AI                    │  Trust                                                                                       █
+ VMs                   │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │                                                                                          │█
+Account                │  │ ! Not trusted                                                        [Review and trust…] │█
+ Plans & Billing       │  │ Installed and not trusted: its                                                           │█
+ Referrals             │  │ description and instructions                                                             │█
+ Keys and tokens       │  │ are withheld and its commands                                                            │█
+ API                   │  │ do not run.                                                                              │█
+ Notifications      26 │  │                                                                                          │█
+ Account               │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ + Rent servers        │  │ Files in this skill ⓘ                                                                    │█
+ Guide                 │  │ SKILL.md                                                                          [Read] │█
+ Support               │  │   Markdown                                                                               │█
+                       │  │ This skill has no other files.                                                           │█
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+                       │  Details                                                                                     █
+                       │  Installed from          skill hub · hoody/deploy-check                                      █
+                       │  Where                   Your skills                                                         █
+                       │  Tools it asks for (a    None                                                                █
+                       │  hint)
+                       │
+                       │  Folder                  /home/ada/.hoody/skills/deploy-check  ⧉ copy
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Bots                                                     ▸ Use with your agent
+ Every Bot on your running computers, and the page of each one.
+ ‖ atlas: 2 Bots are paused after a sign-in change.                    [Resume]
+ ──────────────────────────────────────────────────────────────────────────────
+    ┌──────────────────────────────────────────────────────────────────────┐  █
+    │ Make your first Bot                                                  │  █
+    │                                                                      │  █
+    │ A Bot is an assistant that lives on one of your computers: it takes  │  █
+    │ on tasks and asks you before risky steps.                            │  █
+    │                                                                      │  █
+    │                                                                      │  █
+    │                                                                      │  █
+    │ What a Bot can do                                                    │  █
+    │                                                                      │  █
+    │ [+ New Bot]  How to connect                                          │  █
+    │                                                                      │  █
+    │ Talk to it here, in Telegram, Slack or Discord, or from any app,     │
+    │ agent or program that speaks HTTP, including OpenAI, Anthropic and   │
+    │ MCP clients.                                                         │
+    └──────────────────────────────────────────────────────────────────────┘
+
+ Questions
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

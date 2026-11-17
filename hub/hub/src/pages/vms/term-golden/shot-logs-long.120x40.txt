@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines › web-1
+ Computers             │  web-1  ● Running                                                              Shut down   [⋯]
+ Files                 │  A VM inside atlas.
+ Bots                  │
+ Board                 │   Overview  Screen  Ports  Storage  Snapshots  Settings ▸Logs
+ Demo                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Logs                                                                         [↻ Refresh] │█
+On atlas ▾             │  │ ‹ Console ›  Machine    Network                                                          │█
+ Programs              │  │                                                                                  ⧉ copy  │█
+ Schedules             │  │  [ 0061 ] boot step 61                                                                   │
+ Scripts               │  │  [ 0062 ] boot step 62                                                                   │
+ Logs                  │  │  [ 0063 ] boot step 63                                                                   │
+ Tunnels               │  │  [ 0064 ] boot step 64                                                                   │
+ Notes                 │  │  [ 0065 ] boot step 65                                                                   │
+ AI                    │  │  [ 0066 ] boot step 66                                                                   │
+▌VMs                   │  │  [ 0067 ] boot step 67                                                                   │
+                       │  │  [ 0068 ] boot step 68                                                                   │
+Account                │  │  [ 0069 ] boot step 69                                                                   │
+ Plans & Billing       │  │  [ 0070 ] boot step 70                                                                   │
+ Referrals             │  │  [ 0071 ] boot step 71                                                                   │
+ Keys and tokens       │  │  [ 0072 ] boot step 72                                                                   │
+ API                   │  │  [ 0073 ] boot step 73                                                                   │
+ Notifications      26 │  │  [ 0074 ] boot step 74                                                                   │
+ Account               │  │  [ 0075 ] boot step 75                                                                   │
+                       │  │  [ 0076 ] boot step 76                                                                   │
+ + Rent servers        │  │  [ 0077 ] boot step 77                                                                   │
+ Guide                 │  │  [ 0078 ] boot step 78                                                                   │
+ Support               │  │  [ 0079 ] boot step 79                                                                   │
+                       │  │  [ 0080 ] boot step 80                                                                   │
+                       │  │  [ 0081 ] boot step 81                                                                   │
+                       │  │  [ 0082 ] boot step 82                                                                   │
+                       │  │  [ 0083 ] boot step 83                                                                   │
+                       │  │  [ 0084 ] boot step 84                                                                   │
+                       │  │  [ 0085 ] boot step 85                                                                   │
+                       │  │  [ 0086 ] boot step 86                                                                   │
+                       │  │  [ 0087 ] boot step 87                                                                   │
+                       │  │  [ 0088 ] boot step 88                                                                   │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

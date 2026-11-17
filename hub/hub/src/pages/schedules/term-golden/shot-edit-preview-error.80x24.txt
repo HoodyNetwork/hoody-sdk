@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Edit night-sweep                                                 Esc ×
+ Schedu┃ Runs a command on a timer.
+ 16 sch┃ ──────────────────────────────────────────────────────────────────────
+ Comput┃
+ / Sear┃   Name
+   Name┃   ┃ night-sweep
+ ›   pi┃
+   ! qu┃   Command
+     Wa┃   │ Unchanged
+   ! sy┃   Leave empty to keep the current command.
+     Ni┃
+     ni┃   Runs
+     mo┃   │ Custom ▾
+   ! PO┃
+     ro┃
+     cl┃   Cron expression
+   ! Un┃   ┃ 0 24 * * *
+     ar┃   ✗ Hour must be 0 to 23.
+     ni┃
+     ol┃   ✗ Hour must be 0 to 23.
+     po┃
+     wa┃
+       ┃ ──────────────────────────────────────────────────────────────────────
+ Typing┃ [Cancel]  Save

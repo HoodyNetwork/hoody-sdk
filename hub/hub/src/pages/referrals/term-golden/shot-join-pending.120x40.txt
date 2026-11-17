@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Referrals                                                                     [Program rules]
+ Computers             │  Invite people to Hoody. When they pay for servers by card or crypto, you earn Referral
+ Files                 │  credit.
+ Bots                  │
+ Board                 │  │ ◷ Your join may have gone through                                                         █
+ Demo                  │  │   The server didn't confirm the result. Don't send it again: check the current state      █
+ Vault                 │  │   first.                                                                                  █
+                       │  │   [Check again]  [Stop tracking]                                                          █
+On atlas ▾             │                                                                                              █
+ Programs              │                                                                                              █
+ Schedules             │  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓█
+ Scripts               │  ┃ Invite people, earn Referral credit                                                      ┃█
+ Logs                  │  ┃ Invite people to Hoody and earn Referral credit when they pay for servers by card or     ┃█
+ Tunnels               │  ┃ crypto.                                                                                  ┃█
+ Notes                 │  ┃ ✓ You earn 5% of what they pay for servers                                               ┃█
+ AI                    │  ┃ ✓ 10% as a Creator, from 11 customers who count                                          ┃█
+ VMs                   │  ┃ ✓ Credit pays for servers; Creators may ask to withdraw it                               ┃█
+                       │  ┃ How long you earn from each person                                                       ┃
+Account                │  ┃                                                                                          ┃
+ Plans & Billing       │  ┃ When credit becomes usable                                                               ┃
+▌Referrals             │  ┃                                                                                          ┃
+ Keys and tokens       │  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+ API                   │
+ Notifications      26 │
+ Account               │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ What you'll get                                                                          │
+ + Rent servers        │  │ ✓ A link to share, and codes of your own                                                 │
+ Guide                 │  │ ✓ Credit when the people you invite pay for servers                                      │
+ Support               │  │ ✓ Totals only: how many signed up and pay, never who                                     │
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Levels                                                                                   │
+                       │  │ Your share depends on your level. Each purchase earns at the level of the month it's     │
+                       │  │ activated.                                                                               │
+                       │  │ ┌─────────────────────────────────────────┐  ┌─────────────────────────────────────────┐ │
+                       │  │ │ Referrer                                │  │ Creator                                 │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Use with your agent                                                     Esc ×
+ Home                  │  Scripts       ┃ Hoody Agent, or any agent with the Hoody skill, can write scripts on
+ Computers             │  Small programs┃ your computer. Each .ts or .js file in the scripts folder answers at
+ Files                 │                ┃ its own HTTP address.
+ Bots                  │  / Search      ┃ ─────────────────────────────────────────────────────────────────────────────
+ Board                 │  10 scripts  [R┃ ▸ Prompts    Set up    Access    Can do                                     █
+ Demo                  │                ┃ ────────────────────────────────────────────────────────────────────────────█
+ Vault                 │      Script ↑  ┃                                                                             █
+                       │  ▾ atlas · 7   ┃                                                                             █
+On atlas ▾             │  ›   Daily dige┃ Acts on                                                                     █
+ Programs              │      Health che┃ Computer  atlas c0a7…00a1               Realm     ■ Personal f1f1…f1f1      █
+ Schedules             │      Notify me ┃ Names the computer and its realm so your agent acts on the right one.       █
+▌Scripts               │      Old report┃                                                                             █
+ Logs                  │      Order stat┃ Start here                                                                  █
+ Tunnels               │      Stripe web┃ Write a script with me                                                      █
+ Notes                 │      Weather lo┃ Your agent asks you what you want before it does anything.                  █
+ AI                    │                ┃                                                                             █
+ VMs                   │  ▾ borealis · 3┃  ✦ Ask Hoody Agent   ⧉ Copy for your agent                                  █
+                       │      i Runs an ┃
+Account                │        update t┃ Two ways to use it
+ Plans & Billing       │      ──────────┃ Hoody Agent     No set-up. Ask Hoody Agent puts the prompt in the Agent's
+ Referrals             │      Daily dige┃                 message box; it waits there until you press Send.
+ Keys and tokens       │      Order stat┃ Your own agent  Copy the prompt and paste it in. Set your agent up once in
+ API                   │      Weather lo┃                 Set up.
+ Notifications      26 │                ┃
+ Account               │  ▾ cedar · 0   ┃  Use the Hoody skill.
+                       │      i Turned o┃
+ + Rent servers        │      ──────────┃  Target
+ Guide                 │                ┃  - Computer: "atlas" (id c0a7150000000000000000a1)
+ Support               │  ▾ harbor · 0  ┃  - Realm: "Personal" (id f1f1f1f1f1f1f1f1f1f1f1f1)
+                       │      i Keeps it┃  If you cannot find this computer in this realm, stop and ask me.
+                       │        them.   ┃
+                       │      ──────────┃  Steps
+                       │                ┃  1. Ask me what the script should do: what it takes, what it returns, and
+                       │  ▸ Advanced    ┃  what to call it. Do nothing else until I answer.
+                       │                ┃  2. Tell me your plan in one line and wait for my OK.
+                       │  Questions     ┃  3. Write it in the scripts folder of this computer, then call it once to
+                       │  ▸ What is a sc┃  check that it answers.
+                       │  ▸ Do I need to┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ Skills in the Guide                                         Hide on this page

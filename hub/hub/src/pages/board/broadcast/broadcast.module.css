@@ -1,0 +1,190 @@
+/* The Board broadcast: the strip trigger and its Live mark, its panel and the leftover links. */
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font: var(--t-label);
+  color: var(--hx-danger);
+  white-space: nowrap;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-round);
+  background: var(--hx-danger-fill);
+}
+
+.ending .dot {
+  background: var(--hx-faint);
+}
+
+.ending {
+  color: var(--hx-muted);
+}
+
+/* The Live mark and Stop while the strip is off screen: pinned under the top bar (or in a phone sheet's header), above
+   the page at the dock layer; while an overlay is open the bar sits inside its root, so it stacks above that overlay. */
+.away {
+  position: fixed;
+  inset-block-start: calc(var(--topbar-h) + var(--sp-2));
+  inset-inline: 0;
+  margin-inline: auto;
+  width: fit-content;
+  max-width: calc(100% - 2 * var(--sp-3));
+  z-index: var(--z-dock);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  background: var(--hx-raised);
+  border: 1px solid var(--hx-line-2);
+  border-radius: var(--r-2);
+}
+
+/* Inside an overlay the bar stacks above every overlay layer: its root may be a plain wrapper (a desktop Popover's
+   content) over another overlay's scrim (a Popover opened in a Drawer). */
+.away[data-in-overlay] {
+  z-index: var(--z-toast);
+}
+
+/* At phone width (the kit's phone layout, `data-phone`), while a sheet or dialog is open (the bar then sits inside its
+   root), the bar moves into the header band's far end, where full-screen sheets keep only their title (the back button is
+   at the start), so it covers neither the back button nor the body's first row; its text stays for screen readers. The
+   header keeps the bar's width free so a long title ends before it. Wider, it keeps its row under the top bar but moves
+   to the start, over the scrim: Drawers open from the end and dialogs sit in the middle, so it stays clear of their
+   header, close button and body while that scrim is wide enough for it (else the bottom placement below). Overlays are
+   viewport-level, so the switch is the kit's phone layout (useIsPhone), never a page media query. */
+.away[data-in-overlay]:not([data-phone]) {
+  inset-inline: var(--sp-3) auto;
+  margin-inline: 0;
+}
+
+/* Too little scrim at the start for the bar (a Drawer on a narrow window, a dialog or popover near the start; never at
+   phone width): the bar sits at the viewport's bottom, centred over the overlay's panel (Broadcast.tsx sets
+   --away-start). The panel's dialog keeps the bar's height (one row: Stop's control height, padding and border) plus its
+   gaps free at its bottom, so its last row and footer buttons stay above the bar. Same weight as the start rule above,
+   so this later rule wins. */
+.away[data-in-overlay][data-at-bottom] {
+  inset-block: auto calc(var(--sp-2) + env(safe-area-inset-bottom, 0px));
+  inset-inline: var(--away-start) auto;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+:global(*):has(> .away[data-at-bottom]) :global(:is([role='dialog'], [role='alertdialog'])) {
+  padding-block-end: calc(var(--ctl-h) + 2 * var(--sp-1) + 2 * var(--bw) + 2 * var(--sp-2));
+}
+
+.away[data-in-overlay][data-phone] {
+  inset-block-start: calc((var(--drawer-head-h) - var(--ctl-h)) / 2 - var(--sp-1) - 1px + env(safe-area-inset-top, 0px));
+  inset-inline: auto var(--sp-2);
+  margin-inline: 0;
+  box-sizing: border-box;
+  width: var(--away-w);
+  flex-wrap: nowrap;
+}
+
+.away[data-in-overlay][data-phone] .liveText {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* One width for the bar and the header's reserve: the dot, the gaps and a 44 px "Stop". */
+:global(*):has(> .away[data-in-overlay][data-phone]) {
+  --away-w: 7.5rem;
+}
+
+:global(*):has(> .away[data-in-overlay][data-phone]) :global(header) {
+  padding-inline-end: calc(var(--away-w) + var(--sp-2));
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.muted {
+  margin: 0;
+  font: var(--t-small);
+  color: var(--hx-muted);
+}
+
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font: var(--t-body);
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.url {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font: var(--t-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.leftovers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.leftover {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font: var(--t-small);
+}
+
+.leftover > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.sub {
+  margin: 0;
+  font: var(--t-label);
+}
+
+/* The panel closed because the Board's strip hid: its exit takes no time, so its dialog leaves the page at once (an
+   exiting dialog still gates the Board's keys). Only the duration changes: a close that starts hidden has no running
+   animation and unmounts in the same commit, and an exit already running when the strip hides finishes at once
+   (its `finished` resolves). `animation: none` would cancel that running exit instead: react-aria drops the rejected
+   promise and keeps the dialog for good. Doubled to win over the kit's own exit rule in any load order. */
+.instant.instant[data-exiting] {
+  animation-duration: 0s;
+}
+

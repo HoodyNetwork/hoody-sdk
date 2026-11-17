@@ -1,0 +1,279 @@
+.layout {
+  container: guide / inline-size;
+  flex: 1;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 760px) 280px;
+  gap: var(--sp-7);
+  padding-block-end: var(--sp-9);
+  align-items: start;
+}
+
+.index {
+  position: sticky;
+  inset-block-start: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+
+  /* The items take the kit section-menu look (dashed rail, 34 px rows, the ink bar); the index sets only their size. */
+  font-size: var(--fs-sm);
+}
+
+.hint {
+  margin-block-start: var(--sp-3);
+  padding-inline: var(--sp-3);
+  color: var(--hx-faint);
+  font-size: var(--fs-xs);
+}
+
+/* The reading column: one strict section after another, the same width, the same space between them. */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  min-width: 0;
+  max-inline-size: 760px;
+}
+
+/* A jumped-to section stops a little under the top, not flush against it. */
+.content > section {
+  scroll-margin-block-start: var(--sp-4);
+}
+
+.rail {
+  position: sticky;
+  inset-block-start: var(--sp-4);
+}
+
+.railTitle {
+  margin: 0 0 var(--sp-1);
+  color: var(--hx-muted);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.railNote {
+  margin: 0 0 var(--sp-3);
+  color: var(--hx-muted);
+  font-size: var(--fs-xs);
+}
+
+/* The narrow frame's fold of the facts; the wide rail shows them open (.railFacts). */
+.railFold {
+  display: none;
+}
+
+.doorSelect {
+  display: none;
+}
+
+/* The ways rail (kit SideTabs) and the panel are one framed block on the plate's fill (a light
+   rail plate). */
+.doors {
+  display: grid;
+  grid-template-columns: var(--plate-rail-w) minmax(0, 1fr);
+  border: var(--bw) solid var(--hx-plate-line);
+  background: var(--hx-plate-bg);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+  padding: var(--plate-pad-top) var(--sp-4) var(--plate-pad-bottom);
+}
+
+.note {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.pathLine {
+  margin: 0;
+  padding: var(--sp-3);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--hx-fill);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+.address {
+  display: grid;
+  grid-template-columns: 120px minmax(0, max-content) auto;
+  justify-content: start;
+  gap: var(--sp-3);
+  align-items: center;
+  min-height: var(--row-h);
+  border-block-end: var(--bw) solid var(--hx-line-2);
+}
+
+.addressName {
+  font-weight: var(--fw-medium);
+}
+
+.addressValue {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.topic {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  max-inline-size: var(--measure);
+  margin-block-end: var(--sp-6);
+}
+
+.topic p {
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: 1.6;
+}
+
+.topicTitle {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+}
+
+.topicFrom {
+  color: var(--hx-faint);
+  font-size: var(--fs-xs);
+}
+
+/* Below 1180px the facts fold into one line above the reading column ("atlas · Running · Personal"), so the
+   sections start at the top of the page; the index keeps the left column beside both. */
+@container guide (width < 1180px) {
+  .grid {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+
+  .index {
+    grid-row: 1 / span 2;
+  }
+
+  .rail {
+    position: static;
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .content {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .railFold {
+    display: block;
+  }
+
+  .railFacts,
+  .rail > .railNote,
+  .railTitle {
+    display: none;
+  }
+}
+
+@container guide (width < 760px) {
+  /* The section strip is sticky: a jumped-to heading stops below it, not under it. */
+  .content > section {
+    scroll-margin-block-start: calc(44px + var(--sp-4));
+  }
+
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rail {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .content {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  /* The strip keeps its own look through the section-menu hooks, the same as the settings strip (Account, AI): no rail
+     or bar, the current item underlined in the selected-bar colour, no fills. */
+  .index {
+    --section-menu-flow: row;
+    --section-menu-gap: var(--sp-half);
+    --section-menu-marks: 0;
+    --section-menu-row: max(32px, var(--touch-min));
+    --section-menu-current-line: var(--hx-selected-bar);
+
+    position: sticky;
+    z-index: var(--z-sticky);
+    grid-row: 2;
+    flex-direction: row;
+    overflow-x: auto;
+    background: var(--hx-bg);
+    inset-block-start: 0;
+    mask-image: linear-gradient(to right, transparent 0, var(--hx-ink) 12px, var(--hx-ink) calc(100% - 28px), transparent 100%);
+  }
+
+  .hint {
+    display: none;
+  }
+}
+
+@container guide (width < 640px) {
+  .doors {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Two classes: outranks the kit rail's own display whichever stylesheet loads last. */
+  .doors > .doorList {
+    display: none;
+  }
+
+  .doorSelect {
+    display: block;
+    padding: var(--sp-3) var(--sp-4) 0;
+  }
+
+  .address {
+    grid-template-columns: minmax(0, max-content) auto;
+  }
+
+  .addressName {
+    grid-column: 1 / -1;
+  }
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.footerLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+}
+
+/* Skills and "Build your own": the numbered steps. */
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  max-inline-size: var(--measure);
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  line-height: var(--lh-normal);
+  list-style: decimal;
+}
+
+.steps > li > * + * {
+  margin-block-start: var(--sp-2);
+}

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Vault                                               ▸ Use with your agent   + New entry   [⋯]
+ Computers             │
+ Files                 │  ‹ Vault  Esc
+ Bots                  │  db-password                                                      ⧉ copy [✎ Replace value] [⋯]
+ Board                 │
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+▌Vault                 │  │ About this entry                                                                          │
+                       │  │ Belongs to     Personal                       Updated        Oct 23, 2026, 4:40 PM        │
+On atlas ▾             │  │ Encryption     Encrypted                      Created        Oct 20, 2026, 9:15 AM        │
+ Programs              │  │ Size           251 B                          Other details  None                         │
+ Schedules             │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Scripts               │
+ Logs                  │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Tunnels               │  │ Value                                                                                     │
+ Notes                 │  │ Value                                                                                     │
+ AI                    │  │ │ •••••••••••• (Not read yet) [Show value] [Copy value]                                   │
+ VMs                   │  │ ⚿ Read only on Show value or Copy; hiding it removes it from this page.                   │
+                       │  │                                                                                           │
+Account                │  │ Password                                                                                  │
+ Plans & Billing       │  │ │ ______________                                                                          │
+ Referrals             │  │ Encrypted: its password never leaves this device.                                         │
+ Keys and tokens       │  │  Open and copy  [Cancel]                                                                  │
+ API                   │  │                                                                                           │
+ Notifications      26 │  │ Encrypted form                                                                            │
+ Account               │  │ │ •••••••••••• (Not read yet) [Show encrypted form] [Copy]                                │
+                       │  │ ⚿ The encrypted form, as stored.                                                          │
+ + Rent servers        │  │                                                                                           │
+ Guide                 │  │ ▸ How is the value read, and what about encrypted values?                                 │
+ Support               │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs                              ▸ Use with your agent   + Launch an app
+ Open ports and aliases on atlas
+   Running programs    Apps  ▸ Ports & aliases
+ ──────────────────────────────────────────────────────────────────────────────
+ ▸ How do I create an alias?
+ ▸ What happens to an alias when its program stops?
+ ▸ Who can open a port's address or an alias?
+ ▾ How do I open an alias at my own domain?
+   Where you manage your DNS, add a CNAME record:
+
+   - Name: the part you want in front of your domain, such as
+   app.
+   - Target: the address in the alias's "Your domain points to"
+   column.
+   - DNS proxy: off for that record.
+
+   HTTPS is set up on the first visit, and the computer's access
+   rules still apply.                                                         █
+                                                                              █
+   The Hub can't see your DNS, so it can't list or check the                  █
+   domains you connected.                                                     █
+ ▸ Is the address HTTP or HTTPS, and what if my program serves HTTPS itself?  █
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                           ▸ Use with your agent  [+ Get a computer]
+▌Computers             │
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ Computers  Esc
+ Vault                 │  borealis  ● Running                                      [Open terminal ⇗] [Make current] [⋯]
+                       │  DE fra-7 · Acme storefront · █  Acme client
+On atlas ▾             │
+ Programs              │  ▸Overview  Connect  Permissions  Ports & addresses  Desktop  Network  Run  Programs  Backups
+ Schedules             │   Storage
+ Scripts               │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Logs                  │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Tunnels               │  │ Open on borealis                                                                         │█
+ Notes                 │  │                                                                                          │█
+ AI                    │  │   Terminal                                     Desktop                                   │█
+ VMs                   │  │   Outside the Hub ⇗                            Outside the Hub ⇗                         │█
+                       │  │                                                                                          │
+Account                │  │     ⧉ copy [QR] [Put Terminal on Board]          ⧉ copy [QR] [Put Desktop on Board]      │
+ Plans & Billing       │  │                                                                                          │
+ Referrals             │  │                                                                                          │
+ Keys and tokens       │  │   Files                                        Browser                                   │
+ API                   │  │   Outside the Hub ⇗                            Outside the Hub ⇗                         │
+ Notifications      26 │  │                                                                                          │
+ Account               │  │     ⧉ copy [QR] [Put Files on Board]             ⧉ copy [QR] [Put Browser on Board]      │
+                       │  │                                                                                          │
+ + Rent servers        │  │                                                                                          │
+ Guide                 │  │   Agent                                        Website                                   │
+ Support               │  │   Outside the Hub ⇗                            Set up ›                                  │
+                       │  │                                                                                          │
+                       │  │     ⧉ copy [QR] [Put Agent on Board]                                                     │
+                       │  │                                                                                          │
+                       │  │                                                                                          │
+                       │  │   SSH                                                                                    │
+                       │  │   Add a key ›                                                                            │
+                       │  │                                                                                          │
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

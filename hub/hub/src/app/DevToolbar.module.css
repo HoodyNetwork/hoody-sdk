@@ -1,0 +1,72 @@
+.bar {
+  position: fixed;
+  inset-block-end: var(--sp-3);
+  inset-inline-start: 50%;
+  z-index: var(--z-devbar);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  max-width: calc(100vw - 24px);
+  padding: var(--sp-1) var(--sp-2);
+  border: var(--bw) solid var(--hx-warn-fill);
+  border-radius: var(--r-1);
+  background: var(--hx-app);
+  color: var(--hx-app-ink);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  box-shadow: var(--sh-pop);
+  transform: translateX(-50%);
+}
+
+.title {
+  color: var(--hx-acc);
+}
+
+.group {
+  display: flex;
+  gap: var(--sp-half);
+  padding-inline-start: var(--sp-2);
+  border-inline-start: var(--bw) solid var(--hx-app-hover);
+}
+
+.btn {
+  height: 22px;
+  padding: 0 var(--sp-2);
+  border: var(--bw) solid var(--hx-app-hover);
+  border-radius: var(--r-1);
+  background: transparent;
+  color: var(--hx-app-ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--hx-app-hover);
+}
+
+.btn[aria-pressed="true"] {
+  border-color: var(--hx-acc);
+  background: var(--hx-acc);
+  color: var(--hx-acc-ink);
+}
+
+.fab {
+  position: fixed;
+  inset-block-end: var(--sp-3);
+  inset-inline-end: var(--sp-3);
+  z-index: var(--z-devbar);
+  width: 32px;
+  height: 32px;
+  border: var(--bw) solid var(--hx-warn-fill);
+  background: var(--hx-app);
+  color: var(--hx-app-ink);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+/* The FX glyph keeps the accent on the dark app surface. */
+.fabGlyph {
+  color: var(--hx-acc);
+}

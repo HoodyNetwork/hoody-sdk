@@ -1,0 +1,17 @@
+{
+  "pause.description": "Pausing holds every agent on {{computer}}, in every realm, before its next step. Messages you send are taken and wait. A step already running finishes. Shell jobs keep running. Nothing is cancelled.",
+  "pause.pause": "Pause agents",
+  "pause.pausing": "Pausing…",
+  "pause.resume": "Resume",
+  "pause.resuming": "Resuming…",
+  "pause.strip": "Paused · turns wait at their next step",
+  "pause.band": "Agents on {{computer}} are paused. Messages you send are taken and wait for Resume.",
+  "pause.unsure": "Agents on {{computer}} may be paused: the answer to the last change didn't arrive. We are checking.",
+  "pause.unsureStrip": "May be paused",
+  "pause.checkAgain": "Check again",
+  "pause.readFailed": "Couldn't read whether agents on {{computer}} are paused.",
+  "pause.readFailedStrip": "Pause state unknown",
+  "pause.tryAgain": "Try again",
+  "pause.setFailed": "The agent refused the change, so nothing changed ({{code}}).",
+  "pause.setFailedNoCode": "The agent refused the change, so nothing changed."
+}

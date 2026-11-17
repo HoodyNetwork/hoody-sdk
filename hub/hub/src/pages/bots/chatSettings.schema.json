@@ -1,0 +1,495 @@
+{
+ "bot": {
+  "channels_paused": {
+   "type": "boolean"
+  },
+  "hide_secrets": {
+   "type": "boolean"
+  },
+  "lang": {
+   "enum": [
+    "en",
+    "de",
+    "fr",
+    "es",
+    "pt",
+    "it",
+    "ja",
+    "zh"
+   ],
+   "type": "string"
+  },
+  "max_channels": {
+   "maximum": 8,
+   "minimum": 1,
+   "type": "integer"
+  },
+  "rate_bot_per_day": {
+   "maximum": 3000,
+   "minimum": 0,
+   "type": "integer"
+  },
+  "shared_identity": {
+   "enum": [
+    "off"
+   ],
+   "type": "string"
+  }
+ },
+ "bot_unset": [
+  "lang",
+  "rate_bot_per_day",
+  "hide_secrets",
+  "channels_paused",
+  "shared_identity",
+  "max_channels"
+ ],
+ "channel": {
+  "allowed_chats": {
+   "type": "array"
+  },
+  "blocked_chats": {
+   "type": "array"
+  },
+  "blocked_users": {
+   "type": "array"
+  },
+  "channel_lease": {
+   "type": "boolean"
+  },
+  "chat_commands": {
+   "enum": [
+    "status",
+    "stop",
+    "bind",
+    "unbind",
+    "help"
+   ],
+   "type": "array"
+  },
+  "command_denied_reply": {
+   "enum": [
+    "hint",
+    "silent"
+   ],
+   "type": "string"
+  },
+  "command_prefix": {
+   "enum": [
+    "!",
+    ".",
+    ";",
+    "~",
+    "/"
+   ],
+   "type": "string"
+  },
+  "connection_opens_per_hour": {
+   "maximum": 120,
+   "minimum": 1,
+   "type": "integer"
+  },
+  "decide_in_groups": {
+   "type": "boolean"
+  },
+  "default_rights": {
+   "enum": [
+    "chat",
+    "control",
+    "gates"
+   ],
+   "type": "array"
+  },
+  "delivery_expiry_hours": {
+   "maximum": 168,
+   "minimum": 1,
+   "type": "integer"
+  },
+  "dm_policy": {
+   "enum": [
+    "owner",
+    "allowlist",
+    "pairing",
+    "open"
+   ],
+   "type": "string"
+  },
+  "enabled": {
+   "type": "boolean"
+  },
+  "format": {
+   "enum": [
+    "rich",
+    "plain"
+   ],
+   "type": "string"
+  },
+  "gate_cards": {
+   "enum": [
+    "on",
+    "links",
+    "off"
+   ],
+   "type": "string"
+  },
+  "gate_deciders": {
+   "enum": [
+    "none",
+    "owner",
+    "named",
+    "principals"
+   ],
+   "type": "string"
+  },
+  "gate_detail": {
+   "enum": [
+    "summary",
+    "minimal"
+   ],
+   "type": "string"
+  },
+  "gate_ttl_minutes": {
+   "maximum": 10080,
+   "minimum": 0,
+   "type": "integer"
+  },
+  "group_mode": {
+   "enum": [
+    "off",
+    "owner_approves",
+    "allowlist",
+    "open"
+   ],
+   "type": "string"
+  },
+  "hide_secrets": {
+   "type": "boolean"
+  },
+  "home_chat": {
+   "type": "string"
+  },
+  "identify_per_day": {
+   "maximum": 500,
+   "minimum": 1,
+   "type": "integer"
+  },
+  "identify_per_hour": {
+   "maximum": 60,
+   "minimum": 1,
+   "type": "integer"
+  },
+  "lang": {
+   "enum": [
+    "en",
+    "de",
+    "fr",
+    "es",
+    "pt",
+    "it",
+    "ja",
+    "zh"
+   ],
+   "type": "string"
+  },
+  "max_parts": {
+   "maximum": 20,
+   "minimum": 1,
+   "type": "integer"
+  },
+  "max_principals": {
+   "maximum": 32,
+   "minimum": 1,
+   "type": "integer"
+  },
+  "max_text_bytes": {
+   "maximum": 65536,
+   "minimum": 256,
+   "type": "integer"
+  },
+  "mention_only": {
+   "type": "boolean"
+  },
+  "mirror_other_doors": {
+   "type": "boolean"
+  },
+  "no_reply_notice": {
+   "type": "boolean"
+  },
+  "outbound_rate": {
+   "type": "number"
+  },
+  "overflow_note": {
+   "type": "boolean"
+  },
+  "pairing_code_burn_tries": {
+   "maximum": 200,
+   "minimum": 5,
+   "type": "integer"
+  },
+  "pairing_rights": {
+   "enum": [
+    "chat",
+    "control",
+    "gates"
+   ],
+   "type": "array"
+  },
+  "pairing_ttl_minutes": {
+   "maximum": 1440,
+   "minimum": 1,
+   "type": "integer"
+  },
+  "pairing_user_burn_minutes": {
+   "maximum": 1440,
+   "minimum": 1,
+   "type": "integer"
+  },
+  "pairing_user_burn_tries": {
+   "maximum": 20,
+   "minimum": 1,
+   "type": "integer"
+  },
+  "parse_mode": {
+   "enum": [
+    "html",
+    "plain"
+   ],
+   "type": "string"
+  },
+  "part_chars": {
+   "maximum": 4096,
+   "minimum": 200,
+   "type": "integer"
+  },
+  "push_detail": {
+   "enum": [
+    "brief",
+    "full"
+   ],
+   "type": "string"
+  },
+  "push_events": {
+   "enum": [
+    "report",
+    "gate",
+    "gone",
+    "stop",
+    "waiter",
+    "limit",
+    "budget",
+    "error",
+    "provider",
+    "not_sent",
+    "reset"
+   ],
+   "type": "array"
+  },
+  "rate_chat_per_min": {
+   "maximum": 600,
+   "minimum": 0,
+   "type": "integer"
+  },
+  "rate_user_per_day": {
+   "maximum": 20000,
+   "minimum": 0,
+   "type": "integer"
+  },
+  "rate_user_per_hour": {
+   "maximum": 3600,
+   "minimum": 0,
+   "type": "integer"
+  },
+  "rate_user_per_min": {
+   "maximum": 600,
+   "minimum": 0,
+   "type": "integer"
+  },
+  "reconnect_backoff_max_seconds": {
+   "maximum": 600,
+   "minimum": 5,
+   "type": "integer"
+  },
+  "reply_style": {
+   "enum": [
+    "thread",
+    "reply",
+    "plain"
+   ],
+   "type": "string"
+  },
+  "show_sender_name": {
+   "type": "boolean"
+  },
+  "split_at": {
+   "enum": [
+    "paragraph",
+    "line",
+    "word"
+   ],
+   "type": "string"
+  },
+  "typing": {
+   "type": "boolean"
+  },
+  "unpaired_reply": {
+   "enum": [
+    "hint",
+    "silent"
+   ],
+   "type": "string"
+  },
+  "wake_replies": {
+   "type": "boolean"
+  }
+ },
+ "channel_top": [
+  "enabled",
+  "home_chat"
+ ],
+ "channel_unset": [
+  "dm_policy",
+  "group_mode",
+  "mention_only",
+  "default_rights",
+  "blocked_users",
+  "blocked_chats",
+  "allowed_chats",
+  "unpaired_reply",
+  "command_denied_reply",
+  "pairing_ttl_minutes",
+  "pairing_rights",
+  "max_principals",
+  "pairing_user_burn_tries",
+  "pairing_user_burn_minutes",
+  "pairing_code_burn_tries",
+  "gate_cards",
+  "gate_deciders",
+  "decide_in_groups",
+  "gate_detail",
+  "gate_ttl_minutes",
+  "push_events",
+  "push_detail",
+  "wake_replies",
+  "mirror_other_doors",
+  "typing",
+  "reply_style",
+  "format",
+  "parse_mode",
+  "part_chars",
+  "split_at",
+  "max_parts",
+  "overflow_note",
+  "lang",
+  "show_sender_name",
+  "no_reply_notice",
+  "delivery_expiry_hours",
+  "max_text_bytes",
+  "rate_user_per_min",
+  "rate_user_per_hour",
+  "rate_user_per_day",
+  "rate_chat_per_min",
+  "outbound_rate",
+  "reconnect_backoff_max_seconds",
+  "identify_per_hour",
+  "identify_per_day",
+  "connection_opens_per_hour",
+  "command_prefix",
+  "chat_commands",
+  "hide_secrets",
+  "channel_lease"
+ ],
+ "chat": {
+  "format": {
+   "enum": [
+    "rich",
+    "plain"
+   ],
+   "type": "string"
+  },
+  "mention_only": {
+   "type": "boolean"
+  },
+  "rate_chat_per_min": {
+   "maximum": 600,
+   "minimum": 0,
+   "type": "integer"
+  },
+  "rate_user_per_day": {
+   "maximum": 20000,
+   "minimum": 0,
+   "type": "integer"
+  },
+  "rate_user_per_hour": {
+   "maximum": 3600,
+   "minimum": 0,
+   "type": "integer"
+  },
+  "rate_user_per_min": {
+   "maximum": 600,
+   "minimum": 0,
+   "type": "integer"
+  },
+  "reply_style": {
+   "enum": [
+    "thread",
+    "reply",
+    "plain"
+   ],
+   "type": "string"
+  }
+ },
+ "create": [
+  "allowed_chats",
+  "blocked_chats",
+  "blocked_users",
+  "channel_lease",
+  "chat_commands",
+  "command_denied_reply",
+  "command_prefix",
+  "connection_opens_per_hour",
+  "decide_in_groups",
+  "default_rights",
+  "delivery_expiry_hours",
+  "dm_policy",
+  "enabled",
+  "format",
+  "gate_cards",
+  "gate_deciders",
+  "gate_detail",
+  "gate_ttl_minutes",
+  "group_mode",
+  "hide_secrets",
+  "identify_per_day",
+  "identify_per_hour",
+  "lang",
+  "max_parts",
+  "max_principals",
+  "max_text_bytes",
+  "mention_only",
+  "mirror_other_doors",
+  "no_reply_notice",
+  "outbound_rate",
+  "overflow_note",
+  "pairing_code_burn_tries",
+  "pairing_rights",
+  "pairing_ttl_minutes",
+  "pairing_user_burn_minutes",
+  "pairing_user_burn_tries",
+  "parse_mode",
+  "part_chars",
+  "push_detail",
+  "push_events",
+  "rate_chat_per_min",
+  "rate_user_per_day",
+  "rate_user_per_hour",
+  "rate_user_per_min",
+  "reconnect_backoff_max_seconds",
+  "reply_style",
+  "show_sender_name",
+  "split_at",
+  "typing",
+  "unpaired_reply",
+  "wake_replies"
+ ],
+ "source": "the published API description of the agent"
+}

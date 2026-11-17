@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                          ◆ Personal ▾  No computers yet ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Vault                                                                   ▸ Use with your agent
+ Computers             │  Tokens, passwords and settings your tools and agents read by name. The list shows only names.
+ Files                 │
+ Bots                  │  These entries belong to Personal. Other realms and Global have their own.
+ Board                 │
+ Demo                  │  Entries here    Size here    Account storage
+▌Vault                 │  0               0 B          3% of 50 MB
+                       │
+On this computer       │                ┌────────────────────────────────────────────────────────────────┐
+ Programs              │                │ Nothing in this vault yet                                      │
+ Schedules             │                │                                                                │
+ Scripts               │                │ Add a value your tools or agents should read by name. You can  │
+ Logs                  │                │ encrypt it with a password first.                              │
+ Tunnels               │                │                                                                │
+ Notes                 │                │  + New entry   [↑ Import entries…]                             │
+ AI                    │                └────────────────────────────────────────────────────────────────┘
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications         │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │  Questions
+                       │  ▸ What goes in the vault?
+                       │  ▸ What is the difference between Global and a realm's entries?
+                       │  ▸ How do I see or copy a value?
+                       │  ▸ What does "Encrypt with a password" do?
+                       │  ▸ What can I put in a name and a value?
+                       │  ▸ What is metadata?
+                       │  ▸ What does Export vault do?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

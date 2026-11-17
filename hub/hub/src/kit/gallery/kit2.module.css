@@ -1,0 +1,91 @@
+.p {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-md);
+  line-height: var(--lh-box-body);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.box {
+  padding: var(--sp-2) var(--sp-4);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--hx-card);
+}
+
+.narrow {
+  max-width: 360px;
+  padding: var(--sp-3);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+}
+
+.qrRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 420px;
+  min-height: var(--row-h);
+  padding-inline: var(--sp-3) var(--sp-1);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+}
+
+.widgets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--sp-4);
+}
+
+/* Two context lines: on a coarse pointer each link's 44 px tap box reaches 12 px past its line, so the lines leave
+   --touch-gap more and the boxes never overlap. */
+.ctxStack {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--sp-3) + var(--touch-gap));
+}
+
+.narrowLine {
+  max-width: 260px;
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+}
+
+.spinnerDemo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+/* The section menu specimen: the width of a settings rail. */
+.sectionMenu {
+  max-width: var(--section-rail-w);
+}
+
+/* The side tabs specimen: the caller's frame (layout only) around the kit rail and a panel on the plate's fill. */
+.sideTabs {
+  display: grid;
+  grid-template-columns: var(--plate-rail-w) minmax(0, 1fr);
+  max-width: 560px;
+  border: var(--bw) solid var(--hx-plate-line);
+  background: var(--hx-plate-bg);
+}
+
+.sideTabsPanel {
+  padding: var(--plate-pad-top) var(--sp-4) var(--plate-pad-bottom);
+}

@@ -1,0 +1,289 @@
+.panel {
+  --search-max-w: none;
+  --search-grow: 1;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.fieldLabel {
+  margin: 0;
+  color: var(--hx-ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.searchRow {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-raised);
+  padding-block: var(--sp-1);
+  border-block-end: var(--bw) solid var(--pop-sep);
+  background: var(--pop-band); /* the search line is an opaque band; its field's ring gap follows it */
+  --ring-gap: var(--pop-band);
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus);
+}
+
+.summary {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.hint {
+  margin: 0;
+  color: var(--hx-warn);
+  font-size: var(--fs-sm);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+  margin: 0;
+  padding: 0;
+}
+
+/* maxRows: the rows scroll inside the panel. The component sets the measured height (inline, border box); before that,
+   and where nothing is laid out, about --pp-rows control heights. Its edge is drawn (a line and a small inset), so it
+   reads as a scroll area and the cut row is visibly inside it. Overscroll stays in the list (a drawer behind it never
+   moves). An uncapped list has no frame. */
+.capped {
+  box-sizing: border-box;
+  max-block-size: calc(var(--pp-rows) * var(--ctl-h) + 2 * (var(--bw) + var(--sp-1)));
+  padding: var(--sp-1);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+}
+
+/* The one group label shape: the same declarations as Select's .sectionHead and Menu group labels. */
+.groupTitle {
+  padding: var(--sp-2) var(--pop-row-x) var(--sp-1);
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+
+/* A foldable group's heading: a toggle naming the group and its count, drawn like a heading. */
+.foldToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  width: 100%;
+  margin-block-start: var(--gap-section);
+  padding: var(--pad-row-y) var(--pad-row-x);
+  border: 0;
+  border-radius: var(--r-2);
+  background: none;
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-align: start;
+  text-transform: var(--case-caps);
+  cursor: pointer;
+}
+
+.group:first-child > .foldToggle {
+  margin-block-start: 0;
+}
+
+.foldToggle:hover {
+  background: var(--hx-hover);
+  color: var(--hx-ink);
+}
+
+.foldToggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring-inset);
+}
+
+.foldChevron {
+  flex: none;
+  transition: transform var(--dur-press) var(--ease-out);
+}
+
+.foldToggle[data-open] .foldChevron {
+  transform: rotate(90deg);
+}
+
+:dir(rtl) .foldToggle:not([data-open]) .foldChevron {
+  transform: scaleX(-1);
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--pad-row-y) var(--pad-row-x);
+  border-radius: var(--r-2);
+  color: var(--hx-ink);
+  cursor: pointer;
+}
+
+.row:hover {
+  background: var(--hx-hover);
+}
+
+.row[data-checked] {
+  background: var(--hx-selected);
+}
+
+.row:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring-inset);
+}
+
+.row[data-off] {
+  /* No opacity: the label and the box take --pop-off; the reason elsewhere stays readable. */
+  color: var(--pop-off);
+  cursor: not-allowed;
+}
+
+.box {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-block-start: var(--sp-half);
+  border: var(--bw) solid var(--hx-line-strong);
+  border-radius: var(--r-1);
+  background: var(--hx-card);
+  color: var(--hx-on-check);
+}
+
+.dot {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-block-start: var(--sp-half);
+  border: var(--bw) solid var(--hx-line-strong);
+  border-radius: var(--r-round);
+  background: var(--hx-card);
+}
+
+.row[data-checked] .box {
+  border-color: var(--hx-ink);
+  background: var(--hx-ink);
+}
+
+.row[data-checked] .dot {
+  border: 5px solid var(--hx-ink);
+}
+
+/* Unavailable wins over checked: written after the checked rules at higher specificity. A ticked box
+   keeps its tick but no ink fill: edge and tick --pop-off; a chosen dot rings in --pop-off. */
+.row[data-off] .box,
+.row[data-off] .dot,
+.row[data-off][data-checked] .box {
+  border-color: var(--pop-off);
+  background: var(--hx-card);
+  color: var(--pop-off);
+}
+
+.row[data-off][data-checked] .dot {
+  border: 5px solid var(--pop-off);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+  min-width: 0;
+}
+
+/* A one-line row: the label, its note, and the aside at the line's end; the aside wraps under the label when the
+   line is too short for both. */
+.line {
+  flex: 1;
+  flex-flow: row wrap;
+  align-items: baseline;
+  column-gap: var(--sp-2);
+}
+
+.note {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.aside {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  margin-inline-start: auto;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  overflow-wrap: anywhere;
+}
+
+.desc {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.facts {
+  color: var(--hx-faint);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.create {
+  position: sticky;
+  inset-block-end: 0;
+  padding-block: var(--sp-2);
+  border-block-start: var(--bw) solid var(--pop-sep);
+  background: var(--pop-band); /* the create foot is an opaque band; its button's ring gap follows it */
+  --ring-gap: var(--pop-band);
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus);
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* Phone: one column, rows at least --touch-min (44) high (a thumb), no hover-only affordance. */
+.narrow .row {
+  min-height: var(--hit-narrow);
+  align-items: center;
+}
+
+@media (pointer: coarse) {
+  .row {
+    min-height: var(--touch-min);
+    align-items: center;
+  }
+}
+
+/* Forced colors (Windows high contrast) drop box-shadow, so the focus ring above would vanish: a solid outline in the
+   system Highlight colour instead, as Button's. */
+@media (forced-colors: active) {
+  /* Both rings are inset (the panel clips past its edges): the outline is too. */
+  .foldToggle:focus-visible,
+  .row:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: calc(var(--bw-2) * -1);
+  }
+}

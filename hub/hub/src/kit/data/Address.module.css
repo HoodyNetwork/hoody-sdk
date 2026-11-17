@@ -1,0 +1,108 @@
+/* AddressField: the masked address on one line (cut with an ellipsis) and its buttons. */
+.field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.text {
+  overflow: hidden;
+  min-inline-size: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+.faint {
+  color: var(--hx-faint);
+}
+
+/* AddressList / AddressRow: the list's own width lays its rows out, so an address keeps a usable width in
+   a phone's detail as well as beside a list. */
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--hx-raised);
+  container: addrlist / inline-size;
+}
+
+.row {
+  display: grid;
+  grid-template-areas: 'name addr actions';
+  grid-template-columns: 140px minmax(0, 1fr) auto;
+  gap: var(--sp-3);
+  align-items: center;
+  min-height: var(--row-h);
+  padding: var(--sp-1) var(--sp-4);
+}
+
+.row + .row {
+  border-block-start: var(--bw) solid var(--hx-line);
+}
+
+.rowName {
+  display: inline-flex;
+  grid-area: name;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.rowAddr {
+  grid-area: addr;
+  justify-self: start;
+  max-width: 100%;
+}
+
+.rowActions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  grid-area: actions;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+/* Name and actions share the first line; the address takes the whole second one. Three columns start at 640: the
+   name (140), up to five actions (44px each on a touch screen), gaps and padding take 432px, so the address keeps
+   208px there (the 200px floor plus a little room). */
+@container addrlist (width < 640px) {
+  .row {
+    grid-template-areas:
+      'name actions'
+      'addr addr';
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: var(--sp-1);
+    padding-block: var(--sp-2);
+  }
+}
+
+/* Too narrow for name and actions side by side: each part on its own line. */
+@container addrlist (width < 380px) {
+  .row {
+    grid-template-areas:
+      'name'
+      'addr'
+      'actions';
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rowActions {
+    justify-content: flex-start;
+  }
+}

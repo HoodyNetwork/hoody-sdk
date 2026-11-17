@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY       ┃ Display name                                        Esc ×
+ Account            ┃ The name the Hub shows for you. Your username and
+ Your profile, how y┃ email stay the same.
+ ▌Profile  Password ┃ ─────────────────────────────────────────────────────────
+ ───────────────────┃ │ ◷ This may have gone through
+ ┌──────────────────┃ │   This may have gone through. Check again to see
+ │ Security         ┃ │   whether it did.
+ │ ✓ Your email addr┃
+ │ ✓ Two-step sign-i┃ Display name (unavailable)
+ │ i 11 other browse┃ │ Ada L.
+ └──────────────────┃
+ ┌──────────────────┃
+ │ Profile          ┃
+ │                  ┃
+ │ Display name     ┃
+ │                  ┃
+ │ Username         ┃
+ │                  ┃
+ │ Email            ┃
+ │                  ┃
+ │                  ┃
+ │ Member since     ┃
+ │                  ┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter op┃ [Close]   Check again

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Keys and tokens                             ▸ Use with your agent   + New key
+ A key lets your agent, the CLI or the SDK act for you. Give each one its own
+ key, with an end date.
+ ▸ API keys 3 keys    SSH keys    Shared access 0 shares
+ ──────────────────────────────────────────────────────────────────────────────
+ i Keys that work in Personal.                                [Show all realms]
+ / Search               Filters (1)             3 keys  ↻ Refresh  View options
+   Name ↑                Key            Works in           State
+ ▌ ci-deploy             hdy_9e37…      Personal           ● Active           ⋯
+   hoody-agent auto 7f3a hdy_77c1…      All realms         ● Active           ⋯
+   Unnamed key           hdy_b3e5…      Personal           ● Active           ⋯
+
+
+ Questions
+ ▸ Can I see a key's secret again?
+ ▸ What is an API key for?
+ ▸ Which realms does a key work in?
+ ▸ What can a key do, and what does Full mean?
+ ▸ When does a key stop working, and can I limit where it works from?
+ ▸ How does the SSH key work?
+ ▸ What does sharing a realm give someone?
+ ▸ What do I send to the person I share with?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,182 @@
+{
+  "exports": {
+    "list": "pages/programs/parts/Addresses.module.css#list",
+    "item": "pages/programs/parts/Addresses.module.css#item",
+    "port": "pages/programs/parts/Addresses.module.css#port",
+    "aliases": "pages/programs/parts/Addresses.module.css#aliases",
+    "note": "pages/programs/parts/Addresses.module.css#note"
+  },
+  "classes": {
+    "pages/programs/parts/Addresses.module.css#list": {
+      "id": "pages/programs/parts/Addresses.module.css#list",
+      "style": {
+        "flexDirection": "row",
+        "rowGap": 0,
+        "columnGap": 1,
+        "alignItems": "center"
+      },
+      "grid": {
+        "pattern": "fill-auto",
+        "tracks": 3,
+        "axis": "row",
+        "childStyles": [
+          {
+            "flexGrow": 0,
+            "flexShrink": 0
+          },
+          {
+            "flexGrow": 0,
+            "flexShrink": 0
+          },
+          {
+            "flexGrow": 1,
+            "flexShrink": 1,
+            "flexBasis": 0,
+            "minWidth": 0
+          }
+        ],
+        "fallback": "chunk",
+        "aligned": false,
+        "source": "columns: max-content max-content minmax(0, 1fr)"
+      },
+      "notes": [
+        "grid → 3 tracks: apply grid.childStyles per visible child; more children than tracks → lay out as a column"
+      ],
+      "status": "partial",
+      "outcomes": [
+        {
+          "decl": "display: grid",
+          "kind": "lossy",
+          "detail": "grid (fill-auto, 3 tracks) → row box, tracks → grid.childStyles, more items → rows of 3; content-sized (auto) tracks are sized per row, so columns do not line up across rows"
+        },
+        {
+          "decl": "grid-template-columns: max-content max-content minmax(0, 1fr)",
+          "kind": "lossy",
+          "detail": "tracks → grid.childStyles"
+        },
+        {
+          "decl": "gap: var(--sp-2) var(--sp-3)",
+          "kind": "translated",
+          "detail": "row-gap: 0 rows (8px); column-gap: 1 cols (12px)"
+        },
+        {
+          "decl": "align-items: center",
+          "kind": "translated",
+          "detail": "center"
+        }
+      ]
+    },
+    "pages/programs/parts/Addresses.module.css#item": {
+      "id": "pages/programs/parts/Addresses.module.css#item",
+      "style": {},
+      "contents": true,
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: contents",
+          "kind": "translated",
+          "detail": "contents → runtime renders the children in place (no box)"
+        }
+      ]
+    },
+    "pages/programs/parts/Addresses.module.css#port": {
+      "id": "pages/programs/parts/Addresses.module.css#port",
+      "style": {},
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "font-family: var(--font-mono)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        },
+        {
+          "decl": "font-variant-numeric: tabular-nums",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        }
+      ]
+    },
+    "pages/programs/parts/Addresses.module.css#aliases": {
+      "id": "pages/programs/parts/Addresses.module.css#aliases",
+      "style": {
+        "flexDirection": "row",
+        "flexWrap": "wrap",
+        "rowGap": 0,
+        "columnGap": 1,
+        "marginTop": 0,
+        "marginRight": 0,
+        "marginBottom": 0,
+        "marginLeft": 0,
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "flex-wrap: wrap",
+          "kind": "translated",
+          "detail": "wrap"
+        },
+        {
+          "decl": "gap: var(--sp-1) var(--sp-3)",
+          "kind": "translated",
+          "detail": "row-gap: 0 rows (4px); column-gap: 1 cols (12px)"
+        },
+        {
+          "decl": "margin: 0",
+          "kind": "translated",
+          "detail": "margin-top: 0 rows; margin-right: 0 cols; margin-bottom: 0 rows; margin-left: 0 cols"
+        },
+        {
+          "decl": "padding: 0",
+          "kind": "translated",
+          "detail": "padding-top: 0 rows; padding-right: 0 cols; padding-bottom: 0 rows; padding-left: 0 cols"
+        },
+        {
+          "decl": "list-style: none",
+          "kind": "paint",
+          "detail": "list markers/generated content"
+        }
+      ]
+    },
+    "pages/programs/parts/Addresses.module.css#note": {
+      "id": "pages/programs/parts/Addresses.module.css#note",
+      "style": {
+        "marginTop": 0,
+        "marginRight": 0,
+        "marginBottom": 0,
+        "marginLeft": 0
+      },
+      "text": {
+        "fg": "token:--hx-muted",
+        "bold": false,
+        "italic": false
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "margin: 0",
+          "kind": "translated",
+          "detail": "margin-top: 0 rows; margin-right: 0 cols; margin-bottom: 0 rows; margin-left: 0 cols"
+        },
+        {
+          "decl": "color: var(--hx-muted)",
+          "kind": "translated",
+          "detail": "token:--hx-muted"
+        },
+        {
+          "decl": "font: var(--t-small)",
+          "kind": "translated",
+          "detail": "regular (size/family/line-height: paint)"
+        }
+      ]
+    }
+  }
+}

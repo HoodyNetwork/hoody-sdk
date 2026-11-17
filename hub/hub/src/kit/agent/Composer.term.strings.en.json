@@ -1,0 +1,11 @@
+{
+  "keys": "Enter send · Alt+Enter or Ctrl+J new line · / commands · @ files · PgUp scroll",
+  "attach": "Attach a file",
+  "pathLabel": "Path of the file:",
+  "remove": "Remove",
+  "file.not_found": "{{path}}: no such file.",
+  "file.not_file": "{{path}} is not a file.",
+  "file.too_big": "{{path}} is too large to attach.",
+  "file.unreadable": "{{path}} could not be read.",
+  "file.unsupported": "Files can't be attached by path here."
+}

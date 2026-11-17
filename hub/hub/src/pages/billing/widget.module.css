@@ -1,0 +1,14 @@
+.note {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.section {
+  margin: var(--sp-3) 0 var(--sp-1);
+  color: var(--hx-faint);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                                             ▸ Use with your agent   + Launch an app
+ Computers             │  Apps on atlas: programs you open only when you need them.
+ Files                 │    Running programs  ▸ Apps    Ports & aliases
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  / Search opened apps       State: Needs attention ×                         3 apps  ↻ Refresh
+ Vault                 │
+                       │    Name                             State                 Opens in        Action
+On atlas ▾             │  ▌ btop Installed                   ● Error               Terminal        [Open again]       ⋯
+▌Programs              │    sqlite-web pkgx                  ● Check needed        Web             [Check again]      ⋯
+ Schedules             │    Open WebUI Registry              ● Port in use         Web             [See open apps]    ⋯
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

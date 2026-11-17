@@ -1,0 +1,101 @@
+/* Splitter: a 1 px line centred in an 8 px hit area; 2 px ink on hover and while dragging. */
+.splitter {
+  position: relative;
+  flex: none;
+  touch-action: none;
+  outline: none;
+}
+
+.splitter::after {
+  position: absolute;
+  background: var(--hx-line-2);
+  content: '';
+}
+
+.vertical {
+  inline-size: 8px;
+  align-self: stretch;
+  cursor: col-resize;
+}
+
+.vertical::after {
+  inset-block: 0;
+  inset-inline-start: calc(50% - 0.5px);
+  inline-size: 1px;
+}
+
+.horizontal {
+  block-size: 8px;
+  cursor: row-resize;
+}
+
+.horizontal::after {
+  inset-inline: 0;
+  inset-block-start: calc(50% - 0.5px);
+  block-size: 1px;
+}
+
+.splitter:hover::after,
+.splitter:active::after {
+  background: var(--hx-ink);
+}
+
+.vertical:hover::after,
+.vertical:active::after {
+  inset-inline-start: calc(50% - 1px);
+  inline-size: 2px;
+}
+
+.horizontal:hover::after,
+.horizontal:active::after {
+  inset-block-start: calc(50% - 1px);
+  block-size: 2px;
+}
+
+.splitter:focus-visible {
+  border-radius: var(--r-1);
+  box-shadow: var(--focus-ring);
+}
+
+/* A finger gets a strip --touch-min wide, centred on the line and drawn over the panes, so the 8 px layout strip (and
+   the panes beside it) do not move. */
+@media (pointer: coarse) {
+  .splitter {
+    z-index: var(--z-raised);
+  }
+
+  .splitter::before {
+    position: absolute;
+    content: '';
+  }
+
+  .vertical::before {
+    inset-block: 0;
+    inset-inline: calc(50% - var(--touch-min) / 2);
+  }
+
+  .horizontal::before {
+    inset-block: calc(50% - var(--touch-min) / 2);
+    inset-inline: 0;
+  }
+}
+
+/* Forced colors (Windows high contrast) drop box-shadow, so the focus ring above would vanish: a solid outline in the
+   system Highlight colour instead (as Button's). They also repaint backgrounds, so the
+   line keeps a system colour: CanvasText, Highlight under the pointer. */
+@media (forced-colors: active) {
+  .splitter:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+
+  .splitter::after {
+    background: CanvasText;
+    forced-color-adjust: none;
+  }
+
+  .splitter:hover::after,
+  .splitter:active::after {
+    background: Highlight;
+  }
+}

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                     ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+ New realm
+ A separate space in your account, with its own computers, keys and settings.
+ Step 1 of 3 · Name and colour  ███░░░░░░░
+ ▸1 Name and colour  2 Computers  3 Create
+ ──────────────────────────────────────────────────────────────────────────────
+ ▸ Your choices                                                               █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Name your realm                                                           │█
+ │ The name and colour it shows in the realm menu.                           │█
+ │ Separate           Keys and shares limited to this realm reach only what  │█
+ │                    is in it.                                              │█
+ │ Shared on purpose  A computer can be in several realms. All-realms keys   │█
+ │                    and Global vault entries reach every realm.            │▀
+ │ Free               Making a realm costs nothing. You pay for computers as │
+ │                    before.                                                │
+ │ More about realms                                                         │
+ │ Name                                                                      │
+ │ │ _______________________________________________________________________ │
+ │ Shown in the realm menu on every device.                                  │
+ │                                                                           │
+ ──────────────────────────────────────────────────────────────────────────────
+                                                             [Cancel]   Next →
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,171 @@
+/* Level-2 surface, 360 px, bottom-right of the content area, newest at the bottom,
+   max 3. On phone it spans the width minus 16. Toaster sets --toast-end (a side dock's width: the toasts move left of
+   it) and --toast-lift (above an open dialog's, drawer's or dock sheet's controls in the toasts' column). */
+.region {
+  position: fixed;
+  inset-block-end: calc(var(--sp-4) + var(--toast-lift, 0px));
+  inset-inline-end: calc(var(--sp-4) + var(--toast-end, 0px));
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--sp-2);
+  outline: none;
+}
+
+/* Toaster's fallback when no lift below clears an open dialog's controls with the whole stack on screen. */
+.region[data-at="top"] {
+  inset-block: var(--sp-4) auto;
+}
+
+/* A phone tray is open: the toasts sit in a band at the top, --sp-2 from the edge, at most --toast-band tall
+   (Toaster's budget), and scroll inside it, so every toast's Close and action stay reachable and the band never reaches
+   the tray. Queued (no room for even one toast): none shows until the tray closes or the viewport grows. */
+.region[data-tray] {
+  inset-block: var(--sp-2) auto;
+  max-block-size: var(--toast-band);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.region[data-tray="queued"] {
+  visibility: hidden;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  box-sizing: border-box;
+  width: min(var(--toast-w, 360px), calc(100vw - 2 * var(--sp-4)));
+  padding: var(--sp-3) var(--sp-2) var(--sp-3) var(--sp-3);
+  border: var(--bw) solid var(--pop-line);
+  border-radius: var(--r-1);
+  background: var(--hx-raised);
+  color: var(--hx-ink);
+  box-shadow: var(--sh-pop);
+  outline: none;
+}
+
+.toast[data-entering] {
+  animation: toast-in var(--dur-enter) var(--ease-out);
+}
+
+.toast[data-exiting] {
+  animation: toast-out var(--dur-exit) linear forwards;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast[data-entering] {
+    animation: toast-fade var(--dur-enter) linear;
+  }
+
+  @keyframes toast-fade {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+.toast[data-focus-visible] {
+  box-shadow: var(--sh-pop), var(--focus-ring);
+}
+
+.icon {
+  flex: none;
+  margin-block-start: var(--sp-half);
+  color: var(--hx-ink);
+}
+
+.info .icon {
+  color: var(--hx-muted);
+}
+
+.warn .icon,
+.unknown .icon {
+  color: var(--hx-warn);
+}
+
+.error .icon {
+  color: var(--hx-danger);
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-half);
+  min-width: 0;
+  padding-block: var(--sp-half);
+}
+
+.title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  line-height: 18px;
+}
+
+.body {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-box-small);
+}
+
+/* The action and the close button are the kit's ghost Button sm and IconButton sm: size, look, hover, focus ring and
+   the coarse 44 are the kit's; the toast only keeps them from shrinking in its row. */
+.action,
+.close {
+  flex: none;
+}
+
+/* The phone bottom bar shows below 768 (shell BottomNav): toasts sit just above it, safe area included. */
+@media (width < 768px) {
+  .region {
+    inset-block-end: calc(var(--bottom-nav-h) + var(--safe-bottom) + var(--sp-2) + var(--toast-lift, 0px));
+  }
+}
+
+@media (width < 600px) {
+  .region {
+    inset-inline: var(--sp-4);
+  }
+
+  .toast {
+    width: 100%;
+  }
+}
+
+/* The Details button of an error/unknown toast (showErrorToast). */
+.details {
+  flex: none;
+  align-self: center;
+}
+
+/* ToastPreview (gallery): the same toasts laid out in place, one under another. */
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: min(var(--toast-w, 360px), 100%);
+}
+
+/* Forced colours do not paint box-shadow, so the focus ring above gets a solid system outline (the same rule as
+   Button's; measured by kit/focus.forced.spec.ts). */
+@media (forced-colors: active) {
+  .toast[data-focus-visible] {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+}

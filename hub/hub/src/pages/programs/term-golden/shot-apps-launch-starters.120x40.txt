@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Launch an app                                                                                         Esc ×
+ Home     ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Computers┃ Start a program on atlas. It opens in a window, a terminal or a web page.                                 █
+ Files    ┃                                                                                                           █
+ Bots     ┃ ‹ Find an app ›  From GitHub                                                                              █
+ Board    ┃                                                                                                           █
+ Demo     ┃ │ / Search apps, programs and coding agents                                                               █
+ Vault    ┃                                                                                                           █
+          ┃ Category: All                                                                                             █
+On atlas ▾┃                                                                                                           █
+▌Programs ┃ ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐█
+ Schedules┃ │ Opened recently on atlas                                                                     [See all] │█
+ Scripts  ┃ │ › VS Code                                                                                   ● Starting │█
+ Logs     ┃ │   Web · Starting…                                                                                      │█
+ Tunnels  ┃ │                                                                                                        │█
+ Notes    ┃ │   Firefox                                                                                 ● Warming up │█
+ AI       ┃ │   Display · [Open display]                                                                             │█
+ VMs      ┃ │                                                                                                        │█
+          ┃ │   sqlite-web                                                                            ● Check needed │█
+Account   ┃ │   Web · [Check again]                                                                                  │█
+ Plans & B┃ │                                                                                                        │█
+ Referrals┃ │   JupyterLab                                                                                   ● Ready │▀
+ Keys and ┃ │   Web · [Open]                                                                                         │
+ API      ┃ │                                                                                                        │
+ Notificat┃ │   Open WebUI                                                                             ● Port in use │
+ Account  ┃ │   Web · [See open apps]                                                                                │
+          ┃ │                                                                                                        │
+ + Rent se┃ └────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ Guide    ┃ ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+ Support  ┃ │ Coding agents ⓘ                                                                                        │
+          ┃ │                                                                                                        │
+          ┃ │ Claude Code ● Installed                                                                         [Open] │
+          ┃ │ By Anthropic                                                                                           │
+          ┃ │                                                                                                        │
+          ┃ │                                                                                                        │
+          ┃ │ Codex CLI ● Not installed                                                                       [Open] │
+          ┃ │ By OpenAI                                                                                              │
+          ┃ │ How to install Codex CLI ⇗                                                                             │
+          ┃ │                                                                                                        │
+ Tab move ┃ │                                                                                                        │

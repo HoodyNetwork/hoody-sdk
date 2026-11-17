@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ New script
+ Step 1 of 5 · What it does  ██░░░░░░░░
+ ▸1 What it does  2 Where it answers  3 Write it  4 Check it  5 Make it live
+ ──────────────────────────────────────────────────────────────────────────────
+ ▸ Your script so far                                                         █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ What should it do?                                                        │█
+ │ You write the code in step 3. Choose where it answers next.               │█
+ │                                                                           │█
+ │ How to start                                                              │█
+ │ ┌──────────────────────┐ ┌─────────────────────┐ ┌──────────────────────┐ │▀
+ │ │                      │ │                     │ │                      │ │
+ │ │  Start from an       │ │  Write the code     │ │  Describe it         │ │
+ │ │  idea                │ │  myself             │ │  The agent on        │ │
+ │ │  Ready-made          │ │  For when you       │ │  atlas is signed     │ │
+ │ │  scripts you set     │ │  already know the   │ │  in to a different   │ │
+ │ │  up in a minute.     │ │  code.              │ │  Hoody account, so   │ │
+ │ │                      │ │                     │ │  the assistant       │ │
+ │ └──────────────────────┘ └─────────────────────┘ │  can't work for      │ │
+ ──────────────────────────────────────────────────────────────────────────────
+ Next: where it answers.
+                                                           [Cancel]   Continue
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ○ atlas ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent  [+ Get a computer]
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ Computers  Esc
+ atlas  ● Stopped                                               [Go to n12] [⋯]
+ SG n12 · Home base · █  Personal ·  Current computer
+
+ ▸Overview  Connect  Permissions  Ports & addresses  Desktop  Network  Run
+  Programs  Backups  Storage
+ ──────────────────────────────────────────────────────────────────────────────
+ │ ! atlas expired on Nov 2, 2026: its server ended or was reinstalled.       ▀
+ │   Nothing can start it again.
+
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Open on atlas                                                             │
+ │                                                                           │
+ │   Terminal                                                                │
+ │   Expired                                                                 │
+ │                                                                           │
+ │                                                                           │
+ │                                                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

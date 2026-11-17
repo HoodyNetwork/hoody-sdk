@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Schedules                                             ▸ Use with your agent   + New schedule
+ Computers             │  15 schedules on atlas · next: ping-api in 3 minutes · 4 failed today · Computers ›
+ Files                 │  9 programs running ›
+ Bots                  │
+ Board                 │  ‹ Schedules  Esc
+ Demo                  │  Nightly backup  ● Worked                                                [Edit] [Run now] [⋯]
+ Vault                 │   Command
+                       │                                                                                              ▄
+On atlas ▾             │  Last result  Worked                                                                         █
+ Programs              │                                                                                              █
+▌Schedules             │  Next 5 runs                                                                                 █
+ Scripts               │  Times are in the computer's time zone.                                                      █
+ Logs                  │  in 9 hours · 02:00 · your 18:00                                                             █
+ Tunnels               │  tomorrow · Oct 25, 02:00 · your Oct 24, 18:00                                               █
+ Notes                 │  in 2 days · Oct 26, 02:00 · your Oct 25, 18:00                                              █
+ AI                    │  in 3 days · Oct 27, 02:00 · your Oct 26, 18:00                                              █
+ VMs                   │  in 4 days · Oct 28, 02:00 · your Oct 27, 18:00                                              █
+                       │                                                                                              █
+Account                │                                                                                              █
+ Plans & Billing       │  History                                                                                     █
+ Referrals             │      Started                  Result                                                  Took   █
+ Keys and tokens       │  ›   Today 02:00              ● Worked                                          1 min 34 s   █
+ API                   │      Yesterday 02:00          ● Worked                                          1 min 37 s   █
+ Notifications      26 │      Oct 21 02:00             ● Worked                                          1 min 35 s   █
+ Account               │      Oct 20 02:00             ● Worked                                          1 min 38 s   █
+                       │      Oct 19 02:00             ● Worked                                          1 min 36 s   █
+ + Rent servers        │    ▸ Oct 18 02:00             ● Failed · exit 1                                 1 min 39 s   █
+ Guide                 │      Oct 17 02:00             ● Worked                                          1 min 37 s   █
+ Support               │      Oct 16 02:00             ● Worked                                          1 min 34 s   █
+                       │      Oct 15 02:00             ● Worked                                          1 min 37 s   █
+                       │      Oct 14 02:00             ● Worked                                          1 min 35 s   █
+                       │  [Show more]                                                                                 █
+                       │                                                                                              █
+                       │                                                                                              █
+                       │  Advanced
+                       │  The saved command, with the secrets we recognise hidden.
+                       │  Schedule  0 2 * * *
+                       │                                                                                       ⧉ copy
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

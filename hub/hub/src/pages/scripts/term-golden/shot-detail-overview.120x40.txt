@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                 ▸ Use with your agent   + New script
+ Computers             │
+ Files                 │  ‹ Scripts  Esc
+ Bots                  │  Weather lookup  ● Working                                [▷ Try it] [✦ Ask the assistant] [⋯]
+ Board                 │  /weather ·  atlas
+ Demo                  │
+ Vault                 │  ▸Overview  Code  Test  Settings
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Programs              │  │ About this script                                                                        │█
+ Schedules             │  │                                                                                          │█
+▌Scripts               │  │ Address                                                                                  │█
+ Logs                  │  │ People and programs call your script at this address.                                    │█
+ Tunnels               │  │ https://atlas-exec-1.hoody.example.test/weather ⧉ copy                                   │█
+ Notes                 │  │ The exec-1 part is this computer's script program, where the script runs.                │█
+ AI                    │  │                                                                                          │█
+ VMs                   │  │ Computer  atlas                               Schedule  None                             │█
+                       │  │ File      weather.ts                          Key       Open to anyone with the link     │█
+Account                │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Plans & Billing       │                                                                                              █
+ Referrals             │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Keys and tokens       │  │ Last 24 hours                                                      Open failures in Logs │█
+ API                   │  │  Calls                         Failed                       Typical time                 │█
+ Notifications      26 │  │  412                           ✗ 3                          38 ms                        │█
+ Account               │  │ ▃▇▅▃▇▆▄█▆▅▃▇▅▃▇▆▄█▆▅▃▇▅▃                                                                 │█
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ + Rent servers        │                                                                                              █
+ Guide                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Support               │  │ Schedule                                                                [◷ Set schedule] │█
+                       │  │ Runs  No schedule. It runs only when something calls it.                                 │▀
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Public links                                                                             │
+                       │  │ A link anyone can open, without signing in, that runs this script.       [+ Make a link] │
+                       │  │ ▸ Who can open a public link?                                                            │
+                       │  │ atlas-1.hoody.example.test                               [■ on ] On ⧉ copy [Remove link] │
+                       │  │ /weather                                                                                 │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

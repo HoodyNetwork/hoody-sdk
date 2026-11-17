@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ New Bot                                                          Esc ×
+ Bots  ┃ ──────────────────────────────────────────────────────────────────────
+ Every ┃ ┌───────────────────────────────────────────────────────────────────┐█
+ Bots  ┃ │ The Bot                                                           │█
+ 23    ┃ │ ┌───────────────────────────────────────────────────────────────┐ │█
+ on 2 c┃ │ │                                                               │ │█
+ / Sear┃ │ │ Computer                        │ ● SG atlas · Acme client ▾  │ │█
+ › C Ch┃ │ │ The Bot runs here and starts                                  │ │█
+     As┃ │ │ its tasks here.                                               │ │█
+      ·┃ │ │                                                               │ │█
+      ·┃ │ │ Name                                                          │ │▀
+     Te┃ │ │ Its identifier will be calm-olive-panda.                      │ │
+   L Le┃ │ │ │ calm-olive-panda                     [Suggest another name] │ │
+     St┃ │ │                                                               │ │
+      ·┃ │ │ Model                                                         │ │
+     On┃ │ │ The model that answers you. You can change it later in the    │ │
+   S Su┃ │ │ Bot's Settings, under Model.                                  │ │
+     … ┃ │ │ Hoody Free  Included                                 [Change] │ │
+      ·┃ │ │                                                               │ │
+      ·┃ │ └───────────────────────────────────────────────────────────────┘ │
+     Di┃ ──────────────────────────────────────────────────────────────────────
+ 1–20 o┃ │ ✗ The Bot wasn't made
+       ┃ │   A Bot with this identifier already exists on this computer.
+ Tab mo┃                                                  [Cancel]  Create Bot

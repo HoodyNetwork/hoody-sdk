@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                           ▸ Use with your agent  [+ Get a computer]
+▌Computers             │
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ Computers  Esc
+ Vault                 │  cedar  ● Stopped                                                  ▷ Start  [Make current] [⋯]
+                       │  SG n12 · Home base · █  Personal
+On atlas ▾             │
+ Programs              │  ▸Overview  Connect  Permissions  Ports & addresses  Desktop  Network  Run  Programs  Backups
+ Schedules             │   Storage
+ Scripts               │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Logs                  │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Tunnels               │  │ Open on cedar                                                                            │█
+ Notes                 │  │                                                                                          │█
+ AI                    │  │   Terminal                                     Desktop                                   │█
+ VMs                   │  │   Start                                        Start                                     │█
+                       │  │                                                                                          │▀
+Account                │  │                                                                                          │
+ Plans & Billing       │  │                                                                                          │
+ Referrals             │  │   Files                                        Browser                                   │
+ Keys and tokens       │  │   Start                                        Start                                     │
+ API                   │  │                                                                                          │
+ Notifications      26 │  │                                                                                          │
+ Account               │  │                                                                                          │
+                       │  │   Agent                                        Website                                   │
+ + Rent servers        │  │   Start                                        Start                                     │
+ Guide                 │  │                                                                                          │
+ Support               │  │                                                                                          │
+                       │  │                                                                                          │
+                       │  │   SSH                                                                                    │
+                       │  │   Connect ›                                                                              │
+                       │  │                                                                                          │
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Status and usage                                                                         │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

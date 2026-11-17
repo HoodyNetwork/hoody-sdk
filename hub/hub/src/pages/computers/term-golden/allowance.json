@@ -1,0 +1,15 @@
+{
+  "_doc": "Terminal page acceptance debt (scripts/term/goldens.ts). Shrink-only: `bun scripts/term/check.ts --page <id> --update` drops what is gone and never adds. Fix the cause instead of listing it.",
+  "crashes": [],
+  "placeholders": [],
+  "holes": [],
+  "traps": [],
+  "domRefused": [],
+  "domUnsupported": [],
+  "consoleErrors": [
+    "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause chi …[+0]",
+    "warning: hub StepList \"Steps to connect your domain\": row 0 is over 0 characters (0); split the action, or move the rest to its note"
+  ],
+  "tableFaults": [],
+  "untranslatable": 0
+}

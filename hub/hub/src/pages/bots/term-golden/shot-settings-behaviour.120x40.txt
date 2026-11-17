@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Settings for Chief                                                                                    Esc ×
+ Home     ┃ Model, behaviour, guardrails and voice.
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │ The Bot itself        ┌─────────────────────────────────────────────────────────────────────────────────┐
+▌Bots     ┃ │ Model                 │ Behaviour                                                                       │
+ Board    ┃ │▌Behaviour             │ Its name, role and standing instructions.                                       │
+ Demo     ┃ │ Voice                 │ ┌─────────────────────────────────────────────────────────────────────────────┐ │
+ Vault    ┃ │ The helpers it        │ │                                                                             │ │
+          ┃ │ starts                │ │ Name                            │ Chief                                     │ │
+On atlas ▾┃ │ Helpers               │ │                                                                             │ │
+ Programs ┃ │ Guardrails and        │ │ Role                                                                        │ │
+ Schedules┃ │ limits                │ │ One line that says what it is for.                                          │ │
+ Scripts  ┃ │ Advanced              │ │ │ Runs the team day: triage, approvals and summaries                        │ │
+ Logs     ┃                         │ │                                                                             │ │
+ Tunnels  ┃                         │ │ Instructions                    │ Be brief and kind. Ask before anything    │ │
+ Notes    ┃                         │ │ How it should work and talk.      that costs money. Never reveal keys or    │ │
+ AI       ┃                         │ │ Guardrails are separate.          addresses.                                │ │
+ VMs      ┃                         │ │                                                                             │ │
+          ┃                         │ │                                                                             │ │
+Account   ┃                         │ │                                                                             │ │
+ Plans & B┃                         │ │ Allow everything                [□ off]                                     │ │
+ Referrals┃                         │ │ Off: its helpers ask you when                                               │ │
+ Keys and ┃                         │ │ a step needs you; your rules                                                │ │
+ API      ┃                         │ │ and hooks can let a step run                                                │ │
+ Notificat┃                         │ │ without asking.                                                             │ │
+ Account  ┃                         │ │                                                                             │ │
+          ┃                         │ └─────────────────────────────────────────────────────────────────────────────┘ │
+ + Rent se┃                         └─────────────────────────────────────────────────────────────────────────────────┘
+ Guide    ┃
+ Support  ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tab move ┃ [Discard] [Cancel]  Save

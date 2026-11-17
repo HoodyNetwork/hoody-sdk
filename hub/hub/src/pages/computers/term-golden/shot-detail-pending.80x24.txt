@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent  [+ Get a computer]
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ Computers  Esc
+ cedar  ● Stopped                                   ▷ Start  [Make current] [⋯]
+ SG n12 · Home base · █  Personal
+
+ ! A start, stop or restart of cedar may already [Check again]  [Stop tracking]
+   have gone through. Check the state before
+   trying again.
+ ▸Overview  Connect  Permissions  Ports & addresses  Desktop  Network  Run
+  Programs  Backups  Storage
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐▀
+ │ Open on cedar                                                             │
+ │                                                                           │
+ │   Terminal                                                                │
+ │   Start                                                                   │
+ │                                                                           │
+ │                                                                           │
+ │                                                                           │
+ │   Desktop                                                                 │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

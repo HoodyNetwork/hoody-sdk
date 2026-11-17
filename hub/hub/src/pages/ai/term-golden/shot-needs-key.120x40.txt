@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations   Knowledge  ▌Settings
+ Computers             │  ▌Models & keys   Connections & MCP   Rules & hooks
+ Files                 │  atlas › Models & keys
+ Bots                  │  Models & keys                                                          [+ Connect an account]
+ Board                 │  atlas uses Claude Sonnet for chat and Hoody Free for Bots.
+ Demo                  │
+ Vault                 │  ▌Default model  Accounts  Claude Code  Hoody AI allowance  Spending  Advanced  Questions
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  ┌───────────────────────────────────────────────────────────────────────────────────────┐█
+ Programs              │  │ Now using                                                                             │█
+ Schedules             │  │ Claude Sonnet                                                                         │█
+ Scripts               │  │                                                                                       │█
+ Logs                  │  │ │ ! Claude Sonnet needs a key from Anthropic   [Connect Anthropic]  [Use Hoody Free]  │█
+ Tunnels               │  │ │   before it can answer.                                                             │█
+ Notes                 │  └───────────────────────────────────────────────────────────────────────────────────────┘▀
+▌AI                    │
+ VMs                   │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Default model                                                                         │
+Account                │  │ The model your AI helper and your Bots use unless told otherwise.                     │
+ Plans & Billing       │  │ ┌───────────────────────────────────────────────────────────────────────────────────┐ │
+ Referrals             │  │ │                                                                                   │ │
+ Keys and tokens       │  │ │ AI helper and tasks             Claude Sonnet  Needs a key               [Change] │ │
+ API                   │  │ │ The model for chat and                                                            │ │
+ Notifications      26 │  │ │ everyday work on this                                                             │ │
+ Account               │  │ │ computer.                                                                         │ │
+                       │  │ │                                                                                   │ │
+ + Rent servers        │  │ │ Bots                            Hoody Free  Included                     [Change] │ │
+ Guide                 │  │ │ Bots follow the default.                                                          │ │
+ Support               │  │ │                                                                                   │ │
+                       │  │ └───────────────────────────────────────────────────────────────────────────────────┘ │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Accounts                                                                              │
+                       │  │ The AI providers this computer can use, and how each one connects.                    │
+                       │  │ / Search                                                        2 accounts  ↻ Refresh │
+                       │  │                                                                                       │
+                       │  │   Provider        How it connects               Status          Used by               │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

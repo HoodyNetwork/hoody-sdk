@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notifications                                                               [✓ Mark all read]
+ Computers             │  Messages about your account: computers, rentals, sign-in and keys.
+ Files                 │  ▸ Inbox 26    Notices    Get notified
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  / Search                   ‹ Unread ›  Archive    Kind ▾  Level ▾
+ Vault                 │  26 unread  ↻ Refresh  View options
+                       │
+On atlas ▾             │    [ ] Level   Notice                              Message                     When ↓
+ Programs              │  ▌•[ ]  ✗      Computer atlas stopped              atlas stopped after runnin… 19 days ago   ⋯
+ Schedules             │   •[ ]  ✓      Payment received for borealis       Your payment for borealis … 19 days ago   ⋯
+ Scripts               │   •[ ]  !      Server cedar rental ends in 3 days  Your rental of cedar ends … 19 days ago   ⋯
+ Logs                  │   •[ ]  ✓      Computer dune is running            dune finished being create… 19 days ago   ⋯
+ Tunnels               │   •[ ]  i      Planned maintenance for ember       The server for ember resta… 19 days ago   ⋯
+ Notes                 │   •[ ]  i      Renewal coming up for fjord         Your paid server for fjord… 19 days ago   ⋯
+ AI                    │   •[ ]  !      Storage share granite expires tomo… The share "granite" expire… 19 days ago   ⋯
+ VMs                   │   •[ ]  i      Hoody news: harbor                  Notifications now explain … 20 days ago   ⋯
+                       │   •[ ]  ✗      Computer golden-gazelle stopped     golden-gazelle stopped aft… 20 days ago   ⋯
+Account                │   •[ ]  ✓      Payment received for rapid-raven    Your payment for rapid-rav… 20 days ago   ⋯
+ Plans & Billing       │   •[ ]  !      Server proud-koala rental ends in … Your rental of proud-koala… 20 days ago   ⋯
+ Referrals             │   •[ ]  ✓      Computer gentle-raven is running    gentle-raven finished bein… 20 days ago   ⋯
+ Keys and tokens       │   •[ ]  i      Planned maintenance for dandy-coyo… The server for dandy-coyot… 20 days ago   ⋯
+ API                   │   •[ ]  i      Renewal coming up for witty-raven   Your paid server for witty… 20 days ago   ⋯
+▌Notifications      26 │   •[ ]  !      Storage share cosmic-bison expires… The share "cosmic-bison" e… 20 days ago   ⋯
+ Account               │   •[ ]  i      Hoody news: gentle-panda            Notifications now explain … 20 days ago   ⋯
+                       │   •[ ]  ✗      Computer quiet-ocelot stopped       quiet-ocelot stopped after… 20 days ago   ⋯
+ + Rent servers        │   •[ ]  ✓      Payment received for brisk-jaguar   Your payment for brisk-jag… 20 days ago   ⋯
+ Guide                 │   •[ ]  !      Server steady-squid rental ends in… Your rental of steady-squi… 20 days ago   ⋯
+ Support               │   •[ ]  ✓      Computer mighty-dolphin is running  mighty-dolphin finished be… 20 days ago   ⋯
+                       │   •[ ]  i      Planned maintenance for snappy-squ… The server for snappy-squi… 20 days ago   ⋯
+                       │   •[ ]  i      Renewal coming up for gentle-yak    Your paid server for gentl… 20 days ago   ⋯
+                       │   •[ ]  !      Storage share smart-wombat expires… The share "smart-wombat" e… 20 days ago   ⋯
+                       │   •[ ]  i      Hoody news: swift-cheetah           Notifications now explain … 20 days ago   ⋯
+                       │   •[ ]  ✗      Computer happy-finch stopped        happy-finch stopped after … 20 days ago   ⋯
+                       │
+                       │  1–25 of 26 ‹ ›
+                       │   New notices appear here and are counted beside            [How it works] [Dismiss this tip]
+                       │   Notifications in the sidebar.
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

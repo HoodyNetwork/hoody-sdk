@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                 ◆ Personal ▾  Computers not loaded ▾  [A]  ^K · ?
+ Computers                                                ▸ Use with your agent
+ Your computers: start them, open a terminal, and manage access.
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+                                                                              █
+                                                                              █
+                 ┌────────────────────────────────────────────┐               █
+                 │ No computers here yet                      │               █
+                 │                                            │               █
+                 │ Create your first computer to get started. │               █
+                 │                                            │               █
+                 │ [+ Create your first computer]             │               █
+                 └────────────────────────────────────────────┘               █
+                                                                              █
+                                                                              █
+                                                                              █
+ Questions                                                                    █
+ ▸ What does a new computer come with?                                        █
+ ▸ What are realms and projects?                                              █
+ ▸ Who can open my computer's programs?
+ ▸ How does the firewall work, and what does No internet block?
+ ▸ How do I use a computer as a proxy, and what is an exit?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

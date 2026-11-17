@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                                    ▸ Use with your agent
+ Computers             │
+ Files                 │  ‹ Bots  Esc
+▌Bots                  │  Chief  ● Working                                       [■ Stop] [Bot settings] [Details] [⋯]
+ Board                 │    SG atlas    Hoody Free  · Allow everything is off +2
+ Demo                  │
+ Vault                 │  ▸ Activity    Link and keys    Chat apps 2    Work 2
+                       │  ────┌──────────────────────────────────────────────────────────┐────────────────────────────
+On atlas ▾             │      │ Stop what the Bot is doing?                        Esc × │eploy of the shop failed?
+ Programs              │      │ ──────────────────────────────────────────────────────── │
+ Schedules             │      │ Asks the turn shown at Nov 11, 2026, 9:00 AM to stop, if │
+ Scripts               │     I│ it is still running. Tasks it started keep running; stop │ow.
+ Logs                  │     1│ them under Work in progress.                             │
+ Tunnels               │      │                                                          │
+ Notes                 │     i│                                     [Cancel]   Stop now  │
+ AI                    │     T└──────────────────────────────────────────────────────────┘
+ VMs                   │     19 days ago
+                       │     Advanced details
+Account                │
+ Plans & Billing       │     i Task report ·  Read deploy log  · on atlas
+ Referrals             │     The deploy failed because the build step ran out of memory. I suggest raising the
+ Keys and tokens       │     limit to 2 GB.                                                                           █
+ API                   │     19 days ago                                                                              █
+ Notifications      26 │                                                                                              █
+ Account               │                                            Direct message                                    █
+                       │                                            Do that, but ask me before restarting anything.   █
+ + Rent servers        │                                            19 days ago                                       █
+ Guide                 │                                                                                              █
+ Support               │     Understood. I will change the limit and ask before any restart.                          █
+                       │     19 days ago                                                                              █
+                       │     … Working on it                                                                          █
+                       │                                                                                              █
+                       │     ┌────────────────────────────────────────────────────────────────────────────────────┐   █
+                       │     │ Message the Bot                                                                    │   █
+                       │     └────────────────────────────────────────────────────────────────────────────────────┘   █
+                       │                                                 Write a message first.  [⇗ Talk]  [Send ↵]   █
+                       │                                                                                              █
+                       │                                                                                              █
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

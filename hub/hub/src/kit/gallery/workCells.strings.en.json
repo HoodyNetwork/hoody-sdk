@@ -1,0 +1,17 @@
+{
+  "title": "Work on its way",
+  "label": "Transfers",
+  "col.item": "Item",
+  "col.progress": "Progress",
+  "col.state": "State",
+  "state.running": "Downloading",
+  "state.done": "Done",
+  "row.photos": "photos-2026.zip",
+  "row.backup": "backup.tar",
+  "row.notes": "notes.md",
+  "row.report": "report-q3.pdf",
+  "row.video": "a-very-long-video-file-name-from-the-trip-to-the-mountains.mp4",
+  "sub.photos": "From the backup computer",
+  "sub.video": "Saved to Downloads on the shared studio computer, beside the earlier copies from the same trip",
+  "sub.notes": "Shared"
+}

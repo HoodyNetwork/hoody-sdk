@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Tunnels                                           ▸ Use with your agent   + Connect a laptop
+ Computers             │  Put a laptop app online through atlas, or let atlas reach a service on your laptop. 2
+ Files                 │  sessions connected to atlas · tunnel program running since 06:00 AM
+ Bots                  │
+ Board                 │  ‹ Tunnels  Esc
+ Demo                  │  Web address :8080  ● Reconnecting                                          [Put on Board] [⋯]
+ Vault                 │
+                       │  i This address is waiting for its session: a laptop reconnecting, or a   What does this mean?
+On atlas ▾             │    session closing. First seen at 09:00 AM.
+ Programs              │
+ Schedules             │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Scripts               │  │ Session                                                                                   │
+ Logs                  │  │ Session  77aa31…  ⧉ copy                                                                  │
+▌Tunnels               │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Notes                 │
+ AI                    │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ VMs                   │  │ Web address                                                      [Access settings] [Keys] │
+                       │  │ Anyone with the address can open it, unless this computer's access settings say           │
+Account                │  │ otherwise.                                                                                │
+ Plans & Billing       │  │ https://••••  ⧉ copy                                                                      │
+ Referrals             │  │                                                                                           │
+ Keys and tokens       │  │ ▸ Not loading?                                                                            │
+ API                   │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

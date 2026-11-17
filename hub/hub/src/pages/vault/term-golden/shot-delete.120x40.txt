@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Vault                                               ▸ Use with your agent   + New entry   [⋯]
+ Computers             │
+ Files                 │  ‹ Vault  Esc
+ Bots                  │  deploy.notes                                                     ⧉ copy [✎ Replace value] [⋯]
+ Board                 │
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+▌Vault                 │  │ About this entry                                                                          │
+                       │  │ Be┌──────────────────────────────────────────────────────────┐ct 23, 2026, 4:40 PM        │
+On atlas ▾             │  │ En│ ! Delete deploy.notes?                             Esc × │ct 20, 2026, 9:15 AM        │
+ Programs              │  │ Si│ ──────────────────────────────────────────────────────── │ detail                     │
+ Schedules             │  │   │ The entry deploy.notes is removed from Personal. Tools   │                            │
+ Scripts               │  │ ┌─│ that read it stop finding it. This cannot be undone.     │──────────────────────────┐ │
+ Logs                  │  │ │ │                                                          │                          │ │
+ Tunnels               │  │ │ │                                       [Cancel]  [Delete] │                          │ │
+ Notes                 │  │ │ └──────────────────────────────────────────────────────────┘                          │ │
+ AI                    │  │ │ this entry. To protect this                                                           │ │
+ VMs                   │  │ │ value with a password, use                                                            │ │
+                       │  │ │ Replace value and tick Encrypt                                                        │ │
+Account                │  │ │ with a password.                                                                      │ │
+ Plans & Billing       │  │ │                                                                                       │ │
+ Referrals             │  │ └───────────────────────────────────────────────────────────────────────────────────────┘ │
+ Keys and tokens       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ API                   │
+ Notifications      26 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Account               │  │ Metadata                                                                                  │
+                       │  │ owner  ops                                                                                │
+ + Rent servers        │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Guide                 │
+ Support               │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Value                                                                                     │
+                       │  │ Value                                                                                     │
+                       │  │ │ •••••••••••• (Not read yet) [Show value] [Copy value]                                   │
+                       │  │ ⚿ Read only on Show value or Copy; hiding it removes it from this page.                   │
+                       │  │                                                                                           │
+                       │  │ ▸ How is the value read, and what about encrypted values?                                 │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

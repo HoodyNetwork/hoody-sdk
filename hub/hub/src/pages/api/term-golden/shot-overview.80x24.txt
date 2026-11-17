@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ API                                                      ▸ Use with your agent
+ Every endpoint of the Hoody API, how to call it, and its docs page.
+   Endpoints  ▸ Overview
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Best with an agent                                     [How to set it up] │█
+ │ An AI agent with the Hoody skill is the easiest way to use the API.       │█
+ │ Add the Hoody skill                                            ⧉ Copy all │█
+ │ 1. The Hoody skill                                                        │█
+ │  $ npx skills add https://hoody.com/SKILLS/SKILL.md               ⧉ copy  │█
+ │ 2. Or the same skill with every docs page                                 │
+ │  $ npx skills add HoodyNetwork/hoody-sdk                          ⧉ copy  │
+ │ The skill gives no access: the agent still needs a key from you.          │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ OpenAPI description                                                       │
+ │ Import every endpoint into Postman, Insomnia or a code generator. The     │
+ │ file, in JSON and YAML, is in the hoody-sdk repository on GitHub and on   │
+ │ npm.                                                                      │
+ │ JSON on GitHub  https://github.com/HoodyNetwork/hoody-sdk/blob/main/      │
+ │                 generated/openapi.public.json                             │
+ │ YAML on GitHub  https://github.com/HoodyNetwork/hoody-sdk/blob/main/      │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

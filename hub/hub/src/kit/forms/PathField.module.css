@@ -1,0 +1,7 @@
+/* PathField: an offered entry's name. The box, the popover and its rows are the kit field's and Combobox's own classes
+ * (fields.module.css, more.module.css); Browse is the kit FileChooser. */
+.name {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}

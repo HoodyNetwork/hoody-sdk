@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  Board              ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ ⇗ The Board shows live programs and web pages side by side in browser      │
+ │ frames, which a terminal cannot draw.                                      │
+ │ Open the Board on the web:                                                 │
+ │ https://hub.example.test/auth/home?realm=f1f1…f1f1#/board                  │
+ │ [c Copy link] [r QR code]                                                  │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+ Your Boards are saved in each web browser where you made them, so this
+ terminal has none to show.
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

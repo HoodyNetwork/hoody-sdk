@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Logs                                                                    ▸ Use with your agent
+ Computers             │  Program output
+ Files                 │
+ Bots                  │    Everything    Visits    Bots    Changes    Scripts  ▸ Programs   [More ▾]                 █
+ Board                 │  │ ● SG atlas · █ Personal ▾ │ / Search                                         [Refresh] [⋯]█
+ Demo                  │  Program: api ×  Computer: atlas ×  Clear all                                                █
+ Vault                 │            Instance (port)                                                                   █
+                       │  │  api  ▾ │ [−] 8000         [+] ‹ Normal output ›  Errors   [↻ Refresh] [✦ Explain]        █
+On atlas ▾             │                                                                                              █
+ Programs              │  Program output has no times and is not kept forever: this is what the program wrote most    █
+ Schedules             │  recently.                                                                                   █
+ Scripts               │                                                                                              █
+▌Logs                  │  Recent output as of Nov 11, 09:00 AM. Refresh to read it again.                             █
+ Tunnels               │                                                                                              █
+ Notes                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ AI                    │  │                                                                                          │█
+ VMs                   │  │ request 1 handled in 10 ms                                                               │█
+                       │  │ request 2 handled in 11 ms                                                               │█
+Account                │  │ request 3 handled in 12 ms                                                               │█
+ Plans & Billing       │  │ request 4 handled in 13 ms                                                               │█
+ Referrals             │  │ request 5 handled in 14 ms                                                               │█
+ Keys and tokens       │  │ request 6 handled in 15 ms                                                               │█
+ API                   │  │ request 7 handled in 16 ms                                                               │█
+ Notifications      26 │  │ request 8 handled in 17 ms                                                               │█
+ Account               │  │ request 9 handled in 18 ms                                                               │█
+                       │  │ request 10 handled in 19 ms                                                              │
+ + Rent servers        │  │ request 11 handled in 20 ms                                                              │
+ Guide                 │  │ request 12 handled in 21 ms                                                              │
+ Support               │  │ request 13 handled in 22 ms                                                              │
+                       │  │ request 14 handled in 23 ms                                                              │
+                       │  │ request 15 handled in 24 ms                                                              │
+                       │  │ request 16 handled in 25 ms                                                              │
+                       │  │ request 17 handled in 26 ms                                                              │
+                       │  │ request 18 handled in 27 ms                                                              │
+                       │  │ request 19 handled in 28 ms                                                              │
+                       │  │ request 20 handled in 29 ms                                                              │
+                       │  │ request 21 handled in 30 ms                                                              │
+                       │  │ request 22 handled in 31 ms                                                              │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

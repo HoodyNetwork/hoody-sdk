@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Settings for Chief                                               Esc ×
+ Bots  ┃ Model, behaviour, guardrails and voice.
+ ‹ Bots┃ ──────────────────────────────────────────────────────────────────────
+       ┃ │ The Bot itself        ┌───────────────────────────────────────────┐█
+   i Ta┃ │▌Model                 │ Model                                 [⋯] │█
+   The ┃ │ Behaviour             │ The model the Bot itself answers you      │█
+   rais┃ │ Voice                 │ with. Helpers it starts don't use it.     │█
+   19 d┃ │ The helpers it        │ Ready to use                              │█
+       ┃ │ starts                │                                           │█
+       ┃ │ Helpers               │ │ / Search models and providers           │█
+       ┃ │ Guardrails and        │                                           │█
+       ┃ │ limits                │ Showing 5 of 5                            │█
+       ┃ │ Advanced              │                                           │█
+   Unde┃                         │  ( ) Agent's default                      │█
+   rest┃                         │      Uses the agent's configured model,…  │█
+   19 d┃                         │                                           │█
+       ┃                         │  H Hoody AI Included                      │
+   ┌───┃                         │  (•) Hoody Free Current · Recommended     │
+   │ Me┃                         │  ( ) Hoody Fast                           │
+   └───┃                         │                                           │
+       ┃                         │  G Google Your key · Can't tell yet       │
+       ┃                         │  ( ) Gemini 3 Pro                         │
+       ┃                         │      Can't tell if it runs here           │
+ Tab mo┃                         │                                           │

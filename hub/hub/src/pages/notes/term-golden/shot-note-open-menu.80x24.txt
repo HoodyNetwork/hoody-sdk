@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Notes                                      ▸ Use with your agent   + New note
+ ‹ Notes  Esc
+ Weekly plan                                       [⇗ Open outside the Hub] [⋯]
+ atlas · Changed 12 minutes ago┌──────────────────────────────────────────────┐
+                               │›    Copy link                                │
+  ┌────────────────────────────│     Copy read-only link                      │
+  │ ⇗ A note is a page of the N│       Opens the note with editing turned off.│
+  │ terminal cannot draw.      │       It doesn't change who can edit: anyone │
+  │ Open the Notes page on the │       who opens it can still turn editing    │
+  │ https://hub.example.test/au│       back on.                               │
+  │ notes                      │     Copy for an agent                        │
+  │ [c Copy link] [r QR code]  │       A command an agent on atlas can run to │
+  └────────────────────────────│       read this note. An agent without access│
+                               │       to this notebook can't read it.        │
+                               │     Put on Board                             │
+                               │     Open computer                            │
+                               │──────────────────────────────────────────────│
+                               │     Delete note…                             │
+                               └──────────────────────────────────────────────┘
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

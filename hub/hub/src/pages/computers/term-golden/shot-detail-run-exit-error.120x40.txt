@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                           ▸ Use with your agent  [+ Get a computer]
+▌Computers             │
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ Computers  Esc
+ Vault                 │  atlas  ● Running                                                        [Open terminal ⇗] [⋯]
+                       │  SG n12 · Home base · █  Personal ·  Current computer
+On atlas ▾             │
+ Programs              │   Overview  Connect  Permissions  Ports & addresses  Desktop  Network ▸Run  Programs  Backups
+ Schedules             │   Storage
+ Scripts               │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Logs                  │  Folder
+ Tunnels               │  │ /
+ Notes                 │  ⇗ Browsing a folder tree is in the web Hub; here, type the path and pick from the entries
+ AI                    │  offered.
+ VMs                   │  [c Copy link] [r QR code]
+                       │  https://hub.example.test/auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/computers
+Account                │
+ Plans & Billing       │  ┃ nope       [History]  ▷ Run
+ Referrals             │
+ Keys and tokens       │  Runs once on the computer. Press Enter to run.
+ API                   │
+ Notifications      26 │
+ Account               │                                                                                      ⧉ copy
+                       │     bash: nope: command not found
+ + Rent servers        │
+ Guide                 │
+ Support               │  Exit code 127 40 ms · Folder not reported
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Temporary terminal                                                                        │
+                       │  │ It closes a minute after its window does.                                                 │
+                       │  │ [Open a temporary terminal ⇗] [Put on Board]                                              │
+                       │  │ ▸ How terminals last                                                                      │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │
+ Typing · Esc leaves the field · Ctrl+K commands

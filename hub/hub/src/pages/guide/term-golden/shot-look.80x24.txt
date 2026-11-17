@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  Guide                       ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Ask your agent  Connect  Skills  Build your own  Every link  Bots  Tools
+  Try this  Realms  Topics  Keyboard ▌Look
+ │                               top bar, page)                              │
+ │ [Ctrl+M] or [Ctrl+I] or       Ctrl+M, Ctrl+I, Ctrl+[ arrive as Enter,     │
+ │ [Ctrl+[]                      Tab, Esc: run those page keys from the      │
+ │                               palette (Ctrl+K)                            │
+ │ [Ctrl+S] or [Ctrl+Q]          Ctrl+S / Ctrl+Q may be held by the          │
+ │                               terminal's flow control: use the palette    │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Look                                                                      │
+ │ Light or dark follows your terminal's background, read once when the Hub  │
+ │ starts. If the terminal does not report it in time and COLORFGBG does not │
+ │ name it, the Hub uses dark.                                               │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+
+ ▸ atlas · Running · Personal
+
+
+                                                                               █
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

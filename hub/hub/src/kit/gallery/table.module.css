@@ -1,0 +1,76 @@
+/* Table gallery boxes. */
+.box {
+  display: flex;
+  height: 460px;
+  min-height: 0;
+  transition: max-width var(--dur-enter) var(--ease-out);
+}
+
+.short {
+  display: flex;
+  height: 360px;
+  min-height: 0;
+}
+
+.twoBoxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+}
+
+.listPair {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-5);
+  align-items: flex-start;
+}
+
+.phone {
+  display: flex;
+  width: 390px;
+  max-width: 100%;
+  height: 520px;
+}
+
+.pane {
+  display: flex;
+  width: 340px;
+  max-width: 100%;
+  height: 520px;
+}
+
+.wrapsBox {
+  width: 560px;
+  max-width: 100%;
+}
+
+.name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.nameText {
+  overflow: hidden;
+  font-weight: var(--fw-medium);
+  text-overflow: ellipsis;
+}
+
+.muted {
+  color: var(--hx-muted);
+}
+
+.detailBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-2) var(--sp-5) var(--sp-5);
+}
+
+.outcome {
+  margin-inline-end: auto;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}

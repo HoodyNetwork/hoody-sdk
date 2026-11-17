@@ -1,0 +1,242 @@
+/* The Options drawer (a full-screen sheet on phones). Rows: label 160 | control (max 360) | reset 28, help below.
+   On the phone sheet (.sheet: the kit Drawer goes full-screen below 600 px) the label stacks above the control, the
+   reset sits beside the label and the preview is 96 px. The drawer is 640 px, so its body (592 px) would fall under a
+   600 px container query too; the sheet class follows the Drawer's own switch instead. */
+
+.body {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* Preview (terminal, agent): pinned under the header while the body scrolls. */
+.preview {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding-block-end: var(--sp-2);
+  background: var(--hx-raised);
+}
+
+.term {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  block-size: 132px;
+  overflow: hidden;
+  padding-inline: var(--sp-4);
+  border-radius: var(--r-2);
+  font-family: var(--font-mono);
+  white-space: pre;
+}
+
+.termRow {
+  display: flex;
+  gap: var(--sp-4);
+}
+
+.cursorBlock,
+.cursorBar,
+.cursorLine {
+  display: inline-block;
+  inline-size: 0.6em;
+  block-size: 1.1em;
+  vertical-align: text-bottom;
+}
+
+.cursorBar {
+  inline-size: 0;
+  border-inline-start-style: solid;
+}
+
+.cursorLine {
+  border-block-end: var(--bw-2) solid;
+}
+
+.cursorBlock[data-blink],
+.cursorBar[data-blink],
+.cursorLine[data-blink] {
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursorBlock[data-blink],
+  .cursorBar[data-blink],
+  .cursorLine[data-blink] {
+    animation: none;
+  }
+}
+
+.caption {
+  font: var(--t-small);
+  color: var(--hx-muted);
+}
+
+/* Opens: the view switch and the chosen view's fields, always shown. */
+.opens {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block-end: var(--sp-3);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+/* The Shell row of a terminal: label, what runs now, Change. */
+.shellRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  padding-block-end: var(--sp-3);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.shellLabel {
+  font: var(--t-label);
+}
+
+.shellNow {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--hx-muted);
+  font: var(--t-mono);
+  overflow-wrap: anywhere;
+}
+
+/* A note under a control inside a row (the terminal theme's swatch line). */
+.help {
+  margin: 0;
+  font: var(--t-small);
+  color: var(--hx-muted);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-block-size: 0;
+}
+
+.checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+}
+
+/* Display quality: 2 × 2 cards, one column on narrow drawers. */
+.quality {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.cards {
+  inline-size: 100%;
+}
+
+.cards > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+
+
+/* Fine-tune: the quality's own field rows take the cell's full width. */
+.fine {
+  inline-size: 100%;
+}
+
+.sections {
+  display: flex;
+  flex-direction: column;
+}
+
+.section {
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+
+/* Footer: the reload line above Reset all · Cancel · Save. */
+.foot {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.footLine {
+  margin: 0;
+  font: var(--t-small);
+  color: var(--hx-muted);
+}
+
+.footRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.grow {
+  flex: 1;
+}
+
+.sheet .opensHead,
+.sheet .row,
+.sheet .rowSpan {
+  grid-template-columns: minmax(0, 1fr) 28px;
+}
+
+.sheet .label,
+.sheet .control,
+.sheet .controlWide,
+.sheet .help,
+.sheet .rowSpan > .control,
+.sheet .rowSpan > .controlWide,
+.sheet .rowSpan > .help {
+  grid-column: 1 / 2;
+}
+
+.sheet .control {
+  max-inline-size: none;
+}
+
+.sheet .reset {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+/* The phone sheet pins a shorter preview; the drawer keeps 132 px. */
+.sheet .term {
+  block-size: 96px;
+}
+
+@container (width < 480px) {
+  .cards > div {
+    grid-template-columns: 1fr;
+  }
+}

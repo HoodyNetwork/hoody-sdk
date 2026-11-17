@@ -1,0 +1,7 @@
+{
+  "none": "no links",
+  "one": "1 link",
+  "many": "{{n}} links",
+  "moreOne": "+1 more link in the table",
+  "moreMany": "+{{n}} more links in the table"
+}

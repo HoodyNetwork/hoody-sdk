@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Chats   Agents   Automations   Knowledge  ▌Settings
+ ▌Models & keys   Connections & MCP   Rules & hooks
+ atlas › Models & keys
+ Models & keys                                            + Connect an account
+ atlas uses Hoody Free for everything.
+ ‹ 2  ▌Claude Code  Hoody AI allowance  Spending  Advanced  Questions
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Claude Code                                                               │
+ │ Use your own Claude plan through Claude Code on this computer.            │
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │█
+ │ │                                                                       │ │▀
+ │ │ Claude Code on this computer                                          │ │
+ │ │ Not signed in to Claude Code                                          │ │
+ │ │ [Open a terminal to sign in] Do it myself                             │ │
+ │ │                                                                       │ │
+ │ └───────────────────────────────────────────────────────────────────────┘ │
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │
+ │ │                                                                       │ │
+ │ │ Sign-in on other computers      [Copy sign-in…]                       │ │
+ │ │ Copy Claude Code's sign-in                                            │ │
+ │ │ from a computer where it works                                        │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

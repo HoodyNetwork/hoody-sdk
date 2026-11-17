@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Referrals                                                                     [Program rules]
+ Computers             │  Invite people to Hoody. When they pay for servers by card or crypto, you earn Referral
+ Files                 │  credit.
+ Bots                  │
+ Board                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Demo                  │  │ Your links                                                                               │█
+ Vault                 │  │ Each code is its own signup link. Every code earns you the same.                         │█
+                       │  │                                                                                          │█
+On atlas ▾             │  │ Main code                                                                                │█
+ Programs              │  │ Given when you joined. It stays with your account, can't be retired, and doesn't count   │█
+ Schedules             │  │ toward your own codes.                                                                   │█
+ Scripts               │  │                                                                                          │█
+ Logs                  │  │ k7m2q9xa  Main   https://api.hoody.com/auth/signup?ref=k7m2q9xa ⇗            ⧉ Copy link │▀
+ Tunnels               │  │                                                                                          │
+ Notes                 │  │                                                                                          │
+ AI                    │  │ Your own codes                                                                           │
+ VMs                   │  │ 1 of 3 active · 2 more can be made now                                                   │
+                       │  │                                                                                          │
+Account                │  │ maya-builds  Your own   https://api.hoody.com/auth/signup?ref=maya-builds ⇗  ⧉ copy      │
+ Plans & Billing       │  │ [Retire…]ⓘ                                                                               │
+▌Referrals             │  │ New code                                                                                 │
+ Keys and tokens       │  │ │ ______________________________________________________________________________________ │
+ API                   │  │                                                                                          │
+ Notifications      26 │  │ [Create] ⓘ                                                                               │
+ Account               │  │ Up to 3 of your own codes active at a time, and 10 over the life of your account. A      │
+                       │  │ retired code still counts toward the 10. Codes that could be mistaken for Hoody or its   │
+ + Rent servers        │  │ offers, or are offensive, are refused.                                                   │
+ Guide                 │  │ Code rules ⇗                                                                             │
+ Support               │  │                                                                                          │
+                       │  │                                                                                          │
+                       │  │ Share material                                                                           │
+                       │  │ Logos, banners and text you can use when you share Hoody.                                │
+                       │  │                                                                                          │
+                       │  │ Media kit ⇗                                                                              │
+                       │  │ A new account can become your referral when it's created through one of your links, or   │
+                       │  │ with one of your codes typed at signup. A link opened while signed out is remembered in  │
+                       │  │ the browser for up to 7 days, or until someone signs in. An earlier remembered code      │
+                       │  │ stays; one typed at signup replaces it. A retired or blocked code refers no one, and     │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

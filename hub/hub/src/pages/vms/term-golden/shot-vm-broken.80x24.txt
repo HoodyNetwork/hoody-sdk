@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines › batch
+ batch  ● Failed                                                    Start   [⋯]
+ A VM inside atlas.
+ │ ✗ Last problem: Not enough memory is left in this computer.
+ ▸Overview  Screen  Ports  Storage  Snapshots  Settings  Logs
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Overview                                                                   │
+ │ Memory                  32 GB                                              │
+ │ CPUs                    8                                                  │
+ │ Disk                    20 GB                                              │
+ │ Starts with             UEFI                                               │
+ │ TPM                     No                                                 │
+ │ Disk connection         VirtIO                                             │
+ │ Screen                  Off                                                │
+ │ Open ports              0                                                  │
+ │ Starts with the         No                                                 │
+ │ computer                                                                   │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

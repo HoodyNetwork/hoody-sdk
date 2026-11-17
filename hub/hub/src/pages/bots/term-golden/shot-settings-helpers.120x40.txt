@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Settings for Chief                                                                                    Esc ×
+ Home     ┃ Model, behaviour, guardrails and voice.
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │ The Bot itself        ┌────────────────────────────────────────────────────────────────────────────────┐█
+▌Bots     ┃ │ Model                 │ Who does the work                                                              │█
+ Board    ┃ │ Behaviour             │ The helpers this Bot starts to do the work, and the models they run on. The    │█
+ Demo     ┃ │ Voice                 │ Bot's own model is not passed on.                                              │█
+ Vault    ┃ │ The helpers it        │ The Bot may give work to                                                       │█
+          ┃ │ starts                │ ┌────────────────────────────────────────────────────────────────────────────┐ │█
+On atlas ▾┃ │▌Helpers               │ │                                                                            │ │█
+ Programs ┃ │ Guardrails and        │ │ Hoody models                    [■ on ]                                    │ │█
+ Schedules┃ │ limits                │ │ Helpers that run on the models                                             │ │█
+ Scripts  ┃ │ Advanced              │ │ of this computer.                                                          │ │█
+ Logs     ┃                         │ │                                                                            │ │█
+ Tunnels  ┃                         │ │ Claude Code                     [■ on ]                                    │ │█
+ Notes    ┃                         │ │ Helpers that run in Claude                                                 │ │█
+ AI       ┃                         │ │ Code on this computer.                                                     │ │█
+ VMs      ┃                         │ │                                                                            │ │█
+          ┃                         │ │ New helpers run on              ‹ Hoody models ›  Claude Code              │ │▀
+Account   ┃                         │ │ Applies to new helpers after                                               │ │
+ Plans & B┃                         │ │ you save; helpers at work keep                                             │ │
+ Referrals┃                         │ │ theirs. The Bot learns of it                                               │ │
+ Keys and ┃                         │ │ in its next message.                                                       │ │
+ API      ┃                         │ │                                                                            │ │
+ Notificat┃                         │ └────────────────────────────────────────────────────────────────────────────┘ │
+ Account  ┃                         │ Hoody models                                                                   │
+          ┃                         │ ┌────────────────────────────────────────────────────────────────────────────┐ │
+ + Rent se┃                         │ │                                                                            │ │
+ Guide    ┃                         │ │ What they run on                Open the AI page                           │ │
+ Support  ┃                         │ │ Hoody-model helpers run on the                                             │ │
+          ┃                         │ │ AI helper's model, now Hoody                                               │ │
+          ┃                         │ │ Fast, set on the AI page.                                                  │ │
+          ┃                         │ │                                                                            │ │
+          ┃                         │ │ Helpers may use any agent       [□ off]                                    │ │
+          ┃                         │ │ A task may name any agent. An                                              │ │
+          ┃                         │ │ agent that names its own model                                             │ │
+          ┃                         │ │ brings that model.                                                         │ │
+          ┃                         │ │                                                                            │ │
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tab move ┃ [Discard] [Cancel]  Save

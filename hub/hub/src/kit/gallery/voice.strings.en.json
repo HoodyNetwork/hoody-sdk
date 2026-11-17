@@ -1,0 +1,18 @@
+{
+  "tab": "Voice",
+  "sec.mic": "Talk button",
+  "sec.micDesc": "Starts voice in a Bot thread. When voice cannot start here it stays focusable and says why.",
+  "sec.live": "Talk bar, live",
+  "sec.liveDesc": "Hold to talk, mode, level, mute, stop and devices. Hold the button, or Space or Enter on it, and release to send.",
+  "sec.phases": "Talk bar, every other phase",
+  "sec.phasesDesc": "Each phase is one band with its way on.",
+  "sec.captions": "Captions",
+  "sec.captionsDesc": "What is heard shows at once; only final lines are announced.",
+  "sample.device": "Desk microphone",
+  "sample.speaker": "Headphones",
+  "sample.stage": "speech provider",
+  "sample.bot": "Juno",
+  "sample.you": "book the flight for Friday",
+  "sample.kitButton": "Kit button",
+  "sample.reply": "I'll start a task for that"
+}

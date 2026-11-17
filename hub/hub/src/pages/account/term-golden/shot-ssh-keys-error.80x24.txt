@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Account
+ Your profile, how you sign in, and where you are signed in.
+ ‹ 6   Security history ▌SSH keys  Emails  Elsewhere  This device  Questions
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ SSH keys                                                                  │
+ │ Each computer takes one SSH key, set on that computer.                    │
+ │ / Search                                                        ↻ Refresh │
+ │                                                                           │
+ │ ✗ SSH keys: This didn't load                                              │
+ │ Try again                                                                 │
+ │                                                                           │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Emails                                                                    │
+ │ What Hoody also sends to your email address.                              │█
+ │                                                                           │▀
+ │ Support replies                 [■ on ]                                   │
+ │ Email me when support replies                                             │
+ │ to one of my tickets. The                                                 │
+ │ email names no ticket and                                                 │
+ │ shows none of its text.                                                   │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

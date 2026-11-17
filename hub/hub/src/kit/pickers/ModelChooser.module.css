@@ -1,0 +1,443 @@
+/* The model chooser's views: existing tokens only, no new grey. Cards use
+   --hx-card with an --hx-line border and --hx-hover, as the AI page tiles do; the current option --hx-selected with
+   --hx-selected-bar; attention and consent --hx-warn-t with --hx-warn text. */
+
+.browser {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  color: var(--hx-ink);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.title:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.searchRow {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-raised);
+  padding-block: var(--sp-1);
+  background: var(--hx-card);
+}
+
+/* The field takes the chooser's width (the kit caps a page search; here the field is the view's own). */
+.searchRow > .searchField {
+  max-width: none;
+}
+
+/* Back sits at the start of the column, at its own width. */
+.back {
+  align-self: flex-start;
+}
+
+.count {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-label);
+}
+
+.listbox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+  min-width: 0;
+}
+
+.groupHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  padding: var(--sp-1) var(--pad-row-x) 0;
+  color: var(--hx-ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  min-width: 0;
+}
+
+.groupName {
+  overflow-wrap: anywhere;
+}
+
+.groupFacts {
+  color: var(--hx-muted);
+  font-weight: var(--fw-regular);
+}
+
+.option {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-half) var(--sp-2);
+  min-height: var(--option-row-h);
+  min-width: 0;
+  padding: var(--pad-row-y) var(--pad-row-x);
+  border-radius: var(--r-2);
+  color: var(--hx-ink);
+  cursor: pointer;
+}
+
+.option:hover {
+  background: var(--hx-hover);
+}
+
+.option[data-selected] {
+  background: var(--hx-selected);
+  box-shadow: inset 3px 0 0 var(--hx-selected-bar);
+}
+
+.option:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring-inset);
+}
+
+/* After the two rules above so both show: the chosen option keeps its bar while it has the focus ring. */
+.option[data-selected]:focus-visible {
+  box-shadow: inset 3px 0 0 var(--hx-selected-bar), var(--focus-ring-inset);
+}
+
+.option[data-off],
+.listbox[data-locked] .option {
+  cursor: not-allowed;
+}
+
+.option[data-off] {
+  color: var(--hx-muted);
+}
+
+.optionWarn .optState {
+  color: var(--hx-warn);
+}
+
+.optText {
+  display: flex;
+  flex: 1 1 12rem;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.optLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.tag {
+  flex: none;
+  padding: 0 var(--sp-1);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  color: var(--hx-muted);
+  font-size: var(--fs-xs);
+}
+
+.optState {
+  flex: 1 1 100%;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.optFacts {
+  color: var(--hx-faint);
+  font-size: var(--fs-sm);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.actions > li {
+  display: flex;
+  min-width: 0;
+}
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.range {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.mark,
+.markMd {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  color: var(--hx-ink);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-2);
+  background: var(--hx-card);
+  min-width: 0;
+}
+
+.cardAttention {
+  background: var(--hx-warn-t);
+}
+
+.cardAttention .reason {
+  color: var(--hx-warn);
+}
+
+.cardTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  min-width: 0;
+}
+
+/* 6rem, not more: a two-column card (284 px) then keeps its button beside the name for "Set up" as for the shorter
+   "View", so one grid shows one card layout; narrower, every card wraps the same way. */
+.cardName {
+  flex: 1 1 6rem;
+  overflow: hidden;
+  color: var(--hx-ink);
+  font-weight: var(--fw-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.cardFacts {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.reason {
+  margin: 0;
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cards > li {
+  display: flex;
+  min-width: 0;
+}
+
+.cards > li > .card {
+  flex: 1;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* "All 212 DevPass (LLM Gateway) models": a provider's name can be longer than a phone chooser is wide, so this button
+   takes the row's width at most and its words end in "…" (its own minimum beats the kit's
+   whole-words one). */
+.allButton {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+.more {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-2);
+  background: var(--hx-card);
+}
+
+.inUse {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-2);
+  background: var(--hx-warn-t);
+}
+
+.inUse .reason {
+  color: var(--hx-warn);
+}
+
+.consent {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: var(--z-raised);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-2);
+
+  /* The tint is translucent: laid over the card so rows scrolling under the sticky bar never show through. */
+  background: linear-gradient(var(--hx-warn-t), var(--hx-warn-t)), var(--hx-card);
+}
+
+.consentText {
+  flex: 1 1 14rem;
+  margin: 0;
+  color: var(--hx-warn);
+  overflow-wrap: anywhere;
+}
+
+.memberList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  flex-basis: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.member {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.state {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+/* Cards stack in one column below 560 px of container width; Set up drops under the name below 360 px. */
+@container (max-width: 559px) {
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container (max-width: 359px) {
+  .cardTop > .cardSetup {
+    flex-basis: 100%;
+  }
+}
+
+/* A thumb: every option at least --touch-min (44). The kit's buttons are 44 on touch by themselves, the search
+   field's clear an IconButton xs with its own coarse press, so the browser needs no floor of its own. */
+@media (pointer: coarse) {
+  .option {
+    min-height: var(--touch-min);
+  }
+}
+
+/* The composed chooser and its setup step. */
+.chooser {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* The AI-page link keeps its own width; the form takes the column. */
+.step > span {
+  align-self: flex-start;
+}
+
+.note {
+  margin: 0;
+  color: var(--hx-ink);
+  overflow-wrap: anywhere;
+}
+
+/* Forced colors (Windows high contrast) drop box-shadow, so the focus ring above would vanish: a solid outline in the
+   system Highlight colour instead, as Button's. */
+@media (forced-colors: active) {
+  .title:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+
+  /* The option's ring is inset (a list clips past its edges): the outline is too. */
+  .option:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: calc(var(--bw-2) * -1);
+  }
+}

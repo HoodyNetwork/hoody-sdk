@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Demo                                                                              + New item
+ Computers             │
+ Files                 │  ‹ Demo  Esc
+ Bots                  │  boreal-1  ● Active                                                                   [✎ Edit]
+ Board                 │  Ben Okafor
+▌Demo                  │
+ Vault                 │  ▸Overview  Activity
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  Details
+ Programs              │  Owner    Ben Okafor                             Size     1.4 GB
+ Schedules             │  Updated  Oct 22, 2026, 5:00 AM
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

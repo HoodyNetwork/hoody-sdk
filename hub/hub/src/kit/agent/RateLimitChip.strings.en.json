@@ -1,0 +1,13 @@
+{
+  "rl.window.five_hour": "5-hour window",
+  "rl.window.seven_day": "Weekly window",
+  "rl.window.seven_day_opus": "Weekly Opus window",
+  "rl.window.seven_day_sonnet": "Weekly Sonnet window",
+  "rl.window.seven_day_overage_included": "Weekly Fable window",
+  "rl.window.overage": "Usage credit",
+  "rl.used": "{{window}} {{percent}}%",
+  "rl.usedResets": "{{window}} {{percent}}%, resets {{at}}",
+  "rl.resets": "{{window}}, resets {{at}}",
+  "rl.usedUp": "{{window}} used up",
+  "rl.usedUpResets": "{{window}} used up, resets {{at}}"
+}

@@ -1,0 +1,263 @@
+/* SessionView: the conversation column and the rows pinned under it. Kit tokens only.
+   One rhythm, set once on the root: --conv-gap-row inside a group (a label to its block, an outcome to what it is about),
+   --conv-gap-group between the groups of a turn (steps, reply, outcome), --conv-gap-turn on each side of the hairline that sets
+   two turns apart. --conv-col and --conv-inset are the column's width and side inset; the thread and the pinned rows read the
+   same two, so they share one start edge and one end edge. The column stops growing at --conv-col on every size: a wider screen
+   gets more margin, not longer lines (14 px text at 760 px is already about 95 characters a line). */
+.root {
+  --conv-col: 760px;
+  --conv-inset: var(--sp-6);
+  --conv-gap-row: var(--sp-2);
+  --conv-gap-group: var(--sp-3);
+  --conv-gap-turn: var(--sp-5);
+
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  font: var(--fw-regular) 14px/22px var(--font-text);
+
+  /* The thread measures the pane (100cqi) to line up with the rows pinned under the log, whatever room the log's scrollbar takes. */
+  container: conv / inline-size;
+}
+
+.root[data-size='xs'] {
+  --conv-inset: var(--sp-4);
+  --conv-card-actions-dir: column;
+  --conv-card-actions-align: stretch;
+  --conv-needs-dir: column;
+  --conv-needs-align: stretch;
+}
+
+/* The log: as wide as the pane, so its scrollbar is at the pane's edge and never between the text and the margin. The same
+   room is kept for the scrollbar on both sides (and kept while nothing scrolls), so the thread inside is centred as the rows
+   pinned under the log are. It is the containing block of everything in it: a visually hidden mark (position: absolute,
+   kit/base.css) scrolls with its row. Laid out in the page behind the frame instead, the marks of a long open step list make
+   that page taller than the window, and the frame ends mid-window over an empty area. */
+.column {
+  position: relative;
+  flex: 1;
+  overflow: hidden auto;
+  box-sizing: border-box;
+  min-height: 0;
+  width: 100%;
+  padding: var(--sp-6) var(--conv-inset) var(--sp-4);
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+}
+
+/* The thread: the one column every message, card and outcome line sits in, with the edges of the rows pinned under the log
+   (min(--conv-col, the pane less its two insets), centred in the pane). Where the pane is narrower than the full column the
+   scrollbar's room would push it in on both sides: it then reaches back into the log's side padding by that room, never
+   nearer than --sp-2 to the scrollbar. */
+.thread {
+  max-width: var(--conv-col);
+  margin-inline: max(
+    calc((100% - min(var(--conv-col), 100cqi - 2 * var(--conv-inset))) / 2),
+    calc(var(--sp-2) - var(--conv-inset))
+  );
+}
+
+/* The log takes script focus only (Jump to newest); the reader's own focus is on a control inside it. */
+.column:focus { outline: none; }
+.root[data-size='xs'] .column { padding-block: var(--sp-4) var(--sp-3); }
+
+/* A turn: the person's message, then the agent's groups. The next turn starts under a hairline, with the same room on both
+   sides of it: the rule runs the whole column, wider than any rule a reply draws inside its own text. */
+.turn + .turn {
+  margin-block-start: var(--conv-gap-turn);
+  padding-block-start: var(--conv-gap-turn);
+  border-block-start: var(--bw) solid var(--hx-line);
+}
+
+/* A turn that ends with its reply's foot: with a mouse that row is empty until the reply is pointed at or focused (its room is
+   kept, Conversation.module.css), so the answer already has the row's height under it. The rule comes a row gap under the
+   foot and the next message keeps the same room over it: foot (--icon-hit and its --sp-1 gap) + the row gap on both sides.
+   On touch the actions always show, and the turn gap on both sides of the rule is already even. */
+@media (hover: hover) {
+  .turn[data-foot] + .turn {
+    margin-block-start: var(--conv-gap-row);
+    padding-block-start: calc(var(--icon-hit) + var(--sp-1) + var(--conv-gap-row));
+  }
+}
+
+.turn + .gate,
+.gate + .gate,
+.gate + .turn { margin-block-start: var(--conv-gap-group); }
+.blk + .blk { margin-block-start: var(--conv-gap-group); }
+
+/* Ledger rows that follow one another read as one ledger: the rule runs on, a row apart. */
+.blk[data-k='steps'] + .blk[data-k='steps'],
+.blk[data-k='steps'] + .blk[data-k='decided'],
+.blk[data-k='decided'] + .blk[data-k='steps'],
+.blk[data-k='decided'] + .blk[data-k='decided'] { margin-block-start: 0; }
+
+/* An outcome line belongs to what it is about: a row under it, not a group apart. */
+.blk + .blk[data-k='line'] { margin-block-start: var(--conv-gap-row); }
+
+.muted { margin: 0; color: var(--hx-muted); font: var(--t-small); }
+.bad { color: var(--hx-danger); }
+.line { margin: 0; color: var(--hx-muted); font: var(--t-small); }
+.reading { display: flex; flex-direction: column; gap: var(--sp-3); }
+.saved { margin-block-end: var(--sp-4); }
+p.bad { color: var(--hx-danger); }
+
+/* The person's message: a sheet at the end edge, its author row over it (as far from it as the Agent's row is from its
+   answer) and its meta row under it. The sheet is the raised surface with no visible frame (it is a sent message, not a
+   field); its border is transparent so forced colours draw it. */
+.userWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--conv-gap-row);
+}
+
+.user {
+  display: flex;
+  flex-direction: column;
+  gap: var(--conv-gap-row);
+  box-sizing: border-box;
+  max-width: min(100%, 80%);
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--bw) solid transparent;
+  border-radius: var(--r-2);
+  background: var(--hx-raised);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.root[data-size='xs'] .user { max-width: 100%; }
+
+.rowActs {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.rowAction {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.userState {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-1) var(--sp-2);
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* A waiting message's state reads as a status row: its mark, its words, then its actions. */
+.userStateMark { flex: none; color: var(--hx-muted); }
+
+/* The author row belongs to the block under it: a row apart, never a group apart. */
+.blk[data-k='author'] + .blk { margin-block-start: var(--conv-gap-row); }
+
+/* The activity ledger: tool steps and decided approvals on one grid behind a start rule (one line wide: it marks the
+   indent, it is not a frame). */
+.ledger {
+  padding-inline-start: var(--sp-3);
+  border-inline-start: var(--bw) solid var(--hx-line-strong);
+  color: var(--hx-muted);
+}
+
+/* A step's kind and what it worked on, as the working bar names the running step (the trail's own rows: StepTrail.module.css). */
+.stepTool {
+  color: var(--hx-ink);
+  font: var(--t-small);
+  font-weight: var(--fw-medium);
+}
+
+.stepSum {
+  overflow: hidden;
+  min-width: 0;
+  font-family: var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.infoMark { color: var(--hx-muted); }
+
+/* An outcome of the turn (stopped, failed, may have gone through): a mark, then the host's words. */
+.outcome {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.outcomeMark { flex: none; margin-block-start: var(--sp-half); }
+
+/* The working bar: pinned under the transcript, in the column's flow (never an overlay), as wide as the column. */
+.work {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  max-width: var(--conv-col);
+  width: calc(100% - 2 * var(--conv-inset));
+  min-height: calc(var(--ctl-h-sm) + 2 * var(--sp-1));
+  margin: 0 auto var(--sp-2);
+  padding-block: var(--sp-1);
+  padding-inline: var(--sp-3) var(--sp-1);
+  border: var(--bw) solid var(--hx-line);
+  border-inline-start: var(--bw-notice) solid var(--hx-notice-calm-bar);
+  background: var(--hx-raised);
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.workMark { display: inline-flex; flex: none; align-items: center; }
+.workWords { flex: none; color: var(--hx-ink); font-weight: var(--fw-medium); }
+.work[data-phase='lost'] .workWords { flex: 1; min-width: 0; font-weight: var(--fw-regular); }
+
+.workStep {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* The turn's meta at the end of the bar, before Stop: how many steps, how long, and for how long nothing changed. Quiet text
+   that keeps its width while the seconds run (tabular figures); in a narrow bar the step beside the words gives way first. */
+.workMeta {
+  display: inline-flex;
+  flex: none;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin-inline-start: auto;
+  color: var(--hx-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.workMeta > * + *::before {
+  content: '·' / '';
+  margin-inline-end: var(--sp-2);
+}
+
+.workQuiet { color: var(--hx-ink); }
+.workTime { min-inline-size: 4ch; text-align: end; }
+.workEnd { display: inline-flex; flex: none; margin-inline-start: auto; }
+.workMeta + .workEnd { margin-inline-start: 0; }
+
+
+/* Forced colours: the trail's lines keep a system colour (the toggle's focus is the kit TextButton's). */
+@media (forced-colors: active) {
+  .turn + .turn { border-block-start-color: CanvasText; }
+  .ledger { border-inline-start-color: CanvasText; }
+  .work { border-color: CanvasText; }
+}
+
+/* An unsure turn's line with its Check again under it, the button at its own width. */
+.recheck {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}

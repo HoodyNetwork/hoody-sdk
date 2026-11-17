@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Schedules                                             ▸ Use with your agent   + New schedule
+ Computers             │  15 schedules on atlas · next: ping-api in 3 minutes · 4 failed today · Computers ›
+ Files                 │  9 programs running ›
+ Bots                  │
+ Board                 │  ‹ Schedules  Esc
+ Demo                  │  morning-check  ● Result is in the chat                                                    [⋯]
+ Vault                 │   Agent timer
+                       │
+On atlas ▾             │  i Set up by the agent. To change or cancel it, ask the agent or your Bot. Whether a run
+ Programs              │    reached the chat can't be checked here.
+▌Schedules             │
+ Scripts               │  Schedule     Every day at 08:00
+ Logs                  │  Status       [■ on ] On
+ Tunnels               │  Next run     in 15 hours · 08:00 · your 00:00
+ Notes                 │  Last result  Result is in the chat
+ AI                    │
+ VMs                   │  Next run
+                       │  Times are in the computer's time zone.
+Account                │  in 15 hours · 08:00 · your 00:00
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │  History
+ API                   │      Started                       Result                                              Took
+ Notifications      26 │  ›   Today 16:00                   ● Worked                                            21 s
+ Account               │      Yesterday 16:00               ● Worked                                            24 s
+                       │      Oct 21 16:00                  ● Worked                                            22 s
+ + Rent servers        │      Oct 20 16:00                  ● Worked                                            25 s
+ Guide                 │      Oct 19 16:00                  ● Worked                                            23 s
+ Support               │      Oct 18 16:00                  ● Worked                                            26 s
+                       │      Oct 17 16:00                  ● Worked                                            24 s
+                       │
+                       │
+                       │  Advanced
+                       │  The saved command, with the secrets we recognise hidden.
+                       │  Schedule  0 8 * * *
+                       │  [Show the command]
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

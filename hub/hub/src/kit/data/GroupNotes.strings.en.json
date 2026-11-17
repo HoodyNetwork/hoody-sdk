@@ -1,0 +1,4 @@
+{
+  "groupNotes.actionOn": "{{action}} on {{name}}",
+  "groupNotes.named": "{{name}}: {{note}}"
+}

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Add storage                                                             Esc ×
+ Home                  │  Files         ┃ This computer checks the details with the storage before it keeps them.
+ Computers             │  Storage connec┃ ─────────────────────────────────────────────────────────────────────────────
+▌Files                 │    Browse  ▸ St┃ ┌──────────────────────────────────────────────────────────────────────────┐█
+ Bots                  │  ──────────────┃ │ WHERE YOUR KEYS GO                                                       │█
+ Board                 │                ┃ │ Keys, passwords and tokens you enter go only to this computer's          │█
+ Demo                  │  ┌─────────────┃ │ files program, once, and are kept there in a private file. The           │█
+ Vault                 │  │ At a glance ┃ │ Hub never keeps them.                                                    │█
+                       │  │ Connected st┃ │ Nothing is sent until you press Connect.                                 │█
+On atlas ▾             │  │ Open as fold┃ └──────────────────────────────────────────────────────────────────────────┘█
+ Programs              │  └─────────────┃                                                                             █
+ Schedules             │                ┃ Storage                                                                     █
+ Scripts               │  ┌─────────────┃ ┃ Google Drive                                                             ▾█
+ Logs                  │  │ Connected st┃                                                                             █
+ Tunnels               │  │ Connect clou┃  !  ┌──────────────────────────────────────────────────────────────────────┐█
+ Notes                 │  │ Keys, passwo┃     │ Get a token with rclone                                              │█
+ AI                    │  │ are kept the┃     │ rclone's shared Google sign-in app is being retired and may stop     │█
+ VMs                   │  │No storage co┃     │ working.                                                             │█
+                       │  │Add cloud or ┃     │                                                                      │█
+Account                │  │folder on thi┃     │ ON YOUR OWN COMPUTER ─────────────────────────────────────────────── │█
+ Plans & Billing       │  └─────────────┃     │ 01  Install rclone                                                   │█
+ Referrals             │                ┃     │ 02  Run the command below and sign in on the page it opens           │█
+ Keys and tokens       │                ┃     │ 03  Paste everything it prints into Token                            │█
+ API                   │                ┃     │                                                              ⧉ copy  │█
+ Notifications      26 │                ┃     │  rclone authorize "drive"                                            │█
+ Account               │                ┃     │ Token * (required)                                                   │█
+                       │                ┃     │ │ Type or paste                                [Show what you typed] │█
+ + Rent servers        │                ┃     │                                                                      │█
+ Guide                 │                ┃     │                                                                      │█
+ Support               │                ┃     │                                                                      │█
+                       │  Questions     ┃     │ Paste the token from the steps above. It is sent once and cleared    │█
+                       │  ▸ How do I ope┃     │ from this form.                                                      │█
+                       │  ▸ How do I mou┃     │ Your own client ID (optional)                                        │
+                       │  ▸ Can I mount ┃     │ │ __________________________________________________________________ │
+                       │  ▸ What do I ne┃     │ Use the same client ID and secret you gave rclone.                   │
+                       │  ▸ How do I put┃     │ Your own client secret (optional)                                    │
+                       │  ▸ Which storag┃     │ │ ______________ [Show what you typed]                               │
+                       │  ▸ What happens┃     │ Shared drive ID (optional)                                           │
+                       │  ▸ How much can┃ ─────────────────────────────────────────────────────────────────────────────
+ Typing · Esc leaves the field · Ctrl+K ┃ [Cancel]  Connect

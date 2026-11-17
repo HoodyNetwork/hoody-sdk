@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Scripts                                  ▸ Use with your agent   + New script
+ ‹ Scripts  Esc
+ Order status  ● Failing              [▷ Try it] [✦ Fix with the assistant] [⋯]
+ /orders/:id ·  atlas
+
+  Overview  Code  Test ▸Settings
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Magic comments                                                            │▀
+ │ The settings written at the top of the script: whether it runs, its       │
+ │ schedule, its key and more. The list comes from this computer. Check your │
+ │ changes, then save them.                                                  │
+ │ ▸ Where do these settings live?                                           │
+ │                                                                           │
+ │ How it runs                                                               │
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │
+ │ │                                                                       │ │
+ │ │ Turned on                       [■ on ] On                            │ │
+ │ │ Off: the address stops                                                │ │
+ │ │ answering and scheduled runs                                          │ │
+ │ │ stop.                                                                 │ │
+ │ │ @enabled                                                              │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  Board                       ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ terminal-1
+
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ ⇗ This program runs in a browser frame on the web Board, which a terminal  │
+ │ cannot draw.                                                               │
+ │ Open the Board on the web:                                                 │
+ │ https://hub.example.test/auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/    │
+ │ board                                                                      │
+ │ [c Copy link] [r QR code]                                                  │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

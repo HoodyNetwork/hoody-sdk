@@ -1,0 +1,63 @@
+/* The AI tab's Agents view. Tokens only, logical properties. The table and the detail are
+   ListDetailPage's panes; this file holds the detail's own layout and the table's name cell. */
+
+/* The Name cell: a lock or agent icon, the name, the Default tag. */
+.nameCell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  min-width: 0;
+}
+
+/* The agent's file under the tools: the changed-chat note's Reset to shipped moves focus here (it has no control of its
+   own to land on). */
+.file {
+  min-width: 0;
+}
+
+.overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.groupHead {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-label);
+  text-transform: uppercase;
+}
+
+.advisory ul {
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  font: var(--t-small);
+}
+
+/* The page's sticky footer holds the tools editor's save bar (Tools.tsx portals it here): the whole width of the footer. */
+.footer {
+  flex: 1 1 auto;
+  min-width: 0;
+}

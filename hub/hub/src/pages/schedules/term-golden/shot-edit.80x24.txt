@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Edit Nightly backup                                              Esc ×
+ Schedu┃ Runs a command on a timer.
+ 15 sch┃ ──────────────────────────────────────────────────────────────────────
+ Comput┃                                                                      █
+ / Sear┃   Name                                                               █
+   Name┃   ┃ Nightly backup                                                   █
+ ›   pi┃                                                                      █
+   ! qu┃   Command                                                            █
+     Wa┃   │ Unchanged                                                        █
+   ! sy┃   Leave empty to keep the current command.                           █
+     Ni┃                                                                      █
+     ni┃   Runs                                                               █
+     mo┃   │ Every day ▾                                                      █
+   ! PO┃                                                                      █
+     ro┃   Time                                                               █
+     cl┃   │ 02:00                                                            █
+   ! Un┃                                                                      █
+     ar┃   ┌───────────────────────────────────────────────────────────────┐
+     ol┃   │ NEXT RUNS                                                     │
+     po┃   │ It runs at these times.                                       │
+     wa┃   │ Times are on the computer's clock.                            │
+       ┃   │ in 9 hours · 02:00 · your 18:00                               │
+       ┃ ──────────────────────────────────────────────────────────────────────
+ Typing┃ [Cancel]  Save

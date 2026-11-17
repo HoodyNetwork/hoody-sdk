@@ -1,0 +1,7 @@
+{
+  "outside.copied": "Copied the address: open it in your browser",
+  "outside.copyIt": "Open this address in your browser",
+  "outside.refused": "That address can't be opened from here",
+  "outside.secretStuck": "This private address can't be opened or copied from here. Open it from the Hub in a browser",
+  "outside.webOnly": "This page opens on the web, in a browser"
+}

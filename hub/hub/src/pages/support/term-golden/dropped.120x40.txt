@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Support                                                                         + New ticket
+ Computers             │  Ask us about anything in Hoody. We answer here, in writing.
+ Files                 │
+ Bots                  │  │ i Some tickets couldn't be shown.
+ Board                 │  │ i Some older tickets weren't checked for new replies.
+ Demo                  │
+ Vault                 │  / Search                   ‹ All ›  Waiting for you    Waiting for support    Closed
+                       │  7 tickets  ↻ Refresh  View options
+On atlas ▾             │
+ Programs              │    Subject                              Category      Status                 Last message
+ Schedules             │  ▌ • Computer will not start after re…  · Computers   ● Waiting for you      9 days ago
+ Scripts               │      Invoice shows the wrong country    · Billing     ● Waiting for support  9 days ago
+ Logs                  │    • Refund for the October charge      · Billing     · Closed               9 days ago
+ Tunnels               │      How do I add a domain?             · Networking  · Closed               9 days ago
+ Notes                 │      Old question about bots            · Bots        · Closed for good      9 days ago
+ AI                    │      <b>bold</b> **subject**            · Bug report  ● Waiting for support  9 days ago
+ VMs                   │      A ticket with many messages        · AI          ● Waiting for support  9 days ago
+                       │   7 loaded
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+▌Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │  Questions
+                       │  ▸ What should I never put in a ticket?
+                       │  ▸ Why does my message look plain?
+                       │  ▸ Why is there a limit on tickets?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

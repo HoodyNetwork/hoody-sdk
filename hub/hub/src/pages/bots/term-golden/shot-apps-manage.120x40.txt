@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Community server                                                                                      Esc ×
+ Home     ┃ Discord
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │▌Setup                 ┌─────────────────────────────────────────────────────────────────────────────────┐
+▌Bots     ┃ │ People                │ GET IT WORKING                                    2 OF 4 DONE · 2 OPTIONAL LEFT │
+ Board    ┃ │ Chats                 │ It is paused: it answers nothing until you resume it.                           │
+ Demo     ┃ │ Settings              │ Next: Add it to a group                                                         │
+ Vault    ┃                         │ ━━━━━━━━━━━━━━━━━━━ ━━━━━━━━━━━━━━━━━━━ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
+          ┃                         └─────────────────────────────────────────────────────────────────────────────────┘
+On atlas ▾┃
+ Programs ┃                          ✓  Connect the app                                                          Paused
+ Schedules┃                          ✓  Become its owner                                                            Dee
+ Scripts  ┃                          3  ┌─────────────────────────────────────────────────────────────────────────────┐
+ Logs     ┃                             │ Add it to a group                                                 Optional  │
+ Tunnels  ┃                             │ Chats shows how a group joins with this app's settings.                     │
+ Notes    ┃                             │ ─────────────────────────────────────────────────────────────────────────── │
+ AI       ┃                             │                                                                [Open Chats] │
+ VMs      ┃                             └─────────────────────────────────────────────────────────────────────────────┘
+          ┃                          4  Choose a home chat                                                     Optional
+Account   ┃
+ Plans & B┃                         ┌─────────────────────────────────────────────────────────────────────────────────┐
+ Referrals┃                         │                                                                                 │
+ Keys and ┃                         │ Bot token                       [Replace…]                                      │
+ API      ┃                         │ Replace it when you make a new                                                  │
+ Notificat┃                         │ one in the app.                                                                 │
+ Account  ┃                         │                                                                                 │
+          ┃                         └─────────────────────────────────────────────────────────────────────────────────┘
+ + Rent se┃
+ Guide    ┃
+ Support  ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+ Tab move ┃

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing  Balance $250
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │    Plans  ▸ Bare metal    Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  │ ✗ Your account is suspended.                                                [Check status]
+                       │  │   Purchases and payments are off until it is reinstated.
+On atlas ▾             │  │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC                              [Pay now]
+ Programs              │  ▸ Listings    Reservations 2
+ Schedules             │
+ Scripts               │              ┌───────────────────────────────────────────────────────────────────┐
+ Logs                  │              │ Purchases are paused                                              │
+ Tunnels               │              │                                                                   │
+ Notes                 │              │ Your account is suspended, so you cannot rent or reserve servers  │
+ AI                    │              │ right now. Check your account status to see what is blocking it.  │
+ VMs                   │              │                                                                   │
+                       │              │ [Go to Account]                                                   │
+Account                │              └───────────────────────────────────────────────────────────────────┘
+▌Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notifications                                                                                                                                               [✓ Mark all read]
+ Computers             │  Messages about your account: computers, rentals, sign-in and keys.
+ Files                 │  ▸ Inbox 26    Notices    Get notified
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  / Search                        ‹ Unread ›  Archive    Kind ▾  Level ▾                                                                     26 unread  ↻ Refresh  View options
+ Vault                 │
+                       │    [ ] Level    Notice                                     Message                                                                                 Kind       When ↓
+On atlas ▾             │  ▌•[ ]  ✗       Computer atlas stopped                     atlas stopped after running out of memory on n12. Start it again from Computers, or o…  Computers  19 days ago    ⋯
+ Programs              │   •[ ]  ✓       Payment received for borealis              Your payment for borealis was received. Your wallet balance is now $34.50.              Billing    19 days ago    ⋯
+ Schedules             │   •[ ]  !       Server cedar rental ends in 3 days         Your rental of cedar ends on Oct 26. Extend it from Market to keep your computers run…  Billing    19 days ago    ⋯
+ Scripts               │   •[ ]  ✓       Computer dune is running                   dune finished being created and is running on n12.                                      Computers  19 days ago    ⋯
+ Logs                  │   •[ ]  i       Planned maintenance for ember              The server for ember restarts between 02:00 and 02:30 UTC. Computers on it are unavai…  News       19 days ago    ⋯
+ Tunnels               │   •[ ]  i       Renewal coming up for fjord                Your paid server for fjord renews in 5 days for $12.00.                                 Billing    19 days ago    ⋯
+ Notes                 │   •[ ]  !       Storage share granite expires tomorrow     The share "granite" expires tomorrow.                                                   Computers  19 days ago    ⋯
+ AI                    │   •[ ]  i       Hoody news: harbor                         Notifications now explain exactly what Hoody sends and where you see it: https://hood…  Other      20 days ago    ⋯
+ VMs                   │   •[ ]  ✗       Computer golden-gazelle stopped            golden-gazelle stopped after running out of memory on ash-3. Start it again from Comp…  Computers  20 days ago    ⋯
+                       │   •[ ]  ✓       Payment received for rapid-raven           Your payment for rapid-raven was received. Your wallet balance is now $34.50.           Billing    20 days ago    ⋯
+Account                │   •[ ]  !       Server proud-koala rental ends in 3 days   Your rental of proud-koala ends on Oct 26. Extend it from Market to keep your compute…  Billing    20 days ago    ⋯
+ Plans & Billing       │   •[ ]  ✓       Computer gentle-raven is running           gentle-raven finished being created and is running on ash-3.                            Computers  20 days ago    ⋯
+ Referrals             │   •[ ]  i       Planned maintenance for dandy-coyote       The server for dandy-coyote restarts between 02:00 and 02:30 UTC. Computers on it are…  News       20 days ago    ⋯
+ Keys and tokens       │   •[ ]  i       Renewal coming up for witty-raven          Your paid server for witty-raven renews in 5 days for $12.00.                           Billing    20 days ago    ⋯
+ API                   │   •[ ]  !       Storage share cosmic-bison expires tomor…  The share "cosmic-bison" expires tomorrow.                                              Computers  20 days ago    ⋯
+▌Notifications      26 │   •[ ]  i       Hoody news: gentle-panda                   Notifications now explain exactly what Hoody sends and where you see it: https://hood…  Other      20 days ago    ⋯
+ Account               │   •[ ]  ✗       Computer quiet-ocelot stopped              quiet-ocelot stopped after running out of memory on fra-7. Start it again from Comput…  Computers  20 days ago    ⋯
+                       │   •[ ]  ✓       Payment received for brisk-jaguar          Your payment for brisk-jaguar was received. Your wallet balance is now $34.50.          Billing    20 days ago    ⋯
+ + Rent servers        │   •[ ]  !       Server steady-squid rental ends in 3 days  Your rental of steady-squid ends on Oct 26. Extend it from Market to keep your comput…  Billing    20 days ago    ⋯
+ Guide                 │   •[ ]  ✓       Computer mighty-dolphin is running         mighty-dolphin finished being created and is running on fra-7.                          Computers  20 days ago    ⋯
+ Support               │   •[ ]  i       Planned maintenance for snappy-squid       The server for snappy-squid restarts between 02:00 and 02:30 UTC. Computers on it are…  News       20 days ago    ⋯
+                       │   •[ ]  i       Renewal coming up for gentle-yak           Your paid server for gentle-yak renews in 5 days for $12.00.                            Billing    20 days ago    ⋯
+                       │   •[ ]  !       Storage share smart-wombat expires tomor…  The share "smart-wombat" expires tomorrow.                                              Computers  20 days ago    ⋯
+                       │   •[ ]  i       Hoody news: swift-cheetah                  Notifications now explain exactly what Hoody sends and where you see it: https://hood…  Other      20 days ago    ⋯
+                       │   •[ ]  ✗       Computer happy-finch stopped               happy-finch stopped after running out of memory on n12. Start it again from Computers…  Computers  20 days ago    ⋯
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │  1–25 of 26 ‹ ›
+                       │   New notices appear here and are counted beside Notifications in the sidebar.                                                              [How it works] [Dismiss this tip]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

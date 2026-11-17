@@ -1,0 +1,205 @@
+/* PickCard: the whole card is one press. The mark spans the left column;
+   title and end tag, line, note and mono line stack on the right. The frame is --card-edge: as an outermost card the
+   edge (CardEdge) draws it and the cut corner, nested it is the plain border. */
+.card {
+  --card-edge: var(--hx-panel-line);
+
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-auto-rows: min-content;
+  column-gap: var(--sp-3);
+  row-gap: var(--sp-half);
+  align-content: start;
+  box-sizing: border-box;
+  inline-size: 100%;
+  block-size: 100%;
+  min-inline-size: 0;
+  margin: 0;
+  padding: var(--sp-3);
+  border: var(--bw) solid var(--card-edge);
+  background: var(--hx-input-bg);
+  color: var(--hx-ink);
+  font: var(--t-body);
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--dur-hover);
+}
+
+.noMark {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* A card with a mono line: title, line, note, then the mono line on the card's bottom edge. The third row takes what a
+   taller neighbour in the same grid row leaves, so the mono lines of a row of cards stand on one line. */
+.card:has(> .meta) {
+  grid-template-rows: min-content min-content 1fr min-content;
+}
+
+.card[data-hovered] {
+  --card-edge: var(--hx-line-strong);
+
+  background: var(--hx-raised);
+}
+
+/* Cannot be picked now: the kit's one disabled recipe; hover changes nothing. The reason is in the mono line. */
+.card.off {
+  opacity: var(--ctl-off-opacity);
+  cursor: default;
+}
+
+.card.off[data-hovered] {
+  --card-edge: var(--hx-panel-line);
+
+  background: var(--hx-input-bg);
+}
+
+/* You were here, or the current choice: an ink frame and the selection bar at the start (the words of "you were here"
+   are in the mono line). After `.off` and the hover rule so the frame and bar of a chosen card stay. */
+.card.here {
+  --card-edge: var(--hx-frame);
+
+  background: var(--hx-raised);
+  box-shadow: inset var(--sp-1) 0 0 var(--hx-selected-bar);
+}
+
+/* Above the global [data-focus-visible] outline (base.css) whatever order the sheets load in: a clipped card would cut
+   an outline, so the ring is drawn instead (below, and CardEdge ring). */
+.card:is(:focus, :focus-visible, [data-focus-visible]) {
+  outline: none;
+}
+
+/* Nested (no cut corner, no edge): the ring is the inset token ring, inside the card. Outermost, the edge draws the
+   ring along the cut outline (CardEdge ring). */
+.card:not([data-card-cut])[data-focus-visible] {
+  box-shadow: var(--focus-ring-inset);
+}
+
+.card.here:not([data-card-cut])[data-focus-visible] {
+  box-shadow: inset var(--sp-1) 0 0 var(--hx-selected-bar), var(--focus-ring-inset);
+}
+
+.mark {
+  display: flex;
+  grid-row: 1 / span 4;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.title {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  font: var(--t-group);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.end {
+  display: inline-flex;
+  flex: none;
+}
+
+/* The decorative mark after the end tag (endIcon), in the muted ink. */
+.endIcon {
+  display: inline-flex;
+  flex: none;
+  color: var(--hx-muted);
+}
+
+.line {
+  display: block;
+  font: var(--t-body);
+  color: var(--hx-ink);
+}
+
+.note {
+  display: -webkit-box;
+  overflow: hidden;
+  font: var(--t-small);
+  color: var(--hx-muted);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.meta {
+  display: block;
+  grid-row: 4;
+  align-self: end;
+  margin-block-start: var(--sp-1);
+  font: var(--t-label);
+  color: var(--hx-muted);
+  overflow-wrap: anywhere;
+}
+
+/* The mono line given as parts: one line high; a part that does not fit falls to a second line, which is not shown,
+   so each part is whole or left out. Every part carries its separator before it, and the one before a line's first
+   part lies in the start inset that the clip cuts away. */
+.metaLine {
+  --meta-sep: var(--sp-4);
+
+  display: flex;
+  flex-wrap: wrap;
+  block-size: 1lh;
+  margin-inline-start: calc(-1 * var(--meta-sep));
+  overflow: hidden;
+  clip-path: inset(0 0 0 var(--meta-sep));
+  overflow-wrap: normal;
+}
+
+:dir(rtl) > .metaLine {
+  clip-path: inset(0 var(--meta-sep) 0 0);
+}
+
+.metaPart {
+  position: relative;
+  max-inline-size: 100%;
+  padding-inline-start: var(--meta-sep);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metaPart::before {
+  position: absolute;
+  inset-inline-start: 0;
+  inline-size: var(--meta-sep);
+  content: '·';
+  text-align: center;
+}
+
+/* "You were here" leads the line, so it is never the part left out. */
+.metaFirst {
+  order: -1;
+}
+
+/* A grid card's "you were here" words for the row (React Aria's description slot, read with the row's name); the
+   visible words are in the mono line. */
+.srDesc {
+  position: absolute;
+  inline-size: var(--sp-px);
+  block-size: var(--sp-px);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.hereWords {
+  color: var(--hx-ink);
+}
+
+@media (forced-colors: active) {
+  .card:is(:focus-visible, [data-focus-visible]) {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: calc(-2 * var(--bw-2));
+  }
+
+  .card.here {
+    border-inline-start-width: var(--sp-1);
+  }
+}

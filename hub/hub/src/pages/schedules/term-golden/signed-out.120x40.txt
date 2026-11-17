@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Schedules                                             ▸ Use with your agent   + New schedule
+ Computers             │  At least 13 schedules on atlas · next: ping-api in 3 minutes · 3 failed today · Computers ›
+ Files                 │  9 programs running ›
+ Bots                  │
+ Board                 │
+ Demo                  │    The agent on this computer is signed out, so its schedules can't be shown.
+ Vault                 │
+                       │    [Sign the agent in]
+On atlas ▾             │
+ Programs              │    It signs in to your Hoody account and stays signed in until you sign out of the Hub. Its
+▌Schedules             │    key is on the Keys page.
+ Scripts               │
+ Logs                  │
+ Tunnels               │  / Search schedules
+ Notes                 │  ‹ Any ›  Commands 8    Scripts 3    Web requests 2    Agent loops 0    Status ▾
+ AI                    │  13 schedules  ↻ Refresh  View options
+ VMs                   │
+                       │    Name                                  Next run ↑                Last result         On
+Account                │  ▌   ping-api   Web request              in 3 minutes              ● Worked       [■ on ]    ⋯
+ Plans & Billing       │    ! queue-drain   Script                in 4 minutes              ● Failed                  ⋯
+ Referrals             │    ! sync-photos   Command               in 8 minutes              ● Failed       [■ on ]    ⋯
+ Keys and tokens       │      Nightly backup   Command            in 9 hours                ● Worked       [■ on ]    ⋯
+ API                   │      nightly-digest   Script             in 13 hours               ● Worked                  ⋯
+ Notifications      26 │      morning-check   Agent timer         in 15 hours               ● In chat      [■ on ]    ⋯
+ Account               │    ! POST hooks.example.org              in 20 hours               ● Failed       [■ on ]    ⋯
+                       │      rotate-logs   Command               in 2 days                 ● Worked       [■ on ]    ⋯
+ + Rent servers        │      cleanup-tmp   Command               in 8 days                 ● Not run yet  [■ on ]    ⋯
+ Guide                 │      archive   Script                    Script is turned off      ● Skipped                 ⋯
+ Support               │      old-report   Command                Paused                    ● Worked       [□ off]    ⋯
+                       │      poll.sh   Hand-written              Can't tell                ● No results
+                       │      warm-cache   Command                When the computer starts  ● Not run yet  [■ on ]    ⋯
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

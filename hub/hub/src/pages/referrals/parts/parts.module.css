@@ -1,0 +1,208 @@
+/* Referrals page parts: placement only (grids, columns, wrapping). Every look (cards, type, colour, buttons) is the
+   kit's, and so is the spacing between and inside sections (Stack, Section, SubSection): no row gap here is above the
+   small step. */
+
+/* Row A: the page's 12 columns; Your links on 8, Referral credit on 4, one height. Under 900 px the two join the page's
+   stack (display: contents), so the kit's spacing sits between them, in DOM order (layout.ts). */
+.cols {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: stretch;
+  column-gap: var(--sp-4);
+  min-width: 0;
+}
+
+/* A cell is a one-track grid, so the card in it takes the cell's whole width and height (both cards end level). */
+.span8,
+.span4 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+
+.span8 {
+  grid-column: span 8;
+}
+
+.span4 {
+  grid-column: span 4;
+}
+
+@container content (width < 900px) {
+  .cols {
+    display: contents;
+  }
+}
+
+/* Your links: the main row, every custom row and the create row share three columns, so every link box and the
+   new-code field start and end at one x, and Copy link, Retire… and Create share the action column. The action column
+   holds the widest action with its InfoTip beside it (Retire… and its tip), so no tip drops under its button. */
+.links {
+  --code-col: minmax(7.5rem, 9rem);
+  --act-col: 11rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-block);
+  min-width: 0;
+}
+
+.codes {
+  display: grid;
+  grid-template-columns: var(--code-col) minmax(0, 1fr) var(--act-col);
+  gap: var(--sp-2) var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.code {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* The code itself (a <code>, in the kit's code face): a long one wraps inside the code column. */
+.codeText {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* A code row: [code + kind] [link] [action]; one column when the content is under 600 px. */
+.row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  row-gap: var(--sp-2);
+  align-items: center;
+  min-width: 0;
+}
+
+.link {
+  grid-column: 2;
+  min-width: 0;
+}
+
+/* The action cell, a code row's and the create row's alike: the button at its own width with its InfoTip beside it. */
+.actions,
+.formAct {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.actions {
+  grid-column: 3;
+}
+
+/* The create row on the link rows' three columns: its label in the code column, the field's box in the link column
+   (starting and ending where the link boxes do), Create and its tip in the action column; all start at the box's top. */
+.create {
+  display: grid;
+  grid-template-columns: var(--code-col) minmax(0, 1fr) var(--act-col);
+  column-gap: var(--sp-3);
+  min-width: 0;
+}
+
+.create > * {
+  grid-column: 1 / -1;
+}
+
+.create .form {
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: start;
+  gap: var(--sp-2) var(--sp-3);
+  min-width: 0;
+}
+
+.create .form > * {
+  grid-column: 1 / -1;
+}
+
+.create .form > .formLabel {
+  grid-column: 1;
+  padding-block-start: var(--sp-2);
+}
+
+.create .form > .formField {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.create .form > .formAct {
+  grid-column: 3;
+}
+
+
+/* How you earn: four answers on quarters, one height; halves under 900 px, one column under 600 px. */
+.earn {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+  gap: var(--gap-block) var(--sp-4);
+  min-width: 0;
+}
+
+/* After the base rule, so it wins: the earning cards halve under 900 px; one column under 600 px below. */
+@container content (width < 900px) {
+  .earn {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container content (width < 600px) {
+  .codes,
+  .create {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .link,
+  .actions,
+  .create > *,
+  .create .form > .formLabel,
+  .create .form > .formField,
+  .create .form > .formAct {
+    grid-column: 1;
+  }
+
+  .create .form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .create .form > .formLabel {
+    padding-block-start: 0;
+  }
+
+  .earn {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The page's three plain note lines (no codes yet, the code rules, no more codes can be made): muted, the last two
+   small. They move to a kit note part once the kit has one. */
+.muted {
+  color: var(--hx-muted);
+}
+
+.small {
+  font: var(--t-small);
+}
+
+/* Available (CreditCard): the strip's own number face (tabular numerals). It takes at most 60% of the strip's row and
+   wraps between any two characters there, so neither the amount (the strip clips a number past its cell) nor the
+   "Available" label (the rows layout lets the label column shrink to nothing) is ever cut, up to usdText's largest
+   amount (13 digits). */
+.bigMoney {
+  display: inline-block;
+  max-inline-size: 60cqi;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.p {
+  margin: 0;
+}

@@ -1,0 +1,15 @@
+.area {
+  min-inline-size: 0;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+}

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Keys and tokens                             ▸ Use with your agent   + New key
+ A key lets your agent, the CLI or the SDK act for you. Give each one its own
+ key, with an end date.
+ ▸ API keys 0 keys    SSH keys    Shared access 0 shares
+ ──────────────────────────────────────────────────────────────────────────────
+    ┌──────────────────────────────────────────────────────────────────────┐  █
+    │ No key works in Personal yet                                         │  █
+    │                                                                      │  █
+    │ Make a key for this realm, or show all realms to see keys that work  │  █
+    │ everywhere.                                                          │  █
+    │                                                                      │  █
+    │ [Show all realms]                                                    │  █
+    └──────────────────────────────────────────────────────────────────────┘  █
+                                                                              █
+ Questions                                                                    █
+ ▸ Can I see a key's secret again?                                            █
+ ▸ What is an API key for?                                                    █
+ ▸ Which realms does a key work in?                                           █
+ ▸ What can a key do, and what does Full mean?                                █
+ ▸ When does a key stop working, and can I limit where it works from?         █
+ ▸ How does the SSH key work?                                                 █
+ ▸ What does sharing a realm give someone?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

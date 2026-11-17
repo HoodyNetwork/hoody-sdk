@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Support                                                                         + New ticket
+ Computers             │  Ask us about anything in Hoody. We answer here, in writing.
+ Files                 │
+ Bots                  │  / Search                     All    Waiting for you    Waiting for support  ‹ Closed ›
+ Board                 │  3 tickets  ↻ Refresh  View options
+ Demo                  │
+ Vault                 │    Subject                          Category        Status                Last message
+                       │  ▌ • Refund for the October charge  · Billing       · Closed              9 days ago
+On atlas ▾             │      How do I add a domain?         · Networking    · Closed              9 days ago
+ Programs              │      Old question about bots        · Bots          · Closed for good     9 days ago
+ Schedules             │   3 loaded
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+▌Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │  Questions
+                       │  ▸ What should I never put in a ticket?
+                       │  ▸ Why does my message look plain?
+                       │  ▸ Why is there a limit on tickets?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

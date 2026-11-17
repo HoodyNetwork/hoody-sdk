@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                             ◆ Personal ▾  All computers ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │
+ Computers             │
+ Files                 │  What should we do?
+ Bots                  │
+ Board                 │
+ Demo                  │                  ┌────────────────────────────────────────────────────────────┐
+ Vault                 │                  │ Pick a computer                                            │
+                       │                  │                                                            │
+On this computer ▾     │                  │ AI runs on one of your computers. Pick one in the top bar. │
+ Programs              │                  └────────────────────────────────────────────────────────────┘
+ Schedules             │
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+▌AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

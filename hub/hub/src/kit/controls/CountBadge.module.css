@@ -1,0 +1,34 @@
+/* CountBadge: a count in a small square-cornered box, as tall as a key cap (--kbd-h), in mono digits that do not shift
+   as the number changes. Neutral is quiet (fill and muted ink); accent is the highlight with its own ink. */
+.badge {
+  display: inline-block;
+  flex: none;
+  box-sizing: border-box;
+  min-inline-size: var(--kbd-h);
+  block-size: var(--kbd-h);
+  padding-inline: var(--sp-1);
+  border-radius: var(--r-1);
+  background: var(--hx-fill);
+  color: var(--hx-muted-text);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--kbd-h);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.accent {
+  background: var(--hx-acc);
+  box-shadow: inset 0 0 0 var(--bw) var(--hx-count-line);
+  color: var(--hx-acc-text-on);
+}
+
+/* Forced colours drop both fills: a system line keeps the count a box. */
+@media (forced-colors: active) {
+  .badge {
+    outline: var(--bw) solid CanvasText;
+    outline-offset: calc(-1 * var(--bw));
+  }
+}

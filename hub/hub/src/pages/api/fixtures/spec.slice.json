@@ -1,0 +1,1082 @@
+{
+ "openapi": "3.1.0",
+ "servers": [
+  {
+   "url": "https://api.hoody.com"
+  }
+ ],
+ "paths": {
+  "/api/v1/auth/tokens": {
+   "get": {
+    "operationId": "api_listAuthTokens",
+    "summary": "List auth tokens",
+    "tags": [
+     "api:Auth Tokens"
+    ],
+    "parameters": [],
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ]
+   },
+   "post": {
+    "operationId": "api_createAuthToken",
+    "summary": "Create a new auth token",
+    "tags": [
+     "api:Auth Tokens"
+    ],
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ]
+   }
+  },
+  "/api/v1/auth/tokens/{id}/copy": {
+   "post": {
+    "operationId": "api_copyAuthToken",
+    "summary": "Copy auth token",
+    "tags": [
+     "api:Auth Tokens"
+    ],
+    "parameters": [
+     {
+      "schema": {
+       "type": "string",
+       "pattern": "^[0-9a-f]{24}$"
+      },
+      "in": "path",
+      "name": "id",
+      "required": true
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ]
+   }
+  },
+  "/api/v1/auth/tokens/{id}": {
+   "put": {
+    "operationId": "api_updateAuthTokenPatch",
+    "summary": "Update auth token",
+    "tags": [
+     "api:Auth Tokens"
+    ],
+    "parameters": [
+     {
+      "schema": {
+       "type": "string",
+       "pattern": "^[0-9a-f]{24}$"
+      },
+      "in": "path",
+      "name": "id",
+      "required": true
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ]
+   },
+   "patch": {
+    "operationId": "api_updateAuthTokenPatch_patch",
+    "summary": "Update auth token",
+    "tags": [
+     "api:Auth Tokens"
+    ],
+    "parameters": [
+     {
+      "schema": {
+       "type": "string",
+       "pattern": "^[0-9a-f]{24}$"
+      },
+      "in": "path",
+      "name": "id",
+      "required": true
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "x-original-operation-id": "api_updateAuthTokenPatch"
+   }
+  },
+  "/api/v1/users/auth/login": {
+   "post": {
+    "operationId": "api_login",
+    "summary": "Login with username and password",
+    "tags": [
+     "api:Authentication"
+    ],
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "required": [
+         "password"
+        ],
+        "type": "object"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/waitlist": {
+   "post": {
+    "operationId": "api_waitlistJoin",
+    "summary": "Join the Hoody waitlist",
+    "tags": [
+     "api:Waitlist"
+    ],
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "required": [
+         "email"
+        ],
+        "type": "object"
+       }
+      }
+     }
+    }
+   },
+   "patch": {
+    "operationId": "api_waitlistEnrich",
+    "summary": "Enrich an existing waitlist signup",
+    "tags": [
+     "api:Waitlist"
+    ],
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "required": [
+         "email"
+        ],
+        "type": "object"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/browser/start": {
+   "get": {
+    "operationId": "browser_startInstance",
+    "summary": "Create or retrieve browser instance",
+    "tags": [
+     "browser:Instance Management"
+    ],
+    "parameters": [
+     {
+      "name": "browser_id",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "chromiumVersion",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "fingerprintId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "useRemoteDebuggingPort",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": true
+      }
+     },
+     {
+      "name": "remoteDebuggingPort",
+      "in": "query",
+      "required": false,
+      "deprecated": true,
+      "schema": {
+       "type": "integer"
+      }
+     },
+     {
+      "name": "remoteDebuggingAddress",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "extensions",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "extensionsDir",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "extensionsStoreIds",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "proxyServer",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "proxyUsername",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "proxyPassword",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "proxyBypass",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "enableQuic",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": false
+      }
+     },
+     {
+      "name": "enableDnsOverHttps",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": true
+      }
+     },
+     {
+      "name": "dnsOverHttpsUrl",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "format": "uri",
+       "default": "https://cloudflare-dns.com/dns-query"
+      }
+     },
+     {
+      "name": "display",
+      "in": "query",
+      "schema": {
+       "oneOf": [
+        {
+         "type": "integer"
+        },
+        {
+         "type": "string"
+        }
+       ]
+      }
+     },
+     {
+      "name": "showBrowser",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": true
+      }
+     },
+     {
+      "name": "sessionName",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "timezoneId",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "locale",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "userAgent",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "viewport",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "noViewport",
+      "in": "query",
+      "schema": {
+       "type": "boolean",
+       "default": false
+      }
+     },
+     {
+      "name": "geolocation",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "launchArguments",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "style": "form",
+      "explode": true
+     },
+     {
+      "name": "browser",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "chromium",
+        "firefox"
+       ],
+       "default": "chromium"
+      }
+     },
+     {
+      "name": "firefoxVersion",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "firefoxExecutablePath",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "showDevtools",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": false
+      }
+     },
+     {
+      "name": "userProfile",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "object"
+      }
+     },
+     {
+      "name": "stealth",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": true
+      }
+     },
+     {
+      "name": "iframe",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": true
+      }
+     },
+     {
+      "name": "iframe_url",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "format": "uri"
+      }
+     },
+     {
+      "name": "maximize_new_windows",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": true
+      }
+     }
+    ]
+   },
+   "servers": [
+    {
+     "url": "https://{projectId}-{computerId}-browser-{serviceIndex}.{server}.computers.hoody.com"
+    }
+   ]
+  },
+  "/api/v1/code/health": {
+   "get": {
+    "operationId": "code_healthCheck",
+    "summary": "Service health check",
+    "tags": [
+     "code:health"
+    ],
+    "parameters": []
+   },
+   "servers": [
+    {
+     "url": "https://{projectId}-{computerId}-code-{serviceIndex}.{server}.computers.hoody.com"
+    }
+   ]
+  },
+  "/{path}": {
+   "post": {
+    "operationId": "exec_executeScript_post",
+    "summary": "Execute Script (POST)",
+    "tags": [
+     "exec:Script Execution"
+    ],
+    "parameters": [
+     {
+      "name": "path",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {}
+      },
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "type": "object"
+       }
+      },
+      "multipart/form-data": {
+       "schema": {
+        "type": "object"
+       }
+      },
+      "application/octet-stream": {
+       "schema": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "x-original-operation-id": "exec_executeScript",
+    "servers": [
+     {
+      "url": "https://{projectId}-{computerId}-exec-{serviceIndex}.{server}.computers.hoody.com"
+     }
+    ]
+   }
+  },
+  "/exec/{path}": {
+   "get": {
+    "operationId": "exec_executeScript",
+    "summary": "Execute Script (GET)",
+    "tags": [
+     "exec:Script Execution"
+    ],
+    "parameters": [
+     {
+      "name": "path",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "x-original-path": "/{path}"
+   },
+   "servers": [
+    {
+     "url": "https://{projectId}-{computerId}-exec-{serviceIndex}.{server}.computers.hoody.com"
+    }
+   ]
+  },
+  "/api/v1/notifications/dismiss": {
+   "post": {
+    "operationId": "notifications_dismissNotifications",
+    "summary": "Dismiss notifications",
+    "tags": [
+     "notifications:Notifications"
+    ],
+    "parameters": [],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "required": [
+         "notificationIds"
+        ],
+        "type": "object"
+       }
+      }
+     },
+     "required": true
+    }
+   },
+   "servers": [
+    {
+     "url": "https://{projectId}-{computerId}-n-{serviceIndex}.{server}.computers.hoody.com"
+    }
+   ]
+  },
+  "/api/v1/terminal/state": {
+   "post": {
+    "operationId": "terminal_postTerminalState",
+    "summary": "Client render/connection diagnostics beacon",
+    "tags": [],
+    "parameters": [],
+    "requestBody": {
+     "required": false,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    }
+   },
+   "servers": [
+    {
+     "url": "https://{projectId}-{computerId}-terminal-{serviceIndex}.{server}.computers.hoody.com"
+    }
+   ]
+  },
+  "/api/v1/notes/health": {
+   "get": {
+    "operationId": "notes_healthCheck",
+    "summary": "Service health and runtime info",
+    "tags": [
+     "notes:health"
+    ],
+    "parameters": []
+   },
+   "servers": [
+    {
+     "url": "https://{projectId}-{computerId}-notes-{serviceIndex}.{server}.computers.hoody.com"
+    }
+   ]
+  },
+  "/api/v1/notes/avatars": {
+   "post": {
+    "operationId": "notes_uploadAvatar",
+    "summary": "Upload an avatar image",
+    "tags": [
+     "notes:avatars"
+    ],
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "image/jpeg": {
+       "schema": {
+        "type": "string"
+       }
+      },
+      "image/png": {
+       "schema": {
+        "type": "string"
+       }
+      },
+      "image/webp": {
+       "schema": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "security": [
+     {},
+     {
+      "notesIdentityBearer": []
+     },
+     {
+      "notesIdentityUsername": [],
+      "notesIdentityRole": []
+     }
+    ]
+   },
+   "servers": [
+    {
+     "url": "https://{projectId}-{computerId}-notes-{serviceIndex}.{server}.computers.hoody.com"
+    }
+   ]
+  },
+  "/api/v1/egress/health": {
+   "get": {
+    "operationId": "egress_healthCheck",
+    "summary": "Service health check",
+    "tags": [
+     "egress:egress"
+    ],
+    "parameters": []
+   },
+   "servers": [
+    {
+     "url": "https://{projectId}-{computerId}-egress.{server}.computers.hoody.com"
+    }
+   ]
+  },
+  "/_logs": {
+   "get": {
+    "operationId": "proxyLogs_listLogs",
+    "summary": "Query centralized logs",
+    "tags": [
+     "proxyLogs:logs"
+    ],
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "minimum": 1,
+       "default": 200
+      }
+     },
+     {
+      "name": "offset",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "minimum": 0,
+       "default": 0
+      }
+     },
+     {
+      "name": "projectId",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "computerId",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "serviceName",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "traceId",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "level",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "pattern": "^(debug|info|warn|error)(,(debug|info|warn|error))*$"
+      }
+     },
+     {
+      "name": "excludeService",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "path",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "maxLength": 200
+      }
+     },
+     {
+      "name": "status",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "minimum": 100,
+       "maximum": 599
+      }
+     },
+     {
+      "name": "minStatus",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "minimum": 100,
+       "maximum": 599
+      }
+     },
+     {
+      "name": "maxStatus",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "minimum": 100,
+       "maximum": 599
+      }
+     },
+     {
+      "name": "exposure",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "pattern": "^bu_[0-9a-f]{24}$"
+      }
+     },
+     {
+      "name": "includeRequestBody",
+      "in": "query",
+      "schema": {
+       "type": "boolean",
+       "default": false
+      }
+     },
+     {
+      "name": "includeResponseBody",
+      "in": "query",
+      "schema": {
+       "type": "boolean",
+       "default": false
+      }
+     },
+     {
+      "name": "last",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "minimum": 1
+      }
+     },
+     {
+      "name": "afterId",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "minimum": 0
+      }
+     },
+     {
+      "name": "beforeId",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "minimum": 1
+      }
+     },
+     {
+      "name": "kind",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "request",
+        "response",
+        "event"
+       ]
+      }
+     },
+     {
+      "name": "method",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "source",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "backend",
+        "edge"
+       ]
+      }
+     },
+     {
+      "name": "sinceMs",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "minimum": 0
+      }
+     },
+     {
+      "name": "untilMs",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "minimum": 0
+      }
+     }
+    ]
+   },
+   "servers": [
+    {
+     "url": "https://{projectId}-{computerId}-logs-{serviceIndex}.{server}.computers.hoody.com"
+    }
+   ]
+  }
+ },
+ "x-additional-paths": {
+  "/{path}": {
+   "mkcol": {
+    "operationId": "files_createDirectory",
+    "summary": "Create directory",
+    "tags": [
+     "files:Directories"
+    ],
+    "parameters": [
+     {
+      "in": "path",
+      "name": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ]
+   },
+   "servers": [
+    {
+     "url": "https://{projectId}-{computerId}-files-{serviceIndex}.{server}.computers.hoody.com"
+    }
+   ]
+  },
+  "/?download_history": {
+   "get": {
+    "operationId": "files_getDownloadHistory",
+    "summary": "Download history",
+    "tags": [
+     "files:Download Manager"
+    ],
+    "parameters": [
+     {
+      "in": "query",
+      "name": "download_history",
+      "required": true,
+      "schema": {
+       "enum": [
+        ""
+       ],
+       "type": "string"
+      }
+     }
+    ]
+   },
+   "servers": [
+    {
+     "url": "https://{projectId}-{computerId}-files-{serviceIndex}.{server}.computers.hoody.com"
+    }
+   ]
+  }
+ },
+ "tags": [
+  {
+   "name": "browser:Instance Management"
+  },
+  {
+   "name": "code:health"
+  },
+  {
+   "name": "files:Directories"
+  },
+  {
+   "name": "files:Download Manager"
+  },
+  {
+   "name": "notifications:Notifications"
+  },
+  {
+   "name": "terminal:Terminal Execution"
+  },
+  {
+   "name": "terminal:Terminal Sessions"
+  },
+  {
+   "name": "terminal:Web Interface"
+  },
+  {
+   "name": "terminal:Authentication"
+  },
+  {
+   "name": "terminal:API Documentation"
+  },
+  {
+   "name": "terminal:System Monitoring"
+  },
+  {
+   "name": "terminal:Terminal Automation"
+  }
+ ],
+ "components": {
+  "securitySchemes": {
+   "bearerAuth": {
+    "type": "http",
+    "scheme": "bearer",
+    "bearerFormat": "JWT"
+   },
+   "notesIdentityBearer": {
+    "type": "http",
+    "scheme": "bearer",
+    "bearerFormat": "base64url(JSON)"
+   },
+   "notesIdentityUsername": {
+    "type": "apiKey",
+    "in": "query",
+    "name": "username"
+   },
+   "notesIdentityRole": {
+    "type": "apiKey",
+    "in": "query",
+    "name": "role"
+   },
+   "notesExportTicket": {
+    "type": "apiKey",
+    "in": "query",
+    "name": "ticket"
+   },
+   "BearerAuth": {
+    "type": "http",
+    "scheme": "bearer"
+   }
+  },
+  "schemas": {}
+ },
+ "security": []
+}

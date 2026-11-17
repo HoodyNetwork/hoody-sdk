@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  AI                          ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ [┌──────────────────────────────────────────────────────────────────────────┐]
+ a│ Attach notes                                                       Esc × │
+ [│ ──────────────────────────────────────────────────────────────────────── │
+──│ Pick up to 3 notes. Each note's text is attached as a text file, up to █ │──
+  │ 24 KB of text a note. Nothing is sent yet.                             █ │
+  │                                                                        █ │
+ ││ ! The notes of 1 running computer couldn't be read.           Try again█ │
+ ││                                                                        █ │
+  │ / Search notes                                      10 notes  ↻ Refresh█ │
+ ✦│   [ ] Title                             Computer     Changed ↓         █ │
+ ▸│ › [ ] Weekly plan                       atlas        12 minutes ago    █ │
+  │   [ ] Staging release notes             borealis     40 minutes ago    █ │ █
+ ✗│   [ ] Deploy checklist                  atlas        2 hours ago       █ │ █
+ m│   [ ] Customer feedback                 borealis     5 hours ago       █ │ █
+  │   [ ] Reading list                      atlas        7 hours ago       █ │ █
+ i│   [ ] Meeting notes: storefront review  atlas        yesterday         █ │ █
+ t│   [ ] Launch timeline                   borealis     3 days ago        █ │ █
+  │   [ ] Trip ideas                        atlas        4 days ago        █ │ █
+ ┌│   [ ] Backup schedule                   atlas        9 days ago          │┐
+ ││                                                                          ││
+ └│                                                       [Cancel]   Attach  │┘
+ [└──────────────────────────────────────────────────────────────────────────┘]
+ Typing · Esc leaves the field · Ctrl+K commands

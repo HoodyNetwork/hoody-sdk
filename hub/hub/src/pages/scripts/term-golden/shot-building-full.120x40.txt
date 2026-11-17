@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                 ▸ Use with your agent   + New script
+ Computers             │  Small programs on your computers that answer an address or run on a schedule.
+ Files                 │
+ Bots                  │  ▾ Being built on this device · 3                                                            █
+ Board                 │     This device is holding 32 assistant requests: 3 for new scripts and 29 for changes to    █
+ Demo                  │     scripts. Make a script live, or discard a build or a change request, to start another.   █
+ Vault                 │     ▾ Show the change requests                                                               █
+                       │       default/1/jobs/job-01.ts                                              [Open] [Discard] █
+On atlas ▾             │       default/1/jobs/job-02.ts                                              [Open] [Discard] █
+ Programs              │       default/1/jobs/job-03.ts                                              [Open] [Discard] █
+ Schedules             │       default/1/jobs/job-04.ts                                              [Open] [Discard] █
+▌Scripts               │       default/1/jobs/job-05.ts                                              [Open] [Discard] █
+ Logs                  │       default/1/jobs/job-06.ts                                              [Open] [Discard] █
+ Tunnels               │       default/1/jobs/job-07.ts                                              [Open] [Discard] █
+ Notes                 │       default/1/jobs/job-08.ts                                              [Open] [Discard] █
+ AI                    │       default/1/jobs/job-09.ts                                              [Open] [Discard] █
+ VMs                   │       default/1/jobs/job-10.ts                                              [Open] [Discard] █
+                       │       default/1/jobs/job-11.ts                                              [Open] [Discard] ▀
+Account                │       default/1/jobs/job-12.ts                                              [Open] [Discard]
+ Plans & Billing       │       default/1/jobs/job-13.ts                                              [Open] [Discard]
+ Referrals             │       default/1/jobs/job-14.ts                                              [Open] [Discard]
+ Keys and tokens       │       default/1/jobs/job-15.ts                                              [Open] [Discard]
+ API                   │       default/1/jobs/job-16.ts                                              [Open] [Discard]
+ Notifications      26 │       default/1/jobs/job-17.ts                                              [Open] [Discard]
+ Account               │       default/1/jobs/job-18.ts                                              [Open] [Discard]
+                       │       default/1/jobs/job-19.ts                                              [Open] [Discard]
+ + Rent servers        │       default/1/jobs/job-20.ts                                              [Open] [Discard]
+ Guide                 │       default/1/jobs/job-21.ts                                              [Open] [Discard]
+ Support               │       default/1/jobs/job-22.ts                                              [Open] [Discard]
+                       │       default/1/jobs/job-23.ts                                              [Open] [Discard]
+                       │       default/1/jobs/job-24.ts                                              [Open] [Discard]
+                       │       default/1/jobs/job-25.ts                                              [Open] [Discard]
+                       │       default/1/jobs/job-26.ts                                              [Open] [Discard]
+                       │       default/1/jobs/job-27.ts                                              [Open] [Discard]
+                       │       default/1/jobs/job-28.ts                                              [Open] [Discard]
+                       │       default/1/jobs/job-29.ts                                              [Open] [Discard]
+                       │     Turn the store feed into a daily summary               ● Stopped borealis 40 minutes ago
+                       │     [Open] [Discard]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

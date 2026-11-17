@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+▌Home                  │  Good morning, Ada                                             [i What is Hoody?]  [Customize]
+ Computers             │  ■ Personal · ✓ atlas (Running) · SG n12
+ Files                 │
+ Bots                  │                                                                                              █
+ Board                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Demo                  │  │ │ Ask atlas to…                                                                    [Ask] │█
+ Vault                 │  │                                                                                          │█
+                       │  │ [Install the popular coding agents] [Keep my app running after restarts]                 │█
+On atlas ▾             │  │ [What is running on atlas?] [Back up my files daily] [Create a bot that…]                │█
+ Programs              │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Schedules             │                                                                                              █
+ Scripts               │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Logs                  │  │ Your computer                                                                 View all › │█
+ Tunnels               │  │ atlas ● Running SG n12 Up 5d 0h                                                          │█
+ Notes                 │  │                                                                                          │█
+ AI                    │  │ Agent ⇗     ⧉ copy [QR] [Put Agent on Board]                                             │█
+ VMs                   │  │ Terminal ⇗  ⧉ copy [QR] [Put Terminal on Board]                                          │█
+                       │  │ Desktop ⇗   ⧉ copy [QR] [Put Desktop on Board]                                           │█
+Account                │  │ Files ⇗     ⧉ copy [QR] [Put Files on Board]                                             │█
+ Plans & Billing       │  │ Browser ⇗   ⧉ copy [QR] [Put Browser on Board]                                           │█
+ Referrals             │  │                                                                                          │█
+ Keys and tokens       │  │ Programs: 10 running ! 3 need a look                                       All computers │█
+ API                   │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Notifications      26 │                                                                                              █
+ Account               │  ┌────────────────────────────────────────────┐ ┌───────────────────────────────────────────┐
+                       │  │ Start something                            │ │ Bots                           View all › │
+ + Rent servers        │  │                                            │ │ ◆ Chief · atl… ◆ Waiting for you [Review] │
+ Guide                 │  │ New Bot               Open the Board       │ │ i Support · atlas               i Working │
+ Support               │  │ Assistants that work  Programs, terminals  │ │ i Digest · atlas     i 2 messages waiting │
+                       │  │ on your computers     and displays side by │ │ ! Ledger · cinder                ! Paused │
+                       │  │                       side                 │ │ · Scout · cinder                   · Idle │
+                       │  │                                            │ │                                           │
+                       │  │ New script            New schedule         │ │                                           │
+                       │  │ Saved commands you    Run something every  │ │                                           │
+                       │  │ can run again         hour, day or week    │ │                                           │
+                       │  │                                            │ │                                           │
+                       │  │ MORE                                       │ │                                           │
+                       │  │ Keys and tokens  Open Vault                │ │                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

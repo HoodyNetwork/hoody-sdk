@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ How to connect                                                          Esc ×
+ Home                  │  Computers     ┃ Send traffic through atlas from a browser, an app or a script.
+▌Computers             │                ┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  ▸ Computers   ┃ ┌──────────────────────────────────────────────────────────────────────────┐█
+ Bots                  │  ──────────────┃ │ PROXY ADDRESS                                                            │█
+ Board                 │                ┃ │ Traffic sent here leaves from atlas's address, unless you set            │█
+ Demo                  │  ‹ Computers  E┃ │ another exit.                                                            │█
+ Vault                 │  atlas  ● Runni┃ │ Works like a password: anyone with it can use atlas's proxy.             │█
+                       │  SG n12 · Home ┃ │ https://6a00…0001-c0a7…00a1-egress-1.n12.fixture.invalid:443 ⧉ copy      │█
+On atlas ▾             │                ┃ │ Type     HTTPS ⧉ copy                                                    │█
+ Programs              │   Overview  Con┃ │ Server   6a00…0001-c0a7…00a1-egress-1.n12.fixture.invalid ⧉ copy         │█
+ Schedules             │   Storage      ┃ │ Port     443 ⧉ copy                                                      │█
+ Scripts               │  ──────────────┃ │ Sign-in  None. Leave user name and password empty: the address itself is │█
+ Logs                  │  └─────────────┃ │          the key.                                                        │█
+ Tunnels               │                ┃ │ Reaches  Public IPv4 addresses only, unless you set another exit         │▀
+ Notes                 │  ┌─────────────┃ └──────────────────────────────────────────────────────────────────────────┘
+ AI                    │  │ Where your t┃
+ VMs                   │  │ [Exit addres┃ ▸ Use it in your browser    For scripts    Change the exit
+                       │  │ Sites see th┃ ────────────────────────────────────────────────────────────────────────────
+Account                │  │  Your app  →┃
+ Plans & Billing       │  │             ┃ ‹ Firefox ›  Chrome and Edge    Whole computer    Safari    Phones
+ Referrals             │  │             ┃
+ Keys and tokens       │  └─────────────┃
+ API                   │                ┃ Set it up in Firefox
+ Notifications      26 │  ┌─────────────┃ ON YOUR COMPUTER ───────────────────────────────────────────────────────────
+ Account               │  │ Firewall ⓘ  ┃ 01  Save the proxy file to your computer.                             ⧉ copy
+                       │  │ Anything not┃
+ + Rent servers        │  │    Action   ┃ IN FIREFOX ─────────────────────────────────────────────────────────────────
+ Guide                 │  │▾ Inbound · 3┃ 02  Open Settings and search for proxy ⧉ copy
+ Support               │  │›    Block   ┃     Then press Settings… next to Network Settings.
+                       │  │     Refuse  ┃ 03  Choose Automatic proxy configuration URL.
+                       │  │     Allow   ┃ 04  Type where you saved the file, starting with file:///.
+                       │  │             ┃     Change YOU to your user name, or the folder if you saved it somewhere
+                       │  │▾ Outbound · ┃     else. Mac file:///Users/YOU/Downloads/proxy.pac ⧉ copy Windows
+                       │  │     Block   ┃     file:///C:/Users/YOU/Downloads/proxy.pac ⧉ copy
+                       │  └─────────────┃ ─────────────────────────────────────────────────────────────────────────────
+                       │                ┃ To check a setup, open https://ip.hoody.com      [Close]  [Open ip.hoody.com]
+                       │  ┌─────────────┃ through it. It shows the address sites see:
+                       │  │ Use atlas as┃ atlas's own address, or its exit's if you set
+ Tab move · Enter open · Ctrl+K commands┃ one.

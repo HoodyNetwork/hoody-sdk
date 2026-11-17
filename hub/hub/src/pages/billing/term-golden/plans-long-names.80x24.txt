@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Plans & Billing                                                   + Add funds
+ Upgrade a server, rent a whole machine, and see what you pay.
+ ▸ Plans    Bare metal    Wallet & usage
+ ──────────────────────────────────────────────────────────────────────────────
+ │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC               [Pay now]
+ Plans                                                                        █
+ Each plan is a server of your own. Its computers share its cores, memory and
+ disk. You can take the same plan more than once.
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │                                                                           │
+ │ Plans for                                                                 │
+ │ Choose a plan to buy a new server, or pick one of yours to upgrade it.    │
+ │ ( ) production-web-frontend-singapore-primary-cluster-node-with-a-very-   │
+ │     long-name-01 · Small                                                  │
+ │ ( ) Singapore Medium build and staging server for the whole data team,    │
+ │     second one · Medium                                                   │
+ │ (•) A new server                                                          │
+ │                                                                           │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ ┌────────────────────────────────────┐  ┌───────────────────────────────────┐
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

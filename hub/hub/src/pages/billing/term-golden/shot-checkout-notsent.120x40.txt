@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Buy a plan                                                              Esc ×
+ Home                  │  Plans & Billin┃ Small · $12.00 / month
+ Computers             │  Upgrade a serv┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │                ┃ │ i It didn't go through, and nothing was charged. Try again.               █
+ Bots                  │  ▸ Plans    Bar┃                                                                             █
+ Board                 │  ──────────────┃ ┌──────────────────────────────────────────────────────────────────────────┐█
+ Demo                  │  │ ✗ fra-7: On ┃ │ WHAT YOU GET                                                             │█
+ Vault                 │                ┃ │ This adds a new server to your account. Your free server ash-3           │█
+                       │  Plans         ┃ │ stays as it is.                                                          │█
+On atlas ▾             │  Each plan is a┃ │ CPU cores                                                              2 │█
+ Programs              │  take the same ┃ │ ──────────────────────────────────────────────────────────────────────── │█
+ Schedules             │                ┃ │ Memory                                                              4 GB │█
+ Scripts               │  ┌─────────────┃ │ ──────────────────────────────────────────────────────────────────────── │█
+ Logs                  │  │             ┃ │ Disk                                                               60 GB │█
+ Tunnels               │  │ Plans for   ┃ │ ──────────────────────────────────────────────────────────────────────── │█
+ Notes                 │  │ Choose a pla┃ │ Computers                                                              3 │█
+ AI                    │  │ server, or p┃ │ ──────────────────────────────────────────────────────────────────────── │█
+ VMs                   │  │ to upgrade i┃ │ Disk speed                               400 MiB/s read, 200 MiB/s write │█
+                       │  │             ┃ │ ──────────────────────────────────────────────────────────────────────── │█
+Account                │  └─────────────┃ │ Network                                                         500 Mbps │█
+▌Plans & Billing       │                ┃ │ ──────────────────────────────────────────────────────────────────────── │█
+ Referrals             │  ┌─────────────┃ │ Snapshots per computer                                                 3 │█
+ Keys and tokens       │  │ Free        ┃ │ ──────────────────────────────────────────────────────────────────────── │█
+ API                   │  │ $0 / month  ┃ │ Custom computer URLs                                                   6 │█
+ Notifications      26 │  │ Your free se┃ │ ──────────────────────────────────────────────────────────────────────── │█
+ Account               │  │ Computers   ┃ │ Bot URLs                                                               3 │█
+                       │  │ Hardware    ┃ │ ──────────────────────────────────────────────────────────────────────── │█
+ + Rent servers        │  │ AI allowance┃ │ AI allowance                                                          ×4 │█
+ Guide                 │  │             ┃ │ ──────────────────────────────────────────────────────────────────────── │█
+ Support               │  │ Locations   ┃ └──────────────────────────────────────────────────────────────────────────┘█
+                       │  │ No choice of┃                                                                             ▀
+                       │  │ Your free se┃ Location
+                       │  │ buy a plan. ┃ │ Automatic (best available) ▾
+                       │  │ Next: Small.┃ Right now that is Frankfurt, Germany. The location is set when you confirm.
+                       │  │ computers.  ┃
+                       │  │ Free server ┃ Plan                                                                  $12.00
+                       │  │             ┃ ────────────────────────────────────────────────────────────────────────────
+                       │  │             ┃ Charged now                                                           $12.00
+                       │  │             ┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ [Cancel]   Confirm purchase

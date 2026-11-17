@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Support chat                                                     Esc ×
+ Bots  ┃ Telegram
+ ‹ Bots┃ ──────────────────────────────────────────────────────────────────────
+ Chief ┃ │ Setup                 ┌───────────────────────────────────────────┐█
+   SG┌────────────────────────────────────────────────────────────────────┐  │█
+     │ Add a person to Support chat                                 Esc × │  │█
+   Ac│ ────────────────────────────────────────────────────────────────── │  │█
+ ────│ Add someone by their ID in Telegram. They can then talk to the   █ │  │█
+     │ Bot with the rights you pick.                                    █ │ ⋯│█
+  ┌──│                                                                  █ │  │█
+  │ A│ User ID in Telegram                                              █ │  │█
+  │ A│ ┃                                                                █ │ ⋯│█
+  │ W│ The ID the chat app uses for them, not their @username.          █ │  │
+  │ P│                                                                  █ │  │
+  │ C│ Name (optional)                                                  █ │ ⋯│
+  └──│ │ _______________________________________________________________█ │  │
+     │                                                                  █ │──┘
+     │ [□ off] Owner                                                    ▀ │
+  ┌──│                                                                    │
+  │ C│ Rights                                                             │──┐
+  │ L│                                                                    │  │
+  │  │                                             [Cancel]   Add person  │  │
+  │› └────────────────────────────────────────────────────────────────────┘  │
+ Typing┃                         │   invite code from me". Change that in    │

@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Pay for a server                                                 Esc ×
+ Plans ┃ 1 Review 2 Confirm
+ Upgrad┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Plan┃ Medium fra-7
+ ──────┃
+ │ ✗ fr┃  Plan                                                          $29.00
+ Plans ┃  Charged now                                                   $29.00
+ Each p┃  Wallet balance                                                $42.50
+ disk. ┃
+       ┃ Your server starts again and is paid until 23 Nov 2026.
+ ┌─────┃
+ │     ┃ [ ] I understand this purchase is not eligible for a customer-
+ │ Plan┃     requested refund, and I agree to the Terms of Service and Privacy
+ │ Choo┃     Policy.
+ │ serv┃
+ │ to u┃
+ │     ┃
+ └─────┃
+       ┃
+ ┌─────┃
+ │ Free┃
+ │ $0 /┃
+ │ Your┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Cancel]   Confirm payment

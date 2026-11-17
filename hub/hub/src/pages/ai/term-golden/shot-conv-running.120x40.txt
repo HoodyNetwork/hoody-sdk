@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            AI                                     ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  [Back to chats] Fix the failing checkout tests                      ● Needs you [⋯] [Details]
+ Computers             │  atlas · Personal  /home/ada/projects/shop
+ Files                 │  [Hoody Free]
+ Bots                  │ ───────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │  refreshes every 30 seconds.
+ Demo                  │
+ Vault                 │  HTML ⧉ copy
+                       │   <ul id="pcs"></ul>
+On atlas ▾             │   <script src="dash.js"></script>
+ Programs              │                                                                                               ▄
+ Schedules             │  Open it in the Files program to see it.                                                      █
+ Scripts               │                                                                                               █
+ Logs                  │  ⧉ Copy [⋯]                                                                                   █
+ Tunnels               │                                                                                               █
+ Notes                 │                                                                                               █
+▌AI                    │  │ You 09:00 AM                                                                               █
+ VMs                   │  │ Run the checkout tests again                                                               █
+                       │                                                                                               █
+Account                │  ✦ Agent on atlas                                                                             █
+ Plans & Billing       │  ▸ 1 step ✓ Done                                                                              █
+ Referrals             │                                                                                               █
+ Keys and tokens       │  ▸ 1 step ◌ Running                                                                           █
+ API                   │                                                                                               █
+ Notifications      26 │  ┌─ ! Needs you ─────────────────────────────────────────────────────────────────────────────┐
+ Account               │  │  Allow this action?  Run a command (Can change files)                                     │
+                       │  │                                                                                           │
+ + Rent servers        │  │ Shell ⧉ copy                                                                              │
+ Guide                 │  │  npm install chart.js                                                                     │
+ Support               │  │ Allow once and Deny apply to this call only.                                              │
+                       │  │ [Deny n]  [Allow once y]  [Allow for this session]  Add a reason                          │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │  Waiting for your answer                                                              [■ Stop]
+                       │  Your agent reads this after you answer the waiting approval. To decline it, use Deny.
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Then add a disk chart too.                                                                │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │  [+]  [/ Commands]  [Ask when needed]                                            [Send ↵]  [▾]
+                       │  Enter send · Alt+Enter or Ctrl+J new line · / commands · @ files · PgUp scroll
+ Typing · Esc leaves the field · Ctrl+K commands

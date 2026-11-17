@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                    ◆ Personal ▾  ● production-build-runner-singapore-01 ▾  [A]  Ctrl+K commands · ? keys
+▌Home                  │  Good morning, Ada                                             [i What is Hoody?]  [Customize]
+ Computers             │  ■ Personal · ✓ production-build-runner-singapore-01 (Running) · SG n12
+ Files                 │
+ Bots                  │                                                                                              █
+ Board                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Demo                  │  │ │ Ask production-build-runner-singapore-01 to…                                     [Ask] │█
+ Vault                 │  │                                                                                          │█
+                       │  │ [Install the popular coding agents] [Keep my app running after restarts]                 │█
+On production-build-ru…│  │ [What is running on production-build-runner-singapore-01?] [Back up my files daily]      │█
+ Programs              │  │ [Create a bot that…]                                                                     │█
+ Schedules             │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Scripts               │                                                                                              █
+ Logs                  │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Tunnels               │  │ Your computer                                                                 View all › │█
+ Notes                 │  │ production-build-runner-singapore-01 ● Running SG n12 Up 5d 0h                           │█
+ AI                    │  │                                                                                          │█
+ VMs                   │  │ Agent ⇗     ⧉ copy [QR] [Put Agent on Board]                                             │█
+                       │  │ Terminal ⇗  ⧉ copy [QR] [Put Terminal on Board]                                          │█
+Account                │  │ Desktop ⇗   ⧉ copy [QR] [Put Desktop on Board]                                           │█
+ Plans & Billing       │  │ Files ⇗     ⧉ copy [QR] [Put Files on Board]                                             │█
+ Referrals             │  │ Browser ⇗   ⧉ copy [QR] [Put Browser on Board]                                           │
+ Keys and tokens       │  │                                                                                          │
+ API                   │  │ Programs: 10 running ! 3 need a look                                       All computers │
+ Notifications      26 │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+ Account               │
+                       │  ┌────────────────────────────────────────────┐ ┌───────────────────────────────────────────┐
+ + Rent servers        │  │ Start something                            │ │ Bots                           View all › │
+ Guide                 │  │                                            │ │ ◆ Chief · atl… ◆ Waiting for you [Review] │
+ Support               │  │ New Bot               Open the Board       │ │ i Support · atlas               i Working │
+                       │  │ Assistants that work  Programs, terminals  │ │ i Digest · atlas     i 2 messages waiting │
+                       │  │ on your computers     and displays side by │ │ ! Ledger · cinder                ! Paused │
+                       │  │                       side                 │ │ · Scout · cinder                   · Idle │
+                       │  │                                            │ │                                           │
+                       │  │ New script            New schedule         │ │                                           │
+                       │  │ Saved commands you    Run something every  │ │                                           │
+                       │  │ can run again         hour, day or week    │ │                                           │
+                       │  │                                            │ │                                           │
+                       │  │ MORE                                       │ │                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

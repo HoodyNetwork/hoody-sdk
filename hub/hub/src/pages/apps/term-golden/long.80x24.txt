@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs                              ▸ Use with your agent   + Launch an app
+ Apps on atlas: programs you open only when you need them.
+   Running programs  ▸ Apps    Ports & aliases
+ ──────────────────────────────────────────────────────────────────────────────
+ / Search opened apps   Filters                              68 apps  ↻ Refresh
+   Name                    State             Opens in      Action
+ ▌ JupyterLab Registry     ● Ready           Web           [Open]            ⋯█
+   htop Installed          ● Ready           Terminal      [Open]            ⋯█
+   Firefox Installed       ● Warming up      Display       [Open display]    ⋯█
+   VS Code Registry        ● Starting        Web           Starting…         ⋯█
+   Shared folder Registry  ● Stopped         Web           [Open again]      ⋯█
+   btop Installed          ● Error           Terminal      [Open again]      ⋯░
+   sqlite-web pkgx         ● Check needed    Web           [Check again]     ⋯░
+   Open WebUI Registry     ● Port in use     Web           [See open apps]   ⋯░
+   notebook-01 Registry    ● Stopped         Web           [Open again]      ⋯░
+   notebook-02 Registry    ● Stopped         Web           [Open again]      ⋯░
+   notebook-03 Registry    ● Stopped         Web           [Open again]      ⋯░
+   notebook-04 Registry    ● Stopped         Web           [Open again]      ⋯░
+   notebook-05 Registry    ● Stopped         Web           [Open again]      ⋯░
+   notebook-06 Registry    ● Stopped         Web           [Open again]      ⋯░
+   notebook-07 Registry    ● Stopped         Web           [Open again]      ⋯░
+ 1–50 of 68 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

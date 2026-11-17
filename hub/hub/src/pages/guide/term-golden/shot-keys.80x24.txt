@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  Guide                       ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Ask your agent  Connect  Skills  Build your own  Every link  Bots  Tools
+  Try this  Realms  Topics ▌Keyboard  Look
+ │ Shortcuts worth knowing.                                                  │
+ │ Everywhere                                                                │
+ │ [Ctrl+K]                      Search or jump to anything                  │
+ │ [?]                           Show this list                              │
+ │ [[]                           Expand or collapse the sidebar              │
+ │ [Alt+J]                       Open or close Agent                         │
+ │ [Alt+R]                       Switch realm                                │
+ │ [Alt+C]                       Switch computer                             │
+ │                                                                           │
+ │ Go to                                                                     │
+ │ [g] then [h]                  Home                                        │
+ │ [g] then [c]                  Computers                                   │
+ │ [g] then [b]                  Bots                                        │
+ │ [g] then [a]                  Apps                                        │
+ │ [g] then [p]                  Programs                                    │
+ │ [g] then [s]                  Schedules                                   │
+ │ [g] then [l]                  Logs                                        │
+ │ [g] then [n]                  Notifications                               │ █
+ │ [g] then [t]                  Scripts                                     │
+ │                                                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

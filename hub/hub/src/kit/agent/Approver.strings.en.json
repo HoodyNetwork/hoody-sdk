@@ -1,0 +1,8 @@
+{
+  "approver.elsewhere": "Approvals for this chat are held by another window.",
+  "approver.takeOver": "Take over",
+  "approver.stillHeld": "Still held by another window, so try again once it is closed or has been idle for a few minutes.",
+  "approver.required": "This window has to hold this chat's approvals first.",
+  "approver.invalid": "Another window now holds the approvals for this chat.",
+  "approver.expired": "This window's hold on the approvals ran out, so it has to be taken again."
+}

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                     ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+ Schedules                              ▸ Use with your agent   + New schedule
+ 0 schedules on atlas · Computers › · 9 programs running ›
+      ┌───────────────────────────────────────────────────────────────────┐
+      │ No schedules on atlas yet                                         │
+      │                                                                   │
+      │ Run a command or a web request on a timer, like a nightly backup. │
+      │                                                                   │
+      │  New schedule   How schedules work                                │
+      └───────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

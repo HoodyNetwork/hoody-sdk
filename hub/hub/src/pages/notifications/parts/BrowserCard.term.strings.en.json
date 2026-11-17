@@ -1,0 +1,4 @@
+{
+  "term.alerts.reason": "Alerts are a browser feature: they show only while the Hub is open in a browser tab, so a terminal cannot show them.",
+  "term.alerts.what": "alert settings"
+}

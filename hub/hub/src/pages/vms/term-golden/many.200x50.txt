@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines                                                                                                                            ▸ Use with your agent   + New VM
+ Computers             │  Full machines that run inside atlas.
+ Files                 │
+ Bots                  │  ▸ VMs    Images    KVM on computers
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ This computer                                                                                                                                                            │█
+On atlas ▾             │  │ VMs need a bare-metal server, with KVM on for the computer.                                                                                                              │█
+ Programs              │  │                                                                                                                                                                          │█
+ Schedules             │  │ What this computer can run                                                                                                                                               │█
+ Scripts               │  │ ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │█
+ Logs                  │  │ │                                                                                                                                                                      │ │█
+ Tunnels               │  │ │ Run VMs on this computer (KVM)  [■ on ]                                                                                                                              │ │█
+ Notes                 │  │ │ KVM is on for this computer.                                                                                                                                         │ │█
+ AI                    │  │ │                                                                                                                                                                      │ │█
+▌VMs                   │  │ └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │█
+                       │  │ Server  Bare metal                                                                                                                                                       │█
+Account                │  │                                                                                                                                                                          │█
+ Plans & Billing       │  │ Room for VMs                                                                                                                                                             │█
+ Referrals             │  │ Memory for VMs          █████░░░░░                       Free disk               410 GB                           VM CPUs in use          8 of 64                        │█
+ Keys and tokens       │  │                         7.8 GB of 16 GB in use           Running VMs             3 of 16                                                                                 │█
+ API                   │  │ Largest VM that can     8 GB                                                                                                                                             │█
+ Notifications      26 │  │ start                                                                                                                                                                    │█
+ Account               │  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘█
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐█
+ + Rent servers        │  │ VMs                                                                                                                                                                      │█
+ Guide                 │  │/ Search                        State ▾                                                                                                    17 VMs  ↻ Refresh  View options│█
+ Support               │  │                                                                                                                                                                          │█
+                       │  │  Name                                 State ↑                            Memory          CPUs               Disk  Screen                Ports                            │█
+                       │  │› batch                                ● Failed                            32 GB             8              20 GB  Off                       0                   [Start] ⋯│█
+                       │  │  import-1                             ● Not created                                                                                                [Remove from the list]│█
+                       │  │  ghost                                ● Needs repair                       2 GB             2              20 GB  Off                       0                            │█
+                       │  │  build                                ● Creating                                                                                                                         │█
+                       │  │  cache                                ● Starting                           1 GB             1              20 GB  Off                       0                           ⋯│█
+                       │  │  old-api                              ● Stopping                           2 GB             2              20 GB  Off                       0                           ⋯│█
+                       │  │  web-1                                ● Running                            2 GB             2              20 GB  On                        2               [Shut down] ⋯│█
+                       │  │  stuck                                ● Running                            1 GB             1              20 GB  On                        0               [Power off] ⋯│█
+                       │  │  db-1                                 ● Paused                             4 GB             4             100 GB  Off                       1                  [Resume] ⋯│█
+                       │  │  win11                                ● Stopped                            4 GB             2              64 GB  On                        0                   [Start] ⋯│█
+                       │  │                                                                                                                                                                          │█
+                       │  │1–10 of 17 ‹ ›                                                                                                                                                            │█
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘█
+                       │                                                                                                                                                                              █
+                       │  Questions
+                       │  ▸ What is a VM?
+                       │  ▸ Why can't my computer run VMs?
+                       │  ▸ How do I see a VM's screen?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations   Knowledge  ▌Settings
+ Computers             │  ▌Models & keys   Connections & MCP   Rules & hooks
+ Files                 │  atlas › Models & keys
+ Bots                  │  Models & keys                                                           + Connect an account
+ Board                 │  atlas uses Hoody Free for everything.
+ Demo                  │
+ Vault                 │   Default model  Accounts ▌Claude Code  Hoody AI allowance  Spending  Advanced  Questions
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Programs              │  │ Claude Code                                                                           │
+ Schedules             │  │ Use your own Claude plan through Claude Code on this computer.                        │
+ Scripts               │  │ ┌───────────────────────────────────────────────────────────────────────────────────┐ │
+ Logs                  │  │ │                                                                                   │ │
+ Tunnels               │  │ │ Claude Code                                                                       │ │
+ Notes                 │  │ │ Claude Code is not available                                                      │ │
+▌AI                    │  │ │ on this computer                                                                  │ │▄
+ VMs                   │  │ │                                                                                   │ │█
+                       │  │ └───────────────────────────────────────────────────────────────────────────────────┘ │█
+Account                │  └───────────────────────────────────────────────────────────────────────────────────────┘█
+ Plans & Billing       │                                                                                           █
+ Referrals             │  ┌───────────────────────────────────────────────────────────────────────────────────────┐█
+ Keys and tokens       │  │ Hoody AI allowance                                                                    │█
+ API                   │  │ Each server you own has its own free AI allowance, shared by every computer on it.    │█
+ Notifications      26 │  │                                                                                       │▀
+ Account               │  │ Your servers                                                                          │
+                       │  │ / Search                                        3 servers  Usage and plans  ↻ Refresh │
+ + Rent servers        │  │                                                                                       │
+ Guide                 │  │   Server             Chat       Quick decisions Web search Speech     Transcription   │
+ Support               │  │ › atlas               30% ███░…  10% █░░░░░░░░░   0% ░░░░… Not on th… No reading      │
+                       │  │   build-box          100% ████…  80% ████████░…  50% ████…   0% ░░░░…  20% ██░░░░░…   │
+                       │  │   spare              No reading No reading      No reading No reading No reading      │
+                       │  │   Can't read this                                                                     │
+                       │  │   server right now.                                                                   │
+                       │  │   Try again in a                                                                      │
+                       │  │   minute.                                                                             │
+                       │  │                                                                                       │
+                       │  │ AI credit                                                                             │
+                       │  │ ┌───────────────────────────────────────────────────────────────────────────────────┐ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

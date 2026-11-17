@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                                               ▸ Use with your agent
+▌Computers             │
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ Computers  Esc
+ Vault                 │  atlas  ● Running                                                        [Open terminal ⇗] [⋯]
+                       │  SG n12 · Home base ·  █ Personal  ·  Current computer
+On atlas ▾             │
+ Programs              │   Overview  Connect  Permissions  Ports & addresses  Desktop  Network  Run  Programs  Backups
+ Schedules             │  ▸Storage
+ Scripts               │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Logs                  │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Tunnels               │  │ At a glance                                                                               │
+ Notes                 │  │ Connected storage  None                       Waiting to upload  Nothing                  │
+ AI                    │  │ Open as folders    None                                                                   │
+ VMs                   │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+Account                │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Plans & Billing       │  │ Connected storage                                                            Add storage  │
+ Referrals             │  │ Connect cloud or network storage to this computer, then open it as a folder there.        │
+ Keys and tokens       │  │i Only people who can change this computer can add, open, close or remove storage.         │
+ API                   │  │ Keys, passwords and tokens you enter go only to this computer's files program, once, and  │
+ Notifications         │  │ are kept there in a private file. The Hub never keeps them.                               │
+ Account               │  │No storage connected yet.                                                                  │
+                       │  │Add cloud or network storage, then open it as a                                            │
+ + Rent servers        │  │folder on this computer.                                                                   │
+ Guide                 │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

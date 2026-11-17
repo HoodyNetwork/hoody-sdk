@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing                                                                                                                                                  + Add funds
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │  ▸ Plans    Bare metal    Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC                                                                                                              [Pay now]
+ Vault                 │
+                       │  Plans                                                                                                                                                                       █
+On atlas ▾             │  Each plan is a server of your own. Its computers share its cores, memory and disk. You can take the same plan more than once.                                               █
+ Programs              │                                                                                                                                                                              █
+ Schedules             │  ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐█
+ Scripts               │  │                                                                                                                                                                          │█
+ Logs                  │  │ Plans for                       ( ) n12 · Small                                                                                                                          │█
+ Tunnels               │  │ Choose a plan to buy a new      ( ) Singapore M · Medium                                                                                                                 │█
+ Notes                 │  │ server, or pick one of yours    (•) A new server                                                                                                                         │█
+ AI                    │  │ to upgrade it.                                                                                                                                                           │█
+ VMs                   │  │                                                                                                                                                                          │█
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘█
+Account                │                                                                                                                                                                              █
+▌Plans & Billing       │  ┌────────────────────────────────────────┐  ┌───────────────────────────────────────┐  ┌────────────────────────────────────────┐  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ Referrals             │  │ Free                       ✓ Your plan │  │ Small             ✓ 2 of your servers │  │ Medium             ✓ 2 of your servers │  ┃ Large                                 ┃
+ Keys and tokens       │  │ $0 / month                             │  │ $12 / month                           │  │ $29 / month                            │  ┃ $59 / month                           ┃
+ API                   │  │ Your free server: ash-3                │  │ Paid monthly from your wallet         │  │ Paid monthly from your wallet          │  ┃ Paid monthly from your wallet         ┃
+ Notifications      26 │  │ Computers                            3 │  │ Computers                           3 │  │ Computers                            8 │  ┃ Computers                          16 ┃
+ Account               │  │ Hardware               Shared hardware │  │ CPU cores                           2 │  │ CPU cores                            4 │  ┃ CPU cores                           8 ┃
+                       │  │ AI allowance                Free 1×    │  │ Memory                           4 GB │  │ Memory                            8 GB │  ┃ Memory                          16 GB ┃
+ + Rent servers        │  │                             █░░░░░░░░░ │  │ Disk                            60 GB │  │ Disk                            160 GB │  ┃ Disk                           320 GB ┃
+ Guide                 │  │ Locations                              │  │ Hardware              Shared hardware │  │ Hardware               Shared hardware │  ┃ Hardware              Shared hardware ┃
+ Support               │  │ No choice of location                  │  │ AI allowance               Plus 4×    │  │ AI allowance                Pro 10×    │  ┃ AI allowance               Pro 20×    ┃
+                       │  │ Your free server stays as it is when   │  │                            ██░░░░░░░░ │  │                             █████░░░░░ │  ┃                            ██████████ ┃
+                       │  │ you buy a plan.                        │  │ Locations                             │  │ Locations                              │  ┃ Locations                             ┃
+                       │  │ Next: Small. When you need more than 3 │  │ DE Frankfurt, Germany                 │  │ DE Frankfurt, Germany                  │  ┃ DE Frankfurt, Germany                 ┃
+                       │  │ computers.                             │  │ FI Helsinki, Finland  SG Singapore    │  │ FI Helsinki, Finland  SG Singapore     │  ┃ FI Helsinki, Finland  SG Singapore    ┃
+                       │  │ Free server details                    │  │ Next: Medium. When 4 GB of memory or  │  │ Next: Large. When 8 GB of memory or 8  │  ┃ Next: Bare metal, a whole machine of  ┃
+                       │  │                                        │  │ 3 computers get tight.                │  │ computers get tight.                   │  ┃ your own, below.                      ┃
+                       │  │                                        │  │                                       │  │                                        │  ┃                                       ┃
+                       │  │                                        │  │ [Choose Small]                        │  │ [Choose Medium]                        │  ┃  Choose Large                         ┃
+                       │  └────────────────────────────────────────┘  └───────────────────────────────────────┘  └────────────────────────────────────────┘  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+                       │
+                       │  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+                       │  ┃ Bare metal                                                                                                                                                               ┃
+                       │  ┃ A whole machine for you alone                                                                                                                                            ┃
+                       │  ┃ From $30 a month                                                                                                                                                         ┃
+                       │  ┃ Hardware     Dedicated hardware   Locations                         Cores                       4–32   Memory             32 GB–512 GB   Disk            500 GB–19.75 TB ┃
+                       │  ┃                                   Pick a listing and its location                                                                                                        ┃
+                       │  ┃ Countries                                                                                                                                                              4 ┃
+                       │  ┃                                                                                                                                                                          ┃
+                       │  ┃ [Browse machines →]                                                                                                                                                      ┃
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

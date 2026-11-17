@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Find in atlas                                                    Esc ×
+ Files ┃ ──────────────────────────────────────────────────────────────────────
+ The fo┃ The top of a computer can't be searched in one go. Pick one of its   █
+ ▸ Brow┃ folders to find in.                                                  █
+ ──────┃                                                                      █
+ [Up on┃                                                                      █
+       ┃ bin                                                            [Find]█
+       ┃ Folder                                                               █
+ / Sear┃                                                                      █
+   [ ] ┃                                                                      █
+ › [ ] ┃ copy                                                           [Find]█
+   [ ] ┃ Can't open here yet                                                  █
+   [ ] ┃                                                                      █
+   [ ] ┃                                                                      █
+   [ ] ┃ etc                                                            [Find]
+   [ ] ┃ Folder
+   [ ] ┃
+   [ ] ┃
+   [ ] ┃ home                                                           [Find]
+       ┃ Folder
+ Questi┃
+ ▸ How ┃
+ ▸ How ┃ root                                                           [Find]
+ Tab mo┃ Folder

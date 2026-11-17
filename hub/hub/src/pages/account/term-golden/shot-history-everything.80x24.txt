@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Account
+ Your profile, how you sign in, and where you are signed in.
+ ‹ 6  ▌Security history  SSH keys  Emails  Elsewhere  This device  Questions
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Security history                                                          │
+ │ Sign-ins over the last 180 days, newest first.                            │
+ │ / Search              Filters                       20 entries  ↻ Refresh │
+ │   Event                         When ↓       From                         │
+ │ › Signed in                     19 days ago  203.0.113.24 · SG            │
+ │   Sign-in refused ! Refused     19 days ago  198.51.100.201 · country…    │
+ │   Signed in                     20 days ago  192.0.2.88 · US              │
+ │   Sign-in refused ! Refused     20 days ago  198.51.100.201 · country…    │▄
+ │   Signed in                     20 days ago  198.51.100.130 · GB          │█
+ │   Signed out                    20 days ago  192.0.2.12 · IN              │
+ │   Signed in                     20 days ago  203.0.113.24 · SG            │
+ │   Two-step sign-in turned on    21 days ago  198.51.100.7 · DE            │
+ │   Signed in                     21 days ago  192.0.2.88 · US              │
+ │   Code refused ! Refused        21 days ago  203.0.113.90 · SG            │
+ │   Signed in                     21 days ago  198.51.100.130 · GB          │
+ │   backup code used              21 days ago  192.0.2.12 · IN              │
+ │   Signed in                     22 days ago  203.0.113.24 · SG            │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

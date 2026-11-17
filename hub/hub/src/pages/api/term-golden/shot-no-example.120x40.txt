@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  API                                                                     ▸ Use with your agent
+ Computers             │
+ Files                 │  ▸ Endpoints    Overview
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ API  Esc
+ Vault                 │  MKCOL /{path}
+                       │  Create directory
+On atlas ▾             │
+ Programs              │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Schedules             │  │ Authorisation                                                                             │
+ Scripts               │  │ A program on your computer. Its proxy permissions decide access; never send it your       │
+ Logs                  │  │ token.                                                                                    │
+ Tunnels               │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Notes                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ AI                    │  │ How to call it                                                                            │
+ VMs                   │  │ No example for this request's shape: see the docs.                                        │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+Account                │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Plans & Billing       │  │ About this endpoint                                                                       │
+ Referrals             │  │ Operation ID  files_createDirectory  ⧉ copy   Docs          https://docs.hoody.com/api/   │
+ Keys and tokens       │  │ Service       Files                                         files/directories/            │
+▌API                   │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                     ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+ Notifications
+ Messages about your account: computers, rentals, sign-in and keys.
+ ▸ Inbox    Notices    Get notified
+ ──────────────────────────────────────────────────────────────────────────────
+        ┌───────────────────────────────────────────────────────────────┐
+        │ No notices yet                                                │
+        │                                                               │
+        │ Hoody writes a notice when something happens to your account. │
+        │                                                               │
+        │ [Get notified]  What is not sent, and what you cannot pick    │
+        └───────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+  New notices appear here and are counted    [How it works] [Dismiss this tip]
+  beside Notifications in the sidebar.
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

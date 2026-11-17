@@ -1,0 +1,326 @@
+--- a/packages/native/src/native-renderable.zig
++++ b/packages/native/src/native-renderable.zig
+@@ -23,6 +23,23 @@
+     measure_next: ?*NativeRenderable = null,
+     scene_node: ?*scene.Node = null,
+     surface: ?*buffer.OptimizedBuffer = null,
++    // hoody: the last exact width Yoga asked this measure for, the cells and height it measured
++    // at and the lines it got, and a width to measure at instead (`fitDrawnWidths` in scene.zig):
++    // Yoga draws the box at its rounded width, which can be a cell off the one measured. The hint
++    // is scratch state of one solve: `solveLayout` drops it before it returns.
++    fit: Fit = .{},
++
++    pub const Fit = struct {
++        input: f32 = std.math.nan(f32),
++        cells: u32 = 0,
++        height_cells: u32 = 0,
++        lines: u32 = 0,
++        // Drawn cells checked to give `lines` too (0: none).
++        same_lines_cells: u32 = 0,
++        // 0: none. Applies only to an exact measure asked for `hint_input`.
++        hint_cells: u32 = 0,
++        hint_input: f32 = std.math.nan(f32),
++    };
+ 
+     pub fn init() native_yoga.Error!NativeRenderable {
+         var yoga_node: native_yoga.YGNodeRef = null;
+@@ -108,12 +125,22 @@
+         const self: *NativeRenderable = @ptrCast(@alignCast(target orelse return .{ .width = std.math.nan(f32), .height = std.math.nan(f32) }));
+         const effective_width = normalizeYogaMeasureWidthInput(width, width_mode);
+         const effective_height = normalizeYogaMeasureHeightInput(height);
+-        const measure_width = measureCells(effective_width);
++        var measure_width = measureCells(effective_width);
++        const exact = width_mode == @backingInt(native_yoga.YogaMeasureMode.exactly) and !std.math.isNan(width);
++        if (exact and self.fit.hint_cells != 0 and self.fit.hint_input == width) measure_width = self.fit.hint_cells;
+         const measure_height = measureCells(effective_height);
+         const result = (self.measureTarget(measure_width, measure_height) catch |err| {
+             native_yoga.reportMeasureError(self.yoga_node, err);
+             return .{ .width = std.math.nan(f32), .height = std.math.nan(f32) };
+         }) orelse return .{ .width = 1, .height = 1 };
++        if (exact) self.fit = .{
++            .input = width,
++            .cells = measure_width,
++            .height_cells = measure_height,
++            .lines = result.line_count,
++            .hint_cells = self.fit.hint_cells,
++            .hint_input = self.fit.hint_input,
++        };
+ 
+         var measured_width: f32 = @floatFromInt(@max(@as(u32, 1), result.width_cols_max));
+         const measured_height: f32 = @floatFromInt(@max(@as(u32, 1), result.line_count));
+@@ -126,7 +153,7 @@
+         return .{ .width = measured_width, .height = measured_height };
+     }
+ 
+-    fn measureTarget(self: *NativeRenderable, width: u32, height: u32) !?text_buffer_view.MeasureResult {
++    pub fn measureTarget(self: *NativeRenderable, width: u32, height: u32) !?text_buffer_view.MeasureResult {
+         return switch (self.measure_target) {
+             .none => null,
+             .text_buffer_view => |view| try view.measureForDimensions(width, height),
+--- a/packages/native/src/scene.zig
++++ b/packages/native/src/scene.zig
+@@ -2261,12 +2261,88 @@
+         }
+     }
+ 
++    /// hoody: Yoga measures a text at the width it computes (say 18.83 cells: 18 cells, 4 lines)
++    /// and rounds the box afterwards from its edges (19 cells: 3 lines drawn), so the box kept an
++    /// empty row. A text whose last exact measure used other cells than its rounded box draws, and
++    /// gets another line count at the drawn width, is hinted to measure that same request at the
++    /// drawn width and invalidated. True: solve again.
++    /// Only exact measures: the box width is then fixed, so the drawn width does not depend on the
++    /// result. `|layout.width - input| < 1` keeps out a final size Yoga took from an earlier cached
++    /// call at another width (its rounding would not belong to the recorded measure).
++    /// `restart` drops every hint and invalidates each text whose last measure was not at the floor
++    /// of its width, so the next solve starts as a fresh layout would (a layout can have two
++    /// settled states; a frame must not depend on which one an earlier frame took).
++    fn fitDrawnWidths(self: *Scene, restart: bool) bool {
++        var changed = false;
++        var cursor = self.head;
++        while (cursor) |value| : (cursor = value.scene_node.?.next) {
++            if (value.measure_target == .none) continue;
++            const fit = &value.fit;
++            if (!std.math.isFinite(fit.input)) continue;
++            const base = native.measureCells(fit.input);
++            if (restart) {
++                fit.hint_cells = 0;
++                if (fit.cells != base) {
++                    fit.cells = base;
++                    yoga.yogaNodeInvalidateMeasure(value.yoga_node);
++                    changed = true;
++                }
++                continue;
++            }
++            var layout: yoga.ExternalYogaLayout = undefined;
++            yoga.yogaNodeGetComputedLayout(value.yoga_node, &layout);
++            if (!std.math.isFinite(layout.width) or @abs(layout.width - fit.input) >= 1) continue;
++            const drawn = native.measureCells(layout.width);
++            if (drawn == fit.cells or drawn == fit.same_lines_cells) continue;
++            // A failed measure keeps the floor measure; Yoga's own call reports errors.
++            // This measure runs outside Yoga and leaves nothing a later measure or draw reads as
++            // input: `measureForDimensions` only fills the view's own memos (the per-width measure
++            // cache and the measure ledger, both keyed by width, wrap mode, offset and the content
++            // measured; at the render width it brings the wrapped lines up to date, as the frame
++            // would next). Each holds a pure function of the text and the width, so a result is
++            // the same whether or not this call happened; it can only evict a cached width.
++            const at_drawn = (value.measureTarget(drawn, fit.height_cells) catch continue) orelse continue;
++            if (at_drawn.line_count == fit.lines) {
++                // Same height at the drawn width: an exact box ignores the measured width, so the
++                // layout already is the one a measure at `drawn` gives.
++                fit.same_lines_cells = drawn;
++                continue;
++            }
++            fit.hint_cells = if (drawn == base) 0 else drawn;
++            fit.hint_input = fit.input;
++            yoga.yogaNodeInvalidateMeasure(value.yoga_node);
++            changed = true;
++        }
++        return changed;
++    }
++
++    fn dropFitHints(self: *Scene) void {
++        var cursor = self.head;
++        while (cursor) |value| : (cursor = value.scene_node.?.next) value.fit.hint_cells = 0;
++    }
++
+     fn solveLayout(self: *Scene, cli: *renderer.CliRenderer, root: *native.NativeRenderable) !void {
+         if (!try self.needsSolve(cli, root)) return;
+         const epoch = std.math.add(u64, self.layout_epoch, 1) catch return error.RequestLimit;
++        // hoody: hints live for this solve only, and a solve starts from floor measures, so a frame
++        // never depends on an earlier one.
++        defer self.dropFitHints();
++        _ = self.fitDrawnWidths(true);
+         try yoga.check(yoga.yogaNodeCalculateLayoutChecked(root.yoga_node, @floatFromInt(cli.width), @floatFromInt(cli.height), 1));
+         // A measurement outside a frame counts into work that the next attempt resets.
+         self.frame_work.yoga_solves += 1;
++        // hoody: a text measured at another width than its rounded box is measured again at the
++        // box width. Two rounds at most; if they do not settle, every hint goes and the floor
++        // measure stands, as without this step.
++        var fit_rounds: u32 = 0;
++        while (self.fitDrawnWidths(false)) {
++            fit_rounds += 1;
++            const give_up = fit_rounds > 2;
++            if (give_up) _ = self.fitDrawnWidths(true);
++            try yoga.check(yoga.yogaNodeCalculateLayoutChecked(root.yoga_node, @floatFromInt(cli.width), @floatFromInt(cli.height), 1));
++            self.frame_work.yoga_solves += 1;
++            if (give_up) break;
++        }
+         // Every solve, a measurement-only one too, invalidates the geometry nodes hold.
+         self.layout_epoch = epoch;
+         self.selection_epoch +%= 1;
+--- a/packages/core/src/tests/renderable.test.ts
++++ b/packages/core/src/tests/renderable.test.ts
+@@ -1735,3 +1735,173 @@
+     expect(new BoxRenderable(testRenderer, {}).positionType).toBe("relative")
+   })
+ })
++
++// Yoga measures a text at the width it computes (13.33 cells, cut down to 13: 5 lines) and draws its box at the
++// rounded width (14 cells: 4 lines). The native solve measures it again at the drawn width, so the box is as tall
++// as the lines it draws.
++describe("Renderable - text measured at its drawn width", () => {
++  const T = "aa bb cc dd ee ff gg hh ii jj kk ll mm nn oo pp qq rr ss tt"
++  test.each([
++    [40, 1, 1, 1],
++    [41, 1, 1, 1],
++    [43, 3, 2, 2],
++    [47, 5, 3, 1],
++    [50, 1, 3, 3],
++    [37, 4, 3, 3],
++  ])("row %i split %i:%i:%i", async (width, a, b, c) => {
++    const row = new BoxRenderable(testRenderer, { flexDirection: "row", width, flexShrink: 0, alignItems: "flex-start" })
++    const middle = new BoxRenderable(testRenderer, { flexGrow: b, flexBasis: 0, flexDirection: "column", minWidth: 0 })
++    const text = new TextRenderable(testRenderer, { content: T, wrapMode: "word" })
++    row.add(new BoxRenderable(testRenderer, { flexGrow: a, flexBasis: 0, height: 1 }))
++    row.add(middle)
++    row.add(new BoxRenderable(testRenderer, { flexGrow: c, flexBasis: 0, height: 1 }))
++    middle.add(text)
++    testRenderer.root.add(row)
++    await renderOnce()
++    expect(text.height).toBe(text.virtualLineCount)
++    expect(middle.height).toBe(text.virtualLineCount)
++  })
++
++  // Only a text whose drawn width differs from the measured one costs a second solve.
++  test.each([
++    [42, 1],
++    [41, 1],
++    [40, 2],
++  ])("row %i solves %i times", async (width, solves) => {
++    const row = new BoxRenderable(testRenderer, { flexDirection: "row", width, flexShrink: 0, alignItems: "flex-start" })
++    const middle = new BoxRenderable(testRenderer, { flexGrow: 1, flexBasis: 0, flexDirection: "column", minWidth: 0 })
++    row.add(new BoxRenderable(testRenderer, { flexGrow: 1, flexBasis: 0, height: 1 }))
++    row.add(middle)
++    row.add(new BoxRenderable(testRenderer, { flexGrow: 1, flexBasis: 0, height: 1 }))
++    middle.add(new TextRenderable(testRenderer, { content: T, wrapMode: "word" }))
++    testRenderer.root.add(row)
++    await renderOnce()
++    expect(testRenderer.getNativeStats().frameWork.yogaSolves).toBe(solves)
++  })
++
++  // The re-measure width is scratch state of one solve: a frame after any history equals a fresh one.
++  const frames = async (steps: number[], build: (s: TestRenderer) => (step: number) => TextRenderable) => {
++    const fresh: string[] = []
++    for (const step of steps) {
++      const setup = await createTestRenderer({ width: 60, height: 10 })
++      const text = build(setup.renderer)(step)
++      await setup.renderOnce()
++      fresh.push(`${text.x},${text.width}x${text.height}/${text.virtualLineCount}\n${setup.captureCharFrame()}`)
++      setup.renderer.destroy()
++    }
++    const setup = await createTestRenderer({ width: 60, height: 10 })
++    const apply = build(setup.renderer)
++    const seen: string[] = []
++    for (const step of steps) {
++      const text = apply(step)
++      await setup.renderOnce()
++      seen.push(`${text.x},${text.width}x${text.height}/${text.virtualLineCount}\n${setup.captureCharFrame()}`)
++    }
++    setup.renderer.destroy()
++    return { fresh, seen }
++  }
++
++  test("a resize sequence draws what a fresh layout draws", async () => {
++    const { fresh, seen } = await frames([40, 41, 43, 47, 50, 37, 40, 43], (renderer) => {
++      const row = new BoxRenderable(renderer, { flexDirection: "row", flexShrink: 0, alignItems: "flex-start" })
++      const middle = new BoxRenderable(renderer, { flexGrow: 1, flexBasis: 0, flexDirection: "column", minWidth: 0 })
++      const text = new TextRenderable(renderer, { content: T, wrapMode: "word" })
++      row.add(new BoxRenderable(renderer, { flexGrow: 1, flexBasis: 0, height: 1 }))
++      row.add(middle)
++      row.add(new BoxRenderable(renderer, { flexGrow: 1, flexBasis: 0, height: 1 }))
++      middle.add(text)
++      renderer.root.add(row)
++      return (width) => {
++        row.width = width
++        return text
++      }
++    })
++    expect(seen).toEqual(fresh)
++    for (const frame of seen) {
++      const [h, lines] = frame.split("\n")[0].split("x")[1].split("/")
++      expect(h).toBe(lines)
++    }
++  })
++
++  // The text keeps its exact width (13.333) and moves: drawn 14 wide at left 0.4, 13 wide at left 0 and 13.667.
++  test("a text that moves draws what a fresh layout draws, taller again when drawn narrower", async () => {
++    const steps = [0.4, 0, 13.333, 0.4, 13.667, 0]
++    const { fresh, seen } = await frames(steps, (renderer) => {
++      const row = new BoxRenderable(renderer, { flexDirection: "row", width: 40, flexShrink: 0, alignItems: "flex-start" })
++      const spacer = new BoxRenderable(renderer, { height: 1, flexShrink: 0 })
++      const text = new TextRenderable(renderer, { content: T, wrapMode: "word", width: 13.333, flexShrink: 0 })
++      row.add(spacer)
++      row.add(text)
++      renderer.root.add(row)
++      return (lead) => {
++        spacer.width = lead
++        return text
++      }
++    })
++    expect(seen).toEqual(fresh)
++    expect(seen.map((frame) => frame.split("\n")[0].replace(/^[\d]+,/, ""))).toEqual([
++      "14x4/4",
++      "13x5/5",
++      "14x4/4",
++      "14x4/4",
++      "13x5/5",
++      "13x5/5",
++    ])
++  })
++
++  // Two settled layouts: measured 13 cells (5 lines) the text goes to the second column, where it is drawn 13 wide;
++  // measured 14 (4 lines) it fits the first column at left 0.4, drawn 14 wide. A fresh layout starts from the
++  // floor measure, so after a taller column (first column, 14 wide) a height of 6 must still give the second.
++  test("a layout with two settled states takes the one a fresh layout takes", async () => {
++    const { fresh, seen } = await frames([8, 6, 8, 7, 5, 6], (renderer) => {
++      const column = new BoxRenderable(renderer, {
++        flexDirection: "column",
++        flexWrap: "wrap",
++        alignContent: "flex-start",
++        alignItems: "flex-start",
++        width: 40,
++        paddingLeft: 0.4,
++        flexShrink: 0,
++      })
++      const text = new TextRenderable(renderer, { content: T, wrapMode: "word", width: 13.333, flexShrink: 0 })
++      column.add(new BoxRenderable(renderer, { width: 13.333, height: 2, flexShrink: 0 }))
++      column.add(text)
++      renderer.root.add(column)
++      return (height) => {
++        column.height = height
++        return text
++      }
++    })
++    expect(seen).toEqual(fresh)
++    expect(seen.map((frame) => frame.split("\n")[0])).toEqual([
++      "0,14x4/4",
++      "14,13x5/5",
++      "0,14x4/4",
++      "0,14x4/4",
++      "14,13x5/5",
++      "14,13x5/5",
++    ])
++  })
++
++  // A text in a wrapping column: measured 13 cells (5 lines) it moves to the second column (drawn 14: 4 lines); at
++  // 4 lines it fits the first column again (drawn 13). The rounds never settle, so the hints go and the layout is
++  // the unhinted one, the frame hoody.2 draws (14 wide, 5 rows tall, 4 lines).
++  test("a re-measure that never settles stops after two rounds at the unhinted layout", async () => {
++    const column = new BoxRenderable(testRenderer, {
++      flexDirection: "column",
++      flexWrap: "wrap",
++      alignContent: "flex-start",
++      alignItems: "flex-start",
++      width: 40,
++      height: 6,
++      flexShrink: 0,
++    })
++    const text = new TextRenderable(testRenderer, { content: T, wrapMode: "word", width: 13.333, flexShrink: 0 })
++    column.add(new BoxRenderable(testRenderer, { width: 13.333, height: 2, flexShrink: 0 }))
++    column.add(text)
++    testRenderer.root.add(column)
++    await renderOnce()
++    expect(testRenderer.getNativeStats().frameWork.yogaSolves).toBe(4)
++    expect([text.x, text.y, text.width, text.height, text.virtualLineCount]).toEqual([13, 0, 14, 5, 4])
++  })
++})

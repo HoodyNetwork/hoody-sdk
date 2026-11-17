@@ -1,0 +1,95 @@
+/* InfoTip: the info icon or underlined term, and its small popover. --tip-max-w is declared here, in the component
+   layer; InfoTip.tsx's TIP_MAX_W equals it. .pop is a registered popover surface (app/conformance.surfaces.test.ts):
+   the one --pop-line / --pop-bg / --sh-pop frame. */
+.pop {
+  --tip-max-w: 280px;
+  --ring-gap: var(--pop-bg);
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus); /* again with the gap: see kit/tokens.css Focus */
+
+  z-index: var(--z-popover);
+  max-inline-size: min(var(--tip-max-w), calc(100vw - 16px));
+  border: var(--bw) solid var(--pop-line);
+  border-radius: var(--r-1);
+  background: var(--pop-bg);
+  box-shadow: var(--sh-pop);
+  outline: none;
+}
+
+.body {
+  padding: var(--sp-2) var(--sp-3);
+  color: var(--hx-ink);
+  font: var(--t-body);
+  overflow-wrap: anywhere;
+  outline: none;
+}
+
+.text {
+  margin: 0;
+}
+
+.faq {
+  margin: var(--sp-1) 0 0;
+}
+
+/* Icon form: a small glyph in a 24 px box; --touch-min makes the box a thumb wide on a coarse pointer. */
+.icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: max(24px, var(--touch-min));
+  block-size: max(24px, var(--touch-min));
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-1);
+  background: none;
+  color: var(--hx-muted);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.icon:hover,
+.open {
+  color: var(--hx-ink);
+}
+
+/* Term form: the words keep the surrounding type; only the dotted underline says they explain themselves. */
+.term {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-1);
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-decoration: underline dotted;
+  text-decoration-thickness: 1px;
+  text-transform: inherit;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.icon:focus-visible,
+.term:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* A label and its icon-form InfoTip on one line (InfoLine). */
+.line {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-half);
+  min-width: 0;
+}
+
+/* Forced colours drop box-shadow, so the focus ring above would vanish: a solid outline in the system Highlight colour
+   instead, as Button's (kit/focus.forced.spec.ts). */
+@media (forced-colors: active) {
+  .icon:focus-visible,
+  .term:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+}

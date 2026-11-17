@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-proxy-domain="{{PROXY_DOMAIN}}" data-docs-url="{{DOCS_URL}}" data-terms-url="{{TERMS_URL}}" data-privacy-url="{{PRIVACY_URL}}" data-hub-file="{{HUB_FILE}}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Your Hoody hub">
+  <link rel="icon" href="/auth/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/auth/favicon.ico" sizes="48x48">
+  <!-- Installable: the web manifest, the window colour (the kit page ground, kit/tokens.css --hx-bg) and the
+       home-screen lines. No service worker. -->
+  <link rel="manifest" href="/auth/pwa/manifest.webmanifest">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0f0f0">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#111112">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Hoody">
+  <link rel="apple-touch-icon" href="/auth/apple-touch-icon.png">
+  <title>Hub — Hoody</title>
+  {{REALM_API_META}}
+  <!-- hub:live -->
+  <script src="/auth/fouc.js"></script>
+  <script src="/auth/hub-boot-gate.js"></script>
+  <script src="/auth/hub-chunk-rescue.js"></script>
+  <script src="/auth/shared.js" defer></script>
+  <!-- /hub:live -->
+  <link rel="stylesheet" href="/auth/hub-fonts.css">
+  <script type="module" src="/src/app/main.tsx"></script>
+</head>
+<body>
+  <div id="root"></div>
+</body>
+</html>

@@ -1,0 +1,79 @@
+/* ProblemList: one row per diagnostic, a grid of icon | line number | message, the number column wide enough for four
+   digits. A row is either still text (.still) or one press (.jump) with the same grid. */
+.list {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.row + .row {
+  border-block-start: var(--bw) solid var(--hx-line);
+}
+
+.still,
+.jump {
+  display: grid;
+  grid-template-columns: auto 4ch minmax(0, 1fr);
+  gap: var(--sp-2);
+  align-items: baseline;
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-block-size: var(--row-h);
+  padding: var(--sp-1) var(--sp-2);
+  color: var(--hx-ink);
+  font: var(--t-small);
+  text-align: start;
+}
+
+.jump {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Under the pointer the message is underlined: a press's own fill would stand in for the kit button look. */
+.jump[data-hovered] .message {
+  text-decoration: underline;
+}
+
+.jump[data-focus-visible] {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+@media (pointer: coarse) {
+  .jump {
+    min-block-size: var(--touch-min);
+  }
+}
+
+.icon {
+  align-self: center;
+}
+
+.line {
+  color: var(--hx-muted);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.message {
+  min-inline-size: 0;
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+@media (forced-colors: active) {
+  .jump[data-focus-visible] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  .row + .row {
+    border-color: CanvasText;
+  }
+}

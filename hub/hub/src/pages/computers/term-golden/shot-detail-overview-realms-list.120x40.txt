@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                              ┌─ atlas is in 30 realms ─────────────────────────────┐
+▌Computers             │                                         │ ┃ /  Search realms                                  │
+ Files                 │  ▸ Computers    Servers    Projects     │                                                     │
+ Bots                  │  ───────────────────────────────────────│ █   Personal                            f1f1…f1f1 ⧉ │
+ Board                 │                                         │ █   Acme client                         f2f2…f2f2 ⧉ │
+ Demo                  │  ‹ Computers  Esc                       │ █   Lab                                 f3f3…f3f3 ⧉ │
+ Vault                 │  atlas  ● Running                       │ █   No alias                            1010…1010 ⧉ │
+                       │  SG n12 · Home base · █  Personal █  Acm│ █   No alias                            1111…1111 ⧉ │
+On atlas ▾             │                                         │ █   No alias                            1212…1212 ⧉ │
+ Programs              │  ▸Overview  Connect  Permissions  Ports │ █   No alias                            1313…1313 ⧉ │
+ Schedules             │   Storage                               │ █   No alias                            1414…1414 ⧉ │
+ Scripts               │  ───────────────────────────────────────│ █   No alias                            1515…1515 ⧉ │
+ Logs                  │  │ On atlas                             │ █   No alias                            1616…1616 ⧉ │
+ Tunnels               │  │ Programs    1 of 3 running ›         │ █   No alias                            1717…1717 ⧉ │
+ Notes                 │  │ Backups     3 snapshots ›            │ █   No alias                            1818…1818 ⧉ │
+ AI                    │  │ Addresses   1 of your own ›          │ █   No alias                            1919…1919 ⧉ │
+ VMs                   │  │ Files page  Open in Files ›          │ █   No alias                            1a1a…1a1a ⧉ │
+                       │  │ Schedules   Commands on a timer ›    │ █   No alias                            1b1b…1b1b ⧉ │
+Account                │  └──────────────────────────────────────│ █   No alias                            1c1c…1c1c ⧉ │
+ Plans & Billing       │                                         │ █   No alias                            1d1d…1d1d ⧉ │
+ Referrals             │                                         │ █   No alias                            1e1e…1e1e ⧉ │
+ Keys and tokens       │  ┌──────────────────────────────────────│ █   No alias                            1f1f…1f1f ⧉ │
+ API                   │  │ Access                               │ █   No alias                            2020…2020 ⧉ │
+ Notifications      26 │  │ SSH key                 SHA256:Xq0hF1│ █   No alias                            2121…2121 ⧉ │
+ Account               │  │                         o            │ █   No alias                            2222…2222 ⧉ │
+                       │  │                         Replace on Co│ █   No alias                            2323…2323 ⧉ │
+ + Rent servers        │  │                                      │ █   No alias                            2424…2424 ⧉ │
+ Guide                 │  │ Who can open its        [Access of at│ █   No alias                            2525…2525 ⧉ │
+ Support               │  │ programs                Permissions  │ █   No alias                            2626…2626 ⧉ │
+                       │  └──────────────────────────────────────│ █   No alias                            2727…2727 ⧉ │
+                       │  ┌──────────────────────────────────────│ █   No alias                            2828…2828 ⧉ │
+                       │  │ Where it runs                        │ █   No alias                            2929…2929 ⧉ │
+                       │  │ Server      SG n12 ⧉ copy            │ █   No alias                            2a2a…2a2a ⧉ │
+                       │  │ Kind        A whole machine of your o│                                                     │
+                       │  │ Location    SG Singapore             │                                                     │
+                       │  │ Datacenter  SIN-DC1                  │                                     [Manage realms] │
+                       │  │                                      └─────────────────────────────────────────────────────┘
+                       │  │ Realms      █  Personal █  Acme client █  Lab +27 more · Manage                          │
+ Typing · Esc leaves the field · Ctrl+K commands

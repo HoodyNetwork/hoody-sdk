@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            Guide                                  ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │                              ┌──────────────────────────────────────────────────────────────┐
+ Computers             │  │ Ask your agent            │ Skills                                                       │
+ Files                 │  │ Connect                   │ A skill is a file that teaches a coding agent how Hoody's    │ ▄
+ Bots                  │  │▌Skills                    │ HTTP API works: which calls exist and how to make them. It   │ █
+ Board                 │  │ Build your own            │ gives no access by itself; a key or a sign-in does that.     │ █
+ Demo                  │  │ Every link                │                                                              │ ▀
+ Vault                 │  │ Bots                      │ Install the skill                                            │
+                       │  │ Tools                     │ Run one of these in the folder where you use your agent. The │
+On atlas ▾             │  │ Try this                  │ tool asks which of your agents to add the skill to.          │
+ Programs              │  │ Realms                    │                                                              │
+ Schedules             │  │ Topics                    │ Install the skill                                 ⧉ Copy all │
+ Scripts               │  │ Keyboard                  │ 1. The Hoody skill                                           │
+ Logs                  │  │ Look                      │  $ npx skills add https://hoody.com/SKILLS/SKILL.md  ⧉ copy  │
+ Tunnels               │                              │ 2. The same skill with every docs page on disk               │
+ Notes                 │   [j] [k] move between       │  $ npx skills add HoodyNetwork/hoody-sdk             ⧉ copy  │
+ AI                    │   sections                   │ 3. For one agent, without questions                          │
+ VMs                   │                              │  $ npx skills add HoodyNetwork/hoody-sdk -a claude-  ⧉ copy  │
+                       │                              │  code -y                                                     │
+Account                │                              │ 4. For every project on this device                          │
+ Plans & Billing       │                              │  $ npx skills add HoodyNetwork/hoody-sdk -g          ⧉ copy  │
+ Referrals             │                              │ npx comes with Node.js. The skills tool needs Node.js 22.20  │
+ Keys and tokens       │                              │ or newer.                                                    │
+ API                   │                              │ ! A skill runs with your agent's full permissions. Read what │
+ Notifications      26 │                              │   you install; the Hoody skill is plain text.                │
+ Account               │                              │ ▸ Where each agent keeps it                                  │
+                       │                              │   The tool knows other agents too. Each installs the same    │
+ + Rent servers        │                              │   way, with its name after -a.                               │
+▌Guide                 │                              │                                                              │
+ Support               │                              │ Check that it works                                          │
+                       │                              │ List the skills the tool installed, then ask your agent      │
+                       │                              │ something the skill answers.                                 │
+                       │                              │                                                              │
+                       │                              │ Check that it works                               ⧉ Copy all │
+                       │                              │ 1. See installed skills                                      │
+                       │                              │  npx skills list                                     ⧉ copy  │
+                       │                              │ 2. See skills installed with -g                              │
+                       │                              │  npx skills list -g                                  ⧉ copy  │
+                       │                              │ 3. Ask your agent                                            │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

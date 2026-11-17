@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                           ▸ Use with your agent  [+ Get a computer]
+▌Computers             │
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ Computers  Esc
+ Vault                 │  atlas  ● Running                                                        [Open terminal ⇗] [⋯]
+                       │  SG n┌──────────────────────────────────────────────────────────┐
+On atlas ▾             │      │ Block internet access for atlas?                   Esc × │
+ Programs              │   Ove│ ──────────────────────────────────────────────────────── │work  Run  Programs  Backups
+ Schedules             │   Sto│ atlas can't open new connections to the internet. Once   │
+ Scripts               │  ────│ its open connections end, these stop working: the AI     │─────────────────────────────
+ Logs                  │  ┌───│ agent, package installs, updates and the exit proxy.     │───────────────────────────┐█
+ Tunnels               │  │ At│ Connections already open and inbound traffic keep        │                           │█
+ Notes                 │  │ In│ working, so its programs stay reachable through their    │     4 of 500 █░░░░░░░░░   │█
+ AI                    │  │ Tr│ URLs. Blocked: TCP and UDP on every port (IPv4 and IPv6) │                           │█
+ VMs                   │  └───│ , and all IPv4 ICMP, ping included. Still open: DNS and  │───────────────────────────┘█
+                       │      │ DHCP with its host, IPv6 ping and rarely used protocols. │                            █
+Account                │  ┌───│                                                          │───────────────────────────┐█
+ Plans & Billing       │  │ In│                                        [Cancel]   Block  │    Block internet access  │█
+ Referrals             │  │ Wh└──────────────────────────────────────────────────────────┘                           │█
+ Keys and tokens       │  │ ✓ Allowed atlas can open connections to the internet.                                    │█
+ API                   │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Notifications      26 │                                                                                              █
+ Account               │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Where your traffic comes out                                                             │█
+ + Rent servers        │  │ [Exit addresses in the docs] [VPN inside a computer]  Use another exit…                  │█
+ Guide                 │  │ Sites see the exit, not you. A change applies to everyone who uses atlas's proxy.        │█
+ Support               │  │  Your app  →  atlas's proxy  →  Exit                           →  The internet           │
+                       │  │                                   atlas's own address (now)       websites and services  │
+                       │  │                                                                                          │
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Firewall ⓘ                                            [✦ Ask the Agent]  Add a rule  [⋯] │
+                       │  │ Anything not blocked is allowed. A block always wins over an allow, whatever the order.  │
+                       │  │    Action          Traffic                    From or to      Note                       │
+                       │  │▾ Inbound · 3                                                                             │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

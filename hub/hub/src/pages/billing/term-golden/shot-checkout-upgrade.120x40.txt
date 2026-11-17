@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Upgrade a server                                                        Esc ×
+ Home                  │  Plans & Billin┃ 1 Choose plan 2 Review 3 Confirm
+ Computers             │  Upgrade a serv┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │                ┃ Upgrade n12 to Medium $29.00 / month
+ Bots                  │  ▸ Plans    Bar┃
+ Board                 │  ──────────────┃ What you get
+ Demo                  │  │ ✗ fra-7: On ┃ CPU cores               4
+ Vault                 │                ┃ Memory                  8 GB
+                       │  Plans         ┃ Disk                    160 GB
+On atlas ▾             │  Each plan is a┃ Computers               8
+ Programs              │  take the same ┃ Disk speed              800 MiB/s read, 400 MiB/s write
+ Schedules             │                ┃ Network                 1000 Mbps
+ Scripts               │  ┌─────────────┃ Snapshots per computer  3
+ Logs                  │  │             ┃ Custom computer URLs    16
+ Tunnels               │  │ Plans for   ┃ Bot URLs                8
+ Notes                 │  │ Choose a pla┃ AI allowance            ×10
+ AI                    │  │ server, or p┃
+ VMs                   │  │ to upgrade i┃  Upgrade difference                                                   $17.10
+                       │  │             ┃  Charged now                                                          $17.10
+Account                │  └─────────────┃  Wallet balance                                                       $42.50
+▌Plans & Billing       │                ┃
+ Referrals             │  ┌─────────────┃ │ n12 stops, changes and starts again. That takes a few minutes.
+ Keys and tokens       │  │ Free        ┃ │ Upgrades can't be undone: n12 can't move back to a smaller plan later.
+ API                   │  │ $0 / month  ┃
+ Notifications      26 │  │ Your free se┃ This pays the difference until 3 Nov 2026. Then $29.00 a month from your
+ Account               │  │ Computers   ┃ wallet.
+                       │  │ Hardware    ┃ n12 stays in Singapore. A server's location can't be changed.
+ + Rent servers        │  │ AI allowance┃
+ Guide                 │  │             ┃ [ ] I understand this purchase is not eligible for a customer-requested
+ Support               │  │ Locations   ┃     refund, and I agree to the Terms of Service and Privacy Policy.
+                       │  │ No choice of┃
+                       │  │ Your free se┃
+                       │  │ buy a plan. ┃
+                       │  │ Next: Small.┃
+                       │  │ computers.  ┃
+                       │  │ Free server ┃
+                       │  │             ┃
+                       │  │             ┃
+                       │  │             ┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ [Cancel]   Upgrade and pay

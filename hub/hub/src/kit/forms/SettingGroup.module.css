@@ -1,0 +1,529 @@
+/* SettingGroup: label + help | value | action on one grid; each row is a subgrid of it. The frame
+   follows the surface around it through --sg-bw / --sg-fill / --sg-pad / --sg-pane (SettingGroup.tsx explains the
+   publishers). Placement in narrow layouts follows the row's kind (switch row, no-value row), never :empty. */
+.wrap {
+  container: setting-group / inline-size;
+  min-width: 0;
+}
+
+.group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, var(--setting-value-w)) auto;
+  column-gap: var(--sp-6);
+  min-width: 0;
+  border: var(--sg-bw, var(--bw)) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--sg-fill, var(--card-body));
+}
+
+.field {
+  grid-template-columns: minmax(0, 1fr) minmax(0, var(--setting-field-w)) auto;
+}
+
+/* A value group where no row has a value (only actions or switches) keeps no value track: an empty 240 px column would
+   leave the label too little room beside a wide action and stack the whole group, its button under the help. The label
+   takes that room instead and the actions stay at the end. SettingGroup.tsx reads --setting-value-w from the group, so
+   its stacking judge counts the same 0. The outcome, which sits under value and action, takes the row's width there. */
+.group:not(.field, :has(> .row:not(.noValue))) {
+  --setting-value-w: 0px;
+}
+
+.group:not(.field, :has(> .row:not(.noValue))) > .row > .outcome {
+  grid-column: 1 / -1;
+}
+
+/* The rows' inline inset: the surface's (--pad-card on a framed group), less what a pane box between the surface and
+   the group already paid (--sg-pane minus the --pane-inset left here). */
+.row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  min-width: 0;
+  min-height: var(--row-h-2line);
+  padding-block: var(--sp-3);
+  padding-inline: max(0px, var(--sg-pad, var(--pad-card)) - var(--sg-pane, 0px) + var(--pane-inset, 0px));
+}
+
+/* A tall control (a list, a multi-line field): the label starts with it instead of floating half-way down. */
+.rowStart {
+  align-items: start;
+}
+
+.row + .row {
+  border-block-start: var(--bw) solid var(--hx-line);
+}
+
+.label {
+  display: flex;
+  grid-column: 1;
+  grid-row: 1;
+  flex-direction: column;
+  gap: var(--sp-half);
+  min-width: 0;
+}
+
+.name {
+  color: var(--hx-ink);
+  font: var(--t-body-strong);
+  overflow-wrap: anywhere;
+}
+
+.danger {
+  color: var(--hx-danger);
+}
+
+.help {
+  max-width: 60ch;
+  color: var(--hx-muted);
+  font: var(--t-small);
+
+  /* A line break written in the text shows; plain text wraps (pinned by states/preline.test.tsx). */
+  white-space: pre-line;
+}
+
+/* The setting as it is written (a directive, a flag): one mono line under the help, in the help's colour. A long one
+   breaks anywhere, so it never widens the label track or a phone-width row. */
+.code {
+  max-width: 60ch;
+  color: var(--hx-muted);
+  font: var(--t-mono);
+  overflow-wrap: anywhere;
+}
+
+.value {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The action cluster: end-aligned, the switch first, then the actions. It may wrap inside its own track. */
+.action {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 3;
+  grid-row: 1;
+  align-items: center;
+  justify-content: flex-end;
+  justify-self: end;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.control {
+  display: flex;
+  align-items: center;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+/* A field row's actions sit at the row start, centred on the first control line (--ctl-h), so beside a tall control
+   (a RadioGroup, a list) Save stays next to the top of it instead of floating mid-way down. */
+.field > .row:not(.switchRow, .noValue) > .action {
+  align-self: start;
+  min-block-size: var(--ctl-h);
+}
+
+/* The reset cell, last in the action cell. Hidden by visibility (out of reach and unread) so it keeps its width and a
+   column of rows never shifts when a value returns to its default. */
+.reset {
+  display: inline-flex;
+}
+
+.resetHidden {
+  visibility: hidden;
+}
+
+/* The outcome has its own area under the value, spanning value and action: it never moves the switch or the actions.
+   It fills that area and wraps there (status words, then Check again on the next line when they don't fit), so it
+   never runs past the row; GroupRow passes Outcome `wrap`. */
+.row > .outcome {
+  flex-wrap: wrap;
+  grid-column: 2 / -1;
+  grid-row: 2;
+  justify-self: stretch;
+  min-width: 0;
+  max-inline-size: 100%;
+  margin-block-start: var(--sp-1);
+}
+
+/* Without subgrid each row takes the group's template and aligns on its own. */
+@supports not (grid-template-columns: subgrid) {
+  .row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, var(--setting-value-w)) auto;
+    column-gap: var(--sp-6);
+  }
+
+  .field > .row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, var(--setting-field-w)) auto;
+  }
+}
+
+/* Narrow: label and help on top; the value below with its actions at the row end. A no-value row puts its actions
+   under the help, at the start; a switch row keeps its switch at the end of the label line and its actions under the
+   help. Value groups below 600 px, field groups below 640 px, and any group whose label track would fall under 200 px
+   (data-stack, measured in SettingGroup.tsx). A field group in a Disclosure's fold (data-sg-fold) is judged against
+   640 px on the width before the fold's inset, in SettingGroup.tsx (data-stack), so it takes the layout of the groups
+   beside the Disclosure at the same width. The switch sits on the name's line: its cell is one name line high (1lh
+   in the name's font) with the switch centred in it, and the label starts at the top too, so help that wraps never
+   moves the switch down; the row centres that block in its height (align-content), so a row without help keeps the
+   name and the switch centred together. */
+@container setting-group (width < 600px) {
+  .group:not(.field) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .group:not(.field) > .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--sp-2) var(--sp-4);
+  }
+
+  .group:not(.field) .label {
+    grid-column: 1 / -1;
+  }
+
+  .group:not(.field) .value {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .group:not(.field) .action {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .group:not(.field) .noValue > .action {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    justify-self: start;
+  }
+
+  .group:not(.field) .switchRow {
+    align-content: center;
+  }
+
+  .group:not(.field) .switchRow > .label {
+    grid-column: 1;
+    align-self: start;
+  }
+
+  .group:not(.field) .switchRow > .action {
+    display: contents;
+  }
+
+  .group:not(.field) .switchRow .control {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+    block-size: 1lh;
+    font: var(--t-body-strong);
+    justify-self: end;
+  }
+
+  .group:not(.field) .switchRow .actions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: flex-start;
+    justify-self: start;
+  }
+
+  .group:not(.field) .row > .outcome {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    margin-block-start: 0;
+  }
+}
+
+@container setting-group (width < 640px) {
+  .fieldWrap:where(:not([data-sg-fold])) > .field {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fieldWrap:where(:not([data-sg-fold])) > .field > .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--sp-2) var(--sp-4);
+  }
+
+  .fieldWrap:where(:not([data-sg-fold])) > .field .label {
+    grid-column: 1 / -1;
+  }
+
+  .fieldWrap:where(:not([data-sg-fold])) > .field .value {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .fieldWrap:where(:not([data-sg-fold])) > .field .action {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .fieldWrap:where(:not([data-sg-fold])) > .field .noValue > .action {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    justify-self: start;
+  }
+
+  .fieldWrap:where(:not([data-sg-fold])) > .field .switchRow {
+    align-content: center;
+  }
+
+  .fieldWrap:where(:not([data-sg-fold])) > .field .switchRow > .label {
+    grid-column: 1;
+    align-self: start;
+  }
+
+  .fieldWrap:where(:not([data-sg-fold])) > .field .switchRow > .action {
+    display: contents;
+  }
+
+  .fieldWrap:where(:not([data-sg-fold])) > .field .switchRow .control {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+    block-size: 1lh;
+    font: var(--t-body-strong);
+    justify-self: end;
+  }
+
+  .fieldWrap:where(:not([data-sg-fold])) > .field .switchRow .actions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: flex-start;
+    justify-self: start;
+  }
+
+  .fieldWrap:where(:not([data-sg-fold])) > .field .row > .outcome {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    margin-block-start: 0;
+  }
+}
+
+[data-stack] > .group {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+[data-stack] > .group > .row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--sp-2) var(--sp-4);
+}
+
+[data-stack] > .group .label {
+  grid-column: 1 / -1;
+}
+
+[data-stack] > .group .value {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+[data-stack] > .group .action {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+[data-stack] > .group .noValue > .action {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+  justify-self: start;
+}
+
+[data-stack] > .group .switchRow {
+  align-content: center;
+}
+
+[data-stack] > .group .switchRow > .label {
+  grid-column: 1;
+  align-self: start;
+}
+
+[data-stack] > .group .switchRow > .action {
+  display: contents;
+}
+
+[data-stack] > .group .switchRow .control {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  block-size: 1lh;
+  font: var(--t-body-strong);
+  justify-self: end;
+}
+
+[data-stack] > .group .switchRow .actions {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  justify-content: flex-start;
+  justify-self: start;
+}
+
+[data-stack] > .group .row > .outcome {
+  grid-column: 1 / -1;
+  grid-row: auto;
+  margin-block-start: 0;
+}
+
+/* A stacked row with no action cluster has nothing in its second track: the value takes the whole row, so a field ends
+   on the row's edge, in line with the rules and the switches of the rows around it. */
+@container setting-group (width < 600px) {
+  .group:not(.field) > .row:not(:has(> .action)) > .value {
+    grid-column: 1 / -1;
+  }
+}
+
+@container setting-group (width < 640px) {
+  .fieldWrap:where(:not([data-sg-fold])) > .field > .row:not(:has(> .action)) > .value {
+    grid-column: 1 / -1;
+  }
+}
+
+[data-stack] > .group > .row:not(:has(> .action)) > .value {
+  grid-column: 1 / -1;
+}
+
+/* A field group under 400 px: the field takes the whole width, its actions go on the next line at the start. */
+@container setting-group (width < 400px) {
+  .fieldWrap > .field .value {
+    grid-column: 1 / -1;
+  }
+
+  .fieldWrap > .field .row:not(.switchRow, .noValue) > .action {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    min-block-size: 0;
+    justify-content: flex-start;
+    justify-self: start;
+  }
+}
+
+/* A stacked field row whose actions would leave the field under 200 px (data-sg-drop, measured per row in
+   SettingGroup.tsx) takes the same placement at any width. */
+.fieldWrap > .field > .row[data-sg-drop]:not(.switchRow, .noValue) > .value {
+  grid-column: 1 / -1;
+}
+
+.fieldWrap > .field > .row[data-sg-drop]:not(.switchRow, .noValue) > .action {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  min-block-size: 0;
+  justify-content: flex-start;
+  justify-self: start;
+}
+
+/* Dropped onto its own line, an action cluster that holds nothing but a hidden reset cell takes no height: the cell
+   keeps its place only where it holds a column's width (beside the field), never as an empty line under one. It keeps
+   its inline size, which the row's measurement reads. */
+@container setting-group (width < 400px) {
+  .fieldWrap > .field .row:not(.switchRow, .noValue) > .action:not(:has(> .control, > .actions > :not(.resetHidden))) {
+    block-size: 0;
+    overflow: hidden;
+  }
+}
+
+.fieldWrap > .field > .row[data-sg-drop]:not(.switchRow, .noValue) > .action:not(:has(> .control, > .actions > :not(.resetHidden))) {
+  block-size: 0;
+  overflow: hidden;
+}
+
+/* A side-by-side field group whose label fits beside the field but not beside a row's actions (data-sg-under, measured
+   in SettingGroup.tsx; `crowdedActions="stack"` turns it off): those actions go under their field, in the field column at
+   its start, and the outcome follows them. */
+.fieldWrap[data-sg-under] > .field > .row:not(.switchRow, .noValue) > .action {
+  grid-column: 2;
+  grid-row: 2;
+  min-block-size: 0;
+  margin-block-start: var(--sp-2);
+  justify-content: flex-start;
+  justify-self: start;
+}
+
+.fieldWrap[data-sg-under] > .field > .row:not(.switchRow, .noValue) > .outcome {
+  grid-row: 3;
+}
+
+/* A group's own title:a heading above the frame, one level below its section, in the group heading's type (--t-group,
+   a step above the rows' names), so in a bare surface it never reads as one more row name. */
+.wrap > [data-hub-heading] {
+  margin: 0 0 var(--sp-2);
+  color: var(--hx-ink);
+  font: var(--t-group);
+}
+
+/* A titled group after another group, on a surface where groups are bare (a drawer, a dialog, a panel, a settings
+   section: --sg-bw is 0 there): a rule and one section gap above its title, so groups are set apart more than the rows
+   inside one. A framed group has its own frame and takes neither: the border width and the min() are 0 for it.
+   The space above the rule is one section gap too: the margin adds what the holder's own gap leaves short of it
+   (--form-gap, published by the holder; a holder that publishes none is taken to leave --sp-4). */
+.wrap ~ .wrap:has(> [data-hub-heading]) {
+  margin-block-start: min(max(0px, var(--sp-5) - var(--form-gap, var(--sp-4))), (var(--bw) - var(--sg-bw, var(--bw))) * 1000);
+  padding-block-start: min(var(--sp-5), (var(--bw) - var(--sg-bw, var(--bw))) * 1000);
+  border-block-start: calc(var(--bw) - var(--sg-bw, var(--bw))) solid var(--pop-sep);
+}
+
+/* A framed danger group that follows a group keeps its own distance (--sp-4, the .dangerWrap rule below); a bare one
+   takes the ruled group's space above. */
+.wrap ~ .dangerWrap:has(> [data-hub-heading]) {
+  margin-block-start: max(
+    min(max(0px, var(--sp-5) - var(--form-gap, var(--sp-4))), (var(--bw) - var(--sg-bw, var(--bw))) * 1000),
+    min(var(--sp-4), var(--sg-bw, var(--bw)) * 1000)
+  );
+}
+
+/* The danger group: always the last group, set apart from the ones before it, its title in the
+   danger colour. Its buttons carry tone="danger" themselves; the rows' names stay ink. */
+.dangerWrap {
+  margin-block-start: var(--sp-4);
+}
+
+.dangerWrap > [data-hub-heading] {
+  color: var(--hx-danger);
+}
+
+/* A reveal row's editor: under the row, the full width of it, on the plate, with its Cancel and Save at the
+   end of its foot. Placed by the grid's auto-placement into the first free row, so it follows the row's own lines in
+   every layout (side by side, stacked, dropped actions). */
+.reveal {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: var(--sp-3);
+  min-width: 0;
+  margin-block-start: var(--sp-3);
+  padding: var(--sp-3);
+  border: var(--bw) solid var(--hx-plate-line);
+  border-radius: var(--r-1);
+  background: var(--hx-plate-bg);
+}
+
+.reveal:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.revealBody {
+  min-width: 0;
+}
+
+.revealFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2); /* the gap of every action row (FormFooter, dialog and drawer footers) */
+}
+
+/* Forced colours do not paint box-shadow, so the focus ring above gets a solid system outline (the same rule as
+   Button's; measured by kit/focus.forced.spec.ts). */
+@media (forced-colors: active) {
+  .reveal:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+}

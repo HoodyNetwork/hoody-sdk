@@ -1,0 +1,1440 @@
+/* Page layouts: the page roots (Table, Detail, Settings, Dashboard, Wizard, PageFrame, Canvas) and the card frame that
+   Panel, Widget and AnatomySection share. One cascade for all of them: where the order of two blocks matters, a comment
+   on the later one says so. The root carries the page padding (--pad-page, set by the shell per content class), and
+   every breakpoint keys on the shell's `content` container, so a page never writes a media query. */
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: var(--sp-4) var(--pad-page) var(--sp-9);
+}
+
+/* Canvas (Board): edge to edge, the full content height, no page padding. */
+.canvas {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.canvasBody {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* A TablePage fills the content height; the table scrolls inside its panel. */
+.fill {
+  height: 100%;
+  min-height: 0;
+  padding-block-end: var(--sp-4);
+}
+
+/* Dashboard, Detail and Settings cap at 1600 and stay left-aligned. */
+.capped {
+  max-width: calc(var(--content-max) + 2 * var(--pad-page));
+}
+
+/* The notice stack: page-level notices (and a view strip) between a header and the body, one under the other. The one
+   recipe for every archetype: ListDetailPage's banner and list toolbar take this class too. */
+.noticeStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-block-end: var(--sp-3);
+}
+
+/* A notice that renders nothing (a page's band component returning null) takes no place: without this the empty stack
+   still adds its padding between the header and the body. */
+.noticeStack:empty {
+  display: none;
+}
+
+/* The card frame, written once: a line in --card-edge, the colour the cut corner draws too (CardEdge), on the card body
+   fill. Panel, Widget and AnatomySection are `.panel` (a head band over a padded body); a settings section and the two
+   summary rails are the same frame padded by --pad-card on every side. A tone or a state recolours a card through
+   --card-edge only, in a rule after this one. */
+.panel,
+.settingsSection,
+.settingsSummaryCard,
+.wizardSummary {
+  --card-edge: var(--hx-panel-line);
+
+  border: var(--bw) solid var(--card-edge);
+  border-radius: var(--r-1);
+  background: var(--card-body);
+}
+
+/* Panel: a distinct object with a title. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* The actions sit beside the titles while both fit (the titles prefer 12rem); on a narrower panel (a phone) they take
+   their own line under the titles, never running past the panel. A choice there should be a full-width
+   SegmentedControl, which turns into a Select when its labels do not fit whole. */
+.panelHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-2) var(--sp-3);
+
+  /* The head band: its own grey over a rule, the body below on --card-body. Half --pad-card-y above and below its
+     titles and actions, as a card row's bottom band (DataTable .cardBottom). */
+  padding: calc(var(--pad-card-y) / 2) var(--pad-card);
+  border-block-end: var(--bw) solid var(--card-head-line);
+  background: var(--card-head);
+}
+
+.panelTitles {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
+  gap: var(--sp-half);
+  min-width: 0;
+}
+
+.panelTitle {
+  color: var(--hx-ink);
+  font: var(--t-section);
+}
+
+.panelDesc {
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* An action row: the buttons of one head, --gap-actions apart, as in every action row of the family (ActionBar,
+   InlineActions, the page and detail headers, the footers). */
+.panelActions {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-actions);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.panelActions > * {
+  max-width: 100%;
+}
+
+/* A SettingGroup in a padded card surface is bare and its rows take no inset of their own (SettingGroup.tsx); a
+   flush body leaves the rows their --pad-card. */
+.panelBody {
+  --sg-bw: 0px;
+  --sg-fill: transparent;
+  --sg-pad: 0px;
+  --sg-pane: var(--pane-inset, 0px);
+
+  min-width: 0;
+  padding: var(--sp-4) var(--pad-card) var(--pad-card);
+}
+
+.flush {
+  --sg-pad: var(--pad-card);
+
+  padding: 0;
+}
+
+/* A framed DataTable in a flush body runs edge to edge: the card is its frame at the sides (never a frame inside a
+   frame), as in a settings card (.settingsSection [data-table-frame]). Its own top and bottom lines and its fill stay. */
+.flush [data-table-frame] {
+  border-inline: 0;
+  border-radius: 0;
+}
+
+/* A flush body starts 12 px under the head band's rule, on the card's own fill. */
+.panelHead + .flush {
+  margin-block-start: var(--sp-3);
+}
+
+/* A flush body that opens with a framed table starts at the head band's rule: no empty band between a section's head
+   and its table's toolbar, and the band's rule is the table's top line (never two lines). */
+.panelHead + .flush:has(> [data-table-frame]:first-child) {
+  margin-block-start: 0;
+}
+
+.panelHead + .flush > [data-table-frame]:first-child {
+  border-block-start: 0;
+}
+
+/* Panel notice: after the body, padded like it, so a note never touches a flush table's edge. */
+.panelNotice {
+  min-width: 0;
+  padding: 0 var(--pad-card) var(--pad-card);
+  color: var(--hx-muted);
+  font: var(--t-small);
+  overflow-wrap: anywhere;
+}
+
+.panelNoticeFlush {
+  padding-block-start: var(--sp-3);
+  border-block-start: var(--bw) solid var(--hx-line);
+}
+
+/* The legacy flat Section (inside a detail's main column); new code draws an AnatomySection. */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding-block-end: var(--sp-6);
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.section:last-child {
+  padding-block-end: 0;
+  border-block-end: 0;
+}
+
+/* When the title and the actions do not fit on one row (a phone), the actions wrap under the title, and among
+   themselves, rather than crushing the title or cutting a button. The row is at least one button high (--btn-h), so a
+   head with actions and one without are the same height. */
+.sectionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  min-height: var(--btn-h);
+}
+
+.sectionTitle {
+  flex: 1 1 12rem;
+  min-width: 0;
+  color: var(--hx-ink);
+  font: var(--t-section);
+}
+
+.sectionHead > .panelActions {
+  flex-wrap: wrap;
+}
+
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+/* The page's questions (Faq): the last region of a table, detail, dashboard or wizard body. */
+.faq {
+  min-width: 0;
+}
+
+/* The stats slot above a table (kit/data/Display StatStrip). */
+.statsWrap {
+  padding-block-end: var(--sp-4);
+}
+
+/* TablePage */
+.tableBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* A table page with questions scrolls as one document (as on a phone): the table grows with its rows and the questions
+   follow it, instead of the table scrolling inside a box cut at the viewport with the questions squeezing it. */
+.fillFaq {
+  height: auto;
+  min-height: 100%;
+}
+
+.fillFaq .tableBody {
+  flex: none;
+  min-height: auto;
+  margin-block-end: var(--sp-6);
+}
+
+/* On a short page the questions sit at the bottom of the scroll area, in flow: the page is at least the area's height
+   and the free space goes above them. A long page has none, so they follow the table. */
+.tableBody + .faq {
+  margin-block-start: auto;
+}
+
+.tabPanel {
+  min-width: 0;
+  padding-block-start: var(--sp-4);
+  outline: none;
+}
+
+/* DetailPage: main column (min 480) + facts rail 280 on the end at >= 1180. The wrapper is the
+   container; a container query never matches the element that declares the container. */
+
+/* A full page's detail without tabs takes the page's free height, through the body and the grid to the main column,
+   whose questions take it above them. */
+.detailBody {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  min-width: 0;
+  container: detailbody / inline-size;
+}
+
+.detailGrid {
+  display: grid;
+  flex: 1 0 auto;
+  grid-template-areas: "main";
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-6);
+}
+
+.withAside {
+  grid-template-areas: "main aside";
+  grid-template-columns: minmax(480px, 1fr) var(--rail-w);
+}
+
+/* The main column sets the gap between its sections (--gap-between-sections). */
+.detailMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-between-sections);
+  min-width: 0;
+  grid-area: main;
+}
+
+/* An AnatomySection adds that gap itself after a sibling section (anatomy.module.css), for a parent that sets none:
+   here the column's gap is the only one, or two sections would sit two gaps apart. Three parts, so it outranks the
+   anatomy's two-class rule whichever stylesheet loads last. */
+.detailMain > [data-hub-section] + [data-hub-section] {
+  margin-block-start: 0;
+}
+
+.detailMain > .faq {
+  margin-block-start: auto;
+}
+
+/* Beside a facts rail (>= 1180) the main column keeps its own height: a rail taller than it would otherwise stretch it,
+   and the questions would leave the main column's content for the rail's bottom on a long page. There the questions
+   stay one section gap under the main column; the stacked layout below 1180 still gives them the page's free height. */
+.withAside > .detailMain {
+  align-self: start;
+}
+
+.detailAside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+  grid-area: aside;
+}
+
+.inPane {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
+/* A notice stack in a pane: inset as the pane's header. After .noticeStack, which it adjusts. */
+.paneNotice {
+  padding-inline: var(--pane-inset);
+}
+
+/* A DetailPage's footer: the actions that stay in reach while the body scrolls, an action row on the end. (A
+   ListDetail pane's own footer is ListDetailPage.module.css .detailFooter.) */
+.detailFooter {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--gap-actions);
+  min-height: var(--savebar-h);
+  margin-block-start: auto;
+  padding: var(--sp-2) 0;
+  border-block-start: var(--bw) solid var(--hx-line);
+  background: var(--hx-bg);
+}
+
+.paneFooter {
+  padding-inline: var(--pane-inset);
+  background: var(--hx-card);
+}
+
+.paneBody {
+  min-width: 0;
+  padding: 0 var(--pane-inset) var(--sp-6);
+}
+
+/* These boxes already pad by the pane inset: a Tabs inside them adds none. */
+.paneNotice > *,
+.paneBody > *,
+.paneFooter > * {
+  --pane-inset: 0px; /* a length, never a bare 0: SettingGroup rows compute with it */
+}
+
+
+/* SettingsPage: rail 200 | form 720 | summary 300. */
+.settingsGrid {
+  display: grid;
+  grid-template-columns: minmax(0, var(--form-max));
+  gap: var(--sp-8);
+  align-items: start;
+}
+
+.withRail {
+  grid-template-columns: var(--section-rail-w) minmax(0, var(--form-max));
+}
+
+.withRail.withSummary {
+  grid-template-columns: var(--section-rail-w) minmax(0, var(--form-max)) var(--summary-w);
+}
+
+.withSummary:not(.withRail) {
+  grid-template-columns: minmax(0, var(--form-max)) var(--summary-w);
+}
+
+.settingsNav {
+  position: sticky;
+  inset-block-start: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+}
+
+/* The items (kit SectionMenu: the dashed rail, the ink bar on the current row). On the phone strip this is the part
+   that scrolls, between the edge chevrons. */
+.settingsNavList {
+  min-width: 0;
+}
+
+.settingsNavItem {
+  font: var(--t-body);
+}
+
+.settingsBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4); /* between two cards, as the dashboard grid's gap */
+  min-width: 0;
+}
+
+/* A settings section is a card: the card frame (above), padded by --pad-card, without a head band. */
+.settingsSection {
+  --here-base: var(--card-body);
+  --sg-bw: 0px; /* a SettingGroup in the card is bare and inset by the card (SettingGroup.tsx) */
+  --sg-fill: transparent;
+  --sg-pad: 0px;
+  --sg-pane: var(--pane-inset, 0px);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--pad-card);
+  scroll-margin-block-start: var(--sp-4);
+}
+
+/* The FAQ of a settings page: a section for the rail's jump and the scroll spy, framed by the Faq card inside it. */
+.settingsFaq {
+  min-width: 0;
+  scroll-margin-block-start: var(--sp-4);
+}
+
+/* A framed DataTable in a settings card runs to the card's inline edges, as a flush Panel's table does: the card is its
+   frame at the sides (never a frame inside a frame), and the table keeps the width the card padding would take from
+   it. Its own top and bottom lines and its fill stay. */
+.settingsSection [data-table-frame] {
+  margin-inline: calc(var(--pad-card) * -1);
+  border-inline: 0;
+  border-radius: 0;
+}
+
+/* A danger section is the same card with a danger frame. After the card frame rule, which it recolours. */
+.settingsDanger {
+  --card-edge: var(--hx-danger-fill);
+
+  border-color: var(--card-edge);
+}
+
+.settingsSectionHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+/* A settings section head with AnatomySection's slots: the titles, then the ActionBar at the end, as an
+   AnatomySection's head; it wraps under the titles when the row runs out. */
+.settingsHeadRow {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.settingsTitle {
+  color: var(--hx-ink); /* ink, not the heading grey, so a section title reads as a title */
+  font: var(--t-heading);
+}
+
+/* A rail jump lands focus on the title: the ring shows for a keyboard jump, as on a page or detail title. In forced
+   colours the outline of kit/base.css's heading rule stands in for the shadow. */
+.settingsTitle:focus {
+  outline: none;
+}
+
+.settingsTitle:focus-visible {
+  border-radius: var(--r-1);
+  box-shadow: var(--focus-ring);
+}
+
+.settingsSectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* Wide sections: the part from the first wide section on sits in row 2 under the form and summary columns. Browsers
+   hold a sticky grid item by the whole grid, not by its row, so a sticky summary would follow the page down over that
+   part; see .hasWide .settingsSummary below. */
+.withSummary .settingsWide {
+  grid-column: -3 / -1;
+  grid-row: 2;
+}
+
+.withRail.withSummary.hasWide .settingsNav {
+  grid-row: 1 / span 2;
+}
+
+.settingsWide > .settingsSection:not([data-wide]),
+.settingsWide > .saveBar {
+  max-inline-size: var(--form-max);
+}
+
+.settingsWide > .settingsFaq {
+  max-inline-size: var(--form-max);
+}
+
+/* The parts read as one column: the grid gap between them gives way to the sections' own gap. */
+.settingsWide {
+  margin-block-start: calc(var(--sp-4) - var(--sp-8));
+}
+
+.settingsSummary {
+  position: sticky;
+  inset-block-start: var(--sp-4);
+  min-width: 0;
+}
+
+/* The summary rail's card: the card frame (above), padded by --pad-card, as the wizard's summary. */
+.settingsSummaryCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+  padding: var(--pad-card);
+}
+
+/* With a wide part the aside fills row 1 (beside the form part) and is not sticky itself; the card in it sticks, held
+   by the aside, so it stops at the end of row 1 and leaves with the form part. */
+.hasWide .settingsSummary {
+  position: static;
+  align-self: stretch;
+}
+
+.hasWide .settingsSummaryCard {
+  position: sticky;
+  inset-block-start: var(--sp-4);
+}
+
+.saveBar {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  min-height: var(--savebar-h);
+  padding: var(--sp-2) var(--sp-4);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--hx-card);
+  box-shadow: var(--sh-2);
+}
+
+/* DashboardPage: tracks XL 4, L 3, M 2, S 2, XS 1; gap 16; dense packing. */
+.dashGrid {
+  --tracks: 4;
+
+  position: relative;
+  display: grid;
+  align-items: stretch;
+  grid-auto-flow: row dense;
+  grid-template-columns: repeat(var(--tracks), minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+
+/* A short dashboard's questions sit at the bottom of the scroll area, in flow, as a table page's. */
+.dashGrid + .faq {
+  margin-block-start: auto;
+}
+
+/* DashboardPage flow="ordered": no back-filling, so the visual order is the DOM order. */
+.dashGrid.dashOrdered {
+  grid-auto-flow: row;
+}
+
+/* Card tone: Panel and Widget `tone`. After the card frame rule, so a tone wins over the frame's own colour at the same
+   weight. The colour goes through --card-edge, which the corner edge draws too (CardEdge). */
+.panelWarn {
+  --card-edge: var(--hx-warn-fill);
+
+  border-color: var(--card-edge);
+  background: var(--hx-warn-t);
+}
+
+.panelDanger {
+  --card-edge: var(--hx-danger-fill);
+
+  border-color: var(--card-edge);
+}
+
+.w_s {
+  grid-column: span 1;
+}
+
+.w_m {
+  grid-column: span 2;
+}
+
+.w_l {
+  grid-column: 1 / -1;
+}
+
+/* Widget: the card frame (.panel and its head, title and body) placed on the dashboard grid. These are modifiers, each
+   after the panel rule it adjusts: they set no fill, frame, rule or padding of their own. The head stays on one line and
+   keeps a least height, so the heads of a row of cards end level; the title cuts to an ellipsis instead of wrapping. */
+.widgetHead {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--card-head-h);
+}
+
+.widgetTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.viewAll {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-half);
+  padding-inline: var(--sp-1);
+  border-radius: var(--r-1);
+  color: var(--hx-link);
+  font: var(--t-small);
+  text-decoration: none;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* View all goes somewhere, so it is link blue, the same blue on hover, underlined on hover 3 px below. */
+.viewAll[data-hovered],
+.viewAll[data-focus-visible] {
+  text-decoration: underline;
+}
+
+.viewAll[data-focus-visible] {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+/* viewAll.end: the text ends at the card's padding line (the inline padding that keeps the focus ring off the text is
+   taken back at the end). */
+.viewAll.viewAllEnd {
+  margin-inline-end: calc(var(--sp-1) * -1);
+}
+
+/* On a coarse pointer the link's touch target is --touch-min tall: a box behind it, centred on its line, so the link
+   keeps its text height and its focus ring stays round the text, inside the card (a link as tall as its target would
+   reach past the card's top edge, where the card cuts the ring off). A head holding the link is as tall as one holding
+   a touch-sized button (the band's padding around --touch-min), so the whole target lies inside the head and nothing
+   clips a tap near its ends. */
+@media (pointer: coarse) {
+  .widgetHead:has(.viewAll) {
+    min-height: calc(var(--touch-min) + var(--pad-card-y));
+  }
+
+  .viewAll {
+    position: relative;
+  }
+
+  .viewAll::before {
+    position: absolute;
+    inset-block: calc((var(--touch-min) - 100%) / -2);
+    inset-inline: 0;
+    content: '';
+  }
+}
+
+/* A card's ⋯ menu is always shown: one that only appeared on hover would cover View all and hide its actions from
+   anyone who does not hover. */
+.widgetMenu {
+  display: inline-flex;
+}
+
+/* The widget body takes the card's free height and scrolls past its cap. After .panelBody, whose padding it keeps. */
+.widgetBody {
+  flex: 1;
+  min-height: 120px;
+  max-height: 360px;
+  overflow: auto;
+}
+
+/* fit: a one-line card is as high as its line. */
+.widgetFit {
+  min-height: 0;
+}
+
+/* level: cards that end level beside each other. The head is --card-level-head high; the body holds --card-level-rows
+   whole rows (plus its top inset and one line's room) and ends with 12 px under it, with no line of its own, so
+   nothing scrolls until one more row comes. */
+.widgetLevel {
+  padding-block-end: var(--sp-3);
+}
+
+.widgetLevel > .widgetHead {
+  min-height: var(--card-level-head);
+}
+
+.levelRows,
+.levelFill {
+  --level-top: calc(var(--sp-2) - var(--bw));
+  --level-body: calc(var(--level-top) + var(--card-level-row) * var(--card-level-rows) + var(--bw));
+
+  min-height: var(--level-body);
+  max-height: none;
+  padding: var(--level-top) var(--pad-card) 0;
+}
+
+.levelRows {
+  flex: none;
+  height: var(--level-body);
+  scroll-padding-block-start: var(--level-top);
+  scroll-snap-type: y mandatory;
+}
+
+.levelFill {
+  padding-block-end: var(--sp-2);
+}
+
+/* A rows body holds one list: each item is a row of the row height with a line under it, and the scroll rests on a row's
+   start. (A grid of columns on the list keeps this: the rows are its items.) */
+.levelRows > :is(ul, ol) > li {
+  block-size: var(--card-level-row);
+  border-block-end: var(--bw) solid var(--hx-line);
+  scroll-snap-align: start;
+}
+
+/* Tile (keycap tiles): a faint solid edge (the tile's own text colour at 14%), the tile fill and the tile's padding; a
+   plain tile keeps the edge's room and draws no line. The page's grid places the tiles and may tighten --tile-pad-y
+   where it is narrow. */
+.tile {
+  display: flex;
+  padding: var(--tile-pad-y, var(--sp-3)) calc(var(--sp-3) + var(--sp-half));
+  border: var(--bw) solid transparent;
+}
+
+.tileStack {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: calc(var(--sp-2) + var(--sp-half));
+}
+
+.tileCenter {
+  align-items: center;
+}
+
+.tileFill {
+  border-color: color-mix(in srgb, currentcolor 14%, transparent);
+  background: var(--hx-tile-fill);
+}
+
+/* A widget without a header (hero, strips) keeps its natural height. (Not :only-child: the corner edge is a child.) */
+.widget:not(:has(> .widgetHead)) > .widgetBody {
+  max-height: none;
+}
+
+/* WizardPage: a centred block of stepper (--stepper-w) | body (--wizard-body-max) | summary (--summary-w), over a
+   sticky footer (--wizard-foot-h). */
+.wizard {
+  padding-block-end: 0;
+}
+
+.wizardBlock {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  max-width: calc(var(--stepper-w) + var(--wizard-body-max) + var(--summary-w) + 2 * var(--sp-8));
+  margin-inline: auto;
+  padding-block-end: var(--sp-8);
+}
+
+.wizardGrid {
+  display: grid;
+  grid-template-columns: var(--stepper-w) minmax(0, var(--wizard-body-max));
+  gap: var(--sp-8);
+  align-items: start;
+}
+
+/* The questions under the whole wizard, after its footer: their own block at the wizard's width, one gap below the footer,
+   never stretched to fill the page height as the wizard's block is. */
+.wizardFaqBlock {
+  flex: none;
+  padding-block-start: var(--sp-8);
+}
+
+.wizardGrid.withSummary {
+  grid-template-columns: var(--stepper-w) minmax(0, var(--wizard-body-max)) var(--summary-w);
+}
+
+.wizardCompact {
+  display: none;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-block-end: var(--sp-4);
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.progress {
+  display: block;
+  height: 4px;
+  border-radius: var(--r-1);
+  background: var(--hx-fill);
+}
+
+.progressBar {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-1);
+  background: var(--hx-ink);
+}
+
+.steps {
+  position: sticky;
+  inset-block-start: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  color: var(--hx-muted);
+}
+
+/* A step is one list row high (--row-h, which a coarse pointer raises past the touch minimum). */
+.stepBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  height: var(--row-h);
+  padding: 0 var(--sp-2);
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  color: inherit;
+  font: var(--t-body);
+  text-align: start;
+}
+
+button.stepBtn {
+  cursor: pointer;
+}
+
+button.stepBtn:hover {
+  background: var(--hx-hover);
+  color: var(--hx-ink);
+}
+
+button.stepBtn:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.stepDone {
+  color: var(--hx-ink);
+}
+
+.stepCurrent {
+  color: var(--hx-ink);
+}
+
+/* Current step: neutral like every current nav item (selected fill + semibold), no accent or bar. */
+.stepCurrent .stepBtn {
+  background: var(--hx-selected);
+  font-weight: var(--fw-semibold);
+}
+
+.stepNum {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: var(--bw) solid var(--hx-line-strong);
+  border-radius: var(--r-1);
+  font: var(--t-mono);
+}
+
+.stepDone .stepNum {
+  border-color: var(--hx-ink);
+  background: var(--hx-ink);
+  color: var(--hx-on-ink);
+}
+
+.stepCurrent .stepNum {
+  border-color: var(--hx-ink);
+  color: var(--hx-ink);
+}
+
+.wizardBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  min-width: 0;
+}
+
+/* The summary rail: the card frame (above), padded by --pad-card, as a settings page's summary card. */
+.wizardSummary {
+  position: sticky;
+  inset-block-start: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+  padding: var(--pad-card);
+}
+
+.wizardFooter {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: var(--wizard-foot-h);
+  margin-inline: calc(var(--pad-page) * -1);
+  padding: var(--sp-3) var(--pad-page);
+  border-block-start: var(--bw) solid var(--hx-line);
+  background: var(--hx-card);
+}
+
+/* footNote: full-width notes under the body, above the footer row (never in it). */
+.wizardFootNote {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block-start: var(--sp-5);
+}
+
+.wizardFootNote:empty {
+  display: none;
+}
+
+/* WizardFooter: Back at the start, the actions at the end (an action row, --gap-actions), one row at every width. */
+.wizardFootEnd {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--gap-actions);
+  min-width: 0;
+}
+
+.wizardBack {
+  flex: none;
+}
+
+/* WizardFooter with a note: the muted line above the row; the row itself is the one-row footer. */
+.wizardFootStack {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.wizardFootLine {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.wizardFootRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+/* WizardPage variant="flow" (New script): the strip over the page, the step in a main column beside an optional sticky
+   aside (--flow-aside-w), the block left-aligned under the header and capped at --flow-block-max. The footer is the
+   last thing in the main column, so it rests under the step's content and sticks to the window bottom only on a long
+   step. Everything here is opt-in; the default wizard above is untouched. */
+.wizardFlow {
+  padding-block-end: 0;
+}
+
+.flowBlock {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--flow-block-max, 1180px);
+  padding-block-end: var(--sp-8);
+}
+
+.strip {
+  margin-block-end: var(--sp-6);
+}
+
+.stripList {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  margin: 0;
+  padding: 0;
+  border: var(--bw) solid var(--hx-panel-line);
+  border-radius: var(--r-1);
+  background: var(--hx-card);
+  list-style: none;
+}
+
+.stripStep {
+  position: relative;
+  min-width: 0;
+  color: var(--hx-muted);
+}
+
+.stripStep + .stripStep {
+  border-inline-start: var(--bw) solid var(--hx-panel-line);
+}
+
+/* A segment is a field high plus a small step above and below (48 px with a mouse). */
+.stripBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: max(var(--ctl-h), var(--touch-min));
+  padding: var(--sp-1) var(--sp-3);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: var(--t-label);
+  letter-spacing: var(--tracking-label);
+  text-align: start;
+  text-transform: uppercase;
+}
+
+button.stripBtn {
+  cursor: pointer;
+}
+
+button.stripBtn:hover .stripLabel {
+  text-decoration: underline;
+}
+
+button.stripBtn:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.stripLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stripNum {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: var(--bw) solid var(--hx-line-strong);
+  border-radius: var(--r-1);
+  font: var(--t-mono);
+  letter-spacing: normal;
+}
+
+.stripDone {
+  color: var(--hx-ink);
+}
+
+.stripDone .stripNum {
+  border-color: var(--hx-ink);
+  background: var(--hx-ink);
+  color: var(--hx-on-ink);
+}
+
+/* The current step: the raised segment with the accent bar on top and the number in the accent. */
+.stripCurrent {
+  background: var(--hx-raised);
+  color: var(--hx-ink);
+  box-shadow: inset 0 calc(2 * var(--bw-2)) 0 var(--hx-acc);
+}
+
+.stripCurrent .stripNum {
+  border-color: var(--hx-acc-edge);
+  background: var(--hx-acc);
+  color: var(--hx-acc-text-on);
+}
+
+.stripNow {
+  flex: none;
+  color: var(--hx-muted);
+}
+
+.flowSegments {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: var(--sp-1);
+}
+
+.flowSegment {
+  display: block;
+  height: 4px;
+  background: var(--hx-line);
+}
+
+.flowSegmentDone {
+  background: var(--hx-ink);
+}
+
+.flowSegmentNow {
+  background: var(--hx-acc);
+  box-shadow: inset 0 0 0 var(--bw) var(--hx-acc-edge);
+}
+
+.flowGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-6);
+  align-items: start;
+}
+
+.flowWithAside {
+  grid-template-columns: minmax(0, 1fr) var(--flow-aside-w, 340px);
+}
+
+.flowMain {
+  --flow-foot-h: var(--wizard-foot-h); /* measured by WizardPage once drawn */
+
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* The aside sticks at the top while it fits the window; a taller one scrolls inside its own box. */
+.flowAside {
+  position: sticky;
+  inset-block-start: var(--sp-4);
+  max-height: calc(100vh - 2 * var(--sp-4));
+  min-width: 0;
+  overflow: auto;
+}
+
+.flowAsideFold {
+  margin-block-end: var(--sp-4);
+}
+
+/* The flow's footer: in the main column, right under the step (and its notes), sticky at the window bottom. The band
+   is as wide as the step's card and padded as the card is (its line plus `--pad-card`), so the footer's line and
+   buttons start and end where the card's content does, never on the band's own edges. */
+.wizardFooter.flowFooter {
+  margin-block-start: var(--sp-6);
+  margin-inline: 0;
+  padding-inline: calc(var(--pad-card) + var(--bw));
+
+  /* Stuck, it rests on the shell's covered strip (the phone bottom bar), not above the action button's room under it:
+     the content area's end padding holds both, and a sticky box stops at the padding. */
+  inset-block-end: calc(var(--shell-fab-room, 0px) * -1);
+}
+
+/* The flow's questions close the main column, under the footer (or under the step when a step draws no footer, as
+   New realm while it creates), with the gap between whole Sections: never flush under the footer's line or the step. */
+.flowMain > .faq {
+  margin-block-start: var(--gap-between-sections);
+}
+
+/* Focus or a scroll brings a step's control into view above the stuck footer, not behind it (its height, measured). */
+.flowMain .wizardBody * {
+  scroll-margin-block-end: calc(var(--flow-foot-h) + var(--sp-2));
+}
+
+/* Detail body narrower than 1180: the facts rail moves above the main column. */
+@container detailbody (width < 1180px) {
+  .withAside {
+    grid-template-areas:
+      "aside"
+      "main";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr; /* the free height goes to the main column (its questions), not under the facts */
+  }
+
+  .withAside > .detailMain {
+    align-self: stretch;
+  }
+}
+
+/* XL: 4 tracks (default). L (1180-1559): 3. */
+@container content (width < 1560px) {
+  .dashGrid {
+    --tracks: 3;
+  }
+}
+
+/* M (840-1179) */
+@container content (width < 1180px) {
+  .dashGrid {
+    --tracks: 2;
+  }
+
+  .withRail.withSummary {
+    grid-template-columns: var(--section-rail-w) minmax(0, var(--form-max));
+  }
+
+  .withSummary:not(.withRail) {
+    grid-template-columns: minmax(0, var(--form-max));
+  }
+
+  .withRail.withSummary .settingsNav {
+    grid-row: 1 / span 2;
+  }
+
+  .withRail.withSummary .settingsBody,
+  .withRail.withSummary .settingsSummary {
+    grid-column: 2;
+  }
+
+  /* Below 1180 wide changes nothing: the part follows the form in its column. */
+  .withRail.withSummary.hasWide .settingsNav {
+    grid-row: 1 / span 3;
+  }
+
+  .withSummary .settingsWide {
+    grid-row: auto;
+    grid-column: -2 / -1;
+  }
+
+  .settingsWide > .settingsSection:not([data-wide]),
+  .settingsWide > .saveBar {
+    max-inline-size: none;
+  }
+
+  .settingsWide > .settingsFaq {
+    max-inline-size: none;
+  }
+
+  .settingsSummary {
+    position: static;
+    grid-row: 1;
+  }
+
+  /* The summary sticks nowhere here, with a wide part or without. */
+  .hasWide .settingsSummary {
+    align-self: auto;
+  }
+
+  /* Relative, never static: a card is its corner edge's containing block; the sticky offset is off. */
+  .hasWide .settingsSummaryCard {
+    position: relative;
+    inset-block-start: auto;
+  }
+
+  .wizardGrid.withSummary {
+    grid-template-columns: var(--stepper-w) minmax(0, var(--wizard-body-max));
+  }
+
+  /* Relative, never static, as the settings summary card above: the card is its corner edge's containing block. */
+  .wizardSummary {
+    position: relative;
+    inset-block-start: auto;
+    grid-column: 2;
+  }
+}
+
+/* Below 840: the section rail becomes a sticky strip; the stepper becomes "Step 2 of 4 · Name" over a progress bar. */
+@container content (width < 840px) {
+  .withRail,
+  .withRail.withSummary,
+  .withSummary:not(.withRail) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-4);
+  }
+
+  /* The strip keeps its own look through the section-menu hooks: no rail or bar, 32 px items (the
+     touch minimum on a coarse pointer) with a 2 px gap, the current one underlined in the selected-bar colour. */
+  .settingsNav {
+    --section-menu-flow: row;
+    --section-menu-gap: var(--sp-half);
+    --section-menu-marks: 0;
+    --section-menu-row: max(32px, var(--touch-min)); /* a strip item's height, pinned by kit/controls/kit-parts.swaps.test.tsx */
+    --section-menu-current-line: var(--hx-selected-bar);
+
+    position: sticky;
+    inset-block-start: 0;
+    z-index: var(--z-sticky);
+    flex-direction: row;
+    align-items: stretch;
+    margin-inline: calc(var(--pad-page) * -1);
+    padding-block: var(--sp-1);
+    border-block-end: var(--bw) solid var(--hx-line);
+    background: var(--hx-bg);
+  }
+
+  .settingsNavList {
+    flex: 1;
+    padding-inline: var(--pad-page);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .settingsNavList::-webkit-scrollbar {
+    display: none;
+  }
+
+  .withRail.withSummary .settingsNav,
+  .withRail.withSummary .settingsBody,
+  .withRail.withSummary .settingsSummary,
+  .withRail.withSummary.hasWide .settingsNav,
+  .withSummary .settingsWide {
+    grid-row: auto;
+    grid-column: 1;
+  }
+
+  .settingsWide {
+    margin-block-start: 0;
+  }
+
+  /* The folded summary stays after every section, as without a wide part. */
+  .hasWide .settingsSummary {
+    order: 1;
+  }
+
+  .wizardCompact {
+    display: flex;
+  }
+
+  /* The flow's strip gives way to the compact line and its segments. */
+  .strip {
+    display: none;
+  }
+
+  .wizardGrid,
+  .wizardGrid.withSummary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .steps {
+    display: none;
+  }
+
+  .wizardSummary {
+    grid-column: 1;
+  }
+}
+
+/* Phone (< 480): Back shows its arrow only; its name stays "Back" (aria-label). */
+@container content (width < 480px) {
+  .wizardFooter .wizardBack {
+    gap: 0;
+  }
+
+  .wizardBackLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* XS (< 600): 1 track; widgets span it. */
+@container content (width < 600px) {
+  .dashGrid {
+    --tracks: 1;
+  }
+
+  /* The detail column's gap is the phone gap between sections, the value its sections take (anatomy.module.css). */
+  .detailMain {
+    --gap-between-sections: var(--sp-5);
+  }
+
+  .w_s,
+  .w_m {
+    grid-column: 1 / -1;
+  }
+
+  .levelRows {
+    height: auto;
+    min-height: 0;
+    max-height: var(--level-body);
+  }
+
+  .levelFill {
+    min-height: 0;
+  }
+
+  .page {
+    padding-block-start: var(--sp-3);
+  }
+
+  /* TablePage on phones: the page scrolls as one document, not a short inner box cut at the
+     viewport (like ListDetailPage below 600). The table grows with its rows. */
+  .fill {
+    height: auto;
+  }
+
+  .fill .tableBody {
+    flex: none;
+    min-height: auto;
+  }
+
+  .paneBody,
+  .paneNotice {
+    padding-inline: 0;
+  }
+}
+
+/* Forced colours drop box-shadow, so the focus rings above would vanish: a solid outline in the system Highlight
+   colour instead, as Button's. */
+@media (forced-colors: active) {
+  .settingsTitle:focus-visible,
+  .viewAll[data-focus-visible],
+  button.stepBtn:focus-visible,
+  button.stripBtn:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+}

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Keys and tokens                                         ▸ Use with your agent █
+ A key lets your agent, the CLI or the SDK act for you. Give each one its own  █
+ key, with an end date.                                                        █
+   API keys 5 keys  ▸ SSH keys    Shared access 0 shares                       █
+ ───────────────────────────────────────────────────────────────────────────── █
+                                                                               █
+ Each computer holds one key. Pick another computer in the top bar to change   █
+ its own.                                                                      █
+                                                                               █
+ ┌───────────────────────────────────────────────────────────────────────────┐ █
+ │                                                                           │ █
+ │ Computer                        atlas                                     │ ▀
+ │                                                                           │
+ │ Current key                     ana@laptop                      [Replace] │
+ │                                 ssh-ed25519 …00000000                     │
+ │                                                                           │
+ │ Connect                         Connect with                              │
+ │                                 ssh atlas.ssh.hoody.example  ⧉ copy       │
+ │                                                                           │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

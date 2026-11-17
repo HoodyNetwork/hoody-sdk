@@ -1,0 +1,8 @@
+/* The Free badge and its two offers. Tokens only. On a coarse pointer the kit's buttons are 44 px both ways (the
+   page's own floor left). */
+.offers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}

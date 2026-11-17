@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Support chat                                                     Esc ×
+ Bots  ┃ Telegram
+ ‹ Bots┃ ──────────────────────────────────────────────────────────────────────
+ Chief ┃ │▌Setup                 ┌───────────────────────────────────────────┐█
+   SG a┃ │ People                │ GET IT WORKING                3 OF 6 DONE │█
+       ┃ │ Chats                 │ It can't connect: a webhook takes its     │█
+  ┌─ ! ┃ │ Settings              │ messages.                                 │█
+  │  Al┃                         │ Next: Remove the webhook                  │█
+  │    ┃                         │ ╳╳╳╳╳╳ ────── ━━━━━━ ╍╍╍╍╍╍ ━━━━━━ ━━━━━━ │█
+  │ Run┃                         └───────────────────────────────────────────┘█
+  │ npm┃                                                                      █
+  │ App┃                         ┌───────────────────────────────────────────┐█
+  │ [De┃                         │ Remove the webhook                        │█
+  └────┃                         │ Telegram sends this bot's messages to a   │█
+  A che┃                         │ webhook, so this app can't read them.     │█
+       ┃                         │ ───────────────────────────────────────── │█
+   Acti┃                         │ The old address stops getting the bot's   │█
+ ──────┃                         │ messages.                                 │
+       ┃                         │  Remove the webhook                       │
+  ┌────┃                         └───────────────────────────────────────────┘
+  │ At ┃                          2  Connect the app
+  │ App┃                          ✓  Become its owner                      Ana
+  │ Wai┃                          !  Let it read groups               Optional
+ Tab mo┃                          ✓  Add it to a group        Optional 1 group

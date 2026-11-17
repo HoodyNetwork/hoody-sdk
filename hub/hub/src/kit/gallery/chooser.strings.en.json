@@ -1,0 +1,19 @@
+{
+  "tab": "Model setup",
+  "title": "Model chooser with setup",
+  "desc": "One state per page: pick a state, or open it with ?tab=chooser&ch=<state>. A sample computer with made-up answers: nothing is sent anywhere.",
+  "states": "States",
+  "frame": "Sample model chooser with setup",
+  "chosen": "Chosen: {{what}}",
+  "chosen.none": "Nothing chosen yet",
+  "chosen.inherit": "the Agent's default",
+  "ch.key": "API key",
+  "ch.chatgpt": "ChatGPT sign-in",
+  "ch.openrouter": "OpenRouter sign-in",
+  "ch.endpoint": "Endpoint key",
+  "ch.confirming": "Confirming",
+  "ch.unconfirmed": "Couldn't confirm",
+  "ch.still": "Still needs setup",
+  "computer": "atlas",
+  "origin": "Sample page"
+}

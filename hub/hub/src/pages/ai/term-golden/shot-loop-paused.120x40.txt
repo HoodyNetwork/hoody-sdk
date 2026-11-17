@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents  ▌Automations   Knowledge   Settings
+ Computers             │   Workflows  ▌Loops   TODOs
+ Files                 │  Loops   1 of 8 active on atlas                                        [+ New loop in a chat…]
+ Bots                  │  A loop repeats a prompt in one chat on a timer.
+ Board                 │
+ Demo                  │  ‹ Loops  Esc
+ Vault                 │  Look for dependency updates  · Paused                                  [Run now]  Resume  [⋯]
+                       │
+On atlas ▾             │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Programs              │  │ PAUSED                                                                                    │
+ Schedules             │  │ It no longer keeps its chat open.                                                         │
+ Scripts               │  │ If nobody has the chat open, the agent may close it, and the                              │
+ Logs                  │  │ loop ends with it.                                                                        │
+ Tunnels               │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Notes                 │
+▌AI                    │
+ VMs                   │
+                       │  In chat   Dependency updates
+Account                │  Every     30 min
+ Plans & Billing       │  Runs      3 of 50
+ Referrals             │  Spent     $0.04
+ Keys and tokens       │  Started   10 hours ago
+ API                   │  Last run  12 minutes ago
+ Notifications      26 │
+ Account               │  Prompt    Look for dependency updates
+                       │  Kept      Lives in the agent’s memory on atlas: it ends when its chat closes and is lost if
+ + Rent servers        │            the agent restarts.
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

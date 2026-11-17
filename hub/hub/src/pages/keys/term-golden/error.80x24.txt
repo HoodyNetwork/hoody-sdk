@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                 ◆ Personal ▾  Computers not loaded ▾  [A]  ^K · ?
+ Keys and tokens                             ▸ Use with your agent   + New key
+ A key lets your agent, the CLI or the SDK act for you. Give each one its own
+ key, with an end date.
+ ▸ API keys    SSH keys    Shared access
+ ──────────────────────────────────────────────────────────────────────────────
+ i Keys that work in Personal.                                [Show all realms]
+ / Search               Filters                         ↻ Refresh  View options
+
+ ✗ Keys and tokens: This didn't load
+ Try again
+
+
+
+ Questions
+ ▸ Can I see a key's secret again?
+ ▸ What is an API key for?
+ ▸ Which realms does a key work in?
+ ▸ What can a key do, and what does Full mean?
+ ▸ When does a key stop working, and can I limit where it works from?
+ ▸ How does the SSH key work?
+ ▸ What does sharing a realm give someone?
+ ▸ What do I send to the person I share with?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

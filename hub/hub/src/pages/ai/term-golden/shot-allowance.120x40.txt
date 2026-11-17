@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations   Knowledge  ▌Settings
+ Computers             │  ▌Models & keys   Connections & MCP   Rules & hooks
+ Files                 │  atlas › Models & keys
+ Bots                  │  Models & keys                                                           + Connect an account
+ Board                 │  atlas uses Hoody Free for everything.
+ Demo                  │
+ Vault                 │   Default model  Accounts  Claude Code ▌Hoody AI allowance  Spending  Advanced  Questions
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Programs              │  │ Hoody AI allowance                                                                    │
+ Schedules             │  │ Each server you own has its own free AI allowance, shared by every computer on it.    │
+ Scripts               │  │                                                                                       │
+ Logs                  │  │ Your servers                                                                          │
+ Tunnels               │  │ / Search                                        3 servers  Usage and plans  ↻ Refresh │
+ Notes                 │  │                                                                                       │
+▌AI                    │  │   Server             Chat       Quick decisions Web search Speech     Transcription   │
+ VMs                   │  │ › atlas               30% ███░…  10% █░░░░░░░░░   0% ░░░░… Not on th… No reading      │
+                       │  │   build-box          100% ████…  80% ████████░…  50% ████…   0% ░░░░…  20% ██░░░░░…   │
+Account                │  │   spare              No reading No reading      No reading No reading No reading      │
+ Plans & Billing       │  │   Can't read this                                                                     │
+ Referrals             │  │   server right now.                                                                   │▄
+ Keys and tokens       │  │   Try again in a                                                                      │█
+ API                   │  │   minute.                                                                             │█
+ Notifications      26 │  │                                                                                       │█
+ Account               │  │ AI credit                                                                             │█
+                       │  │ ┌───────────────────────────────────────────────────────────────────────────────────┐ │█
+ + Rent servers        │  │ │                                                                                   │ │█
+ Guide                 │  │ │ Add AI credit                    Coming soon                      [Add AI credit] │ │▀
+ Support               │  │ │ Buying AI credit on its own is                                                    │ │
+                       │  │ │ planned. Until then, your AI                                                      │ │
+                       │  │ │ comes with each server's                                                          │ │
+                       │  │ │ allowance.                                                                        │ │
+                       │  │ │                                                                                   │ │
+                       │  │ └───────────────────────────────────────────────────────────────────────────────────┘ │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Spending                                                                              │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

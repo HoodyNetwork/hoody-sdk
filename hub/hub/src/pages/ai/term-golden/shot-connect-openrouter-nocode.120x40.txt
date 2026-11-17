@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ ‹ Back                                                                  Esc ×
+ Home                  │   Chats   Agent┃ Connect OpenRouter
+ Computers             │  ▌Models & keys┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  atlas › Models┃ How to connect OpenRouter
+ Bots                  │  Models & keys ┃ (•) Sign in with OpenRouter
+ Board                 │  atlas uses Hoo┃     Use your OpenRouter account
+ Demo                  │                ┃ ( ) Use an API key
+ Vault                 │  ▌Default model┃     Pay as you go on your own key
+                       │  ──────────────┃
+On atlas ▾             │  ┌─────────────┃   1. Open OpenRouter and sign in.
+ Programs              │  │ Default mode┃   2. Approve the request. OpenRouter then opens a localhost page that does
+ Schedules             │  │ The model yo┃      not load. That is expected.
+ Scripts               │  │ ┌───────────┃   3. Copy that page's whole address from the address bar and paste it below.
+ Logs                  │  │ │           ┃
+ Tunnels               │  │ │ AI helper ┃ [Open OpenRouter ⇗]
+ Notes                 │  │ │ The model ┃
+▌AI                    │  │ │ everyday w┃ Address of the page that did not load
+ VMs                   │  │ │ computer. ┃ ┃ ______________
+                       │  │ │           ┃ ✗ Paste the address first.
+Account                │  │ │ Bots      ┃
+ Plans & Billing       │  │ │ Bots follo┃  Finish sign-in  [Cancel sign-in]
+ Referrals             │  │ │           ┃
+ Keys and tokens       │  │ └───────────┃ The sign-in stays open for 15 minutes.
+ API                   │  └─────────────┃
+ Notifications      26 │                ┃
+ Account               │  ┌─────────────┃
+                       │  │ Accounts    ┃
+ + Rent servers        │  │ The AI provi┃
+ Guide                 │  │ / Search    ┃
+ Support               │  │             ┃
+                       │  │   Provider  ┃
+                       │  │ › H Hoody AI┃
+                       │  │   O OpenAI  ┃
+                       │  └─────────────┃
+                       │                ┃
+                       │  ┌─────────────┃
+                       │  │ Claude Code ┃
+                       │  │ Use your own┃
+                       │  │ ┌───────────┃
+ Tab move · Enter open · Ctrl+K commands┃

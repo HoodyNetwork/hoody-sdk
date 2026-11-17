@@ -1,0 +1,127 @@
+{
+ "operations": {
+  "createAuthToken": {
+   "group": "auth",
+   "command": "create",
+   "path": [
+    "tokens"
+   ],
+   "sdkOperationId": "api_createAuthToken"
+  },
+  "listAuthTokens": {
+   "group": "auth",
+   "command": "list",
+   "path": [
+    "tokens"
+   ],
+   "sdkOperationId": "api_listAuthTokens"
+  },
+  "copyAuthToken": {
+   "group": "auth",
+   "command": "copy",
+   "positional": [
+    {
+     "name": "id",
+     "from_param": "id",
+     "required": true
+    }
+   ],
+   "path": [
+    "tokens"
+   ],
+   "sdkOperationId": "api_copyAuthToken"
+  },
+  "updateAuthTokenPatch": {
+   "group": "auth",
+   "command": "update",
+   "positional": [
+    {
+     "name": "id",
+     "from_param": "id",
+     "required": true
+    }
+   ],
+   "path": [
+    "tokens"
+   ],
+   "sdkOperationId": "api_updateAuthTokenPatch"
+  },
+  "startInstance": {
+   "group": "browser",
+   "command": "start",
+   "path": [],
+   "sdkOperationId": "browser_startInstance"
+  },
+  "code_healthCheck": {
+   "group": "code",
+   "command": "health",
+   "path": [],
+   "sdkOperationId": "code_healthCheck"
+  },
+  "getDownloadHistory": {
+   "group": "files",
+   "command": "list",
+   "path": [
+    "downloads",
+    "history"
+   ],
+   "sdkOperationId": "files_getDownloadHistory"
+  },
+  "dismissNotifications": {
+   "group": "notifications",
+   "command": "dismiss",
+   "path": [],
+   "sdkOperationId": "notifications_dismissNotifications"
+  },
+  "proxyLogs_listLogs": {
+   "group": "proxy",
+   "command": "list",
+   "path": [
+    "logs"
+   ],
+   "sdkOperationId": "proxyLogs_listLogs"
+  },
+  "egress_healthCheck": {
+   "group": "egress",
+   "command": "health",
+   "path": [],
+   "sdkOperationId": "egress_healthCheck"
+  },
+  "waitlistJoin": {
+   "group": "auth",
+   "command": "join",
+   "path": [
+    "waitlist"
+   ],
+   "sdkOperationId": "api_waitlistJoin"
+  },
+  "waitlistEnrich": {
+   "group": "auth",
+   "command": "update",
+   "path": [
+    "waitlist"
+   ],
+   "sdkOperationId": "api_waitlistEnrich"
+  },
+  "notes_healthCheck": {
+   "group": "notes",
+   "command": "health",
+   "path": [],
+   "sdkOperationId": "notes_healthCheck"
+  },
+  "notes_uploadAvatar": {
+   "group": "notes",
+   "command": "upload",
+   "path": [
+    "avatars"
+   ],
+   "sdkOperationId": "notes_uploadAvatar"
+  }
+ },
+ "excluded_operations": {
+  "exec_executeScript": {},
+  "terminal_postTerminalState": {},
+  "api_login": {},
+  "files_createDirectory": {}
+ }
+}

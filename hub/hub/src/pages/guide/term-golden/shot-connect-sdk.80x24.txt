@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  Guide                       ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Ask your agent ▌Connect  Skills  Build your own  Every link  Bots  Tools
+  Try this  Realms  Topics  Keyboard  Look                                     █
+ │ Connect your AI. Hoody works best from the AI you already use. Connect it │
+ │ once and it gets real computers, terminals, displays, browsers and files. │
+ │   AI chats                                                                │
+ │   Coding agents   Keep your account key out of browser code and source    │
+ │   CLI             files.                                                  │
+ │ ▸ SDK                                                                     │
+ │   HTTP API        SDK                                        ⧉ Copy all   │
+ │   SSH             1. Install                                              │
+ │   Browser          npm install hoody-sdk                        ⧉ copy    │
+ │                   2. Connect to your computer                             │
+ │                    import { HoodyClient } from 'hoody-sdk';     ⧉ copy    │
+ │                    const hoody = new HoodyClient({ baseURL:               │
+ │                    'https://api.hoody.com', token:                        │
+ │                    process.env.HOODY_TOKEN });                            │
+ │                    const box = await                                      │
+ │                    hoody.withComputer('c0a7…00a1');                       │
+ │                   sdk.hoody.com  SDK quick start  Make a key              │
+ │                                                                           │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

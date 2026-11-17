@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Account
+ Computers             │  Your profile, how you sign in, and where you are signed in.
+ Files                 │
+ Bots                  │  ‹ 5   Agent sign-in  Security history  SSH keys  Emails  Elsewhere ▌This device  Questions
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Vault                 │  │ This device                                                                           │
+                       │  │ What the Hub keeps on this device. Nothing here changes your account or your          │
+On atlas ▾             │  │ computers.                                                                            │
+ Programs              │  │                                                                                       │
+ Schedules             │  │ Language                        [English ▾]                                           │
+ Scripts               │  │ The language the Hub is                                                               │
+ Logs                  │  │ written in.                                                                           │
+ Tunnels               │  │                                                                                       │
+ Notes                 │  │ Performance mode                [□ off]                                               │
+ AI                    │  │ A terminal draws no shadows,                                                          │
+ VMs                   │  │ animations or transitions, so                                                         │
+                       │  │ this switch changes nothing                                                           │
+Account                │  │ here.                                                                                 │
+ Plans & Billing       │  │                                                                                       │
+ Referrals             │  │ Remove all local data           [Remove local data]                                   │
+ Keys and tokens       │  │ Removes this account's saved                                                          │
+ API                   │  │ settings, layouts, drafts and                                                         │
+ Notifications      26 │  │ tracked changes from this                                                             │
+▌Account               │  │ device, then leaves the Hub.                                                          │
+                       │  │ You stay signed in: to sign                                                           │
+ + Rent servers        │  │ out, run hoody logout.                                                                │
+ Guide                 │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ Support               │
+                       │
+                       │  Questions
+                       │  ▸ What does the passcode lock protect, and what doesn't it?
+                       │  ▸ Where does the passcode apply, and what removes it?                                    ▄
+                       │  ▸ What does Remove all local data do?                                                    █
+                       │  ▸ What happens when I change my email address?                                           █
+                       │  ▸ What happens when I end a sign-in session?                                             █
+                       │  ▸ What does two-step sign-in change?                                                     █
+                       │  ▸ What do Check again and Stop tracking mean on a change that may have gone through?     █
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

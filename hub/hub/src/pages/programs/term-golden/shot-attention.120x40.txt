@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                            ▸ Use with your agent  [+ New program]   + Launch an app
+ Computers             │  19 programs on atlas · 11 running · 4 need a look
+ Files                 │  ‹ Programs  Esc
+ Bots                  │  worker  ● Not working                                                           [▷ Start] [⋯]
+ Board                 │
+ Demo                  │  ✗ worker could not start. Its log usually says why.                                         █
+ Vault                 │                                                                                              █
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+On atlas ▾             │  │ At a glance                                                                              │█
+▌Programs              │  │ Kind       Your program                                                                  │█
+ Schedules             │  │ State      Not working                                                                   │█
+ Scripts               │  │ Restarts   Starts again whenever it stops                                                │█
+ Logs                  │  │ Startup    [■ on ] Start with the computer                                               │█
+ Tunnels               │  │ Last stop  Couldn't start · 15 minutes ago                                               │█
+ Notes                 │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ AI                    │                                                                                              █
+ VMs                   │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Sandbox                                                                   [Edit sandbox] │█
+Account                │  │ Limits what this program can reach: files, network and resources.                        │█
+ Plans & Billing       │  │ │ ! What the computer reports                                                            │█
+ Referrals             │  │ │   live table does not match the committed fingerprint (missing, unreadable, or         │█
+ Keys and tokens       │  │ │   changed outside the daemon)                                                          │█
+ API                   │  │                                                                                          │█
+ Notifications      26 │  │ Saved policy            • Files are read-only except /hoody/storage/apps/web/data        │█
+ Account               │  │                         • Ports named: 8000 (listening is not limited in this network    │█
+                       │  │                           mode)                                                          │█
+ + Rent servers        │  │                         • New inbound IPv4 TCP connections from outside to its listening │█
+ Guide                 │  │                           ports only from 203.0.113.0/24; replies to its own connections │█
+ Support               │  │                           pass                                                           │█
+                       │  │                         • Each address: at most 50/s new inbound IPv4 TCP connections to │█
+                       │  │                           its listening ports (a short burst passes)                     │█
+                       │  │                         • The computer's own and the platform's connections are not      │█
+                       │  │                           filtered                                                       │
+                       │  │                         • Other ports it listens on are not filtered (listening is not   │
+                       │  │                           limited in this network mode)                                  │
+                       │  │                         • Memory up to 256M                                              │
+                       │  │                         • Up to 64 processes                                             │
+                       │  │ Used at next start    Policy 3f9c1a2b7e4d ⧉                                              │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

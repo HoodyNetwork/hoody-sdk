@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs             ▸ Use with your agent  [+ New program]   + Launch an app
+ 19 programs on atlas · 11 running · 4 need a look
+ ▸ Running programs    Apps    Ports & aliases
+ ──────────────────────────────────────────────────────────────────────────────
+ / Search programs      Filters (1)                      4 programs  ↻ Refresh█
+ ▌   ! nightly-sync                                 ● Ended (code 2) [Start] ⋯█
+     ! worker                                          ● Not working [Start] ⋯█
+     ! mystery                                          ● Can't tell         ⋯█
+ ▾ System programs · 1 ● 1 problem                                            █
+     ! hoody-exec                                      ● Not working [Start] ⋯█
+       · System                                                               █
+                                                                              █
+ Questions                                                                    █
+ ▸ What is a program, and what are Running programs and Apps?                 █
+ ▸ What are the system programs, and is it safe to stop one?                  █
+ ▸ What is the difference between Keep it and Run once?                       █
+ ▸ When does a start count as done, and what happens when a program stops?    ▀
+ ▸ What does a sandbox limit, and what do the starting points do?
+ ▸ What do the network choices and allowed ranges do?
+ ▸ When do new sandbox limits take effect, and what does removing them do?
+ ▸ What if a change may have gone through?
+ ▸ Which open ports get a web address?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

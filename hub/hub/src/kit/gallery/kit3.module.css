@@ -1,0 +1,12 @@
+.what {
+  min-width: 14rem;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.fill {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  max-width: 32rem;
+}

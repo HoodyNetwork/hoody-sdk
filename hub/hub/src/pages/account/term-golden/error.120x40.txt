@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                      ◆ Personal ▾  Computers not loaded ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Account
+ Computers             │  Your profile, how you sign in, and where you are signed in.
+ Files                 │
+ Bots                  │  ▌Profile  Password  Two-step sign-in  Passcode lock  Sign-in sessions  Agent sign-in   5 ›
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────┐█
+ Vault                 │  │ Security                                                                              │█
+                       │  │ ! Your email status could not be read.                                    [Try again] │█
+On this computer       │  │ ! Two-step sign-in status could not be read.                              [Try again] │█
+ Programs              │  │ ! Sign-in sessions could not be read.                                     [Try again] │█
+ Schedules             │  └───────────────────────────────────────────────────────────────────────────────────────┘█
+ Scripts               │                                                                                           █
+ Logs                  │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Tunnels               │  │ Profile                                                                               │
+ Notes                 │  │ ! This didn't load                                                                    │
+ AI                    │  │ [Try again]                                                                           │
+ VMs                   │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+Account                │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Plans & Billing       │  │ Password                                                                              │
+ Referrals             │  │                                                                                       │
+ Keys and tokens       │  │ Password                        [Change password]                                     │
+ API                   │  │ Changing it signs you out                                                             │
+ Notifications       2 │  │ everywhere.                                                                           │
+▌Account               │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+ + Rent servers        │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Guide                 │  │ Two-step sign-in                                                                      │
+ Support               │  │                                                                                       │
+                       │  │ Two-step sign-in                Couldn't read your two-step sign-in       [Try again] │
+                       │  │ It is not off: the Hub just     status                                                │
+                       │  │ could not read it.                                                                    │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Passcode lock                                                                         │
+                       │  │                                                                                       │
+                       │  │ No passcode                                                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

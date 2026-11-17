@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            AI                                     ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  [Back to chats] Plan the backup job                                      · Idle [⋯] [Details]
+ Computers             │  atlas · Personal  /home/ada
+ Files                 │  [Hoody Free]
+ Bots                  │ ───────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │  │ You 09:00 AM
+ Demo                  │  │ Plan the backup job
+ Vault                 │
+                       │ ┌────────────────────────────────────────────────────────────────────┐
+On atlas ▾             │ │ Attach a web page                                            Esc × │
+ Programs              │ │ ────────────────────────────────────────────────────────────────── │
+ Schedules             │ │ The page is read on this chat's computer, not by the Hub, and      │
+ Scripts               │ │ added to your message as a file. Nothing is sent yet.              │
+ Logs                  │ │                                                                    │
+ Tunnels               │ │ Web address                                                        │
+ Notes                 │ │ │ https://example.com/long-page                                    │
+▌AI                    │ │                                                                    │
+ VMs                   │ │ Attach it                                                          │
+                       │ │ (•) As Markdown                                                    │
+Account                │ │     The page's main text, cleaned up by a hidden browser on this   │
+ Plans & Billing       │ │     computer. Best for articles and docs.                          │
+ Referrals             │ │ ( ) As it is                                                       │
+ Keys and tokens       │ │     The file exactly as the site sends it: HTML, JSON, plain text  │
+ API                   │ │     or an image. Text up to 24 KB.                                 │
+ Notifications      26 │ │                                                                    │
+ Account               │ │ ! This page is longer than 24 KB of text, the most one message     │
+                       │ │   file holds. You can attach the first 24 KB; the rest is left     │ick a model that can
+ + Rent servers        │ │   out.                                                             │
+ Guide                 │ │                                                                    │
+ Support               │ │                                 [Cancel]   Attach the first 24 KB  │one trusts them. You
+                       │ └────────────────────────────────────────────────────────────────────┘
+                       │
+                       │
+                       │
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Message your agent                                                                        │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │  [+]  [/ Commands]  [Ask when needed]                                            [Send ↵]  [▾]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,18 @@
+{
+  "head.untitled": "New chat",
+  "head.back": "Back to chats",
+  "head.details": "Details",
+  "head.detailsClose": "Close details",
+  "head.status.loading": "Loading",
+  "head.status.idle": "Idle",
+  "head.status.running": "Running",
+  "head.status.needs": "Needs you",
+  "head.status.paused": "Paused",
+  "head.status.closed": "Closed",
+  "head.status.unreachable": "Can't reach",
+  "head.runsOn": "Runs on",
+  "head.change": "Change",
+  "head.model": "Model: {{name}}. Change the model or how hard it thinks",
+  "head.model.unnamed": "Hoody AI",
+  "head.meta": "Where this chat runs"
+}

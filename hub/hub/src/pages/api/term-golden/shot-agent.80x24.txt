@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Use with your agent                                              Esc ×
+ API   ┃ Hoody Agent, or any agent with the Hoody skill, can find the
+ Every ┃ endpoint for what you want and call it for you. It reaches your
+ ▸ Endp┃ account through the Hoody API, and each computer through the
+ ──────┃ Hoody Kit inside it.
+ / Sear┃ ──────────────────────────────────────────────────────────────────────
+       ┃ ▸ Prompts    Set up    Access    Can do                              █
+ ▸ Agen┃ ─────────────────────────────────────────────────────────────────────█
+ ▸ Acco┃                                                                      █
+ ▸ Brow┃ Acts on                                                              ▀
+ ▸ Code┃ Realm     ■ Personal f1f1…f1f1
+ ▸ Cron┃ Computer  Every computer in this realm
+ ▸ cURL┃ Names the realm so your agent acts on the right one.
+ ▸ Daem┃
+ ▸ Disp┃ Start here
+ ▸ Egre┃ Do something through the API
+ ▸ Exec┃ Your agent asks you what you want before it does anything.
+ ▸ File┃
+ ▸ Note┃  ✦ Ask Hoody Agent   ⧉ Copy for your agent
+ ▸ Noti┃
+ ▸ Pipe┃ Two ways to use it
+ ▸ Prox┃ Hoody Agent     No set-up. Ask Hoody Agent puts the prompt in the
+ ▸ Run ┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ Skills in the Guide                                  Hide on this page

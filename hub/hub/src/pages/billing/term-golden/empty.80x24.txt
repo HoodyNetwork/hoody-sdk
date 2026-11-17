@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                     ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+ Plans & Billing                                                   + Add funds
+ Upgrade a server, rent a whole machine, and see what you pay.
+ ▸ Plans    Bare metal    Wallet & usage
+ ──────────────────────────────────────────────────────────────────────────────
+ Plans                                                                        █
+ Each plan is a server of your own. Its computers share its cores, memory and ▀
+ disk. You can take the same plan more than once.
+
+ ┌────────────────────────────────────┐  ┌───────────────────────────────────┐
+ │ Free                               │  │ Small                             │
+ │ $0 / month                         │  │ $12 / month                       │
+ │ Hardware           Shared hardware │  │ Paid monthly from your wallet     │
+ │ AI allowance            Free 1×    │  │ Computers                       3 │
+ │                         █░░░░░░░░░ │  │ CPU cores                       2 │
+ │ Locations                          │  │ Memory                       4 GB │
+ │ No choice of location              │  │ Disk                        60 GB │
+ │ Next: Small.                       │  │ Hardware          Shared hardware │
+ │ Free server details                │  │ AI allowance           Plus 4×    │
+ │                                    │  │                        ██░░░░░░░░ │
+ │                                    │  │ Locations                         │
+ │                                    │  │ DE Frankfurt, Germany             │
+ │                                    │  │ FI Helsinki, Finland              │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

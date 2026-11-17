@@ -1,0 +1,7 @@
+{
+ "_doc": "Diagnostics that come only from typing web code against DOM and Bun globals in one program (the terminal runs under Bun). Matched by file + code. An entry that no longer matches fails the check. Owner fixes are welcome; never add a real bug here.",
+ "entries": [
+  { "file": "src/core/upload-core.ts", "code": "TS2322", "why": "DOM ReadableStreamReadResult annotation vs Bun's reader.read() result type" },
+  { "file": "src/pages/board/broadcast/sender.ts", "code": "TS18048", "why": "Bun's QueuingStrategySize types chunk as optional; DOM does not" }
+ ]
+}

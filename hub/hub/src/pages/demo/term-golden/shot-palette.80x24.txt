@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ D┌──────────────────────────────────────────────────────────────────────────┐
+ E│ Command palette                                                          │
+ /│ ──────────────────────────────────────────────────────────────────────── │s
+  │ ›  Type a command or a page…                                             │
+ ›│ PAGES                                                                    │█
+  │ ▸ Home                                                               g h │█
+  │   AI                                                                     │█
+  │   Plans & Billing                                                        │█
+  │   Guide                                                                  │█
+  │   Programs                                                           g p │█
+  │   Computers                                                          g c │░
+  │   Schedules                                                          g s │░
+  │   Support                                                                │░
+  │   Files                                                                  │░
+  │   Referrals                                                              │░
+  │   Bots                                                               g b │░
+  │   Notes                                                                  │░
+  │   Scripts                                                            g t │░
+  │   ↓ more                                                                 │░
+  │ ↑↓ choose · Enter run · Esc close · Ctrl+K anytime                       │░
+  └──────────────────────────────────────────────────────────────────────────┘░
+ 1–50 of 120 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

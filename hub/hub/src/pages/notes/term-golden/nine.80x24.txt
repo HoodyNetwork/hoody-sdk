@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Notes                                      ▸ Use with your agent   + New note
+ The notes on your computers. Everyone who opens Notes on a computer shares the
+ same notes.
+ i Showing 8 of 9 computers. Open the others from Computers.
+ / Search               Filters               10 notes  ↻ Refresh  View options
+     Title                             Section         Changed ↓
+ ▾ atlas · 6  Open Notes New note                                             █
+ ▌   Weekly plan                       Work            12 minutes ago        ⋯█
+     Deploy checklist                  Work            2 hours ago           ⋯█
+     Reading list                      Personal        7 hours ago           ⋯█
+     Meeting notes: storefront review  Work            yesterday             ⋯█
+     Trip ideas                        Personal        4 days ago            ⋯█
+     Backup schedule                   Projects        9 days ago            ⋯█
+ ▾ borealis · 4  Open Notes New note                                          █
+     Staging release notes             Work            40 minutes ago        ⋯█
+     Customer feedback                 Work            5 hours ago           ⋯█
+     Launch timeline                   Projects        3 days ago            ⋯█
+     Open questions                    Work                                  ⋯█
+   cedar This computer is stopped. Start it from Computers. Computers         █
+   dune This computer is starting. Its notes show when it is ready. Computers █
+   ember This computer needs attention before its notes can be read. Computers░
+   fjord This computer is stopped. Start it from Computers. Computers         ░
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Account
+ Your profile, how you sign in, and where you are signed in.
+ ▌Profile  Password  Two-step sign-in  Passcode lock  Sign-in sessions   7 ›
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Security                                                                  │▀
+ │ ✓ Your email address is verified.                                         │
+ │ ! Two-step sign-in is off. A password alone signs in.           [Turn on] │
+ │ i 11 other browsers or devices are signed in.                    [Review] │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Profile                                                                   │
+ │                                                                           │
+ │ Display name                    Ada                 [Change display name] │
+ │                                                                           │
+ │ Username                        ada                                       │
+ │                                                                           │
+ │ Email                           ada@example.com            [Change email] │
+ │                                 ✓ Verified                                │
+ │                                                                           │
+ │ Member since                    Mar 14, 2025                              │
+ │                                                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

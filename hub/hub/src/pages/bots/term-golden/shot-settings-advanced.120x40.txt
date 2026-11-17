@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Settings for Chief                                                                                    Esc ×
+ Home     ┃ Model, behaviour, guardrails and voice.
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │ The Bot itself        ┌─────────────────────────────────────────────────────────────────────────────────┐
+▌Bots     ┃ │ Model                 │ Advanced                                                       [Set in Helpers] │
+ Board    ┃ │ Behaviour             │ Read-only for now. Change these with the Hoody agent.                           │
+ Demo     ┃ │ Voice                 │ Model routing        Off                 Waits for a reply    30 seconds        │
+ Vault    ┃ │ The helpers it        │ Replies later        Off                 Realtime items kept  200               │
+          ┃ │ starts                └─────────────────────────────────────────────────────────────────────────────────┘
+On atlas ▾┃ │ Helpers
+ Programs ┃ │ Guardrails and
+ Schedules┃ │ limits
+ Scripts  ┃ │▌Advanced
+ Logs     ┃
+ Tunnels  ┃
+ Notes    ┃
+ AI       ┃
+ VMs      ┃
+          ┃
+Account   ┃
+ Plans & B┃
+ Referrals┃
+ Keys and ┃
+ API      ┃
+ Notificat┃
+ Account  ┃
+          ┃
+ + Rent se┃
+ Guide    ┃
+ Support  ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+ Tab move ┃

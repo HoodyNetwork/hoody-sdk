@@ -1,0 +1,201 @@
+/* Document base: reset, type, focus and scrollbars. Loaded once by the app, after tokens.css. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-text);
+  font-size: var(--fs-md);
+  line-height: var(--lh-normal);
+  color: var(--hx-ink);
+  background: var(--hx-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv11", "ss01";
+}
+
+#root {
+  height: 100%;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+dl,
+dd,
+figure {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--hx-link);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible,
+[data-focus-visible] {
+  outline: var(--bw-2) solid var(--hx-focus);
+  outline-offset: var(--sp-half);
+}
+
+/* Before the page's first key no focus box is drawn on a heading that code focused (kit/overlays/firstKey.ts): a page
+   title, a drawer or step heading, a section heading. Those take focus so the page reads from them, and a browser with
+   no input yet counts that as visible focus, which would show a mouse user a box. Every other element keeps its ring,
+   so a keyboard user who arrives by URL or reload with focus on a control or a panel sees where Enter lands. The
+   specificity is what beats a part's own focus rule. */
+:root[data-hx-no-key] :is(h1, h2, h3, h4, h5, h6)[tabindex='-1']:is(:focus-visible, [data-focus-visible]) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Forced colours drop every box-shadow, and a title's own rule turns its outline off: without this a heading anchor has
+   no focus mark once a key has been pressed. Headings only, so no part's own forced-colours choice is overridden. */
+@media (forced-colors: active) {
+  :root:not([data-hx-no-key]) :is(h1, h2, h3, h4, h5, h6)[tabindex='-1']:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--sp-half);
+  }
+}
+
+::selection {
+  background: var(--hx-selected);
+}
+
+/* Every scroller's bar: thin, its thumb a token of its own that shows on every panel (a hairline colour would leave it
+   unseen). Firefox reads only these two properties, so it has no hover shade: scrollbar-color has no hover state, and
+   a `*:hover` rule would darken every hovered ancestor's bar too. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--hx-scroll-thumb) transparent;
+}
+
+/* The "whisper thumb": where the engine draws ::-webkit-scrollbar (Chromium, Safari), a thin bar with
+   no buttons on a transparent track, a square thumb inside it and a darker thumb under the pointer. Chromium ignores
+   these pseudo-elements while the standard properties are set, so they go back to auto here; an element that sets
+   `scrollbar-width: none` itself (a strip) still hides its bar. */
+@supports selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+
+  ::-webkit-scrollbar {
+    width: var(--scrollbar-size);
+    height: var(--scrollbar-size);
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border: var(--scrollbar-inset) solid transparent;
+    border-radius: 0;
+    background: var(--hx-scroll-thumb) padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--hx-scroll-thumb-hover) padding-box;
+  }
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* Performance mode (kit/perf.ts): nothing animates or transitions, and no text glows. The shadow and duration
+   tokens are emptied in tokens.css; this rule catches every raw animation and transition too, so no page CSS can
+   escape the switch (kit/perf.conformance.test.ts). Focus rings are box-shadows and stay.
+   An animation is not removed but ends at once, run once: its delay and fill stay, so a state an animation shows
+   (the pending bar after 150 ms) still shows, and one running when the switch turns on (an overlay leaving) finishes
+   and fires its end, which removing it would cancel. */
+:root[data-hx-perf="on"] *,
+:root[data-hx-perf="on"] *::before,
+:root[data-hx-perf="on"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition: none !important;
+  text-shadow: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* The passcode lock: while this tab is locked, every body child but the lock host is gone from
+   paint, print, the accessibility tree and focus, portals opened later included. No media query: print too. */
+body[data-hub-locked] > :not(#hub-lock-host) {
+  display: none !important;
+}
+
+/* Visually hidden text: read by assistive tech, never seen or given room. The kit's one recipe: a part writes
+   className="hxSrOnly" (or renders the kit SrOnly) instead of keeping a copy of these rules in its own stylesheet. */
+.hxSrOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: calc(-1 * var(--bw));
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

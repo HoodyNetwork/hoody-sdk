@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Logs                                                 ▸ Use with your agent  [See what failed]
+ Computers             │  Only part of these logs could be read.
+ Files                 │
+ Bots                  │  ▸ Everything    Visits    Bots    Changes    Scripts    Programs   [More ▾]
+ Board                 │  │ ● SG atlas · █ Personal ▾ Result ▾  When: 1 hour │ / Search
+ Demo                  │                                                                     [□ off] Live [Refresh] [⋯]
+ Vault                 │  ! Problems jumped around Nov 11, 08:46 AM (41 in a few minutes).         [Around this moment]
+                       │  ! This computer has read its logs a lot recently. Try again in a while.           [Try again]
+On atlas ▾             │    Time     Result   From    What happened                                  Visitor
+ Programs              │  ▌ 08:35:00          Changes Computer started
+ Schedules             │    06:25:00          Changes Computer renamed
+ Scripts               │    04:15:00          Changes Realm assigned
+▌Logs                  │    02:05:00          Changes SSH key replaced
+ Tunnels               │    ── Tuesday, November 10 ──
+ Notes                 │    23:55:00          Changes Computer stopped
+ AI                    │    21:45:00          Changes Program started
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

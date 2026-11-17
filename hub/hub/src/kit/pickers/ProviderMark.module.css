@@ -1,0 +1,17 @@
+/* A provider's own mark (ProviderMark.tsx): the Monogram's box (sm 16 px, md 24 px), so a row keeps its place whichever mark
+   it shows, in the ink colour as the Hoody AI mark and the Monogram letter are. The mark's view (providerLogos.ts) sets its
+   optical size and centres it, so the box needs no padding. No plate: a filled square marks a provider without a logo. */
+.logo {
+  display: inline-block;
+  flex: none;
+  inline-size: var(--sp-4);
+  block-size: var(--sp-4);
+  vertical-align: middle;
+  color: var(--hx-ink);
+  fill: currentcolor;
+}
+
+.logoMd {
+  inline-size: var(--sp-6);
+  block-size: var(--sp-6);
+}

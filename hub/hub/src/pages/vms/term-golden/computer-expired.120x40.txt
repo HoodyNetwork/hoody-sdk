@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ○ atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Virtual machines                                                        ▸ Use with your agent
+ Computers             │  Full machines that run inside atlas.
+ Files                 │
+ Bots                  │  ▸ VMs    Images    KVM on computers
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  │ ! atlas has expired. Nothing runs on it any more, so the VMs inside it    [Open Computers]
+ Vault                 │  │   cannot be shown.
+                       │
+On atlas ▾             │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Programs              │  │ This computer                                                                             │
+ Schedules             │  │ VMs need a bare-metal server, with KVM on for the computer.                               │
+ Scripts               │  │                                                                                           │
+ Logs                  │  │ What this computer can run                                                                │
+ Tunnels               │  │ ┌───────────────────────────────────────────────────────────────────────────────────────┐ │
+ Notes                 │  │ │                                                                                       │ │
+ AI                    │  │ │ Run VMs on this computer (KVM)  [■ on ]                                               │ │
+▌VMs                   │  │ │ KVM is on for this computer.                                                          │ │
+                       │  │ │                                                                                       │ │
+Account                │  │ └───────────────────────────────────────────────────────────────────────────────────────┘ │
+ Plans & Billing       │  │ Server  Bare metal                                                                        │
+ Referrals             │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Keys and tokens       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ API                   │  │ VMs                                                                                       │
+ Notifications      26 │  │ atlas has expired.                                                                        │
+ Account               │  │ Nothing runs on it any more. Pick another                                                 │
+                       │  │ computer in the top bar.                                                                  │
+ + Rent servers        │  │  Open Computers                                                                           │
+ Guide                 │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Support               │
+                       │
+                       │  Questions
+                       │  ▸ What is a VM?
+                       │  ▸ Why can't my computer run VMs?
+                       │  ▸ How do I see a VM's screen?
+                       │  ▸ How do I install Windows?
+                       │  ▸ How do I reach a website that runs in a VM?
+                       │  ▸ Why did my VM stop or not start?
+                       │  ▸ Is the console line a terminal?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

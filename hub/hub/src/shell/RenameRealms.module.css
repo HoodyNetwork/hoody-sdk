@@ -1,0 +1,134 @@
+/* Rename realms: the dialog's realm list and a row's form in place. */
+.status {
+  margin: 0;
+  min-height: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.status:not(:empty) {
+  margin-bottom: var(--sp-2);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  border-bottom: 1px solid var(--hx-line);
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: var(--sp-1) 0;
+}
+
+.dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-0);
+  background: var(--rc, var(--hx-faint));
+}
+
+.names {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  overflow: hidden;
+  color: var(--hx-ink);
+  font-size: var(--fs-md);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.short {
+  color: var(--hx-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+.held {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: 0 0 var(--sp-3);
+}
+
+.colors {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.colorsLabel {
+  color: var(--hx-ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.swatch {
+  width: 32px;
+  height: 32px;
+  border: 2px solid transparent;
+  border-radius: var(--r-1);
+  background: var(--rc);
+  background-clip: content-box;
+  padding: var(--sp-half);
+  cursor: pointer;
+  outline: none;
+}
+
+.swatch[data-selected] {
+  border-color: var(--hx-ink);
+}
+
+.swatch[data-focus-visible] {
+  box-shadow: var(--focus-ring);
+}
+
+.swatch[data-disabled] {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.hint {
+  color: var(--hx-faint);
+  font-size: var(--fs-sm);
+}
+
+.actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+@media (pointer: coarse) {
+  .swatch {
+    width: 44px;
+    height: 44px;
+  }
+}

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  New script
+ Computers             │
+ Files                 │  Step 3 of 5 · Build it  ██████░░░░
+ Bots                  │   ✓ What it does  ✓ Where it answers ▸3 Build it  4 Check it  5 Make it live
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ▸ Your script so far
+ Vault                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Building your script                                                                      │
+On atlas ▾             │  │ The assistant on atlas is writing it. It keeps going if you leave this page.              │
+ Programs              │  │ ┌───────────────────────────────────────────────────────────────────────────────────────┐ │
+ Schedules             │  │ │ THE BUILD                                                                             │ │
+▌Scripts               │  │ │ Your script is written.                                                               │ │
+ Logs                  │  │ └───────────────────────────────────────────────────────────────────────────────────────┘ │
+ Tunnels               │  │ Adds a 404 for unknown cities.                                                            │
+ Notes                 │  │ ▸ See the code                                                                            │
+ AI                    │  │ [Build again]                                                                             │
+ VMs                   │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+Account                │  Questions
+ Plans & Billing       │  ▸ What is a script?
+ Referrals             │  ▸ Do I need to know how to code?
+ Keys and tokens       │  ▸ What can a script do?
+ API                   │  ▸ How does the assistant write a script?
+ Notifications      26 │  ▸ How do I make a script run on a schedule?
+ Account               │  ▸ What is a public link, and how is its name chosen?
+                       │  ▸ How does a script key work?
+ + Rent servers        │  ▸ Where do I keep secrets such as passwords or API keys?
+ Guide                 │  ▸ What are magic comments, and what do the settings do?
+ Support               │  ▸ Can I undo a change or bring back a deleted script?
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Next: the computer checks the code.
+                       │  [Back]                                                                   [Cancel]   Check it
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

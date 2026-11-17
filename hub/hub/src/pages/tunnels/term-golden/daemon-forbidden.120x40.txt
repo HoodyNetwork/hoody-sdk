@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Tunnels                                           ▸ Use with your agent   + Connect a laptop
+ Computers             │  Put a laptop app online through atlas, or let atlas reach a service on your laptop.
+ Files                 │
+ Bots                  │
+ Board                 │                ┌────────────────────────────────────────────────────────────────┐
+ Demo                  │                │ Not allowed                                                    │
+ Vault                 │                │                                                                │
+                       │                │ This computer's access settings keep the Hub from reading its  │
+On atlas ▾             │                │ programs.                                                      │
+ Programs              │                │                                                                │
+ Schedules             │                │ [Open access settings]                                         │
+ Scripts               │                └────────────────────────────────────────────────────────────────┘
+ Logs                  │
+▌Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │  Questions
+                       │  ▸ What is a tunnel for?
+                       │  ▸ Should I put a laptop app online or bring a laptop service in?
+                       │  ▸ Which port on the computer should I use?
+                       │  ▸ Which ports does the Hub warn about?
+                       │  ▸ When do I tick the password box?
+                       │  ▸ Why did my tunnel fail to open?
+                       │  ▸ Why doesn't a web address load?
+                       │  ▸ What does "Reconnecting or closing" mean?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

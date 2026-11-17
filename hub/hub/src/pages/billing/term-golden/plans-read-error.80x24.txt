@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Plans & Billing                                                   + Add funds
+ Upgrade a server, rent a whole machine, and see what you pay.
+ ▸ Plans    Bare metal    Wallet & usage
+ ──────────────────────────────────────────────────────────────────────────────
+ │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC               [Pay now]
+ Plans                                                                        █
+ Each plan is a server of your own. Its computers share its cores, memory and █
+ disk. You can take the same plan more than once.
+
+ ┌────────────────────────────────────┐  ! Couldn't load the offer.
+ │ Free                   ✓ Your plan │  No answer from the server. Check your
+ │ $0 / month                         │  connection, then try again.
+ │ Your free server: ash-3            │  [Try again]
+ │ Computers                        3 │  ▸ Details
+ │ Hardware           Shared hardware │
+ │ AI allowance               Free 1× │
+ │                            █       │
+ │ Locations                          │
+ │ No choice of location              │
+ │ Your free server stays as it is    │
+ │ when you buy a plan.               │
+ │ Free server details                │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

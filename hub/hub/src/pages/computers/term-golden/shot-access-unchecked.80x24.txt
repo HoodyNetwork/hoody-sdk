@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent  [+ Get a computer]
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ ‹ Computers  Esc
+ atlas  ● Running                                         [Open terminal ⇗] [⋯]
+ SG n12 · Home base · █  Personal ·  Current computer
+
+ ▸Overview  Connect  Permissions  Ports & addresses  Desktop  Network  Run
+  Programs  Backups  Storage
+ ──────────────────────────────────────────────────────────────────────────────
+ │ Bots        Bots working here ›                                           │
+ │ Board       Pin it to a board ›                                           │
+ │ SSH keys    All y┌─ Access ─────────────────────────────┐                 │
+ └──────────────────│ Couldn't check                       │─────────────────┘
+                    │ We couldn't check who can reach      │
+                    │ atlas just now. Open the page again  │                  ▄
+ ┌──────────────────│ to try again.                        │─────────────────┐
+ │ Access           │ How access works                     │                 │
+ │ SSH key          │ [View access rules]                  │nnect            │
+ │ Key added        │ [Learn more ⇗]                       │                 │
+ │                  └──────────────────────────────────────┘                 │
+ │ Who can open its        [Access of atlas: Couldn't check] Couldn't check  │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Programs             ▸ Use with your agent  [+ New program]   + Launch an app
+ 19 programs on atlas · 11 running · 4 need a look
+ ‹ Programs  Esc
+ api  ● Running                                        [↻ Restart] [■ Stop] [⋯]
+
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ At a glance                                                               │█
+ │ Kind      Your program                                                    │█
+ │ State     Running                                                         │█
+ │ Restarts  Starts again after a crash                                      │█
+ │ Startup   [□ off] Start with the computer                                 │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+                                                                              █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Ports                                                       Start a port  │▀
+ │ 2 of 4 ports running                                                      │
+ │    Port             State         Address         Alias                   │
+ │› ▸ 8000             ● Running     Open port 8000               [Restart] ⋯│
+ │  ▸ 8001             ● Running     Open port 8001  api-two      [Restart] ⋯│
+ │  ▸ 8002             ● Stopped     Open port 8002…                [Start] ⋯│
+ │  ▸ 8003             · not started Open port 8003… api-four       [Start] ⋯│
+ └───────────────────────────────────────────────────────────────────────────┘
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

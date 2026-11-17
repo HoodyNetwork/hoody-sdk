@@ -1,0 +1,81 @@
+/* Talk (TalkBar, CaptionStrip): the bar that takes the composer row while live, and the captions above it. Every other
+   control in the bar is a kit Button; only the hold control is sized here: --touch-min + --sp-5 on a coarse pointer
+   (a held thumb covers more than a tap), the button height (--btn-h) with a mouse. */
+.bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.note {
+  margin: 0;
+  color: var(--hx-warn);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-normal);
+}
+
+/* The hold control (a native button wearing the kit Button's classes): only its least size and its touch rules are
+   set here; the look is Button's. */
+.hold {
+  min-height: max(var(--btn-h), calc(var(--touch-min) + var(--sp-5)));
+  min-inline-size: max(var(--btn-h), calc(var(--touch-min) + var(--sp-5)));
+
+  /* A held touch is a hold: no scroll, no text selection, no OS long-press menu (TalkBar.hold.spec.ts). */
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.handsFree,
+.activity {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-normal);
+}
+
+.activity {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.level {
+  flex: 0 0 auto;
+}
+
+.captions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.caption {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-normal);
+  overflow-wrap: anywhere;
+}
+
+.who {
+  color: var(--hx-muted);
+  font-weight: var(--fw-medium);
+}
+
+.partial {
+  color: var(--hx-muted);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

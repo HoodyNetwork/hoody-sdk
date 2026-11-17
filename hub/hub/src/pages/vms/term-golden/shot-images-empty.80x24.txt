@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines                                         ▸ Use with your agent
+ Full machines that run inside atlas.
+   VMs  ▸ Images    KVM on computers
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Images                                   [+ Add from a link] [Open Files] │█
+ │ Installer images (ISO) kept on this computer.                             │█
+ │No images yet                                                              │█
+ │Add one from a link.                                                       │█
+ │ Already have the file? Put it on this computer with Files, then pick it   │█
+ │ when you create the VM.                                                   │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Downloads                                                                 │█
+ │ Images being fetched from a link. A finished one shows under Images.      │█
+ │↓ No downloads                                                             │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+                                                                              █
+ Questions                                                                    ▀
+ ▸ What is a VM?
+ ▸ Why can't my computer run VMs?
+ ▸ How do I see a VM's screen?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

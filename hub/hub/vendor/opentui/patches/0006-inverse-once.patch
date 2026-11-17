@@ -1,0 +1,107 @@
+native: apply INVERSE once (SGR 7), never also in the cell
+
+OpenTUI 0.8.4 swaps fg/bg of an INVERSE cell in the buffer (buffer.zig, text-buffer drawing) AND keeps the INVERSE
+bit, which the renderer writes as SGR 7: the terminal swaps a second time. With a background the inversion cancels;
+with a transparent text background the swap makes fg = bg and the words disappear (the terminal Hub drew focused
+rows as blank blocks). The cell now keeps the text's own colours and the terminal swaps once.
+Kept SGR 7 (not "swap in the cell and clear the bit") because in mono mode (0004) SGR 7 is the only inversion there
+is, and a transparent background then inverts against the terminal's own default background.
+renderer.no-color.test.ts (0004) asserted the double-swapped colours; updated. New: renderer.inverse-once.test.ts.
+
+--- a/packages/native/src/buffer.zig
++++ b/packages/native/src/buffer.zig
+@@ -2725,16 +2725,13 @@
+                         }
+                     }
+ 
+-                    var drawFg = finalFg;
++                    const drawFg = finalFg;
+                     var drawBg = finalBg;
++                    // INVERSE is NOT applied to the cell here: the attribute reaches the terminal as SGR 7, which swaps
++                    // once. Swapping here as well inverted twice (no visible inversion with a background; fg = bg and
++                    // no words with a transparent one), and in mono mode (0004) SGR 7 is the only inversion there is.
+                     const drawAttributes = finalAttributes;
+ 
+-                    if (drawAttributes & (1 << 5) != 0) {
+-                        const temp = drawFg;
+-                        drawFg = drawBg;
+-                        drawBg = temp;
+-                    }
+-
+                     if (prefilledViewportBg) |prefilledBg| {
+                         if (rgbaEqual(drawBg, prefilledBg.bg)) {
+                             drawBg[3] = drawBg[3] & 0xff00;
+--- a/packages/core/src/tests/renderer.no-color.test.ts
++++ b/packages/core/src/tests/renderer.no-color.test.ts
+@@ -91,6 +91,7 @@
+   assert.notDeepEqual(colorParameters(empty.output), [])
+   const explicit = await setup({ environment: { NO_COLOR: "1" }, colorMode: "ansi16" })
+   assert.equal(explicit.renderer.colorMode, "ansi16")
+-  // The reverse attribute swaps the cell's colors in the buffer: red becomes the background.
+-  assert.ok(explicit.output.includes("\x1b[101m") && explicit.output.includes("\x1b[94m"))
++  // 0006: the cell keeps its colors (red text on blue) and SGR 7 swaps them once, in the terminal.
++  assert.ok(explicit.output.includes("\x1b[91m") && explicit.output.includes("\x1b[104m"), JSON.stringify(explicit.output))
++  assert.match(explicit.output, /\x1b\[([0-9;]*;)?7(;[0-9;]*)?m/)
+ })
+--- /dev/null
++++ b/packages/core/src/tests/renderer.inverse-once.test.ts
+@@ -0,0 +1,59 @@
++// 0006-inverse-once: INVERSE is applied once, by the terminal (SGR 7). The cell keeps the text's own colours.
++import { afterEach, test } from "bun:test"
++import assert from "node:assert/strict"
++import { BoxRenderable } from "../renderables/Box.js"
++import { TextRenderable } from "../renderables/Text.js"
++import { ManualClock } from "../testing/manual-clock.js"
++import { createTestRenderer, type TestRendererSetup } from "../testing/test-renderer.js"
++import { RecordingWriteStream } from "../testing/test-streams.js"
++import { TextAttributes } from "../types.js"
++
++const setups: TestRendererSetup[] = []
++afterEach(async () => {
++  for (const { renderer } of setups.splice(0)) {
++    renderer.destroy()
++    await renderer.closed
++  }
++})
++
++async function draw(text: { fg: string; bg?: string }) {
++  const stdout = new RecordingWriteStream(10, 1)
++  const target = await createTestRenderer({
++    width: 10,
++    height: 1,
++    stdout: stdout as unknown as NodeJS.WriteStream,
++    bufferedOutput: "stdout",
++    remote: true,
++    clock: new ManualClock(),
++    colorMode: "truecolor",
++  })
++  setups.push(target)
++  await target.renderer.setupTerminal()
++  stdout.clear()
++  const box = new BoxRenderable(target.renderer, { width: 10, height: 1, backgroundColor: "#111112" })
++  box.add(new TextRenderable(target.renderer, { content: "INV", ...text, attributes: TextAttributes.INVERSE, selectable: false }))
++  target.renderer.root.add(box)
++  await target.renderOnce()
++  return stdout.text()
++}
++
++/** The SGR runs written before the first glyph of "INV". */
++function sgrBefore(output: string): string {
++  const i = output.indexOf("I")
++  return [...output.slice(0, i).matchAll(/\x1b\[([0-9;]*)m/g)].map((m) => m[1]).join("|")
++}
++
++test("inverse text with no background: written as text fg over the box bg, plus SGR 7 (words stay visible)", async () => {
++  const sgr = sgrBefore(await draw({ fg: "#ededed" }))
++  assert.match(sgr, /38;2;237;237;237/)
++  assert.match(sgr, /48;2;17;17;18/)
++  assert.match(sgr, /(^|[|;])7($|[|;])/)
++  assert.doesNotMatch(sgr, /38;2;237;237;237[^|]*\|.*48;2;237;237;237/) // never fg = bg
++})
++
++test("inverse text with its own background: colours as given, SGR 7 swaps them once", async () => {
++  const sgr = sgrBefore(await draw({ fg: "#ededed", bg: "#202020" }))
++  assert.match(sgr, /38;2;237;237;237/)
++  assert.match(sgr, /48;2;32;32;32/)
++  assert.match(sgr, /(^|[|;])7($|[|;])/)
++})

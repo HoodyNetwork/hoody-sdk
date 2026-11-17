@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Bots                                                     ▸ Use with your agent
+ ‹ Bots  Esc
+ Chief  ● Working                                  [■ Stop] [Bot settings] [⋯]█
+   SG atlas    Hoody Free  · Allow everything is off +2                       █
+                                                                              █
+   Activity    Link and keys    Chat apps 2  ▸ Work 2                         █
+ ─────────────────────────────────────────────────────────────────────────────█
+                                                                              █
+  ┌─────────────────────────────────────────────────────────────────────────┐ █
+  │ Work in progress                                                        │ █
+  │ The tasks the Bot opened, what each is doing, and what it waits on.     │ █
+  └─────────────────────────────────────────────────────────────────────────┘ █
+                                                                              █
+                                                                              █
+  / Search tasks                                           2 tasks  ↻ Refresh █
+    Task                       Computer   State                               █
+  ›   Read deploy log          atlas      ● Working               [Message] ⋯ █
+    ◷ Draft reply to a reader  atlas      ● Waiting for…          [Message] ⋯ █
+                                                                              █
+                                                                              █
+  Show finished tasks (1)                                                     █
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

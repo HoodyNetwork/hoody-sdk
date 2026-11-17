@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Account
+ Computers             │  Your profile, how you sign in, and where you are signed in.
+ Files                 │
+ Bots                  │  ▌Profile  Password  Two-step sign-in  Passcode lock  Sign-in sessions  Agent sign-in   6 ›
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────┐█
+ Vault                 │  │ Security                                                                              │█
+                       │  │ ✓ ┌──────────────────────────────────────────────────────────┐                        │█
+On atlas ▾             │  │ ✓ │ ! Remove this account's local data from this       Esc × │                        │█
+ Programs              │  │ i │   device?                                                │               [Review] │█
+ Schedules             │  └───│ ──────────────────────────────────────────────────────── │────────────────────────┘▀
+ Scripts               │      │ The Hub forgets the settings, layouts, drafts and        │
+ Logs                  │  ┌───│ tracked changes it keeps on this device for this         │────────────────────────┐
+ Tunnels               │  │ Pr│ account. Then you leave the Hub. It does not sign you    │                        │
+ Notes                 │  │   │ out: to sign out, run hoody logout. Your account, your   │                        │
+ AI                    │  │ Di│ computers and your data on the server stay as they are.  │  [Change display name] │
+ VMs                   │  │   │                                                          │                        │
+                       │  │ Us│ What this removes                                        │                        │
+Account                │  │   │                                                          │                        │
+ Plans & Billing       │  │ Em│ • Close any other Hub open for this account on this      │         [Change email] │
+ Referrals             │  │   │ device before you start.                                 │                        │
+ Keys and tokens       │  │ Me│ • Records of other accounts on this device stay: the Hub │                        │
+ API                   │  │   │ keeps each account's apart.                              │                        │
+ Notifications      26 │  │ Ac│ These may already have gone through. The Hub stops       │                        │
+▌Account               │  │ Ac│ tracking them on this device:                            │                        │
+                       │  └───│   2 changes from Computers (still sending)               │────────────────────────┘
+ + Rent servers        │      │   1 change from other pages                              │
+ Guide                 │  ┌───│   1 question to the assistant still waiting for an       │────────────────────────┐
+ Support               │  │ Pa│   answer                                                 │                        │
+                       │  │   │                                                          │                        │
+                       │  │ Pa│ [x] I understand that the Hub stops tracking these on    │                        │
+                       │  │ Ch│     this device                                          │                        │
+                       │  │ ev│                                                          │                        │
+                       │  └───│                                                          │────────────────────────┘
+                       │      │                     [Cancel]  [Remove and leave the Hub] │
+                       │  ┌───└──────────────────────────────────────────────────────────┘────────────────────────┐
+                       │  │ Two-step sign-in                                                                      │
+                       │  │                                                                                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  Guide                       ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Ask your agent  Connect  Skills  Build your own  Every link  Bots ▌Tools
+  Try this  Realms  Topics  Keyboard  Look
+ │ The tools, for when you want to see or touch. Each one opens on the       │
+ │ computer picked in the top bar: atlas.                                    │
+ │ Agent                                                                     │
+ │ Your AI next to your files. Watch it, steer it.                           │
+ │ Open  [Put Agent on Board]  Docs                                          │
+ │                                                                           │
+ │ Terminal                                                                  │
+ │ A full shell in a tab, shared with your agent.                            │
+ │ Open  [Put Terminal on Board]  Docs                                       │
+ │                                                                           │
+ │ Display                                                                   │
+ │ The computer's desktop, live, on any device.                              │ █
+ │ Open  [Put Display on Board]  Docs                                        │
+ │                                                                           │
+ │ Files                                                                     │
+ │ Browse, edit and download what is on disk.                                │
+ │ Open  [Put Files on Board]  Docs                                          │
+ │                                                                           │
+ │ Browser                                                                   │
+ │ A real browser your agent can drive.                                      │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

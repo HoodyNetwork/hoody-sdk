@@ -1,0 +1,99 @@
+/* ModelPick: the one model picker's own parts (the rest is ModelChooser.module.css and ModelPickList.module.css). */
+
+/* The list's box: it scrolls, the rest of the panel stays put. */
+.listBox {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: min(60vh, 480px);
+}
+
+/* Under the list: the star for the focused model, and the favourites this computer does not list. */
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.stale {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--hx-muted);
+}
+
+.none {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.noneActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* The panel: the chooser, then the thinking step, the outcome and the footer. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.step {
+  min-width: 0;
+}
+
+.note {
+  margin: 0;
+  color: var(--hx-muted);
+}
+
+.error {
+  margin: 0;
+  color: var(--hx-danger);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+/* The field: label, then the value line (name, facts, readiness, Change), then the why line. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.fieldLabel {
+  color: var(--hx-ink);
+  font-weight: var(--fw-medium);
+}
+
+.fieldValue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.fieldName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--hx-ink);
+}
+
+.fieldFacts,
+.fieldWhy {
+  color: var(--hx-muted);
+}

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                                             ▸ Use with your agent   + Launch an app
+ Computers             │  Open ports and aliases on atlas
+ Files                 │    Running programs    Apps  ▸ Ports & aliases
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Vault                 │  │ Open ports                                                                               │█
+                       │  │ Every port a program listens on. Web ports get an address you can open or share.         │█
+On atlas ▾             │  │ ! This didn't load                                                                       │█
+▌Programs              │  │ The server had a problem. Try again in a moment.                                         │█
+ Schedules             │  │ [Try again]                                                                              │█
+ Scripts               │  │ ▸ Details                                                                                │█
+ Logs                  │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Tunnels               │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Notes                 │  │ Aliases and domains                                                       [Create alias] │█
+ AI                    │  │ Short addresses that point to a web port or a program. Each one can also open at a       │█
+ VMs                   │  │ domain you own.                                                                          │█
+                       │  │ ! This didn't load                                                                       │█
+Account                │  │ The server had a problem. Try again in a moment.                                         │█
+ Plans & Billing       │  │ [Try again]                                                                              │█
+ Referrals             │  │ ▸ Details                                                                                │█
+ Keys and tokens       │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ API                   │                                                                                              █
+ Notifications      26 │  Questions                                                                                   █
+ Account               │  ▸ What is a program, and what are Running programs and Apps?                                █
+                       │  ▸ What are the system programs, and is it safe to stop one?                                 █
+ + Rent servers        │  ▸ What is the difference between Keep it and Run once?                                      █
+ Guide                 │  ▸ When does a start count as done, and what happens when a program stops?                   █
+ Support               │  ▸ What does a sandbox limit, and what do the starting points do?                            █
+                       │  ▸ What do the network choices and allowed ranges do?                                        █
+                       │  ▸ When do new sandbox limits take effect, and what does removing them do?                   █
+                       │  ▸ What if a change may have gone through?                                                   █
+                       │  ▸ Which open ports get a web address?                                                       █
+                       │  ▸ Why are some ports counted but not shown?                                                 █
+                       │  ▸ What is the difference between a port's address and an alias?                             █
+                       │  ▸ How do I create an alias?                                                                 █
+                       │  ▸ What happens to an alias when its program stops?
+                       │  ▸ Who can open a port's address or an alias?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

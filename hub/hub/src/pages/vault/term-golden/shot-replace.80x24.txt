@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY       ┃ Replace value                                       Esc ×
+ Vault              ┃ deploy.notes · Personal
+ ‹ Vault  Esc       ┃ ─────────────────────────────────────────────────────────
+ deploy.notes       ┃ Value
+                    ┃ ┃ Type or paste                     [Show what you typed]
+ ┌──────────────────┃
+ │ About this entry ┃
+ │ Belongs to     Pe┃ Hidden as you type. Use Show what you typed to check it.
+ │ Encryption     No┃ ⚿ Replaces the old value  ⚿ Old value not shown
+ │ Size           44┃
+ │ Updated        Oc┃ [ ] Encrypt with a password
+ │ Created        Oc┃     Encrypted on this device before it is sent.
+ │ Other details  1 ┃
+ │                  ┃ ▾ Optional metadata  Your notes. Not encrypted.
+ │ ┌────────────────┃   [ ] Change metadata
+ │ │                ┃       Off: the entry keeps its metadata as it is.
+ │ │ Protect with a ┃
+ │ │ No encryption i┃ ▸ What can a value hold, and what do encrypting and
+ │ │ this entry. To ┃   metadata do?
+ │ │ value with a pa┃
+ │ │ Replace value a┃
+ │ │ with a password┃
+ │ │                ┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter op┃ [Cancel]  Save

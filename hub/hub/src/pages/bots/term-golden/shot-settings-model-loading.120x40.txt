@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Settings for Chief                                                                                    Esc ×
+ Home     ┃ Model, behaviour, guardrails and voice.
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │ The Bot itself        ┌─────────────────────────────────────────────────────────────────────────────────┐
+▌Bots     ┃ │▌Model                 │ Model                                                         [Helpers' models] │
+ Board    ┃ │ Behaviour             │ The model the Bot itself answers you with. Helpers it starts don't use it.      │
+ Demo     ┃ │ Voice                 │ Checking models…                                                                │
+ Vault    ┃ │ The helpers it        │                                                                                 │
+          ┃ │ starts                │ │ / Search models and providers                                                 │
+On atlas ▾┃ │ Helpers               │                                                                                 │
+ Programs ┃ │ Guardrails and        │  ( ) Agent's default                                                            │
+ Schedules┃ │ limits                │      Uses the agent's configured model, also when that changes                  │
+ Scripts  ┃ │ Advanced              │  (•) Hoody Free Current · Recommended · Checking                                │
+ Logs     ┃                         │                                                                                 │
+ Tunnels  ┃                         │ Loading…                                                                        │
+ Notes    ┃                         │ ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁                               │
+ AI       ┃                         │ ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁                                          │
+ VMs      ┃                         │ ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁                         │
+          ┃                         │                                                                                 │
+Account   ┃                         │ ▸ Do the Bot's helpers use this model?                                          │
+ Plans & B┃                         └─────────────────────────────────────────────────────────────────────────────────┘
+ Referrals┃
+ Keys and ┃
+ API      ┃
+ Notificat┃
+ Account  ┃
+          ┃
+ + Rent se┃
+ Guide    ┃
+ Support  ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+ Tab move ┃

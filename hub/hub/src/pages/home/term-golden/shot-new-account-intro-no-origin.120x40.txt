@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+▌Home                  │  Good morning, Ada                                                                 [Customize]
+ Computers             │  ■ Personal · ✓ atlas (Running) · SG n12
+ Files                 │
+ Bots                  │                                                                                              █
+ Board                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Demo                  │  │  Your own computers in the cloud, each with an                                 [× Hide]  │█
+ Vault                 │  │  AI agent. Reach them from anywhere.                                                     │█
+                       │  │                                                                                          │█
+On atlas ▾             │  │   Open                                                                                   │█
+ Programs              │  │                                                                                          │█
+ Schedules             │  │  ⇗ The tour is an animated page that plays on the web Hub. (on your Hub's web address)   │█
+ Scripts               │  │  [c Copy link]                                                                           │█
+ Logs                  │  │  /auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/onboarding                               │█
+ Tunnels               │  │                                                                                          │█
+ Notes                 │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ AI                    │                                                                                              █
+ VMs                   │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Your computer                                                                 View all › │█
+Account                │  │ atlas ● Running SG n12 Up 5d 0h                                                          │█
+ Plans & Billing       │  │                                                                                          │█
+ Referrals             │  │ Agent ⇗     ⧉ copy [QR] [Put Agent on Board]                                             │█
+ Keys and tokens       │  │ Terminal ⇗  ⧉ copy [QR] [Put Terminal on Board]                                          │█
+ API                   │  │ Desktop ⇗   ⧉ copy [QR] [Put Desktop on Board]                                           │
+ Notifications      26 │  │ Files ⇗     ⧉ copy [QR] [Put Files on Board]                                             │
+ Account               │  │ Browser ⇗   ⧉ copy [QR] [Put Browser on Board]                                           │
+                       │  │                                                                                          │
+ + Rent servers        │  │ Programs: 10 running ! 3 need a look                                       All computers │
+ Guide                 │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+ Support               │
+                       │  ┌────────────────────────────────────────────┐ ┌───────────────────────────────────────────┐
+                       │  │ Start something                            │ │ Bots                           View all › │
+                       │  │                                            │ │ ◆ Chief · atl… ◆ Waiting for you [Review] │
+                       │  │ New Bot               Open the Board       │ │ i Support · atlas               i Working │
+                       │  │ Assistants that work  Programs, terminals  │ │ i Digest · atlas     i 2 messages waiting │
+                       │  │ on your computers     and displays side by │ │ ! Ledger · cinder                ! Paused │
+                       │  │                       side                 │ │ · Scout · cinder                   · Idle │
+                       │  │                                            │ │                                           │
+                       │  │ New script            New schedule         │ │                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

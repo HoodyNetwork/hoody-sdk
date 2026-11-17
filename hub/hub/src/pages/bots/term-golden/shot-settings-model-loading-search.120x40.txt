@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Settings for Chief                                                                                    Esc ×
+ Home     ┃ Model, behaviour, guardrails and voice.
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │ The Bot itself        ┌─────────────────────────────────────────────────────────────────────────────────┐
+▌Bots     ┃ │▌Model                 │ Model                                                         [Helpers' models] │
+ Board    ┃ │ Behaviour             │ The model the Bot itself answers you with. Helpers it starts don't use it.      │
+ Demo     ┃ │ Voice                 │ Checking models…                                                                │
+ Vault    ┃ │ The helpers it        │                                                                                 │
+          ┃ │ starts                │ ┃ / zzz                                     ×                                   │
+On atlas ▾┃ │ Helpers               │                                                                                 │
+ Programs ┃ │ Guardrails and        │ Loading…                                                                        │
+ Schedules┃ │ limits                │ ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁                               │
+ Scripts  ┃ │ Advanced              │ ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁                                          │
+ Logs     ┃                         │ ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁                         │
+ Tunnels  ┃                         │                                                                                 │
+ Notes    ┃                         │ ▸ Do the Bot's helpers use this model?                                          │
+ AI       ┃                         └─────────────────────────────────────────────────────────────────────────────────┘
+ VMs      ┃
+          ┃
+Account   ┃
+ Plans & B┃
+ Referrals┃
+ Keys and ┃
+ API      ┃
+ Notificat┃
+ Account  ┃
+          ┃
+ + Rent se┃
+ Guide    ┃
+ Support  ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+ Typing · ┃

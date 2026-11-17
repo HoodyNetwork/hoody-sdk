@@ -1,0 +1,51 @@
+/* Core notices: the suspended / purge-failed screen covers the app; the offline banner sits on top. */
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--sp-4);
+  background: var(--hx-bg);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  max-width: 480px;
+}
+
+.title {
+  margin: 0;
+  font: var(--t-title);
+}
+
+.body {
+  margin: 0;
+  color: var(--hx-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.banner {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: var(--z-toast);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 36px;
+  padding: 0 var(--sp-4);
+  border-block-end: var(--bw) solid var(--hx-line);
+  background: var(--hx-card);
+  color: var(--hx-ink);
+  font: var(--t-small);
+}

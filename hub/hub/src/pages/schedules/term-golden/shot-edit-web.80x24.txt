@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Edit ping-api                                                    Esc ×
+ Schedu┃ Sends a web request on a timer.
+ 15 sch┃ ──────────────────────────────────────────────────────────────────────
+ Comput┃
+ / Sear┃   Name (unavailable)
+   Name┃   │ ping-api
+ ›   pi┃
+   ! qu┃   Runs
+     Wa┃   ┃ Every few minutes ▾
+   ! sy┃
+     Ni┃   How often
+     ni┃   │ 5 minutes ▾
+     mo┃
+   ! PO┃   ┌────────────────────────────────────────────────────────────────┐
+     ro┃   │ NEXT RUNS                                                      │
+     cl┃   │ Checked when you save.                                         │
+   ! Un┃   └────────────────────────────────────────────────────────────────┘
+     ar┃
+     ol┃
+     po┃
+     wa┃
+       ┃
+       ┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Cancel]  Save

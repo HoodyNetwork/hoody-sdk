@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ New script
+ Step 4 of 4 · Make it live  ██████████
+  ✓ What it does  ✓ Where it answers  ✓ Check it ▸4 Make it live
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ It's live                                                                 │█
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │█
+ │ │ WHAT IS LIVE                                                          │ │█
+ │ │ Answering at /note on atlas.                                          │ │█
+ │ └───────────────────────────────────────────────────────────────────────┘ │█
+ │ People and programs call your script at this address.                     │█
+ │ https://6a00…0001-c0a7…00a1-exec-1.n12.fixture.invalid/note ⧉ copy Open   │█
+ │ The exec-1 part is this computer's script program, where the script runs. │▀
+ │                                                                           │
+ │ Save your key now                                                         │
+ │ This key is shown once. Store it somewhere safe before you close this.    │
+ │ Key                                                                       │
+ │ │ •••••••••••••••••••••••••••••••• (Hidden until you press Show)          │
+ │    [Show] [Copy]                                                          │
+ │ [Try it] [Open the script] [Make another]                                 │
+ ──────────────────────────────────────────────────────────────────────────────
+                                                                          Done
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

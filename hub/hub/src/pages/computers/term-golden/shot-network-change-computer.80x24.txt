@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Use another exit                                                 Esc ×
+ Comput┃ Everything sent through atlas's proxy then leaves from that
+ ▸ Comp┃ exit: for scraping, checking a site from another region, or one
+ ──────┃ fixed IP.
+ ‹ Comp┃ ──────────────────────────────────────────────────────────────────────
+ atlas ┃ Leave from                                                           █
+ SG n12┃ ( ) atlas's own address (now) (unavailable)                          █
+       ┃     Sites see the address of atlas's server. Nothing to set up.      █
+  Overv┃ (•) Another computer of yours                                        █
+  Progr┃     Traffic goes through that computer's proxy and leaves from its   █
+ ──────┃     current exit. With no exit or VPN of its own, that is its        █
+ │ Fire┃     server's address: pick one on another server for a different IP. █
+ └─────┃     Computer                                                         █
+       ┃     │ Pick a computer ▾                                              █
+ ┌─────┃     If that computer's proxy has access rules, allow atlas's address █
+ │ Inte┃     there, or its requests are refused.                              █
+ │ Whet┃     ! Set access rules on atlas's proxy first. Its address is the    █
+ │ ✓ Al┃       only key to it, so without rules anyone who has the address can
+ └─────┃       send traffic through your exit. If the proxy you enter cannot
+       ┃       be reached, atlas refuses requests (502) rather than sending
+ ┌─────┃       them from its own address.
+ │ Wher┃ ( ) Your own proxy
+ │ [Exi┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ Choose the computer to leave through.         [Cancel]  Use this exit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                 ◆ Personal ▾  … Loading computers… ▾  [A]  ^K · ?
+ New realm
+ A separate space in your account, with its own computers, keys and settings.
+ Step 2 of 3 · Computers  ███████░░░
+  ✓ Name and colour ▸2 Computers  3 Create
+ ──────────────────────────────────────────────────────────────────────────────
+ ▸ Your choices                                                               █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Add computers (optional)                                                  │█
+ │ Each computer you pick joins this realm and keeps its other realms and    │█
+ │ its project. Skip this to start empty.                                    │█
+ │ / Search computers                                              ↻ Refresh │█
+ │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                          │█
+ │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                          │█
+ │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                          │█
+ │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                          │
+ │ ▸ Does this move it out of its realms?                                    │
+ │ ▸ Making new computers here                                               │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ Questions
+ ──────────────────────────────────────────────────────────────────────────────
+ [Back]                                                      [Cancel]   Next →
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

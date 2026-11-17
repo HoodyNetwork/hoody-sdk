@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY  AI                          ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ [Back to chats] Plan the backup job                       · Idle [⋯] [Details]
+ atlas · Personal  /home/ada
+ [Hoody Free]
+────────────────────────────────────────────────────────────────────────────────
+
+
+ │ You 09:00 AM
+ │ Run it once now
+
+ ✦ Agent on atlas
+ ▸ 3 steps ✗ Failed
+                                                                               █
+ ✗ This conversation got too long for the model. Start a new one, or pick a    █
+ model that can hold more.                                                     █
+                                                                               █
+ i Hooks in this computer's settings stop the agent's steps until someone      █
+ trusts them. You check and trust them in the Agent app.                       █
+                                                                               █
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Message your agent                                                         │
+ └────────────────────────────────────────────────────────────────────────────┘
+ [+]  [/ Commands]  [Ask when needed]                             [Send ↵]  [▾]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

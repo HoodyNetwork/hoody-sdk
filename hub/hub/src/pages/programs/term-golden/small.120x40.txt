@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                            ▸ Use with your agent  [+ New program]   + Launch an app
+ Computers             │  2 programs on atlas · 1 running
+ Files                 │  ▸ Running programs    Apps    Ports & aliases
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  / Search programs          ‹ Any ›  Running 1    Stopped 1    Problems 0
+ Vault                 │  2 programs  ↻ Refresh
+                       │
+On atlas ▾             │      Name                State                  Ports
+▌Programs              │  ▌     web               ● Running              3000                               [Restart] ⋯
+ Schedules             │        docs-preview      ● Stopped              —                                    [Start] ⋯
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │  Questions
+ API                   │  ▸ What is a program, and what are Running programs and Apps?
+ Notifications      26 │  ▸ What are the system programs, and is it safe to stop one?
+ Account               │  ▸ What is the difference between Keep it and Run once?
+                       │  ▸ When does a start count as done, and what happens when a program stops?
+ + Rent servers        │  ▸ What does a sandbox limit, and what do the starting points do?
+ Guide                 │  ▸ What do the network choices and allowed ranges do?
+ Support               │  ▸ When do new sandbox limits take effect, and what does removing them do?
+                       │  ▸ What if a change may have gone through?
+                       │  ▸ Which open ports get a web address?
+                       │  ▸ Why are some ports counted but not shown?
+                       │  ▸ What is the difference between a port's address and an alias?
+                       │  ▸ How do I create an alias?
+                       │  ▸ What happens to an alias when its program stops?
+                       │  ▸ Who can open a port's address or an alias?
+                       │  ▸ How do I open an alias at my own domain?
+                       │  ▸ Is the address HTTP or HTTPS, and what if my program serves HTTPS itself?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

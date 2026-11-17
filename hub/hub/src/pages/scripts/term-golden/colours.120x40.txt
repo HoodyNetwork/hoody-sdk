@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                 ▸ Use with your agent   + New script
+ Computers             │  Small programs on your computers that answer an address or run on a schedule.
+ Files                 │
+ Bots                  │  / Search                   Status ▾  Computer ▾                                             █
+ Board                 │  10 scripts  [Recently deleted · 2]  ↻ Refresh  View options                                 █
+ Demo                  │                                                                                              █
+ Vault                 │      Script ↑             Status           Address                           Calls, 24 h     █
+                       │  ▾ atlas · 7                                                                                 █
+On atlas ▾             │  ▌   Daily digest  Idea   ● Working        /daily-digest                              30    ⋯█
+ Programs              │      Health check         ● Working        /health                                 5,120    ⋯█
+ Schedules             │      Notify me  Idea      ● Working        /notify                                     9    ⋯█
+▌Scripts               │      Old report           ● Turned off     /old-report                                 —    ⋯█
+ Logs                  │      Order status         ● Failing        /orders/:id                 1,290 · 61 failed    ⋯█
+ Tunnels               │      Stripe webhook       ● Working        /webhooks/stripe                88 · 2 failed    ⋯█
+ Notes                 │      Weather lookup       ● Working        /weather                       412 · 3 failed    ⋯█
+ AI                    │                                                                                              █
+ VMs                   │  ▾ borealis · 3                                                                              █
+                       │      Daily digest         —                /daily-digest                               —    ⋯█
+Account                │      Order status         —                /orders/:id                                 —    ⋯█
+ Plans & Billing       │      Weather lookup       —                /weather                                    —    ⋯█
+ Referrals             │                                                                                              █
+ Keys and tokens       │  ▾ cedar · 0                                                                                 █
+ API                   │      i Turned off. Start it to see its scripts.                                              █
+ Notifications      26 │      ────────────────────────────────────────────────────────────────────────────────────────█
+ Account               │                                                                                              █
+                       │  ▾ harbor · 0                                                                                █
+ + Rent servers        │      i Keeps its scripts private from the Hub. Allow access in the computer's settings to see█
+ Guide                 │        them.                                                                                 █
+ Support               │      ────────────────────────────────────────────────────────────────────────────────────────█
+                       │                                                                                              █
+                       │  ▸ Advanced                                                                                  █
+                       │                                                                                              █
+                       │  Questions                                                                                   █
+                       │  ▸ What is a script?                                                                         ▀
+                       │  ▸ Do I need to know how to code?
+                       │  ▸ What can a script do?
+                       │  ▸ How does the assistant write a script?
+                       │  ▸ How do I make a script run on a schedule?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

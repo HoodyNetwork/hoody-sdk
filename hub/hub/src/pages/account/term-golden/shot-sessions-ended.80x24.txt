@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Account
+ Your profile, how you sign in, and where you are signed in.
+ ‹ 4  ▌Sign-in sessions  Agent sign-in  Security history  SSH keys   4 ›
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Sign-in sessions                                                          │
+ │ Each browser or device signed in to your account. End one you do not      │
+ │ recognise.                                                                │
+ │                                                                           │
+ │ This device's address ⓘ         PT 203.0.113.7 · Lisbon ⧉ copy (i)        │
+ │ / Search              Filters                       6 sessions  ↻ Refresh │█
+ │   Device                   Signed in with     Ended ↓        Keys made    │▀
+ │ › Safari on iPhone         Google             19 days ago            0    │
+ │   build-server             Device sign-in     20 days ago           14    │
+ │    Hoody CLI                                                              │
+ │   Edge on Windows          GitHub             20 days ago            1    │
+ │   Chrome on Android        Password           20 days ago            0    │
+ │   Chrome on macOS          Password           20 days ago            2    │
+ │   Firefox on Linux         Password and code  21 days ago            0    │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Agent sign-in                                                             │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

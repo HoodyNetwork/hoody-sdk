@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Find in atlas                                                           Esc ×
+ Home                  │  Files         ┃ ─────────────────────────────────────────────────────────────────────────────
+ Computers             │  The folders on┃ The top of a computer can't be searched in one go. Pick one of its folders  █
+▌Files                 │  ▸ Browse    St┃ to find in.                                                                 █
+ Bots                  │  ──────────────┃                                                                             █
+ Board                 │                ┃                                                                             █
+ Demo                  │  [Up one folder┃ bin                                                                   [Find]█
+ Vault                 │                ┃ Folder                                                                      █
+                       │  / Search      ┃                                                                             █
+On atlas ▾             │                ┃                                                                             █
+ Programs              │    [ ] Name    ┃ copy                                                                  [Find]█
+ Schedules             │  › [ ] bin     ┃ Can't open here yet                                                         █
+ Scripts               │    [ ] copy Can┃                                                                             █
+ Logs                  │    [ ] etc     ┃                                                                             █
+ Tunnels               │    [ ] home    ┃ etc                                                                   [Find]█
+ Notes                 │    [ ] root    ┃ Folder                                                                      █
+ AI                    │    [ ] srv     ┃                                                                             █
+ VMs                   │    [ ] tmp     ┃                                                                             █
+                       │    [ ] usr     ┃ home                                                                  [Find]█
+Account                │    [ ] var     ┃ Folder                                                                      █
+ Plans & Billing       │                ┃                                                                             █
+ Referrals             │                ┃                                                                             █
+ Keys and tokens       │                ┃ root                                                                  [Find]█
+ API                   │                ┃ Folder                                                                      █
+ Notifications      26 │                ┃                                                                             █
+ Account               │                ┃                                                                             █
+                       │                ┃ srv                                                                   [Find]█
+ + Rent servers        │                ┃ Folder                                                                      █
+ Guide                 │                ┃                                                                             █
+ Support               │                ┃                                                                             █
+                       │  Questions     ┃ tmp                                                                   [Find]█
+                       │  ▸ How do I ope┃ Folder                                                                      █
+                       │  ▸ How do I mou┃                                                                             █
+                       │  ▸ Can I mount ┃                                                                             █
+                       │  ▸ What do I ne┃ usr                                                                   [Find]█
+                       │  ▸ How do I put┃ Folder                                                                      █
+                       │  ▸ Which storag┃                                                                             █
+                       │  ▸ What happens┃                                                                             █
+                       │  ▸ How much can┃ var                                                                   [Find]█
+ Tab move · Enter open · Ctrl+K commands┃ Folder

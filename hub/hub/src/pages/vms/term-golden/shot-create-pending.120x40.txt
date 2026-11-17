@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ New VM inside atlas                                                                                   Esc ×
+ Home     ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Computers┃ ◷ A VM named new-1 may have been created inside atlas.                       [Check again]  [Stop tracking]
+ Files    ┃
+ Bots     ┃
+ Board    ┃
+ Demo     ┃
+ Vault    ┃
+          ┃
+On atlas ▾┃
+ Programs ┃
+ Schedules┃
+ Scripts  ┃
+ Logs     ┃
+ Tunnels  ┃
+ Notes    ┃
+ AI       ┃
+▌VMs      ┃
+          ┃
+Account   ┃
+ Plans & B┃
+ Referrals┃
+ Keys and ┃
+ API      ┃
+ Notificat┃
+ Account  ┃
+          ┃
+ + Rent se┃
+ Guide    ┃
+ Support  ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tab move ┃ ● Unsaved changes                                                                      [Cancel]  Create VM

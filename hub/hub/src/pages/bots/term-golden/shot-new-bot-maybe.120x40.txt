@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ New Bot                                                                 Esc ×
+ Home                  │  Bots          ┃ ─────────────────────────────────────────────────────────────────────────────
+ Computers             │  Every Bot on y┃  ░  Bot                                                           Can't tell█
+ Files                 │                ┃                                                                             █
+▌Bots                  │  Bots          ┃ ┌──────────────────────────────────────────────────────────────────────────┐█
+ Board                 │  23            ┃ │ The Bot                                                                  │█
+ Demo                  │  on 2 computers┃ │ ┌──────────────────────────────────────────────────────────────────────┐ │█
+ Vault                 │                ┃ │ │                                                                      │ │█
+                       │  / Search      ┃ │ │ Computer                        │ ● SG atlas · Acme client ▾         │ │█
+On atlas ▾             │                ┃ │ │ The Bot runs here and starts                                         │ │█
+ Programs              │  › C Chief     ┃ │ │ its tasks here.                                                      │ │█
+ Schedules             │      Asked you ┃ │ │                                                                      │ │█
+ Scripts               │       · Runs th┃ │ │ Name                                                                 │ │█
+ Logs                  │       · Model H┃ │ │ Its identifier will be calm-olive-panda.                             │ │█
+ Tunnels               │      Telegram S┃ │ │ │ calm-olive-panda                            [Suggest another name] │ │█
+ Notes                 │    L Ledger    ┃ │ │                                                                      │ │█
+ AI                    │      Stopped at┃ │ │ Model                           Hoody Free  Included        [Change] │ │█
+ VMs                   │       · cinder ┃ │ │ The model that answers you.                                          │ │█
+                       │      Only here ┃ │ │ You can change it later in the                                       │ │█
+Account                │    S Support   ┃ │ │ Bot's Settings, under Model.                                         │ │█
+ Plans & Billing       │      … Working ┃ │ │                                                                      │ │█
+ Referrals             │       · atlas ·┃ │ └──────────────────────────────────────────────────────────────────────┘ │█
+ Keys and tokens       │      Discord   ┃ └──────────────────────────────────────────────────────────────────────────┘█
+ API                   │    D Digest    ┃                                                                             █
+ Notifications      26 │      2 messages┃ ┌──────────────────────────────────────────────────────────────────────────┐█
+ Account               │       · atlas ·┃ │ Permissions and access                                                   │█
+                       │      Only here ┃ │ ┌──────────────────────────────────────────────────────────────────────┐ │█
+ + Rent servers        │    S Scout     ┃ │ │                                                                      │ │█
+ Guide                 │      Last activ┃ │ │ Allow everything                [■ on ]                              │ │█
+ Support               │       · Model g┃ │ │ On: it runs commands and edits                                       │ │▀
+                       │      Telegram  ┃ │ │ files without asking. Change                                         │ │
+                       │    N Notes     ┃ │ │ it on the Bot's page.                                                │ │
+                       │      Last activ┃ │ │                                                                      │ │
+                       │       · Model H┃ │ │ Public link                     [□ off]                              │ │
+                       │      Only here ┃ │ │ Off: you talk to it in the                                           │ │
+                       │                ┃ ─────────────────────────────────────────────────────────────────────────────
+                       │  1–20 of 23 ‹ ›┃ │ ◷ The Bot may have been made
+                       │                ┃ │   Don't create it again. Check the list; if it's there, you're done.
+                       │  Questions     ┃ │   [Check again]  [Stop tracking]
+ Tab move · Enter open · Ctrl+K commands┃                                                         [Cancel]  Create Bot

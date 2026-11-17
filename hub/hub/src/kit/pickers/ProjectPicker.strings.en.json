@@ -1,0 +1,7 @@
+{
+  "placeholder": "Pick a project",
+  "loading": "Loading projects…",
+  "search": "Find a project",
+  "empty": "No projects here yet.",
+  "failed": "The project list could not be read"
+}

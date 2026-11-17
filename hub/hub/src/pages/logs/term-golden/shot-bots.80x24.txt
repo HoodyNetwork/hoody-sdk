@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Logs                                  ▸ Use with your agent  [See what failed]
+ 1 Bot call failed in the last hour. 2 kinds of problem.
+   Everything    Visits  ▸ Bots    Changes    Scripts    Programs   [More ▾]
+ │ ● SG atlas · █ Personal ▾ Result ▾  When: 1 hour │ / Search
+                                                     [□ off] Live [Refresh] [⋯]
+ [Clear all]
+ What keeps going wrong ▾                     Problem once Bots [More actions]
+                                               Failed once Bots [More actions]
+   Time     Result    From What happened                               Took
+ ▌ 08:38:00 ● OK      Bots Bot call: release-notes                     1,171 ms
+   08:34:00 ● OK      Bots Bot call: support-desk                      1,118 ms
+   08:30:00 ● OK      Bots Bot call: release-notes                     1,065 ms
+   08:26:00 ● Problem Bots Bot call: support-desk                      1,012 ms
+   08:22:00 ● OK      Bots Bot call: release-notes                       959 ms
+   08:18:00 ● Failed  Bots Bot call: support-desk                        906 ms
+   08:14:00 ● OK      Bots Bot call: release-notes                       853 ms
+   08:10:00 ● OK      Bots Bot call: support-desk                        800 ms
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

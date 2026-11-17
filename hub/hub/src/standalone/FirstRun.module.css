@@ -1,0 +1,134 @@
+/* The standalone Hub's sign-in card (Card.tsx): the card (kit CutFrame, --hx-card inside) and the line under it, one
+   column on the page ground, centred while they fit and starting at the top padding when they do not; the page
+   scrolls, nothing is fixed and the card has no scrollbar of its own. At most --auth-card-w wide. The bands sit directly on
+   the card ground: the kit's warn band fill is see-through. The screen is its own stacking context: the backdrop
+   (HGrid.module.css) is drawn over its ground and under everything else in it. */
+.screen {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  min-block-size: 100vh;
+  padding: var(--sp-6) var(--sp-4);
+  background: var(--hx-bg);
+  container-type: inline-size;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-4);
+  inline-size: 100%;
+  max-inline-size: var(--auth-card-w);
+}
+
+.frame {
+  inline-size: 100%;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-4);
+  padding: var(--sp-6);
+  background: var(--hx-card);
+}
+
+/* A narrow page (the kit's 600 px content breakpoint): less padding inside the card. */
+@container (inline-size < 600px) {
+  .card {
+    padding: var(--sp-4);
+  }
+}
+
+/* The kit BrandMark's wrapper: centred; the mark and words are the kit's. */
+.brand {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+}
+
+.title {
+  margin: 0;
+  font: var(--t-title);
+  text-align: center;
+}
+
+.text {
+  margin: 0;
+  color: var(--hx-muted);
+}
+
+/* "By creating an account, you agree to our Terms and Privacy Policy." under Create account (Signup.tsx). */
+.legal {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* A link's name ("Privacy Policy") stays on one line: the sentence breaks between words around it. */
+.legal a {
+  white-space: nowrap;
+}
+
+/* Text actions on their own row (Back to sign in, Start again, Cancel), wrapping on a narrow screen. */
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-4);
+}
+
+/* "Forgot password?" under Sign in, at the end. */
+.end {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Under a line: the provider buttons (when Hoody offers any), then, on the sign-in card, one closed fold "Other ways
+   to sign in". */
+.others {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--hx-line);
+}
+
+/* "Continue with GitHub" / "Continue with Google", one under the other (ProviderWays.tsx). */
+.providers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.otherWay {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+}
+
+.otherWays {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* A page opened as a file: one quiet line at the foot of the card. */
+.note {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* "New to Hoody? Create an account", under the card. */
+.below {
+  margin: 0;
+  color: var(--hx-muted);
+  text-align: center;
+}

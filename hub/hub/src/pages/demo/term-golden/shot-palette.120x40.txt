@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Demo                                                                              + New item
+ Computers             │  Everything in one list, newest first.
+ Files                ┌──────────────────────────────────────────────────────────────────────────┐
+ Bots                 │ Command palette                                                          │Refresh  View options
+ Board                │ ──────────────────────────────────────────────────────────────────────── │
+▌Demo                 │ ›  Type a command or a page…                                             │             Size
+ Vault                │ PAGES                                                                    │           3.4 GB  ⋯█
+                      │ ▸ Home                                                               g h │           6.8 GB  ⋯█
+On atlas ▾            │   AI                                                                     │            10 GB  ⋯█
+ Programs             │   Plans & Billing                                                        │            14 GB  ⋯█
+ Schedules            │   Guide                                                                  │            17 GB  ⋯█
+ Scripts              │   Programs                                                           g p │            21 GB  ⋯█
+ Logs                 │   Computers                                                          g c │            24 GB  ⋯█
+ Tunnels              │   Schedules                                                          g s │            27 GB  ⋯█
+ Notes                │   Support                                                                │            31 GB  ⋯█
+ AI                   │   Files                                                                  │            34 GB  ⋯█
+ VMs                  │   Referrals                                                              │            38 GB  ⋯█
+                      │   Bots                                                               g b │            41 GB  ⋯█
+Account               │   Notes                                                                  │            44 GB  ⋯█
+ Plans & Billing      │   Scripts                                                            g t │            48 GB  ⋯█
+ Referrals            │   API                                                                    │            51 GB  ⋯█
+ Keys and tokens      │   Logs                                                               g l │            55 GB  ⋯█
+ API                  │   ↓ more                                                                 │            58 GB  ⋯█
+ Notifications      26│ ↑↓ choose · Enter run · Esc close · Ctrl+K anytime                       │            62 GB  ⋯█
+ Account              └──────────────────────────────────────────────────────────────────────────┘            65 GB  ⋯█
+                       │    delta-9          ● Failed        Dara Novak     Sep 23, 2026, 3:00 PM             68 GB  ⋯░
+ + Rent servers        │    iris-9           ● Failed        Ana Ruiz       Sep 22, 2026, 4:00 AM             72 GB  ⋯░
+ Guide                 │    boreal-10        ● Failed        Ben Okafor     Sep 20, 2026, 5:00 PM             75 GB  ⋯░
+ Support               │    granite-10       ● Failed        Chen Wei       Sep 19, 2026, 6:00 AM             79 GB  ⋯░
+                       │    lumen-10         ● Failed        Dara Novak     Sep 17, 2026, 7:00 PM             82 GB  ⋯░
+                       │    cinder-1         ● Paused        Chen Wei       Oct 21, 2026, 10:00 PM           2.1 GB  ⋯░
+                       │    harbor-1         ● Paused        Dara Novak     Oct 20, 2026, 11:00 AM           5.5 GB  ⋯░
+                       │    atlas-2          ● Paused        Ana Ruiz       Oct 19, 2026, 12:00 AM           8.9 GB  ⋯░
+                       │    fjord-2          ● Paused        Ben Okafor     Oct 17, 2026, 1:00 PM             12 GB  ⋯░
+                       │    kestrel-2        ● Paused        Chen Wei       Oct 16, 2026, 2:00 AM             16 GB  ⋯░
+                       │    delta-3          ● Paused        Dara Novak     Oct 14, 2026, 3:00 PM             19 GB  ⋯░
+                       │    iris-3           ● Paused        Ana Ruiz       Oct 13, 2026, 4:00 AM             23 GB  ⋯░
+                       │  1–50 of 120 ‹ ›
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

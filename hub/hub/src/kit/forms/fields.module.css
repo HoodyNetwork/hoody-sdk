@@ -1,0 +1,513 @@
+/* TextField, SearchField, Switch and Checkbox, and the label, description and error text every kit field shares
+   (other field modules import .label, .description and .error from here). The box itself is fieldBox.module.css. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.label {
+  color: var(--hx-ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.control {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+}
+
+/* A field with an action lays its own children out in a wrapping row. The label, description and error each take a
+   whole line; the box and the action share one line while the field is at least 20rem wide (a 300 px field must
+   wrap), and each takes a whole line below that. The action carries the threshold as its flex basis,
+   (20rem - 100%) * 99999: negative (so its own width) on a wide field, huge on a narrow one even a fraction of a
+   pixel under 20rem (a smaller factor leaves 300-320 px fields inline), where it takes a line of its own and the box
+   grows into the line it leaves. It follows the space the field gets, not the screen, with no size containment, so the field keeps its intrinsic width in auto flex
+   and grid tracks. Both start at the line's top. Only a field with an action sets it; every other TextField keeps its
+   column. */
+.withAction {
+  flex-flow: row wrap;
+  column-gap: var(--sp-2);
+  align-items: flex-start;
+}
+
+.withAction > * {
+  flex: 0 0 100%;
+}
+
+.withAction > .control,
+.withAction > .slotBox {
+  flex: 1 1 0;
+}
+
+.withAction > .action {
+  flex: 0 1 calc((20rem - 100%) * 99999);
+}
+
+/* The control fills the action's space: its own width on the box's line, the whole line under the box. A ReasonButton
+   draws its button inside a wrapper, so the wrapper and the button both grow; every ActionControl button and link
+   carries data-action-id. */
+.action {
+  display: flex;
+}
+
+.action > *,
+.action [data-action-id] {
+  flex: 1 1 auto;
+}
+
+/* The action is as tall as the box beside it (every field box is --ctl-h-md), not a button's own --btn-h: its top and
+   bottom edges are the box's. */
+.action [data-action-id] {
+  --plate-h: var(--ctl-h-md);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 0 var(--field-pad-x);
+}
+
+.input::placeholder {
+  color: var(--hx-faint);
+}
+
+.input.textarea {
+  height: auto;
+}
+
+.textarea {
+  min-height: var(--field-textarea-min-h);
+  padding: var(--sp-2) var(--field-pad-x);
+  line-height: var(--lh-normal);
+  resize: vertical;
+}
+
+.mono,
+.input.mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+/* Prefix/suffix: the border moves to this box so its slots sit inside the field. A plain element, so
+   React Aria sets no state on it: the same looks come from its own hover and focus and from the field's state. It grows
+   with a multiline input. */
+.slotBox {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.field .slotBox {
+  height: auto;
+  min-height: var(--ctl-h-md);
+}
+
+.slotBox:hover {
+  border-color: var(--field-line-hover);
+}
+
+.slotBox:focus-within {
+  box-shadow: var(--focus-ring);
+}
+
+.field[data-invalid] .slotBox {
+  border-color: var(--hx-danger-fill);
+}
+
+.field[data-disabled] .slotBox {
+  border-color: var(--ctl-line-field);
+  background: var(--field-off-bg);
+  cursor: not-allowed;
+}
+
+.boxInput {
+  flex: 1;
+  align-self: stretch;
+  min-width: 0;
+  padding: 0 var(--sp-3);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: var(--fs-md);
+}
+
+.boxInput:focus {
+  outline: none;
+}
+
+.boxInput::placeholder {
+  color: var(--hx-faint);
+}
+
+.boxInput[data-disabled] {
+  color: var(--field-off-ink);
+  cursor: not-allowed;
+}
+
+.prefix,
+.suffix {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-half);
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.prefix {
+  padding-inline-start: var(--sp-3);
+}
+
+.prefix + .boxInput {
+  padding-inline-start: var(--sp-1);
+}
+
+.suffix {
+  padding-inline: var(--sp-1);
+}
+
+/* The control wrapper without slots: the input carries the border. */
+.control > .suffix {
+  padding-inline: var(--sp-2) 0;
+}
+
+/* Rule checklist */
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rule {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.ruleMet {
+  color: var(--hx-ink);
+}
+
+.ruleIcon {
+  color: var(--hx-ok);
+}
+
+.ruleDot {
+  width: 10px;
+  height: 10px;
+  margin-inline: var(--sp-half);
+  border: var(--bw) solid var(--hx-line-strong);
+  border-radius: var(--r-round);
+}
+
+.description {
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+
+  /* A line break written in the text shows; plain text wraps (pinned by states/preline.test.tsx). */
+  white-space: pre-line;
+}
+
+.error {
+  color: var(--hx-danger);
+  font-size: var(--fs-sm);
+}
+
+/* The reserved 16 px error line. */
+.errorLine {
+  display: block;
+  min-height: var(--sp-4);
+}
+
+/* Search */
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 200px;
+  max-width: var(--search-max-w);
+  flex: 1;
+}
+
+.searchIcon {
+  position: absolute;
+  inset-inline-start: var(--sp-2);
+  color: var(--hx-faint);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0 var(--sp-7) 0 var(--sp-7);
+}
+
+/* size="toolbar": a toolbar control's height, as Button; the look stays the field's (the toolbar look is the field look). */
+.search_toolbar .searchInput {
+  height: var(--tb-ctl-h);
+}
+
+.searchInput::placeholder {
+  color: var(--hx-faint);
+}
+
+.searchInput::-webkit-search-cancel-button {
+  display: none;
+}
+
+/* The clear button is the kit's IconButton xs; the field only places it. 0,2,0 outweighs the kit's .xs position. */
+.search > .searchClear {
+  position: absolute;
+  inset-inline-end: var(--sp-1);
+}
+
+.search[data-empty] .searchClear {
+  display: none;
+}
+
+/* Switch, "Square grey, yellow on": a square 34 x 20 track, grey with a grey frame when off and
+   the yellow with a dark frame when on; a square white 14 px thumb framed in the track's line colour. The thumb's side
+   (start = off, end = on) and the label say the state as well, never the colour alone; the frames carry the 3:1 edge
+   (tokens.css --hx-switch-*). */
+.switchRow {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.switch {
+  /* Holds the hidden input: without it the input hangs off the page at its place in a scrolled pane, makes the page
+     itself scroll, and pressing the switch scrolls the whole Hub out of view. */
+  position: relative;
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: var(--sp-3);
+  cursor: pointer;
+}
+
+.track {
+  position: relative;
+  flex: none;
+  box-sizing: border-box;
+  width: var(--switch-w);
+  height: var(--switch-h);
+  border: var(--bw) solid var(--hx-switch-line);
+  border-radius: 0;
+  background: var(--hx-switch-off);
+  transition:
+    background-color var(--dur-press) var(--ease-out),
+    border-color var(--dur-press) var(--ease-out);
+}
+
+.thumb {
+  position: absolute;
+  box-sizing: border-box;
+  inset-block-start: 2px;
+  inset-inline-start: 2px;
+  width: var(--switch-thumb);
+  height: var(--switch-thumb);
+  border: var(--bw) solid var(--hx-switch-line);
+  border-radius: 0;
+  background: var(--hx-switch-thumb);
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    border-color var(--dur-press) var(--ease-out);
+}
+
+.switch[data-selected] .track {
+  border-color: var(--hx-switch-on-line);
+  background: var(--hx-switch-on);
+}
+
+.switch[data-selected] .thumb {
+  border-color: var(--hx-switch-on-line);
+  transform: translateX(calc(var(--switch-w) - var(--switch-h)));
+}
+
+:dir(rtl) .switch[data-selected] .thumb {
+  transform: translateX(calc(var(--switch-h) - var(--switch-w)));
+}
+
+.switch[data-focus-visible] .track {
+  box-shadow: var(--focus-ring);
+}
+
+.switch[data-disabled] {
+  cursor: not-allowed;
+  opacity: var(--ctl-off-opacity);
+}
+
+/* Never cut: a long label wraps beside its track. A DataTable toolbar keeps it on one line and
+   moves the switch into its view menu when there is no room. */
+.switchLabel {
+  min-width: 0;
+  font-weight: var(--fw-medium);
+  overflow-wrap: anywhere;
+}
+
+/* A switch label kept as the accessible name but not drawn (labelHidden). */
+.switchDesc {
+  padding-inline-start: calc(var(--switch-w) + var(--sp-3));
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+
+  /* A line break written in the text shows; plain text wraps (pinned by states/preline.test.tsx). */
+  white-space: pre-line;
+}
+
+/* Checkbox */
+
+/* Fieldset: a named set of controls; the legend is a field label (no fieldset frame, no legend inset). */
+.fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  margin-block-end: calc(var(--sp-1) - var(--sp-2));
+  padding: 0;
+}
+
+/* CheckboxGroup: its checkboxes in one column, spaced as RadioGroup's options (more.module.css .radios). */
+.checks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* Two columns where there is room for two, one where there is not (never three): rows aligned. */
+.cols2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(calc(4 * var(--sp-10)), calc(50% - var(--sp-5)))), 1fr));
+  column-gap: var(--sp-5);
+}
+
+.checkbox {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  cursor: pointer;
+}
+
+.box {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--toggle-box);
+  height: var(--toggle-box);
+  margin-block-start: var(--sp-half);
+  border: var(--bw) solid var(--ctl-line-toggle);
+  border-radius: var(--r-1);
+  background: var(--hx-card);
+  color: var(--hx-on-check);
+}
+
+.checkbox[data-hovered] .box {
+  border-color: var(--hx-ink);
+}
+
+.checkbox[data-selected] .box,
+.checkbox[data-indeterminate] .box {
+  border-color: var(--hx-ink);
+  background: var(--hx-ink);
+}
+
+.checkbox[data-focus-visible] .box {
+  box-shadow: var(--focus-ring);
+}
+
+.checkbox[data-disabled] {
+  cursor: not-allowed;
+  opacity: var(--ctl-off-opacity);
+}
+
+/* Touch: on a coarse pointer a Switch or Checkbox is at least --touch-min tall, as its own box, so a
+   stack of them makes room rather than sharing targets. One with no visible text (a table's row check, labelHidden, a
+   setting row's labelledBy switch) is --touch-min wide too, its box or track centred: the target is never an
+   extension over a neighbour, only the control's own size. A fine pointer keeps every size. */
+@media (pointer: coarse) {
+  .switch,
+  .checkbox {
+    min-block-size: var(--touch-min);
+  }
+
+  .switch:not(:has(> .switchLabel)),
+  .checkbox:not(:has(> .checkText)) {
+    min-inline-size: var(--touch-min);
+    justify-content: center;
+  }
+
+  .checkbox:not(:has(> .checkText)) {
+    align-items: center;
+  }
+
+  .checkbox:not(:has(> .checkText)) > .box {
+    margin-block-start: 0;
+  }
+}
+
+.checkText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+}
+
+/* Field width: TextField, SearchField and Select `width`. Kept last so a width wins over the search field's
+   own min-width, max-width and flex. A fixed width never grows and may shrink in a narrow row. Full takes the whole
+   line (a row's room beside its neighbours, or a column's width); in a row too narrow for all, it takes the shortfall
+   first (shrink 1000) down to its floor, the xs width or the line when narrower. Neither grows along a column. */
+.w_xs,
+.w_sm,
+.w_md,
+.w_lg {
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+.w_xs {
+  inline-size: var(--field-w-xs);
+}
+
+.w_sm {
+  inline-size: var(--field-w-sm);
+}
+
+.w_md {
+  inline-size: var(--field-w-md);
+}
+
+.w_lg {
+  inline-size: var(--field-w-lg);
+}
+
+.w_full {
+  flex: 0 1000 auto;
+  inline-size: 100%;
+  min-inline-size: min(var(--field-w-xs), 100%);
+  max-inline-size: none;
+}
+
+/* Forced colours do not paint box-shadow, so the focus ring above gets a solid system outline (the same rule as
+   Button's; measured by kit/focus.forced.spec.ts). */
+@media (forced-colors: active) {
+  /* The slot field's ring is on its box (the input inside turns its own outline off). */
+  .slotBox:focus-within {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+}

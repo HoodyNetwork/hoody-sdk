@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                                             ▸ Use with your agent   + Launch an app
+ Computers             │  On atlas
+ Files                 │  ▸ Running programs    Apps    Ports & aliases
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │                           ┌──────────────────────────────────────────┐
+ Demo                  │                           │ ! atlas isn't reachable right now        │
+ Vault                 │                           │                                          │
+                       │                           │ It may be off, restarting or offline.    │
+On atlas ▾             │                           │                                          │
+▌Programs              │                           │ [↻ Try again]  [Open Computers]  Details │
+ Schedules             │                           └──────────────────────────────────────────┘
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

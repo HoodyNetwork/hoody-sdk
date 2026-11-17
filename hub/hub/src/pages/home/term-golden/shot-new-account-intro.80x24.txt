@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Good morning, Ada                                                  [Customize]
+ ■ Personal · ✓ atlas (Running) · SG n12
+
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │  Your own computers in the cloud, each with an                  [× Hide]  │█
+ │  AI agent. Reach them from anywhere.                                      │█
+ │                                                                           │█
+ │   Open                                                                    │█
+ │                                                                           │▀
+ │  ⇗ The tour is an animated page that plays on the web Hub.                │
+ │  [c Copy link] [r QR code]                                                │
+ │  https://hub.example.test/auth/home?realm=f1f1…f1f1&computer=c0a7…00a1#/  │
+ │  onboarding                                                               │
+ │                                                                           │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Your computer                                                  View all › │
+ │ atlas ● Running SG n12 Up 5d 0h                                           │
+ │                                                                           │
+ │ Agent ⇗     ⧉ copy [QR] [Put Agent on Board]                              │
+ │ Terminal ⇗  ⧉ copy [QR] [Put Terminal on Board]                           │
+ │ Desktop ⇗   ⧉ copy [QR] [Put Desktop on Board]                            │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

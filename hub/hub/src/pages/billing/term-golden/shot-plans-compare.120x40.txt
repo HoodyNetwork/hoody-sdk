@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing                                                                  + Add funds
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │  ▸ Plans    Bare metal    Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC                              [Pay now]
+ Vault                 │
+                       │  │ $29 / month                               │  ┃ $59 / month                               ┃
+On atlas ▾             │  │ Paid monthly from your wallet             │  ┃ Paid monthly from your wallet             ┃
+ Programs              │  │ Computers                               8 │  ┃ Computers                              16 ┃
+ Schedules             │  │ CPU cores                               4 │  ┃ CPU cores                               8 ┃
+ Scripts               │  │ Memory                               8 GB │  ┃ Memory                              16 GB ┃
+ Logs                  │  │ Disk                               160 GB │  ┃ Disk                               320 GB ┃
+ Tunnels               │  │ Hardware                  Shared hardware │  ┃ Hardware                  Shared hardware ┃█
+ Notes                 │  │ AI allowance                   Pro 10×    │  ┃ AI allowance                   Pro 20×    ┃█
+ AI                    │  │                                █████░░░░░ │  ┃                                ██████████ ┃█
+ VMs                   │  │ Locations                                 │  ┃ Locations                                 ┃█
+                       │  │ DE Frankfurt, Germany                     │  ┃ DE Frankfurt, Germany                     ┃█
+Account                │  │ FI Helsinki, Finland  SG Singapore        │  ┃ FI Helsinki, Finland  SG Singapore        ┃
+▌Plans & Billing       │  │ Next: Large. When 8 GB of memory or 8     │  ┃ Next: Bare metal, a whole machine of your ┃
+ Referrals             │  │ computers get tight.                      │  ┃ own, below.                               ┃
+ Keys and tokens       │  │                                           │  ┃                                           ┃
+ API                   │  │ [Choose Medium]                           │  ┃  Choose Large                             ┃
+ Notifications      26 │  └───────────────────────────────────────────┘  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+ Account               │
+                       │  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ + Rent servers        │  ┃ Bare metal                                                                               ┃
+ Guide                 │  ┃ A whole machine for you alone                                                            ┃
+ Support               │  ┃ From $30 a month                                                                         ┃
+                       │  ┃ Hardware                 Dedicated hardware   Locations  Pick a listing and its location ┃
+                       │  ┃ Cores                                  4–32   Memory                        32 GB–512 GB ┃
+                       │  ┃ Disk                        500 GB–19.75 TB   Countries                                4 ┃
+                       │  ┃                                                                                          ┃
+                       │  ┃ [Browse machines →]                                                                      ┃
+                       │  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+                       │
+                       │
+                       │  Compare plans
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

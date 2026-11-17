@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ ‹ Back                                                                  Esc ×
+ Home                  │   Chats   Agent┃ Connect OpenAI
+ Computers             │  ▌Models & keys┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  atlas › Models┃ How to connect OpenAI
+ Bots                  │  Models & keys ┃ (•) Sign in with ChatGPT
+ Board                 │  atlas uses Hoo┃     Use your ChatGPT plan
+ Demo                  │                ┃ ( ) Use an API key
+ Vault                 │  ▌Default model┃     Pay as you go on your own key
+                       │  ──────────────┃
+On atlas ▾             │  ┌─────────────┃ Open the page, then enter this code.
+ Programs              │  │ Default mode┃
+ Schedules             │  │ The model yo┃ Your code
+ Scripts               │  │ ┌───────────┃ │ •••••••••••• (Hidden until you press Show) [Show] [Copy]
+ Logs                  │  │ │           ┃ ⚿ Type it on the page that opens. It is hidden when you leave this step.
+ Tunnels               │  │ │ AI helper ┃
+ Notes                 │  │ │ The model ┃  Open the sign-in page ⇗  [Cancel sign-in]
+▌AI                    │  │ │ everyday w┃
+ VMs                   │  │ │ computer. ┃ The code works for 15 minutes.
+                       │  │ │           ┃
+Account                │  │ │ Bots      ┃ Waiting for you to finish signing in
+ Plans & Billing       │  │ │ Bots follo┃
+ Referrals             │  │ │           ┃
+ Keys and tokens       │  │ └───────────┃
+ API                   │  └─────────────┃
+ Notifications      26 │                ┃
+ Account               │  ┌─────────────┃
+                       │  │ Accounts    ┃
+ + Rent servers        │  │ The AI provi┃
+ Guide                 │  │ / Search    ┃
+ Support               │  │             ┃
+                       │  │   Provider  ┃
+                       │  │ › H Hoody AI┃
+                       │  │   O OpenAI  ┃
+                       │  └─────────────┃
+                       │                ┃
+                       │  ┌─────────────┃
+                       │  │ Claude Code ┃
+                       │  │ Use your own┃
+                       │  │ ┌───────────┃
+ Tab move · Enter open · Ctrl+K commands┃

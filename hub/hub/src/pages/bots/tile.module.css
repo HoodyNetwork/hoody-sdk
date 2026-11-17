@@ -1,0 +1,45 @@
+/* A Bot in another page's tile (tile.tsx). Tokens only, logical properties, camelCase classes. */
+
+/* The tile's root: the Board's tile body is a definite height, and this column takes it whole, so the
+   Bot's tile below gets a definite height to share between its header, its card and its log's box. */
+.root {
+  display: flex;
+  flex-direction: column;
+  block-size: 100%;
+  min-block-size: 0;
+}
+
+.tile {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-block-size: 0;
+  padding: var(--sp-2);
+  overflow: auto;
+}
+
+/* The Activity log's own scroll box under the header and the waiting card: the log follows its end inside it, so a long
+   thread never scrolls the tile past them. It keeps a few rows' height in a tile shorter than its card;
+   the tile then scrolls to it. */
+.tileLog {
+  flex: 1 1 0;
+  min-block-size: 8rem;
+  overflow: auto;
+}
+
+.tileHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.tileName {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  font: var(--t-body-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

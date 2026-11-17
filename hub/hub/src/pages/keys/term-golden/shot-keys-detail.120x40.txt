@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Keys and tokens                                            ▸ Use with your agent  [+ New key]
+ Computers             │  A key lets your agent, the CLI or the SDK act for you. Give each one its own key, with an end
+ Files                 │  date.
+ Bots                  │  ▸ API keys 5 keys    SSH keys    Shared access 0 shares
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  i Keys that work in Personal.                                               [Show all realms]
+ Vault                 │
+                       │  ‹ Back to list  Esc
+On atlas ▾             │  ci-deploy  ● Active                                [Pause] [Copy with a new secret…]  Edit… █
+ Programs              │                                                                                              █
+ Schedules             │                                                                                              █
+ Scripts               │    ┌──────────────────────────────────────────────────────────────────────────────────────┐  █
+ Logs                  │    │ THIS KEY                                                                             │  █
+ Tunnels               │    │ It works now.                                                                        │  █
+ Notes                 │    └──────────────────────────────────────────────────────────────────────────────────────┘  █
+ AI                    │                                                                                              █
+ VMs                   │    Key            hdy_9e37…                      Allowed IPs    203.0.113.7/32               █
+                       │    Works in       Personal f1f1…f1f1 ⧉           Made           Nov 2, 2026                  █
+Account                │    In this realm  Computers Programs Shares      Last used      Not used yet                 █
+ Plans & Billing       │    Access         Developer                      Also           Events                       █
+ Referrals             │    Ends           Jan 20, 2027 UTC                                                           █
+▌Keys and tokens       │                                                                                              █
+ API                   │    Rights                                                                                    █
+ Notifications      26 │    Computers                                                                       7 of 15   █
+ Account               │    See computers                                                           Change computers
+                       │    computers.read                                                          computers.update
+ + Rent servers        │
+ Guide                 │     Read                                                                    Write
+ Support               │    Start                                                             Stop
+                       │    computers.actions.start                                           computers.actions.stop
+                       │
+                       │     Write                                                             Write
+                       │    Restart                                                           Run commands (shell)
+                       │    computers.actions.restart                                         computers.actions.exec
+                       │
+                       │     Write                                                             Write
+                       │    Read logs
+                       │    computers.actions.logs
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

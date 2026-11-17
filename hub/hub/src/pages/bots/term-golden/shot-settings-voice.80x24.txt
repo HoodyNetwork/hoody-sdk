@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Settings for Chief                                               Esc ×
+ Bots  ┃ Model, behaviour, guardrails and voice.
+ ‹ Bots┃ ──────────────────────────────────────────────────────────────────────
+       ┃ │ The Bot itself        ┌───────────────────────────────────────────┐█
+   i Ta┃ │ Model                 │ Voice                                     │█
+   The ┃ │ Behaviour             │ Speaking to this Bot and hearing it       │█
+   rais┃ │▌Voice                 │ answer.                                   │█
+   19 d┃ │ The helpers it        │ ┌───────────────────────────────────────┐ │█
+       ┃ │ starts                │ │ VOICE CHECK                           │ │█
+       ┃ │ Helpers               │ │ Voice has not been checked yet.       │ │█
+       ┃ │ Guardrails and        │ └───────────────────────────────────────┘ │█
+       ┃ │ limits                │ ┌───────────────────────────────────────┐ │█
+       ┃ │ Advanced              │ │                                       │ │█
+   Unde┃                         │ │ Voice check                           │ │█
+   rest┃                         │ │ [Check it works]                      │ │█
+   19 d┃                         │ │                                       │ │█
+       ┃                         │ │ Choose the models and voice myself    │ │█
+   ┌───┃                         │ │ The Bot uses the default voices.      │ │█
+   │ Me┃                         │ │ Press Check it works to see if they   │ │█
+   └───┃                         │ │ are ready.                            │ │█
+       ┃                         │ │ [□ off]                               │ │
+       ┃                         │ │                                       │ │
+       ┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Discard] [Cancel]  Save

@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Rent a server                                                    Esc ×
+ Plans ┃ 1 Review 2 Confirm
+ Upgrad┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Plan┃ Singapore M Singapore, SG
+ ──────┃
+ │ ✗ fr┃  Rental                                                        $39.00
+ Plans ┃  Total first payment                                           $39.00
+ Each p┃  Wallet balance                                                $42.50
+ disk. ┃
+       ┃ This charges at most $39.00. If the price goes up, you are asked
+ ┌─────┃ again.
+ │     ┃ Purchases are prepaid and not eligible for customer-requested refunds.
+ │ Plan┃
+ │ Choo┃ This adds a new server. Your free server ash-3 stays as it is.
+ │ serv┃
+ │ to u┃ [ ] I understand this purchase is not eligible for a customer-
+ │     ┃     requested refund, and I agree to the Terms of Service and Privacy
+ └─────┃     Policy.
+       ┃
+ ┌─────┃
+ │ Free┃
+ │ $0 /┃
+ │ Your┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Cancel]   Confirm and pay

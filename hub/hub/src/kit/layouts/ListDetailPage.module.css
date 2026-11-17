@@ -1,0 +1,518 @@
+/* ListDetailPage and the parts of a detail pane (DetailHeader, DetailBody, DetailFooter). The page fills the content
+   area's height; each pane scrolls on its own. Breakpoints key on the shell's `content` container, except the switch to
+   one pane: that keys on the page's own usable width (`ldpage`, inside its padding), which must hold both pane minimums
+   and the separator. */
+.page {
+  /* The separator between the panes, in the grid and in the one-pane width below. */
+  --ld-sep: 6px;
+
+  /* A phone's sticky detail footer: what must stay visible under it, measured from the bottom of
+     the screen: the strip the shell's chrome covers (the bottom bar; 0 in focus mode), or the
+     keyboard. Sticky stops at the main area's end padding, which is that strip
+     plus the action button's room, so the footer's offset takes both back off. */
+  --ld-footer-bottom: var(--shell-main-pad-end, 0px);
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: var(--sp-4) var(--pad-page);
+  container: ldpage / inline-size;
+}
+
+.header {
+  flex: none;
+}
+
+/* The page's view switch (views), then its banner (page-level notices), above both panes. The one-pane rule below never
+   hides either. The banner and the list toolbar are notice stacks (Layouts.module.css .noticeStack, set beside these
+   classes in ListDetailPage.tsx); here they only keep their height in the page's and the pane's flex column. */
+.views {
+  flex: none;
+  padding-block-end: var(--sp-3);
+}
+
+.banner {
+  flex: none;
+}
+
+.split {
+  position: relative;
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.listToolbar {
+  flex: none;
+}
+
+.listBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Questions drawn beside a detail (a hash targets them): the rows keep a floor, or a fill table shrinks to nothing. */
+.hasDetail .listBody:has(> .listFaq) > :first-child {
+  flex: none;
+  min-height: 240px;
+}
+
+/* The page's questions follow the rows in the list pane's own scroll. A fill table takes its rows'
+   height up to the whole pane: more rows than fit keep the pane (rows, pager and inner scroll as without questions)
+   and the questions start under its end; a short table, an empty state or a message keeps its own height and the
+   questions sit right under it. While the location names a question (faqAsked) the table flexes as before and the
+   questions keep their place under it: a landing is placed once, and rows arriving after it must not push it away.
+   A page that wraps its table (notices above it in a flex column) gets the same cap on the wrapper, whose table then
+   shrinks inside it as it does in the pane; a wrapper's own height gives way to its content, so a short wrapped table
+   is followed by the questions too. */
+.listBody:not(.faqAsked):has(> .listFaq) > [data-fill],
+.listBody:not(.faqAsked):has(> .listFaq) > :has([data-fill]) {
+  flex: none;
+  block-size: auto;
+  max-block-size: 100%;
+}
+
+/* The page's questions close the list pane and scroll with it. Under a short list they sit at the pane's bottom, in
+   flow: the free space goes above them, the gap inside this wrapper. A long list has none. */
+.listFaq {
+  flex: none;
+  min-width: 0;
+  margin-block-start: auto;
+  padding-block-start: var(--sp-6);
+}
+
+/* fill + selection: list 340 (280-560) | separator | detail (min --detail-min). The list gives way first; the page
+   is one pane before the detail could go under its minimum (ldpage, below). */
+.fill.hasDetail .split {
+  grid-template-columns: clamp(var(--pane-list-min), var(--ld-list-w), max(var(--pane-list-min), calc(100% - var(--detail-min) - var(--ld-sep)))) var(--ld-sep) minmax(var(--detail-min), 1fr);
+}
+
+.fill.hasDetail.listHidden .split {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.fill.listHidden .list {
+  display: none;
+}
+
+/* side + selection: table | separator | inspector 440 (360-640). The inspector sits beside the table at every width
+   that holds two panes and gives way so the table keeps its least width; the table drops columns by priority for
+   the room it has (DataTable). Under 846 px of the page it is one pane (ldpage, below). */
+.side.hasDetail .split {
+  grid-template-columns: minmax(0, 1fr) var(--ld-sep) min(var(--ld-insp-w), calc(100% - var(--pane-list-min) - var(--ld-sep)));
+}
+
+.detail {
+  /* The pane's inline inset and the ground a stuck tab strip paints. The kit parts in a
+     pane read them (DetailHeader, DetailPage's body, a Tabs bar and panel), so a page never sets
+     them; a box that already pads by --pane-inset hands its contents 0. */
+  --pane-inset: var(--sp-5);
+  --tabs-sticky-top: var(--detail-head-h);
+  --tabs-sticky-bg: var(--hx-card);
+
+  /* A SettingGroup in the pane is bare while the pane paints its frame. The pane pads nothing itself: its rows keep
+     --pad-card, less the --pane-inset a DetailBody, pane body or Tabs panel pays on the way (SettingGroup.tsx). */
+  --sg-bw: 0px;
+  --sg-fill: transparent;
+  --sg-pad: var(--pad-card);
+  --sg-pane: var(--pane-inset);
+
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--hx-card);
+  --ring-gap: var(--hx-card);
+  --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus); /* again with the gap: see kit/tokens.css Focus */
+}
+
+/* The detail's body scrolls; its header sticks inside it and the footer stays below it. */
+.detailScroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* The detail pane's footer: flush, a hairline above, an action row (--gap-actions) on the end. */
+.detailFooter {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--gap-actions);
+  min-height: var(--savebar-h);
+  padding: var(--sp-2) var(--sp-4);
+  border-block-start: var(--bw) solid var(--hx-line);
+  background: var(--hx-card);
+}
+
+.back {
+  display: none;
+  flex: none;
+  padding: var(--sp-2) var(--sp-2) 0;
+}
+
+/* Detail header (--detail-head-h): name, status, meta chips; actions and the pane control on the end. */
+.detailHeader {
+  position: sticky;
+  inset-block-start: 0;
+
+  /* Above a tab strip that sticks under it: a strip whose box scrolls away (a short panel) passes under the
+     header, never over its actions. */
+  z-index: calc(var(--z-sticky) + 1);
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-4);
+  min-height: var(--detail-head-h);
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--pane-inset, var(--sp-5));
+  background: var(--hx-card);
+}
+
+/* The computer's colour band: a leaf at the header's top edge, in the padding, so the header keeps its height.
+   The 1 px line on its inner side keeps white or near-black colours visible; it is decoration, the name carries the
+   identity. */
+.detailAccent {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 4px;
+  background: var(--computer);
+  box-shadow: inset 0 calc(-1 * var(--bw)) 0 var(--hx-swatch-ring);
+  pointer-events: none;
+}
+
+@media (forced-colors: active) {
+  .detailAccent {
+    forced-color-adjust: none;
+    box-shadow: inset 0 calc(-1 * var(--bw)) 0 canvastext;
+  }
+}
+
+.detailTitles {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-half);
+  min-width: 0;
+}
+
+.detailTitleLine {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.detailLeading {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+.detailTitle {
+  overflow: hidden;
+  color: var(--hx-ink);
+  font: var(--t-heading);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detailTitle:focus {
+  outline: none;
+}
+
+.detailTitle:focus-visible {
+  border-radius: var(--r-1);
+  box-shadow: var(--focus-ring);
+}
+
+.detailStatus {
+  display: inline-flex;
+  flex: none;
+}
+
+.detailMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.detailActions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--gap-actions);
+}
+
+/* An actions fragment that renders nothing takes no place (no empty line on a wrapped header). */
+.detailActions:empty {
+  display: none;
+}
+
+/* The end cluster's icon controls, the pane control then the ⋯ (last): one action gap from the page's buttons, not the
+   header's wider gap. On a wrapped header they keep the name row's inline end and the page's buttons take the line
+   below, so the ⋯ never takes a line of its own. */
+.detailEnd {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--gap-actions);
+}
+
+.detailActions + .detailEnd {
+  margin-inline-start: calc(var(--gap-actions) - var(--sp-4));
+}
+
+/* DetailBody: the pane's inset, as its header and tab strip; what it holds starts flush. */
+.detailBody {
+  min-width: 0;
+  padding: var(--sp-4) var(--pane-inset, var(--sp-5)) var(--sp-6);
+}
+
+.detailBody > * {
+  --pane-inset: 0px; /* a length, never a bare 0: SettingGroup rows compute with it */
+}
+
+/* DetailFooter: the notice on its own full-width line, the actions on the end below it. A narrow footer gives each
+   action its own line (two worded buttons side by side never fit a phone). */
+.footerParts {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  container: detailfoot / inline-size;
+}
+
+.footerNotice {
+  flex: 1 1 100%;
+  min-width: 0;
+  color: var(--hx-ink);
+  font: var(--t-small);
+  overflow-wrap: anywhere;
+}
+
+.footerActions {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--gap-actions);
+  min-width: 0;
+}
+
+@container detailfoot (width < 400px) {
+  .footerActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* Stacked (DetailHeader measured its pane too narrow for one line): the name, with its status, keeps
+   the first line and wraps rather than being cut; the actions and the pane control take the line below, on the end
+   side. It still sticks; the tab strip under it follows its height (--detail-head-live). */
+.detailStacked {
+  flex-wrap: wrap;
+  row-gap: var(--sp-2);
+}
+
+.detailStacked .detailTitles {
+  flex: 1 1 0;
+}
+
+.detailStacked .detailTitleLine {
+  flex-wrap: wrap;
+  row-gap: var(--sp-1);
+}
+
+/* A stacked name wraps beside its leading mark instead of dropping under it. */
+.detailStacked .detailLeading + .detailTitle {
+  flex: 1 1 0;
+  min-inline-size: 0;
+}
+
+.detailStacked .detailTitle {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.detailStacked .detailActions {
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* A wrapped header draws the end group before the page's buttons (DetailHeader), so it keeps the name row. */
+.detailStacked .detailEnd {
+  align-self: flex-start;
+  margin-inline-start: 0;
+}
+
+/* Under 600 px of content (DetailHeader measures it: `.detailNarrow`) the same: the name shares its row with the end
+   group (the name wraps first), and the page's buttons take the line below. */
+.detailNarrow:has(> .detailEnd) > .detailTitles {
+  flex: 1 1 0;
+}
+
+.detailNarrow > .detailEnd {
+  align-self: flex-start;
+  margin-inline-start: 0;
+}
+
+.detailNarrow:has(> .detailEnd) > .detailActions {
+  flex-basis: 100%;
+}
+
+/* On their own line the page's buttons end at the pane's inset, where the body's cards end: the header's smaller end
+   padding (--sp-3) is for the frameless icons of the end group, whose glyphs then end at that same inset. */
+.detailStacked .detailActions,
+.detailNarrow:has(> .detailEnd) > .detailActions {
+  padding-inline-end: max(0px, calc(var(--pane-inset, var(--sp-5)) - var(--sp-3)));
+}
+
+/* One pane: the list, or the detail with "‹ <page>", once the page's usable width cannot hold the list's least
+   width, the separator and the detail's least width (846 = --pane-list-min 280 + --ld-sep 6 + --detail-min 560;
+   a query cannot read custom properties, ListDetailPage.test.tsx keeps the sum in step with the tokens). */
+@container ldpage (width < 846px) {
+  .fill.hasDetail .split,
+  .side.hasDetail .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .handle {
+    display: none;
+  }
+
+  .hasDetail .list,
+  .hasDetail .header {
+    display: none;
+  }
+
+  .back {
+    display: block;
+  }
+
+  /* One way out: "‹ <page>" replaces Hide/Show list and the side inspector's × (Esc still closes). */
+  .paneCtl {
+    display: none;
+  }
+}
+
+@container content (width < 600px) {
+  /* Phones: the page scrolls as one document (above the bottom bar and FAB padding the shell
+     adds), not a short inner box cut off at the viewport. */
+  .page {
+    height: auto;
+    padding-block-start: var(--sp-3);
+
+    /* The page's own box clears the strip the bottom bar covers. A page that wraps this one in a
+       fixed-height frame (height: 100%) overflows that frame, and the main area's end padding then
+       lands before the overflow ends: the last rows would sit under the bar, out of reach. Padding
+       here works whatever wraps the page. A flex wrapper would shrink the page below its content
+       and put that padding mid-content, so the page keeps its content height here. */
+    flex-shrink: 0;
+    min-height: 100%; /* at least the content area, so a short list's questions sit at its bottom */
+    padding-block-end: calc(var(--sp-4) + var(--shell-main-pad-end, 0px));
+  }
+
+  .split,
+  .list,
+  .listBody,
+  .detail,
+  .detailScroll {
+    min-height: auto;
+    overflow: visible;
+  }
+
+  /* The header wraps to any height here, so it scrolls away with the content and a tab strip sticks at
+     the top instead: a strip stuck under it would cover its wrapped actions. */
+  .detail {
+    --pane-inset: 0px;
+    --tabs-sticky-top: 0;
+    --tabs-sticky-bg: var(--hx-bg);
+    --sg-bw: initial; /* the pane drops its frame: a SettingGroup in it is framed again */
+    --sg-fill: initial;
+    --ring-gap: var(--hx-bg); /* no card here: the page grey shows through, and the header and footer paint it */
+    --focus-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--hx-focus); /* again with the gap: see kit/tokens.css Focus */
+
+    border: 0;
+    background: transparent;
+  }
+
+  /* The header scrolls away here: the sticky tab bar carries the band instead (exactly one band shows). */
+  .detailAccent {
+    display: none;
+  }
+
+  .detailHeader {
+    position: static;
+    flex-wrap: wrap;
+    row-gap: var(--sp-2);
+    padding-inline: 0;
+    background: var(--hx-bg);
+  }
+
+  /* The name (with its status) gets its own line and wraps rather than being cut; the actions take the row below
+     and wrap among themselves. */
+  .detailTitles {
+    flex-basis: 100%;
+  }
+
+  .detailTitleLine {
+    flex-wrap: wrap;
+    row-gap: var(--sp-1);
+  }
+
+  .detailTitle {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .detailActions {
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+  }
+
+  .back {
+    padding-inline: 0;
+  }
+
+  /* The page scrolls as one document here, so the footer (Rent, Save) would sit below the fold:
+     it sticks to the bottom of the visible pane instead, above the bottom bar. */
+  .detailFooter {
+    /* Thumb-size fields in a narrow pane, whatever the pointer: they read --ctl-h (and its alias, which resolves where
+       it is declared, so it is restated); 12 px block padding, primary last. Buttons keep the kit's own heights, 32 with
+       a mouse and 44 on touch. */
+    --ctl-h: var(--hit-narrow);
+    --ctl-h-md: var(--ctl-h);
+
+    position: sticky;
+    inset-block-end: calc(var(--ld-footer-bottom) - var(--shell-main-pad-end, 0px) - var(--shell-fab-room, 0px));
+    z-index: var(--z-sticky);
+    padding: var(--sp-3) 0;
+    background: var(--hx-bg);
+  }
+}

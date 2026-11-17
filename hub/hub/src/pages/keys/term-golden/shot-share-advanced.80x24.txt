@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Share Personal                                                   Esc ×
+ Keys a┃ ──────────────────────────────────────────────────────────────────────
+ A key ┃ ▸ Computer features  0 of 5
+ key, w┃
+   API ┃
+ ──────┃ ▸ Projects  1 of 4 · 1 shows account details
+       ┃
+ People┃
+ includ┃ ▸ Network and publishing  0 of 4
+ share.┃ ▸ Never included
+ ends. ┃
+       ┃
+ SHARED┃ Limits
+       ┃ Ends                                                                 ▄
+ / Sear┃   1 day  ‹ 7 days ›  30 days    Pick a date and time                 █
+   Shar┃ Only from these addresses                                            █
+ › Anyo┃ │ 203.0.113.7                                                        █
+   Anyo┃ Comma separated. Empty works anywhere.                               █
+       ┃ [Add my IP]                                                          █
+       ┃ Who it's for                                                         █
+       ┃ ┃ Alex                                                               █
+ Questi┃ Optional.
+ ▸ Can ┃ ──────────────────────────────────────────────────────────────────────
+ Typing┃                                                     [Cancel]   Review

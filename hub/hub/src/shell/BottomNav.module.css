@@ -1,0 +1,106 @@
+/* Phone bottom bar: level-1 surface, top hairline, icon 20 + label 11. */
+.bar {
+  display: none;
+}
+
+@media (width < 768px) {
+  .bar {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: var(--z-topbar);
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    height: calc(var(--bottom-nav-h) + var(--safe-bottom));
+    padding-block-end: var(--safe-bottom);
+    border-block-start: var(--bw) solid var(--hx-line);
+    background: var(--hx-card);
+  }
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-half);
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--hx-muted);
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.tab[data-focus-visible] {
+  box-shadow: var(--focus-ring-inset);
+}
+
+.tab[data-pressed] {
+  background: var(--hx-press);
+}
+
+.label {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  line-height: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.current {
+  color: var(--hx-ink);
+}
+
+.current::before {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 25%;
+  height: var(--bw-2);
+  background: var(--hx-ink);
+  content: "";
+}
+
+.icon {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Bots "needs you" and the AI tab's running count: the kit's accent count on the icon's top end corner. Placement only,
+   plus a ring in the bar's own fill that keeps the count apart from the icon under it. */
+.count {
+  position: absolute;
+  inset-block-start: -6px;
+  inset-inline-start: 14px;
+  display: inline-flex;
+  border-radius: var(--r-1);
+  box-shadow: 0 0 0 var(--bw-2) var(--hx-card);
+}
+
+/* Ask "waiting for you": an 8 px accent dot on the icon's top end corner. */
+.dot {
+  position: absolute;
+  inset-block-start: -2px;
+  inset-inline-end: -4px;
+  width: 8px;
+  height: 8px;
+  border: var(--bw-2) solid var(--hx-card);
+  border-radius: var(--r-round);
+  background: var(--hx-acc);
+  box-sizing: content-box;
+}
+
+/* Chalk in the light theme makes the accent white on the light bar: the accent marks take a line in the
+   muted mark grey, about 3:1 on it. */
+:global(:root[data-hx-hl="chalk"]:not([data-hx-theme="dark"])) .dot {
+  box-shadow: inset 0 0 0 var(--bw) var(--hx-muted-fill);
+}
+
+.bar[hidden] {
+  display: none;
+}

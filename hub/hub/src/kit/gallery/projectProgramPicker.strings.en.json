@@ -1,0 +1,16 @@
+{
+  "title": "Project and program pickers",
+  "project": "Sample project",
+  "program": "Sample program",
+  "field": "Project in a form",
+  "fieldHelp": "Where the new computer goes.",
+  "fieldError": "Pick a project first",
+  "newProject": "New project",
+  "computers_one": "{{count}} computer",
+  "computers_other": "{{count}} computers",
+  "notInRealm": "Not in this realm",
+  "groupYours": "Yours",
+  "groupSystem": "System",
+  "running": "Running",
+  "stopped": "Stopped"
+}

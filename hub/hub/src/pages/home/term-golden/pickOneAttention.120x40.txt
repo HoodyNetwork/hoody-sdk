@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ○ atlas ▾  [A]  Ctrl+K commands · ? keys
+▌Home                  │  Good morning, Ada                                             [i What is Hoody?]  [Customize]
+ Computers             │  ■ Personal · · atlas (Stopped) · SG n12
+ Files                 │
+ Bots                  │  orion needs a look                                                                          █
+ Board                 │                                                                                              █
+ Demo                  │                                                                                              █
+ Vault                 │    ! Needs you    orion needs a look in Personal                                     [Open]  █
+                       │                                                                                              █
+On atlas ▾             │                                                                                              █
+ Programs              │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Schedules             │  │ │ Ask atlas to…                                                                    [Ask] │█
+ Scripts               │  │                                                                                          │█
+ Logs                  │  │ [Install the popular coding agents] [Keep my app running after restarts]                 │█
+ Tunnels               │  │ [What is running on atlas?] [Back up my files daily] [Create a bot that…]                │█
+ Notes                 │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ AI                    │                                                                                              █
+ VMs                   │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Your computer                                                                 View all › │█
+Account                │  │ atlas ● Stopped SG n12 [▷ Start]                                                         │█
+ Plans & Billing       │  │                                                                                          │█
+ Referrals             │  │ Agent ⇗                                                                                  │█
+ Keys and tokens       │  │ Terminal ⇗                                                                               │█
+ API                   │  │ Desktop ⇗                                                                                │
+ Notifications      26 │  │ Files ⇗                                                                                  │
+ Account               │  │ Browser ⇗                                                                                │
+                       │  │                                                                                          │
+ + Rent servers        │  │ Start atlas to open its programs.                                          All computers │
+ Guide                 │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+ Support               │
+                       │  ┌────────────────────────────────────────────┐ ┌───────────────────────────────────────────┐
+                       │  │ Start something                            │ │ Bots                           View all › │
+                       │  │                                            │ │ ◆ Chief · atl… ◆ Waiting for you [Review] │
+                       │  │ New Bot               Open the Board       │ │ i Support · atlas               i Working │
+                       │  │ Assistants that work  Programs, terminals  │ │ i Digest · atlas     i 2 messages waiting │
+                       │  │ on your computers     and displays side by │ │ ! Ledger · cinder                ! Paused │
+                       │  │                       side                 │ │ · Scout · cinder                   · Idle │
+                       │  │                                            │ │                                           │
+                       │  │ New script            New schedule         │ │                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

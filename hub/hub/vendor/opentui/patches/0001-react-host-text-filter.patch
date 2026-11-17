@@ -1,0 +1,287 @@
+Rationale: output security needs ONE choke point every string passes before the engine draws it. In the React
+host config, text instances (createTextInstance, commitTextUpdate), text-bearing props (content, title, value,
+placeholder, StyledText chunks) and the setProperty default branch go through a host text filter; the Hub installs
+prim/safe.ts: C0 controls other than TAB, CR and LF are drawn as their control pictures (ESC as ␛, so no escape
+sequence is obeyed), DEL as ␡ and C1 controls as U+FFFD; bidi overrides and invisible format characters are
+removed; links are limited to http/https. The host refuses to draw until a filter is set (fails closed with
+TERM_UNSAFE_OUTPUT), so a build that forgets to install it shows nothing instead of passing raw bytes.
+
+diff -ruN a/packages/keymap/src/react/tests/index.test.tsx b/packages/keymap/src/react/tests/index.test.tsx
+--- a/packages/keymap/src/react/tests/index.test.tsx	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/keymap/src/react/tests/index.test.tsx	2026-11-11 12:33:25.255045169 +0000
+@@ -13,13 +13,16 @@
+   useKeymap,
+   usePendingSequence,
+ } from "@opentui/keymap/react"
+-import { createRoot, type Root } from "@opentui/react"
++import { createRoot, setHostTextFilter, type Root } from "@opentui/react"
+ import { act, type ReactNode } from "react"
+ import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react"
+ import { createDiagnosticHarness } from "../../tests/diagnostic-harness.js"
+ 
+ const diagnostics = createDiagnosticHarness()
+ 
++// The React host refuses to draw until a host text filter is set (fail closed); these tests draw unfiltered text.
++setHostTextFilter({ text: (s: string) => s, props: (p: object) => p, prop: (_k: string, v: unknown) => v })
++
+ function setIsReactActEnvironment(isReactActEnvironment: boolean) {
+   // @ts-expect-error test environment flag
+   globalThis.IS_REACT_ACT_ENVIRONMENT = isReactActEnvironment
+diff -ruN a/packages/react/bunfig.toml b/packages/react/bunfig.toml
+--- a/packages/react/bunfig.toml	1970-01-01 00:00:00.000000000 +0000
++++ b/packages/react/bunfig.toml	2026-11-11 11:20:16.954648597 +0000
+@@ -0,0 +1,3 @@
++[test]
++# The React host refuses to draw until a host text filter is set (fail closed); tests run with a pass-through filter.
++preload = ["./tests/preload.ts"]
+diff -ruN a/packages/react/src/index.ts b/packages/react/src/index.ts
+--- a/packages/react/src/index.ts	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/react/src/index.ts	2026-11-11 11:19:56.571766625 +0000
+@@ -3,6 +3,7 @@
+ export * from "./hooks/index.js"
+ export * from "./plugins/slot.js"
+ export * from "./reconciler/renderer.js"
++export { setHostTextFilter, type HostTextFilter } from "./reconciler/host-text-filter.js"
+ export * from "./time-to-first-draw.js"
+ export * from "./types/components.js"
+ 
+diff -ruN a/packages/react/src/reconciler/host-config.ts b/packages/react/src/reconciler/host-config.ts
+--- a/packages/react/src/reconciler/host-config.ts	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/react/src/reconciler/host-config.ts	2026-11-11 11:19:56.567817664 +0000
+@@ -7,6 +7,7 @@
+ import { textNodeKeys, type TextNodeKey } from "../components/text.js"
+ import type { Container, HostContext, Instance, Props, PublicInstance, TextInstance, Type } from "../types/host.js"
+ import { getNextId } from "../utils/id.js"
++import { hostTextFilter } from "./host-text-filter.js"
+ import { setInitialProperties, updateProperties } from "../utils/index.js"
+ 
+ let currentUpdatePriority = NoEventPriority
+@@ -64,7 +65,7 @@
+ 
+     return new components[type](rootContainerInstance.ctx, {
+       id,
+-      ...initialInstanceProps(type, props),
++      ...(hostTextFilter().props(initialInstanceProps(type, props)) as Props),
+       // setInitialProperties assigns crop, so an invalid one reports once.
+       ...("crop" in props && { crop: undefined }),
+     })
+@@ -134,7 +135,7 @@
+       throw new Error("Text must be created inside of a text node")
+     }
+ 
+-    return TextNodeRenderable.fromString(text)
++    return TextNodeRenderable.fromString(hostTextFilter().text(text))
+   },
+ 
+   // Schedule timeout
+@@ -175,7 +176,7 @@
+   },
+ 
+   commitTextUpdate(textInstance: TextInstance, oldText: string, newText: string) {
+-    textInstance.children = [newText]
++    textInstance.children = [hostTextFilter().text(newText)]
+   },
+ 
+   // Append child to container
+diff -ruN a/packages/react/src/reconciler/host-text-filter.ts b/packages/react/src/reconciler/host-text-filter.ts
+--- a/packages/react/src/reconciler/host-text-filter.ts	1970-01-01 00:00:00.000000000 +0000
++++ b/packages/react/src/reconciler/host-text-filter.ts	2026-11-11 11:19:47.614536926 +0000
+@@ -0,0 +1,43 @@
++/**
++ * The one filter between React and the engine. Every string the React host hands an engine instance passes through
++ * it: text instances and their updates, the props an instance is constructed with, and every prop (and style entry)
++ * set on an instance afterwards, initial or updated. A host uses it to make text safe to draw (strip terminal control
++ * sequences, refuse unsafe link targets, ...).
++ *
++ * Fail closed: until a filter is set, creating or updating any instance throws `TERM_UNSAFE_OUTPUT`, so nothing is
++ * drawn unfiltered. A host that wants no filtering sets a pass-through filter explicitly.
++ */
++export interface HostTextFilter {
++  /** A text instance's string, as it is created or updated. */
++  text(s: string): string
++  /** The props an instance is constructed with. Return the same object when nothing changes. */
++  props(p: object): object
++  /** One prop or style entry as it is set on an instance (initial set and every update). */
++  prop(k: string, v: unknown): unknown
++}
++
++let current: HostTextFilter | null = null
++
++/** Sets the filter for every root of this module instance; null removes it (rendering then throws). */
++export function setHostTextFilter(f: HostTextFilter | null): void {
++  if (
++    f !== null &&
++    (typeof f !== "object" ||
++      typeof f.text !== "function" ||
++      typeof f.props !== "function" ||
++      typeof f.prop !== "function")
++  ) {
++    throw new TypeError("setHostTextFilter expects an object with text, props and prop functions, or null")
++  }
++  current = f
++}
++
++/** The filter in force. Throws when none is set (fail closed). */
++export function hostTextFilter(): HostTextFilter {
++  if (current === null) {
++    throw new Error(
++      "TERM_UNSAFE_OUTPUT: no host text filter is set; call setHostTextFilter() from @opentui/react before rendering",
++    )
++  }
++  return current
++}
+diff -ruN a/packages/react/src/utils/index.ts b/packages/react/src/utils/index.ts
+--- a/packages/react/src/utils/index.ts	2026-11-10 21:27:34.000000000 +0000
++++ b/packages/react/src/utils/index.ts	2026-11-11 11:19:56.570480779 +0000
+@@ -8,6 +8,7 @@
+   TabSelectRenderableEvents,
+   TextareaRenderable,
+ } from "@opentui/core"
++import { hostTextFilter } from "../reconciler/host-text-filter.js"
+ import type { Instance, Props, Type } from "../types/host.js"
+ 
+ function initEventListeners(instance: Instance, eventName: string, listener: any, previousListener?: any) {
+@@ -26,7 +27,7 @@
+       if (oldStyles.hasOwnProperty(styleName)) {
+         if (styles == null || !styles.hasOwnProperty(styleName)) {
+           // @ts-expect-error props are not strongly typed in the reconciler
+-          instance[styleName] = null
++          instance[styleName] = hostTextFilter().prop(styleName, null)
+         }
+       }
+     }
+@@ -39,7 +40,7 @@
+         const oldValue = oldStyles?.[styleName]
+         if (value !== oldValue) {
+           // @ts-expect-error props are not strongly typed in the reconciler
+-          instance[styleName] = value
++          instance[styleName] = hostTextFilter().prop(styleName, value)
+         }
+       }
+     }
+@@ -93,7 +94,7 @@
+       break
+     default:
+       // @ts-expect-error props are not strongly typed in the reconciler, so we need to allow dynamic property access
+-      instance[propKey] = propValue
++      instance[propKey] = hostTextFilter().prop(propKey, propValue)
+   }
+ }
+ 
+diff -ruN a/packages/react/tests/host-text-filter.test.tsx b/packages/react/tests/host-text-filter.test.tsx
+--- a/packages/react/tests/host-text-filter.test.tsx	1970-01-01 00:00:00.000000000 +0000
++++ b/packages/react/tests/host-text-filter.test.tsx	2026-11-11 11:24:20.743581619 +0000
+@@ -0,0 +1,98 @@
++import { afterEach, describe, expect, test } from "bun:test"
++import { act, useState } from "react"
++import { setHostTextFilter } from "../src/index.js"
++import { hostConfig } from "../src/reconciler/host-config.js"
++import { testRender } from "../src/test-utils.js"
++import { passThroughHostTextFilter } from "./preload.js"
++
++let testSetup: Awaited<ReturnType<typeof testRender>> | undefined
++
++// Replaces ESC with "?" in text and in the text props it is asked about; records what it saw.
++function recordingFilter() {
++  const seen = { text: [] as string[], props: [] as string[], prop: [] as string[] }
++  const clean = (s: string) => s.replaceAll("\x1b", "?")
++  return {
++    seen,
++    filter: {
++      text(s: string) {
++        seen.text.push(s)
++        return clean(s)
++      },
++      props(p: object) {
++        const out: Record<string, unknown> = { ...(p as Record<string, unknown>) }
++        for (const k of Object.keys(out)) {
++          seen.props.push(k)
++          if (typeof out[k] === "string") out[k] = clean(out[k] as string)
++        }
++        return out
++      },
++      prop(k: string, v: unknown) {
++        seen.prop.push(k)
++        return typeof v === "string" ? clean(v) : v
++      },
++    },
++  }
++}
++
++afterEach(() => {
++  if (testSetup) {
++    act(() => testSetup!.renderer.destroy())
++    testSetup = undefined
++  }
++  setHostTextFilter(passThroughHostTextFilter)
++})
++
++describe("host text filter", () => {
++  test("is exported and validates its argument", () => {
++    expect(typeof setHostTextFilter).toBe("function")
++    expect(() => setHostTextFilter({ text: (s: string) => s } as never)).toThrow(TypeError)
++  })
++
++  test("fails closed: no filter set means no instance and no text instance", () => {
++    setHostTextFilter(null)
++    const container = {} as never
++    expect(() => hostConfig.createTextInstance("hi", container, { isInsideText: true }, null as never)).toThrow(
++      "TERM_UNSAFE_OUTPUT",
++    )
++    expect(() => hostConfig.createInstance("box", {}, container, { isInsideText: false }, null as never)).toThrow(
++      "TERM_UNSAFE_OUTPUT",
++    )
++    expect(() => hostConfig.commitTextUpdate!({ children: [] } as never, "a", "b")).toThrow("TERM_UNSAFE_OUTPUT")
++  })
++
++  test("routes text instances, text updates, initial props and prop updates through the filter", async () => {
++    const { seen, filter } = recordingFilter()
++    setHostTextFilter(filter)
++    let setLabel: (s: string) => void = () => {}
++    function App() {
++      const [label, set] = useState("one\x1b]52;c;x")
++      setLabel = set
++      return (
++        <box title={"T\x1b[2J" + label.slice(0, 3)} border style={{ width: 30, height: 4 }}>
++          <text>{label}</text>
++        </box>
++      )
++    }
++    await act(async () => {
++      testSetup = await testRender(<App />, { width: 30, height: 4 })
++    })
++    await testSetup!.renderOnce()
++    let frame = testSetup!.captureCharFrame()
++    expect(frame).toContain("one?]52;c;x")
++    expect(frame).toContain("T?[2Jone")
++    expect(frame).not.toContain("\x1b")
++    expect(seen.text).toContain("one\x1b]52;c;x")
++    expect(seen.props).toContain("title")
++    expect(seen.prop).toContain("title")
++    expect(seen.prop).toContain("width")
++
++    await act(async () => {
++      setLabel("two\x1b[31m")
++    })
++    await testSetup!.renderOnce()
++    frame = testSetup!.captureCharFrame()
++    expect(frame).toContain("two?[31m")
++    expect(frame).toContain("T?[2Jtwo")
++    expect(seen.text).toContain("two\x1b[31m")
++  })
++})
+diff -ruN a/packages/react/tests/preload.ts b/packages/react/tests/preload.ts
+--- a/packages/react/tests/preload.ts	1970-01-01 00:00:00.000000000 +0000
++++ b/packages/react/tests/preload.ts	2026-11-11 11:20:16.959242263 +0000
+@@ -0,0 +1,11 @@
++import { setHostTextFilter } from "../src/index.js"
++
++// The host text filter fails closed. Upstream tests render unfiltered text, so they run with a pass-through filter.
++// Tests that check the filter itself set their own and restore this one.
++export const passThroughHostTextFilter = {
++  text: (s: string) => s,
++  props: (p: object) => p,
++  prop: (_k: string, v: unknown) => v,
++}
++
++setHostTextFilter(passThroughHostTextFilter)

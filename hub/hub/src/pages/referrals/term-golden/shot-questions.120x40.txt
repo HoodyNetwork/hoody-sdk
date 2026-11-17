@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Referrals                                                                     [Program rules]
+ Computers             │  Invite people to Hoody. When they pay for servers by card or crypto, you earn Referral
+ Files                 │  credit.
+ Bots                  │
+ Board                 │  │ │ arrive later; refunds can reduce or     │  │ month it was activated.                 │ │
+ Demo                  │  │ │ reverse credit.                         │  │ Credit already earned never changes     │ │
+ Vault                 │  │ │                                         │  │ with your level.                        │ │
+                       │  │ └─────────────────────────────────────────┘  └─────────────────────────────────────────┘ │
+On atlas ▾             │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+ Programs              │
+ Schedules             │
+ Scripts               │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+ Logs                  │  │ People you invited                                                                       │
+ Tunnels               │  │ One or two people show as "Fewer than 3"; from 3 the exact number shows. Never who.      │
+ Notes                 │  │ Signed up                 Paying                       Active                            │
+ AI                    │  │ 7                         Fewer than 3                 Fewer than 3                      │
+ VMs                   │  │ used one of your codes    made a qualifying payment    earned you credit recently        │
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+Account                │
+ Plans & Billing       │
+▌Referrals             │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+ Keys and tokens       │  │ Monthly                                                                                  │
+ API                   │  │ The last 12 months, including credit still on hold. Months without earnings are not      │
+ Notifications      26 │  │ listed.                                                                                  │
+ Account               │  │                                                                       3 months  ↻ Refresh│
+                       │  │                                                                                          │
+ + Rent servers        │  │  Month                                Earned                   Reversed                  │
+ Guide                 │  │› Oct 2026                             $6.40                    $0.00                     │
+ Support               │  │  Sept 2026                            $9.00                    $0.00                     │█
+                       │  │  Jul 2026                             $5.00                    $0.00                     │█
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+                       │                                                                                              █
+                       │  Questions                                                                                   █
+                       │  ▸ How much do I earn?                                                                       █
+                       │  ▸ What doesn't count?                                                                       █
+                       │  ▸ How long do I earn from each person?                                                      ▀
+                       │  ▸ Do bare metal and prepaid purchases work differently?
+                       │  ▾ When can I use my credit?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

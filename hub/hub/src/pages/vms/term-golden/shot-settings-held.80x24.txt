@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Virtual machines › win11
+ win11  ● Stopped                                                   Start   [⋯]
+ A VM inside atlas.
+  Overview  Screen  Ports  Storage  Snapshots ▸Settings  Logs
+ ──────────────────────────────────────────────────────────────────────────────
+ │ │ Show a screen                   [■ on ]                               │ │
+ │ │ You need it to install a                                              │ │
+ │ │ system and to use a desktop.                                          │ │
+ │ │                                                                       │ │
+ │ └───────────────────────────────────────────────────────────────────────┘ │
+ │                                                                           │
+ │ Limits                                                                    │
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │
+ │ │                                                                       │ │
+ │ │ Disk speed (MiB/s)              │ [−] No limit             [+]        │ │
+ │ │ Shared by the disk and the                                            │ │
+ │ │ discs. Empty: no limit.                                               │ │█
+ │ │                                                                       │ │█
+ │ │ Disk operations per second      │ [−] No limit             [+]        │ │█
+ │ │ Empty: no limit.                                                      │ │█
+ │ │                                                                       │ │█
+ │ └───────────────────────────────────────────────────────────────────────┘ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

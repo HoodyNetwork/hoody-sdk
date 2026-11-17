@@ -1,0 +1,18 @@
+{
+  "handoff.open": "Open",
+  "handoff.opened": "Opened",
+  "handoff.openFailed": "Couldn't open a browser: copy the address",
+  "handoff.copy": "Copy link",
+  "handoff.copied": "Copied",
+  "handoff.copyFailed": "Copy failed: select the address",
+  "handoff.copyFailedQr": "Copy failed: press r for the QR code",
+  "handoff.copyFailedOpen": "Copy failed: press o to open it",
+  "handoff.copyFailedBare": "Copy failed",
+  "handoff.qr": "QR code",
+  "handoff.openThing": "Open the {{what}} on the web:",
+  "handoff.openIt": "Open it on the web:",
+  "handoff.noOrigin": "(on your Hub's web address)",
+  "handoff.qrName": "the {{what}} on the web",
+  "handoff.qrNameIt": "this on the web",
+  "handoff.actions": "Continue on the web"
+}

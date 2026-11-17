@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Account
+ Your profile, how you sign in, and where you are signed in.
+ ‹ 6  ▌Security history  SSH keys  Emails  Elsewhere  This device  Questions
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Security history                                                          │
+ │ Sign-ins over the last 180 days, newest first.                            │
+ │ / Search              Filters                        0 entries  ↻ Refresh │
+ │ Nothing recorded yet.                                                     │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ SSH keys                                                                  │
+ │ Each computer takes one SSH key, set on that computer.                    │
+ │ / Search                                           5 computers  ↻ Refresh │▄
+ │   Computer ↑        Key                                                   │█
+ │ › atlas             ED25519 …AcctKey1                                     │
+ │                     ada@laptop                                            │
+ │   borealis          · No key                                              │
+ │   cedar             RSA …lyCedar9                                         │
+ │   fjord             · No key                                              │
+ │   granite           ED25519 …Granite7                                     │
+ │                     ci-deploy@build-runner-07.acme.example (rotated       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

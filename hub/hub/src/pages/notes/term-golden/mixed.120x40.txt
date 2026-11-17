@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Notes                                                     ▸ Use with your agent   + New note
+ Computers             │  The notes on your computers. Everyone who opens Notes on a computer shares the same notes.
+ Files                 │
+ Bots                  │  / Search                   Computer ▾                        6 notes  ↻ Refresh  View options
+ Board                 │
+ Demo                  │      Title                                  Section                  Changed ↓
+ Vault                 │  ▾ atlas · 6  Open Notes New note
+                       │  ▌   Weekly plan                            Work                     12 minutes ago          ⋯
+On atlas ▾             │      Deploy checklist                       Work                     2 hours ago             ⋯
+ Programs              │      Reading list                           Personal                 7 hours ago             ⋯
+ Schedules             │      Meeting notes: storefront review       Work                     yesterday               ⋯
+ Scripts               │      Trip ideas                             Personal                 4 days ago              ⋯
+ Logs                  │      Backup schedule                        Projects                 9 days ago              ⋯
+ Tunnels               │
+▌Notes                 │    borealis Notes here is protected. Open Notes to sign in. Open Notes
+ AI                    │
+ VMs                   │    cedar This computer is stopped. Start it from Computers. Computers
+                       │
+Account                │    dune This computer is starting. Its notes show when it is ready. Computers
+ Plans & Billing       │
+ Referrals             │    ember This computer needs attention before its notes can be read. Computers
+ Keys and tokens       │
+ API                   │    fjord This computer is stopped. Start it from Computers. Computers
+ Notifications      26 │
+ Account               │    granite Only the owner of this computer can see its notes here.
+                       │
+ + Rent servers        │    harbor Notes is busy. Try again in a moment. Try again
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

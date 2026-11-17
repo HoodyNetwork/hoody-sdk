@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ ‹ Back                                                                  Esc ×
+ Home                  │   Chats   Agent┃ Connect OpenRouter
+ Computers             │  ▌Models & keys┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  atlas › Models┃ How to connect OpenRouter
+ Bots                  │  Models & keys ┃ (•) Sign in with OpenRouter
+ Board                 │  atlas uses Hoo┃     Use your OpenRouter account
+ Demo                  │                ┃ ( ) Use an API key
+ Vault                 │  ▌Default model┃     Pay as you go on your own key
+                       │  ──────────────┃
+On this computer       │  ┌─────────────┃ ! Sign-in did not finish
+ Programs              │  │ Default mode┃ This computer cannot sign in to OpenRouter yet. Go back and use an API key.
+ Schedules             │  │ The model yo┃ [Try again]  [Back]
+ Scripts               │  │ ┌───────────┃ ▸ Details
+ Logs                  │  │ │           ┃
+ Tunnels               │  │ │ AI helper ┃
+ Notes                 │  │ │ The model ┃
+▌AI                    │  │ │ everyday w┃
+ VMs                   │  │ │ computer. ┃
+                       │  │ │           ┃
+Account                │  │ │ Bots      ┃
+ Plans & Billing       │  │ │ Bots follo┃
+ Referrals             │  │ │           ┃
+ Keys and tokens       │  │ └───────────┃
+ API                   │  └─────────────┃
+ Notifications      26 │                ┃
+ Account               │  ┌─────────────┃
+                       │  │ Accounts    ┃
+ + Rent servers        │  │ The AI provi┃
+ Guide                 │  │ / Search    ┃
+ Support               │  │             ┃
+                       │  │   Provider  ┃
+                       │  │ › H Hoody AI┃
+                       │  │   O OpenAI  ┃
+                       │  └─────────────┃
+                       │                ┃
+                       │  ┌─────────────┃
+                       │  │ Claude Code ┃
+                       │  │ Use your own┃
+                       │  │ ┌───────────┃
+ Tab move · Enter open · Ctrl+K commands┃

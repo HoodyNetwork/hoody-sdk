@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                           ▸ Use with your agent  [+ Get a computer]
+▌Computers             │
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ Computers  Esc
+ Vault                 │  atlas  ● Running                                                        [Open terminal ⇗] [⋯]
+                       │  SG n12 · Home base · █  Personal ·  Current computer
+On atlas ▾             │
+ Programs              │   Overview  Connect ▸Permissions  Ports & addresses  Desktop  Network  Run  Programs  Backups
+ Schedules             │   Storage
+ Scripts               │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Logs                  │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Tunnels               │  │ ACCESS                                                                                   │█
+ Notes                 │  │ Now: rules set outside the Hub decide who can open the programs.                         │█
+ AI                    │  │ Its project has access rules too.                                                        │█
+ VMs                   │  │ hub-my-ip               IP range 203.0.113.7/32                                          │█
+                       │  │ hub-my-ip may open      every program, logs                                              │█
+Account                │  │ Everyone not in a       Kept out                                                         │█
+ Plans & Billing       │  │ group                                                                                    │█
+ Referrals             │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Keys and tokens       │                                                                                              █
+ API                   │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Notifications      26 │  │ Who can open its programs                                              [✦ Ask the Agent] │█
+ Account               │  │ This computer's own rules say:                                                           │
+                       │  │ Only members of hub-my-ip can open the programs, and only what its rule allows. Everyone │
+ + Rent servers        │  │ else is kept out.                                                                        │
+ Guide                 │  │ Its project has access rules too. They can let more people in, ask for a password, or    │
+ Support               │  │ switch the addresses off, so these rules alone don't tell who gets in.                   │
+                       │  │ ▸ Why can't I change these here?                                                         │
+                       │  │ Change them with the Hoody API                                                           │
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Where these rules come from                                           [Open permissions] │
+                       │  │ Its project Home base has access rules.                                                  │
+                       │  │ This computer keeps its own answer for everyone not in a group and inherits the          │
+                       │  │ project's groups and rules.                                                              │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

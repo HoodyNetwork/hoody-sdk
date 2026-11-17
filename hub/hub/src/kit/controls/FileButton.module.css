@@ -1,0 +1,11 @@
+/* The hidden file input: out of sight and out of the tab order, but still clickable by script. */
+.input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+}

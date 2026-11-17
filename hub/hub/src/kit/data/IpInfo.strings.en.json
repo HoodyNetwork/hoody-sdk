@@ -1,0 +1,21 @@
+{
+  "ip.copy": "Copy {{ip}}",
+  "ip.details": "Details for {{ip}}",
+  "ip.city": "City",
+  "ip.region": "Region",
+  "ip.country": "Country",
+  "ip.postal": "Postal code",
+  "ip.timezone": "Time zone",
+  "ip.loc": "Coordinates",
+  "ip.hostname": "Host name",
+  "ip.network": "Network",
+  "ip.networkDomain": "Network domain",
+  "ip.networkType": "Network type",
+  "ip.v4": "IPv4 address",
+  "ip.v6": "IPv6 address",
+  "ip.hosting": "Hosting or data center",
+  "ip.mobile": "Mobile network",
+  "ip.anonymous": "Anonymous (VPN, proxy or Tor)",
+  "ip.satellite": "Satellite link",
+  "ip.anycast": "Anycast address"
+}

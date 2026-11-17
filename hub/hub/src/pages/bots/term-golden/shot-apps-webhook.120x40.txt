@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Support chat                                                                                          Esc ×
+ Home     ┃ Telegram
+ Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ │▌Setup                 ┌─────────────────────────────────────────────────────────────────────────────────┐
+▌Bots     ┃ │ People                │ GET IT WORKING                                                      3 OF 6 DONE │
+ Board    ┃ │ Chats                 │ It can't connect: a webhook takes its messages.                                 │
+ Demo     ┃ │ Settings              │ Next: Remove the webhook                                                        │
+ Vault    ┃                         │ ╳╳╳╳╳╳╳╳╳╳╳╳╳ ───────────── ━━━━━━━━━━━━ ╍╍╍╍╍╍╍╍╍╍╍╍ ━━━━━━━━━━━━ ━━━━━━━━━━━━ │
+          ┃                         └─────────────────────────────────────────────────────────────────────────────────┘
+On atlas ▾┃
+ Programs ┃                          ✗  ┌─────────────────────────────────────────────────────────────────────────────┐
+ Schedules┃                             │ Remove the webhook                                                          │
+ Scripts  ┃                             │ Telegram sends this bot's messages to a webhook, so this app                │
+ Logs     ┃                             │ can't read them.                                                            │
+ Tunnels  ┃                             │ ─────────────────────────────────────────────────────────────────────────── │
+ Notes    ┃                             │ The old address stops getting the bot's messages.       Remove the webhook  │
+ AI       ┃                             └─────────────────────────────────────────────────────────────────────────────┘
+ VMs      ┃                          2  Connect the app
+          ┃                          ✓  Become its owner                                                            Ana
+Account   ┃                          !  Let it read groups                                                     Optional
+ Plans & B┃                          ✓  Add it to a group                                              Optional 1 group
+ Referrals┃                          ✓  Choose a home chat                                         Optional cht-support
+ Keys and ┃
+ API      ┃                         ┌─────────────────────────────────────────────────────────────────────────────────┐
+ Notificat┃                         │                                                                                 │
+ Account  ┃                         │ Bot token                       [Replace…]                                      │
+          ┃                         │ Replace it when you make a new                                                  │
+ + Rent se┃                         │ one in the app.                                                                 │
+ Guide    ┃                         │                                                                                 │
+ Support  ┃                         └─────────────────────────────────────────────────────────────────────────────────┘
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+          ┃
+ Tab move ┃

@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Outgoing spam reported from your server                          Esc ×
+ Notifi┃ About n12
+ Notice┃ ──────────────────────────────────────────────────────────────────────
+   Inbo┃ ┌───────────────────────────────────────────────────────────────────┐█
+ ──────┃ │ The notice                                                        │█
+ ┌─────┃ │ │ ! The suspension linked to this notice remains active.          │█
+ │ Noti┃ │ │   Resolving this notice does not lift that suspension.          │█
+ │/ Sea┃ │ Server                                                        n12 │█
+ │  Not┃ │ ───────────────────────────────────────────────────────────────── │█
+ │› Out┃ │ Status                                                     ! Open │█
+ │  Por┃ │ ───────────────────────────────────────────────────────────────── │█
+ │  Cop┃ │ Sent                                        Oct 22, 2026, 3:00 AM │█
+ │  Phi┃ │ ───────────────────────────────────────────────────────────────── │█
+ │  Out┃ │ Last update                                 Oct 23, 2026, 2:30 AM │
+ │  Por┃ │ ───────────────────────────────────────────────────────────────── │
+ │  Cop┃ │ Linked suspension                                        ✗ Active │
+ │  Phi┃ │ ───────────────────────────────────────────────────────────────── │
+ │  Out┃ │ Hoody                                                             │
+ │  Por┃ │   Oct 22, 2026, 3:00 AM                                           │
+ │  Cop┃ │   Message  We received a report about n12. Please check what runs │
+ │  Phi┃ │            on it and reply here with what you found and what you  │
+ │  Out┃ │            changed.                                               │
+ │  Por┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃                                                  [Close]   Send reply

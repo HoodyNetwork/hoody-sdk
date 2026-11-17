@@ -1,0 +1,2498 @@
+{
+  "exports": {
+    "bar": "pages/logs/parts/Logs.module.css#bar",
+    "search": "pages/logs/parts/Logs.module.css#search",
+    "band": "pages/logs/parts/Logs.module.css#band",
+    "bandBad": "pages/logs/parts/Logs.module.css#bandBad",
+    "bandInfo": "pages/logs/parts/Logs.module.css#bandInfo",
+    "bandText": "pages/logs/parts/Logs.module.css#bandText",
+    "notes": "pages/logs/parts/Logs.module.css#notes",
+    "strip": "pages/logs/parts/Logs.module.css#strip",
+    "chipGroup": "pages/logs/parts/Logs.module.css#chipGroup",
+    "chipMain": "pages/logs/parts/Logs.module.css#chipMain",
+    "groupMeta": "pages/logs/parts/Logs.module.css#groupMeta",
+    "list": "pages/logs/parts/Logs.module.css#list",
+    "head": "pages/logs/parts/Logs.module.css#head",
+    "row": "pages/logs/parts/Logs.module.css#row",
+    "rowSelected": "pages/logs/parts/Logs.module.css#rowSelected",
+    "rowFresh": "pages/logs/parts/Logs.module.css#rowFresh",
+    "what": "pages/logs/parts/Logs.module.css#what",
+    "mono": "pages/logs/parts/Logs.module.css#mono",
+    "visitorCell": "pages/logs/parts/Logs.module.css#visitorCell",
+    "ipFlag": "pages/logs/parts/Logs.module.css#ipFlag",
+    "ipText": "pages/logs/parts/Logs.module.css#ipText",
+    "ipCode": "pages/logs/parts/Logs.module.css#ipCode",
+    "end": "pages/logs/parts/Logs.module.css#end",
+    "muted": "pages/logs/parts/Logs.module.css#muted",
+    "divider": "pages/logs/parts/Logs.module.css#divider",
+    "edge": "pages/logs/parts/Logs.module.css#edge",
+    "pill": "pages/logs/parts/Logs.module.css#pill",
+    "stateBox": "pages/logs/parts/Logs.module.css#stateBox",
+    "inspector": "pages/logs/parts/Logs.module.css#inspector",
+    "group": "pages/logs/parts/Logs.module.css#group",
+    "sectionTitle": "pages/logs/parts/Logs.module.css#sectionTitle",
+    "one": "pages/logs/parts/Logs.module.css#one",
+    "prog": "pages/logs/parts/Logs.module.css#prog",
+    "progBar": "pages/logs/parts/Logs.module.css#progBar",
+    "out": "pages/logs/parts/Logs.module.css#out",
+    "mark": "pages/logs/parts/Logs.module.css#mark",
+    "drawer": "pages/logs/parts/Logs.module.css#drawer",
+    "exact": "pages/logs/parts/Logs.module.css#exact",
+    "answer": "pages/logs/parts/Logs.module.css#answer",
+    "dialogBody": "pages/logs/parts/Logs.module.css#dialogBody",
+    "colTook": "pages/logs/parts/Logs.module.css#colTook",
+    "lead": "pages/logs/parts/Logs.module.css#lead",
+    "path": "pages/logs/parts/Logs.module.css#path",
+    "clip": "pages/logs/parts/Logs.module.css#clip",
+    "colFrom": "pages/logs/parts/Logs.module.css#colFrom",
+    "colVisitor": "pages/logs/parts/Logs.module.css#colVisitor",
+    "srcGroup": "pages/logs/parts/Logs.module.css#srcGroup",
+    "barStart": "pages/logs/parts/Logs.module.css#barStart",
+    "barActs": "pages/logs/parts/Logs.module.css#barActs",
+    "searchRow": "pages/logs/parts/Logs.module.css#searchRow",
+    "chipRow": "pages/logs/parts/Logs.module.css#chipRow",
+    "footNote": "pages/logs/parts/Logs.module.css#footNote"
+  },
+  "classes": {
+    "pages/logs/parts/Logs.module.css#bar": {
+      "id": "pages/logs/parts/Logs.module.css#bar",
+      "style": {
+        "paddingTop": 0,
+        "paddingBottom": 0
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "padding-block: var(--sp-2)",
+          "kind": "translated",
+          "detail": "padding-top: 0 rows (8px); padding-bottom: 0 rows (8px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#search": {
+      "id": "pages/logs/parts/Logs.module.css#search",
+      "style": {
+        "flexGrow": 1,
+        "flexShrink": 1,
+        "flexBasis": 27,
+        "minWidth": 22,
+        "maxWidth": 45
+      },
+      "status": "partial",
+      "outcomes": [
+        {
+          "decl": "flex: 1 1 220px",
+          "kind": "lossy",
+          "detail": "flex-grow: 1; flex-shrink: 1; flex-basis: 27 cells, read as a WIDTH (the parent's direction is unknown here)"
+        },
+        {
+          "decl": "min-width: 180px",
+          "kind": "translated",
+          "detail": "22 cols (180px)"
+        },
+        {
+          "decl": "max-width: 360px",
+          "kind": "translated",
+          "detail": "45 cols (360px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#band": {
+      "id": "pages/logs/parts/Logs.module.css#band",
+      "style": {
+        "flexDirection": "row",
+        "flexWrap": "wrap",
+        "alignItems": "center",
+        "rowGap": 1,
+        "columnGap": 1,
+        "minHeight": 1,
+        "paddingTop": 0,
+        "paddingRight": 1,
+        "paddingBottom": 0,
+        "paddingLeft": 1
+      },
+      "text": {
+        "bg": "token:--hx-warn-t",
+        "fg": "token:--hx-ink"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "flex-wrap: wrap",
+          "kind": "translated",
+          "detail": "wrap"
+        },
+        {
+          "decl": "align-items: center",
+          "kind": "translated",
+          "detail": "center"
+        },
+        {
+          "decl": "gap: var(--sp-3)",
+          "kind": "translated",
+          "detail": "row-gap: 1 rows (12px); column-gap: 1 cols (12px)"
+        },
+        {
+          "decl": "min-block-size: 36px",
+          "kind": "translated",
+          "detail": "1 row (36px: one line + control chrome)"
+        },
+        {
+          "decl": "padding: var(--sp-1) var(--sp-3)",
+          "kind": "translated",
+          "detail": "padding-top: 0 rows (4px); padding-right: 1 cols (12px); padding-bottom: 0 rows (4px); padding-left: 1 cols (12px)"
+        },
+        {
+          "decl": "border-radius: var(--r-2)",
+          "kind": "paint",
+          "detail": "corner radius"
+        },
+        {
+          "decl": "background: var(--hx-warn-t)",
+          "kind": "translated",
+          "detail": "token:--hx-warn-t"
+        },
+        {
+          "decl": "color: var(--hx-ink)",
+          "kind": "translated",
+          "detail": "token:--hx-ink"
+        },
+        {
+          "decl": "font-size: var(--fs-md)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#bandBad": {
+      "id": "pages/logs/parts/Logs.module.css#bandBad",
+      "style": {},
+      "text": {
+        "bg": "token:--hx-danger-t"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "background: var(--hx-danger-t)",
+          "kind": "translated",
+          "detail": "token:--hx-danger-t"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#bandInfo": {
+      "id": "pages/logs/parts/Logs.module.css#bandInfo",
+      "style": {},
+      "text": {
+        "bg": "token:--hx-fill"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "background: var(--hx-fill)",
+          "kind": "translated",
+          "detail": "token:--hx-fill"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#bandText": {
+      "id": "pages/logs/parts/Logs.module.css#bandText",
+      "style": {
+        "flexGrow": 1,
+        "flexShrink": 1,
+        "flexBasis": "auto",
+        "minWidth": 0
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "flex: 1 1 auto",
+          "kind": "translated",
+          "detail": "flex-grow: 1; flex-shrink: 1; flex-basis: auto"
+        },
+        {
+          "decl": "min-inline-size: 0",
+          "kind": "translated",
+          "detail": "0"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#notes": {
+      "id": "pages/logs/parts/Logs.module.css#notes",
+      "style": {
+        "flexDirection": "column",
+        "rowGap": 0,
+        "columnGap": 1,
+        "paddingBottom": 0
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "flex-direction: column",
+          "kind": "translated",
+          "detail": "column"
+        },
+        {
+          "decl": "gap: var(--sp-2)",
+          "kind": "translated",
+          "detail": "row-gap: 0 rows (8px); column-gap: 1 cols (8px)"
+        },
+        {
+          "decl": "padding-block-end: var(--sp-2)",
+          "kind": "translated",
+          "detail": "0 rows (8px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#strip": {
+      "id": "pages/logs/parts/Logs.module.css#strip",
+      "style": {
+        "flexDirection": "row",
+        "flexWrap": "wrap",
+        "alignItems": "center",
+        "rowGap": 0,
+        "columnGap": 1,
+        "paddingTop": 0,
+        "paddingBottom": 0
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "flex-wrap: wrap",
+          "kind": "translated",
+          "detail": "wrap"
+        },
+        {
+          "decl": "align-items: center",
+          "kind": "translated",
+          "detail": "center"
+        },
+        {
+          "decl": "gap: var(--sp-2)",
+          "kind": "translated",
+          "detail": "1 cols (8px)"
+        },
+        {
+          "decl": "row-gap: max(var(--sp-2), var(--touch-gap))",
+          "kind": "translated",
+          "detail": "0 rows (8px)"
+        },
+        {
+          "decl": "padding-block: var(--sp-2)",
+          "kind": "translated",
+          "detail": "padding-top: 0 rows (8px); padding-bottom: 0 rows (8px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#chipGroup": {
+      "id": "pages/logs/parts/Logs.module.css#chipGroup",
+      "style": {
+        "flexDirection": "row",
+        "alignItems": "center",
+        "rowGap": 0,
+        "columnGap": 1,
+        "minHeight": 1,
+        "paddingLeft": 1,
+        "paddingRight": 1
+      },
+      "text": {
+        "bg": "token:--hx-card"
+      },
+      "border": {
+        "sides": [
+          "top",
+          "right",
+          "bottom",
+          "left"
+        ],
+        "style": "rounded",
+        "color": "token:--hx-line-2"
+      },
+      "status": "partial",
+      "outcomes": [
+        {
+          "decl": "display: inline-flex",
+          "kind": "lossy",
+          "detail": "inline-flex as flex row: in a block parent CSS shrink-wraps it on a text line, Yoga stretches it"
+        },
+        {
+          "decl": "align-items: center",
+          "kind": "translated",
+          "detail": "center"
+        },
+        {
+          "decl": "gap: var(--sp-2)",
+          "kind": "translated",
+          "detail": "row-gap: 0 rows (8px); column-gap: 1 cols (8px)"
+        },
+        {
+          "decl": "min-block-size: 32px",
+          "kind": "translated",
+          "detail": "1 row (32px: one line + control chrome)"
+        },
+        {
+          "decl": "padding-inline: var(--sp-3) var(--sp-2)",
+          "kind": "translated",
+          "detail": "padding-left: 1 cols (12px); padding-right: 1 cols (8px)"
+        },
+        {
+          "decl": "border: 1px solid var(--hx-line-2)",
+          "kind": "translated",
+          "detail": "border-top-width: frame (rounded; costs a cell on each side); border-top-style: frame (rounded; costs a cell on each side); border-top-color: frame (rounded; costs a cell on each side); border-right-width: frame (rounded; costs a cell on each side); border-right-style: frame (rounded; costs a cell on each side); border-right-color: frame (rounded; costs a cell on each side); border-bottom-width: frame (rounded; costs a cell on each side); border-bottom-style: frame (rounded; costs a cell on each side); border-bottom-color: frame (rounded; costs a cell on each side); border-left-width: frame (rounded; costs a cell on each side); border-left-style: frame (rounded; costs a cell on each side); border-left-color: frame (rounded; costs a cell on each side)"
+        },
+        {
+          "decl": "border-radius: var(--r-pill)",
+          "kind": "paint",
+          "detail": "rounded frame"
+        },
+        {
+          "decl": "background: var(--hx-card)",
+          "kind": "translated",
+          "detail": "token:--hx-card"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#chipMain": {
+      "id": "pages/logs/parts/Logs.module.css#chipMain",
+      "style": {
+        "flexDirection": "row",
+        "alignItems": "center",
+        "rowGap": 0,
+        "columnGap": 1,
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0
+      },
+      "text": {
+        "bg": "none",
+        "fg": "token:--hx-ink"
+      },
+      "status": "partial",
+      "outcomes": [
+        {
+          "decl": "display: inline-flex",
+          "kind": "lossy",
+          "detail": "inline-flex as flex row: in a block parent CSS shrink-wraps it on a text line, Yoga stretches it"
+        },
+        {
+          "decl": "align-items: center",
+          "kind": "translated",
+          "detail": "center"
+        },
+        {
+          "decl": "gap: var(--sp-2)",
+          "kind": "translated",
+          "detail": "row-gap: 0 rows (8px); column-gap: 1 cols (8px)"
+        },
+        {
+          "decl": "padding: 0",
+          "kind": "translated",
+          "detail": "padding-top: 0 rows; padding-right: 0 cols; padding-bottom: 0 rows; padding-left: 0 cols"
+        },
+        {
+          "decl": "border: 0",
+          "kind": "translated",
+          "detail": "border-top-width: no border; border-top-style: no border; border-top-color: no border; border-right-width: no border; border-right-style: no border; border-right-color: no border; border-bottom-width: no border; border-bottom-style: no border; border-bottom-color: no border; border-left-width: no border; border-left-style: no border; border-left-color: no border"
+        },
+        {
+          "decl": "background: none",
+          "kind": "translated",
+          "detail": "none"
+        },
+        {
+          "decl": "color: var(--hx-ink)",
+          "kind": "translated",
+          "detail": "token:--hx-ink"
+        },
+        {
+          "decl": "font: inherit",
+          "kind": "translated",
+          "detail": "inherit: inherits"
+        },
+        {
+          "decl": "font-size: var(--fs-md)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        },
+        {
+          "decl": "cursor: pointer",
+          "kind": "paint",
+          "detail": "pointer/interaction"
+        },
+        {
+          "decl": "outline: none",
+          "kind": "dropped",
+          "detail": "interaction: :focus-visible",
+          "via": ".chipMain:focus-visible"
+        },
+        {
+          "decl": "box-shadow: var(--focus-ring)",
+          "kind": "dropped",
+          "detail": "interaction: :focus-visible",
+          "via": ".chipMain:focus-visible"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#groupMeta": {
+      "id": "pages/logs/parts/Logs.module.css#groupMeta",
+      "style": {},
+      "text": {
+        "fg": "token:--hx-muted"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "color: var(--hx-muted)",
+          "kind": "translated",
+          "detail": "token:--hx-muted"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#list": {
+      "id": "pages/logs/parts/Logs.module.css#list",
+      "style": {
+        "position": "relative",
+        "flexGrow": 1,
+        "flexShrink": 1,
+        "flexBasis": "auto",
+        "minHeight": 0,
+        "overflow": "scroll"
+      },
+      "text": {
+        "bg": "token:--hx-card"
+      },
+      "border": {
+        "sides": [
+          "top",
+          "right",
+          "bottom",
+          "left"
+        ],
+        "style": "single",
+        "color": "token:--hx-line"
+      },
+      "container": {
+        "type": "inline-size"
+      },
+      "variants": [
+        {
+          "when": {
+            "self": {
+              "attrs": [
+                {
+                  "name": "data-visitor",
+                  "op": "=",
+                  "value": "off"
+                }
+              ]
+            }
+          },
+          "selector": ".list[data-visitor='off']",
+          "specificity": [
+            0,
+            2,
+            0
+          ],
+          "outcomes": [
+            {
+              "decl": "--cols: var(--c-time) var(--c-out) var(--c-src) minmax(0, 1fr) var(--c-took)",
+              "kind": "meta",
+              "detail": "custom property (feeds var())",
+              "via": ".list[data-visitor='off']"
+            }
+          ]
+        }
+      ],
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "container-type: inline-size",
+          "kind": "paint",
+          "detail": "container query scope (recorded on the class)"
+        },
+        {
+          "decl": "position: relative",
+          "kind": "translated",
+          "detail": "relative"
+        },
+        {
+          "decl": "flex: 1 1 auto",
+          "kind": "translated",
+          "detail": "flex-grow: 1; flex-shrink: 1; flex-basis: auto"
+        },
+        {
+          "decl": "min-block-size: 0",
+          "kind": "translated",
+          "detail": "0"
+        },
+        {
+          "decl": "overflow-y: auto",
+          "kind": "translated",
+          "detail": "scroll; the runtime needs a scroll box"
+        },
+        {
+          "decl": "border: 1px solid var(--hx-line)",
+          "kind": "translated",
+          "detail": "border-top-width: frame (single; costs a cell on each side); border-top-style: frame (single; costs a cell on each side); border-top-color: frame (single; costs a cell on each side); border-right-width: frame (single; costs a cell on each side); border-right-style: frame (single; costs a cell on each side); border-right-color: frame (single; costs a cell on each side); border-bottom-width: frame (single; costs a cell on each side); border-bottom-style: frame (single; costs a cell on each side); border-bottom-color: frame (single; costs a cell on each side); border-left-width: frame (single; costs a cell on each side); border-left-style: frame (single; costs a cell on each side); border-left-color: frame (single; costs a cell on each side)"
+        },
+        {
+          "decl": "border-radius: var(--r-2)",
+          "kind": "paint",
+          "detail": "corner radius"
+        },
+        {
+          "decl": "background: var(--hx-card)",
+          "kind": "translated",
+          "detail": "token:--hx-card"
+        },
+        {
+          "decl": "--c-time: 88px",
+          "kind": "meta",
+          "detail": "custom property (feeds var())"
+        },
+        {
+          "decl": "--c-out: 148px",
+          "kind": "meta",
+          "detail": "custom property (feeds var())"
+        },
+        {
+          "decl": "--c-src: 116px",
+          "kind": "meta",
+          "detail": "custom property (feeds var())"
+        },
+        {
+          "decl": "--c-vis: 172px",
+          "kind": "meta",
+          "detail": "custom property (feeds var())"
+        },
+        {
+          "decl": "--c-took: 68px",
+          "kind": "meta",
+          "detail": "custom property (feeds var())"
+        },
+        {
+          "decl": "--cols: var(--c-time) var(--c-out) var(--c-src) minmax(0, 1fr) var(--c-vis) var(--c-took)",
+          "kind": "meta",
+          "detail": "custom property (feeds var())"
+        },
+        {
+          "decl": "--cols-mid: min(var(--c-time), 88px) min(var(--c-out), 148px) min(var(--c-src), 116px) minmax(0, 1fr)",
+          "kind": "meta",
+          "detail": "custom property (feeds var())"
+        },
+        {
+          "decl": "--cols-narrow: min(var(--c-time), 72px) min(var(--c-out), 148px) minmax(0, 1fr)",
+          "kind": "meta",
+          "detail": "custom property (feeds var())"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#head": {
+      "id": "pages/logs/parts/Logs.module.css#head",
+      "style": {
+        "flexDirection": "row",
+        "alignItems": "center",
+        "columnGap": 1,
+        "paddingLeft": 1,
+        "paddingRight": 1,
+        "sticky": {
+          "top": 0
+        },
+        "height": 1,
+        "flexShrink": 1
+      },
+      "text": {
+        "bg": "token:--hx-card",
+        "bold": true,
+        "transform": "uppercase",
+        "fg": "token:--hx-muted"
+      },
+      "border": {
+        "sides": [
+          "bottom"
+        ],
+        "style": "single",
+        "color": "token:--hx-line",
+        "divider": true
+      },
+      "grid": {
+        "pattern": "tracks",
+        "tracks": 3,
+        "axis": "row",
+        "childStyles": [
+          {
+            "flexGrow": 0,
+            "flexShrink": 0,
+            "width": 9
+          },
+          {
+            "flexGrow": 0,
+            "flexShrink": 0,
+            "width": 18
+          },
+          {
+            "flexGrow": 1,
+            "flexShrink": 1,
+            "flexBasis": 0,
+            "minWidth": 0
+          }
+        ],
+        "fallback": "chunk",
+        "aligned": true,
+        "source": "columns: min(88px, 72px) min(148px, 148px) minmax(0, 1fr)"
+      },
+      "variants": [
+        {
+          "when": {
+            "ancestors": [
+              {
+                "attrs": [
+                  {
+                    "name": "data-cols",
+                    "op": "=",
+                    "value": "mid"
+                  }
+                ],
+                "classes": [
+                  "pages/logs/parts/Logs.module.css#list"
+                ]
+              }
+            ]
+          },
+          "selector": ".list[data-cols='mid'] .head",
+          "specificity": [
+            0,
+            3,
+            0
+          ],
+          "outcomes": [
+            {
+              "decl": "grid-template-columns: var(--cols-mid)",
+              "kind": "translated",
+              "detail": "tracks → grid.childStyles",
+              "via": ".list[data-cols='mid'] .head"
+            }
+          ],
+          "grid": {
+            "pattern": "tracks",
+            "tracks": 4,
+            "axis": "row",
+            "childStyles": [
+              {
+                "flexGrow": 0,
+                "flexShrink": 0,
+                "width": 11
+              },
+              {
+                "flexGrow": 0,
+                "flexShrink": 0,
+                "width": 18
+              },
+              {
+                "flexGrow": 0,
+                "flexShrink": 0,
+                "width": 14
+              },
+              {
+                "flexGrow": 1,
+                "flexShrink": 1,
+                "flexBasis": 0,
+                "minWidth": 0
+              }
+            ],
+            "fallback": "chunk",
+            "aligned": true,
+            "source": "columns: min(88px, 88px) min(148px, 148px) min(116px, 116px) minmax(0, 1fr)"
+          }
+        }
+      ],
+      "notes": [
+        "--cols taken from .list (assumed ancestor)",
+        "--c-time taken from .list (assumed ancestor)",
+        "--c-out taken from .list (assumed ancestor)",
+        "--c-src taken from .list (assumed ancestor)",
+        "--c-vis taken from .list (assumed ancestor)",
+        "--c-took taken from .list (assumed ancestor)",
+        "--cols-mid taken from .list (assumed ancestor)",
+        "--cols-narrow taken from .list (assumed ancestor)",
+        "flexShrink 1 added: CSS shrinks a sized flex item by default; OpenTUI would set 0 for a numeric width/height",
+        "grid → 3 tracks: apply grid.childStyles per visible child; more children than tracks → lay out as a column",
+        "[.list[data-cols='mid'] .head] grid → 4 tracks: apply grid.childStyles per visible child; more children than tracks → lay out as a column"
+      ],
+      "status": "partial",
+      "outcomes": [
+        {
+          "decl": "display: grid",
+          "kind": "translated",
+          "detail": "grid (tracks, 3 tracks) → row box, tracks → grid.childStyles, more items → rows of 3"
+        },
+        {
+          "decl": "grid-template-columns: var(--cols)",
+          "kind": "overridden"
+        },
+        {
+          "decl": "align-items: center",
+          "kind": "translated",
+          "detail": "center"
+        },
+        {
+          "decl": "column-gap: var(--sp-2)",
+          "kind": "translated",
+          "detail": "1 cols (8px)"
+        },
+        {
+          "decl": "padding-inline: var(--sp-3)",
+          "kind": "translated",
+          "detail": "padding-left: 1 cols (12px); padding-right: 1 cols (12px)"
+        },
+        {
+          "decl": "position: sticky",
+          "kind": "translated",
+          "detail": "sticky: in flow, kept inside the nearest scroll box at run time (top/bottom)"
+        },
+        {
+          "decl": "inset-block-start: 0",
+          "kind": "translated",
+          "detail": "sticky top inset 0"
+        },
+        {
+          "decl": "z-index: var(--z-raised)",
+          "kind": "paint",
+          "detail": "no effect (not positioned)"
+        },
+        {
+          "decl": "block-size: 32px",
+          "kind": "translated",
+          "detail": "1 row (32px: one line + control chrome)"
+        },
+        {
+          "decl": "border-block-end: 1px solid var(--hx-line)",
+          "kind": "lossy",
+          "detail": "border-bottom-width: bottom rule: a 1px line becomes a whole row; border-bottom-style: bottom rule: a 1px line becomes a whole row; border-bottom-color: bottom rule: a 1px line becomes a whole row"
+        },
+        {
+          "decl": "background: var(--hx-card)",
+          "kind": "translated",
+          "detail": "token:--hx-card"
+        },
+        {
+          "decl": "font-size: var(--fs-xs)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        },
+        {
+          "decl": "font-weight: var(--fw-semibold)",
+          "kind": "translated",
+          "detail": "bold"
+        },
+        {
+          "decl": "letter-spacing: var(--tracking-caps)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        },
+        {
+          "decl": "text-transform: var(--case-caps)",
+          "kind": "translated",
+          "detail": "uppercase"
+        },
+        {
+          "decl": "color: var(--hx-muted)",
+          "kind": "translated",
+          "detail": "token:--hx-muted"
+        },
+        {
+          "decl": "grid-template-columns: var(--cols-mid)",
+          "kind": "overridden",
+          "via": "@container (max-width: 880px)"
+        },
+        {
+          "decl": "grid-template-columns: var(--cols-narrow)",
+          "kind": "translated",
+          "detail": "tracks → grid.childStyles",
+          "via": "@container (max-width: 640px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#row": {
+      "id": "pages/logs/parts/Logs.module.css#row",
+      "style": {
+        "flexDirection": "row",
+        "alignItems": "center",
+        "columnGap": 1,
+        "paddingLeft": 1,
+        "paddingRight": 1,
+        "width": "100%",
+        "height": 1,
+        "flexShrink": 1
+      },
+      "text": {
+        "bg": "none",
+        "fg": "token:--hx-ink",
+        "align": "left"
+      },
+      "border": {
+        "sides": [
+          "bottom"
+        ],
+        "style": "single",
+        "color": "token:--hx-line",
+        "divider": true
+      },
+      "grid": {
+        "pattern": "tracks",
+        "tracks": 3,
+        "axis": "row",
+        "childStyles": [
+          {
+            "flexGrow": 0,
+            "flexShrink": 0,
+            "width": 9
+          },
+          {
+            "flexGrow": 0,
+            "flexShrink": 0,
+            "width": 18
+          },
+          {
+            "flexGrow": 1,
+            "flexShrink": 1,
+            "flexBasis": 0,
+            "minWidth": 0
+          }
+        ],
+        "fallback": "chunk",
+        "aligned": true,
+        "source": "columns: min(88px, 72px) min(148px, 148px) minmax(0, 1fr)"
+      },
+      "variants": [
+        {
+          "when": {
+            "ancestors": [
+              {
+                "attrs": [
+                  {
+                    "name": "data-cols",
+                    "op": "=",
+                    "value": "mid"
+                  }
+                ],
+                "classes": [
+                  "pages/logs/parts/Logs.module.css#list"
+                ]
+              }
+            ]
+          },
+          "selector": ".list[data-cols='mid'] .row",
+          "specificity": [
+            0,
+            3,
+            0
+          ],
+          "outcomes": [
+            {
+              "decl": "grid-template-columns: var(--cols-mid)",
+              "kind": "translated",
+              "detail": "tracks → grid.childStyles",
+              "via": ".list[data-cols='mid'] .row"
+            }
+          ],
+          "grid": {
+            "pattern": "tracks",
+            "tracks": 4,
+            "axis": "row",
+            "childStyles": [
+              {
+                "flexGrow": 0,
+                "flexShrink": 0,
+                "width": 11
+              },
+              {
+                "flexGrow": 0,
+                "flexShrink": 0,
+                "width": 18
+              },
+              {
+                "flexGrow": 0,
+                "flexShrink": 0,
+                "width": 14
+              },
+              {
+                "flexGrow": 1,
+                "flexShrink": 1,
+                "flexBasis": 0,
+                "minWidth": 0
+              }
+            ],
+            "fallback": "chunk",
+            "aligned": true,
+            "source": "columns: min(88px, 88px) min(148px, 148px) min(116px, 116px) minmax(0, 1fr)"
+          }
+        }
+      ],
+      "notes": [
+        "--cols taken from .list (assumed ancestor)",
+        "--c-time taken from .list (assumed ancestor)",
+        "--c-out taken from .list (assumed ancestor)",
+        "--c-src taken from .list (assumed ancestor)",
+        "--c-vis taken from .list (assumed ancestor)",
+        "--c-took taken from .list (assumed ancestor)",
+        "--cols-mid taken from .list (assumed ancestor)",
+        "--cols-narrow taken from .list (assumed ancestor)",
+        "flexShrink 1 added: CSS shrinks a sized flex item by default; OpenTUI would set 0 for a numeric width/height",
+        "grid → 3 tracks: apply grid.childStyles per visible child; more children than tracks → lay out as a column",
+        "[.list[data-cols='mid'] .row] grid → 4 tracks: apply grid.childStyles per visible child; more children than tracks → lay out as a column"
+      ],
+      "status": "partial",
+      "outcomes": [
+        {
+          "decl": "display: grid",
+          "kind": "translated",
+          "detail": "grid (tracks, 3 tracks) → row box, tracks → grid.childStyles, more items → rows of 3"
+        },
+        {
+          "decl": "grid-template-columns: var(--cols)",
+          "kind": "overridden"
+        },
+        {
+          "decl": "align-items: center",
+          "kind": "translated",
+          "detail": "center"
+        },
+        {
+          "decl": "column-gap: var(--sp-2)",
+          "kind": "translated",
+          "detail": "1 cols (8px)"
+        },
+        {
+          "decl": "padding-inline: var(--sp-3)",
+          "kind": "translated",
+          "detail": "padding-left: 1 cols (12px); padding-right: 1 cols (12px)"
+        },
+        {
+          "decl": "inline-size: 100%",
+          "kind": "translated",
+          "detail": "100%"
+        },
+        {
+          "decl": "block-size: 32px",
+          "kind": "translated",
+          "detail": "1 row (32px: one line + control chrome)"
+        },
+        {
+          "decl": "border: 0",
+          "kind": "translated",
+          "detail": "border-top-width: side not drawn; border-top-style: side not drawn; border-top-color: side not drawn; border-right-width: side not drawn; border-right-style: side not drawn; border-right-color: side not drawn; border-left-width: side not drawn; border-left-style: side not drawn; border-left-color: side not drawn"
+        },
+        {
+          "decl": "border-block-end: 1px solid var(--hx-line)",
+          "kind": "lossy",
+          "detail": "border-bottom-width: bottom rule: a 1px line becomes a whole row; border-bottom-style: bottom rule: a 1px line becomes a whole row; border-bottom-color: bottom rule: a 1px line becomes a whole row"
+        },
+        {
+          "decl": "background: transparent",
+          "kind": "translated",
+          "detail": "none"
+        },
+        {
+          "decl": "color: var(--hx-ink)",
+          "kind": "translated",
+          "detail": "token:--hx-ink"
+        },
+        {
+          "decl": "font: inherit",
+          "kind": "translated",
+          "detail": "inherit: inherits"
+        },
+        {
+          "decl": "font-size: var(--fs-md)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        },
+        {
+          "decl": "text-align: start",
+          "kind": "translated",
+          "detail": "left"
+        },
+        {
+          "decl": "cursor: pointer",
+          "kind": "paint",
+          "detail": "pointer/interaction"
+        },
+        {
+          "decl": "grid-template-columns: var(--cols-mid)",
+          "kind": "overridden",
+          "via": "@container (max-width: 880px)"
+        },
+        {
+          "decl": "grid-template-columns: var(--cols-narrow)",
+          "kind": "translated",
+          "detail": "tracks → grid.childStyles",
+          "via": "@container (max-width: 640px)"
+        },
+        {
+          "decl": "background: var(--hx-hover)",
+          "kind": "dropped",
+          "detail": "interaction: :hover",
+          "via": ".row:hover"
+        },
+        {
+          "decl": "outline: none",
+          "kind": "dropped",
+          "detail": "interaction: :focus-visible",
+          "via": ".row:focus-visible"
+        },
+        {
+          "decl": "box-shadow: var(--focus-ring-inset)",
+          "kind": "dropped",
+          "detail": "interaction: :focus-visible",
+          "via": ".row:focus-visible"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#rowSelected": {
+      "id": "pages/logs/parts/Logs.module.css#rowSelected",
+      "style": {},
+      "text": {
+        "bg": "token:--hx-selected"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "background: var(--hx-selected)",
+          "kind": "translated",
+          "detail": "token:--hx-selected"
+        },
+        {
+          "decl": "box-shadow: inset 3px 0 0 var(--hx-selected-bar)",
+          "kind": "paint",
+          "detail": "shadow/filter"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#rowFresh": {
+      "id": "pages/logs/parts/Logs.module.css#rowFresh",
+      "style": {},
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "animation: fresh 1200ms ease-out",
+          "kind": "overridden"
+        },
+        {
+          "decl": "animation: none",
+          "kind": "paint",
+          "detail": "motion",
+          "via": "@media (prefers-reduced-motion: reduce)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#what": {
+      "id": "pages/logs/parts/Logs.module.css#what",
+      "style": {
+        "overflow": "hidden"
+      },
+      "text": {
+        "truncate": true,
+        "wrap": "none"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "overflow: hidden",
+          "kind": "translated",
+          "detail": "overflow-x: hidden; overflow-y: hidden"
+        },
+        {
+          "decl": "text-overflow: ellipsis",
+          "kind": "translated",
+          "detail": "truncate with …"
+        },
+        {
+          "decl": "white-space: nowrap",
+          "kind": "translated",
+          "detail": "wrap none"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#mono": {
+      "id": "pages/logs/parts/Logs.module.css#mono",
+      "style": {},
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "font-family: var(--font-mono)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        },
+        {
+          "decl": "font-size: var(--fs-sm)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#visitorCell": {
+      "id": "pages/logs/parts/Logs.module.css#visitorCell",
+      "style": {
+        "flexDirection": "row",
+        "alignItems": "center",
+        "rowGap": 0,
+        "columnGap": 1,
+        "minWidth": 0
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "align-items: center",
+          "kind": "translated",
+          "detail": "center"
+        },
+        {
+          "decl": "gap: var(--sp-1)",
+          "kind": "translated",
+          "detail": "row-gap: 0 rows (4px); column-gap: 1 cols (4px)"
+        },
+        {
+          "decl": "min-inline-size: 0",
+          "kind": "translated",
+          "detail": "0"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#ipFlag": {
+      "id": "pages/logs/parts/Logs.module.css#ipFlag",
+      "style": {
+        "flexDirection": "row",
+        "flexGrow": 0,
+        "flexShrink": 0,
+        "flexBasis": "auto",
+        "justifyContent": "center",
+        "width": 2
+      },
+      "status": "partial",
+      "outcomes": [
+        {
+          "decl": "display: inline-flex",
+          "kind": "lossy",
+          "detail": "inline-flex as flex row: in a block parent CSS shrink-wraps it on a text line, Yoga stretches it"
+        },
+        {
+          "decl": "flex: none",
+          "kind": "translated",
+          "detail": "flex-grow: 0; flex-shrink: 0; flex-basis: auto"
+        },
+        {
+          "decl": "justify-content: center",
+          "kind": "translated",
+          "detail": "center"
+        },
+        {
+          "decl": "inline-size: 20px",
+          "kind": "translated",
+          "detail": "2 cols (20px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#ipText": {
+      "id": "pages/logs/parts/Logs.module.css#ipText",
+      "style": {
+        "flexGrow": 1,
+        "flexShrink": 1,
+        "flexBasis": "auto",
+        "minWidth": 0,
+        "overflow": "hidden"
+      },
+      "text": {
+        "truncate": true,
+        "wrap": "none"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "flex: 1 1 auto",
+          "kind": "translated",
+          "detail": "flex-grow: 1; flex-shrink: 1; flex-basis: auto"
+        },
+        {
+          "decl": "min-inline-size: 0",
+          "kind": "translated",
+          "detail": "0"
+        },
+        {
+          "decl": "overflow: hidden",
+          "kind": "translated",
+          "detail": "overflow-x: hidden; overflow-y: hidden"
+        },
+        {
+          "decl": "text-overflow: ellipsis",
+          "kind": "translated",
+          "detail": "truncate with …"
+        },
+        {
+          "decl": "white-space: nowrap",
+          "kind": "translated",
+          "detail": "wrap none"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#ipCode": {
+      "id": "pages/logs/parts/Logs.module.css#ipCode",
+      "style": {
+        "flexGrow": 0,
+        "flexShrink": 0,
+        "flexBasis": "auto"
+      },
+      "text": {
+        "fg": "token:--hx-muted"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "flex: none",
+          "kind": "translated",
+          "detail": "flex-grow: 0; flex-shrink: 0; flex-basis: auto"
+        },
+        {
+          "decl": "color: var(--hx-muted)",
+          "kind": "translated",
+          "detail": "token:--hx-muted"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#end": {
+      "id": "pages/logs/parts/Logs.module.css#end",
+      "style": {},
+      "text": {
+        "align": "right"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "text-align: end",
+          "kind": "translated",
+          "detail": "right"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#muted": {
+      "id": "pages/logs/parts/Logs.module.css#muted",
+      "style": {},
+      "text": {
+        "fg": "token:--hx-muted"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "color: var(--hx-muted)",
+          "kind": "translated",
+          "detail": "token:--hx-muted"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#divider": {
+      "id": "pages/logs/parts/Logs.module.css#divider",
+      "style": {
+        "flexDirection": "row",
+        "alignItems": "center",
+        "rowGap": 1,
+        "columnGap": 1,
+        "height": 1,
+        "paddingLeft": 1,
+        "paddingRight": 1,
+        "flexShrink": 1
+      },
+      "text": {
+        "bg": "token:--hx-fill",
+        "fg": "token:--hx-muted"
+      },
+      "border": {
+        "sides": [
+          "bottom"
+        ],
+        "style": "single",
+        "color": "token:--hx-line",
+        "divider": true
+      },
+      "notes": [
+        "flexShrink 1 added: CSS shrinks a sized flex item by default; OpenTUI would set 0 for a numeric width/height"
+      ],
+      "status": "partial",
+      "outcomes": [
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "align-items: center",
+          "kind": "translated",
+          "detail": "center"
+        },
+        {
+          "decl": "gap: var(--sp-3)",
+          "kind": "translated",
+          "detail": "row-gap: 1 rows (12px); column-gap: 1 cols (12px)"
+        },
+        {
+          "decl": "block-size: 28px",
+          "kind": "translated",
+          "detail": "1 row (28px: one line + control chrome)"
+        },
+        {
+          "decl": "padding-inline: var(--sp-3)",
+          "kind": "translated",
+          "detail": "padding-left: 1 cols (12px); padding-right: 1 cols (12px)"
+        },
+        {
+          "decl": "border-block-end: 1px solid var(--hx-line)",
+          "kind": "lossy",
+          "detail": "border-bottom-width: bottom rule: a 1px line becomes a whole row; border-bottom-style: bottom rule: a 1px line becomes a whole row; border-bottom-color: bottom rule: a 1px line becomes a whole row"
+        },
+        {
+          "decl": "background: var(--hx-fill)",
+          "kind": "translated",
+          "detail": "token:--hx-fill"
+        },
+        {
+          "decl": "color: var(--hx-muted)",
+          "kind": "translated",
+          "detail": "token:--hx-muted"
+        },
+        {
+          "decl": "font-size: var(--fs-sm)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#edge": {
+      "id": "pages/logs/parts/Logs.module.css#edge",
+      "style": {
+        "flexDirection": "row",
+        "justifyContent": "center",
+        "paddingTop": 0,
+        "paddingRight": 1,
+        "paddingBottom": 0,
+        "paddingLeft": 1
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "justify-content: center",
+          "kind": "translated",
+          "detail": "center"
+        },
+        {
+          "decl": "padding: var(--sp-2)",
+          "kind": "translated",
+          "detail": "padding-top: 0 rows (8px); padding-right: 1 cols (8px); padding-bottom: 0 rows (8px); padding-left: 1 cols (8px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#pill": {
+      "id": "pages/logs/parts/Logs.module.css#pill",
+      "style": {
+        "flexDirection": "row",
+        "sticky": {
+          "top": 2
+        },
+        "justifyContent": "center",
+        "height": 0,
+        "flexShrink": 1
+      },
+      "childRules": [
+        {
+          "selector": ".pill > *",
+          "direct": true,
+          "match": {},
+          "specificity": [
+            0,
+            1,
+            0
+          ],
+          "outcomes": [
+            {
+              "decl": "box-shadow: var(--focus-ring)",
+              "kind": "paint",
+              "detail": "shadow/filter",
+              "via": ".pill > *"
+            }
+          ]
+        }
+      ],
+      "notes": [
+        "flexShrink 1 added: CSS shrinks a sized flex item by default; OpenTUI would set 0 for a numeric width/height"
+      ],
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "position: sticky",
+          "kind": "translated",
+          "detail": "sticky: in flow, kept inside the nearest scroll box at run time (top/bottom)"
+        },
+        {
+          "decl": "inset-block-start: 40px",
+          "kind": "translated",
+          "detail": "sticky top inset 2"
+        },
+        {
+          "decl": "z-index: var(--z-sticky)",
+          "kind": "paint",
+          "detail": "no effect (not positioned)"
+        },
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "justify-content: center",
+          "kind": "translated",
+          "detail": "center"
+        },
+        {
+          "decl": "block-size: 0",
+          "kind": "translated",
+          "detail": "0"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#stateBox": {
+      "id": "pages/logs/parts/Logs.module.css#stateBox",
+      "style": {
+        "flexDirection": "row",
+        "flexGrow": 1,
+        "flexShrink": 1,
+        "flexBasis": "auto",
+        "alignItems": "center",
+        "justifyContent": "center"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "flex: 1 1 auto",
+          "kind": "translated",
+          "detail": "flex-grow: 1; flex-shrink: 1; flex-basis: auto"
+        },
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "align-items: center",
+          "kind": "translated",
+          "detail": "center"
+        },
+        {
+          "decl": "justify-content: center",
+          "kind": "translated",
+          "detail": "center"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#inspector": {
+      "id": "pages/logs/parts/Logs.module.css#inspector",
+      "style": {
+        "flexDirection": "column",
+        "rowGap": 1,
+        "columnGap": 2
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "flex-direction: column",
+          "kind": "translated",
+          "detail": "column"
+        },
+        {
+          "decl": "gap: var(--sp-4)",
+          "kind": "translated",
+          "detail": "row-gap: 1 rows (16px); column-gap: 2 cols (16px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#group": {
+      "id": "pages/logs/parts/Logs.module.css#group",
+      "style": {
+        "flexDirection": "column",
+        "rowGap": 0,
+        "columnGap": 1
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "flex-direction: column",
+          "kind": "translated",
+          "detail": "column"
+        },
+        {
+          "decl": "gap: var(--sp-2)",
+          "kind": "translated",
+          "detail": "row-gap: 0 rows (8px); column-gap: 1 cols (8px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#sectionTitle": {
+      "id": "pages/logs/parts/Logs.module.css#sectionTitle",
+      "style": {
+        "marginTop": 0,
+        "marginRight": 0,
+        "marginBottom": 0,
+        "marginLeft": 0
+      },
+      "text": {
+        "bold": true,
+        "transform": "uppercase",
+        "fg": "token:--hx-muted"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "margin: 0",
+          "kind": "translated",
+          "detail": "margin-top: 0 rows; margin-right: 0 cols; margin-bottom: 0 rows; margin-left: 0 cols"
+        },
+        {
+          "decl": "font-size: var(--fs-xs)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        },
+        {
+          "decl": "font-weight: var(--fw-semibold)",
+          "kind": "translated",
+          "detail": "bold"
+        },
+        {
+          "decl": "letter-spacing: var(--tracking-caps)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        },
+        {
+          "decl": "text-transform: var(--case-caps)",
+          "kind": "translated",
+          "detail": "uppercase"
+        },
+        {
+          "decl": "color: var(--hx-muted)",
+          "kind": "translated",
+          "detail": "token:--hx-muted"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#one": {
+      "id": "pages/logs/parts/Logs.module.css#one",
+      "style": {
+        "marginTop": 0,
+        "marginRight": 0,
+        "marginBottom": 0,
+        "marginLeft": 0
+      },
+      "text": {
+        "fg": "token:--hx-muted"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "margin: 0",
+          "kind": "translated",
+          "detail": "margin-top: 0 rows; margin-right: 0 cols; margin-bottom: 0 rows; margin-left: 0 cols"
+        },
+        {
+          "decl": "color: var(--hx-muted)",
+          "kind": "translated",
+          "detail": "token:--hx-muted"
+        },
+        {
+          "decl": "font-size: var(--fs-md)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#prog": {
+      "id": "pages/logs/parts/Logs.module.css#prog",
+      "style": {
+        "flexDirection": "column",
+        "rowGap": 1,
+        "columnGap": 1,
+        "flexGrow": 1,
+        "flexShrink": 1,
+        "flexBasis": "auto",
+        "minHeight": 0
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "flex-direction: column",
+          "kind": "translated",
+          "detail": "column"
+        },
+        {
+          "decl": "gap: var(--sp-3)",
+          "kind": "translated",
+          "detail": "row-gap: 1 rows (12px); column-gap: 1 cols (12px)"
+        },
+        {
+          "decl": "flex: 1 1 auto",
+          "kind": "translated",
+          "detail": "flex-grow: 1; flex-shrink: 1; flex-basis: auto"
+        },
+        {
+          "decl": "min-block-size: 0",
+          "kind": "translated",
+          "detail": "0"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#progBar": {
+      "id": "pages/logs/parts/Logs.module.css#progBar",
+      "style": {
+        "flexDirection": "row",
+        "flexWrap": "wrap",
+        "alignItems": "flex-end",
+        "rowGap": 1,
+        "columnGap": 1
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "flex-wrap: wrap",
+          "kind": "translated",
+          "detail": "wrap"
+        },
+        {
+          "decl": "align-items: flex-end",
+          "kind": "translated",
+          "detail": "flex-end"
+        },
+        {
+          "decl": "gap: var(--sp-3)",
+          "kind": "translated",
+          "detail": "row-gap: 1 rows (12px); column-gap: 1 cols (12px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#out": {
+      "id": "pages/logs/parts/Logs.module.css#out",
+      "style": {
+        "flexGrow": 1,
+        "flexShrink": 1,
+        "flexBasis": "auto",
+        "minHeight": 17,
+        "overflow": "scroll",
+        "marginTop": 0,
+        "marginRight": 0,
+        "marginBottom": 0,
+        "marginLeft": 0,
+        "paddingTop": 1,
+        "paddingRight": 1,
+        "paddingBottom": 1,
+        "paddingLeft": 1
+      },
+      "text": {
+        "bg": "token:--hx-fill",
+        "fg": "token:--hx-ink",
+        "wrap": "pre"
+      },
+      "border": {
+        "sides": [
+          "top",
+          "right",
+          "bottom",
+          "left"
+        ],
+        "style": "single",
+        "color": "token:--hx-line-2"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "flex: 1 1 auto",
+          "kind": "translated",
+          "detail": "flex-grow: 1; flex-shrink: 1; flex-basis: auto"
+        },
+        {
+          "decl": "min-block-size: 280px",
+          "kind": "translated",
+          "detail": "17 rows (280px)"
+        },
+        {
+          "decl": "overflow: auto",
+          "kind": "translated",
+          "detail": "overflow-x: scroll; the runtime needs a scroll box; overflow-y: scroll; the runtime needs a scroll box"
+        },
+        {
+          "decl": "margin: 0",
+          "kind": "translated",
+          "detail": "margin-top: 0 rows; margin-right: 0 cols; margin-bottom: 0 rows; margin-left: 0 cols"
+        },
+        {
+          "decl": "padding: var(--sp-3)",
+          "kind": "translated",
+          "detail": "padding-top: 1 rows (12px); padding-right: 1 cols (12px); padding-bottom: 1 rows (12px); padding-left: 1 cols (12px)"
+        },
+        {
+          "decl": "border: var(--bw) solid var(--hx-line-2)",
+          "kind": "translated",
+          "detail": "border-top-width: frame (single; costs a cell on each side); border-top-style: frame (single; costs a cell on each side); border-top-color: frame (single; costs a cell on each side); border-right-width: frame (single; costs a cell on each side); border-right-style: frame (single; costs a cell on each side); border-right-color: frame (single; costs a cell on each side); border-bottom-width: frame (single; costs a cell on each side); border-bottom-style: frame (single; costs a cell on each side); border-bottom-color: frame (single; costs a cell on each side); border-left-width: frame (single; costs a cell on each side); border-left-style: frame (single; costs a cell on each side); border-left-color: frame (single; costs a cell on each side)"
+        },
+        {
+          "decl": "border-radius: var(--r-2)",
+          "kind": "paint",
+          "detail": "corner radius"
+        },
+        {
+          "decl": "background: var(--hx-fill)",
+          "kind": "translated",
+          "detail": "token:--hx-fill"
+        },
+        {
+          "decl": "color: var(--hx-ink)",
+          "kind": "translated",
+          "detail": "token:--hx-ink"
+        },
+        {
+          "decl": "font-family: var(--font-mono)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        },
+        {
+          "decl": "font-size: var(--fs-sm)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        },
+        {
+          "decl": "line-height: var(--lh-snug)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        },
+        {
+          "decl": "white-space: pre",
+          "kind": "translated",
+          "detail": "wrap pre"
+        },
+        {
+          "decl": "background: color-mix(in srgb, var(--hx-ink) 22%, transparent)",
+          "kind": "dropped",
+          "detail": "pseudo-element: ::selection",
+          "via": ".out ::selection"
+        },
+        {
+          "decl": "color: var(--hx-ink)",
+          "kind": "dropped",
+          "detail": "pseudo-element: ::selection",
+          "via": ".out ::selection"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#mark": {
+      "id": "pages/logs/parts/Logs.module.css#mark",
+      "style": {},
+      "text": {
+        "bg": "token:--hx-acc",
+        "fg": "token:--hx-acc-ink"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "background: var(--hx-acc)",
+          "kind": "translated",
+          "detail": "token:--hx-acc"
+        },
+        {
+          "decl": "color: var(--hx-acc-ink)",
+          "kind": "translated",
+          "detail": "token:--hx-acc-ink"
+        },
+        {
+          "decl": "box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hx-acc-ink) 60%, var(--hx-acc))",
+          "kind": "paint",
+          "detail": "shadow/filter"
+        },
+        {
+          "decl": "background: color-mix(in srgb, var(--hx-acc-ink) 30%, var(--hx-acc))",
+          "kind": "dropped",
+          "detail": "pseudo-element: ::selection",
+          "via": ".out .mark::selection"
+        },
+        {
+          "decl": "color: var(--hx-acc-ink)",
+          "kind": "dropped",
+          "detail": "pseudo-element: ::selection",
+          "via": ".out .mark::selection"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#drawer": {
+      "id": "pages/logs/parts/Logs.module.css#drawer",
+      "style": {
+        "flexDirection": "column",
+        "rowGap": 1,
+        "columnGap": 2
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "flex-direction: column",
+          "kind": "translated",
+          "detail": "column"
+        },
+        {
+          "decl": "gap: var(--sp-4)",
+          "kind": "translated",
+          "detail": "row-gap: 1 rows (16px); column-gap: 2 cols (16px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#exact": {
+      "id": "pages/logs/parts/Logs.module.css#exact",
+      "style": {
+        "width": "100%",
+        "minHeight": 10,
+        "paddingTop": 1,
+        "paddingRight": 1,
+        "paddingBottom": 1,
+        "paddingLeft": 1
+      },
+      "text": {
+        "bg": "token:--hx-fill",
+        "fg": "token:--hx-ink"
+      },
+      "border": {
+        "sides": [
+          "top",
+          "right",
+          "bottom",
+          "left"
+        ],
+        "style": "single",
+        "color": "token:--hx-line-2"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "inline-size: 100%",
+          "kind": "translated",
+          "detail": "100%"
+        },
+        {
+          "decl": "min-block-size: 160px",
+          "kind": "translated",
+          "detail": "10 rows (160px)"
+        },
+        {
+          "decl": "padding: var(--sp-3)",
+          "kind": "translated",
+          "detail": "padding-top: 1 rows (12px); padding-right: 1 cols (12px); padding-bottom: 1 rows (12px); padding-left: 1 cols (12px)"
+        },
+        {
+          "decl": "border: 1px solid var(--hx-line-2)",
+          "kind": "translated",
+          "detail": "border-top-width: frame (single; costs a cell on each side); border-top-style: frame (single; costs a cell on each side); border-top-color: frame (single; costs a cell on each side); border-right-width: frame (single; costs a cell on each side); border-right-style: frame (single; costs a cell on each side); border-right-color: frame (single; costs a cell on each side); border-bottom-width: frame (single; costs a cell on each side); border-bottom-style: frame (single; costs a cell on each side); border-bottom-color: frame (single; costs a cell on each side); border-left-width: frame (single; costs a cell on each side); border-left-style: frame (single; costs a cell on each side); border-left-color: frame (single; costs a cell on each side)"
+        },
+        {
+          "decl": "border-radius: var(--r-2)",
+          "kind": "paint",
+          "detail": "corner radius"
+        },
+        {
+          "decl": "background: var(--hx-fill)",
+          "kind": "translated",
+          "detail": "token:--hx-fill"
+        },
+        {
+          "decl": "color: var(--hx-ink)",
+          "kind": "translated",
+          "detail": "token:--hx-ink"
+        },
+        {
+          "decl": "font-family: var(--font-mono)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        },
+        {
+          "decl": "font-size: var(--fs-sm)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        },
+        {
+          "decl": "resize: vertical",
+          "kind": "paint",
+          "detail": "pointer/interaction"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#answer": {
+      "id": "pages/logs/parts/Logs.module.css#answer",
+      "style": {},
+      "childRules": [
+        {
+          "selector": ".answer p",
+          "direct": false,
+          "match": {
+            "tags": [
+              "p"
+            ]
+          },
+          "specificity": [
+            0,
+            1,
+            1
+          ],
+          "outcomes": [
+            {
+              "decl": "margin: 0",
+              "kind": "translated",
+              "detail": "margin-top: 0 rows; margin-right: 0 cols; margin-bottom: 0 rows; margin-left: 0 cols",
+              "via": ".answer p"
+            },
+            {
+              "decl": "padding-block-end: var(--sp-2)",
+              "kind": "translated",
+              "detail": "0 rows (8px)",
+              "via": ".answer p"
+            }
+          ],
+          "style": {
+            "marginTop": 0,
+            "marginRight": 0,
+            "marginBottom": 0,
+            "marginLeft": 0,
+            "paddingBottom": 0
+          }
+        }
+      ],
+      "status": "full",
+      "outcomes": []
+    },
+    "pages/logs/parts/Logs.module.css#dialogBody": {
+      "id": "pages/logs/parts/Logs.module.css#dialogBody",
+      "style": {
+        "flexDirection": "column",
+        "rowGap": 1,
+        "columnGap": 1
+      },
+      "text": {
+        "align": "left"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "flex-direction: column",
+          "kind": "translated",
+          "detail": "column"
+        },
+        {
+          "decl": "gap: var(--sp-3)",
+          "kind": "translated",
+          "detail": "row-gap: 1 rows (12px); column-gap: 1 cols (12px)"
+        },
+        {
+          "decl": "text-align: start",
+          "kind": "translated",
+          "detail": "left"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#colTook": {
+      "id": "pages/logs/parts/Logs.module.css#colTook",
+      "style": {},
+      "text": {
+        "align": "right"
+      },
+      "hidden": true,
+      "variants": [
+        {
+          "when": {
+            "ancestors": [
+              {
+                "attrs": [
+                  {
+                    "name": "data-cols",
+                    "op": "=",
+                    "value": "mid"
+                  }
+                ],
+                "classes": [
+                  "pages/logs/parts/Logs.module.css#list"
+                ]
+              }
+            ]
+          },
+          "selector": ".list[data-cols='mid'] .colTook",
+          "specificity": [
+            0,
+            3,
+            0
+          ],
+          "outcomes": [
+            {
+              "decl": "display: none",
+              "kind": "translated",
+              "detail": "hidden",
+              "via": ".list[data-cols='mid'] .colTook"
+            }
+          ]
+        }
+      ],
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "text-align: end",
+          "kind": "translated",
+          "detail": "right"
+        },
+        {
+          "decl": "display: none",
+          "kind": "translated",
+          "detail": "hidden",
+          "via": "@container (max-width: 880px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#lead": {
+      "id": "pages/logs/parts/Logs.module.css#lead",
+      "style": {
+        "minWidth": 11,
+        "paddingRight": 1
+      },
+      "text": {
+        "fg": "token:--hx-muted"
+      },
+      "hidden": true,
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "font-family: var(--font-mono)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        },
+        {
+          "decl": "font-size: var(--fs-sm)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        },
+        {
+          "decl": "color: var(--hx-muted)",
+          "kind": "translated",
+          "detail": "token:--hx-muted"
+        },
+        {
+          "decl": "display: inline-block",
+          "kind": "overridden"
+        },
+        {
+          "decl": "min-inline-size: 11ch",
+          "kind": "translated",
+          "detail": "11 cols (88px)"
+        },
+        {
+          "decl": "padding-inline-end: var(--sp-2)",
+          "kind": "translated",
+          "detail": "1 cols (8px)"
+        },
+        {
+          "decl": "display: none",
+          "kind": "translated",
+          "detail": "hidden",
+          "via": "@container (max-width: 640px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#path": {
+      "id": "pages/logs/parts/Logs.module.css#path",
+      "style": {},
+      "text": {
+        "fg": "token:--hx-muted"
+      },
+      "hidden": true,
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "font-family: var(--font-mono)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        },
+        {
+          "decl": "font-size: var(--fs-sm)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        },
+        {
+          "decl": "color: var(--hx-muted)",
+          "kind": "translated",
+          "detail": "token:--hx-muted"
+        },
+        {
+          "decl": "display: none",
+          "kind": "translated",
+          "detail": "hidden",
+          "via": "@container (max-width: 640px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#clip": {
+      "id": "pages/logs/parts/Logs.module.css#clip",
+      "style": {
+        "minWidth": 0,
+        "overflow": "hidden"
+      },
+      "text": {
+        "truncate": true,
+        "wrap": "none"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "min-inline-size: 0",
+          "kind": "translated",
+          "detail": "0"
+        },
+        {
+          "decl": "overflow: hidden",
+          "kind": "translated",
+          "detail": "overflow-x: hidden; overflow-y: hidden"
+        },
+        {
+          "decl": "text-overflow: ellipsis",
+          "kind": "translated",
+          "detail": "truncate with …"
+        },
+        {
+          "decl": "white-space: nowrap",
+          "kind": "translated",
+          "detail": "wrap none"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#colFrom": {
+      "id": "pages/logs/parts/Logs.module.css#colFrom",
+      "style": {
+        "overflow": "hidden"
+      },
+      "text": {
+        "truncate": true,
+        "wrap": "none"
+      },
+      "hidden": true,
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "overflow: hidden",
+          "kind": "translated",
+          "detail": "overflow-x: hidden; overflow-y: hidden"
+        },
+        {
+          "decl": "text-overflow: ellipsis",
+          "kind": "translated",
+          "detail": "truncate with …"
+        },
+        {
+          "decl": "white-space: nowrap",
+          "kind": "translated",
+          "detail": "wrap none"
+        },
+        {
+          "decl": "display: none",
+          "kind": "translated",
+          "detail": "hidden",
+          "via": "@container (max-width: 640px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#colVisitor": {
+      "id": "pages/logs/parts/Logs.module.css#colVisitor",
+      "style": {},
+      "hidden": true,
+      "variants": [
+        {
+          "when": {
+            "ancestors": [
+              {
+                "attrs": [
+                  {
+                    "name": "data-cols",
+                    "op": "=",
+                    "value": "mid"
+                  }
+                ],
+                "classes": [
+                  "pages/logs/parts/Logs.module.css#list"
+                ]
+              }
+            ]
+          },
+          "selector": ".list[data-cols='mid'] .colVisitor",
+          "specificity": [
+            0,
+            3,
+            0
+          ],
+          "outcomes": [
+            {
+              "decl": "display: none",
+              "kind": "translated",
+              "detail": "hidden",
+              "via": ".list[data-cols='mid'] .colVisitor"
+            }
+          ]
+        }
+      ],
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: none",
+          "kind": "translated",
+          "detail": "hidden",
+          "via": "@container (max-width: 880px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#srcGroup": {
+      "id": "pages/logs/parts/Logs.module.css#srcGroup",
+      "style": {
+        "flexDirection": "row",
+        "alignItems": "center",
+        "rowGap": 0,
+        "columnGap": 1
+      },
+      "status": "partial",
+      "outcomes": [
+        {
+          "decl": "display: inline-flex",
+          "kind": "lossy",
+          "detail": "inline-flex as flex row: in a block parent CSS shrink-wraps it on a text line, Yoga stretches it"
+        },
+        {
+          "decl": "align-items: center",
+          "kind": "translated",
+          "detail": "center"
+        },
+        {
+          "decl": "gap: var(--sp-1)",
+          "kind": "translated",
+          "detail": "row-gap: 0 rows (4px); column-gap: 1 cols (4px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#barStart": {
+      "id": "pages/logs/parts/Logs.module.css#barStart",
+      "style": {
+        "flexDirection": "row",
+        "flexGrow": 1,
+        "flexShrink": 1,
+        "flexBasis": "auto",
+        "flexWrap": "wrap",
+        "alignItems": "center",
+        "rowGap": 0,
+        "columnGap": 1,
+        "minWidth": 0
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "flex: 1 1 auto",
+          "kind": "translated",
+          "detail": "flex-grow: 1; flex-shrink: 1; flex-basis: auto"
+        },
+        {
+          "decl": "flex-wrap: wrap",
+          "kind": "translated",
+          "detail": "wrap"
+        },
+        {
+          "decl": "align-items: center",
+          "kind": "translated",
+          "detail": "center"
+        },
+        {
+          "decl": "gap: var(--sp-2)",
+          "kind": "translated",
+          "detail": "row-gap: 0 rows (8px); column-gap: 1 cols (8px)"
+        },
+        {
+          "decl": "min-inline-size: 0",
+          "kind": "translated",
+          "detail": "0"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#barActs": {
+      "id": "pages/logs/parts/Logs.module.css#barActs",
+      "style": {
+        "flexDirection": "row",
+        "alignItems": "center",
+        "rowGap": 0,
+        "columnGap": 1,
+        "marginLeft": "auto"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "align-items: center",
+          "kind": "translated",
+          "detail": "center"
+        },
+        {
+          "decl": "gap: var(--sp-2)",
+          "kind": "translated",
+          "detail": "row-gap: 0 rows (8px); column-gap: 1 cols (8px)"
+        },
+        {
+          "decl": "margin-inline-start: auto",
+          "kind": "translated",
+          "detail": "auto"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#searchRow": {
+      "id": "pages/logs/parts/Logs.module.css#searchRow",
+      "style": {
+        "flexGrow": 1,
+        "flexShrink": 1,
+        "flexBasis": "auto",
+        "width": "100%",
+        "minWidth": 0
+      },
+      "status": "partial",
+      "outcomes": [
+        {
+          "decl": "flex: 1 1 100%",
+          "kind": "lossy",
+          "detail": "flex-grow: 1; flex-shrink: 1; flex-basis: 100% → width 100% with basis auto (OpenTUI flexBasis takes cells or auto; read as a WIDTH)"
+        },
+        {
+          "decl": "min-width: 0",
+          "kind": "translated",
+          "detail": "0"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#chipRow": {
+      "id": "pages/logs/parts/Logs.module.css#chipRow",
+      "style": {
+        "flexDirection": "row",
+        "flexWrap": "wrap",
+        "alignItems": "center",
+        "rowGap": 0,
+        "columnGap": 1
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: flex",
+          "kind": "translated",
+          "detail": "flex → box (CSS default direction row)"
+        },
+        {
+          "decl": "flex-wrap: wrap",
+          "kind": "translated",
+          "detail": "wrap"
+        },
+        {
+          "decl": "align-items: center",
+          "kind": "translated",
+          "detail": "center"
+        },
+        {
+          "decl": "gap: var(--sp-2)",
+          "kind": "translated",
+          "detail": "row-gap: 0 rows (8px); column-gap: 1 cols (8px)"
+        }
+      ]
+    },
+    "pages/logs/parts/Logs.module.css#footNote": {
+      "id": "pages/logs/parts/Logs.module.css#footNote",
+      "style": {
+        "marginRight": "auto"
+      },
+      "text": {
+        "fg": "token:--hx-muted"
+      },
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "margin-inline-end: auto",
+          "kind": "translated",
+          "detail": "auto"
+        },
+        {
+          "decl": "color: var(--hx-muted)",
+          "kind": "translated",
+          "detail": "token:--hx-muted"
+        },
+        {
+          "decl": "font-size: var(--fs-sm)",
+          "kind": "paint",
+          "detail": "type metrics (one monospace size)"
+        }
+      ]
+    }
+  }
+}

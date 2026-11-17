@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  New script
+ Computers             │
+ Files                 │  Step 2 of 5 · Where it answers  ████░░░░░░
+ Bots                  │   ✓ What it does ▸2 Where it answers  3 Build it  4 Check it  5 Make it live
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ▸ Your script so far                                                                        █
+ Vault                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Where does it answer?                                                                    │█
+On atlas ▾             │  │ People and programs call your script at its address.                                     │█
+ Programs              │  │ │ ● atlas ▾                                                                              │█
+ Schedules             │  │ Address                                                                                  │█
+▌Scripts               │  │ ┃ /count-last-week                                                               ✗ Taken │█
+ Logs                  │  │ ✗ /count-last-week is already used by weather.ts. Pick another address.                  │█
+ Tunnels               │  │ [Use /count-last-week-2]                                                                 │█
+ Notes                 │  │ People and programs call your script at this address.                                    │█
+ AI                    │  │ https://atlas-exec-1.hoody.example.test/count-last-week ⧉ copy                           │█
+ VMs                   │  │ The exec-1 part is this computer's script program, where the script runs.                │█
+                       │  │ When it runs                                                                             │█
+Account                │  │ ┌─────────────────────────────────────────┐ ┌─────────────────────────────────────────┐  │█
+ Plans & Billing       │  │ │ (•) Only when its address is called     │ │ ( ) Also on a schedule                  │  │█
+ Referrals             │  │ │     It runs each time someone or a      │ │     It also runs by itself at the times │  │█
+ Keys and tokens       │  │ │     program calls its address.          │ │     you set, and still answers its      │  │█
+ API                   │  │ │                                         │ │     address.                            │  │█
+ Notifications      26 │  │ └─────────────────────────────────────────┘ └─────────────────────────────────────────┘  │█
+ Account               │  │ [□ off] Also make a public link                                                          │█
+                       │  │         Once the script is live, make a link anyone can open. Off by default.            │█
+ + Rent servers        │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Guide                 │                                                                                              █
+ Support               │  Questions                                                                                   █
+                       │  ▸ What is a script?                                                                         █
+                       │  ▸ Do I need to know how to code?                                                            █
+                       │  ▸ What can a script do?
+                       │  ▸ How does the assistant write a script?
+                       │  ▸ How do I make a script run on a schedule?
+                       │  ▸ What is a public link, and how is its name chosen?
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  The assistant writes the code next. You check it before it goes live.
+                       │  [Back]                                                                   [Cancel]   Build it
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

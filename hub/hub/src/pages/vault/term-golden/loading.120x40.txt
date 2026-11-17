@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                      ◆ Personal ▾  … Loading computers… ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Vault                                                    ▸ Use with your agent   + New entry
+ Computers             │  Tokens, passwords and settings your tools and agents read by name. The list shows only names.
+ Files                 │
+ Bots                  │  These entries belong to Personal. Other realms and Global have their own.
+ Board                 │
+ Demo                  │  / Search                   Encryption ▾  Kind ▾                       ↻ Refresh  View options
+▌Vault                 │
+                       │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+On this computer       │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ Programs              │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ Schedules             │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications       2 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │  Questions
+                       │  ▸ What goes in the vault?
+                       │  ▸ What is the difference between Global and a realm's entries?
+                       │  ▸ How do I see or copy a value?
+                       │  ▸ What does "Encrypt with a password" do?
+                       │  ▸ What can I put in a name and a value?
+                       │  ▸ What is metadata?
+                       │  ▸ What does Export vault do?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                                    ▸ Use with your agent
+ Computers             │
+ Files                 │  ‹ Bots  Esc
+▌Bots                  │             ┌──────────────────────────────────────────────────────────────────────┐
+ Board                 │             │ ! This Bot isn't here any more                                       │
+ Demo                  │             │                                                                      │
+ Vault                 │             │ It may have been deleted, or its computer stopped. Pick another Bot  │
+                       │             │ from the list.                                                       │
+On atlas ▾             │             │                                                                      │
+ Programs              │             │ [Back to the list]                                                   │
+ Schedules             │             └──────────────────────────────────────────────────────────────────────┘
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,147 @@
+{
+  "exports": {
+    "slot": "shell/pageHost.module.css#slot",
+    "pending": "shell/pageHost.module.css#pending"
+  },
+  "classes": {
+    "shell/pageHost.module.css#slot": {
+      "id": "shell/pageHost.module.css#slot",
+      "style": {},
+      "contents": true,
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "display: contents",
+          "kind": "translated",
+          "detail": "contents → runtime renders the children in place (no box)"
+        }
+      ]
+    },
+    "shell/pageHost.module.css#pending": {
+      "id": "shell/pageHost.module.css#pending",
+      "style": {
+        "sticky": {
+          "top": 0
+        },
+        "height": 0,
+        "flexShrink": 1
+      },
+      "pseudo": [
+        {
+          "side": "after",
+          "content": [],
+          "selector": ".pending::after",
+          "specificity": [
+            0,
+            1,
+            1
+          ],
+          "outcomes": [
+            {
+              "decl": "content: ''",
+              "kind": "translated",
+              "detail": "an empty generated box",
+              "via": ".pending::after"
+            },
+            {
+              "decl": "position: absolute",
+              "kind": "translated",
+              "detail": "absolute (Yoga places it in its parent; CSS in the nearest positioned ancestor)",
+              "via": ".pending::after"
+            },
+            {
+              "decl": "inset-inline: 0",
+              "kind": "translated",
+              "detail": "left: 0; right: 0",
+              "via": ".pending::after"
+            },
+            {
+              "decl": "inset-block-start: 0",
+              "kind": "translated",
+              "detail": "0",
+              "via": ".pending::after"
+            },
+            {
+              "decl": "block-size: 2px",
+              "kind": "lossy",
+              "detail": "2px hairline → 1 row",
+              "via": ".pending::after"
+            },
+            {
+              "decl": "background: var(--hx-ink)",
+              "kind": "translated",
+              "detail": "token:--hx-ink",
+              "via": ".pending::after"
+            },
+            {
+              "decl": "opacity: 0",
+              "kind": "paint",
+              "detail": "transparent until a hover/focus rule reveals it: shown (the terminal has no hover)",
+              "via": ".pending::after"
+            },
+            {
+              "decl": "transform-origin: 0 50%",
+              "kind": "paint",
+              "detail": "visual transform (a translate used for positioning is lost)",
+              "via": ".pending::after"
+            },
+            {
+              "decl": "animation: pending-show var(--dur-enter) linear 150ms forwards,\n    pending-grow 2400ms var(--ease-out) 150ms forwards",
+              "kind": "overridden",
+              "via": ".pending::after"
+            },
+            {
+              "decl": "transform: none",
+              "kind": "paint",
+              "detail": "visual transform (a translate used for positioning is lost)",
+              "via": "@media (prefers-reduced-motion: reduce) .pending::after"
+            },
+            {
+              "decl": "animation: pending-show 0ms linear 150ms forwards",
+              "kind": "paint",
+              "detail": "motion",
+              "via": "@media (prefers-reduced-motion: reduce) .pending::after"
+            }
+          ],
+          "style": {
+            "position": "absolute",
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "height": 1,
+            "flexShrink": 1
+          },
+          "text": {
+            "bg": "token:--hx-ink"
+          }
+        }
+      ],
+      "notes": [
+        "flexShrink 1 added: CSS shrinks a sized flex item by default; OpenTUI would set 0 for a numeric width/height"
+      ],
+      "status": "full",
+      "outcomes": [
+        {
+          "decl": "position: sticky",
+          "kind": "translated",
+          "detail": "sticky: in flow, kept inside the nearest scroll box at run time (top/bottom)"
+        },
+        {
+          "decl": "inset-block-start: 0",
+          "kind": "translated",
+          "detail": "sticky top inset 0"
+        },
+        {
+          "decl": "z-index: var(--z-raised)",
+          "kind": "paint",
+          "detail": "no effect (not positioned)"
+        },
+        {
+          "decl": "block-size: 0",
+          "kind": "translated",
+          "detail": "0"
+        }
+      ]
+    }
+  }
+}

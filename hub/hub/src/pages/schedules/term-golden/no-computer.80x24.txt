@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Schedules
+                    ┌───────────────────────────────────────┐
+                    │ No computer selected                  │
+                    │                                       │
+                    │ Pick a computer to see its schedules. │
+                    │                                       │
+                    │ [Pick a computer]                     │
+                    └───────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Chats   Agents   Automations   Knowledge  ▌Settings
+ ▌Models & keys   Connections & MCP   Rules & hooks
+ atlas › Models & keys
+ Models & keys                                            + Connect an account
+ atlas uses Hoody Free for everything.
+ ‹ 2  ▌Claude Code  Hoody AI allowance  Spending  Advanced  Questions
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Claude Code                                                               │
+ │ Use your own Claude plan through Claude Code on this computer.            │
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │▄
+ │ │                                                                       │ │█
+ │ │ Claude Code                                                           │ │▀
+ │ │ Claude Code is not available                                          │ │
+ │ │ on this computer                                                      │ │
+ │ │                                                                       │ │
+ │ └───────────────────────────────────────────────────────────────────────┘ │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Hoody AI allowance                                                        │
+ │ Each server you own has its own free AI allowance, shared by every        │
+ │ computer on it.                                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

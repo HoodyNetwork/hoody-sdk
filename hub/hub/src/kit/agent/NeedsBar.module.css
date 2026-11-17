@@ -1,0 +1,56 @@
+/* NeedsBar: pinned between the transcript and the composer, in the column's flow (never an overlay), as wide as the column
+   (--conv-col and --conv-inset are SessionView's). The notice shape in the accent, as a gate card. One row at every size:
+   in a narrow conversation SessionView sets --conv-needs-dir so the label goes over the request and the buttons stay beside
+   them (the whole request is on the card Show brings into view). Kit tokens only. */
+.bar {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  box-sizing: border-box;
+  max-width: var(--conv-col, 760px);
+  width: calc(100% - 2 * var(--conv-inset, var(--sp-4)));
+  min-height: calc(var(--ctl-h-sm) + 2 * var(--sp-1));
+  margin: 0 auto var(--sp-2);
+  padding-block: var(--sp-1);
+  padding-inline: var(--sp-3) var(--sp-1);
+  border: var(--bw) solid var(--hx-line);
+  border-inline-start: var(--bw-notice) solid var(--hx-acc-edge);
+  border-radius: var(--r-2);
+  background: var(--hx-raised);
+  font: var(--t-small);
+}
+
+/* What waits: the label, the request and how many more, in a row, or a column in a narrow conversation. */
+.text {
+  display: flex;
+  flex: 1 1 0%;
+  flex-direction: var(--conv-needs-dir, row);
+  align-items: var(--conv-needs-align, baseline);
+  gap: 0 var(--sp-3);
+  min-width: 0;
+}
+
+/* Muted ink, as the gate card's own label: the accent is a fill, never a text colour. */
+.label {
+  flex: none;
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.what {
+  flex: 1 1 0%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.more { flex: none; color: var(--hx-muted); }
+
+@media (forced-colors: active) {
+  .bar { border-color: CanvasText; }
+}

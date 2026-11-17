@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Bots                                                     ▸ Use with your agent
+ ‹ Bots  Esc
+   i Task report ·  Read deploy log  · on atlas
+   The deploy failed because the build step ran out of memory. I suggest
+   raising the limit to 2 GB.
+   19 days ago
+
+                             Direct message
+                             Do that, but ask me before restarting anything.
+                             19 days ago
+
+   Understood. I will change the limit and ask before any
+   restart.
+   19 days ago
+   … Working on it
+
+   ┌───────────────────────────────────────────────────────────────────────┐
+   │ Message the Bot                                                       │  █
+   └───────────────────────────────────────────────────────────────────────┘  █
+                                  Write a message first.  [⇗ Talk]  [Send ↵]  █
+                                                                              █
+                                                                              █
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

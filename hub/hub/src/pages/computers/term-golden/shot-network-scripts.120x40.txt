@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ How to connect                                                          Esc ×
+ Home                  │  Computers     ┃ Send traffic through atlas from a browser, an app or a script.
+▌Computers             │                ┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │  ▸ Computers   ┃ ┌──────────────────────────────────────────────────────────────────────────┐█
+ Bots                  │  ──────────────┃ │ PROXY ADDRESS                                                            │█
+ Board                 │                ┃ │ Traffic sent here leaves from atlas's address, unless you set            │█
+ Demo                  │  ‹ Computers  E┃ │ another exit.                                                            │█
+ Vault                 │  atlas  ● Runni┃ │ Works like a password: anyone with it can use atlas's proxy.             │█
+                       │  SG n12 · Home ┃ │ https://6a00…0001-c0a7…00a1-egress-1.n12.fixture.invalid:443 ⧉ copy      │█
+On atlas ▾             │                ┃ │ Type     HTTPS ⧉ copy                                                    │█
+ Programs              │   Overview  Con┃ │ Server   6a00…0001-c0a7…00a1-egress-1.n12.fixture.invalid ⧉ copy         │█
+ Schedules             │   Storage      ┃ │ Port     443 ⧉ copy                                                      │█
+ Scripts               │  ──────────────┃ │ Sign-in  None. Leave user name and password empty: the address itself is │█
+ Logs                  │  └─────────────┃ │          the key.                                                        │█
+ Tunnels               │                ┃ │ Reaches  Public IPv4 addresses only, unless you set another exit         │█
+ Notes                 │  ┌─────────────┃ └──────────────────────────────────────────────────────────────────────────┘
+ AI                    │  │ Where your t┃
+ VMs                   │  │ [Exit addres┃   Use it in your browser  ▸ For scripts    Change the exit
+                       │  │ Sites see th┃ ────────────────────────────────────────────────────────────────────────────
+Account                │  │  Your app  →┃
+ Plans & Billing       │  │             ┃ ‹ curl ›  macOS and Linux    Windows    Node.js
+ Referrals             │  │             ┃
+ Keys and tokens       │  └─────────────┃
+ API                   │                ┃ curl through the proxy
+ Notifications      26 │  ┌─────────────┃ One request through the proxy. The second line asks a site which address it
+ Account               │  │ Firewall ⓘ  ┃ saw, so you can check the route.
+                       │  │ Anything not┃
+ + Rent servers        │  │    Action   ┃ curl through the proxy                                            ⧉ Copy all
+ Guide                 │  │▾ Inbound · 3┃ 1. Fetch a page
+ Support               │  │›    Block   ┃  $ curl -x "https://6a00…0001-c0a7…00a1-                             ⧉ copy
+                       │  │     Refuse  ┃  egress-1.n12.fixture.invalid:443" https://example.com/
+                       │  │     Allow   ┃ 2. Show the address sites see
+                       │  │             ┃  $ curl -x "https://6a00…0001-c0a7…00a1-                             ⧉ copy
+                       │  │▾ Outbound · ┃  egress-1.n12.fixture.invalid:443" https://ip.hoody.com
+                       │  │     Block   ┃
+                       │  └─────────────┃ ─────────────────────────────────────────────────────────────────────────────
+                       │                ┃ To check a setup, open https://ip.hoody.com      [Close]  [Open ip.hoody.com]
+                       │  ┌─────────────┃ through it. It shows the address sites see:
+                       │  │ Use atlas as┃ atlas's own address, or its exit's if you set
+ Tab move · Enter open · Ctrl+K commands┃ one.

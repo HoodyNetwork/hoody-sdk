@@ -1,0 +1,15 @@
+{
+  "conv.needs": "Needs you",
+  "conv.running": "Running",
+  "conv.opening": "Opening the conversation",
+  "conv.placeholder": "Message your agent",
+  "conv.send.notSent": "Not sent; nothing ran.",
+  "conv.send.again": "Send it now",
+  "conv.send.unknown": "This message may already have been sent. Check the chat before you send it again.",
+  "conv.send.dismiss": "Stop tracking",
+  "conv.send.dismissed": "If it went through, it will show in the chat.",
+  "conv.send.held": "Check the chat first: your last message may already have been sent",
+  "conv.send.unresolved": "An earlier message to this chat is still unresolved. Check it first.",
+  "conv.stop.unknown": "Stop may have gone through. The chat shows when the turn ends.",
+  "conv.stop.refused": "The turn was not stopped."
+}

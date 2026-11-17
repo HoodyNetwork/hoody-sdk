@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Notes                                      ▸ Use with your agent   + New note
+ The notes on your computers. Everyone who opens Notes on a computer shares the
+ same notes.
+ / Search               Filters               40 notes  ↻ Refresh  View options
+     Title                                       Section    Changed ↓
+ ▾ atlas · 10 Some recent notes may be missing. Open Notes New note           █
+ ▌   A very long note title that goes on and o…  Work       10 minutes ago   ⋯█
+     Notes from the meeting about the backup s…  Personal   3 hours ago      ⋯█
+     Customer feedback                           Projects   6 hours ago      ⋯█
+     Launch timeline                             Work       10 hours ago     ⋯█
+     Open questions                              Personal   13 hours ago     ⋯█
+     Schema changes                              Projects   16 hours ago     ⋯░
+     Index review                                Work       19 hours ago     ⋯░
+     Weekly plan                                 Personal   yesterday        ⋯░
+     Deploy checklist                            Projects   yesterday        ⋯░
+     Reading list                                Work       yesterday        ⋯░
+ ▾ borealis · 10 Some recent notes may be missing. Open Notes New note        ░
+     A very long note title that goes on and o…  Work       10 minutes ago   ⋯░
+     Notes from the meeting about the backup s…  Personal   3 hours ago      ⋯░
+     Schema changes                              Projects   6 hours ago      ⋯░
+     Index review                                Work       10 hours ago     ⋯░
+     Weekly plan                                 Personal   13 hours ago     ⋯░
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

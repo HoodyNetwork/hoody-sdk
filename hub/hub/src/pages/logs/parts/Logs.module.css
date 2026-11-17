@@ -1,0 +1,499 @@
+/* The bar is the kit Toolbar; all its controls wrap in one start group, .barStart below. */
+.bar {
+  /* No padding above: the page header already keeps its gap to the first block, as on every other page. */
+  padding-block: 0 var(--sp-2);
+}
+
+.search {
+  flex: 1 1 220px;
+  min-width: 180px;
+  max-width: 360px;
+}
+
+/* The "around a moment" picker: a time field with its two buttons, one row that wraps on a narrow list. */
+.around {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-block-end: var(--sp-2);
+}
+
+/* The problem strip: its question on a line of its own (a 40 px row, the sampled-read note after it), then the chips
+   as one group under it. Both start at the strip's start edge, the list's. */
+.strip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-block: 0;
+}
+
+.stripHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-3);
+  min-block-size: 40px;
+}
+
+/* The chips: one group that wraps from the start, so every wrapped row begins under the first chip. Its rows are the
+   small step apart: on a coarse pointer each chip already holds its whole More press (--xs-press-h below), so no touch
+   gap is needed between them. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Every chip, one problem or many, is this one square chip in both themes, 30 px with a mouse; no theme rule
+   reshapes it. The More trigger is the kit's 24 px xs icon button. On a coarse pointer its press reaches past the 24 px
+   box (46 px tall, 11 px to each side), so the chip grows to the press height (--xs-press-h) and keeps the label at least
+   the press's reach away: no press overlaps another row's or its own label. */
+.chipGroup {
+  display: inline-flex;
+  align-items: center;
+  column-gap: max(var(--sp-2), var(--xs-press-out)); /* the More press reaches --xs-press-out to its side: never into the label */
+  min-block-size: max(30px, var(--xs-press-h)); /* at least the More press, so stacked rows never share one */
+  padding-block: 0;
+  padding-inline: var(--sp-3) calc(var(--sp-1) + var(--sp-half));
+  border: 1px solid var(--hx-panel-line);
+  border-radius: var(--r-0);
+  background: var(--hx-input-bg);
+}
+
+.chipMain {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--hx-ink);
+  font: inherit;
+  font-size: var(--fs-md);
+  cursor: pointer;
+}
+
+.chipMain:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.groupMeta {
+  color: var(--hx-muted);
+}
+
+.list {
+  container-type: inline-size;
+  position: relative;
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+  border: 1px solid var(--hx-line);
+  border-radius: var(--r-2);
+  background: var(--hx-card);
+
+  /* Time | Result | From | What | Visitor | Took. Every row is one fixed 32px line, so the columns sit at the same
+     place in every row. Result holds its longest pill whole; Visitor holds the longest IPv4 with its flag slot and
+     country code; wider lists show all six, mid-width lists drop Visitor and Took, narrow ones drop From too. A source
+     with no addresses has no Visitor column.
+     Measured columns: Time, Result, From and Took are measured from their words (LogList sets
+     --c-* on the list: the translated header, every outcome and source word, the loaded durations); the values here are
+     the fallbacks. What takes the rest. Mid and narrow lists keep at most today's widths, so What keeps its room. */
+  --c-time: 88px;
+  --c-out: 148px;
+  --c-src: 116px;
+  --c-vis: 172px;
+  --c-took: 68px;
+  --cols: var(--c-time) var(--c-out) var(--c-src) minmax(0, 1fr) var(--c-vis) var(--c-took);
+  --cols-mid: min(var(--c-time), 88px) min(var(--c-out), 148px) min(var(--c-src), 116px) minmax(0, 1fr);
+  --cols-narrow: min(var(--c-time), 72px) min(var(--c-out), 148px) minmax(0, 1fr);
+}
+
+.list[data-visitor='off'] {
+  --cols: var(--c-time) var(--c-out) var(--c-src) minmax(0, 1fr) var(--c-took);
+}
+
+.head,
+.row {
+  display: grid;
+  grid-template-columns: var(--cols);
+  align-items: center;
+  column-gap: var(--sp-2);
+  padding-inline: var(--sp-3);
+}
+
+.head {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-raised);
+  block-size: 32px;
+  border-block-end: 1px solid var(--hx-line);
+  background: var(--hx-card);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+  color: var(--hx-muted);
+}
+
+.row {
+  inline-size: 100%;
+  block-size: 32px;
+  border: 0;
+  border-block-end: 1px solid var(--hx-line);
+  background: transparent;
+  color: var(--hx-ink);
+  font: inherit;
+  font-size: var(--fs-md);
+  text-align: start;
+  cursor: pointer;
+}
+
+.row:hover {
+  background: var(--hx-hover);
+}
+
+.row:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring-inset);
+}
+
+.rowSelected {
+  background: var(--hx-selected);
+  box-shadow: inset 3px 0 0 var(--hx-selected-bar);
+}
+
+.rowFresh {
+  animation: fresh 1200ms ease-out;
+}
+
+@keyframes fresh {
+  from {
+    background: var(--hx-acc-soft);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rowFresh {
+    animation: none;
+  }
+}
+
+.what {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+/* The Visitor cell: [flag slot] address (shortens with an ellipsis) [country code]. The slot is always there so the
+   addresses of a column start at one place whether or not their country is known yet. */
+.visitorCell {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.ipFlag {
+  display: inline-flex;
+  flex: none;
+  justify-content: center;
+  inline-size: 20px;
+}
+
+.ipText {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ipCode {
+  flex: none;
+  color: var(--hx-muted);
+}
+
+.end {
+  text-align: end;
+}
+
+.muted {
+  color: var(--hx-muted);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  block-size: 28px;
+  padding-inline: var(--sp-3);
+  border-block-end: 1px solid var(--hx-line);
+  background: var(--hx-fill);
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.edge {
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-2);
+}
+
+.pill {
+  position: sticky;
+  inset-block-start: 40px;
+  z-index: var(--z-sticky);
+  display: flex;
+  justify-content: center;
+  block-size: 0;
+}
+
+.pill > * {
+  box-shadow: var(--focus-ring);
+}
+
+.stateBox {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The Explain drawer's field label: sentence case in ink at the size and weight of the "Model" label under it, as
+   every other drawer labels its fields; not a caps section heading. */
+.sectionTitle {
+  margin: 0;
+  color: var(--hx-ink);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+}
+
+.one {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-md);
+}
+
+/* Program output: the controls, the two notes and the output box are one group, the small step apart (as the list
+   column's own blocks), so no blank row parts a note from the box it describes. */
+.prog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
+
+.progBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
+}
+
+.out {
+  flex: 1 1 auto;
+  min-block-size: 280px;
+  overflow: auto;
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3); /* the first output line starts right under the box's edge */
+  border: var(--bw) solid var(--hx-line-2);
+  border-radius: var(--r-2);
+  background: var(--hx-fill);
+  color: var(--hx-ink);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+  white-space: pre;
+}
+
+/* The page-wide selection tint (6%) barely shows on output text; copying a line must be visible. An ink tint, not
+   the accent: the same contrast with every highlight colour (chalk is white), and the ink stays readable on it. */
+.out ::selection {
+  background: color-mix(in srgb, var(--hx-ink) 22%, transparent);
+  color: var(--hx-ink);
+}
+
+/* A selected find match: a darker accent of its own, since the page tint over the accent changes nothing in dark,
+   and its own dark ink on it (the theme ink is light in dark mode). */
+.out .mark::selection {
+  background: color-mix(in srgb, var(--hx-acc-ink) 30%, var(--hx-acc));
+  color: var(--hx-acc-ink);
+}
+
+/* A find match: the accent, ringed with the accent ink, since some accents are nearly the light output fill (chalk
+   is white). An inset ring changes no glyph's place, so the output's columns stay aligned. */
+.mark {
+  background: var(--hx-acc);
+  color: var(--hx-acc-ink);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hx-acc-ink) 60%, var(--hx-acc));
+}
+
+.drawer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.exact {
+  inline-size: 100%;
+  min-block-size: 160px;
+  padding: var(--sp-3);
+  border: 1px solid var(--hx-line-2);
+  border-radius: var(--r-2);
+  background: var(--hx-fill);
+  color: var(--hx-ink);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  resize: vertical;
+}
+
+/* The verdict plate, then the answer (kit Prose), then the cut note: one column with the kit's row gap. */
+.answer:not(:empty) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.answer > p { margin: 0; }
+
+.dialogBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  text-align: start;
+}
+
+.colTook {
+  text-align: end;
+}
+
+/* The request a proxy or account row records: the method and status lead the prose, the path trails it (the one
+   ellipsis of .what cuts the path first). The tag's padding and the path's leading text space keep them apart, so the
+   accessible name reads with a space before the path. */
+.lead,
+.path {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--hx-muted);
+}
+
+.lead {
+  display: inline-block;
+  min-inline-size: 11ch;
+  padding-inline-end: var(--sp-2);
+}
+
+/* A capped track cuts its cell, never lets it run into the next (a translated pill in the mid template's 148 px Result):
+   the cell's tooltip then shows it whole. */
+.clip {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.colFrom {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@container (max-width: 880px) {
+  .head,
+  .row {
+    grid-template-columns: var(--cols-mid);
+  }
+
+  .colVisitor,
+  .colTook {
+    display: none;
+  }
+}
+
+/* Past the breakpoint but too narrow for every measured track whole and What's least (LogList
+   reads its words and its width), the list takes the mid template too. */
+.list[data-cols='mid'] .head,
+.list[data-cols='mid'] .row {
+  grid-template-columns: var(--cols-mid);
+}
+
+.list[data-cols='mid'] .colVisitor,
+.list[data-cols='mid'] .colTook {
+  display: none;
+}
+
+@container (max-width: 640px) {
+  .head,
+  .row {
+    grid-template-columns: var(--cols-narrow);
+  }
+
+  .colFrom,
+  .lead,
+  .path {
+    display: none;
+  }
+}
+
+/* The source radio group and its More menu sit together as one control. */
+.srcGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+/* What you look at, in one wrapping group on the kit Toolbar's start side: the search grows into what is left of its
+   line, and .barActs ends it. The actions are only Live, Refresh and ⋯, small enough that the search
+   keeps a line shared with other controls at 1100 px. */
+.barStart {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+/* Live, Refresh and ⋯ end the start's last line, on a line of controls rather than between two. */
+.barActs {
+  display: flex;
+  align-items: center;
+  column-gap: calc(var(--sp-2) + var(--sp-half)); /* 10 px between Live, refresh and More (one row: no row gap) */
+  margin-inline-start: auto;
+}
+
+/* On a phone (390 px) the search takes a line of its own. */
+.searchRow {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+/* The chips under the bar, ended by Clear all whenever the view is off its defaults. */
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.footNote {
+  margin-inline-end: auto;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}

@@ -1,0 +1,652 @@
+/* LoadScreen (states/LoadScreen.tsx): a region that waits. One card on the raised surface holds the mark, the count,
+   the bar, the steps, the buttons and the question; the cards beside it sit on the page's own ground. Everything that
+   loops is decoration and is stopped under reduced motion and Performance mode (the rules at the end); what the bar
+   shows is the steps as given, never time. */
+.screen {
+  position: relative;
+  isolation: isolate;
+  block-size: 100%;
+  min-block-size: 0;
+  overflow: hidden;
+  background: var(--hx-bg);
+}
+
+/* The backdrop: a faint grid that drifts by one cell, faded toward the edges. The grid is drawn one cell larger than
+   the box on every side and moved with a transform, so the drift never repaints it. */
+.grid {
+  position: absolute;
+  inset: 0;
+  z-index: calc(-1 * var(--z-raised));
+  overflow: hidden;
+  mask-image: radial-gradient(closest-side, var(--hx-ink) 40%, transparent);
+  pointer-events: none;
+}
+
+.grid::before {
+  position: absolute;
+  inset: calc(-1 * var(--sp-8));
+  background-image:
+    linear-gradient(to right, var(--hx-line) var(--bw), transparent var(--bw)),
+    linear-gradient(to bottom, var(--hx-line) var(--bw), transparent var(--bw));
+  background-size: var(--sp-8) var(--sp-8);
+  content: "";
+  animation: load-drift calc(8 * var(--dur-loop)) linear infinite;
+}
+
+.scroll {
+  block-size: 100%;
+  overflow: hidden auto;
+  container-type: inline-size;
+}
+
+.column {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+  inline-size: 100%;
+  max-inline-size: calc(18 * var(--sp-10));
+  min-block-size: 100%;
+  margin-inline: auto;
+  padding: var(--sp-7) var(--sp-4);
+  align-content: start;
+  align-items: start;
+}
+
+/* The card's column, and the cards' beside it: each a plain stack. */
+.side,
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-inline-size: 0;
+}
+
+/* Room for both: the cards take the start side and the card a fixed column at the end (it stays first in the document). */
+@container (inline-size >= 880px) {
+  .column {
+    grid-template-columns: minmax(0, 1fr) calc(6 * var(--sp-10));
+    column-gap: var(--sp-7);
+
+    /* The page's line keeps its own height; the card's extra height goes to the cards' row. */
+    grid-template-rows: auto 1fr;
+  }
+
+  .intro {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  /* The card spans the page's line and the cards; alone in the column it still starts at the top. */
+  .side {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+  }
+
+  .main {
+    grid-row: 2;
+    grid-column: 1;
+  }
+
+  /* No page's line: the cards start at the top, beside the card. */
+  .side:first-child ~ .main {
+    grid-row: 1 / span 2;
+  }
+}
+
+/* The page's line: first in the column, the whole width when narrow. */
+.intro {
+  grid-column: 1 / -1;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--hx-muted-text);
+  font: var(--t-title);
+}
+
+/* ── The card ──────────────────────────────────────────────────────────────────────── */
+.plateFrame {
+  flex: none;
+  animation: load-enter var(--dur-enter) var(--ease-out) both;
+}
+
+.plate {
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  color: var(--hx-ink);
+  background: var(--hx-raised);
+}
+
+/* The title, and the state word at the end of its line. */
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-3);
+}
+
+.title {
+  min-inline-size: 0;
+}
+
+.title > [data-hub-heading] {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font: var(--t-heading);
+}
+
+.caption {
+  color: var(--hx-muted-text);
+  font: var(--t-label);
+  text-transform: uppercase;
+}
+
+/* The mark on its accent tile, beside the count of finished steps. */
+.tally {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+/* The mark is a plate with the glyph cut out of it: the plate takes the accent and the glyph shows the ink under it. */
+.markWrap {
+  display: grid;
+  flex: none;
+  place-items: center;
+  inline-size: var(--sp-10);
+  block-size: var(--sp-10);
+  background: var(--hx-acc-ink);
+}
+
+.mark {
+  inline-size: var(--sp-10);
+  block-size: var(--sp-10);
+  fill: var(--hx-acc);
+}
+
+/* The glyph's three parts light in turn while a step is under way; at rest the mark is the plain mark. */
+.part {
+  fill: var(--hx-acc);
+  opacity: 0;
+  animation: load-part calc(2 * var(--dur-pulse)) var(--ease-in-out) infinite;
+}
+
+.part:nth-child(3) {
+  animation-delay: calc(2 * var(--dur-pulse) / 3);
+}
+
+.part:nth-child(4) {
+  animation-delay: calc(4 * var(--dur-pulse) / 3);
+}
+
+.count {
+  color: var(--hx-ink);
+  font: var(--t-display);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Every step done, a step that needs the person, or no step under way: nothing works, so nothing moves. */
+.complete .part,
+.stuck .part,
+.idle .part {
+  animation: none;
+}
+
+.complete .mark {
+  animation: load-settle var(--dur-enter) var(--ease-out);
+}
+
+.complete .grid::before,
+.stuck .grid::before,
+.idle .grid::before {
+  animation: none;
+}
+
+.summary {
+  min-block-size: var(--lh-box-body);
+  margin: 0;
+  color: var(--hx-ink);
+  font: var(--t-body);
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  inline-size: 100%;
+}
+
+/* One block per step. */
+.bar {
+  display: grid;
+  grid-template-columns: repeat(var(--load-steps), minmax(0, 1fr));
+  gap: var(--sp-1);
+}
+
+.seg {
+  position: relative;
+  block-size: var(--sp-2);
+  overflow: hidden;
+  border: var(--bw) solid var(--hx-panel-line);
+  background: var(--hx-meter-track);
+}
+
+.seg_done {
+  border-color: var(--hx-acc-edge);
+  background: var(--hx-acc);
+}
+
+/* Under way: stripes in two shades of the accent (they read as "working" when still), and a sheen passing over them. */
+.seg_now {
+  border-color: var(--hx-acc-edge);
+  background: repeating-linear-gradient(-45deg, var(--hx-acc) 0 var(--sp-1), var(--hx-acc-press) var(--sp-1) var(--sp-2));
+}
+
+.seg_now::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, transparent, var(--hx-acc), transparent);
+  content: "";
+  transform: translateX(-100%);
+  animation: load-sheen var(--dur-loop) var(--ease-in-out) infinite;
+}
+
+/* It cannot go on by itself: hazard stripes, accent and ink, that never move. */
+.seg_stuck {
+  border-color: var(--hx-acc-ink);
+  background: repeating-linear-gradient(-45deg, var(--hx-acc) 0 var(--sp-1), var(--hx-acc-ink) var(--sp-1) var(--sp-2));
+}
+
+/* The steps, two to a line. */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+  color: var(--hx-muted-text);
+  font: var(--t-small);
+}
+
+.step_done,
+.step_now,
+.step_stuck {
+  color: var(--hx-ink);
+}
+
+.stepMark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  inline-size: var(--icon-sm);
+  block-size: var(--lh-box-small);
+}
+
+/* The step under way: an accent block with an ink edge, that blinks. */
+.caret {
+  inline-size: var(--sp-3);
+  block-size: var(--sp-3);
+  border: var(--bw) solid var(--hx-ink);
+  background: var(--hx-acc);
+  animation: load-blink var(--dur-blink) steps(2, jump-none) infinite;
+}
+
+.hollow {
+  inline-size: var(--sp-3);
+  block-size: var(--sp-3);
+  border: var(--bw) solid var(--hx-panel-line);
+}
+
+.notice {
+  flex: none;
+}
+
+/* ── The cards ─────────────────────────────────────────────────────────────────────── */
+.cards {
+  flex: none;
+  animation: load-enter var(--dur-enter) var(--ease-out) both;
+}
+
+.cardsInner {
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+  background: var(--hx-raised);
+}
+
+.cardsHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-block-size: var(--ctl-h-sm);
+}
+
+.place {
+  color: var(--hx-muted-text);
+  font: var(--t-label);
+  text-transform: uppercase;
+}
+
+.cardsControls {
+  display: flex;
+  gap: max(var(--sp-1), var(--touch-gap));
+}
+
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+
+  /* Room for the longest card, so the buttons under the cards do not move as they change. */
+  min-block-size: calc(4 * var(--lh-box-body));
+  animation: load-card var(--dur-enter) var(--ease-out);
+}
+
+.cardIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  inline-size: var(--sp-9);
+  block-size: var(--sp-9);
+  color: var(--hx-verdict-good);
+  background: var(--hx-verdict-bg);
+}
+
+.cardGlyph {
+  inline-size: var(--sp-6);
+  block-size: var(--sp-6);
+}
+
+.cardText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.cardTitle > [data-hub-heading] {
+  margin: 0;
+  color: var(--hx-ink);
+  font: var(--t-heading);
+}
+
+.cardLine {
+  max-inline-size: 64ch;
+  margin: 0;
+  color: var(--hx-ink);
+  font: var(--t-body);
+}
+
+/* One pip per card: seen ones are ink, the shown one fills while the cards rotate. */
+.pips {
+  display: flex;
+  gap: var(--sp-1);
+}
+
+.pip {
+  position: relative;
+  flex: 1;
+  max-inline-size: var(--sp-7);
+  block-size: var(--bw-2);
+  overflow: hidden;
+  background: var(--hx-meter-track);
+}
+
+.pipSeen,
+.pipNow {
+  background: var(--hx-muted-fill);
+}
+
+.pipNow::after {
+  position: absolute;
+  inset: 0;
+  background: var(--hx-ink);
+  content: "";
+  transform-origin: 0 50%;
+}
+
+.pipNow:dir(rtl)::after {
+  transform-origin: 100% 50%;
+}
+
+.pipFilling::after {
+  animation: load-pip calc(6 * var(--dur-loop)) linear both;
+}
+
+/* Still: every card at once. */
+.all {
+  display: grid;
+  flex: none;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(4 * var(--sp-10))), 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.allCard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: var(--bw) solid var(--hx-panel-line);
+  background: var(--hx-raised);
+}
+
+/* The page's buttons, one per line, each as wide as the card. */
+.actions {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-2);
+}
+
+/* The question block: inside the card, past a rule under the page's buttons. Its buttons start where its text starts. */
+.ask {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block-start: var(--sp-4);
+  border-block-start: var(--bw) solid var(--hx-panel-line);
+}
+
+/* Where the person is among the questions: one small segment each. */
+.askSteps {
+  display: flex;
+  gap: var(--sp-1);
+}
+
+.askStep {
+  inline-size: var(--sp-4);
+  block-size: var(--bw-2);
+  background: var(--hx-meter-track);
+}
+
+.askStepAt {
+  background: var(--hx-ink);
+}
+
+.askHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.askHint {
+  margin: 0;
+  color: var(--hx-muted-text);
+  font: var(--t-small);
+}
+
+.askBody {
+  min-inline-size: 0;
+  padding-block-end: var(--sp-2);
+}
+
+.askActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.askNote {
+  margin: 0;
+  color: var(--hx-muted-text);
+  font: var(--t-small);
+}
+
+/* What next: its heading, then the page's cards, the column wide. */
+.nextEnd {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.nextWait {
+  margin: 0;
+  color: var(--hx-muted-text);
+}
+
+.next {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block-start: var(--sp-4);
+  border-block-start: var(--bw) solid var(--hx-panel-line);
+}
+
+/* Narrow: less room around the card. */
+@container (inline-size < 520px) {
+  .column {
+    padding: var(--sp-5) var(--sp-3);
+  }
+
+  .plate {
+    padding: var(--sp-4);
+  }
+
+  .card {
+    gap: var(--sp-3);
+  }
+}
+
+@keyframes load-drift {
+  to {
+    transform: translate(var(--sp-8), var(--sp-8));
+  }
+}
+
+@keyframes load-part {
+  20% {
+    opacity: 1;
+  }
+
+  40% {
+    opacity: 0;
+  }
+}
+
+@keyframes load-sheen {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes load-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes load-pip {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes load-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--sp-2));
+  }
+}
+
+@keyframes load-card {
+  from {
+    opacity: 0;
+    transform: translateX(var(--sp-3));
+  }
+}
+
+@keyframes load-settle {
+  40% {
+    transform: scale(1.08);
+  }
+}
+
+/* Reduced motion: nothing loops and nothing slides. The hatch, the caret and the plain mark still say what is under way. */
+@media (prefers-reduced-motion: reduce) {
+  .grid::before {
+    animation: none;
+  }
+
+  .part {
+    animation: none;
+  }
+
+  .seg_now::after {
+    display: none;
+    animation: none;
+  }
+
+  .caret {
+    animation: none;
+  }
+
+  .plateFrame,
+  .cards,
+  .card,
+  .complete .mark,
+  .pipFilling::after {
+    animation: none;
+  }
+}
+
+/* Performance mode (kit/perf.ts) stops them too. */
+:root[data-hx-perf] .grid::before,
+:root[data-hx-perf] .complete .mark,
+:root[data-hx-perf] .part,
+:root[data-hx-perf] .caret,
+:root[data-hx-perf] .plateFrame,
+:root[data-hx-perf] .cards,
+:root[data-hx-perf] .card,
+:root[data-hx-perf] .pipFilling::after {
+  animation: none;
+}
+
+:root[data-hx-perf] .seg_now::after {
+  display: none;
+  animation: none;
+}
+
+/* Forced colours: the blocks keep a line, so done and to-do still differ without their fills. */
+@media (forced-colors: active) {
+  .seg {
+    border: var(--bw) solid canvastext;
+  }
+
+  .seg_done {
+    background: canvastext;
+  }
+}

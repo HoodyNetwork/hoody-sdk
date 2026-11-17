@@ -1,0 +1,24 @@
+┌──────────────────────────────────────────────┐                          Esc ×
+│›✓ Amazon S3 or compatible                    │he storage before it
+│   SFTP server                                │
+│   WebDAV (Nextcloud, ownCloud and others)    │───────────────────────────────
+│   MEGA                                       │─────────────────────────────┐█
+│   Windows share (SMB)                        │                             │█
+│   FTP server                                 │go only to this computer's   │█
+│   Google Drive                               │re in a private file. The    │█
+│   Dropbox                                    │                             │█
+│   Microsoft OneDrive                         │ct.                          │█
+│   pCloud                                     │─────────────────────────────┘█
+│  ↓ 93                                        │                              █
+└──────────────────────────────────────────────┘                              █
+ │ Conn┃ ┃ Amazon S3 or compatible                                           ▾█
+ │ Conn┃                                                                      █
+ │ fold┃ Service                                                              █
+ │ Keys┃ │ AWS ▾
+ │ prog┃
+ │ them┃ Access key ID * (required)
+ │No st┃ │ ___________________________________________________________________
+ │Add c┃
+ │folde┃ Secret access key * (required)
+ └─────┃ ──────────────────────────────────────────────────────────────────────
+ Typing┃ [Cancel]  Connect

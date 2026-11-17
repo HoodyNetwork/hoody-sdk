@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ New script
+ Step 1 of 5 · What it does  ██░░░░░░░░
+ ▸1 What it does  2 Where it answers  3 Build it  4 Check it  5 Make it live
+ ──────────────────────────────────────────────────────────────────────────────
+ │ What it does                                                              │
+ │ │                                                                         │
+ │                                                                           │
+ │                                                                           │
+ │                                                                           │
+ │ Examples to start from                                                    │▄
+ │ [Summarise a web page with AI] [Check my website every hour]              │█
+ │ [Post events to my team chat] [Turn messy text into clean data]           │█
+ │ [A to-do API that remembers] [Answer questions from my files]             │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+                                                                              ▀
+ Questions
+ ▸ What is a script?
+ ▸ Do I need to know how to code?
+ ▾ What can a script do?
+ ──────────────────────────────────────────────────────────────────────────────
+ Next: where it answers.
+                                                           [Cancel]   Continue
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  API                                                                     ▸ Use with your agent
+ Computers             │  Every endpoint of the Hoody API, how to call it, and its docs page.
+ Files                 │
+ Bots                  │  ▸ Endpoints    Overview
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  / waitlist                 Service ▾                                   2 endpoints  ↻ Refresh
+                       │
+On atlas ▾             │        Method               Path                         Summary
+ Programs              │  ▾ Account API · 1 resource · 2 endpoints
+ Schedules             │    ▾ Waitlist · 2 endpoints
+ Scripts               │  ›      PATCH               /api/v1/waitlist             Enrich an existing waitlist signup
+ Logs                  │         POST                /api/v1/waitlist             Join the Hoody waitlist
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+▌API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Typing · Esc leaves the field · Ctrl+K commands

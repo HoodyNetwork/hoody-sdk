@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                                    ▸ Use with your agent
+ Computers             │
+ Files                 │  ‹ Bots  Esc
+▌Bots                  │  Chief  ● Idle                                                   [Bot settings] [Details] [⋯]
+ Board                 │    SG atlas    Hoody Free  · Allow everything is off +2
+ Demo                  │
+ Vault                 │  ▸ Activity    Link and keys    Chat apps 2    Work 2
+                       │ ┌────────────────────────────────────────────────────────────────────┐───────────────────────
+On atlas ▾             │ │ ! Delete Chief?                                              Esc × │
+ Programs              │ │ ────────────────────────────────────────────────────────────────── │ of the shop failed?
+ Schedules             │ │ The Bot, its conversation and its archive are deleted. Its link    │
+ Scripts               │ │ stops working and its keys are removed. Running tasks are stopped  │
+ Logs                  │ │ where possible.                                                    │
+ Tunnels               │ │                                                                    │
+ Notes                 │ │                                                                    │
+ AI                    │ │ Type Chief to confirm                                              │
+ VMs                   │ │ ┌────────────────────────────────────────────────────────────────┐ │
+                       │ │ │                                                                │ │
+Account                │ │ └────────────────────────────────────────────────────────────────┘ │
+ Plans & Billing       │ │                                                                    │
+ Referrals             │ │                                             [Cancel]  [Delete Bot] │
+ Keys and tokens       │ └────────────────────────────────────────────────────────────────────┘est raising the        █
+ API                   │     limit to 2 GB.                                                                           █
+ Notifications      26 │     19 days ago                                                                              █
+ Account               │                                                                                              █
+                       │                                            Direct message                                    █
+ + Rent servers        │                                            Do that, but ask me before restarting anything.   █
+ Guide                 │                                            19 days ago                                       █
+ Support               │                                                                                              █
+                       │     Understood. I will change the limit and ask before any restart.                          █
+                       │     19 days ago                                                                              █
+                       │                                                                                              █
+                       │     ┌────────────────────────────────────────────────────────────────────────────────────┐   █
+                       │     │ Message the Bot                                                                    │   █
+                       │     └────────────────────────────────────────────────────────────────────────────────────┘   █
+                       │                                                 Write a message first.  [⇗ Talk]  [Send ↵]   █
+                       │                                                                                              █
+                       │                                                                                              █
+ Typing · Esc leaves the field · Ctrl+K commands

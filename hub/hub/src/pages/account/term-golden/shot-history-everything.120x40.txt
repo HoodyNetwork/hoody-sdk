@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Account
+ Computers             │  Your profile, how you sign in, and where you are signed in.
+ Files                 │
+ Bots                  │  ‹ 5   Agent sign-in ▌Security history  SSH keys  Emails  Elsewhere  This device  Questions
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Vault                 │  │ Security history                                                                      │
+                       │  │ Sign-ins over the last 180 days, newest first.                                        │
+On atlas ▾             │  │ / Search                 Filters                                20 entries  ↻ Refresh │
+ Programs              │  │                                                                                       │
+ Schedules             │  │   Event                          When ↓       From                       Through      │
+ Scripts               │  │ › Signed in                      19 days ago  203.0.113.24 · SG          Browser      │
+ Logs                  │  │   Sign-in refused ! Refused      19 days ago  198.51.100.201 · country…  Browser      │
+ Tunnels               │  │   Signed in                      20 days ago  192.0.2.88 · US            Browser      │
+ Notes                 │  │   Sign-in refused ! Refused      20 days ago  198.51.100.201 · country…  Browser      │
+ AI                    │  │   Signed in                      20 days ago  198.51.100.130 · GB        Browser      │
+ VMs                   │  │   Signed out                     20 days ago  192.0.2.12 · IN            Browser      │
+                       │  │   Signed in                      20 days ago  203.0.113.24 · SG          Browser      │
+Account                │  │   Two-step sign-in turned on     21 days ago  198.51.100.7 · DE          Browser      │
+ Plans & Billing       │  │   Signed in                      21 days ago  192.0.2.88 · US            Hoody CLI    │
+ Referrals             │  │   Code refused ! Refused         21 days ago  203.0.113.90 · SG          Browser      │█
+ Keys and tokens       │  │   Signed in                      21 days ago  198.51.100.130 · GB        Browser      │█
+ API                   │  │   backup code used               21 days ago  192.0.2.12 · IN            —            │█
+ Notifications      26 │  │   Signed in                      22 days ago  203.0.113.24 · SG          Browser      │█
+▌Account               │  │   Password changed               22 days ago  198.51.100.7 · DE          Browser      │█
+                       │  │   Signed in                      22 days ago  192.0.2.88 · US            Browser      │
+ + Rent servers        │  │   API key made                   22 days ago  203.0.113.90 · SG          Browser      │
+ Guide                 │  │   Signed in                      22 days ago  198.51.100.130 · GB        Browser      │
+ Support               │  │   Session ended                  23 days ago  192.0.2.12 · IN            Browser      │
+                       │  │   GitHub or Google sign-in lin…  23 days ago  198.51.100.7 · DE          Browser      │
+                       │  │   Email change asked for         23 days ago  203.0.113.90 · SG          Browser      │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ SSH keys                                                                              │
+                       │  │ Each computer takes one SSH key, set on that computer.                                │
+                       │  │ / Search                                                       5 computers  ↻ Refresh │
+                       │  │                                                                                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

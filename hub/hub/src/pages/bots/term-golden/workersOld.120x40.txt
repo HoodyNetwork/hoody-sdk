@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                       ▸ Use with your agent   + New Bot
+ Computers             │  Every Bot on your running computers, and the page of each one.
+ Files                 │
+▌Bots                  │  Bots              Working now    ! Need you    In chat apps
+ Board                 │  23                2              1             3
+ Demo                  │  on 2 computers    Show           Show          Show
+ Vault                 │
+                       │  / Search                   Filters                          23 Bots  ↻ Refresh  View options█
+On atlas ▾             │                                                                                              █
+ Programs              │  ▌ L Ledger                                                               ● Paused [Write] ⋯██
+ Schedules             │      Stopped at its limit until you write to it · Keeps the monthly numbers tidy            ██
+ Scripts               │       · cinder · Personal · Model Hoody Free                                                ██
+ Logs                  │      Only here in the Hub                                                                   ██
+ Tunnels               │    S Support                                                             ● Working         ⋯██
+ Notes                 │      … Working on it now · Answers questions about the shop and drafts replies              ██
+ AI                    │       · atlas · Acme client · Model Hoody Free                                              ██
+ VMs                   │      Discord                                                                                ░█
+                       │    C Chief                                                               ● Working         ⋯░█
+Account                │      … Working on it now · Runs the team day: triage, approvals and summaries               ░█
+ Plans & Billing       │       · atlas · Acme client · Model Hoody Free                                              ░█
+ Referrals             │      Telegram Slack Discord  Public link                                                    ░█
+ Keys and tokens       │    D Digest                                                   ● 2 messages waiting         ⋯░█
+ API                   │      2 messages to read next · Writes the daily summary of what changed                     ░█
+ Notifications      26 │       · atlas · Acme client · Model Hoody Free                                              ░█
+ Account               │      Only here in the Hub                                                                   ░█
+                       │    S Scout                                                                  ● Idle         ⋯░█
+ + Rent servers        │      Last active 19 days ago · Watches deploys and reports failures · cinder · Acme client  ░█
+ Guide                 │       · Model gpt-5                                                                         ░█
+ Support               │      Telegram  Public link                                                                  ░█
+                       │    N Notes                                                                  ● Idle         ⋯░█
+                       │      Last active 19 days ago · Files meeting notes where they belong · atlas · Personal     ░█
+                       │       · Model Hoody Free                                                                    ░▀
+                       │      Only here in the Hub                                                                   ░
+                       │
+                       │  1–20 of 23 ‹ ›
+                       │
+                       │  Questions
+                       │  ▸ What is a Bot, and where does it run?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

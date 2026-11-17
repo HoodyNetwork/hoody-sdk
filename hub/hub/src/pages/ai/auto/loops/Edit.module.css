@@ -1,0 +1,13 @@
+/* Loop changes: the outcome under the actions, and the form's narrow fields. */
+.outcome {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.every {
+  width: 9rem;
+}
+
+.unit {
+  width: 10rem;
+}

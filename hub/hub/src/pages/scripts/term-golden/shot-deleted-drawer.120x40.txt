@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Recently deleted                                                        Esc ×
+ Home                  │  Scripts       ┃ Deleted scripts are kept for a while. Restore brings one back at its
+ Computers             │  Small programs┃ old address.
+ Files                 │                ┃ ─────────────────────────────────────────────────────────────────────────────
+ Bots                  │  / Search      ┃   /scratch  atlas  · Kept until Nov 18, 2026, 2:25 PM             [Restore]
+ Board                 │  10 scripts  [R┃   /legacy/report  atlas  · Kept until Nov 2, 2026, 7:40 AM        [Restore]
+ Demo                  │                ┃
+ Vault                 │      Script ↑  ┃
+                       │  ▾ atlas · 7   ┃
+On atlas ▾             │  ›   Daily dige┃
+ Programs              │      Health che┃
+ Schedules             │      Notify me ┃
+▌Scripts               │      Old report┃
+ Logs                  │      Order stat┃
+ Tunnels               │      Stripe web┃
+ Notes                 │      Weather lo┃
+ AI                    │                ┃
+ VMs                   │  ▾ borealis · 3┃
+                       │      i Runs an ┃
+Account                │        update t┃
+ Plans & Billing       │      ──────────┃
+ Referrals             │      Daily dige┃
+ Keys and tokens       │      Order stat┃
+ API                   │      Weather lo┃
+ Notifications      26 │                ┃
+ Account               │  ▾ cedar · 0   ┃
+                       │      i Turned o┃
+ + Rent servers        │      ──────────┃
+ Guide                 │                ┃
+ Support               │  ▾ harbor · 0  ┃
+                       │      i Keeps it┃
+                       │        them.   ┃
+                       │      ──────────┃
+                       │                ┃
+                       │  ▸ Advanced    ┃
+                       │                ┃
+                       │  Questions     ┃
+                       │  ▸ What is a sc┃
+                       │  ▸ Do I need to┃
+ Tab move · Enter open · Ctrl+K commands┃

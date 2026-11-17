@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations  ▌Knowledge   Settings
+ Computers             │   Skills  ▌Instructions   Memory
+ Files                 │  Instructions  ● Off                                                              [Read again]
+ Bots                  │  The text this realm's agents get with their instructions on this computer, and its on/off.
+ Board                 │
+ Demo                  │  ! These instructions changed since you opened them, so nothing was     Keep mine  Load theirs
+ Vault                 │    saved. Your text and switch are still here.
+                       │
+On atlas ▾             │  Saving yours over theirs would change them like this                                        █
+ Programs              │  On or off  Off in both                                                                      █
+ Schedules             │  Text       3 lines added, 2 removed                                                         █
+ Scripts               │                                                                                       ⧉ copy █
+ Logs                  │     Answer in English.                                                                       █
+ Tunnels               │   - Keep pull requests small.                                                                █
+ Notes                 │   - Ask before you add a dependency.                                                         █
+▌AI                    │   + Keep pull requests small and explain why a change is needed.                             █
+ VMs                   │   + Run the tests before you say a change is done.                                           █
+                       │   + Write the summary first.                                                                 █
+Account                │                                                                                              █
+ Plans & Billing       │  ┌────────────────────────────────────────────────────────────────────────────────────────┐  █
+ Referrals             │  │                                                                                        │  █
+ Keys and tokens       │  │ Give agents these instructions  [□ off]                                                │  █
+ API                   │  │ Off. Instructions built from                                                           │  █
+ Notifications      26 │  │ now on leave this text out.                                                            │  █
+ Account               │  │ The text is kept.                                                                      │  █
+                       │  │                                                                                        │  █
+ + Rent servers        │  └────────────────────────────────────────────────────────────────────────────────────────┘  █
+ Guide                 │                                                                                              █
+ Support               │  Instructions text (unavailable)                                                             █
+                       │  │ Answer in English.                                                                        █
+                       │    Keep pull requests small and explain why a change is needed.                              █
+                       │    Run the tests before you say a change is done.                                            █
+                       │    Write the summary first.                                                                  █
+                       │                                                                                              ▀
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

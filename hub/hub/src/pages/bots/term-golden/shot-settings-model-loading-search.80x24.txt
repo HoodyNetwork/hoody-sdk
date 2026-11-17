@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Settings for Chief                                               Esc ×
+ Bots  ┃ Model, behaviour, guardrails and voice.
+ ‹ Bots┃ ──────────────────────────────────────────────────────────────────────
+   rest┃ │ The Bot itself        ┌────────────────────────────────────────────┐
+   19 d┃ │▌Model                 │ Model                                  [⋯] │
+   … Wo┃ │ Behaviour             │ The model the Bot itself answers you with. │
+  ┌─ ! ┃ │ Voice                 │ Helpers it starts don't use it.            │
+  │  Al┃ │ The helpers it        │ Checking models…                           │
+  │    ┃ │ starts                │                                            │
+  │ Run┃ │ Helpers               │ ┃ / zzz                                  × │
+  │ npm┃ │ Guardrails and        │                                            │
+  │ App┃ │ limits                │ Loading…                                   │
+  │ [De┃ │ Advanced              │ ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁                 │
+  └────┃                         │ ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁                       │
+  A che┃                         │ ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁              │
+       ┃                         │                                            │
+   ! Se┃                         │ ▸ Do the Bot's helpers use this model?     │
+   ┌───┃                         └────────────────────────────────────────────┘
+   │ Me┃
+   └───┃
+       ┃
+       ┃
+       ┃
+ Typing┃

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Get a computer                                                                                        Esc ×
+ Home     ┃ Something is missing. The box below says what.
+▌Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+ Bots     ┃ │ YOU GET                                                                                                 │
+ Board    ┃ │ Not ready yet: you have no server.                                                                      │
+ Demo     ┃ │ Get a new server from the Server list.                                                                  │
+ Vault    ┃ │ Size      Known once a server is picked              Software  Hoody kit, Developer kit, Hoody AI       │
+          ┃ │ System    Debian 13                                                                                     │
+On this co┃ └─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ Programs ┃
+ Schedules┃ ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+ Scripts  ┃ │ Computer                                                                                                │
+ Logs     ┃ │ ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+ Tunnels  ┃ │ │                                                                                                     │ │
+ Notes    ┃ │ │ Name                            ┃ proud-rust-llama   [Suggest another name]                         │ │
+ AI       ┃ │ │ Suggested for you. Keep it or                                                                       │ │
+ VMs      ┃ │ │ type your own.                                                                                      │ │
+          ┃ │ │                                                                                                     │ │
+Account   ┃ │ │ Server                          │ Choose… ▾                                                         │ │
+ Plans & B┃ │ │ Computers on a server share     You have no server yet                                              │ │
+ Referrals┃ │ │ its cores, memory and disk.                                                                         │ │
+ Keys and ┃ │ │                                                                                                     │ │
+ API      ┃ │ │ Project                         │ █ Home base ▾                                                     │ │
+ Notificat┃ │ │ Groups computers. Its people    [+ New project in this realm]                                       │ │
+ Account  ┃ │ │ and access rules apply to this                                                                      │ │
+          ┃ │ │ one too.                                                                                            │ │
+ + Rent se┃ │ │                                                                                                     │ │
+ Guide    ┃ │ │ Realm                            █  Personal                                                        │ │
+ Support  ┃ │ │ Always added: you're getting                                                                        │ │
+          ┃ │ │ this computer inside this                                                                           │ │
+          ┃ │ │ realm.                                                                                              │ │
+          ┃ │ │                                                                                                     │ │
+          ┃ │ └─────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+          ┃ └─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+          ┃
+          ┃ ▸ More options  Colour, software, SSH key, a note and variables. All optional.
+          ┃
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Typing · ┃ [Cancel]  Get computer

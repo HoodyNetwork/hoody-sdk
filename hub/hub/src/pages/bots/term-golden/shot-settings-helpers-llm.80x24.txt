@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Settings for Chief                                               Esc ×
+ Bots  ┃ Model, behaviour, guardrails and voice.
+ ‹ Bots┃ ──────────────────────────────────────────────────────────────────────
+       ┃ │ The Bot itself        ┌───────────────────────────────────────────┐█
+   i Ta┃ │ Model                 │ Who does the work                         │█
+   The ┃ │ Behaviour             │ The helpers this Bot starts to do the     │█
+   rais┃ │ Voice                 │ work, and the models they run on. The     │█
+   19 d┃ │ The helpers it        │ Bot's own model is not passed on.         │█
+       ┃ │ starts                │ The Bot may give work to                  │
+       ┃ │▌Helpers               │ ┌───────────────────────────────────────┐ │
+       ┃ │ Guardrails and        │ │                                       │ │
+       ┃ │ limits                │ │ Hoody models                          │ │
+       ┃ │ Advanced              │ │ Helpers that run on the models of     │ │
+   Unde┃                         │ │ this computer.                        │ │
+   rest┃                         │ │ [■ on ]                               │ │
+   19 d┃                         │ │                                       │ │
+       ┃                         │ │ Claude Code                           │ │
+   ┌───┃                         │ │ Helpers that run in Claude Code on    │ │
+   │ Me┃                         │ │ this computer.                        │ │
+   └───┃                         │ │ [□ off]                               │ │
+       ┃                         │ │                                       │ │
+       ┃                         │ │ New helpers run on                    │ │
+       ┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Discard] [Cancel]  Save

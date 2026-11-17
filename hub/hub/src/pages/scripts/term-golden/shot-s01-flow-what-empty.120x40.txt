@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  New script
+ Computers             │
+ Files                 │  Step 1 of 5 · What it does  ██░░░░░░░░
+ Bots                  │  ▸1 What it does  2 Where it answers  3 Build it  4 Check it  5 Make it live
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ▸ Your script so far                                                                        █
+ Vault                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ What should it do?                                                                       │█
+On atlas ▾             │  │ Describe it in your own words. The assistant builds it; you check it before it goes      │█
+ Programs              │  │ live.                                                                                    │█
+ Schedules             │  │                                                                                          │█
+▌Scripts               │  │ How to start                                                                             │█
+ Logs                  │  │ ┌───────────────────────────┐ ┌──────────────────────────┐ ┌───────────────────────────┐ │█
+ Tunnels               │  │ │                           │ │                          │ │                           │ │█
+ Notes                 │  │ │  Describe it              │ │  Start from an idea      │ │  Write the code myself    │ │█
+ AI                    │  │ │  The assistant builds     │ │  Ready-made scripts you  │ │  For when you already     │ │█
+ VMs                   │  │ │  it from your words.      │ │  set up in a minute.     │ │  know the code.           │ │█
+                       │  │ │                           │ │                          │ │                           │ │█
+Account                │  │ └───────────────────────────┘ └──────────────────────────┘ └───────────────────────────┘ │█
+ Plans & Billing       │  │ What it does                                                                             │█
+ Referrals             │  │ ┃                                                                                        │█
+ Keys and tokens       │  │                                                                                          │█
+ API                   │  │                                                                                          │█
+ Notifications      26 │  │                                                                                          │█
+ Account               │  │ Examples to start from                                                                   │█
+                       │  │ [Summarise a web page with AI] [Check my website every hour]                             │█
+ + Rent servers        │  │ [Post events to my team chat] [Turn messy text into clean data]                          │█
+ Guide                 │  │ [A to-do API that remembers] [Answer questions from my files]                            │█
+ Support               │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+                       │                                                                                              █
+                       │  Questions
+                       │  ▸ What is a script?
+                       │  ▸ Do I need to know how to code?
+                       │  ▸ What can a script do?
+                       │  ▸ How does the assistant write a script?
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Next: where it answers.
+                       │                                                                           [Cancel]   Continue
+ Typing · Esc leaves the field · Ctrl+K commands

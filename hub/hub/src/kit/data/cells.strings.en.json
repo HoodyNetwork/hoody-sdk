@@ -1,0 +1,10 @@
+{
+  "progress.of": "{{pct}}% · {{done}} of {{total}}",
+  "progress.some": "{{done}} so far",
+  "progress.start": "Starting",
+  "progress.meter": "{{name}}: {{words}}",
+  "unknown": "Outcome unknown",
+  "check.again": "Check again",
+  "check.busy": "Checking…",
+  "check.busyWhy": "Reading the answer again; nothing is sent again."
+}

@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ ‹ Back                                                           Esc ×
+  Chats┃ Connect OpenRouter
+ ▌Model┃ ──────────────────────────────────────────────────────────────────────
+ atlas ┃ How to connect OpenRouter                                            █
+ Models┃ (•) Sign in with OpenRouter                                          █
+ atlas ┃     Use your OpenRouter account                                      █
+ ▌Defau┃ ( ) Use an API key                                                   █
+ ──────┃     Pay as you go on your own key                                    █
+ ┌─────┃                                                                      █
+ │ Defa┃   1. Open OpenRouter and sign in.                                    █
+ │ The ┃   2. Approve the request. OpenRouter then opens a localhost page that█
+ │ ┌───┃      does not load. That is expected.                                █
+ │ │   ┃   3. Copy that page's whole address from the address bar and paste it█
+ │ │ AI┃      below.                                                          █
+ │ │ Th┃                                                                      █
+ │ │ ev┃ [Open OpenRouter ⇗]                                                  █
+ │ │ co┃                                                                      █
+ │ │   ┃ Address of the page that did not load                                █
+ │ │ Bo┃ │ ______________                                                     █
+ │ │ Bo┃ It starts with localhost and holds a sign-in code. It is sent once   █
+ │ │   ┃ and never shown here.                                                █
+ │ └───┃                                                                      █
+ └─────┃  Finish sign-in  [Cancel sign-in]                                    █
+ Tab mo┃

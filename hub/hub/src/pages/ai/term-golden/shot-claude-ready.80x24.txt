@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Chats   Agents   Automations   Knowledge  ▌Settings
+ ▌Models & keys   Connections & MCP   Rules & hooks
+ atlas › Models & keys
+ Models & keys                                            + Connect an account
+ atlas chats with Claude Code and runs Bots on Hoody Free.
+ ‹ 2  ▌Claude Code  Hoody AI allowance  Spending  Advanced  Questions
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Claude Code                                                               │
+ │ Use your own Claude plan through Claude Code on this computer.            │
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │█
+ │ │                                                                       │ │▀
+ │ │ Claude Code on this computer                                          │ │
+ │ │ Signed in to Claude Code and                                          │ │
+ │ │ verified                                                              │ │
+ │ │                                                                       │ │
+ │ │ Use Claude Code                 [Go back to my models]                │ │
+ │ │ New chats use Claude Code                                             │ │
+ │ │                                                                       │ │
+ │ └───────────────────────────────────────────────────────────────────────┘ │
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │
+ │ │                                                                       │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

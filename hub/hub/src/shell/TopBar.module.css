@@ -1,0 +1,340 @@
+/* Top bar: 48 px, level-1 surface, one ink rule under it. Every control in it takes the
+   kit compact height (32 px), and a coarse pointer keeps the touch minimum. Set once here,
+   so the kit Buttons, the switchers and the parts take it; popovers render outside the bar and keep theirs.
+   The bar is the `topbar` container: it is as wide as the content under it, so its end follows the page's padding
+   (the .end rules below). */
+.bar {
+  --ctl-h: max(var(--ctl-h-compact), var(--touch-min));
+  --ctl-h-md: var(--ctl-h); /* an alias resolves where it is declared, so the md role follows the bar's height here */
+
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: var(--topbar-h);
+  padding-inline: var(--sp-4) 0;
+  container: topbar / inline-size;
+
+  /* The same scrollbar room as the content under it (AppShell.module.css .main): the bar never scrolls, but a box
+     that hides its overflow keeps a stable gutter, so its end sits where the content's end sits under a classic
+     scrollbar. Nothing in the bar reaches outside its 48 px (popovers and tooltips are drawn outside it). */
+  overflow: hidden;
+  scrollbar-gutter: stable;
+  border-block-end: var(--bw) solid var(--hx-panel-line);
+  background: var(--hx-card);
+}
+
+/* A kit Button with words in the bar (Skills / SDK, the Free badge) takes the bar's control height, through the plate's
+   own property as PageHeader's actions do, so the touch floor and the focus ring stay the Button's. Icon-only buttons
+   keep their own height (at least the icon hit); the bar's --ctl-h-compact equals --btn-h, so they draw the same. */
+.bar :is(button, a)[data-variant][data-words] {
+  --plate-h: var(--ctl-h);
+}
+
+.context {
+  position: relative;
+  display: flex;
+  flex: 0 1 auto;
+  align-items: stretch;
+  min-width: 0;
+  height: var(--ctl-h);
+  margin-inline-end: var(--topbar-zone-pad);
+
+  /* The pickers' frame and fill: an outline drawn on the inner edge takes no room, so each picker
+     keeps the whole bar height (32, or the touch minimum); the line between two pickers is the switcher's own. */
+  outline: var(--bw) solid var(--hx-line-strong);
+  outline-offset: calc(-1 * var(--bw));
+  border-radius: var(--r-1);
+  background: var(--hx-topbar-pick-bg);
+}
+
+/* The zone hairlines: 1 px, 4 px in from top and bottom; one closes the realm zone, one opens the actions. */
+.context::after,
+.end::before {
+  position: absolute;
+  inset-block: var(--topbar-zone-inset);
+  width: var(--bw);
+  background: var(--hx-topbar-zone-line);
+  content: "";
+}
+
+.context::after {
+  inset-inline-end: calc(-1 * var(--topbar-zone-pad));
+}
+
+.end::before {
+  inset-inline-start: 0;
+}
+
+.context:empty {
+  display: none;
+}
+
+/* Phone: one context chip, search and the bell; no zones to split, so no hairlines. */
+@media (width < 768px) {
+  .context {
+    margin-inline-end: 0;
+    outline: 0;
+    background: transparent;
+  }
+
+  .context::after,
+  .end::before {
+    content: none;
+  }
+}
+
+/* A focused picker draws its inset ring above the zone's frame: an outline paints over the zone's own children, so
+   the ring takes a layer of its own. */
+.context [data-focus-visible] {
+  position: relative;
+  z-index: var(--z-raised);
+}
+
+/* Search gives way before the pickers (its shrink outweighs theirs a thousand to one): where the actions leave less
+   than 260 px, the field narrows and the realm and computer names stay whole. */
+.search {
+  display: flex;
+  flex: 0 1000 260px;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  height: var(--ctl-h);
+  padding: 0 var(--sp-1) 0 var(--sp-3);
+  border: var(--bw) solid var(--hx-line-strong);
+  border-radius: var(--r-1);
+  background: var(--hx-topbar-search-bg);
+  color: var(--hx-faint);
+  font-size: var(--fs-md);
+  cursor: pointer;
+  outline: none;
+}
+
+.search[data-hovered] {
+  border-color: var(--hx-line-strong);
+  color: var(--hx-muted);
+}
+
+.search[data-focus-visible] {
+  box-shadow: var(--focus-ring);
+}
+
+.searchText {
+  flex: 1;
+  overflow: hidden;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* The actions: one row of plates of one height, one gap between every two.
+   The row ends where the page's content ends: the avatar's own box pads its picture by 6 px,
+   so the room after it is the page padding less that (--pad-page per content class, AppShell.module.css: 24, 20, 16;
+   change both together). A page that scrolls under a classic scrollbar is narrower by that bar; the top bar is not. */
+.end {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2);
+  height: var(--ctl-h);
+  margin-inline-end: calc(var(--sp-5) - var(--sp-half));
+  padding-inline-start: var(--topbar-zone-pad);
+}
+
+@container topbar (width < 1180px) {
+  .end {
+    margin-inline-end: calc(var(--sp-4) - var(--sp-half));
+  }
+}
+
+@container topbar (width < 840px) {
+  .end {
+    margin-inline-end: calc(var(--sp-3) - var(--sp-half));
+  }
+}
+
+/* The parts pages contribute: no box of its own, so a part that renders nothing takes no space or gap. */
+.parts {
+  display: contents;
+}
+
+.ask,
+.bell,
+.account {
+  position: relative;
+  display: inline-flex;
+}
+
+/* One top-bar part, box-less like the parts span: its children stay flex items of the bar (no box, no gap, the same Tab
+   order). Its data-hub-topbar-part (pageId:id) is a styling hook only, read by the rule below. */
+.part {
+  display: contents;
+}
+
+/* "Top bar AI and Skills / SDK are dark": the AI slot's ghost button and the Guide's Skills / SDK
+   trigger (its part, guide:links) take the dark action colour, at rest, hovered, pressed and open (kit Button reads
+   --ghost-text). Only those two: another part's ghost button (Billing's Free badge) keeps the kit's muted look. */
+.ask,
+.parts [data-hub-topbar-part='guide:links'] {
+  --ghost-text: var(--hx-do-text);
+}
+
+/* The Free badge (Billing's part, billing:free) is the plan's mark and the way to the plans, not an action of the
+   page: its plate is the accent's soft ground inside the accent's edge (the kit's accent Tag pair, so it follows the
+   highlight colour), its words and seedling in the button's own ink. Retinted through the kit plate's properties, never
+   a background, so the cut and the frame stay the kit's. Under the pointer, pressed or open it keeps its ground and
+   takes the full-ink frame every plate takes; it is never the accent fill, which stays the page's one primary.
+   Load-bearing weight: a class, an attribute and `button` outweigh the kit's hover and pressed steps (two classes). */
+.parts [data-hub-topbar-part='billing:free'] button {
+  --plate: var(--hx-acc-soft);
+  --plate-line: var(--hx-acc-edge);
+}
+
+.parts [data-hub-topbar-part='billing:free'] button:is([data-hovered], [data-pressed], [aria-expanded='true']) {
+  --plate-line: var(--hx-btn-line-hover);
+}
+
+/* The AI button's running count: on its top end corner, out of the plate, in the bell count's small box, so the
+   sparkle and the word stay whole (2 px inside, the kit's 18 px badge covered the sparkle on the 32 px icon button below
+   1024). 5 px above as the bell's count, so the two stand level; 3 px past the end, not 5: below 1024 the next button
+   stands 4 px away. */
+.count {
+  position: absolute;
+  inset-block-start: -5px;
+  inset-inline-end: -3px;
+  display: inline-flex;
+  pointer-events: none;
+}
+
+.count > * {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 14px;
+  block-size: 14px;
+  padding-inline: calc(var(--sp-half) + var(--bw));
+  font-size: 10px;
+  line-height: var(--lh-tight);
+}
+
+/* The bell's unread count: pinned on the button's top end corner, 5 px out on both sides, so the whole
+   bell shows beside it; a small box (14 px tall, at least 14 wide, 3 px sides, 10 px digits) that takes no clicks. The
+   kit CountBadge keeps its colours; the bell's button carries the count in its name. The sidebar's count is unchanged. */
+.bellCount {
+  position: absolute;
+  inset-block-start: -5px;
+  inset-inline-end: -5px;
+  display: inline-flex;
+  pointer-events: none;
+}
+
+.bellCount > * {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 14px;
+  block-size: 14px;
+  padding-inline: calc(var(--sp-half) + var(--bw));
+  font-size: 10px;
+  line-height: var(--lh-tight);
+}
+
+/* A coarse pointer's bell is 44 px in the 48 px bar: 5 px above it would leave the bar, so the count keeps to the
+   plate's top edge there. */
+@media (pointer: coarse) {
+  .bellCount {
+    inset-block-start: 0;
+  }
+}
+
+/* Below 1024: search is an icon (Ask becomes the kit's icon button in TopBar.tsx at the same width), and the actions
+   sit half a step apart (4 px), still one gap for all, so the pickers keep their names down to 768. */
+@media (width < 1024px) {
+  .end {
+    gap: var(--sp-1);
+  }
+
+  .search {
+    flex: none;
+    justify-content: center;
+    width: var(--ctl-h);
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .searchText,
+  .search kbd {
+    display: none;
+  }
+}
+
+/* Phone: context chip, search, bell. Ask and the account live in the bottom bar / drawer. */
+@media (width < 768px) {
+  .bar {
+    gap: var(--sp-1);
+
+    /* The chip lines up with the page's 16 px gutter (the end's room is the .end rule's, below). */
+    padding-inline: var(--sp-4) 0;
+
+    /* No kept scrollbar room on a phone, as the content under it (AppShell.module.css, the phone .main rule). */
+    scrollbar-gutter: auto;
+  }
+
+  /* No action zone on a phone: no zone padding (after the base .end rule, which sets it). The end keeps 8: the bell's
+     own hit area pads it to the page's 16 px gutter. */
+  .end {
+    margin-inline-end: var(--sp-2);
+    padding-inline-start: 0;
+  }
+
+  /* The phone's bell has no frame, so its count sits on the bell itself: 8 px out from the icon's corner, whatever
+     the button's size (32, or the touch minimum). */
+  .bellCount {
+    inset-block-start: calc((var(--ctl-h) - var(--icon-md)) / 2 - var(--sp-2));
+    inset-inline-end: calc((var(--ctl-h) - var(--icon-md)) / 2 - var(--sp-2));
+  }
+
+  .ask,
+  .parts,
+  .account {
+    display: none;
+  }
+}
+
+/* "Needs you": an agent conversation waits for an answer. The dot sits on the button's top end corner, 3 px out on both
+   sides like the bell's count, so the whole sparkle and the word stay readable (6 px inside, it covered the sparkle's
+   top and end points on the 32 px icon button below 1024 and the word's last letter above). 3 px, not the count's 5:
+   below 1024 the next button stands 4 px away. Its ring is the bar's own ground (.bar --hx-card), where it now mostly
+   sits, so it cuts the dot out without a halo (as the bottom nav's dot rings in --hx-card). */
+.askDot {
+  position: absolute;
+  inset-block-start: -3px;
+  inset-inline-end: -3px;
+  width: 8px;
+  height: 8px;
+  border: var(--bw-2) solid var(--hx-card);
+  border-radius: var(--r-round);
+  background: var(--hx-acc);
+  box-sizing: content-box;
+  pointer-events: none;
+}
+
+/* A coarse pointer's AI button is 44 px in the 48 px bar: as the bell's count, its count and dot keep to the plate's top
+   edge there (the bar hides what leaves it). After .count and .askDot, so it wins. */
+@media (pointer: coarse) {
+  .count,
+  .askDot {
+    inset-block-start: 0;
+  }
+}
+
+/* Chalk in the light theme makes the accent white on a near-white bar: the accent marks take a line in the
+   muted mark grey, about 3:1 on it. */
+:global(:root[data-hx-hl="chalk"]:not([data-hx-theme="dark"])) .askDot {
+  box-shadow: inset 0 0 0 var(--bw) var(--hx-muted-fill);
+}

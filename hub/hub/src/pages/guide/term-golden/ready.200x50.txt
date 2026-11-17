@@ -1,0 +1,50 @@
+ ▐━┓ HOODY HUB                                                                                                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Guide                                                                                                                                                                        █
+ Computers             │  How to use Hoody: ask your agent, connect your own tools, and find every link.                                                                                               █
+ Files                 │                                                                                                                                                                               █
+ Bots                  │  │▌Ask your agent            ┌─────────────────────────────────────────────────────────────────────────────────────────────┐   ON THIS COMPUTER                               █
+ Board                 │  │ Connect                   │ Ask your agent                                      [Show the welcome again]  ✦ Open Agent  │   These fill in the commands and                 █
+ Demo                  │  │ Skills                    │ Every computer comes with its own agent. Tell it what to build, watch its progress, and     │   addresses on this page.                        █
+ Vault                 │  │ Build your own            │ answer its questions in the Agent panel.                                                    │
+                       │  │ Every link                │ Alt+J opens or closes the Agent panel from any page.                                        │   Computer   atlas ›
+On atlas ▾             │  │ Bots                      └─────────────────────────────────────────────────────────────────────────────────────────────┘   State      ● Running
+ Programs              │  │ Tools                                                                                                                       Realm      Personal
+ Schedules             │  │ Try this                  ┌─────────────────────────────────────────────────────────────────────────────────────────────┐   Server     SG n12 Singapore ›
+ Scripts               │  │ Realms                    │ Connect                                                                                     │   Bot label  Make a Bot ›
+ Logs                  │  │ Topics                    │ Connect your AI. Hoody works best from the AI you already use. Connect it once and it gets  │
+ Tunnels               │  │ Keyboard                  │ real computers, terminals, displays, browsers and files.                                    │
+ Notes                 │  │ Look                      │ ▸ AI chats                                                                                  │
+ AI                    │                              │   Coding agents   Paste this into an AI that can open links. It can guide you through       │
+ VMs                   │   [j] [k] move between       │   CLI             connecting Hoody.                                                         │
+                       │   sections                   │   SDK                                                                                       │
+Account                │                              │   HTTP API        AI chats                                                     ⧉ Copy all   │
+ Plans & Billing       │                              │   SSH             1. Paste into your AI                                                     │
+ Referrals             │                              │   Browser          @https://hoody.com Connect to Hoody                            ⧉ copy    │
+ Keys and tokens       │                              │                                                                                             │
+ API                   │                              └─────────────────────────────────────────────────────────────────────────────────────────────┘
+ Notifications      26 │
+ Account               │                              ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+                       │                              │ Skills                                                                                      │
+ + Rent servers        │                              │ A skill is a file that teaches a coding agent how Hoody's HTTP API works: which calls exist │
+▌Guide                 │                              │ and how to make them. It gives no access by itself; a key or a sign-in does that.           │
+ Support               │                              │                                                                                             │
+                       │                              │ Install the skill                                                                           │
+                       │                              │ Run one of these in the folder where you use your agent. The tool asks which of your agents │
+                       │                              │ to add the skill to.                                                                        │
+                       │                              │                                                                                             │
+                       │                              │ Install the skill                                                                ⧉ Copy all │
+                       │                              │ 1. The Hoody skill                                                                          │
+                       │                              │  $ npx skills add https://hoody.com/SKILLS/SKILL.md                                 ⧉ copy  │
+                       │                              │ 2. The same skill with every docs page on disk                                              │
+                       │                              │  $ npx skills add HoodyNetwork/hoody-sdk                                            ⧉ copy  │
+                       │                              │ 3. For one agent, without questions                                                         │
+                       │                              │  $ npx skills add HoodyNetwork/hoody-sdk -a claude-code -y                          ⧉ copy  │
+                       │                              │ 4. For every project on this device                                                         │
+                       │                              │  $ npx skills add HoodyNetwork/hoody-sdk -g                                         ⧉ copy  │
+                       │                              │ npx comes with Node.js. The skills tool needs Node.js 22.20 or newer.                       │
+                       │                              │ ! A skill runs with your agent's full permissions. Read what you install; the Hoody skill   │
+                       │                              │   is plain text.                                                                            │
+                       │                              │ ▸ Where each agent keeps it                                                                 │
+                       │                              │   The tool knows other agents too. Each installs the same way, with its name after -a.      │
+                       │                              │                                                                                             │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

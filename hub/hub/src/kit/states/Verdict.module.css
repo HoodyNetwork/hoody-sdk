@@ -1,0 +1,186 @@
+/* Verdict. calm: the light plate (--hx-plate-bg in a --hx-panel-line frame). state: the ink plate
+   in a CutFrame, every colour from --hx-verdict-*. The label and the count in mono caps on one line, the
+   sentence in the heading face, the muted next line, then the segment meter. */
+.verdict {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--sp-4);
+  container-type: inline-size;
+}
+
+.tone_calm {
+  border: var(--bw) solid var(--hx-panel-line);
+  background: var(--hx-plate-bg);
+  color: var(--hx-ink);
+}
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-3);
+  min-width: 0;
+}
+
+.label,
+.count {
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: var(--case-caps);
+}
+
+.count {
+  font-variant-numeric: tabular-nums;
+}
+
+.sentence {
+  max-width: 64ch;
+  margin: 0;
+  color: var(--hx-ink);
+  font: var(--t-heading);
+  overflow-wrap: anywhere;
+}
+
+/* The one coloured phrase: the colour carries the tone, the weight keeps it legible without colour. */
+.mark {
+  font-weight: inherit;
+}
+
+.mark_warn {
+  color: var(--hx-warn-text);
+  text-decoration: underline;
+  text-decoration-color: var(--hx-warn-fill);
+  text-decoration-thickness: var(--bw-2);
+}
+
+.mark_danger {
+  color: var(--hx-danger-text);
+}
+
+.mark_good {
+  color: var(--hx-ok);
+}
+
+.next {
+  max-width: 64ch;
+  margin: 0;
+  color: var(--hx-dim);
+  font: var(--t-body);
+}
+
+.slot,
+.facts {
+  min-width: 0;
+}
+
+/* One segment per step; the count above says the same in words. */
+.segments {
+  display: flex;
+  gap: var(--sp-half);
+  min-width: 0;
+  padding-block-start: var(--sp-1);
+}
+
+.seg {
+  flex: 1;
+  min-width: 0;
+  block-size: var(--sp-1);
+  border: var(--bw) solid var(--hx-panel-line);
+}
+
+.seg_done {
+  border-color: var(--hx-frame);
+  background: var(--hx-frame);
+}
+
+/* A limited step wears the warning's hazard stripe, so it never reads as a done one where the warn fill and the
+   accent are the same yellow; the count above says it in words. */
+.seg_limited {
+  border-color: transparent;
+  background: var(--hx-warn-stripe) border-box;
+}
+
+.seg_blocking {
+  border-color: var(--hx-danger-fill);
+  background: var(--hx-danger-fill);
+}
+
+.seg_optional,
+.seg_unknown {
+  border-color: var(--hx-plate-rule);
+  background: repeating-linear-gradient(135deg, var(--hx-plate-rule) 0 var(--bw), transparent var(--bw) var(--sp-1));
+}
+
+/* state: the ink plate. The CutFrame draws its edge in --hx-verdict-edge (the plate's own colour in light, a visible
+   line in dark); every text and segment colour is a --hx-verdict-* tint, so no page token shows on the dark plate. */
+.stateFrame {
+  --cut-edge: var(--hx-verdict-edge);
+}
+
+.tone_state {
+  background: var(--hx-verdict-bg);
+  color: var(--hx-verdict-ink);
+}
+
+.tone_state .label,
+.tone_state .count {
+  color: var(--hx-verdict-muted);
+}
+
+.tone_state .sentence {
+  color: var(--hx-verdict-ink);
+}
+
+.tone_state .next {
+  color: var(--hx-verdict-next);
+}
+
+.tone_state .mark_warn {
+  color: var(--hx-verdict-warn);
+}
+
+.tone_state .mark_danger {
+  color: var(--hx-verdict-danger);
+}
+
+.tone_state .mark_good {
+  color: var(--hx-verdict-good);
+}
+
+/* A link in the sentence or the next line (a kit Link of any variant, a bare <a>): the plate's ink, always underlined, since
+   the page's link colours (--hx-link, --hx-do-text, --hx-danger) are made for a light ground. */
+.tone_state .sentence a,
+.tone_state .next a {
+  color: var(--hx-verdict-ink);
+  text-decoration: underline;
+}
+
+.tone_state .seg {
+  border-color: var(--hx-verdict-seg);
+  background: var(--hx-verdict-seg);
+}
+
+.tone_state .seg_done {
+  border-color: var(--hx-verdict-good);
+  background: var(--hx-verdict-good);
+}
+
+.tone_state .seg_limited {
+  border-color: transparent;
+  background: var(--hx-verdict-stripe) border-box;
+}
+
+.tone_state .seg_blocking {
+  border-color: var(--hx-danger-fill);
+  background: var(--hx-danger-fill);
+}
+
+.tone_state .seg_optional,
+.tone_state .seg_unknown {
+  border-color: var(--hx-verdict-hatch);
+  background: repeating-linear-gradient(135deg, var(--hx-verdict-hatch) 0 var(--bw), transparent var(--bw) var(--sp-1));
+}

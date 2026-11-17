@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ New loop                                                         Esc ×
+  Chats┃ It repeats a prompt in one chat on atlas.
+  Workf┃ ──────────────────────────────────────────────────────────────────────
+ Loops ┃ Chat * (required)                                                    █
+ A loop┃ │ Pick a chat ▾                                                      █
+ / Sear┃                                                                      █
+   Loop┃ Prompt * (required)                                                  █
+ › Chec┃ ┃                                                                    █
+   Look┃                                                                      █
+   Proo┃                                                                      █
+       ┃                                                                      █
+       ┃ Sent into the chat on every run.                                     █
+       ┃                                                                      █
+       ┃ Every                  Unit                                          █
+       ┃ │ 30                   │ minutes ▾                                   █
+       ┃                                                                      █
+       ┃ Ends                           Stop after (runs)                     ▀
+       ┃ │ Never ▾                      │ 50
+       ┃
+       ┃ [ ] Run once now, then on the timer
+       ┃
+       ┃ Spending limit (US$)           Running-time limit
+ ▸ What┃ ──────────────────────────────────────────────────────────────────────
+ Typing┃                                                 [Cancel]   Start loop

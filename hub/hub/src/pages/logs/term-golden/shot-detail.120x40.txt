@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Logs                                                 ▸ Use with your agent  [See what failed]
+ Computers             │  55 events failed in the last hour. 19 kinds of problem.
+ Files                 │
+ Bots                  │  ‹ Logs  Esc
+ Board                 │  Files: opened  ● OK
+ Demo                  │
+ Vault                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ WHAT HAPPENED                                                                             │
+On atlas ▾             │  │ OK · Nov 11, 08:46 AM · 68 ms · Visits                                                    │
+ Programs              │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Schedules             │
+ Scripts               │  [Around this moment] [This computer]  ✦ Explain  [⋯]
+▌Logs                  │
+ Tunnels               │
+ Notes                 │  Request
+ AI                    │  Time             2026-11-11T08:46:57.000Z  ⧉ copy
+ VMs                   │  Method           GET  ⧉ copy
+                       │  Status           200  ⧉ copy
+Account                │  Request ID       e3f5…5d29 ⧉
+ Plans & Billing       │  Visitor address  93.184.216.225
+ Referrals             │  Program          files  ⧉ copy
+ Keys and tokens       │
+ API                   │  Address          /download/backup.tar.gz  ⧉ copy
+ Notifications      26 │
+ Account               │
+                       │  Details
+ + Rent servers        │  Level  info  ⧉ copy
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

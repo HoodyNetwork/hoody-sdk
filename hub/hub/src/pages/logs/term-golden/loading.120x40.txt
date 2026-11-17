@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                      ◆ Personal ▾  … Loading computers… ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Logs
+ Computers             │  What happened on this computer, newest first.
+ Files                 │
+ Bots                  │  Loading…
+ Board                 │  ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁             ▁▁▁▁▁▁▁▁        ▁▁▁▁▁▁          ▁▁▁▁▁▁▁         ▁▁▁▁▁▁
+ Demo                  │  ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁               ▁▁▁▁▁▁▁▁▁       ▁▁▁▁▁▁▁▁        ▁▁▁▁▁▁          ▁▁▁▁▁▁▁
+ Vault                 │  ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁               ▁▁▁▁▁▁▁▁        ▁▁▁▁▁▁▁▁▁       ▁▁▁▁▁▁▁▁        ▁▁▁▁▁▁
+                       │  ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁           ▁▁▁▁▁▁▁         ▁▁▁▁▁▁▁▁        ▁▁▁▁▁▁▁▁▁       ▁▁▁▁▁▁▁▁
+On this computer       │  ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁          ▁▁▁▁▁▁▁▁▁▁      ▁▁▁▁▁▁▁         ▁▁▁▁▁▁▁▁        ▁▁▁▁▁▁▁▁▁
+ Programs              │  ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁            ▁▁▁▁▁▁▁▁▁▁      ▁▁▁▁▁▁▁▁▁▁      ▁▁▁▁▁▁▁         ▁▁▁▁▁▁▁▁
+ Schedules             │  ▁▁▁▁▁▁▁▁▁▁▁▁▁                 ▁▁▁▁▁▁▁▁▁       ▁▁▁▁▁▁▁▁▁▁      ▁▁▁▁▁▁▁▁▁▁      ▁▁▁▁▁▁▁
+ Scripts               │  ▁▁▁▁▁▁▁▁▁▁▁▁▁                 ▁▁▁▁▁▁          ▁▁▁▁▁▁▁▁▁       ▁▁▁▁▁▁▁▁▁▁      ▁▁▁▁▁▁▁▁▁▁
+▌Logs                  │  ▁▁▁▁▁▁▁▁▁▁▁                   ▁▁▁▁▁▁▁         ▁▁▁▁▁▁          ▁▁▁▁▁▁▁▁▁       ▁▁▁▁▁▁▁▁▁▁
+ Tunnels               │  ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁              ▁▁▁▁▁▁          ▁▁▁▁▁▁▁         ▁▁▁▁▁▁          ▁▁▁▁▁▁▁▁▁
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications       2 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

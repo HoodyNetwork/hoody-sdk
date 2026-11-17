@@ -1,0 +1,10 @@
+/* ModelPicker: the one line under the list (more models come with a provider) and its action. */
+.more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-2);
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}

@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Reserve a server                                                 Esc ×
+ Plans ┃ 1 Review 2 Confirm
+ Upgrad┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Plan┃ Singapore M Singapore, SG
+ ──────┃
+ │ ✗ fr┃  Rental                                                        $35.00
+ Plans ┃  One-time setup fee                                             $4.00
+ Each p┃  Total first payment                                           $39.00
+ disk. ┃  Wallet balance                                                $42.50
+       ┃
+ ┌─────┃ This charges at most $39.00. If the price goes up, you are asked
+ │     ┃ again.
+ │ Plan┃ If a pre-order cannot be delivered, Hoody may return the payment as
+ │ Choo┃ Hoody wallet credit while the reservation is still pending.
+ │ serv┃
+ │ to u┃ This adds a new server. Your free server ash-3 stays as it is.
+ │     ┃
+ └─────┃ [ ] I understand this purchase is not eligible for a customer-
+       ┃     requested refund, and I agree to the Terms of Service and Privacy
+ ┌─────┃     Policy.
+ │ Free┃
+ │ $0 /┃
+ │ Your┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Cancel]   Confirm and pay

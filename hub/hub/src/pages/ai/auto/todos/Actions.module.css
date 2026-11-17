@@ -1,0 +1,10 @@
+/* TODO actions: the outcome under the actions (the waiting runs are a kit ItemList). */
+.outcome {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+/* A waiting run's prompt keeps its line breaks and indentation. */
+.prompt {
+  white-space: pre-wrap;
+}

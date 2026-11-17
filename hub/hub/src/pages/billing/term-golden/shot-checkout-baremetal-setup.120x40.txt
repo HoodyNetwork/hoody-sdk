@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Reserve a server                                                        Esc ×
+ Home                  │  Plans & Billin┃ 1 Review 2 Confirm
+ Computers             │  Upgrade a serv┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │                ┃ Singapore M Singapore, SG
+ Bots                  │  ▸ Plans    Bar┃
+ Board                 │  ──────────────┃  Rental                                                               $90.00
+ Demo                  │  │ ✗ fra-7: On ┃  One-time setup fee                                                   $20.00
+ Vault                 │                ┃  Total first payment                                                 $110.00
+                       │  Plans         ┃  Wallet balance                                                       $60.00
+On atlas ▾             │  Each plan is a┃  Referral credit (used first)                                         $40.00
+ Programs              │  take the same ┃
+ Schedules             │                ┃ This charges at most $110.00. If the price goes up, you are asked again.
+ Scripts               │  ┌─────────────┃ If a pre-order cannot be delivered, Hoody may return the payment as Hoody
+ Logs                  │  │             ┃ wallet credit while the reservation is still pending.
+ Tunnels               │  │ Plans for   ┃
+ Notes                 │  │ Choose a pla┃ This adds a new server. Your free server ash-3 stays as it is.
+ AI                    │  │ server, or p┃
+ VMs                   │  │ to upgrade i┃
+                       │  │             ┃  Your wallet is $10.00 short for this purchase.                  [Add funds]
+Account                │  └─────────────┃
+▌Plans & Billing       │                ┃
+ Referrals             │  ┌─────────────┃ [ ] I understand this purchase is not eligible for a customer-requested
+ Keys and tokens       │  │ Free        ┃     refund, and I agree to the Terms of Service and Privacy Policy.
+ API                   │  │ $0 / month  ┃
+ Notifications      26 │  │ Your free se┃
+ Account               │  │ Computers   ┃
+                       │  │ Hardware    ┃
+ + Rent servers        │  │ AI allowance┃
+ Guide                 │  │             ┃
+ Support               │  │ Locations   ┃
+                       │  │ No choice of┃
+                       │  │ Your free se┃
+                       │  │ buy a plan. ┃
+                       │  │ Next: Small.┃
+                       │  │ computers.  ┃
+                       │  │ Free server ┃
+                       │  │             ┃
+                       │  │             ┃
+                       │  │             ┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ [Cancel]   Confirm and pay

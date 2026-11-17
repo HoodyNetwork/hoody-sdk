@@ -1,0 +1,237 @@
+/* The Files page: one pane at full width, or two side by side with the kit Splitter between them (one pane on a
+   phone, with a From / To switch). */
+.panes {
+  display: grid;
+
+  /* The even split TwoPanes' inline style starts from (the inline style wins). The terminal Hub never draws this
+     grid: twoPanes.term.tsx lays the two panes out as a row of its own. */
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: var(--sp-2);
+  min-height: 0;
+  height: 100%;
+}
+
+.paneSlot {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+/* One pane (the One pane toggle): pane A alone, the whole width, as a pane slot fills its cell. */
+.onePane {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.phone {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-height: 0;
+}
+
+.pane {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.paneHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.picker {
+  min-width: 12rem;
+  max-width: 100%;
+}
+
+.folder {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.crumbs {
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Find, Run here, New folder and Put on Board: one group at the bar's end, apart from the crumbs. The group
+   draws no box of its own, so each button stays a flex item of the bar and gives way as before; the first one present takes
+   the free room before it. */
+.barActions {
+  display: contents;
+}
+
+.barActions > :first-child {
+  margin-inline-start: auto;
+}
+
+/* Up and the actions keep their size (each at least its hit size); only the crumbs give way. */
+.bar > :not(.crumbs, .barActions),
+.barActions > * {
+  flex: none;
+}
+
+/* The picker in the bar is the path's root: it gives way first, down to its own name and dots
+   (bar.ts PICKER_ROOM), before the crumbs do; after the rule above, which keeps every other item whole. */
+.bar > .picker {
+  flex: 0 100 auto;
+  min-width: 10rem;
+  max-width: 20rem;
+}
+
+/* A phone: the actions take a second line at the bar's end, under Up and the crumbs. */
+.barStacked {
+  flex-wrap: wrap;
+  row-gap: var(--sp-2);
+}
+
+/* Their basis is the room they need: where Up, the picker and the crumbs do not fit one line (a phone), the crumbs
+   take their own line under them. */
+.barStacked .crumbs {
+  flex: 1 1 12rem;
+}
+
+/* The break before the actions: a full-width, zero-height item (a line of its own, so the actions sit two row gaps
+   under the crumbs). */
+.barStacked .barActions::before {
+  content: '';
+  flex-basis: 100%;
+  height: 0;
+}
+
+/* The kit's crumb list wraps; in a pane it stays one line and every crumb stays in view and clickable. Ancestors give
+   way down to about two characters and their separator, each clipped inside its own box with an ellipsis (never
+   pushed out, never over the next crumb); the folder you are in gives way last (deep paths also fold to "…", Folder).
+   Shrink weights 100:1, not a fraction: a lone item whose flex-shrink sums below 1 takes only that share of the
+   overflow, so the folder would stay wide and push out of the box. */
+.crumbs > ol {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.crumbs li {
+  flex: 0 100 auto;
+  min-width: calc(2ch + 1rem + 2 * var(--sp-1));
+  overflow: hidden;
+}
+
+.crumbs li:last-child {
+  flex-shrink: 1;
+  min-width: 2ch;
+}
+
+.crumbs li > :first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crumbs li > svg {
+  flex: none;
+}
+
+.name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.nameText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note {
+  color: var(--hx-muted);
+  font-size: var(--fs-xs);
+}
+
+/* The delete planner's lines: where it is, what it holds, no trash; room between them. */
+.planLines {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+/* The preview and find drawers. */
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.previewImage {
+  display: block;
+  max-width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  align-self: center;
+  border-radius: var(--r-2);
+}
+
+.findRow {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-3);
+}
+
+.findRow > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.found {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.foundRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--hx-line);
+}
+
+.foundName {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.foundActions {
+  display: flex;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+}
+
+/* Preview: the reasons a button is off, one per line with room between them. */
+.offNotes {
+  display: grid;
+  gap: var(--sp-2);
+}

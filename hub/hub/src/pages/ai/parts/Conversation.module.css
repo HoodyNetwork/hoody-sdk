@@ -1,0 +1,18 @@
+/* The open chat fills the AI region above the strip the shell's chrome covers (the phone bottom bar) and the action
+   button's room, so the composer is never under either: the conversation frame (kit/agent/ConversationView) lays out
+   inside it. */
+.frame {
+  block-size: calc(var(--rail-region-h, 100dvh) - var(--shell-main-pad-end, 0px) - var(--shell-fab-room, 0px));
+  min-block-size: 0;
+}
+
+.fallback {
+  display: flex;
+  flex-direction: column;
+}
+
+.why {
+  margin: 0;
+  padding: var(--sp-4) var(--pad-page);
+  color: var(--hx-muted);
+}

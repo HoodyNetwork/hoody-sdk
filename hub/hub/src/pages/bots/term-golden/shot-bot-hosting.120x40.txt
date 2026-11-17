@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Bots                                                                    ▸ Use with your agent
+ Computers             │
+ Files                 │  ‹ Bots  Esc
+▌Bots                  │  Chief  ● Idle                                                   [Bot settings] [Details] [⋯]
+ Board                 │    SG atlas    Hoody Free  · Allow everything is off +2
+ Demo                  │                                                      ┌─ Where this Bot lives ───────────────┐
+ Vault                 │  ▸ Activity    Link and keys    Chat apps 2    Work 2│   n12 Singapore    Acme client       │▄
+                       │  ────────────────────────────────────────────────────│ This Bot   at…. It starts its tasks  │█
+On atlas ▾             │     I opened a task to read the deploy log. It is wor│ runs on       there. With permission │█
+ Programs              │     19 days ago                                      │               it can also use the    │█
+ Schedules             │                                                      │               other computers of its │█
+ Scripts               │     i Update ·  Read deploy log  · on atlas          │               realm; you choose      │█
+ Logs                  │     Task "Read deploy log" started on atlas.         │               which under Settings,  │█
+ Tunnels               │     19 days ago                                      │               Guardrails and limits. │█
+ Notes                 │     Advanced details                                 │ The default Bot of a realm answers   │█
+ AI                    │                                                      │ when something asks for a Bot        │█
+ VMs                   │     i Task report ·  Read deploy log  · on atlas     │ without naming one. If you delete    │█
+                       │     The deploy failed because the build step ran out │ it, a new empty one is made the next │█
+Account                │     limit to 2 GB.                                   │ time it is needed.                   │█
+ Plans & Billing       │     19 days ago                                      └──────────────────────────────────────┘█
+ Referrals             │                                                                                              █
+ Keys and tokens       │                                            Key “website widget” · OpenAI-style link          █
+ API                   │                                            Do that, but ask me before restarting anything.   █
+ Notifications      26 │                                            19 days ago                                       ▀
+ Account               │
+                       │     Understood. I will change the limit and ask before any restart.
+ + Rent servers        │     19 days ago
+ Guide                 │
+ Support               │     ! The model stopped the answer
+                       │     The model provider stopped the answer. Earlier steps may have completed.
+                       │     19 days ago
+                       │     Advanced details
+                       │
+                       │     i Task ended ·  Read deploy log  · on atlas
+                       │     ┌────────────────────────────────────────────────────────────────────────────────────┐
+                       │     │ Message the Bot                                                                    │
+                       │     └────────────────────────────────────────────────────────────────────────────────────┘
+                       │                                                 Write a message first.  [⇗ Talk]  [Send ↵]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ ‹ Back to New Bot                                                       Esc ×
+ Home                  │  Bots          ┃ Choose a model
+ Computers             │  Every Bot on y┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │                ┃ Ready to use
+▌Bots                  │  Bots          ┃
+ Board                 │  23            ┃ │ / Search models and providers
+ Demo                  │  on 2 computers┃
+ Vault                 │                ┃ Showing 9 of 9
+                       │  / Search      ┃
+On atlas ▾             │                ┃  ( ) Agent's default
+ Programs              │  › C Chief     ┃      Uses the agent's configured model, also when that changes
+ Schedules             │      Asked you ┃
+ Scripts               │       · Runs th┃  H Hoody AI Included
+ Logs                  │       · Model H┃  (•) Hoody Free Current · Recommended
+ Tunnels               │      Telegram S┃  ( ) Hoody Fast
+ Notes                 │    L Ledger    ┃
+ AI                    │      Stopped at┃  A Anthropic Your key
+ VMs                   │       · cinder ┃  ( ) Claude 1
+                       │      Only here ┃  ( ) Claude 2
+Account                │    S Support   ┃  ( ) Claude 3
+ Plans & Billing       │      … Working ┃  ( ) Claude 4
+ Referrals             │       · atlas ·┃  ( ) Claude 5
+ Keys and tokens       │      Discord   ┃
+ API                   │    D Digest    ┃  G Google Your key · Can't tell yet
+ Notifications      26 │      2 messages┃  ( ) Gemini 3 Pro
+ Account               │       · atlas ·┃      Can't tell if it runs here
+                       │      Only here ┃
+ + Rent servers        │    S Scout     ┃ [All 9 Anthropic models ›]
+ Guide                 │      Last activ┃
+ Support               │       · Model g┃
+                       │      Telegram  ┃  More models
+                       │    N Notes     ┃  More models are available once you set up a provider.
+                       │      Last activ┃  [OpenAI] [Set up a provider]
+                       │       · Model H┃
+                       │      Only here ┃
+                       │                ┃
+                       │  1–20 of 23 ‹ ›┃
+                       │                ┃
+                       │  Questions     ┃
+ Tab move · Enter open · Ctrl+K commands┃

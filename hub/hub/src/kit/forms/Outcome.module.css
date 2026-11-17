@@ -1,0 +1,179 @@
+/* The Outcome line: sits where a button was, at button height; colour lives in the icon only, so a
+   footer full of outcomes stays calm. */
+.outcome {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  color: var(--hx-ink);
+  font: var(--t-small);
+}
+
+.line {
+  min-height: var(--btn-h); /* the line stands where a button was */
+}
+
+.line .text {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.line .detail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wrap .text {
+  flex-wrap: wrap;
+  column-gap: var(--sp-2);
+  row-gap: 0;
+  white-space: normal;
+}
+
+.wrap .detail {
+  overflow: visible;
+}
+
+/* The block is a notice of the Band family (states/Band.module.css): a hairline frame, an edge bar at the start
+   and a fill, read from the --nt-* map its kind sets below. The values are Band's, tone for tone. */
+.block {
+  --nt-fill: var(--hx-notice-calm);
+  --nt-line: var(--hx-notice-line);
+  --nt-bar: var(--hx-notice-calm-bar);
+  --nt-edge: none;
+
+  align-items: flex-start;
+  padding: var(--sp-3);
+  border: var(--bw) solid var(--nt-line);
+  border-inline-start: var(--bw-notice) solid var(--nt-bar);
+  border-radius: 0;
+  background: var(--nt-edge) 0 0 / var(--bw-notice) 100% no-repeat border-box, var(--nt-fill);
+  color: var(--hx-notice-text);
+}
+
+.block:dir(rtl) {
+  background-position-x: 100%;
+}
+
+.block .text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-half);
+}
+
+.block .icon {
+  margin-block-start: var(--sp-half);
+}
+
+/* On a notice fill the sentence takes the notice text shade (the muted grey is tuned for a card). */
+.block .title {
+  color: var(--hx-ink);
+}
+
+.block .detail {
+  color: inherit;
+}
+
+.block .action {
+  align-self: center;
+}
+
+.text {
+  flex: 1 1 auto;
+}
+
+.title {
+  font: var(--t-body-strong);
+}
+
+.detail {
+  color: var(--hx-muted);
+}
+
+.icon {
+  flex: none;
+}
+
+.action {
+  flex: none;
+}
+
+.k_pending .icon {
+  color: var(--hx-warn);
+}
+
+.k_pending.block {
+  --nt-fill: var(--hx-notice-warn);
+  --nt-line: var(--hx-notice-warn-line);
+  --nt-bar: transparent;
+  --nt-edge: var(--hx-warn-stripe);
+}
+
+@media (forced-colors: active) {
+  .k_pending.block {
+    --nt-bar: CanvasText;
+  }
+}
+
+
+.k_failed .icon {
+  color: var(--hx-danger);
+}
+
+.k_failed.block {
+  --nt-fill: var(--hx-notice-danger);
+  --nt-line: var(--hx-notice-danger-line);
+  --nt-bar: var(--hx-danger-fill);
+}
+
+.k_done .icon {
+  color: var(--hx-ok);
+}
+
+.k_done.block {
+  --nt-bar: var(--hx-ok);
+}
+
+.k_done.line {
+  animation: outcome-in var(--dur-enter) var(--ease-out);
+}
+
+.k_not_sent .icon,
+.k_stale .icon {
+  color: var(--hx-muted);
+}
+
+/* OutcomeSlot: the action's place keeps its row so nothing below moves. */
+.slot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  min-width: 0;
+  min-height: var(--btn-h); /* one button row, with or without the buttons in it */
+}
+
+.slot > .outcome {
+  flex: 1 1 auto;
+}
+
+@keyframes outcome-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .k_done.line {
+    animation: none;
+  }
+}

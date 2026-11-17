@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                 ◆ Personal ▾  Computers not loaded ▾  [A]  ^K · ?
+  Chats   Agents   Automations   Knowledge  ▌Settings
+ ▌Models & keys   Connections & MCP   Rules & hooks
+ atlas › Models & keys
+ Models & keys
+ Which AI this computer uses, and what it costs.
+ ! Could not load the AI settings
+ Check that the computer is running, then try again.
+ [Try again]
+                                                                              █
+ Questions                                                                    █
+ ▸ What changes when I pick a default model?                                  █
+ ▸ Where is my key kept, and can I see it again?                              █
+ ▸ Can I use my own Claude plan?                                              █
+ ▸ What is an agent, and what does its tool list do?                          █
+ ▸ What is the difference between turning a skill on and trusting it?         █
+ ▸ What do instructions and memory add to my agents?                          █
+ ▸ What are loops, TODOs and workflows?                                       █
+ ▸ What happens to a workflow while it runs?                                  ▀
+ ▸ What do rules and hooks do, and what is a settings chat?
+ ▸ What do the GitHub and MCP connections give my agents?
+ ▸ Why does a chat say Settle it first?
+ ▸ What happens when I run or approve a TODO?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

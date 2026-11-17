@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                 ▸ Use with your agent   + New script
+ Computers             │
+ Files                 │  ‹ Scripts  Esc
+ Bots                  │  Order status  ● Failing                             [▷ Try it] [✦ Fix with the assistant] [⋯]
+ Board                 │  /orders/:id ·  atlas
+ Demo                  │
+ Vault                 │   Overview  Code ▸Test  Settings
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Programs              │  │ Request                                                                                  │█
+ Schedules             │  │ Send one request to the script as it is saved, and see what it answers.                  │█
+▌Scripts               │  │ Method  Address                                                                          │█
+ Logs                  │  │ │ GET ▾ │ /orders/hub-probe                                                              │█
+ Tunnels               │  │                                                                                          │█
+ Notes                 │  │  ▷ Send                                                                                  │█
+ AI                    │  │                                                                                          │█
+ VMs                   │  │ Test name                                                                                │█
+                       │  │ │ _______________________________________________________________________ [Save as test] │█
+Account                │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Plans & Billing       │                                                                                              █
+ Referrals             │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Keys and tokens       │  │ Answer                                                                                   │█
+ API                   │  │ ● Passed · 200 41 ms                                                                     │█
+ Notifications      26 │  │ Content type  application/json                Size          30 B                         │█
+ Account               │  │ Headers                                                                                  │█
+                       │  │ content-type    application/json                                                         │█
+ + Rent servers        │  │ x-execution-id  ex_42                                                                    │█
+ Guide                 │  │ [Hide body]                                                                              │█
+ Support               │  │                          ⧉ copy                                                          │█
+                       │  │  {"id":"42","status":"shipped"}                                                          │█
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+                       │                                                                                              █
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Saved tests                                                                              │█
+                       │  │finds an order                                                  [▷ Run test] [Remove test]│█
+                       │  │  GET /orders/42                                                                          │█
+                       │  │unknown order is 404                                            [▷ Run test] [Remove test]│█
+                       │  │  GET /orders/0                                                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

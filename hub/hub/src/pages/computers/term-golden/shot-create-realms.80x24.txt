@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Get a computer                                                   Esc ×
+ Comput┃ Everything is filled in for you. Change what you like, then get
+ Your c┃ it.
+ ▸ Comp┃ ──────────────────────────────────────────────────────────────────────
+ ──────┃   └─────────────────────────────────────────────────────────────────┘
+ Comput┃
+ / Sear┃   ┌─────────────────────────────────────────────────────────────────┐
+ 8 comp┃   │ Access                                                          │
+ › █ at┃   │ ┌─────────────────────────────────────────────────────────────┐ │
+    █ P┃   │ │                                                             │ │
+   █ bo┃   │ │ SSH key                         │ _______________________   │ │
+    █ A┃   │ │ Paste a public key to connect   Optional: Hoody Terminal    │ │
+   █ ce┃   │ │ from your own SSH client.       opens in your browser       │ │
+    █ P┃   │ │                                 without a key.              │ │
+   █ du┃   │ │                                 ▸ How do I get a key?       │ │
+    █ L┃   │ │                                                             │ │
+   █ em┃   │ │ Other realms                    1 selected                  │ │
+    █ A┃   │ │                                  [ ] █   Acme client        │ │
+   █ fj┃   │ │                                      3 computers            │ │▄
+    █ P┃   │ │                                 ›[✓] █   Lab                │ │█
+   █ gr┃   │ │                                      2 computers            │ │▀
+    █ A┃   │ │                                 ▸ What does adding a realm  │ │
+   █ ha┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ ● Unsaved changes                              [Cancel]  Get computer

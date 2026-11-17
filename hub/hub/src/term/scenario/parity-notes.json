@@ -1,0 +1,10 @@
+{
+  "_doc": "Read by scripts/term/scenarios.ts --parity-md (out/PARITY.md). cases: '<file>::<component>::<case>' -> 'component difference | scenario fault | driver limit: <why>'. limits: the drivers' known limits, each with its evidence.",
+  "cases": {},
+  "limits": [
+    "web, press on a kit menu item (menuitem / menuitemcheckbox / menuitemradio): user-event's Enter on the focused item runs no onAction under happy-dom (a plain React Aria Menu does). WORKED AROUND, not closed: the driver holds the focus on the item and sends one synchronous keydown+keyup pair (still the keyboard path, no click). Not checked in a real browser. Regression: drivers.scenario.ts DriverMenuPick.",
+    "web, storage: the driver clears localStorage and sessionStorage before every case (a fresh tab), as the terminal has none; a case cannot test what a component remembers across reloads on the web. Regression: drivers.scenario.ts DriverStorage.",
+    "terminal, Escape: a lone ESC is decided by OpenTUI's parser timeout; the driver waits 120 ms after one (LONE_ESC_MS), so Escape-then-key faster than that is not representable. Regression: drivers.scenario.ts DriverEscape / DriverFaults escape.",
+    "both, mount: every component renders inside a memory router at /page and a QueryClient (route.ts); a component's behaviour at other paths needs its own mount."
+  ]
+}

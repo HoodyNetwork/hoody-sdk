@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Plans & Billing                                                   + Add funds
+ Upgrade a server, rent a whole machine, and see what you pay.
+ ▸ Plans    Bare metal    Wallet & usage
+ ──────────────────────────────────────────────────────────────────────────────
+ │ ✗ clash-2: On hold — will be deleted Nov 17, 2026 UTC             [Pay now]
+ Plans                                                                        █
+ Each plan is a server of your own. Its computers share its cores, memory and
+ disk. You can take the same plan more than once.
+
+ ┌────────────────────────────────────┐  ┌───────────────────────────────────┐
+ │ Free                   ✓ Your plan │  │ Small                             │
+ │ $0 / month                         │  │ $12 / month                       │
+ │ Your free server: ash-3            │  │ Paid monthly from your wallet     │
+ │ Computers                        3 │  │ Computers                       3 │
+ │ Hardware           Shared hardware │  │ CPU cores                       2 │
+ │ AI allowance            Free 1×    │  │ Memory                       4 GB │
+ │                         █░░░░░░░░░ │  │ Disk                        60 GB │
+ │ Locations                          │  │ Hardware          Shared hardware │
+ │ No choice of location              │  │ AI allowance           Plus 4×    │
+ │ Your free server stays as it is    │  │                        ██░░░░░░░░ │
+ │ when you buy a plan.               │  │ Locations                         │
+ │ Next: Small. When you need more    │  │ DE Frankfurt, Germany             │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Add a firewall rule                                              Esc ×
+ Comput┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Comp┃
+ ──────┃ ‹ Inbound ›  Outbound
+ ‹ Comp┃
+ atlas ┃ What to do
+ SG n12┃ │ Block (drop it silently) ▾
+       ┃                                                                      █
+  Overv┃ Protocol                                                             █
+  Progr┃ │ TCP ▾                                                              █
+ ──────┃                                                                      █
+ │ [Exi┃ Ports                                                                █
+ │ Site┃ │ ___________________________________________________________________█
+ │ atla┃ One port (443), a range (8000-8100) or a list (80,443). This blocks  █
+ │     ┃ direct connections to port 22. SSH from Hoody keeps working: it does █
+ │  You┃ not pass through this firewall.                                      █
+ │     ┃                                                                      █
+ │     ┃ From addresses                                                       █
+ │     ┃ │ 203.0.113.7                                                        █
+ └─────┃ IPv4 addresses or ranges (203.0.113.5, 10.0.0.0/8), separated by
+       ┃ commas. Empty means anywhere.
+ ┌─────┃ [Add my IP] ✓ Added 203.0.113.7
+ │ Fire┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Cancel]  Add rule

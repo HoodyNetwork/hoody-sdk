@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                      ◆ Personal ▾  … Loading computers… ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations   Knowledge  ▌Settings
+ Computers             │  ▌Models & keys   Connections & MCP   Rules & hooks
+ Files                 │  Models & keys                                                           + Connect an account
+ Bots                  │
+ Board                 │  ▌Default model  Accounts  Claude Code  Hoody AI allowance  Spending  Advanced  Questions
+ Demo                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Vault                 │  ┌───────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Default model                                                                         │█
+On this computer       │  │ The model your AI helper and your Bots use unless told otherwise.                     │█
+ Programs              │  │ Loading…                                                                              │█
+ Schedules             │  │ ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁                                 │█
+ Scripts               │  │ ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁                                             │█
+ Logs                  │  └───────────────────────────────────────────────────────────────────────────────────────┘█
+ Tunnels               │                                                                                           █
+ Notes                 │  ┌───────────────────────────────────────────────────────────────────────────────────────┐█
+▌AI                    │  │ Accounts                                                                              │█
+ VMs                   │  │ The AI providers this computer can use, and how each one connects.                    │▀
+                       │  │ / Search                                                                    ↻ Refresh │
+Account                │  │                                                                                       │
+ Plans & Billing       │  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                                      │
+ Referrals             │  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                                      │
+ Keys and tokens       │  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                                      │
+ API                   │  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                                      │
+ Notifications       2 │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ Account               │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ + Rent servers        │  │ Claude Code                                                                           │
+ Guide                 │  │ Use your own Claude plan through Claude Code on this computer.                        │
+ Support               │  │ Choose a realm                                                                        │
+                       │  │ This computer is in more than one realm. A realm                                      │
+                       │  │ is a separate space with its own computers, keys                                      │
+                       │  │ and settings. Pick it from the realm menu at the                                      │
+                       │  │ top. Pick one there to see its default model.                                         │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Hoody AI allowance                                                                    │
+                       │  │ Each server you own has its own free AI allowance, shared by every computer on it.    │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

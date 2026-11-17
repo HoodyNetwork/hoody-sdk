@@ -1,0 +1,20 @@
+/* The library step of From GitHub (Library.tsx): the rail keeps its width and stays in view beside the section;
+   when the pane is narrow (its own width, the kit's one breakpoint) the rail is the Category chip and this is unused. */
+.rail {
+  position: sticky;
+  top: 0;
+  flex: 0 0 calc(3 * var(--sp-10) - var(--sp-1));
+  min-width: 0;
+}
+
+.main {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* A plain mark (marks.tsx): the letter in ink on the card's own ground, no plate; the slot keeps the Monogram's size. */
+.plainMark.plainMark {
+  background: none;
+  box-shadow: none;
+  font-family: var(--font-head);
+}

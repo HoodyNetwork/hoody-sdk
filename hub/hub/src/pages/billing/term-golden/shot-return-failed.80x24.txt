@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Plans & Billing                                                   + Add funds
+ Upgrade a server, rent a whole machine, and see what you pay.
+ ▸ Plans    Bare metal    Wallet & usage
+ ──────────────────────────────────────────────────────────────────────────────
+ │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC               [Pay now]
+ │ ✗ The payment failed. Nothing was added to your wallet.           [Dismiss]
+ Plans                                                                        █
+ Each plan is a server of your own. Its computers share its cores, memory and
+ disk. You can take the same plan more than once.
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │                                                                           │
+ │ Plans for                       ( ) n12 · Small                           │
+ │ Choose a plan to buy a new      ( ) Singapore M · Medium                  │
+ │ server, or pick one of yours    (•) A new server                          │
+ │ to upgrade it.                                                            │
+ │                                                                           │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+ ┌────────────────────────────────────┐  ┌───────────────────────────────────┐
+ │ Free                   ✓ Your plan │  │ Small         ✓ 2 of your servers │
+ │ $0 / month                         │  │ $12 / month                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

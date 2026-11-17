@@ -1,0 +1,12 @@
+{
+  "path.browse": "Browse",
+  "path.reading": "Reading…",
+  "path.failed": "Couldn't read this folder.",
+  "path.typeOnly": "Folders aren't listed here. Type the path.",
+  "path.empty": "This folder is empty.",
+  "path.noFolders": "No folders here.",
+  "path.noMatch": "No match.",
+  "path.hidden": "Type a dot to see hidden names.",
+  "path.inside": "Paths are inside {{root}}.",
+  "path.outside": "Only paths inside {{root}} are listed."
+}

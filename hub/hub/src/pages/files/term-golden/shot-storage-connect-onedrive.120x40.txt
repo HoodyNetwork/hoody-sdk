@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Add storage                                                             Esc ×
+ Home                  │  Files         ┃ This computer checks the details with the storage before it keeps them.
+ Computers             │  Storage connec┃ ─────────────────────────────────────────────────────────────────────────────
+▌Files                 │    Browse  ▸ St┃ ┌──────────────────────────────────────────────────────────────────────────┐█
+ Bots                  │  ──────────────┃ │ WHERE YOUR KEYS GO                                                       │█
+ Board                 │                ┃ │ Keys, passwords and tokens you enter go only to this computer's          │█
+ Demo                  │  ┌─────────────┃ │ files program, once, and are kept there in a private file. The           │█
+ Vault                 │  │ At a glance ┃ │ Hub never keeps them.                                                    │█
+                       │  │ Connected st┃ │ Nothing is sent until you press Connect.                                 │█
+On atlas ▾             │  │ Open as fold┃ └──────────────────────────────────────────────────────────────────────────┘█
+ Programs              │  └─────────────┃                                                                             █
+ Schedules             │                ┃ Storage                                                                     █
+ Scripts               │  ┌─────────────┃ ┃ Microsoft OneDrive                                                       ▾█
+ Logs                  │  │ Connected st┃ This storage can be opened as a plain folder only.                          █
+ Tunnels               │  │ Connect clou┃                                                                             █
+ Notes                 │  │ Keys, passwo┃  1  ┌──────────────────────────────────────────────────────────────────────┐█
+ AI                    │  │ are kept the┃     │ Get a token with rclone                                              │█
+ VMs                   │  │No storage co┃     │ OneDrive also needs its drive, so its token comes from an rclone     │█
+                       │  │Add cloud or ┃     │ config.                                                              │█
+Account                │  │folder on thi┃     │                                                                      │█
+ Plans & Billing       │  └─────────────┃     │ ON YOUR OWN COMPUTER ─────────────────────────────────────────────── │█
+ Referrals             │                ┃     │ 01  Install rclone                                                   │█
+ Keys and tokens       │                ┃     │ 02  Run rclone config ⧉ copy and add a OneDrive remote               │█
+ API                   │                ┃     │ 03  Show the remote with rclone config show ⧉ copy                   │█
+ Notifications      26 │                ┃     │     Copy its token, drive_id and drive_type into the fields below.   │█
+ Account               │                ┃     │ 04  Last, remove that remote with rclone config delete ⧉ copy        │█
+                       │                ┃     │     So the token isn't left on your computer.                        │█
+ + Rent servers        │                ┃     │ Token * (required)                                                   │█
+ Guide                 │                ┃     │ │ Type or paste                                [Show what you typed] │█
+ Support               │                ┃     │                                                                      │█
+                       │  Questions     ┃     │                                                                      │█
+                       │  ▸ How do I ope┃     │                                                                      │█
+                       │  ▸ How do I mou┃     │ Paste the token from the steps above. It is sent once and cleared    │▀
+                       │  ▸ Can I mount ┃     │ from this form.                                                      │
+                       │  ▸ What do I ne┃     │ Your own client ID (optional)                                        │
+                       │  ▸ How do I put┃     │ │ __________________________________________________________________ │
+                       │  ▸ Which storag┃     │ Use the same client ID and secret you gave rclone.                   │
+                       │  ▸ What happens┃     │ Your own client secret (optional)                                    │
+                       │  ▸ How much can┃ ─────────────────────────────────────────────────────────────────────────────
+ Typing · Esc leaves the field · Ctrl+K ┃ [Cancel]  Connect

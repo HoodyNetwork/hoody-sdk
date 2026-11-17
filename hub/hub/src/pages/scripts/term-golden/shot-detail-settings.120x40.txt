@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Scripts                                                 ▸ Use with your agent   + New script
+ Computers             │
+ Files                 │  ‹ Scripts  Esc
+ Bots                  │  Order status  ● Failing                             [▷ Try it] [✦ Fix with the assistant] [⋯]
+ Board                 │  /orders/:id ·  atlas
+ Demo                  │
+ Vault                 │   Overview  Code  Test ▸Settings
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Programs              │  │ Magic comments                                                                           │█
+ Schedules             │  │ The settings written at the top of the script: whether it runs, its schedule, its key    │█
+▌Scripts               │  │ and more. The list comes from this computer. Check your changes, then save them.         │█
+ Logs                  │  │ ▸ Where do these settings live?                                                          │█
+ Tunnels               │  │                                                                                          │█
+ Notes                 │  │ How it runs                                                                              │█
+ AI                    │  │ ┌──────────────────────────────────────────────────────────────────────────────────────┐ │
+ VMs                   │  │ │                                                                                      │ │
+                       │  │ │ Turned on                       [■ on ] On                                           │ │
+Account                │  │ │ Off: the address stops                                                               │ │
+ Plans & Billing       │  │ │ answering and scheduled runs                                                         │ │
+ Referrals             │  │ │ stop.                                                                                │ │
+ Keys and tokens       │  │ │ @enabled                                                                             │ │
+ API                   │  │ │                                                                                      │ │
+ Notifications      26 │  │ │ Run on a schedule               │ Never ▾                                            │ │
+ Account               │  │ │ When the script runs by                                                              │ │
+                       │  │ │ itself, in UTC.                                                                      │ │
+ + Rent servers        │  │ │ @schedule                                                                            │ │
+ Guide                 │  │ │                                                                                      │ │
+ Support               │  │ │ Time limit per scheduled run    │ e.g. 5m                                            │ │
+                       │  │ │ Free the slot for the next                                                           │ │
+                       │  │ │ scheduled run after this long.                                                       │ │
+                       │  │ │ A number with a unit, like 90s                                                       │ │
+                       │  │ │ or 5m; 0 for no limit.                                                               │ │
+                       │  │ │ @schedule-timeout                                                                    │ │
+                       │  │ │                                                                                      │ │
+                       │  │ │ Time limit                      │ e.g. 30s                                           │ │
+                       │  │ │ Give each request at most this                                                       │ │
+                       │  │ │ long to reply. A number with a                                                       │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

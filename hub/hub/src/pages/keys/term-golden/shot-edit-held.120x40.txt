@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Keys and tokens                                            ▸ Use with your agent  [+ New key]
+ Computers             │  A key lets your agent, the CLI or the SDK act for you. Give each one its own key, with an end
+ Files                 │  date.
+ Bots                  │  ▸ API keys 5 keys    SSH keys    Shared access 0 shares
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  i Keys that work in Personal.                                               [Show all realms]
+ Vault                 │
+                       │  ‹ Back to list  Esc
+On atlas ▾             │  ci-deploy  ● Not confirmed                         [Pause] [Copy with a new secret…]  Edit… █
+ Programs              │                                                                                              █
+ Schedules             │                                                                                              █
+ Scripts               │    ┌──────────────────────────────────────────────────────────────────────────────────────┐  █
+ Logs                  │    │ THIS KEY                                                                             │  █
+ Tunnels               │    │ Its last change is not confirmed yet.                                                │  █
+ Notes                 │    └──────────────────────────────────────────────────────────────────────────────────────┘  █
+ AI                    │                                                                                              █
+ VMs                   │    │ ◷ The change may have gone through                                                      █
+                       │    │   The Hub could not confirm the change to ci-deploy. It may have gone through; the      █
+Account                │    │   list shows what is true now.                                                          █
+ Plans & Billing       │    │   [Check again]                                                                         █
+ Referrals             │                                                                                              █
+▌Keys and tokens       │    [Stop tracking]                                                                           █
+ API                   │
+ Notifications      26 │    Key            hdy_9e37…                      Allowed IPs    203.0.113.7/32
+ Account               │    Works in       Personal f1f1…f1f1 ⧉           Made           Nov 2, 2026
+                       │    In this realm  Computers Programs Shares      Last used      Not used yet
+ + Rent servers        │    Access         Developer                      Also           Events
+ Guide                 │    Ends           Jan 20, 2027 UTC
+ Support               │
+                       │    Rights
+                       │    Computers                                                                       7 of 15
+                       │    See computers                                                           Change computers
+                       │    computers.read                                                          computers.update
+                       │
+                       │     Read                                                                    Write
+                       │    Start                                                             Stop
+                       │    computers.actions.start                                           computers.actions.stop
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

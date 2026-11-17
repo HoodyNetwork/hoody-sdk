@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ Pay for a server                                                        Esc ×
+ Home                  │  Plans & Billin┃ 1 Review 2 Confirm
+ Computers             │  Upgrade a serv┃ ─────────────────────────────────────────────────────────────────────────────
+ Files                 │                ┃ Medium fra-7
+ Bots                  │  ▸ Plans    Bar┃
+ Board                 │  ──────────────┃  Plan                                                                 $29.00
+ Demo                  │  │ ✗ fra-7: On ┃  Charged now                                                          $29.00
+ Vault                 │                ┃  Wallet balance                                                       $42.50
+                       │  Plans         ┃
+On atlas ▾             │  Each plan is a┃ Your server starts again and is paid until 23 Nov 2026.
+ Programs              │  take the same ┃
+ Schedules             │                ┃ [ ] I understand this purchase is not eligible for a customer-requested
+ Scripts               │  ┌─────────────┃     refund, and I agree to the Terms of Service and Privacy Policy.
+ Logs                  │  │             ┃
+ Tunnels               │  │ Plans for   ┃
+ Notes                 │  │ Choose a pla┃
+ AI                    │  │ server, or p┃
+ VMs                   │  │ to upgrade i┃
+                       │  │             ┃
+Account                │  └─────────────┃
+▌Plans & Billing       │                ┃
+ Referrals             │  ┌─────────────┃
+ Keys and tokens       │  │ Free        ┃
+ API                   │  │ $0 / month  ┃
+ Notifications      26 │  │ Your free se┃
+ Account               │  │ Computers   ┃
+                       │  │ Hardware    ┃
+ + Rent servers        │  │ AI allowance┃
+ Guide                 │  │             ┃
+ Support               │  │ Locations   ┃
+                       │  │ No choice of┃
+                       │  │ Your free se┃
+                       │  │ buy a plan. ┃
+                       │  │ Next: Small.┃
+                       │  │ computers.  ┃
+                       │  │ Free server ┃
+                       │  │             ┃
+                       │  │             ┃
+                       │  │             ┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃ [Cancel]   Confirm payment

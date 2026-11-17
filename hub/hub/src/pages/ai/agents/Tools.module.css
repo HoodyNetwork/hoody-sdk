@@ -1,0 +1,61 @@
+/* The Agent tools editor. Tokens only, logical properties. The section, its search row and each group's fold are kit
+   parts; this file only stacks the groups and lays out a group's tool lines: two columns when the editor is wide, one
+   when it is narrow (its own width, never the screen's). */
+
+.note {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-body);
+}
+
+/* The search row: the search box and the filter, wrapping onto two lines when narrow. */
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+/* The groups' column: the tool lines take their column count from its width. */
+.groups {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.lines {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-1) var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Two columns once a line has room for a name, its tags and the info button beside a second one. */
+@container (width >= 520px) {
+  .lines {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.check {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* A tool line: the box and its name, then its tags, then the info button at the end. */
+.lines > li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}

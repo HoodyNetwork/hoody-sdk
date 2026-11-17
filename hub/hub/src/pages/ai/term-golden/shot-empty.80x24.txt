@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                     ◆ Personal ▾  No computers yet ▾  [A]  ^K · ?
+ atlas › Models & keys
+ Models & keys                                            + Connect an account
+ atlas uses Hoody Free for everything.
+ ▌Default model  Accounts  Claude Code  Hoody AI allowance  Spending   2 ›
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Default model                                                             │█
+ │ The model your AI helper and your Bots use unless told otherwise.         │▀
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │
+ │ │                                                                       │ │
+ │ │ AI helper and tasks             Hoody Free  Included         [Change] │ │
+ │ │ The model for chat and                                                │ │
+ │ │ everyday work on this                                                 │ │
+ │ │ computer.                                                             │ │
+ │ │                                                                       │ │
+ │ │ Bots                            Hoody Free  Included         [Change] │ │
+ │ │ Bots follow the default.                                              │ │
+ │ │                                                                       │ │
+ │ └───────────────────────────────────────────────────────────────────────┘ │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Accounts                                                                  │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,49 @@
+.line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* SSH keys: type and last characters on line 1, the comment on line 2 (a cut RowNote). */
+.keyCell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.keyTop {
+  display: flex;
+  gap: var(--sp-2);
+  white-space: nowrap;
+}
+
+/* The QR's box (QrSecret boxClassName): the kit's QrImage fills it. */
+.qr {
+  width: 200px;
+  height: 200px;
+  padding: var(--sp-2);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--hx-on-ink);
+}
+
+/* The QR's column: the image at the start, its key caption wrapped to the image's width. */
+.qrSecret {
+  align-items: flex-start;
+  max-width: 200px;
+}
+
+.help {
+  margin: 0;
+  color: var(--hx-muted);
+  font-size: var(--fs-sm);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  align-items: flex-start;
+}

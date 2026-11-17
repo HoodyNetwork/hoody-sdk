@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Plans & Billing                                                                  + Add funds
+ Computers             │  Upgrade a server, rent a whole machine, and see what you pay.
+ Files                 │
+ Bots                  │    Plans    Bare metal  ▸ Wallet & usage
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  │ ✗ fra-7: On hold — will be deleted Nov 17, 2026 UTC                              [Pay now]
+ Vault                 │
+                       │    Pays for servers and plans.
+On atlas ▾             │
+ Programs              │                                                                                              █
+ Schedules             │    GITHUB BONUS  $10.00 in Wallet credit is available.                                       █
+ Scripts               │    [Claim bonus] GitHub account: @octocat                                                    █
+ Logs                  │    Limit: one bonus per Hoody account and one per GitHub account.                            █
+ Tunnels               │                                                                                              █
+ Notes                 │                                                                                              █
+ AI                    │                                                                                              █
+ VMs                   │  Server subscriptions                                                                        █
+                       │  What you pay for, when it renews, and what needs you. What happens when auto-renew is off   █
+Account                │                                                                                              █
+▌Plans & Billing       │  / Search                   State ▾                                      4 servers  ↻ Refresh█
+ Referrals             │                                                                                              █
+ Keys and tokens       │    Plan ↑             Server              State                           Price              █
+ API                   │  › Medium             DE fra-7            ● On hold                   $29.00/mo     [Pay now]█
+ Notifications      26 │                       Frankfurt, Germany                                                     █
+ Account               │    Medium             SG Singapore M      ● Active                    $29.00/mo   [Upgrade] ⋯█
+                       │                       Singapore                                                              █
+ + Rent servers        │    Small              #10111216           ● Setting up                $12.00/mo             ⋯█
+ Guide                 │    Small              SG n12              ● Active                    $12.00/mo   [Upgrade] ⋯█
+ Support               │                       Singapore                                                              █
+                       │                                                                                              █
+                       │                                                                                              ▀
+                       │  AI usage & limits
+                       │  Each server you own has its own free AI allowance, shared by every computer on it.
+                       │  Where the allowance comes from
+                       │
+                       │  ! AI usage isn't shown for this sign-in.
+                       │  No answer from the server. Check your connection, then try again.
+                       │  ▸ Details
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

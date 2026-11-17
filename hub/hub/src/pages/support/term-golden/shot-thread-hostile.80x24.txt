@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Support                                                         [+ New ticket]
+ ‹ Support  Esc
+ <b>bold</b> **subject**  ● Waiting for support                             [⋯]
+ · Bug report 0000…a1b8
+
+
+  You Nov 2, 2026, 1:10 PM
+  <b>not bold</b> **not bold** <script>alert(1)</      https://hoody.com/help
+  script>                                              ⇗
+  A reversed txt.exe name
+  [click](javascript:alert(1)) javascript:alert(2)
+  A real link:
+
+ We'll answer here. You'll get a notice when we reply.
+ ──────────────────────────────────────────────────────────────────────────────
+ Your reply
+ │
+
+
+
+ 0 of 4,000 · Plain text. Never paste passwords, keys or tokens.
+                                                                          Send
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

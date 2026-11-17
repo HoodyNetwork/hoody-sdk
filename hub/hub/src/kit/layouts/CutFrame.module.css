@@ -1,0 +1,32 @@
+/* CutFrame: the slanted-corner frame. The SVG edge draws the line; the inner box is clipped to the
+   same outline, so its background never shows past the corner. */
+.frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.inner {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-inline-size: 0;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%);
+}
+
+.edge {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: var(--z-raised);
+  overflow: visible;
+  color: var(--cut-edge, var(--hx-panel-line)); /* a frame may name its own line (the Verdict state plate) */
+  pointer-events: none;
+}
+
+.edge path {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1px;
+}

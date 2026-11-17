@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                            ▸ Use with your agent  [+ New program]   + Launch an app
+ Computers             │  19 programs on atlas · 11 running · 4 need a look
+ Files                 │  ‹ Programs  Esc
+ Bots                  │  web  ● Running                                                       [↻ Restart] [■ Stop] [⋯]
+ Board                 │
+ Demo                  │  │ ◷ This may have gone through                                                              █
+ Vault                 │  │   We couldn't confirm web restarted.                                                      █
+                       │  │   [Check again]  [Stop tracking]                                                          █
+On atlas ▾             │                                                                                              █
+▌Programs              │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Schedules             │  │ At a glance                                                                              │█
+ Scripts               │  │ Kind      Your program                                                                   │█
+ Logs                  │  │ State     Running                                                                        │█
+ Tunnels               │  │ Up        3 days                                                                         │█
+ Notes                 │  │ Restarts  Starts again whenever it stops                                                 │█
+ AI                    │  │ Startup   [■ on ] Start with the computer                                                │█
+ VMs                   │  │                   Waiting until the last action on this program is settled.              │█
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+Account                │                                                                                              █
+ Plans & Billing       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Referrals             │  │ Ports                                                                                    │█
+ Keys and tokens       │  │    Port              State                  Address              Alias                   │█
+ API                   │  │› ▸ 3000              ● Running              Open port 3000       shop-front             ⋯│█
+ Notifications      26 │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Account               │                                                                                              █
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ + Rent servers        │  │ Sandbox                                                                   [Edit sandbox] │█
+ Guide                 │  │ Limits what this program can reach: files, network and resources.                        │▀
+ Support               │  │ A start, stop or restart of this program is still waiting. Sandbox changes wait until it │
+                       │  │ is settled.                                                                              │
+                       │  │                                                                                          │
+                       │  │ Saved policy            • Files are read-only except /hoody/storage/apps/web/data        │
+                       │  │                         • Ports named: 8000 (listening is not limited in this network    │
+                       │  │                           mode)                                                          │
+                       │  │                         • New inbound IPv4 TCP connections from outside to its listening │
+                       │  │                           ports only from 203.0.113.0/24; replies to its own connections │
+                       │  │                           pass                                                           │
+                       │  │                         • Each address: at most 50/s new inbound IPv4 TCP connections to │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

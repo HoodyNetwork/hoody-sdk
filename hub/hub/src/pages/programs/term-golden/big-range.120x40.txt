@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Programs                            ▸ Use with your agent  [+ New program]   + Launch an app
+ Computers             │  21 programs on atlas · 11 running · 4 need a look
+ Files                 │  ▸ Running programs    Apps    Ports & aliases
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  / Search programs          ‹ Any ›  Running 11    Stopped 6    Problems 4                   █
+ Vault                 │  21 programs  ↻ Refresh                                                                      █
+                       │                                                                                              █
+On atlas ▾             │      Name               State                  Ports                                         █
+▌Programs              │  ▌   ! nightly-sync     ● Ended (code 2)       —                                    [Start] ⋯█
+ Schedules             │      ! worker           ● Not working          —                                    [Start] ⋯█
+ Scripts               │      ! mystery          ● Can't tell           —                                            ⋯█
+ Logs                  │        api              ● Running              8000-8003 · 2/4 up                 [Restart] ⋯█
+ Tunnels               │        web              ● Running              3000                               [Restart] ⋯█
+ Notes                 │        backup           ● Finished             —                                    [Start] ⋯█
+ AI                    │        docs-preview     ● Stopped              —                                    [Start] ⋯█
+ VMs                   │        legacy-cron      ● Turned off           —                                            ⋯█
+                       │        report-builder   ● Starts when used     —                                    [Start] ⋯█
+Account                │        shards           ● Stopped              9000-9017                                    ⋯█
+ Plans & Billing       │        shards-wide      ● Stopped              9100-9139                                    ⋯█
+ Referrals             │                                                                                              █
+ Keys and tokens       │  ▾ Temporary programs · 1                                                                    █
+ API                   │        http-server      ● Running              —                                            ⋯█
+ Notifications      26 │                                                                                              █
+ Account               │  ▸ System programs · 9 ● 1 problem                                                           █
+                       │                                                                                              █
+ + Rent servers        │  Questions                                                                                   █
+ Guide                 │  ▸ What is a program, and what are Running programs and Apps?                                █
+ Support               │  ▸ What are the system programs, and is it safe to stop one?                                 █
+                       │  ▸ What is the difference between Keep it and Run once?                                      █
+                       │  ▸ When does a start count as done, and what happens when a program stops?                   █
+                       │  ▸ What does a sandbox limit, and what do the starting points do?                            █
+                       │  ▸ What do the network choices and allowed ranges do?                                        █
+                       │  ▸ When do new sandbox limits take effect, and what does removing them do?                   ▀
+                       │  ▸ What if a change may have gone through?
+                       │  ▸ Which open ports get a web address?
+                       │  ▸ Why are some ports counted but not shown?
+                       │  ▸ What is the difference between a port's address and an alias?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

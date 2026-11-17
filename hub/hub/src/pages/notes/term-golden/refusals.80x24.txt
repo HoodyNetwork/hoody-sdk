@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Notes                                      ▸ Use with your agent  [+ New note]
+ The notes on your computers. Everyone who opens Notes on a computer shares the
+ same notes.
+    ┌──────────────────────────────────────────────────────────────────────┐
+    │ No notes to show                                                     │
+    │                                                                      │
+    │ borealis and granite gave no full list of notes. cedar, dune, ember  │
+    │ and 1 more aren't running. atlas and harbor can't be read here.      │
+    │                                                                      │
+    │  ↻ Try again   Computers                                             │
+    └──────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

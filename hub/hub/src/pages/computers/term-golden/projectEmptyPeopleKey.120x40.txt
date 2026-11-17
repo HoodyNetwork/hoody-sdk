@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                                               ▸ Use with your agent
+▌Computers             │  Your computers: start them, open a terminal, and manage access.
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  Computers 6 · 3 running · 2 stopped · 1 failed    Servers 3
+ Vault                 │
+                       │  / Search computers         Filters       6 computers  [ ] Show usage  ↻ Refresh  View options
+On atlas ▾             │
+ Programs              │  ▌ █ atlas · Home base · Current                                                   ● Running ⋯
+ Schedules             │     █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM
+ Scripts               │
+ Logs                  │    █ borealis · Acme storefront                                                    ● Running ⋯
+ Tunnels               │     █ Acme client  · DE fra-7 · Frankfurt · 2 cores · 4 GB RAM
+ Notes                 │
+ AI                    │    █ cedar · Home base                                                             ● Stopped ⋯
+ VMs                   │     █ Personal  · SG n12 · Singapore · 2 cores · 4 GB RAM
+                       │
+Account                │    █ ember · Acme storefront                                                        ● Failed ⋯
+ Plans & Billing       │     █ Acme client  · DE fra-7 · Frankfurt · 2 cores · 4 GB RAM
+ Referrals             │
+ Keys and tokens       │    █ fjord · Home base                                                              ● Paused ⋯
+ API                   │     █ Personal  · US ash-3 · Ashburn · 1 core · 2 GB RAM
+ Notifications         │
+ Account               │    █ granite · Acme storefront                                                     ● Running ⋯
+                       │     █ Acme client  · SG n12 · Singapore · 4 cores · 16 GB RAM
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │  Questions
+                       │  ▸ What does a new computer come with?
+                       │  ▸ What are realms and projects?
+                       │  ▸ Who can open my computer's programs?
+                       │  ▸ How does the firewall work, and what does No internet block?
+                       │  ▸ How do I use a computer as a proxy, and what is an exit?
+                       │  ▸ How do I use my own domain for a web address?
+                       │  ▸ How do I get a shell on my computer?
+                       │  ▸ What is the difference between a snapshot and a zip backup?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

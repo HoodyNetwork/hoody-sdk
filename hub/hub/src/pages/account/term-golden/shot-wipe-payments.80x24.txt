@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Account
+ Your profile, how you sign in, and where you are signed in.
+ ▌Profile  Password  Two-step sign-in  Passcode lock  Sign-in sessions   7 ›
+ ─────────┌──────────────────────────────────────────────────────────┐─────────
+ ┌────────│ ! Remove this account's local data from this       Esc × │───────┐█
+ │ Securit│   device?                                                │       │▀
+ │ ✓ Your │ ──────────────────────────────────────────────────────── │       │
+ │ ✓ Two-s│ │ ✗ Check Billing first                                █ │       │
+ │ i 11 ot│ │   A payment made on this device has no final answer  █ │eview] │
+ └────────│ │   yet. Check it in Billing first; local data can be  █ │───────┘
+ ┌────────│ │   removed once it is settled.                        █ │───────┐
+ │ Profile│ │   Open Billing                                       █ │       │
+ │        │                                                        █ │       │
+ │ Display│                                                        █ │ name] │
+ │        │ The Hub forgets the settings, layouts, drafts and        │       │
+ │ Usernam│ tracked changes it keeps on this device for this         │       │
+ │        │ account. Then you leave the Hub. It does not sign you    │       │
+ │ Email  │ out: to sign out, run hoody logout. Your account, your   │email] │
+ │        │ computers and your data on the server stay as they are.  │       │
+ │        │                                                          │       │
+ │ Member │                     [Cancel]  [Remove and leave the Hub] │       │
+ │        └──────────────────────────────────────────────────────────┘       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Buy a plan                                                       Esc ×
+ Plans ┃ Small
+ Upgrad┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Plan┃
+ ──────┃    !
+ │ ✗ fr┃
+ Plans ┃ Setup failed
+ Each p┃
+ disk. ┃ We charged $12.00 to your wallet, but setting up
+       ┃ your server failed. Give support this reference.
+ ┌─────┃
+ │     ┃ sub_…1f03 ⧉
+ │ Plan┃
+ │ Choo┃
+ │ serv┃
+ │ to u┃
+ │     ┃
+ └─────┃
+       ┃
+ ┌─────┃
+ │ Free┃
+ │ $0 /┃
+ │ Your┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Done]   View servers

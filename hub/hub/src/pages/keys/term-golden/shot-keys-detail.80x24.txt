@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Keys and tokens                             ▸ Use with your agent  [+ New key]
+ A key lets your agent, the CLI or the SDK act for you. Give each one its own
+ key, with an end date.
+ ▸ API keys 5 keys    SSH keys    Shared access 0 shares
+ ──────────────────────────────────────────────────────────────────────────────
+ i Keys that work in Personal.                                [Show all realms]
+ ‹ Back to list  Esc
+ ci-deploy  ● Active                 [Pause] [Copy with a new secret…]  Edit… █
+                                                                              █
+                                                                              █
+   ┌───────────────────────────────────────────────────────────────────────┐  ▀
+   │ THIS KEY                                                              │
+   │ It works now.                                                         │
+   └───────────────────────────────────────────────────────────────────────┘
+
+   Key            hdy_9e37…
+   Works in       Personal f1f1…f1f1 ⧉
+   In this realm  Computers Programs Shares
+   Access         Developer
+   Ends           Jan 20, 2027 UTC
+   Allowed IPs    203.0.113.7/32
+   Made           Nov 2, 2026
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

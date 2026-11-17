@@ -1,0 +1,56 @@
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.groupTitle {
+  color: var(--hx-faint);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 32px;
+  border-block-end: var(--bw) solid var(--hx-line);
+}
+
+.label {
+  color: var(--hx-ink);
+  font: var(--t-body);
+}
+
+.keys {
+  display: flex;
+  gap: var(--sp-1);
+  margin: 0;
+}
+
+/* One way to press it; the next way follows after a muted "or". */
+.alt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.or {
+  color: var(--hx-faint);
+  font: var(--t-small);
+}

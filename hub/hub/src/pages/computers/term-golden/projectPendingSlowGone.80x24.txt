@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Computers                            ▸ Use with your agent   + Get a computer
+ Your computers: start them, open a terminal, and manage access.
+ ▸ Computers    Servers    Projects
+ ──────────────────────────────────────────────────────────────────────────────
+ Computers 3 · 1 running · 2 stopped · 0 failed    Servers 2                  █
+ / Search computers     Filters                                               █
+ 3 computers  [ ] Show usage  Ask the Agent  ↻ Refresh  View options          █
+ ▌ █ atlas · Home base · Current                                   ● Running ⋯█
+    █ Personal  · SG n12 · Singapore · 4 cores · 8 GB RAM                     █
+   █ cedar · Home base                                             ● Stopped ⋯█
+    █ Personal  · SG n12 · Singapore · 2 cores · 4 GB RAM                     █
+   █ fjord · Home base                                              ● Paused ⋯█
+    █ Personal  · US ash-3 · Ashburn · 1 core · 2 GB RAM                      █
+                                                                              █
+ Questions                                                                    █
+ ▸ What does a new computer come with?                                        █
+ ▸ What are realms and projects?                                              █
+ ▸ Who can open my computer's programs?                                       █
+ ▸ How does the firewall work, and what does No internet block?               █
+ ▸ How do I use a computer as a proxy, and what is an exit?                   █
+ ▸ How do I use my own domain for a web address?                              █
+ ▸ How do I get a shell on my computer?
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

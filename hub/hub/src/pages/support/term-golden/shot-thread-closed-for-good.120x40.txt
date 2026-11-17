@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Support                                                                        [+ New ticket]
+ Computers             │
+ Files                 │  ‹ Support  Esc
+ Bots                  │  Old question about bots  · Closed for good                                                [⋯]
+ Board                 │  · Bots 0000…a1b7
+ Demo                  │
+ Vault                 │
+                       │   You Sep 1, 2026, 12:20 AM
+On atlas ▾             │   Can a bot have two keys?
+ Programs              │
+ Schedules             │
+ Scripts               │   Hoody support Sep 1, 2026, 1:10 AM
+ Logs                  │   Yes, each bot can have several keys.
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+▌Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  This ticket is closed for good. Open a new ticket for anything else.           [+ New ticket]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

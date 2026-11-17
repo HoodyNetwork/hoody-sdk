@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Vault                                ▸ Use with your agent   + New entry   [⋯]
+ ‹ Vault  Esc
+ deploy.notes                                      ⧉ copy [✎ Replace value] [⋯]
+
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ About this entry                                                          │█
+ │ Belongs to     Personal                                                   │█
+ │ Encryption     Not marked as encrypted                                    │█
+ │ Size           44 B                                                       │█
+ │ Updated        Oct 23, 2026, 4:40 PM                                      │█
+ │ Created        Oct 20, 2026, 9:15 AM                                      │█
+ │ Other details  1 detail                                                   │█
+ │                                                                           │█
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │▀
+ │ │                                                                       │ │
+ │ │ Protect with a password         [Encrypt…]                            │ │
+ │ │ No encryption is recorded for                                         │ │
+ │ │ this entry. To protect this                                           │ │
+ │ │ value with a password, use                                            │ │
+ │ │ Replace value and tick Encrypt                                        │ │
+ │ │ with a password.                                                      │ │
+ │ │                                                                       │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

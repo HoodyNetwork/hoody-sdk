@@ -1,0 +1,9 @@
+{
+  "placeholder": "Pick a computer",
+  "loading": "Loading computers…",
+  "search": "Find a computer",
+  "empty": "No computers here yet.",
+  "failed": "The computer list could not be read",
+  "notRunning": "Not running",
+  "noRealm": "No realm"
+}

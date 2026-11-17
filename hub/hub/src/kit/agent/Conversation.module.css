@@ -1,0 +1,646 @@
+/* The conversation's shared pieces: reply and its foot, gate cards, the composer, attachment chips, link and path marks.
+   Kit tokens only. Rule order matters where a comment says so (Conversation.css.test.ts pins two of them). */
+
+/* reply */
+.reply { min-width: 0; }
+
+.prose {
+  overflow-wrap: anywhere;
+}
+
+/* Blocks carry no margins of their own (the kit base resets p and lists to 0); the rhythm rules below space them,
+   so a block's own rule can never undo them. */
+.p,
+.h { white-space: pre-wrap; }
+.h { font-weight: var(--fw-semibold); }
+.h1 { font: var(--t-section); }   /* # and ## */
+.h3 { font: var(--t-group); }     /* ### and deeper */
+
+.hr {
+  margin: 0;
+  border: 0;
+  border-block-start: var(--bw) solid var(--hx-line);
+}
+
+/* The base reset drops list markers for the Hub's own lists; a reply's lists keep them. */
+.list {
+  padding-inline-start: var(--sp-5);
+  list-style: disc outside;
+}
+
+.olist { list-style-type: decimal; }
+.list > li + li { margin-block-start: var(--sp-1); }
+.list > li::marker { color: var(--hx-muted); }
+
+.quote {
+  margin: 0;
+  padding-inline-start: var(--sp-3);
+  border-inline-start: var(--bw-2) solid var(--hx-line-2);
+  color: var(--hx-muted);
+}
+
+.quote > * + * { margin-block-start: var(--sp-2); }
+
+.tableWrap { overflow-x: auto; }
+
+.table {
+  border-collapse: collapse;
+  font: var(--t-body);
+}
+
+.table th,
+.table td {
+  padding: var(--pad-row-y) var(--pad-row-x);
+  border: var(--bw) solid var(--hx-line);
+  text-align: start;
+  vertical-align: top;
+}
+
+.table th { background: var(--hx-fill); font-weight: var(--fw-semibold); }
+
+.icode {
+  padding: 0 var(--sp-1);
+  border-radius: var(--r-1);
+  background: var(--hx-fill);
+  font: var(--fw-regular) 12.5px/20px var(--font-mono);
+}
+
+.codeWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.codeWrap > figure { width: 100%; font: var(--fw-regular) 12.5px/20px var(--font-mono); }
+
+.codeLang {
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.caret {
+  display: inline-block;
+  width: var(--bw-2);
+  height: 1.1em;
+  margin-inline-start: var(--sp-half);
+  background: var(--hx-ink);
+  vertical-align: text-bottom;
+  animation: caretBlink var(--dur-blink) steps(1) infinite;
+}
+
+/* Reply rhythm, from the kit spacing tokens: --sp-3 between blocks; a heading leaves
+   --gap-section above it (none first) and --sp-2 to its content; a rule leaves --sp-4 on both sides. */
+.prose > * + * { margin-block-start: var(--sp-3); }
+.prose > .h + * { margin-block-start: var(--sp-2); }
+.prose > * + .h { margin-block-start: var(--gap-section); }
+.prose > .hr { margin-block: var(--sp-4); }   /* below it too: collapses with the next block's --sp-3, and holds when last */
+.prose > .hr:first-child { margin-block-start: 0; }
+.prose > .caret { margin-block-start: 0; }
+
+@keyframes caretBlink {
+  50% { opacity: 0; }
+}
+
+/* The turn's foot: its actions at the start, under the text they act on (Copy, the host's turn menu: frameless icons), then
+   cost and time, quiet text, at the end. One row as tall as an icon's press area. */
+.replyFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  min-height: var(--icon-hit);
+  margin-block-start: var(--sp-1);
+
+  /* The first icon's glyph lines up with the text above it: the foot starts half an icon button's padding early (the button
+     is max(--btn-h-sm, --icon-hit) wide around an --icon-md glyph, so this holds on a coarse pointer too). Never so early
+     that the focus ring (2 * --bw-2) leaves the log's side inset (--conv-inset, SessionView; the Ask column's is --sp-4):
+     on a phone's touch-sized button the glyph then sits a little in, and the ring is never cut. */
+  margin-inline-start: max(
+    calc((var(--icon-md) - max(var(--btn-h-sm), var(--icon-hit))) / 2),
+    calc(2 * var(--bw-2) - var(--conv-inset, var(--sp-4)))
+  );
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* The actions are quiet: a row of them under every reply is too much to see at once. With a mouse they show while the pointer
+   is on the reply or focus is inside it (Tab still reaches them, and they show on focus), on the newest turn (SessionView marks
+   it data-latest), and while the turn menu is open; without hover (touch) they always show. Only opacity changes: their room is
+   always kept, so nothing moves. Code blocks keep their own Copy. */
+.replyFoot > button { transition: opacity var(--dur-hover) var(--ease-out); }
+
+@media (hover: hover) {
+  .reply:not(:hover, :focus-within, [data-latest] *) .replyFoot:not([data-menu-open]) > button { opacity: 0; }
+}
+
+/* Pushes cost and time to the end of the foot. */
+.replyGap { flex: 1 1 0; min-width: 0; }
+.replyMeta { font-variant-numeric: tabular-nums; }
+
+/* ---- cards ---- */
+
+/* A card that waits for the person: the notice shape (a frame and a bar at the start), in the accent. The bar is a real border, so
+   it shows in forced colours. */
+.card {
+  position: relative;
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--bw) solid var(--hx-line);
+  border-inline-start: var(--bw-notice) solid var(--hx-acc-edge);
+  border-radius: var(--r-2);
+  background: var(--hx-raised);
+  animation: cardRise var(--dur-enter) var(--ease-out);
+}
+
+@keyframes cardRise {
+  from { opacity: 0; transform: translateY(4px); }
+}
+
+.needsYou {
+  display: block;
+  margin-block-end: var(--sp-1);
+  color: var(--hx-muted);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: var(--case-caps);
+}
+
+.cardHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.cardTitle {
+  flex: 1 0 auto;
+  margin: 0;
+  font: var(--t-body-strong);
+}
+
+.cardAct {
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-block: var(--sp-2) var(--sp-3);
+  min-width: 0;
+}
+
+.cardWarn { margin: 0; color: var(--hx-warn); font: var(--t-small); }
+
+.cardPath,
+.cardDir {
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-mono);
+  overflow-wrap: anywhere;
+}
+
+.kv {
+  display: flex;
+  gap: var(--sp-2);
+  margin: 0;
+  font: var(--t-small);
+}
+
+.kvName { flex: none; color: var(--hx-muted); }
+.kvValue { min-width: 0; font-family: var(--font-mono); overflow-wrap: anywhere; }
+
+/* A workflow's step and route rows: names the agent chose can be long, so a long one takes its own line and the words stay readable below it. */
+.kvFlow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  font: var(--t-small);
+}
+
+.kvStep { flex: 0 1 auto; min-width: 0; color: var(--hx-muted); overflow-wrap: anywhere; }
+.kvText { flex: 1 1 12ch; min-width: 0; overflow-wrap: anywhere; }
+
+/* A route's condition: its own line, its label, then its code, so no step name can read as one. */
+.kvIf { display: block; }
+.kvIfName { color: var(--hx-muted); }
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pathChip {
+  padding: 0 var(--sp-2);
+  border: var(--bw) solid var(--hx-line-2);
+  border-radius: var(--r-pill);
+  font: var(--t-mono);
+}
+
+/* A narrow conversation (SessionView's xs size class) stacks the actions full width; the kit Button keeps its own 44 px coarse floor. */
+.cardActions {
+  display: flex;
+  flex-direction: var(--conv-card-actions-dir, row);
+  flex-wrap: wrap;
+  align-items: var(--conv-card-actions-align, center);
+  gap: var(--sp-2);
+}
+
+.cardUnknown {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.qGroup { display: flex; flex-direction: column; gap: var(--sp-2); }
+.qRadios > :first-child { position: absolute; overflow: hidden; clip-path: inset(50%); width: 1px; height: 1px; }
+
+/* A decided approval or answer: one row of the activity ledger (mark, what was decided, about what). */
+.decided {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--icon-hit);
+  margin: 0;
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.decided > span { flex: none; white-space: nowrap; }
+.decided > svg { flex: none; color: var(--hx-ok); }
+.decidedNo > svg { color: var(--hx-danger); }
+.decidedWhat { flex: none; color: var(--hx-ink); }
+
+.decided > .decidedText {
+  flex: 0 1 auto;
+  overflow: hidden;
+  min-width: 0;
+  font-family: var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- composer ---- */
+.composerWrap {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: 0 var(--sp-3) var(--sp-3);
+  padding-block-end: max(var(--sp-3), env(safe-area-inset-bottom));
+}
+
+/* Composer `flush`: the host's column is the inset (the AI page's New chat). */
+.composerWrap.composerFlush {
+  padding: 0;
+}
+
+.composerNote {
+  display: flex;
+
+  /* Its actions go under the text when both do not fit (a phone), never over each other. */
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-2);
+  margin: 0;
+  padding: 0 var(--sp-1);
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+/* A note that waits on something shows the kit spinner before its words. */
+.composerNoteBusy {
+  justify-content: flex-start;
+}
+
+/* A note's actions (Details, Try again, close) as one group at the end of the line; under the text together on a phone. */
+.composerNoteEnd {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-inline-start: auto;
+}
+
+/* After .composerNote on purpose (same specificity: the later rule wins), so a warning note is drawn in the warning colour. */
+.warnText { color: var(--hx-warn); }
+
+.composer {
+  /* The "/" menu (SlashMenu.module.css) is drawn above the box, from its edges. */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-block: var(--sp-2);
+  padding-inline: var(--sp-3) var(--sp-2);
+
+  /* The page's main control, drawn as every kit field box is (forms/fieldBox.module.css): the field line (3:1 beside the card)
+     on the field ground, so it reads as where to type, not as a slab or as one more message. */
+  border: var(--bw) solid var(--ctl-line-field);
+  border-radius: var(--r-2);
+  background: var(--field-bg);
+  transition: background-color 600ms var(--ease-out);
+}
+
+/* Text entry shows the kit focus ring while anything in the box has focus (the field box recipe, forms/fieldBox.module.css). */
+.composer:focus-within { box-shadow: var(--focus-ring); }
+
+/* Forced colours drop box-shadow: a solid Highlight outline instead, as on every kit field. */
+@media (forced-colors: active) {
+  .composer:focus-within {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+}
+
+/* The plate (the AI start page): framed on three sides in the panel line; the host's strip under it draws the fourth. After
+   `.composer` so its frame wins; the focus rule above still rings it. */
+.plate {
+  border-color: var(--hx-panel-line);
+  border-block-end-width: 0;
+  border-radius: 0;
+}
+.flash { background: var(--hx-acc-soft); transition: none; }
+
+.input {
+  overflow-y: auto;
+  min-height: 22px;
+  max-height: min(176px, 40cqb);
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--hx-ink);
+  font: var(--fw-regular) 14px/22px var(--font-text);
+  resize: none;
+}
+
+.input::placeholder { color: var(--hx-faint); }
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-height: 32px;
+}
+
+.autoChip { min-width: 0; font: var(--t-small); }
+
+/* The approval control keeps its words: it does not shrink (its width is its words, capped at the row's), so when
+   the counter, Stop and Send leave no room the row wraps and they take the next line; only a row narrower than the
+   words wraps the label itself. */
+.autoWrap {
+  display: flex;
+  max-width: 100%;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--hx-muted);
+}
+
+/* Armed auto-approval stays visible: ink label and a small "On". */
+.autoArmed { color: var(--hx-ink); }
+
+.autoOn {
+  flex: none;
+  padding-inline: var(--sp-1);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  color: var(--hx-ink);
+  font: var(--t-small);
+  font-weight: var(--fw-medium);
+}
+
+.actionStart {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+/* With chips (tools) and no approval switch the controls stay one line: the start part takes the width the end part
+   (counter, Send) leaves, never more, and its chips shrink, their labels ending in an ellipsis. */
+.actionFit { flex: 1 1 0; }
+
+/* Images and text files with a message: in the composer, and on the sent message. */
+.attList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.attChip {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  max-width: 100%;
+  padding-block: var(--sp-1);
+  padding-inline: var(--sp-2) var(--sp-1);
+  border: var(--bw) solid var(--hx-line);
+  border-radius: var(--r-1);
+  background: var(--hx-fill);
+  white-space: normal;
+}
+
+.attThumb {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-1);
+  object-fit: cover;
+}
+
+/* The thumbnail as the button that opens the image larger. */
+.attOpen {
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  line-height: 0;
+  cursor: zoom-in;
+}
+
+@media (pointer: coarse) {
+  .attOpen {
+    min-inline-size: var(--touch-min);
+    min-block-size: var(--touch-min);
+  }
+}
+
+.attList[data-big] .attThumb {
+  width: 64px;
+  height: 64px;
+}
+
+.attFull {
+  display: block;
+  max-inline-size: 100%;
+  max-block-size: 70vh;
+  margin-inline: auto;
+  object-fit: contain;
+}
+
+.attViewBar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 var(--sp-2);
+}
+
+/* "Actual size": the picture's own pixels, in a region of the dialog that scrolls both ways (ScrollRegion owns the overflow). */
+.attActualView {
+  max-block-size: 60vh;
+}
+
+.attActual {
+  display: block;
+  max-inline-size: none;
+}
+
+.attText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.attName {
+  overflow: hidden;
+  max-width: 180px;
+  font: var(--t-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attMeta {
+  color: var(--hx-muted);
+  font: var(--t-small);
+}
+
+.attFile {
+  display: none;
+}
+
+.dropping {
+  border-color: var(--hx-focus);
+  background: var(--hx-fill);
+}
+
+.actionEnd {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-inline-start: auto;
+}
+
+.counter {
+  color: var(--hx-muted);
+  font: var(--t-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.attNote {
+  display: block;
+}
+
+.bad { color: var(--hx-danger); }
+
+@media (prefers-reduced-motion: reduce) {
+  .card { animation: none; }
+  .caret { animation: none; }
+  .composer { transition: none; }
+}
+
+/* A marked link: its kind icon, the label as the open button, then ⋯. It wraps with the line, and a long label
+   breaks anywhere rather than widen the reply. Both kinds flow as text: a bare one (icon, label) and a labelled one (the agent's
+   words or inline code, then its open button), each with ⋯ after it. */
+.mark,
+.markLabelled {
+  overflow-wrap: anywhere;
+}
+
+.markTail {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-inline-start: var(--sp-1);
+  vertical-align: middle;
+}
+
+.markIcon {
+  margin-inline-end: var(--sp-1);
+  color: var(--hx-muted);
+  vertical-align: middle;
+}
+
+/* The open button wraps inside the reply (a text button keeps one line elsewhere): a masked host is one long word on a phone. */
+.mark .markOpen {
+  min-inline-size: 0;
+  white-space: normal;
+  text-align: start;
+}
+
+/* Another computer: the masked host in the muted ink, so it never reads as one of yours. */
+.markOther {
+  color: var(--hx-muted);
+}
+
+/* A local address's card (LocalPort): what the check found, then its actions. */
+.localCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.localText {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.localActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* The result row: under a finished reply, what the turn made. Wraps whole parts, never inside one. */
+.result { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-4); margin-block-start: var(--sp-3); font: var(--t-small); }
+.resultPart { display: inline-flex; align-items: center; column-gap: var(--sp-2); min-inline-size: 0; }
+.resultWords { color: var(--hx-muted); overflow-wrap: anywhere; }
+
+/* A path in a reply: its menu's trigger, drawn as the path in the mono face; a long one wraps anywhere rather than
+   widening the reply. One written as inline code keeps the code look (.icode inside), without the button's underline. */
+.pathMark {
+  max-inline-size: 100%;
+}
+
+.pathOpen {
+  display: inline;
+  min-inline-size: 0;
+  font-family: var(--font-mono);
+  font-weight: var(--fw-regular);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: start;
+}
+
+.pathCode {
+  text-decoration: none;
+}

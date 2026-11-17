@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Vault                                ▸ Use with your agent   + New entry   [⋯]
+ ‹ Vault  Esc
+ db-password                                       ⧉ copy [✎ Replace value] [⋯]
+
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ About this entry                                                          │█
+ │ Belongs to     Personal                                                   │█
+ │ Encryption     Encrypted                                                  │█
+ │ Size           251 B                                                      │█
+ │ Updated        Oct 23, 2026, 4:40 PM                                      │█
+ │ Created        Oct 20, 2026, 9:15 AM                                      │█
+ │ Other details  None                                                       │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+                                                                              █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Value                                                                     │█
+ │ Value                                                                     │
+ │ │ •••••••••••• (Not read yet) [Show value] [Copy value]                   │
+ │ ⚿ Read only on Show value or Copy; hiding it removes it from this page.   │
+ │                                                                           │
+ │ Password                                                                  │
+ │ │ ______________                                                          │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

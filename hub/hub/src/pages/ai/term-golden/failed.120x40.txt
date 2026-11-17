@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            AI                        ◆ Personal ▾  Computers not loaded ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   New chat
+ Computers             │  ▌✦ Chats ●     Agents     Automations     Knowledge     Settings
+ Files                 │  / Search                   Filters     5 chats  ‹ This computer ›  All computers    ↻ Refresh
+ Bots                  │
+ Board                 │  ▾ Needs you · 1
+ Demo                  │  ›     Deploy the staging site                                                      last month
+ Vault                 │
+                       │  ▾ Today · 2
+On this computer       │        Fix the failing checkout tests                                            2 minutes ago
+ Programs              │        Review the release notes                                                    3 hours ago
+ Schedules             │         Claude Code
+ Scripts               │
+ Logs                  │  ▾ Yesterday · 1
+ Tunnels               │        Answer the support ticket                                                     yesterday
+ Notes                 │         Bot support-desk
+▌AI                    │
+ VMs                   │  ▾ Older · 1
+                       │        Plan the backup job                                                          last month
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │ ───────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Personal                                                                        [AI settings]
+                       │  1 needs you
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

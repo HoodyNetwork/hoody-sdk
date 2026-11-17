@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  New script
+ Computers             │
+ Files                 │  Step 3 of 5 · Fill it in  ██████░░░░
+ Bots                  │   ✓ What it does  ✓ Where it answers ▸3 Fill it in  4 Check it  5 Make it live
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │  ▸ Your script so far
+ Vault                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Fill in the details                                                                       │
+On atlas ▾             │  │ This idea needs a little information.                                                     │
+ Programs              │  │ Address to check                                                                          │
+ Schedules             │  │ │ _______________________________________________________________________________________ │
+▌Scripts               │  │ A key is made for you when it goes live.                                                  │
+ Logs                  │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+ Tunnels               │
+ Notes                 │  Questions
+ AI                    │  ▸ What is a script?
+ VMs                   │  ▸ Do I need to know how to code?
+                       │  ▸ What can a script do?
+Account                │  ▸ How does the assistant write a script?
+ Plans & Billing       │  ▸ How do I make a script run on a schedule?
+ Referrals             │  ▸ What is a public link, and how is its name chosen?
+ Keys and tokens       │  ▸ How does a script key work?
+ API                   │  ▸ Where do I keep secrets such as passwords or API keys?
+ Notifications      26 │  ▸ What are magic comments, and what do the settings do?
+ Account               │  ▸ Can I undo a change or bring back a deleted script?
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+                       │  Next: the computer checks the code.
+                       │  [Back]                                                                   [Cancel]   Continue
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

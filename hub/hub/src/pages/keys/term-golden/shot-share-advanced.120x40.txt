@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Share Personal                                                                                        Esc ×
+ Home     ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Computers┃    Also turns on: Change a computer's settings         [ ] Delete projects, and their computers when asked
+ Files    ┃                                                            to
+ Bots     ┃ [ ] Turn on AI for a computer                              Can't be undone
+ Board    ┃     Costs money
+ Demo     ┃    Also turns on: Change a computer's settings
+ Vault    ┃
+          ┃ [ ] Install Hoody Kit on computers they add
+On atlas ▾┃     Costs money
+ Programs ┃    Also turns on: Add computers to this realm
+ Schedules┃
+ Scripts  ┃
+ Logs     ┃ [ ] Network and publishing
+ Tunnels  ┃ 0 of 4
+ Notes    ┃ [ ] Change firewall rules
+ AI       ┃
+ VMs      ┃ [ ] Manage program addresses and who can open them, including their sign-in details and hooks
+          ┃     Can show secrets   Can outlast the share
+Account   ┃
+ Plans & B┃ [ ] Share storage with others
+ Referrals┃     Can outlast the share
+▌Keys and ┃
+ API      ┃ [ ] Manage public Bot links
+ Notificat┃     Can outlast the share                                                                                 █
+ Account  ┃ ▸ Never included                                                                                          █
+          ┃                                                                                                           █
+ + Rent se┃                                                                                                           █
+ Guide    ┃ Limits                                                                                                    █
+ Support  ┃ Ends                                                                                                      █
+          ┃   1 day  ‹ 7 days ›  30 days    Pick a date and time                                                      █
+          ┃ Only from these addresses                                                                                 █
+          ┃ │ 203.0.113.7                                                                                             █
+          ┃ Comma separated. Empty works anywhere.                                                                    █
+          ┃ [Add my IP]                                                                                               █
+          ┃ Who it's for                                                                                              █
+          ┃ ┃ Alex                                                                                                    █
+          ┃ Optional.
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Typing · ┃                                                                                          [Cancel]   Review

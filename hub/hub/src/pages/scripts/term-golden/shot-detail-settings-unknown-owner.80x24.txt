@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Scripts                                  ▸ Use with your agent   + New script
+ ‹ Scripts  Esc
+ Weather lookup  ● Working                                       [▷ Try it] [⋯]
+ /weather ·  atlas
+
+  Overview  Code  Test ▸Settings
+ ──────────────────────────────────────────────────────────────────────────────
+ i Can't tell who owns this script. The agent on this computer did not answer,█
+   so changes are off until it does. Open the page again to try again.        ▀
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Magic comments                                                            │
+ │ The settings written at the top of the script: whether it runs, its       │
+ │ schedule, its key and more. The list comes from this computer. Check your │
+ │ changes, then save them.                                                  │
+ │ ▸ Where do these settings live?                                           │
+ │                                                                           │
+ │ How it runs                                                               │
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │
+ │ │                                                                       │ │
+ │ │ Turned on                       [■ on ] On                            │ │
+ │ │ Off: the address stops                                                │ │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                          ┃ New Bot                                                                 Esc ×
+ Home                  │  Bots          ┃ ─────────────────────────────────────────────────────────────────────────────
+ Computers             │  None of your c┃ ┌──────────────────────────────────────────────────────────────────────────┐█
+ Files                 │                ┃ │ The Bot                                                                  │█
+▌Bots                  │                ┃ │ ┌──────────────────────────────────────────────────────────────────────┐ │█
+ Board                 │             ┌──┃ │ │                                                                      │ │█
+ Demo                  │             │ ▷┃ │ │ Computer                        ┃ Choose a computer ▾                │ │█
+ Vault                 │             │  ┃ │ │ The Bot runs here and starts    No computer is running in this       │ │█
+                       │             │ A┃ │ │ its tasks here.                 realm. Start one, then come back.    │ │█
+On atlas ▾             │             │ n┃ │ │                                                                      │ │█
+ Programs              │             │  ┃ │ │ Name                                                                 │ │█
+ Schedules             │             │  ┃ │ │ Its identifier will be calm-olive-panda.                             │ │█
+ Scripts               │             │ ›┃ │ │ │ calm-olive-panda                            [Suggest another name] │ │█
+ Logs                  │             │  ┃ │ │                                                                      │ │█
+ Tunnels               │             │  ┃ │ │ Model                           Hoody Free                  [Change] │ │█
+ Notes                 │             └──┃ │ │ The model that answers you.                                          │ │█
+ AI                    │                ┃ │ │ You can change it later in the                                       │ │█
+ VMs                   │                ┃ │ │ Bot's Settings, under Model.                                         │ │█
+                       │                ┃ │ │                                                                      │ │█
+Account                │                ┃ │ └──────────────────────────────────────────────────────────────────────┘ │█
+ Plans & Billing       │                ┃ └──────────────────────────────────────────────────────────────────────────┘█
+ Referrals             │                ┃                                                                             █
+ Keys and tokens       │                ┃ ┌──────────────────────────────────────────────────────────────────────────┐█
+ API                   │                ┃ │ Permissions and access                                                   │█
+ Notifications      26 │                ┃ │ ┌──────────────────────────────────────────────────────────────────────┐ │█
+ Account               │                ┃ │ │                                                                      │ │█
+                       │                ┃ │ │ Allow everything                [■ on ]                              │ │█
+ + Rent servers        │                ┃ │ │ On: it runs commands and edits                                       │ │█
+ Guide                 │                ┃ │ │ files without asking. Change                                         │ │█
+ Support               │  Questions     ┃ │ │ it on the Bot's page.                                                │ │█
+                       │  ▸ What is a Bo┃ │ │                                                                      │ │█
+                       │  ▸ What is the ┃ │ │ Public link                     [□ off]                              │ │█
+                       │  ▸ What is a li┃ │ │ Off: you talk to it in the                                           │ │█
+                       │  ▸ What do Othe┃ │ │ Hub. Add one in Link and keys.                                       │ │█
+                       │  ▸ What does Al┃ │ │                                                                      │ │█
+                       │  ▸ Who becomes ┃ │ └──────────────────────────────────────────────────────────────────────┘ │█
+                       │  ▸ What does th┃ └──────────────────────────────────────────────────────────────────────────┘█
+                       │  ▸ What does th┃
+                       │  ▸ Which model ┃ ─────────────────────────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands┃                                                         [Cancel]  Create Bot

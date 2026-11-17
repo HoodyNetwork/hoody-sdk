@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Vault                                ▸ Use with your agent   + New entry   [⋯]
+ ‹ Vault  Esc
+ app.config                                        ⧉ copy [✎ Replace value] [⋯]
+
+ │ Other details  None                                                       │
+ │                                                                           │
+ │ ┌───────────────────────────────────────────────────────────────────────┐ │
+ │ │                                                                       │ │
+ │ │ Protect with a password         [Encrypt…]                            │ │▄
+ │ │ No encryption is recorded for                                         │ │█
+ │ │ this entry. To protect this                                           │ │█
+ │ │ value with a password, use                                            │ │█
+ │ │ Replace value and tick Encrypt                                        │ │█
+ │ │ with a password.                                                      │ │█
+ │ │                                                                       │ │█
+ │ └───────────────────────────────────────────────────────────────────────┘ │█
+ └───────────────────────────────────────────────────────────────────────────┘█
+                                                                              █
+ ┌───────────────────────────────────────────────────────────────────────────┐█
+ │ Value                                                                     │
+ │ Value    Formatted  ‹ Raw ›                                               │
+ │ │ {"retries":3,"hosts":["a.example","b.example"],"tls":{"verify":true}}   │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

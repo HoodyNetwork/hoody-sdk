@@ -1,0 +1,11 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`Panel tones carry a mark (mono) and the notice sits after the body 1`] = `
+"┌──────────────────────────────────────┐
+│ ✗ Billing                            │
+│ body                                 │
+│ 2 left out                           │
+└──────────────────────────────────────┘
+                                        
+"
+`;

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │   Chats   Agents   Automations   Knowledge  ▌Settings
+ Computers             │  ▌Models & keys   Connections & MCP   Rules & hooks
+ Files                 │  atlas › Models & keys
+ Bots                  │  Models & keys                                                           + Connect an account
+ Board                 │  atlas chats with Claude Code and runs Bots on Hoody Free.
+ Demo                  │
+ Vault                 │   Default model  Accounts ▌Claude Code  Hoody AI allowance  Spending  Advanced  Questions
+                       │  ─────────────────────────────────────────────────────────────────────────────────────────────
+On atlas ▾             │  ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ Programs              │  │ Claude Code                                                                           │
+ Schedules             │  │ Use your own Claude plan through Claude Code on this computer.                        │
+ Scripts               │  │ ┌───────────────────────────────────────────────────────────────────────────────────┐ │
+ Logs                  │  │ │                                                                                   │ │
+ Tunnels               │  │ │ Claude Code on this computer                                                      │ │
+ Notes                 │  │ │ Signed in to Claude Code and                                                      │ │█
+▌AI                    │  │ │ verified                                                                          │ │█
+ VMs                   │  │ │                                                                                   │ │█
+                       │  │ │ Use Claude Code                 [Go back to my models]                            │ │█
+Account                │  │ │ New chats use Claude Code                                                         │ │█
+ Plans & Billing       │  │ │                                                                                   │ │█
+ Referrals             │  │ └───────────────────────────────────────────────────────────────────────────────────┘ │▀
+ Keys and tokens       │  │ ┌───────────────────────────────────────────────────────────────────────────────────┐ │
+ API                   │  │ │                                                                                   │ │
+ Notifications      26 │  │ │ Sign-in on other computers      [Copy sign-in…]                                   │ │
+ Account               │  │ │ Copy Claude Code's sign-in                                                        │ │
+                       │  │ │ from a computer where it works                                                    │ │
+ + Rent servers        │  │ │ to another computer of this                                                       │ │
+ Guide                 │  │ │ realm.                                                                            │ │
+ Support               │  │ │                                                                                   │ │
+                       │  │ │ Settings on other computers     [Copy settings…]                                  │ │
+                       │  │ │ Copy Claude Code's settings,                                                      │ │
+                       │  │ │ agents, commands and skills to                                                    │ │
+                       │  │ │ another computer of this                                                          │ │
+                       │  │ │ realm. Sign-ins and chats are                                                     │ │
+                       │  │ │ never copied.                                                                     │ │
+                       │  │ │                                                                                   │ │
+                       │  │ └───────────────────────────────────────────────────────────────────────────────────┘ │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────┘
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

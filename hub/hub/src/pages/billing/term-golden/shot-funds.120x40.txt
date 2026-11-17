@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                              ┃ Add funds                                           Esc ×
+ Home                  │  Plans & Billing                   ┃ Money you add goes to your wallet. You pay on the
+ Computers             │  Upgrade a server, rent a whole mac┃ provider's page.
+ Files                 │                                    ┃ ─────────────────────────────────────────────────────────
+ Bots                  │  ▸ Plans    Bare metal    Wallet & ┃ Wallet balance                                     $42.50
+ Board                 │  ──────────────────────────────────┃
+ Demo                  │  │ ✗ fra-7: On hold — will be delet┃ ┌───────────────────────────────────────────────────────┐
+ Vault                 │                                    ┃ │                                                       │
+                       │  Plans                             ┃ │ Pay with                                              │
+On atlas ▾             │  Each plan is a server of your own.┃ │ ‹ Card ›  Crypto                                      │
+ Programs              │  take the same plan more than once.┃ │                                                       │
+ Schedules             │                                    ┃ │ Amount                                                │
+ Scripts               │  ┌─────────────────────────────────┃ │ From $5.00 to $10,000.00.                             │
+ Logs                  │  │                                 ┃ │   $10  ‹ $20 ›  $50    $100    Other amount           │
+ Tunnels               │  │ Plans for                       ┃ │                                                       │
+ Notes                 │  │ Choose a plan to buy a new      ┃ └───────────────────────────────────────────────────────┘
+ AI                    │  │ server, or pick one of yours    ┃
+ VMs                   │  │ to upgrade it.                  ┃ By continuing you agree to the Terms of Service and the
+                       │  │                                 ┃ Privacy Policy.
+Account                │  └─────────────────────────────────┃
+▌Plans & Billing       │                                    ┃ ▸ How does adding funds work?
+ Referrals             │  ┌─────────────────────────────────┃
+ Keys and tokens       │  │ Free                          ✓ ┃
+ API                   │  │ $0 / month                      ┃
+ Notifications      26 │  │ Your free server: ash-3         ┃
+ Account               │  │ Computers                       ┃
+                       │  │ Hardware                  Shared┃
+ + Rent servers        │  │ AI allowance                   F┃
+ Guide                 │  │                                █┃
+ Support               │  │ Locations                       ┃
+                       │  │ No choice of location           ┃
+                       │  │ Your free server stays as it is ┃
+                       │  │ buy a plan.                     ┃
+                       │  │ Next: Small. When you need more ┃
+                       │  │ computers.                      ┃
+                       │  │ Free server details             ┃
+                       │  │                                 ┃
+                       │  │                                 ┃
+                       │  │                                 ┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit  ┃ [Cancel]   Continue to payment

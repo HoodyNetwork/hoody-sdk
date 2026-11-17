@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+ Tunnels                            ▸ Use with your agent   + Connect a laptop
+ Put a laptop app online through atlas, or let atlas reach a service on your
+ laptop. 2 sessions connected to atlas · tunnel program running since 06:00 AM
+ ‹ Tunnels  Esc
+ Web address :8080  ● Reconnecting                           [Put on Board] [⋯]
+
+ i This address is waiting for its session: a laptop       What does this mean?
+   reconnecting, or a session closing. First seen at 09:00
+   AM.
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Session                                                                    │
+ │ Session  77aa31…  ⧉ copy                                                   │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │ Web address                                       [Access settings] [Keys] │
+ │ Anyone with the address can open it, unless this computer's access         │
+ │ settings say otherwise.                                                    │
+ │ https://••••  ⧉ copy                                                       │
+ │                                                                            │
+ │ ▸ Not loading?                                                             │
+ └────────────────────────────────────────────────────────────────────────────┘
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Computers                                           ▸ Use with your agent  [+ Get a computer]
+▌Computers             │
+ Files                 │  ▸ Computers    Servers    Projects
+ Bots                  │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Board                 │
+ Demo                  │  ‹ Computers  Esc
+ Vault                 │  atlas  ● Running                                                        [Open terminal ⇗] [⋯]
+                       │  SG n12 · Home base · █  Personal ·  Current computer
+On atlas ▾             │
+ Programs              │   Overview ▸Connect  Permissions  Ports & addresses  Desktop  Network  Run  Programs  Backups
+ Schedules             │   Storage
+ Scripts               │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Logs                  │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+ Tunnels               │  │ Program links                                                                            │█
+ Notes                 │  │ Each program has its own address. Copy it or open it.                                    │█
+ AI                    │  │ Agent  https://••••                     ⧉ copy  [QR]  [Open Agent]  [Put Agent on Board] │█
+ VMs                   │  │ Terminal  https://••••            ⧉ copy  [QR]  [Open Terminal]  [Put Terminal on Board] │█
+                       │  │ Desktop  https://••••               ⧉ copy  [QR]  [Open Desktop]  [Put Desktop on Board] │█
+Account                │  │ Files  https://••••                                                                      │█
+ Plans & Billing       │  │ ⧉ copy  [QR]  [Mount on your device]  [Open Files]  [Put Files on Board]                 │█
+ Referrals             │  │ Browser  https://••••               ⧉ copy  [QR]  [Open Browser]  [Put Browser on Board] │█
+ Keys and tokens       │  │ Code  https://••••                        ⧉ copy  [QR]  [Open Code]  [Put Code on Board] │█
+ API                   │  │ Notes  https://••••                     ⧉ copy  [QR]  [Open Notes]  [Put Notes on Board] │█
+ Notifications      26 │  │ SQLite  https://••••                  ⧉ copy  [QR]  [Open SQLite]  [Put SQLite on Board] │█
+ Account               │  │ Pipe  https://••••                                             ⧉ copy  [QR]  [Open Pipe] │█
+                       │  │ Cron  https://••••                                             ⧉ copy  [QR]  [Open Cron] │█
+ + Rent servers        │  │ Notifications  https://••••                           ⧉ copy  [QR]  [Open Notifications] │█
+ Guide                 │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ Support               │                                                                                              █
+                       │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Use from code                                                                            │
+                       │  │ These programs have no page to open: your scripts and apps call their addresses. Copy an │
+                       │  │ address or show it as a QR code.                                                         │
+                       │  │ Exec  https://6a00…0001-c0a7…00a1-exec-1.n12.fixture.invalid                ⧉ copy  [QR] │
+                       │  │ cURL  https://6a00…0001-c0a7…00a1-curl-1.n12.fixture.invalid                ⧉ copy  [QR] │
+                       │  │ Watch  https://6a00…0001-c0a7…00a1-watch-1.n12.fixture.invalid              ⧉ copy  [QR] │
+                       │  └──────────────────────────────────────────────────────────────────────────────────────────┘
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

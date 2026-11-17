@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            Welcome to Hoody          ◆ Personal ▾  Computers not loaded ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  Welcome to Hoody
+ Computers             │
+ Files                 │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ Bots                  │  │ ⇗ The tour is an animated page that plays on the web Hub.                                 │
+ Board                 │  │ Open the tour on the web:                                                                 │
+ Demo                  │  │ https://hub.example.test/auth/home?realm=f1f1…f1f1#/onboarding                            │
+ Vault                 │  │ [c Copy link] [r QR code]                                                                 │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+On this computer       │
+ Programs              │
+ Schedules             │
+ Scripts               │
+ Logs                  │
+ Tunnels               │
+ Notes                 │
+ AI                    │
+ VMs                   │
+                       │
+Account                │
+ Plans & Billing       │
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications       2 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+                       │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

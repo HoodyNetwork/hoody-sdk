@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY       ┃ Customize Home                                      Esc ×
+ Good morning, Ada  ┃ Pick the cards and their order. Kept until you
+ ■ Personal · ✓ atla┃ close the Hub.
+                    ┃ ─────────────────────────────────────────────────────────
+ ┌──────────────────┃ ┌───────────────────────────────────────────────────────┐
+ │ │ Ask atlas to…  ┃ │ Cards on Home                                         │
+ │                  ┃ │ [■ on ] Your computer                         [↑] [↓] │
+ │ [Install the popu┃ │ [■ on ] Start something                       [↑] [↓] │
+ │ [What is running ┃ │ [■ on ] Bots                                  [↑] [↓] │
+ └──────────────────┃ │ [■ on ] Billing                               [↑] [↓] │
+ ┌──────────────────┃ │ [■ on ] Notifications                         [↑] [↓] │
+ │ Your computer    ┃ │ [■ on ] Your realms                           [↑] [↓] │
+ │ atlas ● Running S┃ │ [■ on ] Shortcuts                             [↑] [↓] │
+ │                  ┃ └───────────────────────────────────────────────────────┘
+ │ Agent ⇗     ⧉ cop┃
+ │ Terminal ⇗  ⧉ cop┃
+ │ Desktop ⇗   ⧉ cop┃
+ │ Files ⇗     ⧉ cop┃
+ │ Browser ⇗   ⧉ cop┃
+ │                  ┃
+ │ Programs: 10 runn┃
+ └──────────────────┃
+ ┌──────────────────┃ ─────────────────────────────────────────────────────────
+ Tab move · Enter op┃ [Reset to default]   Done

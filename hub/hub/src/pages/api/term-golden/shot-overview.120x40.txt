@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB                                                   ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  API                                                                     ▸ Use with your agent
+ Computers             │  Every endpoint of the Hoody API, how to call it, and its docs page.
+ Files                 │
+ Bots                  │    Endpoints  ▸ Overview
+ Board                 │  ─────────────────────────────────────────────────────────────────────────────────────────────
+ Demo                  │
+ Vault                 │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ Best with an agent                                                    [How to set it up] │█
+On atlas ▾             │  │ An AI agent with the Hoody skill is the easiest way to use the API.                      │█
+ Programs              │  │ Add the Hoody skill                                                           ⧉ Copy all │█
+ Schedules             │  │ 1. The Hoody skill                                                                       │█
+ Scripts               │  │  $ npx skills add https://hoody.com/SKILLS/SKILL.md                              ⧉ copy  │█
+ Logs                  │  │ 2. Or the same skill with every docs page                                                │█
+ Tunnels               │  │  $ npx skills add HoodyNetwork/hoody-sdk                                         ⧉ copy  │█
+ Notes                 │  │ The skill gives no access: the agent still needs a key from you.                         │█
+ AI                    │  └──────────────────────────────────────────────────────────────────────────────────────────┘█
+ VMs                   │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐█
+                       │  │ OpenAPI description                                                                      │█
+Account                │  │ Import every endpoint into Postman, Insomnia or a code generator. The file, in JSON and  │█
+ Plans & Billing       │  │ YAML, is in the hoody-sdk repository on GitHub and on npm.                               │█
+ Referrals             │  │ JSON on GitHub  https://github.com/HoodyNetwork/hoody-sdk/blob/main/generated/           │█
+ Keys and tokens       │  │                 openapi.public.json                                                      │█
+▌API                   │  │ YAML on GitHub  https://github.com/HoodyNetwork/hoody-sdk/blob/main/generated/           │█
+ Notifications      26 │  │                 openapi.public.yaml                                                      │█
+ Account               │  │ Import by URL                                                                 ⧉ Copy all │█
+                       │  │ 1. JSON                                                                                  │█
+ + Rent servers        │  │  https://raw.githubusercontent.com/HoodyNetwork/hoody-sdk/main/generated/        ⧉ copy  │█
+ Guide                 │  │  openapi.public.json                                                                     │
+ Support               │  │ 2. Or YAML                                                                               │
+                       │  │  https://raw.githubusercontent.com/HoodyNetwork/hoody-sdk/main/generated/        ⧉ copy  │
+                       │  │  openapi.public.yaml                                                                     │
+                       │  │ From the npm package                                                          ⧉ Copy all │
+                       │  │ 1. Get the package                                                                       │
+                       │  │  $ npm install hoody-sdk                                                         ⧉ copy  │
+                       │  │ 2. Copy out the JSON file                                                                │
+                       │  │  $ cp node_modules/hoody-sdk/generated/openapi.public.json openapi.json          ⧉ copy  │
+                       │  │ 3. Or the YAML file                                                                      │
+                       │  │  $ cp node_modules/hoody-sdk/generated/openapi.public.yaml openapi.yaml          ⧉ copy  │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

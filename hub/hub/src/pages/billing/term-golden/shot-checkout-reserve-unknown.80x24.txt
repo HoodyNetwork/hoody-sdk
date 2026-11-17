@@ -1,0 +1,24 @@
+ ≡  ▐━┓┃ Reserve a server                                                 Esc ×
+ Plans ┃ Singapore M
+ Upgrad┃ ──────────────────────────────────────────────────────────────────────
+ ▸ Plan┃ │ ◷ Outcome unknown
+ ──────┃ │   We couldn't confirm whether your reservation was created. Check
+ │ ✗ fr┃ │   again only looks for it and sends nothing.
+ │ ◷ Si┃ │   [Check again]  [Send the same request again]
+ │   We┃
+ │   ag┃ If the earlier request never reached us, this one goes through now and
+ Plans ┃ charges up to $39.00. If it did, you get its result and nothing new is
+ Each p┃ charged.
+ disk. ┃
+       ┃
+ ┌─────┃
+ │     ┃
+ │ Plan┃
+ │ Choo┃
+ │ serv┃
+ │ to u┃
+ │     ┃
+ └─────┃
+       ┃
+ ┌─────┃ ──────────────────────────────────────────────────────────────────────
+ Tab mo┃ [Close]

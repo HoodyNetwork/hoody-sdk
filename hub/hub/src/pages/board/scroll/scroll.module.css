@@ -1,0 +1,21 @@
+/* The Board's view: holds the area. In Fit it is the area's frame; in Scroll it scrolls a
+   taller area. A Board in Scroll keeps its scrollbar gutter even while it shows one tile at a time or a maximised
+   tile (when nothing scrolls): the width it is measured at, which decides one-at-a-time, never depends on that
+   decision, and the tiles do not jump when the scrollbar comes and goes. */
+.view {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.gutter {
+  scrollbar-gutter: stable;
+}
+
+.scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}

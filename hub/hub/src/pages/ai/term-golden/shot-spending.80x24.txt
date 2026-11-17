@@ -1,0 +1,24 @@
+ ≡  ▐━┓ HOODY                              ◆ Personal ▾  ● atlas ▾  [A]  ^K · ?
+  Chats   Agents   Automations   Knowledge  ▌Settings
+ ▌Models & keys   Connections & MCP   Rules & hooks
+ atlas › Models & keys
+ Models & keys                                            + Connect an account
+ atlas uses Hoody Free for everything.
+ ‹ 2   Claude Code  Hoody AI allowance ▌Spending  Advanced  Questions
+ ──────────────────────────────────────────────────────────────────────────────
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ Spending                                                                  │
+ │ What each model has cost, as this computer recorded it.                   │
+ │ ‹ 7 days ›  30 days    All time                                           │
+ │ $4.20 credit left                                                         │
+ │                                                                           │
+ │ / Search                                              5 models  ↻ Refresh │
+ │     Model             Provider   Calls      Success    Recorded cost      │
+ │ ›   Hoody Free        Hoody AI   412        99%        No cost recorded   │
+ │     GPT-5             OpenAI     63         97%        $4.82              │
+ │     GPT-5 mini        OpenAI     130        100%       Under $0.01        │█
+ │ ▾ Other models · 2                                                        │▀
+ │     gpt-4-turbo       OpenAI     3          66%        $0.11              │
+ │     gpt-3.5-turbo     OpenAI     9          100%       No cost recorded   │
+ │                                                                           │
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

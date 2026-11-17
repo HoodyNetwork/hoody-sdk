@@ -1,0 +1,283 @@
+/* Track: one spine of steps. A closed step is one row (node, name, end); the open step is the one framed card (head,
+   body, foot). The node column is --track-node wide; under 600 px of the track's own width the open step drops its
+   node, its tags move above its name and its foot stacks. */
+.track {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  container-type: inline-size;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: var(--track-node) minmax(0, 1fr);
+  gap: 0 var(--sp-3);
+  align-items: start;
+  min-width: 0;
+  padding-block: var(--sp-1);
+}
+
+/* A closed row: node, name, then the result or tags at its end; one line, a hairline under it. */
+.row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: var(--track-node) minmax(0, 1fr) auto;
+  gap: 0 var(--sp-3);
+  align-items: center;
+  min-width: 0;
+  min-height: var(--row-h);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-block-end: var(--bw) solid var(--hx-plate-rule);
+  background: none;
+  color: var(--hx-ink);
+  font: var(--t-body);
+  text-align: start;
+}
+
+button.row {
+  cursor: pointer;
+}
+
+button.row:hover .rowName {
+  text-decoration: underline;
+}
+
+/* Inset: rows stack edge to edge, so an outset ring would lie over the neighbours' lines. */
+button.row:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring-inset);
+}
+
+.rowName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.state_later .rowName,
+.state_wait .rowName {
+  color: var(--hx-muted);
+}
+
+.rowEnd {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.result {
+  color: var(--hx-ink);
+  font: var(--t-body-strong);
+  overflow-wrap: anywhere;
+}
+
+/* The node: an ink square with a tick when done, the number outlined while to do, a lighter outline when optional or
+   waiting (its tag or state word says which; never a dashed line, hub/no-dashed), hatched when the Hub cannot tell
+   (never a tick). */
+.node {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--track-node);
+  block-size: var(--track-node);
+  border: var(--bw) solid var(--hx-panel-line);
+  background: var(--hx-plate-bg);
+  color: var(--hx-muted);
+  font: var(--t-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.state_done .node {
+  border-color: var(--hx-frame);
+  background: var(--hx-frame);
+  color: var(--hx-plate-bg);
+}
+
+.state_now .node {
+  border-color: var(--hx-frame);
+  color: var(--hx-ink);
+}
+
+.tone_warn .node {
+  border-color: var(--hx-warn-fill);
+  background: var(--hx-warn-fill);
+  color: var(--hx-on-warn); /* --hx-ink is light in dark: 2.2:1 on the orange */
+}
+
+.tone_danger .node {
+  border-color: var(--hx-danger);
+  background: var(--hx-danger);
+  color: var(--hx-plate-bg);
+}
+
+.nodeOptional,
+.state_wait .node {
+  border-color: var(--hx-plate-rule);
+}
+
+.state_unknown .node {
+  border-color: var(--hx-plate-rule);
+  background: repeating-linear-gradient(135deg, var(--hx-plate-rule) 0 var(--bw), transparent var(--bw) var(--sp-1));
+}
+
+/* The open step: the one framed card in the panel. */
+.card,
+.flatBody {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.card {
+  border: var(--bw) solid var(--hx-frame);
+  background: var(--hx-plate-bg);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  min-width: 0;
+}
+
+.unframed .head {
+  padding: 0 0 var(--sp-2);
+}
+
+.headLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.name {
+  margin: 0;
+  color: var(--hx-ink);
+  font: var(--t-heading);
+  overflow-wrap: anywhere;
+}
+
+.name:focus {
+  outline: none;
+}
+
+.name:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.why {
+  max-width: 64ch;
+  margin: 0;
+  color: var(--hx-dim);
+  font: var(--t-body);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: 0 var(--sp-4) var(--sp-4);
+  min-width: 0;
+}
+
+.unframed .body {
+  padding: 0 0 var(--sp-3);
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-block-start: var(--bw) solid var(--hx-plate-rule);
+  background: var(--hx-fill);
+  min-width: 0;
+}
+
+.say {
+  max-width: 64ch;
+  min-width: 0;
+  color: var(--hx-dim);
+  font: var(--t-small);
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* A narrow track. The open step drops its node and takes the full width; its tags sit above its name; the
+   foot stacks with the primary last, full width, at the touch height. */
+@container (width < 600px) {
+  .open {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .open > .node {
+    display: none;
+  }
+
+  .open .headLine {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+  }
+
+  .foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .primary {
+    display: flex;
+    flex-direction: column;
+    min-height: var(--touch-min);
+  }
+
+  .primary > * {
+    flex: 1 1 auto;
+  }
+
+  /* A Drawer that mirrors the primary in its sticky foot (only while its body is under 600 px) marks its body; the
+     step's own copy hides, so the panel shows one accent. Only on a narrow track: a wide one never loses its primary. */
+  [data-foot-primary] .primary {
+    display: none;
+  }
+}
+
+/* Forced colours drop box-shadow, so the focus rings above would vanish: an outline in the system colour instead. */
+@media (forced-colors: active) {
+  button.row:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: calc(var(--bw-2) * -1);
+  }
+
+  .name:focus-visible {
+    outline: var(--bw-2) solid Highlight;
+    outline-offset: var(--bw-2);
+  }
+}

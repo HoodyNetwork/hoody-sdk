@@ -1,0 +1,40 @@
+ ▐━┓ HOODY HUB            AI                                     ◆ Personal ▾  ● atlas ▾  [A]  Ctrl+K commands · ? keys
+ Home                  │  [Back to chats] Plan the backup job                                   ● Running [⋯] [Details]
+ Computers             │  atlas · Personal
+ Files                 │ ───────────────────────────────────────────────────────────────────────────────────────────────
+ Bots                  │  │ You 09:00 AM
+ Board                 │  │ Plan the backup job
+ Demo                  │
+ Vault                 │  ✦ Agent on atlas
+                       │  ▸ 2 steps ✓ Done
+On atlas ▾             │
+ Programs              │  I wrote the plan to plan.md:
+ Schedules             │
+ Scripts               │  • Copy photos and projects every night at 02:00
+ Logs                  │  • Keep the last 7 copies
+ Tunnels               │  • Send a note when a copy fails
+ Notes                 │
+▌AI                    │  ⧉ Copy [⋯]
+ VMs                   │
+                       │
+Account                │  │ You 09:00 AM
+ Plans & Billing       │  │ /compact
+ Referrals             │
+ Keys and tokens       │
+ API                   │
+ Notifications      26 │
+ Account               │
+                       │
+ + Rent servers        │
+ Guide                 │
+ Support               │
+                       │
+                       │
+                       │
+                       │
+                       │  Compacting the conversation… Summing up earlier messages so the chat fits.           [■ Stop]
+                       │  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+                       │  │ Message your agent                                                                        │
+                       │  └───────────────────────────────────────────────────────────────────────────────────────────┘
+                       │  [+]  [/ Commands]  [Ask when needed]                                            [Send ↵]  [▾]
+ Tab move · Enter open · Ctrl+K commands · ? keys · q quit

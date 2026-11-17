@@ -1,0 +1,40 @@
+ ▐━┓ HOODY┃ Get a computer                                                                                        Esc ×
+ Home     ┃ Everything is filled in for you. Change what you like, then get it.
+▌Computers┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Files    ┃ ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+ Bots     ┃ │ YOU GET                                                                                                 │
+ Board    ┃ │ A new computer on n12, Singapore.                                                                       │
+ Demo     ┃ │ Size      16 cores, 64 GB RAM, shared                Software  Hoody kit, Developer kit, Hoody AI       │
+ Vault    ┃ │ System    Debian 13                                                                                     │
+          ┃ └─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+On this co┃
+ Programs ┃ ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+ Schedules┃ │ Computer                                                                                                │
+ Scripts  ┃ │ ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+ Logs     ┃ │ │                                                                                                     │ │
+ Tunnels  ┃ │ │ Name                            ┃ proud-rust-llama   [Suggest another name]                         │ │
+ Notes    ┃ │ │ Suggested for you. Keep it or                                                                       │ │
+ AI       ┃ │ │ type your own.                                                                                      │ │
+ VMs      ┃ │ │                                                                                                     │ │
+          ┃ │ │ Server                          │ SG n12 · Singapore ▾                                              │ │
+Account   ┃ │ │ Computers on a server share                                                                         │ │
+ Plans & B┃ │ │ its cores, memory and disk.                                                                         │ │
+ Referrals┃ │ │                                                                                                     │ │
+ Keys and ┃ │ │ Project                         │ █ Home base ▾                                                     │ │
+ API      ┃ │ │ Groups computers. Its people    [+ New project in this realm]                                       │ │
+ Notificat┃ │ │ and access rules apply to this                                                                      │ │
+ Account  ┃ │ │ one too.                                                                                            │ │
+          ┃ │ │                                                                                                     │ │
+ + Rent se┃ │ │ Realm                            █  Personal                                                        │ │
+ Guide    ┃ │ │ Always added: you're getting                                                                        │ │
+ Support  ┃ │ │ this computer inside this                                                                           │ │
+          ┃ │ │ realm.                                                                                              │ │
+          ┃ │ │                                                                                                     │ │
+          ┃ │ └─────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+          ┃ └─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+          ┃
+          ┃ ▸ More options  Colour, software, SSH key, a note and variables. All optional.
+          ┃
+          ┃
+          ┃ ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Typing · ┃ [Cancel]  Get computer

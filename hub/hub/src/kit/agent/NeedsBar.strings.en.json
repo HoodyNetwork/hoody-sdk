@@ -1,0 +1,9 @@
+{
+  "needs.label": "Waiting for you",
+  "needs.more": "{{n}} more",
+  "needs.show": "Show",
+  "needs.approve": "Allow {{what}}?",
+  "needs.approveTool": "Allow this action?",
+  "needs.askQuestion": "A question is waiting.",
+  "needs.aria": "Waiting for you"
+}
