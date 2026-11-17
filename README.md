@@ -55,12 +55,14 @@
   <img src="https://img.shields.io/badge/runtime-Node.js_%7C_Bun_%7C_Browser-green.svg" alt="Node.js | Bun | Browser">
 </p>
 
-<a name="what-hoody-is"></a>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-what-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-what-light.svg">
-  <img alt="What Hoody is" src="https://cdn.hoody.com/assets/readme/title-what-light.svg" width="100%" height="104">
-</picture>
+<p>
+  <a name="what-hoody-is"></a>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-what-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-what-light.svg">
+    <img alt="What Hoody is" src="https://cdn.hoody.com/assets/readme/title-what-light.svg" width="100%" height="104">
+  </picture>
+</p>
 
 <picture>
   <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/kit-narrow-dark.gif">
@@ -227,12 +229,14 @@ By default a computer runs full Debian 13 Linux with systemd and `apt`.
 > [!WARNING]
 > New computer links are open unless their project restricts access. Anyone with an open link can use it, including terminals and files. Treat links like passwords. Set permissions before sharing. See [Access control](https://docs.hoody.com/foundation/proxy/permissions/).
 
-<a name="quick-start"></a>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-quick-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-quick-light.svg">
-  <img alt="Quick start" src="https://cdn.hoody.com/assets/readme/title-quick-light.svg" width="100%" height="104">
-</picture>
+<p>
+  <a name="quick-start"></a>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-quick-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-quick-light.svg">
+    <img alt="Quick start" src="https://cdn.hoody.com/assets/readme/title-quick-light.svg" width="100%" height="104">
+  </picture>
+</p>
 
 **1. Create an account:**
 
@@ -328,12 +332,14 @@ See [Links](https://docs.hoody.com/concepts/everything-is-a-url/) for computer s
 
 </details>
 
-<a name="examples"></a>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-examples-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-examples-light.svg">
-  <img alt="Examples" src="https://cdn.hoody.com/assets/readme/title-examples-light.svg" width="100%" height="104">
-</picture>
+<p>
+  <a name="examples"></a>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-examples-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-examples-light.svg">
+    <img alt="Examples" src="https://cdn.hoody.com/assets/readme/title-examples-light.svg" width="100%" height="104">
+  </picture>
+</p>
 
 Ask an AI [connected to Hoody](#hoody-for-ai-agents), or use code. Examples continue the SDK quick start: `hoody` is your account, `computer` the computer and `box` its client.
 
@@ -486,12 +492,14 @@ Use a terminal number that is not open yet: a new terminal draws on the display 
 
 </details>
 
-<a name="bots"></a>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-bots-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-bots-light.svg">
-  <img alt="Bots" src="https://cdn.hoody.com/assets/readme/title-bots-light.svg" width="100%" height="104">
-</picture>
+<p>
+  <a name="bots"></a>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-bots-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-bots-light.svg">
+    <img alt="Bots" src="https://cdn.hoody.com/assets/readme/title-bots-light.svg" width="100%" height="104">
+  </picture>
+</p>
 
 <p align="center">
   <picture>
@@ -588,12 +596,14 @@ AI apps use the Bot as a model or MCP server, with the Bot URL key as their API 
 
 </details>
 
-<a name="hoody-for-ai-agents"></a>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-ai-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-ai-light.svg">
-  <img alt="Hoody for AI agents" src="https://cdn.hoody.com/assets/readme/title-ai-light.svg" width="100%" height="104">
-</picture>
+<p>
+  <a name="hoody-for-ai-agents"></a>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-ai-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-ai-light.svg">
+    <img alt="Hoody for AI agents" src="https://cdn.hoody.com/assets/readme/title-ai-light.svg" width="100%" height="104">
+  </picture>
+</p>
 
 External AI tools call Hoody directly over HTTP, while built-in agents run inside your computers:
 
@@ -763,12 +773,14 @@ Names stand for 24-character hex realm IDs:
 
 </details>
 
-<a name="hub"></a>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-hub-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-hub-light.svg">
-  <img alt="Hub" src="https://cdn.hoody.com/assets/readme/title-hub-light.svg" width="100%" height="104">
-</picture>
+<p>
+  <a name="hub"></a>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-hub-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-hub-light.svg">
+    <img alt="Hub" src="https://cdn.hoody.com/assets/readme/title-hub-light.svg" width="100%" height="104">
+  </picture>
+</p>
 
 The Hub is the app for your account: computers, Bots, apps, programs, files, schedules, logs, billing and settings. It comes in three forms that draw the same pages.
 
@@ -782,12 +794,14 @@ The Hub's source is in [`hub/`](./hub/). You can fork it, change it and build yo
 
 On Linux x86-64 and arm64, from the npm package with an older Node.js or with Bun, `hoody hub` says it needs Node.js 26 or later and shows how to install the binary. On other systems it points to the web Hub. The [Hub guide](./docs/reference/guides/hub.md) has the terminal keys, sign-in and troubleshooting.
 
-<a name="sdk-and-cli"></a>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-sdk-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-sdk-light.svg">
-  <img alt="SDK and CLI" src="https://cdn.hoody.com/assets/readme/title-sdk-light.svg" width="100%" height="104">
-</picture>
+<p>
+  <a name="sdk-and-cli"></a>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-sdk-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-sdk-light.svg">
+    <img alt="SDK and CLI" src="https://cdn.hoody.com/assets/readme/title-sdk-light.svg" width="100%" height="104">
+  </picture>
+</p>
 
 `hoody-sdk` includes the TypeScript/browser SDK, `hoody` CLI, single-file Hub, OpenAPI specs and agent skills.
 
@@ -923,12 +937,14 @@ Event-stream commands with `--output json` print one JSON object per line; byte-
 
 </details>
 
-<a name="docs-and-support"></a>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-docs-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-docs-light.svg">
-  <img alt="Docs and support" src="https://cdn.hoody.com/assets/readme/title-docs-light.svg" width="100%" height="104">
-</picture>
+<p>
+  <a name="docs-and-support"></a>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hoody.com/assets/readme/title-docs-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://cdn.hoody.com/assets/readme/title-docs-light.svg">
+    <img alt="Docs and support" src="https://cdn.hoody.com/assets/readme/title-docs-light.svg" width="100%" height="104">
+  </picture>
+</p>
 
 Read the [changelog](./CHANGELOG.md)'s Breaking section before upgrading.
 
