@@ -1,9 +1,9 @@
 {
   "name": "hoody-sdk",
-  "version": "1.0.0-beta.17",
+  "version": "1.0.1",
   "description": "Official Hoody Platform SDK - unified access to all Hoody APIs",
   "license": "Apache-2.0",
-  "author": "Hoody Platform",
+  "author": "Hoody Pte Ltd",
   "keywords": [
     "hoody",
     "sdk",
@@ -20,7 +20,7 @@
   "jsdelivr": "./dist/hoody-sdk.browser.min.js",
   "type": "module",
   "engines": {
-    "node": ">=20.3"
+    "node": ">=20.19"
   },
   "bin": {
     "hoody": "./cli/dist/index.js"
@@ -122,6 +122,10 @@
       "types": "./dist-ts/generated/watch/index.d.ts",
       "default": "./dist-ts/generated/watch/index.js"
     },
+    "./vm": {
+      "types": "./dist-ts/generated/vm/index.d.ts",
+      "default": "./dist-ts/generated/vm/index.js"
+    },
     "./tunnel": {
       "types": "./dist-ts/generated/tunnel/index.d.ts",
       "default": "./dist-ts/generated/tunnel/index.js"
@@ -134,22 +138,6 @@
       "types": "./dist-ts/generated/agent/index.d.ts",
       "default": "./dist-ts/generated/agent/index.js"
     },
-    "./bot": {
-      "types": "./dist-ts/lib/subpath/bot.d.ts",
-      "default": "./dist-ts/lib/subpath/bot.js"
-    },
-    "./chat": {
-      "types": "./dist-ts/lib/chat/index.d.ts",
-      "default": "./dist-ts/lib/chat/index.js"
-    },
-    "./ai": {
-      "types": "./dist-ts/lib/ai/index.d.ts",
-      "default": "./dist-ts/lib/ai/index.js"
-    },
-    "./update-check": {
-      "types": "./dist-ts/lib/update-check/index.d.ts",
-      "default": "./dist-ts/lib/update-check/index.js"
-    },
     "./openapi.json": "./generated/openapi.public.json",
     "./openapi.yaml": "./generated/openapi.public.yaml",
     "./embeds/catalog.v1.json": "./generated/embeds.catalog.v1.json",
@@ -157,7 +145,6 @@
   },
   "files": [
     "generated",
-    "!generated/docs",
     "!generated/*.json",
     "!generated/**/*.yaml",
     "!generated/**/*.yml",
@@ -165,17 +152,16 @@
     "generated/openapi.public.yaml",
     "generated/embeds.catalog.v1.json",
     "lib",
-    "!lib/chat/system-prompt.txt",
     "dist",
     "dist-ts",
     "!dist-ts/**/*.js.map",
     "!dist-ts/**/*.d.ts.map",
     "cli/dist",
     "cli/CLI_AUTHENTICATION.md",
+    "action-commands.json",
     "docs/reference",
     "docs/agent/skills",
     "docs/MIGRATION-2026-10-NAMES.md",
-    "assets",
     "README.md",
     "CHANGELOG.md",
     "NOTICE",
@@ -185,6 +171,35 @@
     "SUPPORT.md",
     "CODE_OF_CONDUCT.md",
     ".github",
+    "hub/package.json",
+    "hub/bun.lock",
+    "hub/README.md",
+    "hub/AGENTS.md",
+    "hub/LICENSE",
+    "hub/tsconfig.json",
+    "hub/patches",
+    "hub/src",
+    "hub/public",
+    "hub/hub/index.html",
+    "hub/hub/CONTRIBUTING.md",
+    "hub/hub/AGENTS.md",
+    "hub/hub/HUB-GUIDE.md",
+    "hub/hub/src",
+    "hub/hub/templates",
+    "hub/hub/e2e-live/fixture-markers.ts",
+    "hub/hub/scripts",
+    "hub/hub/vendor/opentui",
+    "hub/hub/playwright.config.ts",
+    "hub/hub/playwright.shots.config.ts",
+    "hub/hub/eslint.config.js",
+    "hub/hub/stylelint.config.mjs",
+    "hub/hub/tsconfig.json",
+    "hub/hub/tsconfig.node.json",
+    "hub/hub/vite.config.mts",
+    "hub/hub/vite.modes.ts",
+    "hub/hub/vite.single.config.mts",
+    "hub/hub/vitest.lists.mts",
+    "!**/tsconfig.tsbuildinfo",
     "!**/*.backup",
     "!**/*.bak",
     "!**/*.orig",
@@ -192,10 +207,11 @@
     "!**/*.tmp",
     "!**/*.swp",
     "!**/.DS_Store",
-    "!**/*.phase*-backup",
     "!**/.gitignore",
     "AGENTS.md",
-    "SKILLS"
+    "SKILLS",
+    "hoody-hub.html",
+    "hoody-hub.html.sha256"
   ],
   "repository": {
     "type": "git",
@@ -215,7 +231,7 @@
     "semver": "^7.7.4",
     "socket.io-client": "^4.8.3",
     "tweetnacl": "^1.0.3",
-    "undici": "^8.9.0",
+    "undici": "^8.12.2",
     "ws": "^8.21.1"
   },
   "publishConfig": {
